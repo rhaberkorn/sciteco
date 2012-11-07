@@ -21,8 +21,7 @@ UndoTokenMessage::run(void)
 void
 UndoStack::push_msg(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
 {
-	UndoToken *token = new UndoTokenMessage(iMessage, wParam, lParam);
-	SLIST_INSERT_HEAD(&head, token, tokens);
+	push(new UndoTokenMessage(iMessage, wParam, lParam));
 }
 
 #if 0

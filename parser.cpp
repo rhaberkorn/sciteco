@@ -2,6 +2,7 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "undo.h"
 #include "parser.h"
 
 gint macro_pc = 0;
