@@ -153,16 +153,18 @@ public:
 	Operator push(Operator op);
 	Operator push_calc(Operator op);
 
+	void eval(bool pop_brace = false);
+
+	int args(void);
+
+	void discard_args(void);
+
+private:
 	Operator pop_op(int index = 1);
 
 	void calc(void);
 
-	void eval(bool pop_brace = false);
-
-	int args(void);
 	int first_op(void);
-
-	void discard_args(void);
 } expressions;
 
 #endif
