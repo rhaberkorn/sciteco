@@ -140,6 +140,11 @@ public:
 
 	gint64 push(gint64 number);
 
+	inline gint64
+	peek_num(int index = 1)
+	{
+		return numbers.peek(index);
+	}
 	gint64 pop_num(int index = 1);
 	gint64 pop_num_calc(int index, gint64 imply);
 	inline gint64
@@ -152,6 +157,7 @@ public:
 
 	Operator push(Operator op);
 	Operator push_calc(Operator op);
+	Operator pop_op(int index = 1);
 
 	void eval(bool pop_brace = false);
 
@@ -160,8 +166,6 @@ public:
 	void discard_args(void);
 
 private:
-	Operator pop_op(int index = 1);
-
 	void calc(void);
 
 	int first_op(void);

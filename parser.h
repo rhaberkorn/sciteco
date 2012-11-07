@@ -45,6 +45,7 @@ public:
 
 private:
 	void move(gint64 n);
+	void move_lines(gint64 n);
 
 	State *custom(gchar chr);
 };
