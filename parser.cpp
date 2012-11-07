@@ -73,6 +73,14 @@ StateStart::StateStart() : State()
 	transitions['\v']	= this;
 }
 
+void
+StateStart::move(gint64 n)
+{
+	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
+	editor_msg(SCI_GOTOPOS, pos + n);
+	undo.push_msg(SCI_GOTOPOS, pos);
+}
+
 State *
 StateStart::custom(gchar chr)
 {
@@ -103,7 +111,7 @@ StateStart::custom(gchar chr)
 		expressions.push_calc(Expressions::OP_ADD);
 		break;
 	case '-':
-		if (!expressions.args() &&
+		if (!expressions.args() ||
 		    expressions.peek_num() == G_MAXINT64)
 			expressions.set_num_sign(-expressions.num_sign);
 		else
@@ -133,8 +141,10 @@ StateStart::custom(gchar chr)
 	 * commands
 	 */
 	case 'C':
-		editor_msg(SCI_CHARRIGHT);
-		undo.push_msg(SCI_CHARLEFT);
+		move(expressions.pop_num_calc());
+		break;
+	case 'R':
+		move(-expressions.pop_num_calc());
 		break;
 	case '=':
 		message_display(GTK_MESSAGE_OTHER, "%" G_GINT64_FORMAT,

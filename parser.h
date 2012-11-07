@@ -39,6 +39,8 @@ class StateStart : public State {
 public:
 	StateStart();
 
+	void move(gint64 n);
+
 	State *custom(gchar chr);
 };
 

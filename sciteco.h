@@ -18,7 +18,7 @@ void message_display(GtkMessageType type, const gchar *fmt, ...);
 void cmdline_keypress(gchar key);
 void cmdline_display(const gchar *cmdline);
 
-void editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
+sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
 
 gboolean macro_execute(const gchar *macro);
 

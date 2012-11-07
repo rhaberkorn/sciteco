@@ -40,11 +40,11 @@ message_display(GtkMessageType type, const gchar *fmt, ...)
 	gtk_label_set_text(GTK_LABEL(message_widget), buf);
 }
 
-void
+sptr_t
 editor_msg(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
 {
-	scintilla_send_message(SCINTILLA(editor_widget),
-			       iMessage, wParam, lParam);
+	return scintilla_send_message(SCINTILLA(editor_widget),
+				      iMessage, wParam, lParam);
 }
 
 static gboolean
