@@ -7,6 +7,40 @@
 
 template <typename Type>
 class ValueStack {
+	class UndoTokenPush : public UndoToken {
+		ValueStack<Type> *stack;
+
+		Type	value;
+		int	index;
+
+	public:
+		UndoTokenPush(ValueStack<Type> *_stack,
+			      Type _value, int _index = 1)
+			     : stack(_stack), value(_value), index(_index) {}
+
+		void
+		run(void)
+		{
+			stack->push(value, index);
+		}
+	};
+
+	class UndoTokenPop : public UndoToken {
+		ValueStack<Type> *stack;
+
+		int index;
+
+	public:
+		UndoTokenPop(ValueStack<Type> *_stack, int _index = 1)
+			    : stack(_stack), index(_index) {}
+
+		void
+		run(void)
+		{
+			stack->pop(index);
+		}
+	};
+
 	int size;
 
 	Type *stack;
@@ -38,6 +72,11 @@ public:
 		top++;
 		return peek(index) = value;
 	}
+	inline void
+	undo_push(Type value, int index = 1)
+	{
+		undo.push(new UndoTokenPush(this, value, index));
+	}
 
 	inline Type
 	pop(int index = 1)
@@ -50,46 +89,16 @@ public:
 
 		return v;
 	}
+	inline void
+	undo_pop(int index = 1)
+	{
+		undo.push(new UndoTokenPop(this, index));
+	}
 
 	inline Type &
 	peek(int index = 1)
 	{
 		return top[-index];
-	}
-};
-
-template <typename Type>
-class UndoTokenPush : public UndoToken {
-	ValueStack<Type> *stack;
-
-	Type	value;
-	int	index;
-
-public:
-	UndoTokenPush(ValueStack<Type> &_stack, Type _value, int _index = 1)
-		     : stack(&_stack), value(_value), index(_index) {}
-
-	void
-	run(void)
-	{
-		stack->push(value, index);
-	}
-};
-
-template <typename Type>
-class UndoTokenPop : public UndoToken {
-	ValueStack<Type> *stack;
-
-	int index;
-
-public:
-	UndoTokenPop(ValueStack<Type> &_stack, int _index = 1)
-		    : stack(&_stack), index(_index) {}
-
-	void
-	run(void)
-	{
-		stack->pop(index);
 	}
 };
 

@@ -28,7 +28,7 @@ Expressions::push(gint64 number)
 
 	push(OP_NUMBER);
 
-	undo.push(new UndoTokenPop<gint64>(numbers));
+	numbers.undo_pop();
 	return numbers.push(number);
 }
 
@@ -40,7 +40,7 @@ Expressions::pop_num(int index)
 	pop_op();
 	if (numbers.items() > 0) {
 		n = numbers.pop(index);
-		undo.push(new UndoTokenPush<gint64>(numbers, n, index));
+		numbers.undo_push(n, index);
 	}
 
 	return n;
@@ -67,7 +67,7 @@ Expressions::add_digit(gchar digit)
 Expressions::Operator
 Expressions::push(Expressions::Operator op)
 {
-	undo.push(new UndoTokenPop<Operator>(operators));
+	operators.undo_pop();
 	return operators.push(op);
 }
 
@@ -90,7 +90,7 @@ Expressions::pop_op(int index)
 
 	if (operators.items() > 0) {
 		op = operators.pop(index);
-		undo.push(new UndoTokenPush<Operator>(operators, op, index));
+		operators.undo_push(op, index);
 	}
 
 	return op;
