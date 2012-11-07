@@ -14,19 +14,8 @@ protected:
 public:
 	State();
 
-	inline State *&
-	operator [](int i)
-	{
-		return transitions[i];
-	}
-
 	static gboolean input(gchar chr);
-
-	inline State *
-	get_next_state(gchar chr)
-	{
-		return transitions[(int)g_ascii_toupper(chr)] ? : custom(chr);
-	}
+	State *get_next_state(gchar chr);
 
 	virtual State *
 	custom(gchar chr)

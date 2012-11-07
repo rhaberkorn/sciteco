@@ -33,7 +33,7 @@ macro_execute(const gchar *macro)
 
 State::State()
 {
-	for (int i = 0; i < MAX_TRANSITIONS; i++)
+	for (guint i = 0; i < G_N_ELEMENTS(transitions); i++)
 		transitions[i] = NULL;
 }
 
@@ -62,6 +62,20 @@ State::input(gchar chr)
 	}
 
 	return TRUE;
+}
+
+State *
+State::get_next_state(gchar chr)
+{
+	State *next = NULL;
+	guint upper = g_ascii_toupper(chr);
+
+	if (upper < G_N_ELEMENTS(transitions))
+		next = transitions[upper];
+	if (!next)
+		next = custom(chr);
+
+	return next;
 }
 
 StateStart::StateStart() : State()
