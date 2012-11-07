@@ -23,8 +23,8 @@ Expressions::set_radix(gint r)
 gint64
 Expressions::push(gint64 number)
 {
-	while (numbers.items() > 0 && numbers.peek() == G_MAXINT64)
-		pop_num();
+	while (operators.items() && operators.peek() == OP_NEW)
+		pop_op();
 
 	push(OP_NUMBER);
 
@@ -35,7 +35,7 @@ Expressions::push(gint64 number)
 gint64
 Expressions::pop_num(int index)
 {
-	gint64 n = G_MAXINT64;
+	gint64 n = 0;
 
 	pop_op();
 	if (numbers.items() > 0) {
@@ -49,30 +49,17 @@ Expressions::pop_num(int index)
 gint64
 Expressions::pop_num_calc(int index, gint64 imply)
 {
-	gint64 n = G_MAXINT64;
-
 	eval();
-	if (args() > 0)
-		n = pop_num(index);
-	if (n == G_MAXINT64)
-		n = imply;
-
 	if (num_sign < 0)
 		set_num_sign(1);
 
-	return n;
+	return args() > 0 ? pop_num(index) : imply;
 }
 
 gint64
 Expressions::add_digit(gchar digit)
 {
-	gint64 n = 0;
-
-	if (args() > 0) {
-		n = pop_num();
-		if (n == G_MAXINT64)
-			n = 0;
-	}
+	gint64 n = args() > 0 ? pop_num() : 0;
 
 	return push(n*radix + num_sign*(digit - '0'));
 }
@@ -175,6 +162,24 @@ Expressions::args(void)
 		n++;
 
 	return n;
+}
+
+int
+Expressions::first_op(void)
+{
+	int items = operators.items();
+
+	for (int i = 1; i <= items; i++) {
+		switch (operators.peek(i)) {
+		case OP_NUMBER:
+		case OP_NEW:
+			break;
+		default:
+			return i;
+		}
+	}
+
+	return 0;
 }
 
 void

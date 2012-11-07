@@ -111,8 +111,7 @@ StateStart::custom(gchar chr)
 		expressions.push_calc(Expressions::OP_ADD);
 		break;
 	case '-':
-		if (!expressions.args() ||
-		    expressions.peek_num() == G_MAXINT64)
+		if (!expressions.args())
 			expressions.set_num_sign(-expressions.num_sign);
 		else
 			expressions.push_calc(Expressions::OP_SUB);
@@ -135,7 +134,7 @@ StateStart::custom(gchar chr)
 		break;
 	case ',':
 		expressions.eval();
-		expressions.push(G_MAXINT64);
+		expressions.push(Expressions::OP_NEW);
 		break;
 	/*
 	 * commands

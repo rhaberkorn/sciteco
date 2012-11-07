@@ -110,6 +110,7 @@ public:
 		OP_AND,		// &
 		OP_OR,		// #
 				// pseudo operators:
+		OP_NEW,
 		OP_BRACE,
 		OP_LOOP,
 		OP_NUMBER
@@ -130,11 +131,6 @@ public:
 
 	gint64 push(gint64 number);
 
-	inline gint64
-	peek_num(int index = 1)
-	{
-		return numbers.peek(index);
-	}
 	gint64 pop_num(int index = 1);
 	gint64 pop_num_calc(int index, gint64 imply);
 	inline gint64
@@ -155,12 +151,7 @@ public:
 	void eval(bool pop_brace = false);
 
 	int args(void);
-	inline int
-	first_op(void)
-	{
-		int n = args() + 1;
-		return n > operators.items() ? 0 : n;
-	}
+	int first_op(void);
 
 	void discard_args(void);
 } expressions;
