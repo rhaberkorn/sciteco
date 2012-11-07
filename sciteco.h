@@ -13,7 +13,8 @@
 extern gchar *cmdline;
 extern gint macro_pc;
 
-void message_display(GtkMessageType type, const gchar *fmt, ...);
+void message_display(GtkMessageType type,
+		     const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 
 void cmdline_keypress(gchar key);
 void cmdline_display(const gchar *cmdline);
