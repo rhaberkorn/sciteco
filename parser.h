@@ -12,22 +12,25 @@ protected:
 	State *transitions[MAX_TRANSITIONS];
 
 	inline void
-	init(const gchar *chars, State *state)
+	init(const gchar *chars, State &state)
 	{
 		while (*chars)
-			transitions[(int)*chars++] = state;
+			transitions[(int)*chars++] = &state;
 	}
 	inline void
 	init(const gchar *chars)
 	{
-		init(chars, this);
+		init(chars, *this);
 	}
 
 public:
 	State();
 
-	static gboolean input(gchar chr);
+	static bool input(gchar chr);
 	State *get_next_state(gchar chr);
+
+protected:
+	static bool eval_colon(void);
 
 	virtual State *
 	custom(gchar chr)
@@ -40,6 +43,7 @@ class StateStart : public State {
 public:
 	StateStart();
 
+private:
 	void move(gint64 n);
 
 	State *custom(gchar chr);

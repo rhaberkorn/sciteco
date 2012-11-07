@@ -21,7 +21,7 @@ void cmdline_display(const gchar *cmdline);
 
 sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
 
-gboolean macro_execute(const gchar *macro);
+bool macro_execute(const gchar *macro);
 
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)

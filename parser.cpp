@@ -9,12 +9,27 @@
 gint macro_pc = 0;
 
 static struct {
-	StateStart start;
+	StateStart	start;
 } states;
 
 static State *current_state = &states.start;
 
-gboolean
+static struct {
+	bool colon;
+	bool at;
+} modifiers = {false, false};
+
+static enum {
+	MODE_NORMAL = 0,
+	MODE_PARSE_ONLY
+} mode = MODE_NORMAL;
+
+#define BEGIN_EXEC(STATE) G_STMT_START {	\
+	if (mode != MODE_NORMAL)		\
+		return STATE;			\
+} G_STMT_END
+
+bool
 macro_execute(const gchar *macro)
 {
 	while (macro[macro_pc]) {
@@ -22,13 +37,13 @@ macro_execute(const gchar *macro)
 			message_display(GTK_MESSAGE_ERROR,
 					"Syntax error \"%c\"",
 					macro[macro_pc]);
-			return FALSE;
+			return false;
 		}
 
 		macro_pc++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 State::State()
@@ -37,7 +52,18 @@ State::State()
 		transitions[i] = NULL;
 }
 
-gboolean
+bool
+State::eval_colon(void)
+{
+	if (!modifiers.colon)
+		return false;
+
+	undo.push_var<bool>(modifiers.colon);
+	modifiers.colon = false;
+	return true;
+}
+
+bool
 State::input(gchar chr)
 {
 	State *state = current_state;
@@ -47,7 +73,7 @@ State::input(gchar chr)
 
 		if (!next)
 			/* Syntax error */
-			return FALSE;
+			return false;
 
 		if (next == state)
 			break;
@@ -61,7 +87,7 @@ State::input(gchar chr)
 		current_state = state;
 	}
 
-	return TRUE;
+	return true;
 }
 
 State *
@@ -107,33 +133,41 @@ StateStart::custom(gchar chr)
 	 * arithmetics
 	 */
 	if (g_ascii_isdigit(chr)) {
+		BEGIN_EXEC(this);
 		expressions.add_digit(chr);
 		return this;
 	}
 
 	switch (g_ascii_toupper(chr)) {
 	case '/':
+		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_DIV);
 		break;
 	case '*':
+		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_MUL);
 		break;
 	case '+':
+		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_ADD);
 		break;
 	case '-':
+		BEGIN_EXEC(this);
 		if (!expressions.args())
 			expressions.set_num_sign(-expressions.num_sign);
 		else
 			expressions.push_calc(Expressions::OP_SUB);
 		break;
 	case '&':
+		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_AND);
 		break;
 	case '#':
+		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_OR);
 		break;
 	case '(':
+		BEGIN_EXEC(this);
 		if (expressions.num_sign < 0) {
 			expressions.push(-1);
 			expressions.push_calc(Expressions::OP_MUL);
@@ -141,22 +175,43 @@ StateStart::custom(gchar chr)
 		expressions.push(Expressions::OP_BRACE);
 		break;
 	case ')':
+		BEGIN_EXEC(this);
 		expressions.eval(true);
 		break;
 	case ',':
+		BEGIN_EXEC(this);
 		expressions.eval();
 		expressions.push(Expressions::OP_NEW);
+		break;
+	case '.':
+		BEGIN_EXEC(this);
+		expressions.eval();
+		expressions.push(editor_msg(SCI_GETCURRENTPOS));
+		break;
+	case 'Z':
+		BEGIN_EXEC(this);
+		expressions.eval();
+		expressions.push(editor_msg(SCI_GETLENGTH));
+		break;
+	case 'H':
+		BEGIN_EXEC(this);
+		expressions.eval();
+		expressions.push(0);
+		expressions.push(editor_msg(SCI_GETLENGTH));
 		break;
 	/*
 	 * commands
 	 */
 	case 'C':
+		BEGIN_EXEC(this);
 		move(expressions.pop_num_calc());
 		break;
 	case 'R':
+		BEGIN_EXEC(this);
 		move(-expressions.pop_num_calc());
 		break;
 	case '=':
+		BEGIN_EXEC(this);
 		message_display(GTK_MESSAGE_OTHER, "%" G_GINT64_FORMAT,
 				expressions.pop_num_calc());
 		break;
@@ -166,3 +221,4 @@ StateStart::custom(gchar chr)
 
 	return this;
 }
+

@@ -52,7 +52,9 @@ extern class UndoStack {
 	SLIST_HEAD(undo_head, UndoToken) head;
 
 public:
-	UndoStack()
+	bool enabled;
+
+	UndoStack(bool _enabled = true) : enabled(_enabled)
 	{
 		SLIST_INIT(&head);
 	}
@@ -61,7 +63,10 @@ public:
 	inline void
 	push(UndoToken *token)
 	{
-		SLIST_INSERT_HEAD(&head, token, tokens);
+		if (enabled)
+			SLIST_INSERT_HEAD(&head, token, tokens);
+		else
+			delete token;
 	}
 
 	void push_msg(unsigned int iMessage,
