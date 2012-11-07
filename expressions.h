@@ -26,7 +26,7 @@ public:
 	inline int
 	items(void)
 	{
-		return (top - stack)/sizeof(Type);
+		return top - stack;
 	}
 
 	inline Type &
@@ -97,6 +97,7 @@ public:
  * Arithmetic expression stacks
  */
 extern class Expressions {
+public:
 	/* reflects also operator precedence */
 	enum Operator {
 		OP_NIL = 0,
@@ -114,20 +115,26 @@ extern class Expressions {
 		OP_NUMBER
 	};
 
+private:
 	ValueStack<gint64>	numbers;
 	ValueStack<Operator>	operators;
-
-	gint			num_sign;
-	gint			radix;
 
 public:
 	Expressions() : num_sign(1), radix(10) {}
 
+	gint num_sign;
 	void set_num_sign(gint sign);
+
+	gint radix;
 	void set_radix(gint r);
 
 	gint64 push(gint64 number);
 
+	inline gint64
+	peek_num(int index = 1)
+	{
+		return numbers.peek(index);
+	}
 	gint64 pop_num(int index = 1);
 	gint64 pop_num_calc(int index, gint64 imply);
 	inline gint64
@@ -151,7 +158,8 @@ public:
 	inline int
 	first_op(void)
 	{
-		return args() + 1;
+		int n = args() + 1;
+		return n > operators.items() ? 0 : n;
 	}
 
 	void discard_args(void);

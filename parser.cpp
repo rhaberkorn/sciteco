@@ -3,6 +3,7 @@
 
 #include "sciteco.h"
 #include "undo.h"
+#include "expressions.h"
 #include "parser.h"
 
 gint macro_pc = 0;
@@ -76,20 +77,71 @@ State *
 StateStart::custom(gchar chr)
 {
 #if 0
+	/*
+	 * <CTRL/x> commands implemented in StateCtrlCmd
+	 */
 	if (IS_CTL(chr))
 		return states.ctl.get_next_state(CTL_ECHO(chr));
 #endif
 
+	/*
+	 * arithmetics
+	 */
+	if (g_ascii_isdigit(chr)) {
+		expressions.add_digit(chr);
+		return this;
+	}
+
 	switch (g_ascii_toupper(chr)) {
+	case '/':
+		expressions.push_calc(Expressions::OP_DIV);
+		break;
+	case '*':
+		expressions.push_calc(Expressions::OP_MUL);
+		break;
+	case '+':
+		expressions.push_calc(Expressions::OP_ADD);
+		break;
+	case '-':
+		if (!expressions.args() &&
+		    expressions.peek_num() == G_MAXINT64)
+			expressions.set_num_sign(-expressions.num_sign);
+		else
+			expressions.push_calc(Expressions::OP_SUB);
+		break;
+	case '&':
+		expressions.push_calc(Expressions::OP_AND);
+		break;
+	case '#':
+		expressions.push_calc(Expressions::OP_OR);
+		break;
+	case '(':
+		if (expressions.num_sign < 0) {
+			expressions.push(-1);
+			expressions.push_calc(Expressions::OP_MUL);
+		}
+		expressions.push(Expressions::OP_BRACE);
+		break;
+	case ')':
+		expressions.eval(true);
+		break;
+	case ',':
+		expressions.eval();
+		expressions.push(G_MAXINT64);
+		break;
 	/*
 	 * commands
 	 */
- 	case 'C':
- 		editor_msg(SCI_CHARRIGHT);
- 		undo.push_msg(SCI_CHARLEFT);
- 		break;
- 	default:
- 		return NULL;
+	case 'C':
+		editor_msg(SCI_CHARRIGHT);
+		undo.push_msg(SCI_CHARLEFT);
+		break;
+	case '=':
+		message_display(GTK_MESSAGE_OTHER, "%" G_GINT64_FORMAT,
+				expressions.pop_num_calc());
+		break;
+	default:
+		return NULL;
 	}
 
 	return this;

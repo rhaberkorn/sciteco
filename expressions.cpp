@@ -23,7 +23,7 @@ Expressions::set_radix(gint r)
 gint64
 Expressions::push(gint64 number)
 {
-	while (numbers.peek() == G_MAXINT64)
+	while (numbers.items() > 0 && numbers.peek() == G_MAXINT64)
 		pop_num();
 
 	push(OP_NUMBER);
@@ -87,8 +87,10 @@ Expressions::push(Expressions::Operator op)
 Expressions::Operator
 Expressions::push_calc(Expressions::Operator op)
 {
+	int first = first_op();
+
 	/* calculate if op has lower precedence than op on stack */
-	if (operators.peek(first_op()) <= op)
+	if (first && operators.peek(first) <= op)
 		calc();
 
 	return push(op);
