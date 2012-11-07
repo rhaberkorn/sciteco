@@ -11,6 +11,18 @@ protected:
 	/* static transitions */
 	State *transitions[MAX_TRANSITIONS];
 
+	inline void
+	init(const gchar *chars, State *state)
+	{
+		while (*chars)
+			transitions[(int)*chars++] = state;
+	}
+	inline void
+	init(const gchar *chars)
+	{
+		init(chars, this);
+	}
+
 public:
 	State();
 

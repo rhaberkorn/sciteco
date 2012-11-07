@@ -80,11 +80,8 @@ State::get_next_state(gchar chr)
 
 StateStart::StateStart() : State()
 {
-	transitions['\0']	= this;
-	transitions[' ']	= this;
-	transitions['\r']	= this;
-	transitions['\n']	= this;
-	transitions['\v']	= this;
+	transitions['\0'] = this;
+	init(" \r\n\v");
 }
 
 void
