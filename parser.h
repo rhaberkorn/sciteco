@@ -76,6 +76,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateECommand : public State {
+public:
+	StateECommand();
+
+private:
+	State *custom(gchar chr);
+};
+
 class StateInsert : public StateExpectString {
 private:
 	void initial(void);
@@ -91,6 +99,7 @@ extern struct States {
 	StateStart	start;
 	StateLabel	label;
 	StateControl	control;
+	StateECommand	ecommand;
 	StateInsert	insert;
 } states;
 

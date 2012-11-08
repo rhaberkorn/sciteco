@@ -9,6 +9,7 @@
 #include <Scintilla.h>
 
 extern gchar *cmdline;
+extern bool quit_requested;
 
 void message_display(GtkMessageType type,
 		     const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);

@@ -169,6 +169,7 @@ StateStart::StateStart() : State()
 
 	transitions['!'] = &states.label;
 	transitions['^'] = &states.control;
+	transitions['E'] = &states.ecommand;
 	transitions['I'] = &states.insert;
 }
 
@@ -543,6 +544,28 @@ StateControl::custom(gchar chr)
 	case '/':
 		BEGIN_EXEC(&states.start);
 		expressions.push_calc(Expressions::OP_MOD);
+		break;
+
+	default:
+		return NULL;
+	}
+
+	return &states.start;
+}
+
+StateECommand::StateECommand() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateECommand::custom(gchar chr)
+{
+	switch (g_ascii_toupper(chr)) {
+	case 'X':
+		BEGIN_EXEC(&states.start);
+		undo.push_var<bool>(quit_requested);
+		quit_requested = true;
 		break;
 
 	default:

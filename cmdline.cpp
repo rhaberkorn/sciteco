@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -12,6 +13,8 @@ static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro, const gchar *prefix = "");
 
 gchar *cmdline = NULL;
+
+bool quit_requested = false;
 
 void
 cmdline_keypress(gchar key)
@@ -73,7 +76,10 @@ process_edit_cmd(gchar key)
 
 	case '\x1B':
 		if (cmdline && cmdline[cmdline_len - 1] == '\x1B') {
-			/* TODO: exit if previously requested */
+			if (quit_requested) {
+				/* FIXME */
+				exit(EXIT_SUCCESS);
+			}
 
 			undo.clear();
 			goto_table_clear();
