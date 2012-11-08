@@ -6,6 +6,10 @@
 #include "sciteco.h"
 #include "parser.h"
 
+/*
+ * Command states
+ */
+
 class StateLabel : public State {
 public:
 	StateLabel();

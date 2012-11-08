@@ -166,6 +166,10 @@ goto_table_clear(void)
 	table.clear();
 }
 
+/*
+ * Command states
+ */
+
 StateLabel::StateLabel() : State()
 {
 	transitions['\0'] = this;
