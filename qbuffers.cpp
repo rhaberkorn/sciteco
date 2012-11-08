@@ -1,4 +1,5 @@
 #include <bsd/sys/queue.h>
+#include <string.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -125,20 +126,66 @@ Ring::~Ring()
 }
 
 /*
+ * Auxiliary functions
+ */
+static inline bool
+is_glob_pattern(const gchar *str)
+{
+	return strchr(str, '*') || strchr(str, '?');
+}
+
+/*
  * Command states
  */
+
+void
+StateFile::do_edit(const gchar *filename)
+{
+	ring.undo_edit();
+	if (ring.edit(filename))
+		ring.undo_close();
+}
 
 State *
 StateFile::done(const gchar *str)
 {
-	bool new_in_ring;
-
 	BEGIN_EXEC(&states.start);
 
-	ring.undo_edit();
-	new_in_ring = ring.edit(*str ? str : NULL);
-	if (new_in_ring)
-		ring.undo_close();
+	if (is_glob_pattern(str)) {
+		gchar *dirname;
+		GDir *dir;
+
+		dirname = g_path_get_dirname(str);
+		dir = g_dir_open(dirname, 0, NULL);
+
+		if (dir) {
+			const gchar *basename;
+			GPatternSpec *pattern;
+
+			basename = g_path_get_basename(str);
+			pattern = g_pattern_spec_new(basename);
+			g_free((gchar *)basename);
+
+			while ((basename = g_dir_read_name(dir))) {
+				if (g_pattern_match_string(pattern, basename)) {
+					gchar *filename;
+
+					filename = g_build_filename(dirname,
+								    basename,
+								    NULL);
+					do_edit(filename);
+					g_free(filename);
+				}
+			}
+
+			g_pattern_spec_free(pattern);
+			g_dir_close(dir);
+		}
+
+		g_free(dirname);
+	} else {
+		do_edit(*str ? str : NULL);
+	}
 
 	return &states.start;
 }

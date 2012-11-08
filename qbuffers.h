@@ -116,6 +116,8 @@ public:
 
 class StateFile : public StateExpectString {
 private:
+	void do_edit(const gchar *filename);
+
 	State *done(const gchar *str);
 };
 
