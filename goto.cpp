@@ -160,6 +160,12 @@ public:
 
 static GotoTable table;
 
+void
+goto_table_clear(void)
+{
+	table.clear();
+}
+
 StateLabel::StateLabel() : State()
 {
 	transitions['\0'] = this;

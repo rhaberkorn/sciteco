@@ -14,4 +14,6 @@ private:
 	State *custom(gchar chr);
 };
 
+void goto_table_clear(void);
+
 #endif

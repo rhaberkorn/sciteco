@@ -460,7 +460,7 @@ StateControl::custom(gchar chr)
 #endif
 
 	/*
-	 * Alternatives: ^[, <CTRL/[> (cannot be typed), <ESC>
+	 * Alternatives: ^[, <CTRL/[>, <ESC>
 	 */
 	case '[':
 		BEGIN_EXEC(&states.start);

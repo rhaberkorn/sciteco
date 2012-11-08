@@ -124,6 +124,8 @@ public:
 	}
 
 	void pop(gint pos);
+
+	void clear(void);
 } undo;
 
 #endif

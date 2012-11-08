@@ -47,6 +47,17 @@ UndoStack::pop(gint pos)
 	}
 }
 
+void
+UndoStack::clear(void)
+{
+	UndoToken *cur;
+
+	while ((cur = SLIST_FIRST(&head))) {
+		SLIST_REMOVE_HEAD(&head, tokens);
+		delete cur;
+	}
+}
+
 UndoStack::~UndoStack()
 {
 	UndoToken *token, *next;

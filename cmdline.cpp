@@ -5,8 +5,10 @@
 
 #include "sciteco.h"
 #include "parser.h"
+#include "goto.h"
 #include "undo.h"
 
+static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro, const gchar *prefix = "");
 
 gchar *cmdline = NULL;
@@ -14,27 +16,14 @@ gchar *cmdline = NULL;
 void
 cmdline_keypress(gchar key)
 {
-	gchar insert[255] = "";
+	const gchar *insert;
 	gint old_cmdline_len = 0;
 	gchar *echo;
 
 	/*
 	 * Process immediate editing commands
 	 */
-	switch (key) {
-	case '\b':
-		if (!cmdline || !*cmdline)
-			break;
-		old_cmdline_len = strlen(cmdline);
-
-		undo.pop(old_cmdline_len);
-		cmdline[old_cmdline_len-1] = '\0';
-		macro_pc--;
-		break;
-	default:
-		insert[0] = key;
-		insert[1] = '\0';
-	}
+	insert = process_edit_cmd(key);
 
 	/*
 	 * Parse/execute characters
@@ -44,12 +33,12 @@ cmdline_keypress(gchar key)
 		cmdline = (gchar *)g_realloc(cmdline, old_cmdline_len +
 						      strlen(insert) + 1);
 	} else {
-		cmdline = (gchar *)g_malloc(2);
+		cmdline = (gchar *)g_malloc(strlen(insert) + 1);
 		*cmdline = '\0';
 	}
 
-	for (gchar *p = insert; *p; p++) {
-		strcat(cmdline, (gchar[]){key, '\0'});
+	for (const gchar *p = insert; *p; p++) {
+		strcat(cmdline, (gchar[]){*p, '\0'});
 
 		if (!macro_execute(cmdline)) {
 			cmdline[old_cmdline_len] = '\0';
@@ -63,6 +52,43 @@ cmdline_keypress(gchar key)
 	echo = macro_echo(cmdline, "*");
 	cmdline_display(echo);
 	g_free(echo);
+}
+
+static inline const gchar *
+process_edit_cmd(gchar key)
+{
+	static gchar insert[255];
+	gint cmdline_len = cmdline ? strlen(cmdline) : 0;
+
+	insert[0] = '\0';
+
+	switch (key) {
+	case '\b':
+		if (cmdline_len) {
+			undo.pop(cmdline_len);
+			cmdline[cmdline_len - 1] = '\0';
+			macro_pc--;
+		}
+		break;
+
+	case '\x1B':
+		if (cmdline && cmdline[cmdline_len - 1] == '\x1B') {
+			/* TODO: exit if previously requested */
+
+			undo.clear();
+			goto_table_clear();
+
+			*cmdline = '\0';
+			macro_pc = 0;
+			break;
+		}
+		/* fall through */
+	default:
+		insert[0] = key;
+		insert[1] = '\0';
+	}
+
+	return insert;
 }
 
 static gchar *
