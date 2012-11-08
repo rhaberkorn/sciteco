@@ -556,6 +556,7 @@ StateControl::custom(gchar chr)
 StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
+	transitions['B'] = &states.file;
 }
 
 State *

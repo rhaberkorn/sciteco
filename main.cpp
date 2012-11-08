@@ -13,6 +13,9 @@
 #include <ScintillaWidget.h>
 
 #include "sciteco.h"
+#include "parser.h"
+#include "qbuffers.h"
+#include "undo.h"
 
 static GtkWidget *editor_widget;
 static GtkWidget *cmdline_widget;
@@ -143,11 +146,10 @@ main(int argc, char **argv)
 	editor_msg(SCI_STYLESETFORE, SCE_C_WORD, 0x800000);
 	editor_msg(SCI_STYLESETFORE, SCE_C_STRING, 0x800080);
 	editor_msg(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
-	editor_msg(SCI_INSERTTEXT, 0, (sptr_t)
-	"int main(int argc, char **argv) {\n"
-	"    // Start up the gnome\n"
-	"    gnome_init(\"stest\", \"1.0\", argc, argv);\n}"
-	);
+
+	ring.edit(NULL);
+
+	undo.enabled = true;
 
 	cmdline_display("*");
 	gtk_widget_grab_focus(cmdline_widget);

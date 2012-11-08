@@ -92,6 +92,7 @@ private:
 };
 
 #include "goto.h"
+#include "qbuffers.h"
 
 extern gint macro_pc;
 
@@ -100,6 +101,7 @@ extern struct States {
 	StateLabel	label;
 	StateControl	control;
 	StateECommand	ecommand;
+	StateFile	file;
 	StateInsert	insert;
 } states;
 
