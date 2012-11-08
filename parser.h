@@ -39,6 +39,24 @@ protected:
 	}
 };
 
+/*
+ * Super-class for states accepting string arguments
+ * Opaquely cares about alternative-escape characters,
+ * string building commands and accumulation into a string
+ */
+class StateExpectString : public State {
+public:
+	StateExpectString() : State() {}
+
+private:
+	virtual State *custom(gchar chr);
+
+protected:
+	virtual void initial(void) {}
+	virtual void process(const gchar *str, gint new_chars) {}
+	virtual State *done(const gchar *str) = 0;
+};
+
 class StateStart : public State {
 public:
 	StateStart();
@@ -58,6 +76,13 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateInsert : public StateExpectString {
+private:
+	void initial(void);
+	void process(const gchar *str, gint new_chars);
+	State *done(const gchar *str);
+};
+
 #include "goto.h"
 
 extern gint macro_pc;
@@ -66,6 +91,7 @@ extern struct States {
 	StateStart	start;
 	StateLabel	label;
 	StateControl	control;
+	StateInsert	insert;
 } states;
 
 extern enum Mode {

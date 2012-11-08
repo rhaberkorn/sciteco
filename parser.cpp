@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -25,6 +27,8 @@ static bool skip_else = false;
 static gint nest_level = 0;
 
 gchar *strings[2] = {NULL, NULL};
+
+static gchar escape_char = '\x1B';
 
 bool
 macro_execute(const gchar *macro)
@@ -101,6 +105,63 @@ State::get_next_state(gchar chr)
 	return next;
 }
 
+State *
+StateExpectString::custom(gchar chr)
+{
+	gchar insert[255];
+	gchar *new_str;
+
+	if (chr == '\0') {
+		BEGIN_EXEC(this);
+		initial();
+		return this;
+	}
+
+	/*
+	 * String termination handling
+	 */
+	if (modifiers.at) {
+		undo.push_var<bool>(modifiers.at);
+		modifiers.at = false;
+		undo.push_var<gchar>(escape_char);
+		escape_char = g_ascii_toupper(chr);
+
+		return this;
+	}
+
+	if (g_ascii_toupper(chr) == escape_char) {
+		State *next = done(strings[0]);
+
+		undo.push_var<gchar>(escape_char);
+		escape_char = '\x1B';
+		undo.push_str(strings[0]);
+		g_free(strings[0]);
+		strings[0] = NULL;
+		/* TODO: save and reset string building machine state */
+
+		return next;
+	}
+
+	/*
+	 * String building characters
+	 */
+	/* TODO */
+	insert[0] = chr;
+	insert[1] = '\0';
+
+	/*
+	 * String accumulation
+	 */
+	undo.push_str(strings[0]);
+	new_str = g_strconcat(strings[0] ? : "", insert, NULL);
+	g_free(strings[0]);
+	strings[0] = new_str;
+
+	BEGIN_EXEC(this);
+	process(strings[0], strlen(insert));
+	return this;
+}
+
 StateStart::StateStart() : State()
 {
 	transitions['\0'] = this;
@@ -108,6 +169,7 @@ StateStart::StateStart() : State()
 
 	transitions['!'] = &states.label;
 	transitions['^'] = &states.control;
+	transitions['I'] = &states.insert;
 }
 
 void
@@ -448,7 +510,6 @@ StateControl::custom(gchar chr)
 			expressions.set_radix(expressions.pop_num_calc());
 		break;
 
-#if 0
 	/*
 	 * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
 	 */
@@ -457,7 +518,6 @@ StateControl::custom(gchar chr)
 		expressions.eval();
 		expressions.push('\t');
 		return &states.insert;
-#endif
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
@@ -489,5 +549,49 @@ StateControl::custom(gchar chr)
 		return NULL;
 	}
 
+	return &states.start;
+}
+
+/*
+ * NOTE: cannot support VideoTECO's <n>I because
+ * beginning and end of strings must be determined
+ * syntactically
+ */
+void
+StateInsert::initial(void)
+{
+	int args;
+
+	expressions.eval();
+	args = expressions.args();
+	if (!args)
+		return;
+
+	editor_msg(SCI_BEGINUNDOACTION);
+	for (int i = args; i > 0; i--) {
+		/* FIXME: if possible prevent pops with index != 1 */
+		gchar chr = (gchar)expressions.pop_num_calc(i);
+		editor_msg(SCI_ADDTEXT, 1, (sptr_t)&chr);
+	}
+	editor_msg(SCI_ENDUNDOACTION);
+
+	undo.push_msg(SCI_UNDO);
+}
+
+void
+StateInsert::process(const gchar *str, gint new_chars)
+{
+	editor_msg(SCI_BEGINUNDOACTION);
+	editor_msg(SCI_ADDTEXT, new_chars,
+		   (sptr_t)str + strlen(str) - new_chars);
+	editor_msg(SCI_ENDUNDOACTION);
+
+	undo.push_msg(SCI_UNDO);
+}
+
+State *
+StateInsert::done(const gchar *str __attribute__((unused)))
+{
+	/* nothing to be done when done */
 	return &states.start;
 }
