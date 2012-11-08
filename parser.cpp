@@ -104,7 +104,7 @@ State::get_next_state(gchar chr)
 StateStart::StateStart() : State()
 {
 	transitions['\0'] = this;
-	init(" \r\n\v");
+	init(" \f\r\n\v");
 
 	transitions['!'] = &states.label;
 	transitions['^'] = &states.control;
