@@ -50,4 +50,22 @@ private:
 	State *custom(gchar chr);
 };
 
+#include "goto.h"
+
+extern gint macro_pc;
+
+extern struct States {
+	StateStart	start;
+	StateLabel	label;
+} states;
+
+extern enum Mode {
+	MODE_NORMAL = 0,
+	MODE_PARSE_ONLY
+} mode;
+
+extern gchar *strings[2];
+
+bool macro_execute(const gchar *macro);
+
 #endif

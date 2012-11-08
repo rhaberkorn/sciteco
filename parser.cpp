@@ -8,9 +8,7 @@
 
 gint macro_pc = 0;
 
-static struct {
-	StateStart	start;
-} states;
+States states;
 
 static State *current_state = &states.start;
 
@@ -19,10 +17,7 @@ static struct {
 	bool at;
 } modifiers = {false, false};
 
-static enum Mode {
-	MODE_NORMAL = 0,
-	MODE_PARSE_ONLY
-} mode = MODE_NORMAL;
+enum Mode mode = MODE_NORMAL;
 
 /* FIXME: perhaps integrate into Mode */
 static bool skip_else = false;
@@ -33,6 +28,8 @@ static bool skip_else = false;
 } G_STMT_END
 
 static gint nest_level = 0;
+
+gchar *strings[2] = {NULL, NULL};
 
 bool
 macro_execute(const gchar *macro)
@@ -113,6 +110,8 @@ StateStart::StateStart() : State()
 {
 	transitions['\0'] = this;
 	init(" \r\n\v");
+
+	transitions['!'] = &states.label;
 }
 
 void
@@ -426,4 +425,3 @@ StateStart::custom(gchar chr)
 
 	return this;
 }
-

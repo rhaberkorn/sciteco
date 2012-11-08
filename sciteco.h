@@ -8,10 +8,7 @@
 
 #include <Scintilla.h>
 
-#include "undo.h"
-
 extern gchar *cmdline;
-extern gint macro_pc;
 
 void message_display(GtkMessageType type,
 		     const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
@@ -20,8 +17,6 @@ void cmdline_keypress(gchar key);
 void cmdline_display(const gchar *cmdline);
 
 sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
-
-bool macro_execute(const gchar *macro);
 
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)

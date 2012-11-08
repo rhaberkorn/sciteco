@@ -4,6 +4,8 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "parser.h"
+#include "undo.h"
 
 static gchar *macro_echo(const gchar *macro, const gchar *prefix = "");
 

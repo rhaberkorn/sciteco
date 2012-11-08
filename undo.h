@@ -4,6 +4,7 @@
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #include <Scintilla.h>
 
@@ -48,6 +49,31 @@ public:
 	}
 };
 
+class UndoTokenString : public UndoToken {
+	gchar **ptr;
+	gchar *str;
+
+public:
+	UndoTokenString(gchar *&variable, gchar *_str)
+		       : UndoToken(), ptr(&variable)
+	{
+		str = _str ? g_strdup(_str) : NULL;
+	}
+
+	~UndoTokenString()
+	{
+		g_free(str);
+	}
+
+	void
+	run(void)
+	{
+		g_free(*ptr);
+		*ptr = str;
+		str = NULL;
+	}
+};
+
 extern class UndoStack {
 	SLIST_HEAD(undo_head, UndoToken) head;
 
@@ -84,6 +110,17 @@ public:
 	push_var(Type &variable)
 	{
 		push_var<Type>(variable, variable);
+	}
+
+	inline void
+	push_str(gchar *&variable, gchar *str)
+	{
+		push(new UndoTokenString(variable, str));
+	}
+	inline void
+	push_str(gchar *&variable)
+	{
+		push_str(variable, variable);
 	}
 
 	void pop(gint pos);

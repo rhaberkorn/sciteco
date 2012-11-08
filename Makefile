@@ -10,7 +10,8 @@ LDFLAGS:=$(GTK_LDFLAGS) $(SCI_LDFLAGS)
 
 all : sciteco
 
-sciteco : main.o cmdline.o undo.o expressions.o parser.o
+sciteco : main.o cmdline.o undo.o expressions.o \
+	  parser.o goto.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 clean:
