@@ -10,8 +10,6 @@
 
 UndoStack undo;
 
-UndoToken::UndoToken() : pos(strlen(cmdline)) {}
-
 void
 UndoTokenMessage::run(void)
 {
@@ -19,20 +17,21 @@ UndoTokenMessage::run(void)
 }
 
 void
+UndoStack::push(UndoToken *token)
+{
+	if (enabled) {
+		token->pos = strlen(cmdline);
+		SLIST_INSERT_HEAD(&head, token, tokens);
+	} else {
+		delete token;
+	}
+}
+
+void
 UndoStack::push_msg(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
 {
 	push(new UndoTokenMessage(iMessage, wParam, lParam));
 }
-
-#if 0
-template <typename Type>
-void
-UndoStack::push_var(Type &variable, Type value)
-{
-	UndoToken *token = new UndoTokenVariable<Type>(variable, value);
-	SLIST_INSERT_HEAD(&head, token, tokens);
-}
-#endif
 
 void
 UndoStack::pop(gint pos)

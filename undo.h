@@ -14,8 +14,6 @@ public:
 
 	gint pos;
 
-	UndoToken();
-
 	virtual void run() = 0;
 };
 
@@ -75,25 +73,18 @@ public:
 };
 
 extern class UndoStack {
-	SLIST_HEAD(undo_head, UndoToken) head;
+	SLIST_HEAD(Head, UndoToken) head;
 
 public:
 	bool enabled;
 
-	UndoStack(bool _enabled = true) : enabled(_enabled)
+	UndoStack(bool _enabled = false) : enabled(_enabled)
 	{
 		SLIST_INIT(&head);
 	}
 	~UndoStack();
 
-	inline void
-	push(UndoToken *token)
-	{
-		if (enabled)
-			SLIST_INSERT_HEAD(&head, token, tokens);
-		else
-			delete token;
-	}
+	void push(UndoToken *token);
 
 	void push_msg(unsigned int iMessage,
 		      uptr_t wParam = 0, sptr_t lParam = 0);
