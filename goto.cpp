@@ -160,6 +160,11 @@ public:
 
 static GotoTable table;
 
+StateLabel::StateLabel() : State()
+{
+	transitions['\0'] = this;
+}
+
 State *
 StateLabel::custom(gchar chr)
 {

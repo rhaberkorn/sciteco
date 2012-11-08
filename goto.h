@@ -7,6 +7,9 @@
 #include "parser.h"
 
 class StateLabel : public State {
+public:
+	StateLabel();
+
 private:
 	State *custom(gchar chr);
 };
