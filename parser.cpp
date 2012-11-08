@@ -22,11 +22,6 @@ enum Mode mode = MODE_NORMAL;
 /* FIXME: perhaps integrate into Mode */
 static bool skip_else = false;
 
-#define BEGIN_EXEC(STATE) G_STMT_START {	\
-	if (mode != MODE_NORMAL)		\
-		return STATE;			\
-} G_STMT_END
-
 static gint nest_level = 0;
 
 gchar *strings[2] = {NULL, NULL};
@@ -112,6 +107,7 @@ StateStart::StateStart() : State()
 	init(" \r\n\v");
 
 	transitions['!'] = &states.label;
+	transitions['^'] = &states.control;
 }
 
 void
@@ -134,13 +130,11 @@ StateStart::move_lines(gint64 n)
 State *
 StateStart::custom(gchar chr)
 {
-#if 0
 	/*
 	 * <CTRL/x> commands implemented in StateCtrlCmd
 	 */
 	if (IS_CTL(chr))
-		return states.ctl.get_next_state(CTL_ECHO(chr));
-#endif
+		return states.control.get_next_state(CTL_ECHO(chr));
 
 	/*
 	 * arithmetics
@@ -424,4 +418,76 @@ StateStart::custom(gchar chr)
 	}
 
 	return this;
+}
+
+StateControl::StateControl() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateControl::custom(gchar chr)
+{
+	switch (g_ascii_toupper(chr)) {
+	case 'O':
+		BEGIN_EXEC(&states.start);
+		expressions.set_radix(8);
+		break;
+
+	case 'D':
+		BEGIN_EXEC(&states.start);
+		expressions.set_radix(10);
+		break;
+
+	case 'R':
+		BEGIN_EXEC(&states.start);
+		expressions.eval();
+		if (!expressions.args())
+			expressions.push(expressions.radix);
+		else
+			expressions.set_radix(expressions.pop_num_calc());
+		break;
+
+#if 0
+	/*
+	 * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
+	 */
+	case 'I':
+		BEGIN_EXEC(&states.insert);
+		expressions.eval();
+		expressions.push('\t');
+		return &states.insert;
+#endif
+
+	/*
+	 * Alternatives: ^[, <CTRL/[> (cannot be typed), <ESC>
+	 */
+	case '[':
+		BEGIN_EXEC(&states.start);
+		expressions.discard_args();
+		break;
+
+	/*
+	 * Additional numeric operations
+	 */
+	case '_':
+		BEGIN_EXEC(&states.start);
+		expressions.push(~expressions.pop_num_calc());
+		break;
+
+	case '*':
+		BEGIN_EXEC(&states.start);
+		expressions.push_calc(Expressions::OP_POW);
+		break;
+
+	case '/':
+		BEGIN_EXEC(&states.start);
+		expressions.push_calc(Expressions::OP_MOD);
+		break;
+
+	default:
+		return NULL;
+	}
+
+	return &states.start;
 }

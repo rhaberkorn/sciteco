@@ -50,6 +50,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateControl : public State {
+public:
+	StateControl();
+
+private:
+	State *custom(gchar chr);
+};
+
 #include "goto.h"
 
 extern gint macro_pc;
@@ -57,12 +65,18 @@ extern gint macro_pc;
 extern struct States {
 	StateStart	start;
 	StateLabel	label;
+	StateControl	control;
 } states;
 
 extern enum Mode {
 	MODE_NORMAL = 0,
 	MODE_PARSE_ONLY
 } mode;
+
+#define BEGIN_EXEC(STATE) G_STMT_START {	\
+	if (mode != MODE_NORMAL)		\
+		return STATE;			\
+} G_STMT_END
 
 extern gchar *strings[2];
 
