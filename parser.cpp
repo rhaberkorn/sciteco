@@ -129,7 +129,7 @@ StateExpectString::custom(gchar chr)
 	}
 
 	if (g_ascii_toupper(chr) == escape_char) {
-		State *next = done(strings[0]);
+		State *next = done(strings[0] ? : "");
 
 		undo.push_var<gchar>(escape_char);
 		escape_char = '\x1B';
