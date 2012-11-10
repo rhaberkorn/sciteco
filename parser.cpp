@@ -14,10 +14,10 @@ States states;
 
 State *current_state = &states.start;
 
-static struct {
-	bool colon;
-	bool at;
-} modifiers = {false, false};
+namespace Modifiers {
+	static bool colon = false;
+	static bool at = false;
+}
 
 enum Mode mode = MODE_NORMAL;
 
@@ -55,11 +55,11 @@ State::State()
 bool
 State::eval_colon(void)
 {
-	if (!modifiers.colon)
+	if (!Modifiers::colon)
 		return false;
 
-	undo.push_var<bool>(modifiers.colon);
-	modifiers.colon = false;
+	undo.push_var<bool>(Modifiers::colon);
+	Modifiers::colon = false;
 	return true;
 }
 
@@ -119,9 +119,9 @@ StateExpectString::custom(gchar chr)
 	/*
 	 * String termination handling
 	 */
-	if (modifiers.at) {
-		undo.push_var<bool>(modifiers.at);
-		modifiers.at = false;
+	if (Modifiers::at) {
+		undo.push_var<bool>(Modifiers::at);
+		Modifiers::at = false;
 		undo.push_var<gchar>(escape_char);
 		escape_char = g_ascii_toupper(chr);
 
@@ -392,14 +392,14 @@ StateStart::custom(gchar chr)
 	 */
 	case '@':
 		BEGIN_EXEC(this);
-		undo.push_var<bool>(modifiers.at);
-		modifiers.at = true;
+		undo.push_var<bool>(Modifiers::at);
+		Modifiers::at = true;
 		break;
 
 	case ':':
 		BEGIN_EXEC(this);
-		undo.push_var<bool>(modifiers.colon);
-		modifiers.colon = true;
+		undo.push_var<bool>(Modifiers::colon);
+		Modifiers::colon = true;
 		break;
 
 	/*
