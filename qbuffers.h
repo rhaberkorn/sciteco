@@ -136,6 +136,10 @@ private:
 	State *done(const gchar *str);
 };
 
+namespace States {
+	extern StateFile file;
+}
+
 /*
  * Auxiliary functions
  */

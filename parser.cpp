@@ -6,13 +6,20 @@
 #include "sciteco.h"
 #include "undo.h"
 #include "expressions.h"
+#include "goto.h"
+#include "qbuffers.h"
 #include "parser.h"
 
 gint macro_pc = 0;
 
-States states;
+namespace States {
+	StateStart 	start;
+	StateControl	control;
+	StateECommand	ecommand;
+	StateInsert	insert;
 
-State *current_state = &states.start;
+	State *current = &start;
+}
 
 namespace Modifiers {
 	static bool colon = false;
@@ -66,7 +73,7 @@ State::eval_colon(void)
 bool
 State::input(gchar chr)
 {
-	State *state = current_state;
+	State *state = States::current;
 
 	for (;;) {
 		State *next = state->get_next_state(chr);
@@ -82,9 +89,9 @@ State::input(gchar chr)
 		chr = '\0';
 	}
 
-	if (state != current_state) {
-		undo.push_var<State *>(current_state);
-		current_state = state;
+	if (state != States::current) {
+		undo.push_var<State *>(States::current);
+		States::current = state;
 	}
 
 	return true;
@@ -166,10 +173,10 @@ StateStart::StateStart() : State()
 	transitions['\0'] = this;
 	init(" \f\r\n\v");
 
-	transitions['!'] = &states.label;
-	transitions['^'] = &states.control;
-	transitions['E'] = &states.ecommand;
-	transitions['I'] = &states.insert;
+	transitions['!'] = &States::label;
+	transitions['^'] = &States::control;
+	transitions['E'] = &States::ecommand;
+	transitions['I'] = &States::insert;
 }
 
 void
@@ -196,7 +203,7 @@ StateStart::custom(gchar chr)
 	 * <CTRL/x> commands implemented in StateCtrlCmd
 	 */
 	if (IS_CTL(chr))
-		return states.control.get_next_state(CTL_ECHO(chr));
+		return States::control.get_next_state(CTL_ECHO(chr));
 
 	/*
 	 * arithmetics
@@ -492,17 +499,17 @@ StateControl::custom(gchar chr)
 {
 	switch (g_ascii_toupper(chr)) {
 	case 'O':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.set_radix(8);
 		break;
 
 	case 'D':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.set_radix(10);
 		break;
 
 	case 'R':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.eval();
 		if (!expressions.args())
 			expressions.push(expressions.radix);
@@ -514,16 +521,16 @@ StateControl::custom(gchar chr)
 	 * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
 	 */
 	case 'I':
-		BEGIN_EXEC(&states.insert);
+		BEGIN_EXEC(&States::insert);
 		expressions.eval();
 		expressions.push('\t');
-		return &states.insert;
+		return &States::insert;
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
 	 */
 	case '[':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.discard_args();
 		break;
 
@@ -531,17 +538,17 @@ StateControl::custom(gchar chr)
 	 * Additional numeric operations
 	 */
 	case '_':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.push(~expressions.pop_num_calc());
 		break;
 
 	case '*':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.push_calc(Expressions::OP_POW);
 		break;
 
 	case '/':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		expressions.push_calc(Expressions::OP_MOD);
 		break;
 
@@ -549,13 +556,13 @@ StateControl::custom(gchar chr)
 		return NULL;
 	}
 
-	return &states.start;
+	return &States::start;
 }
 
 StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
-	transitions['B'] = &states.file;
+	transitions['B'] = &States::file;
 }
 
 State *
@@ -563,7 +570,7 @@ StateECommand::custom(gchar chr)
 {
 	switch (g_ascii_toupper(chr)) {
 	case 'X':
-		BEGIN_EXEC(&states.start);
+		BEGIN_EXEC(&States::start);
 		undo.push_var<bool>(quit_requested);
 		quit_requested = true;
 		break;
@@ -572,7 +579,7 @@ StateECommand::custom(gchar chr)
 		return NULL;
 	}
 
-	return &states.start;
+	return &States::start;
 }
 
 /*
@@ -616,5 +623,5 @@ State *
 StateInsert::done(const gchar *str __attribute__((unused)))
 {
 	/* nothing to be done when done */
-	return &states.start;
+	return &States::start;
 }

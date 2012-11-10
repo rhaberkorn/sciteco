@@ -7,6 +7,7 @@
 
 #include "sciteco.h"
 #include "parser.h"
+#include "qbuffers.h"
 #include "goto.h"
 #include "undo.h"
 
@@ -99,7 +100,7 @@ process_edit_cmd(gchar key)
 	}
 
 	case '\t':
-		if (current_state == &states.file) {
+		if (States::current == &States::file) {
 			gchar *new_chars = filename_complete(strings[0], escape_char);
 			if (new_chars)
 				g_stpcpy(insert, new_chars);

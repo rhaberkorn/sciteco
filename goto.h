@@ -18,6 +18,10 @@ private:
 	State *custom(gchar chr);
 };
 
+namespace States {
+	extern StateLabel label;
+}
+
 void goto_table_clear(void);
 
 #endif

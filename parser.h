@@ -91,21 +91,16 @@ private:
 	State *done(const gchar *str);
 };
 
-#include "goto.h"
-#include "qbuffers.h"
-
 extern gint macro_pc;
 
-extern struct States {
-	StateStart	start;
-	StateLabel	label;
-	StateControl	control;
-	StateECommand	ecommand;
-	StateFile	file;
-	StateInsert	insert;
-} states;
+namespace States {
+	extern StateStart 	start;
+	extern StateControl	control;
+	extern StateECommand	ecommand;
+	extern StateInsert	insert;
 
-extern State *current_state;
+	extern State *current;
+}
 
 extern enum Mode {
 	MODE_NORMAL = 0,

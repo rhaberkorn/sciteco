@@ -15,6 +15,10 @@
 #include "expressions.h"
 #include "qbuffers.h"
 
+namespace States {
+	StateFile file;
+}
+
 Ring ring;
 
 bool
@@ -159,7 +163,7 @@ StateFile::initial(void)
 State *
 StateFile::done(const gchar *str)
 {
-	BEGIN_EXEC(&states.start);
+	BEGIN_EXEC(&States::start);
 
 	if (is_glob_pattern(str)) {
 		gchar *dirname;
@@ -197,5 +201,5 @@ StateFile::done(const gchar *str)
 		do_edit(*str ? str : NULL);
 	}
 
-	return &states.start;
+	return &States::start;
 }

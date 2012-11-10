@@ -8,6 +8,10 @@
 #include "undo.h"
 #include "goto.h"
 
+namespace States {
+	StateLabel label;
+}
+
 static gchar *skip_label = NULL;
 
 class GotoTable {
@@ -196,7 +200,7 @@ StateLabel::custom(gchar chr)
 		g_free(strings[0]);
 		strings[0] = NULL;
 
-		return &states.start;
+		return &States::start;
 	}
 
 	undo.push_str(strings[0]);
