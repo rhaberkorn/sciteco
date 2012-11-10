@@ -7,6 +7,7 @@
 #include <gdk/gdkkeysyms.h>
 
 #include <gtk/gtk.h>
+#include "gtk-info-popup.h"
 
 #include <Scintilla.h>
 #include <SciLexer.h>
@@ -20,6 +21,8 @@
 static GtkWidget *editor_widget;
 static GtkWidget *cmdline_widget;
 static GtkWidget *info_widget, *message_widget;
+
+GtkInfoPopup *filename_popup;
 
 void
 cmdline_display(const gchar *cmdline_str)
@@ -133,6 +136,8 @@ main(int argc, char **argv)
 	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
 
 	gtk_container_add(GTK_CONTAINER(window), vbox);
+
+	filename_popup = GTK_INFO_POPUP(gtk_info_popup_new(cmdline_widget));
 
 	editor_msg(SCI_SETFOCUS, 1);
 	editor_msg(SCI_SETCARETSTYLE, 2);

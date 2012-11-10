@@ -126,15 +126,6 @@ Ring::~Ring()
 }
 
 /*
- * Auxiliary functions
- */
-static inline bool
-is_glob_pattern(const gchar *str)
-{
-	return strchr(str, '*') || strchr(str, '?');
-}
-
-/*
  * Command states
  */
 

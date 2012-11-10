@@ -105,6 +105,8 @@ extern struct States {
 	StateInsert	insert;
 } states;
 
+extern State *current_state;
+
 extern enum Mode {
 	MODE_NORMAL = 0,
 	MODE_PARSE_ONLY
@@ -116,6 +118,7 @@ extern enum Mode {
 } G_STMT_END
 
 extern gchar *strings[2];
+extern gchar escape_char;
 
 bool macro_execute(const gchar *macro);
 

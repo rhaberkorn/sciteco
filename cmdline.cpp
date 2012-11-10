@@ -3,6 +3,7 @@
 
 #include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 #include "sciteco.h"
 #include "parser.h"
@@ -11,6 +12,11 @@
 
 static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro, const gchar *prefix = "");
+static gchar *filename_complete(const gchar *filename, gchar completed = ' ');
+
+static const gchar *last_occurrence(const gchar *str,
+				    const gchar *chars = " \t\v\r\n\f<>,;@");
+static inline gboolean filename_is_dir(const gchar *filename);
 
 gchar *cmdline = NULL;
 
@@ -22,6 +28,14 @@ cmdline_keypress(gchar key)
 	const gchar *insert;
 	gint old_cmdline_len = 0;
 	gchar *echo;
+
+	/*
+	 * Cleanup messages, popups, etc...
+	 */
+	if (gtk_widget_get_visible(GTK_WIDGET(filename_popup))) {
+		gtk_widget_hide(GTK_WIDGET(filename_popup));
+		gtk_info_popup_clear(filename_popup);
+	}
 
 	/*
 	 * Process immediate editing commands
@@ -72,6 +86,28 @@ process_edit_cmd(gchar key)
 			cmdline[cmdline_len - 1] = '\0';
 			macro_pc--;
 		}
+		break;
+
+	case CTL_KEY('T'): {
+		const gchar *filename = cmdline ? last_occurrence(cmdline) + 1
+						: NULL;
+		gchar *new_chars = filename_complete(filename);
+		if (new_chars)
+			g_stpcpy(insert, new_chars);
+		g_free(new_chars);
+		break;
+	}
+
+	case '\t':
+		if (current_state == &states.file) {
+			gchar *new_chars = filename_complete(strings[0], escape_char);
+			if (new_chars)
+				g_stpcpy(insert, new_chars);
+			g_free(new_chars);
+			break;
+		}
+		insert[0] = key;
+		insert[1] = '\0';
 		break;
 
 	case '\x1B':
@@ -134,4 +170,108 @@ macro_echo(const gchar *macro, const gchar *prefix)
 	*rp = '\0';
 
 	return result;
+}
+
+static gchar *
+filename_complete(const gchar *filename, gchar completed)
+{
+	gchar *dirname, *basename;
+	GDir *dir;
+	GList *files = NULL, *matching;
+	GCompletion *completion;
+	gchar *new_prefix;
+	gchar *insert = NULL;
+
+	if (!filename)
+		filename = "";
+
+	if (is_glob_pattern(filename))
+		return NULL;
+
+	dirname = g_path_get_dirname(filename);
+	dir = g_dir_open(dirname, 0, NULL);
+	if (!dir) {
+		g_free(dirname);
+		return NULL;
+	}
+	if (*dirname != *filename)
+		*dirname = '\0';
+
+	while ((basename = (gchar *)g_dir_read_name(dir))) {
+		gchar *filename = g_build_filename(dirname, basename, NULL);
+
+		if (g_file_test(filename, G_FILE_TEST_IS_DIR)) {
+			gchar *new_filename;
+			new_filename = g_strconcat(filename,
+						   G_DIR_SEPARATOR_S, NULL);
+			g_free(filename);
+			filename = new_filename;
+		}
+
+		files = g_list_prepend(files, filename);
+	}
+
+	g_free(dirname);
+	g_dir_close(dir);
+
+	completion = g_completion_new(NULL);
+	g_completion_add_items(completion, files);
+
+	matching = g_completion_complete(completion, filename, &new_prefix);
+	if (new_prefix && strlen(new_prefix) > strlen(filename))
+		insert = g_strdup(new_prefix + strlen(filename));
+	g_free(new_prefix);
+
+	if (!insert && g_list_length(matching) > 1) {
+		matching = g_list_sort(matching, (GCompareFunc)g_strcmp0);
+
+		for (GList *file = g_list_first(matching);
+		     file != NULL;
+		     file = g_list_next(file)) {
+			GtkInfoPopupFileType type;
+
+			type = filename_is_dir((gchar *)file->data)
+					? GTK_INFO_POPUP_DIRECTORY
+					: GTK_INFO_POPUP_FILE;
+			gtk_info_popup_add_filename(filename_popup,
+						    type, (gchar *)file->data);
+		}
+
+		gtk_widget_show(GTK_WIDGET(filename_popup));
+	} else if (g_list_length(matching) == 1 &&
+		   !filename_is_dir((gchar *)g_list_first(matching)->data)) {
+		gchar *new_insert;
+
+		new_insert = g_strconcat(insert ? : "",
+					 (gchar []){completed, '\0'}, NULL);
+		g_free(insert);
+		insert = new_insert;
+	}
+
+	g_completion_free(completion);
+
+	for (GList *file = g_list_first(files); file; file = g_list_next(file))
+		g_free(file->data);
+	g_list_free(files);
+
+	return insert;
+}
+
+/*
+ * Auxiliary functions
+ */
+
+static const gchar *
+last_occurrence(const gchar *str, const gchar *chars)
+{
+	while (*chars)
+		str = strrchr(str, *chars++) ? : str;
+
+	return str;
+}
+
+static inline gboolean
+filename_is_dir(const gchar *filename)
+{
+	return g_str_has_suffix(filename, G_DIR_SEPARATOR_S);
 }

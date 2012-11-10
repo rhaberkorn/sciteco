@@ -1,3 +1,6 @@
+# Generated code
+gtk-info-popup*.[ch]
+
 *.o
 sciteco
 

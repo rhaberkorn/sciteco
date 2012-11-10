@@ -12,7 +12,7 @@ gint macro_pc = 0;
 
 States states;
 
-static State *current_state = &states.start;
+State *current_state = &states.start;
 
 static struct {
 	bool colon;
@@ -27,8 +27,7 @@ static bool skip_else = false;
 static gint nest_level = 0;
 
 gchar *strings[2] = {NULL, NULL};
-
-static gchar escape_char = '\x1B';
+gchar escape_char = '\x1B';
 
 bool
 macro_execute(const gchar *macro)

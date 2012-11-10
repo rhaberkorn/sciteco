@@ -1,0 +1,135 @@
+requires 2.0.16
+
+%privateheader{
+#include <gdk/gdk.h>
+%}
+
+%h{
+#include <gtk/gtk.h>
+%}
+
+enum GTK_INFO_POPUP {
+	FILE,
+	DIRECTORY
+} Gtk:Info:Popup:File:Type;
+
+class Gtk:Info:Popup from Gtk:Window {
+	private GtkWidget *parent;
+
+	init(self)
+	{
+		GtkWidget *vbox;
+
+		//gtk_window_set_gravity(GTK_WINDOW(self), GDK_GRAVITY_SOUTH_WEST);
+		gtk_container_set_border_width(GTK_CONTAINER(self), 10);
+
+		vbox = gtk_vbox_new(FALSE, 5);
+		gtk_container_set_resize_mode(GTK_CONTAINER(vbox), GTK_RESIZE_PARENT);
+		gtk_container_add(GTK_CONTAINER(self), vbox);
+		gtk_widget_show(vbox);
+	}
+
+	public GtkWidget *
+	new(Gtk:Widget *parent)
+	{
+		Self *widget;
+		GtkWidget *toplevel;
+
+		widget = GET_NEW_VARG("type", GTK_WINDOW_POPUP, NULL);
+		widget->_priv->parent = parent;
+
+		g_signal_connect(parent, "size-allocate",
+				 G_CALLBACK(self_size_allocate_cb), widget);
+		toplevel = gtk_widget_get_toplevel(parent);
+		g_signal_connect(toplevel, "configure-event",
+				 G_CALLBACK(self_configure_cb), widget);
+
+		return GTK_WIDGET(widget);
+	}
+
+	private void
+	position(self)
+	{
+		GdkWindow *window = gtk_widget_get_window(self->_priv->parent);
+		gint x, y;
+		gint w, h;
+
+		if (!window)
+			return;
+
+		gdk_window_get_origin(window, &x, &y);
+		gtk_window_get_size(GTK_WINDOW(self), &w, &h);
+
+		gtk_window_move(GTK_WINDOW(self), x, y - h);
+	}
+
+	private void
+	size_allocate_cb(Gtk:Widget *parent,
+			 Gtk:Allocation *alloc, gpointer user_data)
+	{
+		self_position(SELF(user_data));
+	}
+
+	private gboolean
+	configure_cb(Gtk:Widget *toplevel,
+		     Gdk:Event:Configure *event, gpointer user_data)
+	{
+		self_position(SELF(user_data));
+		return FALSE;
+	}
+
+	override (Gtk:Widget) void
+	show(Gtk:Widget *self)
+	{
+		GtkRequisition req;
+
+		gtk_widget_size_request(self, &req);
+		gtk_window_resize(GTK_WINDOW(self), req.width, req.height);
+		self_position(SELF(self));
+
+		PARENT_HANDLER(self);
+	}
+
+	public void
+	add_filename(self, Gtk:Info:Popup:File:Type type, const gchar *filename)
+	{
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
+
+		const gchar *stock_id;
+		GtkWidget *hbox;
+		GtkWidget *image, *label;
+
+		switch (type) {
+		case GTK_INFO_POPUP_FILE:
+			stock_id = GTK_STOCK_FILE;
+			break;
+		case GTK_INFO_POPUP_DIRECTORY:
+			stock_id = GTK_STOCK_DIRECTORY;
+			break;
+		}
+
+		hbox = gtk_hbox_new(FALSE, 5);
+		image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_MENU);
+		gtk_box_pack_start(GTK_BOX(hbox), image, FALSE, FALSE, 0);
+		label = gtk_label_new(filename);
+		gtk_misc_set_alignment(GTK_MISC(label), 0., 0.5);
+		gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+
+		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+		gtk_widget_show_all(hbox);
+	}
+
+	public void
+	clear(self)
+	{
+		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
+		GList *children;
+
+		children = gtk_container_get_children(GTK_CONTAINER(vbox));
+		for (GList *cur = g_list_first(children);
+		     cur != NULL;
+		     cur = g_list_next(cur))
+			gtk_widget_destroy(GTK_WIDGET(cur->data));
+		g_list_free(children);
+	}
+}

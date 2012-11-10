@@ -1,6 +1,7 @@
 #ifndef __QBUFFERS_H
 #define __QBUFFERS_H
 
+#include <string.h>
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
@@ -120,5 +121,14 @@ private:
 
 	State *done(const gchar *str);
 };
+
+/*
+ * Auxiliary functions
+ */
+static inline bool
+is_glob_pattern(const gchar *str)
+{
+	return strchr(str, '*') || strchr(str, '?');
+}
 
 #endif
