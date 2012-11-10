@@ -234,7 +234,8 @@ filename_complete(const gchar *filename, gchar completed)
 					? GTK_INFO_POPUP_DIRECTORY
 					: GTK_INFO_POPUP_FILE;
 			gtk_info_popup_add_filename(filename_popup,
-						    type, (gchar *)file->data);
+						    type, (gchar *)file->data,
+						    FALSE);
 		}
 
 		gtk_widget_show(GTK_WIDGET(filename_popup));
