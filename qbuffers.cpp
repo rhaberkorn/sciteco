@@ -5,11 +5,14 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+#include "gtk-info-popup.h"
+
 #include <Scintilla.h>
 
 #include "sciteco.h"
 #include "undo.h"
 #include "parser.h"
+#include "expressions.h"
 #include "qbuffers.h"
 
 Ring ring;
@@ -110,7 +113,7 @@ Ring::close(void)
 	Buffer *buffer = current;
 
 	buffer->close();
-	current = LIST_NEXT(buffer, buffers) ? : LIST_FIRST(&head);
+	current = buffer->next() ? : first();
 	if (!current)
 		edit(NULL);
 
@@ -135,6 +138,22 @@ StateFile::do_edit(const gchar *filename)
 	ring.undo_edit();
 	if (ring.edit(filename))
 		ring.undo_close();
+}
+
+void
+StateFile::initial(void)
+{
+	gint64 id = expressions.pop_num_calc(1, -1);
+
+	if (id == 0) {
+		for (Buffer *cur = ring.first(); cur; cur = cur->next())
+			gtk_info_popup_add_filename(filename_popup,
+						    GTK_INFO_POPUP_FILE,
+						    cur->filename ? : "(Unnamed)",
+						    cur == ring.current);
+
+		gtk_widget_show(GTK_WIDGET(filename_popup));
+	}
 }
 
 State *

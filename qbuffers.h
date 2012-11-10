@@ -50,6 +50,12 @@ public:
 		g_free(filename);
 	}
 
+	inline Buffer *
+	next(void)
+	{
+		return LIST_NEXT(this, buffers);
+	}
+
 	inline void
 	set_filename(const gchar *filename)
 	{
@@ -82,14 +88,21 @@ public:
 
 extern class Ring {
 	LIST_HEAD(Head, Buffer) head;
-	Buffer *current;
 
 public:
+	Buffer *current;
+
 	Ring() : current(NULL)
 	{
 		LIST_INIT(&head);
 	}
 	~Ring();
+
+	inline Buffer *
+	first(void)
+	{
+		return LIST_FIRST(&head);
+	}
 
 	Buffer *find(const gchar *filename);
 
@@ -119,6 +132,7 @@ class StateFile : public StateExpectString {
 private:
 	void do_edit(const gchar *filename);
 
+	void initial(void);
 	State *done(const gchar *str);
 };
 
