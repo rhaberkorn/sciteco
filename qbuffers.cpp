@@ -16,13 +16,33 @@
 #include "qbuffers.h"
 
 namespace States {
-	StateFile	file;
-	StateEQCommand	eqcommand;
-	StateLoadQReg	loadqreg;
+	StateFile		file;
+	StateEQCommand		eqcommand;
+	StateLoadQReg		loadqreg;
+	StateCtlUCommand	ctlucommand;
+	StateSetQRegString	setqregstring;
 }
 
 Ring ring;
 QRegisterTable qregisters;
+
+static QRegister *register_argument = NULL;
+
+void
+QRegister::set_string(const gchar *str)
+{
+	edit();
+	dot = 0;
+
+	editor_msg(SCI_BEGINUNDOACTION);
+	editor_msg(SCI_SETTEXT, 0, (sptr_t)str);
+	editor_msg(SCI_ENDUNDOACTION);
+
+	if (ring.current)
+		ring.current->edit();
+	else /* qregisters.current != NULL */
+		qregisters.current->edit();
+}
 
 bool
 QRegister::load(const gchar *filename)
@@ -31,13 +51,17 @@ QRegister::load(const gchar *filename)
 	gsize size;
 
 	edit();
-	editor_msg(SCI_CLEARALL);
 	dot = 0;
 
 	/* FIXME: prevent excessive allocations by reading file into buffer */
 	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
+
+	editor_msg(SCI_BEGINUNDOACTION);
+	editor_msg(SCI_CLEARALL);
 	editor_msg(SCI_APPENDTEXT, size, (sptr_t)contents);
+	editor_msg(SCI_ENDUNDOACTION);
+
 	g_free(contents);
 
 	if (ring.current)
@@ -257,15 +281,13 @@ StateFile::done(const gchar *str)
 	return &States::start;
 }
 
-static QRegister *eq_register = NULL;
-
 State *
 StateEQCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::loadqreg);
 
-	undo.push_var<QRegister*>(eq_register);
-	eq_register = reg;
+	undo.push_var<QRegister*>(register_argument);
+	register_argument = reg;
 
 	return &States::loadqreg;
 }
@@ -276,14 +298,39 @@ StateLoadQReg::done(const gchar *str)
 	BEGIN_EXEC(&States::start);
 
 	if (*str) {
-		eq_register->load(str);
+		undo.push_var<gint>(register_argument->dot);
+		undo.push_msg(SCI_UNDO);
+		register_argument->load(str);
 	} else {
 		if (ring.current)
 			ring.undo_edit();
 		else /* qregisters.current != NULL */
 			qregisters.undo_edit();
-		qregisters.edit(eq_register);
+		qregisters.edit(register_argument);
 	}
+
+	return &States::start;
+}
+
+State *
+StateCtlUCommand::got_register(QRegister *reg)
+{
+	BEGIN_EXEC(&States::setqregstring);
+
+	undo.push_var<QRegister*>(register_argument);
+	register_argument = reg;
+
+	return &States::setqregstring;
+}
+
+State *
+StateSetQRegString::done(const gchar *str)
+{
+	BEGIN_EXEC(&States::start);
+
+	undo.push_var<gint>(register_argument->dot);
+	undo.push_msg(SCI_UNDO);
+	register_argument->set_string(str);
 
 	return &States::start;
 }

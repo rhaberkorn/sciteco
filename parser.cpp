@@ -508,6 +508,7 @@ StateStart::custom(gchar chr)
 StateControl::StateControl() : State()
 {
 	transitions['\0'] = this;
+	transitions['U'] = &States::ctlucommand;
 }
 
 State *

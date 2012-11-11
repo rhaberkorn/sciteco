@@ -39,6 +39,7 @@ public:
 		return g_strcmp0(name, ((QRegister &)entry).name);
 	}
 
+	void set_string(const gchar *str);
 	inline document *
 	get_string(void)
 	{
@@ -241,10 +242,23 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateCtlUCommand : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
+class StateSetQRegString : public StateExpectString {
+private:
+	State *done(const gchar *str);
+};
+
+
 namespace States {
-	extern StateFile	file;
-	extern StateEQCommand	eqcommand;
-	extern StateLoadQReg	loadqreg;
+	extern StateFile		file;
+	extern StateEQCommand		eqcommand;
+	extern StateLoadQReg		loadqreg;
+	extern StateCtlUCommand		ctlucommand;
+	extern StateSetQRegString	setqregstring;
 }
 
 /*
