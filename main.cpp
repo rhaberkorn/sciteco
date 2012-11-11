@@ -59,9 +59,11 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 {
 	gchar key = '\0';
 
+#ifdef DEBUG
 	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
 		 event->string, *event->string,
 		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
+#endif
 
 	switch (event->keyval) {
 	case GDK_BackSpace:
