@@ -37,7 +37,9 @@ class GotoTable : public RBTree {
 			g_free(name);
 			name = NULL;
 
+#ifdef DEBUG
 			table->dump();
+#endif
 		}
 	};
 
@@ -112,7 +114,9 @@ public:
 			RBTree::insert(label);
 		}
 
+#ifdef DEBUG
 		dump();
+#endif
 
 		return existing_pc;
 	}
@@ -134,6 +138,7 @@ public:
 		}
 	}
 
+#ifdef DEBUG
 	void
 	dump(void)
 	{
@@ -143,6 +148,7 @@ public:
 			g_printf("table[\"%s\"] = %d\n", cur->name, cur->pc);
 		g_printf("---END---\n");
 	}
+#endif
 };
 
 static GotoTable table;
