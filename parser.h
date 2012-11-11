@@ -96,6 +96,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateFlowCommand : public State {
+public:
+	StateFlowCommand();
+
+private:
+	State *custom(gchar chr);
+};
+
 class StateECommand : public State {
 public:
 	StateECommand();
@@ -116,6 +124,7 @@ extern gint macro_pc;
 namespace States {
 	extern StateStart 	start;
 	extern StateControl	control;
+	extern StateFlowCommand	flowcommand;
 	extern StateECommand	ecommand;
 	extern StateInsert	insert;
 

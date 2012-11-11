@@ -15,10 +15,11 @@
 gint macro_pc = 0;
 
 namespace States {
-	StateStart 	start;
-	StateControl	control;
-	StateECommand	ecommand;
-	StateInsert	insert;
+	StateStart 		start;
+	StateControl		control;
+	StateFlowCommand	flowcommand;
+	StateECommand		ecommand;
+	StateInsert		insert;
 
 	State *current = &start;
 }
@@ -199,6 +200,7 @@ StateStart::StateStart() : State()
 
 	transitions['!'] = &States::label;
 	transitions['^'] = &States::control;
+	transitions['F'] = &States::flowcommand;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
 	transitions['Q'] = &States::getqreginteger;
@@ -515,6 +517,79 @@ StateStart::custom(gchar chr)
 	}
 
 	return this;
+}
+
+StateFlowCommand::StateFlowCommand() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateFlowCommand::custom(gchar chr)
+{
+	switch (chr) {
+	/*
+	 * loop flow control
+	 */
+	case '<':
+		BEGIN_EXEC(&States::start);
+		/* FIXME: what if in brackets? */
+		expressions.discard_args();
+		if (expressions.peek_op() == Expressions::OP_LOOP)
+			/* repeat loop */
+			macro_pc = expressions.peek_num();
+		else
+			macro_pc = -1;
+		break;
+
+	case '>': {
+		gint64 loop_pc, loop_cnt;
+
+		BEGIN_EXEC(&States::start);
+		/* FIXME: what if in brackets? */
+		expressions.discard_args();
+		g_assert(expressions.pop_op() == Expressions::OP_LOOP);
+		loop_pc = expressions.pop_num();
+		loop_cnt = expressions.pop_num();
+
+		if (loop_cnt != 1) {
+			/* repeat loop */
+			macro_pc = loop_pc;
+			expressions.push(MAX(loop_cnt - 1, -1));
+			expressions.push(loop_pc);
+			expressions.push(Expressions::OP_LOOP);
+		} else {
+			/* skip to end of loop */
+			undo.push_var<Mode>(mode);
+			mode = MODE_PARSE_ONLY;
+		}
+		break;
+	}
+
+	/*
+	 * conditional flow control
+	 */
+	case '\'':
+		BEGIN_EXEC(&States::start);
+		/* skip to end of conditional */
+		undo.push_var<Mode>(mode);
+		mode = MODE_PARSE_ONLY;
+		undo.push_var<bool>(skip_else);
+		skip_else = true;
+		break;
+
+	case '|':
+		BEGIN_EXEC(&States::start);
+		/* skip to ELSE-part or end of conditional */
+		undo.push_var<Mode>(mode);
+		mode = MODE_PARSE_ONLY;
+		break;
+
+	default:
+		return NULL;
+	}
+
+	return &States::start;
 }
 
 StateControl::StateControl() : State()

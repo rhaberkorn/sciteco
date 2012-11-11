@@ -157,6 +157,11 @@ public:
 
 	Operator push(Operator op);
 	Operator push_calc(Operator op);
+	inline Operator
+	peek_op(int index = 1)
+	{
+		return operators.peek(index);
+	}
 	Operator pop_op(int index = 1);
 
 	void eval(bool pop_brace = false);
