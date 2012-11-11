@@ -49,12 +49,32 @@ public:
 	StateExpectString() : State() {}
 
 private:
-	virtual State *custom(gchar chr);
+	State *custom(gchar chr);
 
 protected:
 	virtual void initial(void) {}
 	virtual void process(const gchar *str, gint new_chars) {}
 	virtual State *done(const gchar *str) = 0;
+};
+
+class QRegister;
+
+/*
+ * Super class for states accepting Q-Register specifications
+ */
+class StateExpectQReg : public State {
+public:
+	StateExpectQReg();
+
+private:
+	State *custom(gchar chr);
+
+protected:
+	/*
+	 * FIXME: would be nice to pass reg as reference, but there are
+	 * circular header dependencies...
+	 */
+	virtual State *got_register(QRegister *reg) = 0;
 };
 
 class StateStart : public State {

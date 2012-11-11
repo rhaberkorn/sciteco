@@ -168,6 +168,22 @@ StateExpectString::custom(gchar chr)
 	return this;
 }
 
+StateExpectQReg::StateExpectQReg() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateExpectQReg::custom(gchar chr)
+{
+	QRegister *reg = qregisters[(gchar []){g_ascii_toupper(chr), '\0'}];
+
+	if (!reg)
+		return NULL;
+
+	return got_register(reg);
+}
+
 StateStart::StateStart() : State()
 {
 	transitions['\0'] = this;
@@ -563,6 +579,7 @@ StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['B'] = &States::file;
+	transitions['Q'] = &States::eqcommand;
 }
 
 State *

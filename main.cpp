@@ -152,6 +152,7 @@ main(int argc, char **argv)
 	editor_msg(SCI_STYLESETFORE, SCE_C_STRING, 0x800080);
 	editor_msg(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
 
+	qregisters.initialize();
 	ring.edit(NULL);
 
 	undo.enabled = true;

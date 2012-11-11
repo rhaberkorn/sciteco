@@ -8,7 +8,7 @@
 #include "undo.h"
 
 class RBTree {
-protected:
+public:
 	class RBEntry;
 
 private:
@@ -16,7 +16,7 @@ private:
 
 	RB_PROTOTYPE_INTERNAL(Tree, RBEntry, nodes, /* unused */, static);
 
-protected:
+public:
 	class RBEntry {
 	public:
 		RB_ENTRY(RBEntry) nodes;

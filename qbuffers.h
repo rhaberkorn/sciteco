@@ -11,7 +11,100 @@
 
 #include "sciteco.h"
 #include "undo.h"
+#include "rbtree.h"
 #include "parser.h"
+
+class QRegister : public RBTree::RBEntry {
+public:
+	gchar *name;
+
+	gint64 integer;
+
+	typedef void document;
+	document *string;
+	gint dot;
+
+	QRegister(const gchar *_name)
+		 : name(g_strdup(_name)), integer(0), string(NULL), dot(0) {}
+	~QRegister()
+	{
+		if (string)
+			editor_msg(SCI_RELEASEDOCUMENT, 0, (sptr_t)string);
+		g_free(name);
+	}
+
+	int
+	operator <(RBEntry &entry)
+	{
+		return g_strcmp0(name, ((QRegister &)entry).name);
+	}
+
+	inline document *
+	get_string(void)
+	{
+		if (!string)
+			string = (document *)editor_msg(SCI_CREATEDOCUMENT);
+		return string;
+	}
+
+	inline void
+	edit(void)
+	{
+		editor_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_string());
+		editor_msg(SCI_GOTOPOS, dot);
+	}
+	inline void
+	undo_edit(void)
+	{
+		undo.push_msg(SCI_GOTOPOS, dot);
+		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_string());
+	}
+};
+
+extern class QRegisterTable : public RBTree {
+	inline void
+	initialize_register(const gchar *name)
+	{
+		QRegister *reg = new QRegister(name);
+		insert(reg);
+		/* make sure document is initialized */
+		reg->get_string();
+	}
+
+public:
+	QRegister *current;
+
+	QRegisterTable() : RBTree(), current(NULL) {}
+
+	void initialize(void);
+
+	inline QRegister *
+	operator [](const gchar *name)
+	{
+		QRegister reg(name);
+		return (QRegister *)find(&reg);
+	}
+
+	void edit(QRegister *reg);
+	inline QRegister *
+	edit(const gchar *name)
+	{
+		QRegister *reg = operator [](name);
+
+		if (!reg)
+			return NULL;
+		edit(reg);
+		return reg;
+	}
+	inline void
+	undo_edit(void)
+	{
+		current->dot = editor_msg(SCI_GETCURRENTPOS);
+
+		undo.push_var<QRegister*>(current);
+		current->undo_edit();
+	}
+} qregisters;
 
 class Buffer {
 	class UndoTokenClose : public UndoToken {
@@ -136,8 +229,14 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateEQCommand : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
 namespace States {
-	extern StateFile file;
+	extern StateFile	file;
+	extern StateEQCommand	eqcommand;
 }
 
 /*
