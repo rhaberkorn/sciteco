@@ -4,13 +4,15 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "expressions.h"
 #include "parser.h"
 #include "undo.h"
 #include "rbtree.h"
 #include "goto.h"
 
 namespace States {
-	StateLabel label;
+	StateLabel	label;
+	StateGotoCmd	gotocmd;
 }
 
 static gchar *skip_label = NULL;
@@ -198,4 +200,33 @@ StateLabel::custom(gchar chr)
 	strings[0] = new_str;
 
 	return this;
+}
+
+State *
+StateGotoCmd::done(const gchar *str)
+{
+	gint64 value;
+	gchar **labels;
+
+	BEGIN_EXEC(&States::start);
+
+	value = expressions.pop_num_calc();
+	labels = g_strsplit(str, ",", -1);
+
+	if (value > 0 && value <= g_strv_length(labels) && *labels[value-1]) {
+		gint pc = table.find(labels[value-1]);
+
+		if (pc >= 0) {
+			macro_pc = pc;
+		} else {
+			/* skip till label is defined */
+			undo.push_str(skip_label);
+			skip_label = g_strdup(labels[value-1]);
+			undo.push_var<Mode>(mode);
+			mode = MODE_PARSE_ONLY;
+		}
+	}
+
+	g_strfreev(labels);
+	return &States::start;
 }

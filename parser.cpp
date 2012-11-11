@@ -200,6 +200,7 @@ StateStart::StateStart() : State()
 	init(" \f\r\n\v");
 
 	transitions['!'] = &States::label;
+	transitions['O'] = &States::gotocmd;
 	transitions['^'] = &States::control;
 	transitions['F'] = &States::flowcommand;
 	transitions['"'] = &States::condcommand;

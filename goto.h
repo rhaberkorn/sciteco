@@ -18,8 +18,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateGotoCmd : public StateExpectString {
+private:
+	State *done(const gchar *str);
+};
+
 namespace States {
-	extern StateLabel label;
+	extern StateLabel 	label;
+	extern StateGotoCmd	gotocmd;
 }
 
 void goto_table_clear(void);
