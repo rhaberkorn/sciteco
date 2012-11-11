@@ -8,6 +8,10 @@
 
 #include <Scintilla.h>
 
+#ifdef DEBUG
+#include "parser.h"
+#endif
+
 class UndoToken {
 public:
 	SLIST_ENTRY(UndoToken) tokens;
@@ -43,6 +47,10 @@ public:
 	void
 	run(void)
 	{
+#ifdef DEBUG
+		if ((State **)ptr == &States::current)
+			g_printf("undo state -> %p\n", (void *)value);
+#endif
 		*ptr = value;
 	}
 };
