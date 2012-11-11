@@ -18,6 +18,7 @@ namespace States {
 	StateStart 		start;
 	StateControl		control;
 	StateFlowCommand	flowcommand;
+	StateCondCommand	condcommand;
 	StateECommand		ecommand;
 	StateInsert		insert;
 
@@ -201,6 +202,7 @@ StateStart::StateStart() : State()
 	transitions['!'] = &States::label;
 	transitions['^'] = &States::control;
 	transitions['F'] = &States::flowcommand;
+	transitions['"'] = &States::condcommand;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
 	transitions['Q'] = &States::getqreginteger;
@@ -587,6 +589,86 @@ StateFlowCommand::custom(gchar chr)
 
 	default:
 		return NULL;
+	}
+
+	return &States::start;
+}
+
+StateCondCommand::StateCondCommand() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateCondCommand::custom(gchar chr)
+{
+	gint64 value;
+	bool result;
+
+	if (mode == MODE_PARSE_ONLY) {
+		undo.push_var<gint>(nest_level);
+		nest_level++;
+	} else {
+		value = expressions.pop_num_calc();
+	}
+
+	switch (g_ascii_toupper(chr)) {
+	case 'A':
+		BEGIN_EXEC(&States::start);
+		result = g_ascii_isalpha((gchar)value);
+		break;
+	case 'C':
+		BEGIN_EXEC(&States::start);
+		/* FIXME */
+		result = g_ascii_isalnum((gchar)value);
+		break;
+	case 'D':
+		BEGIN_EXEC(&States::start);
+		result = g_ascii_isdigit((gchar)value);
+		break;
+	case 'E':
+	case 'F':
+	case 'U':
+	case '=':
+		BEGIN_EXEC(&States::start);
+		result = value == 0;
+		break;
+	case 'G':
+	case '>':
+		BEGIN_EXEC(&States::start);
+		result = value > 0;
+		break;
+	case 'L':
+	case 'S':
+	case 'T':
+	case '<':
+		BEGIN_EXEC(&States::start);
+		result = value < 0;
+		break;
+	case 'N':
+		BEGIN_EXEC(&States::start);
+		result = value != 0;
+		break;
+	case 'R':
+		BEGIN_EXEC(&States::start);
+		result = g_ascii_isalnum((gchar)value);
+		break;
+	case 'V':
+		BEGIN_EXEC(&States::start);
+		result = g_ascii_islower((gchar)value);
+		break;
+	case 'W':
+		BEGIN_EXEC(&States::start);
+		result = g_ascii_isupper((gchar)value);
+		break;
+	default:
+		return NULL;
+	}
+
+	if (!result) {
+		/* skip to ELSE-part or end of conditional */
+		undo.push_var<Mode>(mode);
+		mode = MODE_PARSE_ONLY;
 	}
 
 	return &States::start;

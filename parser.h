@@ -104,6 +104,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateCondCommand : public State {
+public:
+	StateCondCommand();
+
+private:
+	State *custom(gchar chr);
+};
+
 class StateECommand : public State {
 public:
 	StateECommand();
@@ -125,6 +133,7 @@ namespace States {
 	extern StateStart 	start;
 	extern StateControl	control;
 	extern StateFlowCommand	flowcommand;
+	extern StateCondCommand	condcommand;
 	extern StateECommand	ecommand;
 	extern StateInsert	insert;
 
