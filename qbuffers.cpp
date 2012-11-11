@@ -25,6 +25,7 @@ namespace States {
 	StateSetQRegInteger	setqreginteger;
 	StateIncreaseQReg	increaseqreg;
 	StateMacro		macro;
+	StateCopyToQReg		copytoqreg;
 }
 
 Ring ring;
@@ -423,6 +424,44 @@ StateMacro::got_register(QRegister *reg)
 	States::current = this;
 	if (!rc)
 		return NULL;
+
+	return &States::start;
+}
+
+State *
+StateCopyToQReg::got_register(QRegister *reg)
+{
+	gint64 from, len;
+	Sci_TextRange tr;
+
+	BEGIN_EXEC(&States::start);
+	expressions.eval();
+
+	if (expressions.args() <= 1) {
+		from = editor_msg(SCI_GETCURRENTPOS);
+		sptr_t line = editor_msg(SCI_LINEFROMPOSITION, from) +
+			      expressions.pop_num_calc();
+		len = editor_msg(SCI_POSITIONFROMLINE, line) - from;
+
+		if (len < 0) {
+			from += len;
+			len *= -1;
+		}
+	} else {
+		gint64 to = expressions.pop_num();
+		from = expressions.pop_num();
+		len = to - from;
+	}
+
+	tr.chrg.cpMin = from;
+	tr.chrg.cpMax = from + len;
+	tr.lpstrText = (char *)g_malloc(len + 1);
+	editor_msg(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
+
+	undo.push_var<gint>(reg->dot);
+	undo.push_msg(SCI_UNDO);
+	reg->set_string(tr.lpstrText);
+	g_free(tr.lpstrText);
 
 	return &States::start;
 }

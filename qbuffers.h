@@ -274,6 +274,11 @@ private:
 	State *got_register(QRegister *reg);
 };
 
+class StateCopyToQReg : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
 namespace States {
 	extern StateFile		file;
 	extern StateEQCommand		eqcommand;
@@ -284,6 +289,7 @@ namespace States {
 	extern StateSetQRegInteger	setqreginteger;
 	extern StateIncreaseQReg	increaseqreg;
 	extern StateMacro		macro;
+	extern StateCopyToQReg		copytoqreg;
 }
 
 /*

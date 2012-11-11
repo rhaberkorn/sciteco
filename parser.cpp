@@ -2,6 +2,7 @@
 
 #include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 #include "sciteco.h"
 #include "undo.h"
@@ -60,6 +61,31 @@ macro_execute(const gchar *macro)
 		macro_pc++;
 	}
 
+	return true;
+}
+
+bool
+file_execute(const gchar *filename)
+{
+	gchar *macro, *p = NULL;
+	bool rc;
+
+	macro_pc = 0;
+	States::current = &States::start;
+
+	if (!g_file_get_contents(filename, &macro, NULL, NULL))
+		return false;
+	/* only when executing files, ignore Hash-Bang line */
+	if (macro[0] == '#')
+		p = MAX(strchr(macro, '\r'), strchr(macro, '\n'));
+
+	rc = macro_execute(p ? p+1 : macro);
+	g_free(macro);
+	if (!rc)
+		return false;
+
+	macro_pc = 0;
+	States::current = &States::start;
 	return true;
 }
 
@@ -310,6 +336,7 @@ StateStart::StateStart() : State()
 	transitions['U'] = &States::setqreginteger;
 	transitions['%'] = &States::increaseqreg;
 	transitions['M'] = &States::macro;
+	transitions['X'] = &States::copytoqreg;
 }
 
 void

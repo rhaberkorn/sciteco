@@ -1,7 +1,10 @@
+#include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
@@ -23,6 +26,8 @@ static GtkWidget *cmdline_widget;
 static GtkWidget *info_widget, *message_widget;
 
 GtkInfoPopup *filename_popup;
+
+#define INI_FILE ".teco_ini"
 
 void
 cmdline_display(const gchar *cmdline_str)
@@ -101,13 +106,51 @@ widget_set_font(GtkWidget *widget, const gchar *font_name)
 	pango_font_description_free(font_desc);
 }
 
+static gchar *mung_file = NULL;
+
+static inline void
+process_options(int &argc, char **&argv)
+{
+	static const GOptionEntry option_entries[] = {
+		{"mung", 'm', 0, G_OPTION_ARG_FILENAME, &mung_file,
+		 "Mung file instead of " INI_FILE, "filename"},
+		{NULL}
+	};
+
+	GOptionContext *options;
+
+	options = g_option_context_new("- Advanced interactive TECO");
+	g_option_context_add_main_entries(options, option_entries, NULL);
+	g_option_context_add_group(options, gtk_get_option_group(TRUE));
+	if (!g_option_context_parse(options, &argc, &argv, NULL)) {
+		g_printf("Option parsing failed!\n");
+		exit(EXIT_FAILURE);
+	}
+	g_option_context_free(options);
+
+	if (mung_file) {
+		if (!g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
+			g_printf("Cannot mung %s. File does not exist!\n",
+				 mung_file);
+			exit(EXIT_FAILURE);
+		}
+	} else {
+		mung_file = g_build_filename(g_get_user_config_dir(),
+					     INI_FILE, NULL);
+	}
+
+	gtk_init(&argc, &argv);
+
+	/* remaining arguments, are arguments to the munged file */
+}
+
 int
 main(int argc, char **argv)
 {
 	GtkWidget *window, *vbox;
 	GtkWidget *info_content;
 
-	gtk_init(&argc, &argv);
+	process_options(argc, argv);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "SciTECO");
@@ -156,6 +199,19 @@ main(int argc, char **argv)
 
 	qregisters.initialize();
 	ring.edit(NULL);
+
+	/* add remaining arguments to unnamed buffer */
+	for (int i = 1; i < argc; i++) {
+		editor_msg(SCI_ADDTEXT, strlen(argv[i]), (sptr_t)argv[i]);
+		editor_msg(SCI_ADDTEXT, 1, (sptr_t)"\r");
+	}
+	editor_msg(SCI_GOTOPOS, 0);
+
+	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
+		if (!file_execute(mung_file))
+			exit(EXIT_FAILURE);
+	}
+	g_free(mung_file);
 
 	undo.enabled = true;
 

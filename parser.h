@@ -178,5 +178,6 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 bool macro_execute(const gchar *macro);
+bool file_execute(const gchar *filename);
 
 #endif
