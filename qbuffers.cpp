@@ -32,9 +32,30 @@ QRegisterTable qregisters;
 
 static QRegister *register_argument = NULL;
 
+static inline void
+current_save_dot(void)
+{
+	gint dot = editor_msg(SCI_GETCURRENTPOS);
+
+	if (ring.current)
+		ring.current->dot = dot;
+	else if (qregisters.current)
+		qregisters.current->dot = dot;
+}
+
+static inline void
+current_edit(void)
+{
+	if (ring.current)
+		ring.current->edit();
+	else if (qregisters.current)
+		qregisters.current->edit();
+}
+
 void
 QRegister::set_string(const gchar *str)
 {
+	current_save_dot();
 	edit();
 	dot = 0;
 
@@ -42,10 +63,7 @@ QRegister::set_string(const gchar *str)
 	editor_msg(SCI_SETTEXT, 0, (sptr_t)str);
 	editor_msg(SCI_ENDUNDOACTION);
 
-	if (ring.current)
-		ring.current->edit();
-	else /* qregisters.current != NULL */
-		qregisters.current->edit();
+	current_edit();
 }
 
 gchar *
@@ -54,16 +72,14 @@ QRegister::get_string(void)
 	gint size;
 	gchar *str;
 
+	current_save_dot();
 	edit();
 
 	size = editor_msg(SCI_GETLENGTH) + 1;
 	str = (gchar *)g_malloc(size);
 	editor_msg(SCI_GETTEXT, size, (sptr_t)str);
 
-	if (ring.current)
-		ring.current->edit();
-	else /* qregisters.current != NULL */
-		qregisters.current->edit();
+	current_edit();
 
 	return str;
 }
@@ -74,6 +90,7 @@ QRegister::load(const gchar *filename)
 	gchar *contents;
 	gsize size;
 
+	current_save_dot();
 	edit();
 	dot = 0;
 
@@ -88,10 +105,7 @@ QRegister::load(const gchar *filename)
 
 	g_free(contents);
 
-	if (ring.current)
-		ring.current->edit();
-	else /* qregisters.current != NULL */
-		qregisters.current->edit();
+	current_edit();
 
 	return true;
 }
@@ -109,9 +123,7 @@ QRegisterTable::initialize(void)
 void
 QRegisterTable::edit(QRegister *reg)
 {
-	if (current)
-		current->dot = editor_msg(SCI_GETCURRENTPOS);
-
+	current_save_dot();
 	reg->edit();
 
 	ring.current = NULL;
@@ -173,8 +185,7 @@ Ring::edit(const gchar *filename)
 	bool new_in_ring = false;
 	Buffer *buffer = find(filename);
 
-	if (current)
-		current->dot = editor_msg(SCI_GETCURRENTPOS);
+	current_save_dot();
 
 	if (buffer) {
 		buffer->edit();
