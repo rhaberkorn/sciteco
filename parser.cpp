@@ -121,11 +121,104 @@ State::get_next_state(gchar chr)
 	return next;
 }
 
+gchar *
+StateExpectString::machine_input(gchar chr)
+{
+	switch (machine.mode) {
+	case Machine::MODE_UPPER:
+		chr = g_ascii_toupper(chr);
+		break;
+	case Machine::MODE_LOWER:
+		chr = g_ascii_tolower(chr);
+		break;
+	default:
+		break;
+	}
+
+	if (machine.toctl) {
+		chr = CTL_KEY(g_ascii_toupper(chr));
+		machine.toctl = false;
+	}
+
+	if (machine.state == Machine::STATE_ESCAPED) {
+		machine.state = Machine::STATE_START;
+		goto original;
+	}
+
+	if (chr == '^') {
+		machine.toctl = true;
+		return NULL;
+	}
+
+	switch (machine.state) {
+	case Machine::STATE_START:
+		switch (chr) {
+		case CTL_KEY('Q'):
+		case CTL_KEY('R'): machine.state = Machine::STATE_ESCAPED; break;
+		case CTL_KEY('V'): machine.state = Machine::STATE_LOWER; break;
+		case CTL_KEY('W'): machine.state = Machine::STATE_UPPER; break;
+		case CTL_KEY('E'): machine.state = Machine::STATE_CTL_E; break;
+		default:
+			goto original;
+		}
+		break;
+
+	case Machine::STATE_LOWER:
+		machine.state = Machine::STATE_START;
+		if (chr != CTL_KEY('V'))
+			return g_strdup((gchar []){g_ascii_tolower(chr), '\0'});
+		machine.mode = Machine::MODE_LOWER;
+		break;
+
+	case Machine::STATE_UPPER:
+		machine.state = Machine::STATE_START;
+		if (chr != CTL_KEY('W'))
+			return g_strdup((gchar []){g_ascii_toupper(chr), '\0'});
+		machine.mode = Machine::MODE_UPPER;
+		break;
+
+	case Machine::STATE_CTL_E:
+		switch (g_ascii_toupper(chr)) {
+		case 'Q': machine.state = Machine::STATE_CTL_EQ; break;
+		case 'U': machine.state = Machine::STATE_CTL_EU; break;
+		default:
+			machine.state = Machine::STATE_START;
+			return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
+		}
+		break;
+
+	/*
+	 * FIXME: Q-Register specifications might get more complicated
+	 */
+	case Machine::STATE_CTL_EU:
+	case Machine::STATE_CTL_EQ: {
+		QRegister *reg;
+		Machine::State state = machine.state;
+		machine.state = Machine::STATE_START;
+
+		reg = qregisters[(gchar []){g_ascii_toupper(chr), '\0'}];
+		if (!reg)
+			return NULL;
+
+		return state == Machine::STATE_CTL_EQ
+			? reg->get_string()
+			: g_strdup((gchar []){(gchar)reg->integer, '\0'});
+	}
+
+	default:
+		g_assert(TRUE);
+	}
+
+	return NULL;
+
+original:
+	return g_strdup((gchar []){chr, '\0'});
+}
+
 State *
 StateExpectString::custom(gchar chr)
 {
-	gchar insert[255];
-	gchar *new_str;
+	gchar *insert, *new_str;
 
 	if (chr == '\0') {
 		BEGIN_EXEC(this);
@@ -153,17 +246,24 @@ StateExpectString::custom(gchar chr)
 		undo.push_str(strings[0]);
 		g_free(strings[0]);
 		strings[0] = NULL;
-		/* TODO: save and reset string building machine state */
+
+		undo.push_var<Machine>(machine);
+		machine.state = Machine::STATE_START;
+		machine.mode = Machine::MODE_NORMAL;
+		machine.toctl = false;
 
 		return next;
 	}
 
+	BEGIN_EXEC(this);
+
 	/*
 	 * String building characters
 	 */
-	/* TODO */
-	insert[0] = chr;
-	insert[1] = '\0';
+	undo.push_var<Machine>(machine);
+	insert = machine_input(chr);
+	if (!insert)
+		return this;
 
 	/*
 	 * String accumulation
@@ -173,8 +273,8 @@ StateExpectString::custom(gchar chr)
 	g_free(strings[0]);
 	strings[0] = new_str;
 
-	BEGIN_EXEC(this);
 	process(strings[0], strlen(insert));
+	g_free(insert);
 	return this;
 }
 
@@ -787,10 +887,11 @@ StateInsert::initial(void)
 
 	editor_msg(SCI_BEGINUNDOACTION);
 	for (int i = args; i > 0; i--) {
-		/* FIXME: if possible prevent pops with index != 1 */
-		gchar chr = (gchar)expressions.pop_num_calc(i);
+		gchar chr = (gchar)expressions.peek_num(i);
 		editor_msg(SCI_ADDTEXT, 1, (sptr_t)&chr);
 	}
+	for (int i = args; i > 0; i--)
+		expressions.pop_num_calc();
 	editor_msg(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);
@@ -801,7 +902,7 @@ StateInsert::process(const gchar *str, gint new_chars)
 {
 	editor_msg(SCI_BEGINUNDOACTION);
 	editor_msg(SCI_ADDTEXT, new_chars,
-		   (sptr_t)str + strlen(str) - new_chars);
+		   (sptr_t)(str + strlen(str) - new_chars));
 	editor_msg(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);

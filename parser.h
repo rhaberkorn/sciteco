@@ -45,10 +45,34 @@ protected:
  * string building commands and accumulation into a string
  */
 class StateExpectString : public State {
+	struct Machine {
+		enum State {
+			STATE_START,
+			STATE_ESCAPED,
+			STATE_LOWER,
+			STATE_UPPER,
+			STATE_CTL_E,
+			STATE_CTL_EQ,
+			STATE_CTL_EU
+		} state;
+
+		enum Mode {
+			MODE_NORMAL,
+			MODE_UPPER,
+			MODE_LOWER
+		} mode;
+
+		bool toctl;
+
+		Machine() : state(STATE_START),
+			    mode(MODE_NORMAL), toctl(false) {}
+	} machine;
+
 public:
 	StateExpectString() : State() {}
 
 private:
+	gchar *machine_input(gchar key);
 	State *custom(gchar chr);
 
 protected:
