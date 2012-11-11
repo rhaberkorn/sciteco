@@ -18,10 +18,35 @@
 namespace States {
 	StateFile	file;
 	StateEQCommand	eqcommand;
+	StateLoadQReg	loadqreg;
 }
 
 Ring ring;
 QRegisterTable qregisters;
+
+bool
+QRegister::load(const gchar *filename)
+{
+	gchar *contents;
+	gsize size;
+
+	edit();
+	editor_msg(SCI_CLEARALL);
+	dot = 0;
+
+	/* FIXME: prevent excessive allocations by reading file into buffer */
+	if (!g_file_get_contents(filename, &contents, &size, NULL))
+		return false;
+	editor_msg(SCI_APPENDTEXT, size, (sptr_t)contents);
+	g_free(contents);
+
+	if (ring.current)
+		ring.current->edit();
+	else /* qregisters.current != NULL */
+		qregisters.current->edit();
+
+	return true;
+}
 
 void
 QRegisterTable::initialize(void)
@@ -232,19 +257,33 @@ StateFile::done(const gchar *str)
 	return &States::start;
 }
 
-/*
- * TODO: expect filename to read into Q-register
- */
+static QRegister *eq_register = NULL;
+
 State *
 StateEQCommand::got_register(QRegister *reg)
 {
+	BEGIN_EXEC(&States::loadqreg);
+
+	undo.push_var<QRegister*>(eq_register);
+	eq_register = reg;
+
+	return &States::loadqreg;
+}
+
+State *
+StateLoadQReg::done(const gchar *str)
+{
 	BEGIN_EXEC(&States::start);
 
-	if (ring.current)
-		ring.undo_edit();
-	else /* qregisters.current != NULL */
-		qregisters.undo_edit();
-	qregisters.edit(reg);
+	if (*str) {
+		eq_register->load(str);
+	} else {
+		if (ring.current)
+			ring.undo_edit();
+		else /* qregisters.current != NULL */
+			qregisters.undo_edit();
+		qregisters.edit(eq_register);
+	}
 
 	return &States::start;
 }

@@ -59,6 +59,8 @@ public:
 		undo.push_msg(SCI_GOTOPOS, dot);
 		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_string());
 	}
+
+	bool load(const gchar *filename);
 };
 
 extern class QRegisterTable : public RBTree {
@@ -234,9 +236,15 @@ private:
 	State *got_register(QRegister *reg);
 };
 
+class StateLoadQReg : public StateExpectString {
+private:
+	State *done(const gchar *str);
+};
+
 namespace States {
 	extern StateFile	file;
 	extern StateEQCommand	eqcommand;
+	extern StateLoadQReg	loadqreg;
 }
 
 /*

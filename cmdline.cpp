@@ -100,15 +100,16 @@ process_edit_cmd(gchar key)
 	}
 
 	case '\t':
-		if (States::current == &States::file) {
+		if (States::current == &States::file ||
+		    States::current == &States::loadqreg) {
 			gchar *new_chars = filename_complete(strings[0], escape_char);
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
-			break;
+		} else {
+			insert[0] = key;
+			insert[1] = '\0';
 		}
-		insert[0] = key;
-		insert[1] = '\0';
 		break;
 
 	case '\x1B':
