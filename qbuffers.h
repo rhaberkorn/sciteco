@@ -39,26 +39,28 @@ public:
 		return g_strcmp0(name, ((QRegister &)entry).name);
 	}
 
-	void set_string(const gchar *str);
 	inline document *
-	get_string(void)
+	get_document(void)
 	{
 		if (!string)
 			string = (document *)editor_msg(SCI_CREATEDOCUMENT);
 		return string;
 	}
 
+	void set_string(const gchar *str);
+	gchar *get_string(void);
+
 	inline void
 	edit(void)
 	{
-		editor_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_string());
+		editor_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 		editor_msg(SCI_GOTOPOS, dot);
 	}
 	inline void
 	undo_edit(void)
 	{
 		undo.push_msg(SCI_GOTOPOS, dot);
-		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_string());
+		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 	}
 
 	bool load(const gchar *filename);
@@ -71,7 +73,7 @@ extern class QRegisterTable : public RBTree {
 		QRegister *reg = new QRegister(name);
 		insert(reg);
 		/* make sure document is initialized */
-		reg->get_string();
+		reg->get_document();
 	}
 
 public:
@@ -252,6 +254,25 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateGetQRegInteger : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
+class StateSetQRegInteger : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
+class StateIncreaseQReg : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
+
+class StateMacro : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg);
+};
 
 namespace States {
 	extern StateFile		file;
@@ -259,6 +280,10 @@ namespace States {
 	extern StateLoadQReg		loadqreg;
 	extern StateCtlUCommand		ctlucommand;
 	extern StateSetQRegString	setqregstring;
+	extern StateGetQRegInteger	getqreginteger;
+	extern StateSetQRegInteger	setqreginteger;
+	extern StateIncreaseQReg	increaseqreg;
+	extern StateMacro		macro;
 }
 
 /*

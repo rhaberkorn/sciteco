@@ -21,6 +21,10 @@ namespace States {
 	StateLoadQReg		loadqreg;
 	StateCtlUCommand	ctlucommand;
 	StateSetQRegString	setqregstring;
+	StateGetQRegInteger	getqreginteger;
+	StateSetQRegInteger	setqreginteger;
+	StateIncreaseQReg	increaseqreg;
+	StateMacro		macro;
 }
 
 Ring ring;
@@ -42,6 +46,26 @@ QRegister::set_string(const gchar *str)
 		ring.current->edit();
 	else /* qregisters.current != NULL */
 		qregisters.current->edit();
+}
+
+gchar *
+QRegister::get_string(void)
+{
+	gint size;
+	gchar *str;
+
+	edit();
+
+	size = editor_msg(SCI_GETLENGTH) + 1;
+	str = (gchar *)g_malloc(size);
+	editor_msg(SCI_GETTEXT, size, (sptr_t)str);
+
+	if (ring.current)
+		ring.current->edit();
+	else /* qregisters.current != NULL */
+		qregisters.current->edit();
+
+	return str;
 }
 
 bool
@@ -285,10 +309,7 @@ State *
 StateEQCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::loadqreg);
-
-	undo.push_var<QRegister*>(register_argument);
 	register_argument = reg;
-
 	return &States::loadqreg;
 }
 
@@ -316,10 +337,7 @@ State *
 StateCtlUCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::setqregstring);
-
-	undo.push_var<QRegister*>(register_argument);
 	register_argument = reg;
-
 	return &States::setqregstring;
 }
 
@@ -331,6 +349,69 @@ StateSetQRegString::done(const gchar *str)
 	undo.push_var<gint>(register_argument->dot);
 	undo.push_msg(SCI_UNDO);
 	register_argument->set_string(str);
+
+	return &States::start;
+}
+
+State *
+StateGetQRegInteger::got_register(QRegister *reg)
+{
+	BEGIN_EXEC(&States::start);
+
+	expressions.eval();
+	expressions.push(reg->integer);
+
+	return &States::start;
+}
+
+State *
+StateSetQRegInteger::got_register(QRegister *reg)
+{
+	BEGIN_EXEC(&States::start);
+
+	undo.push_var<gint64>(reg->integer);
+	reg->integer = expressions.pop_num_calc();
+
+	return &States::start;
+}
+
+State *
+StateIncreaseQReg::got_register(QRegister *reg)
+{
+	BEGIN_EXEC(&States::start);
+
+	undo.push_var<gint64>(reg->integer);
+	reg->integer += expressions.pop_num_calc();
+	expressions.push(reg->integer);
+
+	return &States::start;
+}
+
+State *
+StateMacro::got_register(QRegister *reg)
+{
+	gint pc = macro_pc;
+	gchar *str;
+	bool rc;
+
+	BEGIN_EXEC(&States::start);
+
+	/*
+	 * need this to fixup state on rubout: state machine emits undo token
+	 * resetting state to StateMacro, but the macro executed also emitted
+	 * undo tokens resetting the state to StateStart
+	 */
+	undo.push_var<State*>(States::current);
+	States::current = &States::start;
+
+	macro_pc = 0;
+	str = reg->get_string();
+	rc = macro_execute(str);
+	g_free(str);
+	macro_pc = pc;
+	States::current = this;
+	if (!rc)
+		return NULL;
 
 	return &States::start;
 }

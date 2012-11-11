@@ -10,6 +10,8 @@
 #include "qbuffers.h"
 #include "parser.h"
 
+//#define DEBUG
+
 gint macro_pc = 0;
 
 namespace States {
@@ -40,6 +42,12 @@ bool
 macro_execute(const gchar *macro)
 {
 	while (macro[macro_pc]) {
+#ifdef DEBUG
+		g_printf("EXEC(%d): input='%c'/%x, state=%p\n",
+			 macro_pc, macro[macro_pc], macro[macro_pc],
+			 States::current);
+#endif
+
 		if (!State::input(macro[macro_pc])) {
 			message_display(GTK_MESSAGE_ERROR,
 					"Syntax error \"%c\"",
@@ -193,6 +201,10 @@ StateStart::StateStart() : State()
 	transitions['^'] = &States::control;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
+	transitions['Q'] = &States::getqreginteger;
+	transitions['U'] = &States::setqreginteger;
+	transitions['%'] = &States::increaseqreg;
+	transitions['M'] = &States::macro;
 }
 
 void
