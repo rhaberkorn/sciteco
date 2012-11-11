@@ -14,7 +14,7 @@ LDFLAGS:=$(GTK_LDFLAGS) $(SCI_LDFLAGS)
 all : sciteco
 
 sciteco : main.o cmdline.o undo.o expressions.o qbuffers.o \
-	  parser.o goto.o \
+	  parser.o goto.o rbtree.o \
 	  gtk-info-popup.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 

@@ -6,6 +6,7 @@
 #include "sciteco.h"
 #include "parser.h"
 #include "undo.h"
+#include "rbtree.h"
 #include "goto.h"
 
 namespace States {
@@ -14,7 +15,7 @@ namespace States {
 
 static gchar *skip_label = NULL;
 
-class GotoTable {
+class GotoTable : public RBTree {
 	class UndoTokenSet : public UndoToken {
 		GotoTable *table;
 
@@ -35,16 +36,13 @@ class GotoTable {
 			table->set(name, pc);
 			g_free(name);
 			name = NULL;
-#if 0
+
 			table->dump();
-#endif
 		}
 	};
 
-	class Label {
+	class Label : public RBEntry {
 	public:
-		RB_ENTRY(Label) nodes;
-
 		gchar	*name;
 		gint	pc;
 
@@ -55,27 +53,15 @@ class GotoTable {
 			g_free(name);
 		}
 
-		static inline int
-		cmp(Label *l1, Label *l2)
+		int
+		operator <(RBEntry &l2)
 		{
-			return g_strcmp0(l1->name, l2->name);
+			return g_strcmp0(name, ((Label &)l2).name);
 		}
 	};
 
-	RB_HEAD(Table, Label) head;
-
-	RB_GENERATE(Table, Label, nodes, Label::cmp);
-
 public:
-	GotoTable()
-	{
-		RB_INIT(&head);
-	}
-
-	~GotoTable()
-	{
-		clear();
-	}
+	GotoTable() : RBTree() {}
 
 	gint
 	remove(gchar *name)
@@ -83,11 +69,11 @@ public:
 		gint existing_pc = -1;
 
 		Label label(name);
-		Label *existing = RB_FIND(Table, &head, &label);
+		Label *existing = (Label *)RBTree::find(&label);
 
 		if (existing) {
 			existing_pc = existing->pc;
-			RB_REMOVE(Table, &head, existing);
+			RBTree::remove(existing);
 			delete existing;
 		}
 
@@ -98,7 +84,7 @@ public:
 	find(gchar *name)
 	{
 		Label label(name);
-		Label *existing = RB_FIND(Table, &head, &label);
+		Label *existing = (Label *)RBTree::find(&label);
 
 		return existing ? existing->pc : -1;
 	}
@@ -113,7 +99,7 @@ public:
 		Label *existing;
 		gint existing_pc = -1;
 
-		existing = RB_FIND(Table, &head, label);
+		existing = (Label *)RBTree::find(label);
 		if (existing) {
 			existing_pc = existing->pc;
 			g_free(existing->name);
@@ -123,12 +109,11 @@ public:
 			label->name = NULL;
 			delete label;
 		} else {
-			RB_INSERT(Table, &head, label);
+			RBTree::insert(label);
 		}
 
-#if 0
 		dump();
-#endif
+
 		return existing_pc;
 	}
 
@@ -143,23 +128,21 @@ public:
 	{
 		Label *cur;
 
-		while ((cur = RB_MIN(Table, &head))) {
-			RB_REMOVE(Table, &head, cur);
+		while ((cur = (Label *)RBTree::min())) {
+			RBTree::remove(cur);
 			delete cur;
 		}
 	}
 
-#if 0
 	void
 	dump(void)
 	{
-		Label *cur;
-
-		RB_FOREACH(cur, Table, &head)
+		for (Label *cur = (Label *)RBTree::min();
+		     cur != NULL;
+		     cur = (Label *)cur->next())
 			g_printf("table[\"%s\"] = %d\n", cur->name, cur->pc);
 		g_printf("---END---\n");
 	}
-#endif
 };
 
 static GotoTable table;
