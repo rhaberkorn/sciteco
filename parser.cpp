@@ -1028,7 +1028,7 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 			gint from, to;
 		};
 		/* at most one match per character */
-		Range matched[parameters.to - parameters.from];
+		Range *matched = new Range[parameters.to - parameters.from];
 		gint i = 0;
 
 		while (g_match_info_matches(info)) {
@@ -1045,6 +1045,8 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 			matched_from = matched[i + parameters.count].from;
 			matched_to = matched[i + parameters.count].to;
 		}
+
+		delete matched;
 	}
 
 	g_match_info_free(info);
