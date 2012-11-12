@@ -119,6 +119,9 @@ QRegisterTable::initialize(void)
 		initialize_register((gchar []){q, '\0'});
 	for (gchar q = '0'; q <= '9'; q++)
 		initialize_register((gchar []){q, '\0'});
+
+	/* search string and status register */
+	initialize_register("_");
 }
 
 void

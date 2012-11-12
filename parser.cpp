@@ -22,6 +22,7 @@ namespace States {
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
 	StateInsert		insert;
+	StateSearch		search;
 
 	State *current = &start;
 }
@@ -332,6 +333,7 @@ StateStart::StateStart() : State()
 	transitions['"'] = &States::condcommand;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
+	transitions['S'] = &States::search;
 	transitions['Q'] = &States::getqreginteger;
 	transitions['U'] = &States::setqreginteger;
 	transitions['%'] = &States::increaseqreg;
@@ -507,13 +509,14 @@ StateStart::custom(gchar chr)
 		break;
 
 	case ';': {
+		gint64 v;
 		BEGIN_EXEC(this);
-		/* TODO: search Q-reg */
-		gint64 v = expressions.pop_num_calc();
+
+		v = expressions.pop_num_calc(1, qregisters["_"]->integer);
 		if (eval_colon())
 			v = ~v;
 
-		if (v >= 0) {
+		if (IS_FAILURE(v)) {
 			expressions.discard_args();
 			g_assert(expressions.pop_op() == Expressions::OP_LOOP);
 			expressions.pop_num(); /* pc */
@@ -952,5 +955,129 @@ State *
 StateInsert::done(const gchar *str __attribute__((unused)))
 {
 	/* nothing to be done when done */
+	return &States::start;
+}
+
+void
+StateSearch::initial(void)
+{
+	gint64 v;
+
+	undo.push_var<Parameters>(parameters);
+
+	parameters.dot = editor_msg(SCI_GETCURRENTPOS);
+	v = expressions.pop_num_calc();
+	if (expressions.args()) {
+		/* TODO: optional count argument? */
+		parameters.count = 1;
+		parameters.from = (gint)v;
+		parameters.to = (gint)expressions.pop_num_calc();
+	} else {
+		parameters.count = (gint)v;
+		if (v >= 0) {
+			parameters.from = parameters.dot;
+			parameters.to = editor_msg(SCI_GETLENGTH);
+		} else {
+			parameters.from = 0;
+			parameters.to = parameters.dot;
+		}
+	}
+}
+
+void
+StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
+{
+	static const gint flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
+				  G_REGEX_DOTALL | G_REGEX_RAW;
+
+	QRegister *search_reg = qregisters["_"];
+	GRegex *re;
+	GMatchInfo *info;
+	const gchar *buffer;
+
+	gint matched_from = -1, matched_to = -1;
+
+	undo.push_var<gint64>(search_reg->integer);
+
+	re = g_regex_new(str, (GRegexCompileFlags)flags,
+			 (GRegexMatchFlags)0, NULL);
+	if (!re) {
+		search_reg->integer = FAILURE;
+		return;
+	}
+
+	buffer = (const gchar *)editor_msg(SCI_GETCHARACTERPOINTER);
+	g_regex_match_full(re, buffer, (gssize)parameters.to, parameters.from,
+			   (GRegexMatchFlags)0, &info, NULL);
+
+	if (parameters.count >= 0) {
+		gint count = parameters.count;
+
+		while (g_match_info_matches(info) && --count)
+			g_match_info_next(info, NULL);
+
+		if (!count)
+			/* successful */
+			g_match_info_fetch_pos(info, 0,
+					       &matched_from, &matched_to);
+	} else {
+		/*
+		 * FIXME: use queue, or self-expanding stack
+		 */
+		struct Range {
+			gint from, to;
+		};
+		/* at most one match per character */
+		Range matched[parameters.to - parameters.from];
+		gint i = 0;
+
+		while (g_match_info_matches(info)) {
+			g_match_info_fetch_pos(info, 0,
+					       &matched[i].from,
+					       &matched[i].to);
+
+			g_match_info_next(info, NULL);
+			i++;
+		}
+
+		if (i) {
+			/* successful */
+			matched_from = matched[i + parameters.count].from;
+			matched_to = matched[i + parameters.count].to;
+		}
+	}
+
+	g_match_info_free(info);
+
+	if (matched_from >= 0 && matched_to >= 0) {
+		/* match success */
+		search_reg->integer = SUCCESS;
+
+		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+		editor_msg(SCI_SETSEL, matched_from, matched_to);
+	} else {
+		search_reg->integer = FAILURE;
+	}
+
+	g_regex_unref(re);
+}
+
+State *
+StateSearch::done(const gchar *str)
+{
+	BEGIN_EXEC(&States::start);
+
+	QRegister *search_reg = qregisters["_"];
+
+	if (*str) {
+		undo.push_var<gint>(search_reg->dot);
+		undo.push_msg(SCI_UNDO);
+		search_reg->set_string(str);
+	} else {
+		gchar *search_str = search_reg->get_string();
+		process(search_str, 0);
+		g_free(search_str);
+	}
+
 	return &States::start;
 }

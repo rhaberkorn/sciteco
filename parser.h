@@ -151,6 +151,19 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateSearch : public StateExpectString {
+private:
+	struct Parameters {
+		gint dot;
+		gint from, to;
+		gint count;
+	} parameters;
+
+	void initial(void);
+	void process(const gchar *str, gint new_chars);
+	State *done(const gchar *str);
+};
+
 extern gint macro_pc;
 
 namespace States {
@@ -160,6 +173,7 @@ namespace States {
 	extern StateCondCommand	condcommand;
 	extern StateECommand	ecommand;
 	extern StateInsert	insert;
+	extern StateSearch	search;
 
 	extern State *current;
 }
