@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -42,12 +43,25 @@ message_display(GtkMessageType type, const gchar *fmt, ...)
 	va_list ap;
 	gchar buf[255];
 
-	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget), type);
-
 	va_start(ap, fmt);
 	g_vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
+	switch (type) {
+	case GTK_MESSAGE_ERROR:
+		g_fprintf(stderr, "Error: %s\n", buf);
+		break;
+	case GTK_MESSAGE_WARNING:
+		g_fprintf(stderr, "Warning: %s\n", buf);
+		break;
+	case GTK_MESSAGE_INFO:
+		g_printf("Info: %s\n", buf);
+		break;
+	default:
+		g_printf("%s\n", buf);
+	}
+
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget), type);
 	gtk_label_set_text(GTK_LABEL(message_widget), buf);
 }
 
@@ -210,6 +224,11 @@ main(int argc, char **argv)
 	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
 		if (!file_execute(mung_file))
 			exit(EXIT_FAILURE);
+		/* FIXME: make quit immediate in commandline mode (non-UNDO)? */
+		if (quit_requested) {
+			/* FIXME */
+			exit(EXIT_SUCCESS);
+		}
 	}
 	g_free(mung_file);
 
