@@ -412,6 +412,8 @@ StateStart::custom(gchar chr)
 	case '(':
 		BEGIN_EXEC(this);
 		if (expressions.num_sign < 0) {
+			expressions.set_num_sign(1);
+			expressions.eval();
 			expressions.push(-1);
 			expressions.push_calc(Expressions::OP_MUL);
 		}

@@ -28,6 +28,11 @@ Expressions::push(gint64 number)
 
 	push(OP_NUMBER);
 
+	if (num_sign < 0) {
+		set_num_sign(1);
+		number *= -1;
+	}
+
 	numbers.undo_pop();
 	return numbers.push(number);
 }
@@ -61,7 +66,7 @@ Expressions::add_digit(gchar digit)
 {
 	gint64 n = args() > 0 ? pop_num() : 0;
 
-	return push(n*radix + num_sign*(digit - '0'));
+	return push(n*radix + (n < 0 ? -1 : 1)*(digit - '0'));
 }
 
 Expressions::Operator
@@ -106,11 +111,7 @@ Expressions::calc(void)
 	gint64 vleft = pop_num();
 
 	switch (op) {
-	case OP_POW:
-		result = 1;
-		while (vright--)
-			result *= vleft;
-		break;
+	case OP_POW: for (result = 1; vright--; result *= vleft); break;
 	case OP_MUL: result = vleft * vright; break;
 	case OP_DIV: result = vleft / vright; break;
 	case OP_MOD: result = vleft % vright; break;
@@ -129,14 +130,11 @@ Expressions::calc(void)
 void
 Expressions::eval(bool pop_brace)
 {
-	if (numbers.items() < 2)
-		return;
-
 	for (;;) {
 		gint n = first_op();
 		Operator op;
 
-		if (!n)
+		if (n < 2)
 			break;
 
 		op = operators.peek(n);
