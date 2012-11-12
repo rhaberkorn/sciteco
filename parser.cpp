@@ -454,11 +454,12 @@ StateStart::custom(gchar chr)
 	 * control structures (loops)
 	 */
 	case '<':
-		if (mode == MODE_PARSE_ONLY) {
+		if (mode == MODE_PARSE_ONLY_LOOP) {
 			undo.push_var<gint>(nest_level);
 			nest_level++;
 			return this;
 		}
+		BEGIN_EXEC(this);
 
 		expressions.eval();
 		if (!expressions.args())
@@ -470,7 +471,7 @@ StateStart::custom(gchar chr)
 
 			/* skip to end of loop */
 			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY;
+			mode = MODE_PARSE_ONLY_LOOP;
 		} else {
 			expressions.push(macro_pc);
 			expressions.push(Expressions::OP_LOOP);
@@ -478,7 +479,7 @@ StateStart::custom(gchar chr)
 		break;
 
 	case '>':
-		if (mode == MODE_PARSE_ONLY) {
+		if (mode == MODE_PARSE_ONLY_LOOP) {
 			if (!nest_level) {
 				undo.push_var<Mode>(mode);
 				mode = MODE_NORMAL;
@@ -487,6 +488,7 @@ StateStart::custom(gchar chr)
 				nest_level--;
 			}
 		} else {
+			BEGIN_EXEC(this);
 			gint64 loop_pc, loop_cnt;
 
 			expressions.discard_args();
@@ -519,7 +521,7 @@ StateStart::custom(gchar chr)
 
 			/* skip to end of loop */
 			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY;
+			mode = MODE_PARSE_ONLY_LOOP;
 		}
 		break;
 	}
@@ -528,21 +530,22 @@ StateStart::custom(gchar chr)
 	 * control structures (conditionals)
 	 */
 	case '|':
-		if (mode == MODE_PARSE_ONLY) {
+		if (mode == MODE_PARSE_ONLY_COND) {
 			if (!skip_else && !nest_level) {
 				undo.push_var<Mode>(mode);
 				mode = MODE_NORMAL;
 			}
 			return this;
 		}
+		BEGIN_EXEC(this);
 
 		/* skip to end of conditional; skip ELSE-part */
 		undo.push_var<Mode>(mode);
-		mode = MODE_PARSE_ONLY;
+		mode = MODE_PARSE_ONLY_COND;
 		break;
 
 	case '\'':
-		if (mode == MODE_NORMAL)
+		if (mode != MODE_PARSE_ONLY_COND)
 			break;
 
 		if (!nest_level) {
@@ -561,8 +564,8 @@ StateStart::custom(gchar chr)
 	 */
 	case '@':
 		/*
-		 * @ modifier has syntactic significance so set it even
-		 * in PARSE_ONLY mode
+		 * @ modifier has syntactic significance, so set it even
+		 * in PARSE_ONLY* modes
 		 */
 		undo.push_var<bool>(Modifiers::at);
 		Modifiers::at = true;
@@ -696,7 +699,7 @@ StateFlowCommand::custom(gchar chr)
 		} else {
 			/* skip to end of loop */
 			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY;
+			mode = MODE_PARSE_ONLY_LOOP;
 		}
 		break;
 	}
@@ -708,7 +711,7 @@ StateFlowCommand::custom(gchar chr)
 		BEGIN_EXEC(&States::start);
 		/* skip to end of conditional */
 		undo.push_var<Mode>(mode);
-		mode = MODE_PARSE_ONLY;
+		mode = MODE_PARSE_ONLY_COND;
 		undo.push_var<bool>(skip_else);
 		skip_else = true;
 		break;
@@ -717,7 +720,7 @@ StateFlowCommand::custom(gchar chr)
 		BEGIN_EXEC(&States::start);
 		/* skip to ELSE-part or end of conditional */
 		undo.push_var<Mode>(mode);
-		mode = MODE_PARSE_ONLY;
+		mode = MODE_PARSE_ONLY_COND;
 		break;
 
 	default:
@@ -738,11 +741,16 @@ StateCondCommand::custom(gchar chr)
 	gint64 value;
 	bool result;
 
-	if (mode == MODE_PARSE_ONLY) {
+	switch (mode) {
+	case MODE_PARSE_ONLY_COND:
 		undo.push_var<gint>(nest_level);
 		nest_level++;
-	} else {
+		break;
+	case MODE_NORMAL:
 		value = expressions.pop_num_calc();
+		break;
+	default:
+		break;
 	}
 
 	switch (g_ascii_toupper(chr)) {
@@ -801,7 +809,7 @@ StateCondCommand::custom(gchar chr)
 	if (!result) {
 		/* skip to ELSE-part or end of conditional */
 		undo.push_var<Mode>(mode);
-		mode = MODE_PARSE_ONLY;
+		mode = MODE_PARSE_ONLY_COND;
 	}
 
 	return &States::start;

@@ -166,11 +166,13 @@ namespace States {
 
 extern enum Mode {
 	MODE_NORMAL = 0,
-	MODE_PARSE_ONLY
+	MODE_PARSE_ONLY_GOTO,
+	MODE_PARSE_ONLY_LOOP,
+	MODE_PARSE_ONLY_COND
 } mode;
 
 #define BEGIN_EXEC(STATE) G_STMT_START {	\
-	if (mode != MODE_NORMAL)		\
+	if (mode > MODE_NORMAL)			\
 		return STATE;			\
 } G_STMT_END
 

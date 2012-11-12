@@ -223,7 +223,7 @@ StateGotoCmd::done(const gchar *str)
 			undo.push_str(skip_label);
 			skip_label = g_strdup(labels[value-1]);
 			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY;
+			mode = MODE_PARSE_ONLY_GOTO;
 		}
 	}
 
