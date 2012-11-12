@@ -560,7 +560,10 @@ StateStart::custom(gchar chr)
 	 * modifiers
 	 */
 	case '@':
-		BEGIN_EXEC(this);
+		/*
+		 * @ modifier has syntactic significance so set it even
+		 * in PARSE_ONLY mode
+		 */
 		undo.push_var<bool>(Modifiers::at);
 		Modifiers::at = true;
 		break;
