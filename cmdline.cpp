@@ -232,13 +232,19 @@ filename_complete(const gchar *filename, gchar completed)
 		     file != NULL;
 		     file = g_list_next(file)) {
 			GtkInfoPopupFileType type;
+			gboolean in_buffer = FALSE;
 
-			type = filename_is_dir((gchar *)file->data)
-					? GTK_INFO_POPUP_DIRECTORY
-					: GTK_INFO_POPUP_FILE;
+			if (filename_is_dir((gchar *)file->data)) {
+				type = GTK_INFO_POPUP_DIRECTORY;
+			} else {
+				type = GTK_INFO_POPUP_FILE;
+				/* FIXME: inefficient */
+				in_buffer = ring.find((gchar *)file->data)
+					    != NULL;
+			}
 			gtk_info_popup_add_filename(filename_popup,
 						    type, (gchar *)file->data,
-						    FALSE);
+						    in_buffer);
 		}
 
 		gtk_widget_show(GTK_WIDGET(filename_popup));
