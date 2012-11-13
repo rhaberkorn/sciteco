@@ -1021,15 +1021,13 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 			g_match_info_fetch_pos(info, 0,
 					       &matched_from, &matched_to);
 	} else {
-		/*
-		 * FIXME: use queue, or self-expanding stack
-		 */
+		/* only keep the last `count' matches, in a circular stack */
 		struct Range {
 			gint from, to;
 		};
-		/* at most one match per character */
-		Range *matched = new Range[parameters.to - parameters.from];
-		gint i = 0;
+		gint count = -parameters.count;
+		Range *matched = new Range[count];
+		gint matched_total = 0, i = 0;
 
 		while (g_match_info_matches(info)) {
 			g_match_info_fetch_pos(info, 0,
@@ -1037,13 +1035,13 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 					       &matched[i].to);
 
 			g_match_info_next(info, NULL);
-			i++;
+			i = ++matched_total % count;
 		}
 
-		if (i) {
-			/* successful */
-			matched_from = matched[i + parameters.count].from;
-			matched_to = matched[i + parameters.count].to;
+		if (matched_total >= count) {
+			/* successful, i points to stack bottom */
+			matched_from = matched[i].from;
+			matched_to = matched[i].to;
 		}
 
 		delete matched;
