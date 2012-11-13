@@ -1290,5 +1290,8 @@ StateSearch::done(const gchar *str)
 		g_free(search_str);
 	}
 
+	if (eval_colon())
+		expressions.push(search_reg->integer);
+
 	return &States::start;
 }
