@@ -264,10 +264,16 @@ Ring::save(const gchar *filename)
 				 buffer, size, NULL))
 		return false;
 
-	if (filename) {
-		undo.push_str(current->filename);
-		current->set_filename(filename);
-	}
+	/*
+	 * FIXME: necessary also if the filename was not specified but the file
+	 * is (was) new, in order to canonicalize the filename.
+	 * May be circumvented by cananonicalizing without requiring the file
+	 * name to exist (like readlink -f)
+	 */
+	//if (filename) {
+	undo.push_str(current->filename);
+	current->set_filename(filename ? : current->filename);
+	//}
 
 	return true;
 }
@@ -301,6 +307,7 @@ Ring::~Ring()
 gchar *
 get_absolute_path(const gchar *path)
 {
+	/* FIXME: see Unix implementation */
 	return path ? g_file_read_link(path, NULL) : NULL;
 }
 
@@ -309,16 +316,24 @@ get_absolute_path(const gchar *path)
 gchar *
 get_absolute_path(const gchar *path)
 {
+	gchar buf[PATH_MAX];
 	gchar *resolved;
 
 	if (!path)
 		return NULL;
 
-	resolved = (gchar *)g_malloc(PATH_MAX);
-	if (!realpath(path, resolved)) {
-		g_free(resolved);
-		return NULL;
+	if (!realpath(path, buf)) {
+		if (g_path_is_absolute(path)) {
+			resolved = g_strdup(path);
+		} else {
+			gchar *cwd = g_get_current_dir();
+			resolved = g_build_filename(cwd, path, NULL);
+			g_free(cwd);
+		}
+	} else {
+		resolved = g_strdup(buf);
 	}
+
 	return resolved;
 }
 

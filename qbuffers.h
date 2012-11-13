@@ -177,8 +177,9 @@ public:
 	inline void
 	set_filename(const gchar *filename)
 	{
+		gchar *resolved = get_absolute_path(filename);
 		g_free(Buffer::filename);
-		Buffer::filename = get_absolute_path(filename);
+		Buffer::filename = resolved;
 	}
 
 	inline void
