@@ -190,6 +190,22 @@ Buffer::close(void)
 				"Removed unnamed file from the ring.");
 }
 
+void
+Ring::UndoTokenEdit::run(void)
+{
+	/*
+	 * assumes that buffer still has correct prev/next
+	 * pointers
+	 */
+	*buffer->buffers.le_prev = buffer;
+	if (buffer->next())
+		buffer->next()->buffers.le_prev = &buffer->next();
+
+	ring->current = buffer;
+	buffer->edit();
+	buffer = NULL;
+}
+
 Buffer *
 Ring::find(const gchar *filename)
 {
@@ -283,12 +299,18 @@ Ring::close(void)
 {
 	Buffer *buffer = current;
 
+	buffer->dot = editor_msg(SCI_GETCURRENTPOS);
 	buffer->close();
 	current = buffer->next() ? : first();
-	if (!current)
-		edit(NULL);
+	/* transfer responsibility to UndoToken object */
+	undo.push(new UndoTokenEdit(this, buffer));
 
-	delete buffer;
+	if (current) {
+		current->edit();
+	} else {
+		edit(NULL);
+		undo_close();
+	}
 }
 
 Ring::~Ring()

@@ -143,6 +143,7 @@ class Buffer {
 		run(void)
 		{
 			buffer->close();
+			/* NOTE: the buffer is NOT deleted on Token destruction */
 			delete buffer;
 		}
 	};
@@ -168,7 +169,7 @@ public:
 		g_free(filename);
 	}
 
-	inline Buffer *
+	inline Buffer *&
 	next(void)
 	{
 		return LIST_NEXT(this, buffers);
@@ -206,6 +207,26 @@ public:
 };
 
 extern class Ring {
+	/*
+	 * Emitted after a buffer close
+	 * The pointer is the only remaining reference to the buffer!
+	 */
+	class UndoTokenEdit : public UndoToken {
+		Ring	*ring;
+		Buffer	*buffer;
+
+	public:
+		UndoTokenEdit(Ring *_ring, Buffer *_buffer)
+			     : UndoToken(), ring(_ring), buffer(_buffer) {}
+		~UndoTokenEdit()
+		{
+			if (buffer)
+				delete buffer;
+		}
+
+		void run(void);
+	};
+
 	LIST_HEAD(Head, Buffer) head;
 
 public:

@@ -957,6 +957,13 @@ State *
 StateECommand::custom(gchar chr)
 {
 	switch (g_ascii_toupper(chr)) {
+	case 'F':
+		BEGIN_EXEC(&States::start);
+		if (!ring.current)
+			return NULL; /* FIXME */
+		ring.close();
+		break;
+
 	case 'X':
 		BEGIN_EXEC(&States::start);
 		undo.push_var<bool>(quit_requested);
