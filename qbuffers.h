@@ -90,6 +90,11 @@ public:
 		QRegister reg(name);
 		return (QRegister *)find(&reg);
 	}
+	inline QRegister *
+	operator [](gchar chr)
+	{
+		return operator []((gchar []){chr, '\0'});
+	}
 
 	void edit(QRegister *reg);
 	inline QRegister *

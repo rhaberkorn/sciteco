@@ -35,4 +35,23 @@ sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
 /* TECO uses only lower 7 bits for commands */
 #define MAX_TRANSITIONS	127
 
+namespace String {
+
+static inline void
+append(gchar *&str1, const gchar *str2)
+{
+	/* FIXME: optimize */
+	gchar *new_str = g_strconcat(str1 ? : "", str2, NULL);
+	g_free(str1);
+	str1 = new_str;
+}
+
+static inline void
+append(gchar *&str, gchar chr)
+{
+	append(str, (gchar []){chr, '\0'});
+}
+
+} /* namespace String */
+
 #endif

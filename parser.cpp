@@ -223,7 +223,7 @@ StateExpectString::machine_input(gchar chr)
 		Machine::State state = machine.state;
 		machine.state = Machine::STATE_START;
 
-		reg = qregisters[(gchar []){g_ascii_toupper(chr), '\0'}];
+		reg = qregisters[g_ascii_toupper(chr)];
 		if (!reg)
 			return NULL;
 
@@ -313,7 +313,7 @@ StateExpectQReg::StateExpectQReg() : State()
 State *
 StateExpectQReg::custom(gchar chr)
 {
-	QRegister *reg = qregisters[(gchar []){g_ascii_toupper(chr), '\0'}];
+	QRegister *reg = qregisters[g_ascii_toupper(chr)];
 
 	if (!reg)
 		return NULL;
@@ -984,6 +984,207 @@ StateSearch::initial(void)
 	}
 }
 
+static inline const gchar *
+regexp_escape_chr(gchar chr)
+{
+	static gchar escaped[3] = {'\\', '\0', '\0'};
+
+	escaped[1] = chr;
+	return g_ascii_isalnum(chr) ? escaped + 1 : escaped;
+}
+
+gchar *
+StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
+			  bool escape_default)
+{
+	while (*pattern) {
+		QRegister *reg;
+		gchar *temp, *temp2;
+
+		switch (state) {
+		case STATE_START:
+			switch (*pattern) {
+			case CTL_KEY('S'):
+				return g_strdup("[:^alnum:]");
+			case CTL_KEY('E'):
+				state = STATE_CTL_E;
+				break;
+			default:
+				temp = escape_default
+					? g_strdup(regexp_escape_chr(*pattern))
+					: NULL;
+				return temp;
+			}
+			break;
+
+		case STATE_CTL_E:
+			switch (g_ascii_toupper(*pattern)) {
+			case 'A':
+				state = STATE_START;
+				return g_strdup("[:alpha:]");
+			/* same as <CTRL/S> */
+			case 'B':
+				state = STATE_START;
+				return g_strdup("[:^alnum:]");
+			case 'C':
+				state = STATE_START;
+				return g_strdup("[:alnum:].$");
+			case 'D':
+				state = STATE_START;
+				return g_strdup("[:digit:]");
+			case 'G':
+				state = STATE_ANYQ;
+				break;
+			case 'L':
+				state = STATE_START;
+				return g_strdup("\r\n\v\f");
+			case 'R':
+				state = STATE_START;
+				return g_strdup("[:alnum:]");
+			case 'V':
+				state = STATE_START;
+				return g_strdup("[:lower:]");
+			case 'W':
+				state = STATE_START;
+				return g_strdup("[:upper:]");
+			default:
+				return NULL;
+			}
+			break;
+
+		case STATE_ANYQ:
+			/* FIXME: Q-Register spec might get more complicated */
+			reg = qregisters[g_ascii_toupper(*pattern)];
+			if (!reg)
+				return NULL;
+
+			temp = reg->get_string();
+			temp2 = g_regex_escape_string(temp, -1);
+			g_free(temp);
+			state = STATE_START;
+			return temp2;
+
+		default:
+			return NULL;
+		}
+
+		pattern++;
+	}
+
+	return NULL;
+}
+
+gchar *
+StateSearch::pattern2regexp(const gchar *&pattern, bool single_expr)
+{
+	MatchState state = STATE_START;
+	gchar *re = NULL;
+
+	while (*pattern) {
+		gchar *new_re, *temp;
+
+		temp = class2regexp(state, pattern);
+		if (temp) {
+			new_re = g_strconcat(re ? : "", "[", temp, "]", NULL);
+			g_free(temp);
+			g_free(re);
+			re = new_re;
+
+			goto next;
+		}
+		if (!*pattern)
+			break;
+
+		switch (state) {
+		case STATE_START:
+			switch (*pattern) {
+			case CTL_KEY('X'): String::append(re, "."); break;
+			case CTL_KEY('N'): state = STATE_NOT; break;
+			default:
+				String::append(re, regexp_escape_chr(*pattern));
+			}
+			break;
+
+		case STATE_NOT:
+			state = STATE_START;
+			temp = class2regexp(state, pattern, true);
+			if (!temp)
+				goto error;
+			new_re = g_strconcat(re ? : "", "[^", temp, "]", NULL);
+			g_free(temp);
+			g_free(re);
+			re = new_re;
+			g_assert(state == STATE_START);
+			break;
+
+		case STATE_CTL_E:
+			state = STATE_START;
+			switch (g_ascii_toupper(*pattern)) {
+			case 'M': state = STATE_MANY; break;
+			case 'S': String::append(re, "\\s+"); break;
+			/* same as <CTRL/X> */
+			case 'X': String::append(re, "."); break;
+			/* TODO: ASCII octal code!? */
+			case '[':
+				String::append(re, "(");
+				state = STATE_ALT;
+				break;
+			default:
+				goto error;
+			}
+			break;
+
+		case STATE_MANY:
+			temp = pattern2regexp(pattern, true);
+			if (!temp)
+				goto error;
+			new_re = g_strconcat(re ? : "", "(", temp, ")+", NULL);
+			g_free(temp);
+			g_free(re);
+			re = new_re;
+			state = STATE_START;
+			break;
+
+		case STATE_ALT:
+			switch (*pattern) {
+			case ',':
+				String::append(re, "|");
+				break;
+			case ']':
+				String::append(re, ")");
+				state = STATE_START;
+				break;
+			default:
+				temp = pattern2regexp(pattern, true);
+				if (!temp)
+					goto error;
+				String::append(re, temp);
+				g_free(temp);
+			}
+			break;
+
+		default:
+			/* shouldn't happen */
+			g_assert(true);
+		}
+
+next:
+		if (single_expr && state == STATE_START)
+			return re;
+
+		pattern++;
+	}
+
+	if (state == STATE_ALT)
+		String::append(re, ")");
+
+	return re;
+
+error:
+	g_free(re);
+	return NULL;
+}
+
 void
 StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 {
@@ -991,6 +1192,7 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 				  G_REGEX_DOTALL | G_REGEX_RAW;
 
 	QRegister *search_reg = qregisters["_"];
+	gchar *re_pattern;
 	GRegex *re;
 	GMatchInfo *info;
 	const gchar *buffer;
@@ -999,8 +1201,18 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 
 	undo.push_var<gint64>(search_reg->integer);
 
-	re = g_regex_new(str, (GRegexCompileFlags)flags,
+	/* NOTE: pattern2regexp() modifies str pointer */
+	re_pattern = pattern2regexp(str);
+#ifdef DEBUG
+	g_printf("REGEXP: %s\n", re_pattern);
+#endif
+	if (!re_pattern) {
+		search_reg->integer = FAILURE;
+		return;
+	}
+	re = g_regex_new(re_pattern, (GRegexCompileFlags)flags,
 			 (GRegexMatchFlags)0, NULL);
+	g_free(re_pattern);
 	if (!re) {
 		search_reg->integer = FAILURE;
 		return;
@@ -1074,7 +1286,7 @@ StateSearch::done(const gchar *str)
 		search_reg->set_string(str);
 	} else {
 		gchar *search_str = search_reg->get_string();
-		process(search_str, 0);
+		process(search_str, 0 /* unused */);
 		g_free(search_str);
 	}
 

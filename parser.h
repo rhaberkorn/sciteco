@@ -159,6 +159,19 @@ private:
 		gint count;
 	} parameters;
 
+	enum MatchState {
+		STATE_START,
+		STATE_NOT,
+		STATE_CTL_E,
+		STATE_ANYQ,
+		STATE_MANY,
+		STATE_ALT
+	};
+
+	gchar *class2regexp(MatchState &state, const gchar *&pattern,
+			    bool escape_default = false);
+	gchar *pattern2regexp(const gchar *&pattern, bool single_expr = false);
+
 	void initial(void);
 	void process(const gchar *str, gint new_chars);
 	State *done(const gchar *str);
