@@ -988,7 +988,7 @@ StateSearch::initial(void)
 static inline const gchar *
 regexp_escape_chr(gchar chr)
 {
-	static gchar escaped[3] = {'\\', '\0', '\0'};
+	static gchar escaped[] = {'\\', '\0', '\0'};
 
 	escaped[1] = chr;
 	return g_ascii_isalnum(chr) ? escaped + 1 : escaped;
