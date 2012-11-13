@@ -358,6 +358,32 @@ StateStart::move_lines(gint64 n)
 	undo.push_msg(SCI_GOTOPOS, pos);
 }
 
+void
+StateStart::delete_words(gint64 n)
+{
+	if (!n)
+		return;
+
+	undo.push_msg(SCI_UNDO);
+	editor_msg(SCI_BEGINUNDOACTION);
+	/*
+	 * FIXME: would be nice to do this with constant amount of
+	 * editor messages. E.g. by using custom algorithm accessing
+	 * the internal document buffer.
+	 */
+	if (n > 0) {
+		while (n--)
+			editor_msg(SCI_DELWORDRIGHTEND);
+	} else {
+		while (n++) {
+			//editor_msg(SCI_DELWORDLEFTEND);
+			editor_msg(SCI_WORDLEFTEND);
+			editor_msg(SCI_DELWORDRIGHTEND);
+		}
+	}
+	editor_msg(SCI_ENDUNDOACTION);
+}
+
 State *
 StateStart::custom(gchar chr)
 {
@@ -607,6 +633,36 @@ StateStart::custom(gchar chr)
 	case 'B':
 		BEGIN_EXEC(this);
 		move_lines(-expressions.pop_num_calc());
+		break;
+
+	case 'W': {
+		BEGIN_EXEC(this);
+		gint64 words = expressions.pop_num_calc();
+
+		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+		/*
+		 * FIXME: would be nice to do this with constant amount of
+		 * editor messages. E.g. by using custom algorithm accessing
+		 * the internal document buffer.
+		 */
+		if (words >= 0) {
+			while (words--)
+				editor_msg(SCI_WORDRIGHTEND);
+		} else {
+			while (words++)
+				editor_msg(SCI_WORDLEFTEND);
+		}
+		break;
+	}
+
+	case 'V':
+		BEGIN_EXEC(this);
+		delete_words(expressions.pop_num_calc());
+		break;
+
+	case 'Y':
+		BEGIN_EXEC(this);
+		delete_words(-expressions.pop_num_calc());
 		break;
 
 	case '=':
