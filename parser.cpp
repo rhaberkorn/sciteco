@@ -1199,7 +1199,10 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 
 	gint matched_from = -1, matched_to = -1;
 
+	undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+
 	undo.push_var<gint64>(search_reg->integer);
+	search_reg->integer = FAILURE;
 
 	/* NOTE: pattern2regexp() modifies str pointer */
 	re_pattern = pattern2regexp(str);
@@ -1207,14 +1210,14 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 	g_printf("REGEXP: %s\n", re_pattern);
 #endif
 	if (!re_pattern) {
-		search_reg->integer = FAILURE;
+		editor_msg(SCI_GOTOPOS, parameters.dot);
 		return;
 	}
 	re = g_regex_new(re_pattern, (GRegexCompileFlags)flags,
 			 (GRegexMatchFlags)0, NULL);
 	g_free(re_pattern);
 	if (!re) {
-		search_reg->integer = FAILURE;
+		editor_msg(SCI_GOTOPOS, parameters.dot);
 		return;
 	}
 
@@ -1264,11 +1267,9 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 	if (matched_from >= 0 && matched_to >= 0) {
 		/* match success */
 		search_reg->integer = SUCCESS;
-
-		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
 		editor_msg(SCI_SETSEL, matched_from, matched_to);
 	} else {
-		search_reg->integer = FAILURE;
+		editor_msg(SCI_GOTOPOS, parameters.dot);
 	}
 
 	g_regex_unref(re);
