@@ -892,7 +892,8 @@ StateControl::custom(gchar chr)
 StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
-	transitions['B'] = &States::file;
+	transitions['B'] = &States::editfile;
+	transitions['W'] = &States::savefile;
 	transitions['Q'] = &States::eqcommand;
 }
 

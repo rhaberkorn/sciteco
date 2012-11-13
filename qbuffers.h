@@ -14,6 +14,20 @@
 #include "rbtree.h"
 #include "parser.h"
 
+/*
+ * Auxiliary functions
+ */
+static inline bool
+is_glob_pattern(const gchar *str)
+{
+	return strchr(str, '*') || strchr(str, '?');
+}
+
+gchar *get_absolute_path(const gchar *path);
+
+/*
+ * Classes
+ */
 class QRegister : public RBTree::RBEntry {
 public:
 	gchar *name;
@@ -164,7 +178,7 @@ public:
 	set_filename(const gchar *filename)
 	{
 		g_free(Buffer::filename);
-		Buffer::filename = filename ? g_strdup(filename) : NULL;
+		Buffer::filename = get_absolute_path(filename);
 	}
 
 	inline void
@@ -220,6 +234,8 @@ public:
 		current->undo_edit();
 	}
 
+	bool save(const gchar *filename);
+
 	void close(void);
 	inline void
 	undo_close(void)
@@ -232,11 +248,16 @@ public:
  * Command states
  */
 
-class StateFile : public StateExpectString {
+class StateEditFile : public StateExpectString {
 private:
 	void do_edit(const gchar *filename);
 
 	void initial(void);
+	State *done(const gchar *str);
+};
+
+class StateSaveFile : public StateExpectString {
+private:
 	State *done(const gchar *str);
 };
 
@@ -286,7 +307,9 @@ private:
 };
 
 namespace States {
-	extern StateFile		file;
+	extern StateEditFile		editfile;
+	extern StateSaveFile		savefile;
+
 	extern StateEQCommand		eqcommand;
 	extern StateLoadQReg		loadqreg;
 	extern StateCtlUCommand		ctlucommand;
@@ -296,15 +319,6 @@ namespace States {
 	extern StateIncreaseQReg	increaseqreg;
 	extern StateMacro		macro;
 	extern StateCopyToQReg		copytoqreg;
-}
-
-/*
- * Auxiliary functions
- */
-static inline bool
-is_glob_pattern(const gchar *str)
-{
-	return strchr(str, '*') || strchr(str, '?');
 }
 
 #endif

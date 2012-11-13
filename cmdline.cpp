@@ -100,7 +100,8 @@ process_edit_cmd(gchar key)
 	}
 
 	case '\t':
-		if (States::current == &States::file ||
+		if (States::current == &States::editfile ||
+		    States::current == &States::savefile ||
 		    States::current == &States::loadqreg) {
 			gchar *new_chars = filename_complete(strings[0], escape_char);
 			if (new_chars)

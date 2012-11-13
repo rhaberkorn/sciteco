@@ -1,5 +1,7 @@
-#include <bsd/sys/queue.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
+#include <bsd/sys/queue.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -16,7 +18,9 @@
 #include "qbuffers.h"
 
 namespace States {
-	StateFile		file;
+	StateEditFile		editfile;
+	StateSaveFile		savefile;
+
 	StateEQCommand		eqcommand;
 	StateLoadQReg		loadqreg;
 	StateCtlUCommand	ctlucommand;
@@ -189,13 +193,15 @@ Buffer::close(void)
 Buffer *
 Ring::find(const gchar *filename)
 {
+	gchar *resolved = get_absolute_path(filename);
 	Buffer *cur;
 
 	LIST_FOREACH(cur, &head, buffers)
-		if (!g_strcmp0(cur->filename, filename))
-			return cur;
+		if (!g_strcmp0(cur->filename, resolved))
+			break;
 
-	return NULL;
+	g_free(resolved);
+	return cur;
 }
 
 bool
@@ -239,6 +245,33 @@ Ring::edit(const gchar *filename)
 	return new_in_ring;
 }
 
+bool
+Ring::save(const gchar *filename)
+{
+	const gchar *buffer;
+	gssize size;
+
+	if (!current)
+		return false;
+
+	if (!filename && !current->filename)
+		return false;
+
+	buffer = (const gchar *)editor_msg(SCI_GETCHARACTERPOINTER);
+	size = editor_msg(SCI_GETLENGTH);
+
+	if (!g_file_set_contents(filename ? : current->filename,
+				 buffer, size, NULL))
+		return false;
+
+	if (filename) {
+		undo.push_str(current->filename);
+		current->set_filename(filename);
+	}
+
+	return true;
+}
+
 void
 Ring::close(void)
 {
@@ -261,11 +294,42 @@ Ring::~Ring()
 }
 
 /*
+ * Auxiliary functions
+ */
+#ifdef __WIN32__
+
+gchar *
+get_absolute_path(const gchar *path)
+{
+	return path ? g_file_read_link(path, NULL) : NULL;
+}
+
+#else
+
+gchar *
+get_absolute_path(const gchar *path)
+{
+	gchar *resolved;
+
+	if (!path)
+		return NULL;
+
+	resolved = (gchar *)g_malloc(PATH_MAX);
+	if (!realpath(path, resolved)) {
+		g_free(resolved);
+		return NULL;
+	}
+	return resolved;
+}
+
+#endif
+
+/*
  * Command states
  */
 
 void
-StateFile::do_edit(const gchar *filename)
+StateEditFile::do_edit(const gchar *filename)
 {
 	if (ring.current)
 		ring.undo_edit();
@@ -276,7 +340,7 @@ StateFile::do_edit(const gchar *filename)
 }
 
 void
-StateFile::initial(void)
+StateEditFile::initial(void)
 {
 	gint64 id = expressions.pop_num_calc(1, -1);
 
@@ -292,7 +356,7 @@ StateFile::initial(void)
 }
 
 State *
-StateFile::done(const gchar *str)
+StateEditFile::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -331,6 +395,17 @@ StateFile::done(const gchar *str)
 	} else {
 		do_edit(*str ? str : NULL);
 	}
+
+	return &States::start;
+}
+
+State *
+StateSaveFile::done(const gchar *str)
+{
+	BEGIN_EXEC(&States::start);
+
+	if (!ring.save(*str ? str : NULL))
+		return NULL;
 
 	return &States::start;
 }
