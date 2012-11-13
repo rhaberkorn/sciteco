@@ -48,6 +48,7 @@ public:
 	}
 
 	void set_string(const gchar *str);
+	void undo_set_string(void);
 	gchar *get_string(void);
 
 	inline void

@@ -1070,8 +1070,7 @@ StateSearch::done(const gchar *str)
 	QRegister *search_reg = qregisters["_"];
 
 	if (*str) {
-		undo.push_var<gint>(search_reg->dot);
-		undo.push_msg(SCI_UNDO);
+		search_reg->undo_set_string();
 		search_reg->set_string(str);
 	} else {
 		gchar *search_str = search_reg->get_string();

@@ -33,6 +33,7 @@ QRegisterTable qregisters;
 
 static QRegister *register_argument = NULL;
 
+/* FIXME: clean up current_save_dot() usage */
 static inline void
 current_save_dot(void)
 {
@@ -56,7 +57,6 @@ current_edit(void)
 void
 QRegister::set_string(const gchar *str)
 {
-	current_save_dot();
 	edit();
 	dot = 0;
 
@@ -65,6 +65,21 @@ QRegister::set_string(const gchar *str)
 	editor_msg(SCI_ENDUNDOACTION);
 
 	current_edit();
+}
+
+void
+QRegister::undo_set_string(void)
+{
+	current_save_dot();
+	if (ring.current)
+		ring.current->undo_edit();
+	else if (qregisters.current)
+		qregisters.current->undo_edit();
+
+	undo.push_var<gint>(dot);
+	undo.push_msg(SCI_UNDO);
+
+	undo_edit();
 }
 
 gchar *
@@ -361,8 +376,7 @@ StateSetQRegString::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
-	undo.push_var<gint>(register_argument->dot);
-	undo.push_msg(SCI_UNDO);
+	register_argument->undo_set_string();
 	register_argument->set_string(str);
 
 	return &States::start;
@@ -461,8 +475,7 @@ StateCopyToQReg::got_register(QRegister *reg)
 	tr.lpstrText = (char *)g_malloc(len + 1);
 	editor_msg(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
 
-	undo.push_var<gint>(reg->dot);
-	undo.push_msg(SCI_UNDO);
+	reg->undo_set_string();
 	reg->set_string(tr.lpstrText);
 	g_free(tr.lpstrText);
 
