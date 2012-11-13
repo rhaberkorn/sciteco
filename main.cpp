@@ -76,8 +76,6 @@ static gboolean
 cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		    gpointer user_data __attribute__((unused)))
 {
-	gchar key = '\0';
-
 #ifdef DEBUG
 	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
 		 event->string, *event->string,
@@ -86,17 +84,28 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 
 	switch (event->keyval) {
 	case GDK_BackSpace:
-		key = '\b';
+		cmdline_keypress('\b');
 		break;
 	case GDK_Tab:
-		key = '\t';
+		cmdline_keypress('\t');
+		break;
+	case GDK_Return:
+		switch (editor_msg(SCI_GETEOLMODE)) {
+		case SC_EOL_CR:
+			cmdline_keypress('\r');
+			break;
+		case SC_EOL_CRLF:
+			cmdline_keypress('\r');
+			/* fall through */
+		case SC_EOL_LF:
+		default:
+			cmdline_keypress('\n');
+		}
 		break;
 	default:
-		key = *event->string;
+		if (*event->string)
+			cmdline_keypress(*event->string);
 	}
-
-	if (key)
-		cmdline_keypress(key);
 
 	return TRUE;
 }
