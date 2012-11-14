@@ -1455,7 +1455,7 @@ StateSearch::done(const gchar *str)
 	if (eval_colon())
 		expressions.push(search_reg->integer);
 	else if (IS_FAILURE(search_reg->integer) &&
-		 !expressions.find_op(Expressions::OP_LOOP) /* in loop */)
+		 !expressions.find_op(Expressions::OP_LOOP) /* not in loop */)
 		message_display(GTK_MESSAGE_ERROR, "Search string not found!");
 
 	return &States::start;
