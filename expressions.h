@@ -170,6 +170,8 @@ public:
 
 	void discard_args(void);
 
+	int find_op(Operator op);
+
 private:
 	void calc(void);
 

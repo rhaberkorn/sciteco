@@ -163,6 +163,18 @@ Expressions::args(void)
 }
 
 int
+Expressions::find_op(Operator op)
+{
+	int items = operators.items();
+
+	for (int i = 1; i <= items; i++)
+		if (operators.peek(i) == op)
+			return i;
+
+	return 0;
+}
+
+int
 Expressions::first_op(void)
 {
 	int items = operators.items();
