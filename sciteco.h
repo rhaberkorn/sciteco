@@ -26,8 +26,11 @@ sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
 #define CTL_ECHO(C)	((C) | 0x40)
 #define CTL_KEY(C)	((C) & ~0x40)
 
+typedef gint64 tecoBool;
+
 #define SUCCESS		(-1)
 #define FAILURE		(0)
+#define TECO_BOOL(X)	((X) ? SUCCESS : FAILURE)
 
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
@@ -53,5 +56,21 @@ append(gchar *&str, gchar chr)
 }
 
 } /* namespace String */
+
+namespace Validate {
+
+static inline bool
+pos(gint n)
+{
+	return n >= 0 && n <= editor_msg(SCI_GETLENGTH);
+}
+
+static inline bool
+line(gint n)
+{
+	return n >= 0 && n < editor_msg(SCI_GETLINECOUNT);
+}
+
+} /* namespace Validate */
 
 #endif

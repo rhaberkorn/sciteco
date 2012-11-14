@@ -341,29 +341,43 @@ StateStart::StateStart() : State()
 	transitions['X'] = &States::copytoqreg;
 }
 
-void
-StateStart::move(gint64 n)
+tecoBool
+StateStart::move_chars(gint64 n)
 {
 	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
+
+	if (!Validate::pos(pos + n))
+		return FAILURE;
+
 	editor_msg(SCI_GOTOPOS, pos + n);
 	undo.push_msg(SCI_GOTOPOS, pos);
+	return SUCCESS;
 }
 
-void
+tecoBool
 StateStart::move_lines(gint64 n)
 {
 	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
-	editor_msg(SCI_GOTOLINE, editor_msg(SCI_LINEFROMPOSITION, pos) + n);
+	sptr_t line = editor_msg(SCI_LINEFROMPOSITION, pos) + n;
+
+	if (!Validate::line(line))
+		return FAILURE;
+
+	editor_msg(SCI_GOTOLINE, line);
 	undo.push_msg(SCI_GOTOPOS, pos);
+	return SUCCESS;
 }
 
-void
+tecoBool
 StateStart::delete_words(gint64 n)
 {
-	if (!n)
-		return;
+	sptr_t pos, size;
 
-	undo.push_msg(SCI_UNDO);
+	if (!n)
+		return SUCCESS;
+
+	pos = editor_msg(SCI_GETCURRENTPOS);
+	size = editor_msg(SCI_GETLENGTH);
 	editor_msg(SCI_BEGINUNDOACTION);
 	/*
 	 * FIXME: would be nice to do this with constant amount of
@@ -371,21 +385,44 @@ StateStart::delete_words(gint64 n)
 	 * the internal document buffer.
 	 */
 	if (n > 0) {
-		while (n--)
+		while (n--) {
+			sptr_t size = editor_msg(SCI_GETLENGTH);
 			editor_msg(SCI_DELWORDRIGHTEND);
+			if (size == editor_msg(SCI_GETLENGTH))
+				break;
+		}
 	} else {
-		while (n++) {
+		n *= -1;
+		while (n--) {
+			sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
 			//editor_msg(SCI_DELWORDLEFTEND);
 			editor_msg(SCI_WORDLEFTEND);
+			if (pos == editor_msg(SCI_GETCURRENTPOS))
+				break;
 			editor_msg(SCI_DELWORDRIGHTEND);
 		}
 	}
 	editor_msg(SCI_ENDUNDOACTION);
+
+	if (n >= 0) {
+		if (size != editor_msg(SCI_GETLENGTH)) {
+			editor_msg(SCI_UNDO);
+			editor_msg(SCI_GOTOPOS, pos);
+		}
+		return FAILURE;
+	}
+
+	undo.push_msg(SCI_GOTOPOS, pos);
+	undo.push_msg(SCI_UNDO);
+	return SUCCESS;
 }
 
 State *
 StateStart::custom(gchar chr)
 {
+	gint64 v;
+	tecoBool rc;
+
 	/*
 	 * <CTRL/x> commands implemented in StateCtrlCmd
 	 */
@@ -533,15 +570,14 @@ StateStart::custom(gchar chr)
 		}
 		break;
 
-	case ';': {
-		gint64 v;
+	case ';':
 		BEGIN_EXEC(this);
 
-		v = expressions.pop_num_calc(1, qregisters["_"]->integer);
+		rc = expressions.pop_num_calc(1, qregisters["_"]->integer);
 		if (eval_colon())
-			v = ~v;
+			rc = ~rc;
 
-		if (IS_FAILURE(v)) {
+		if (IS_FAILURE(rc)) {
 			expressions.discard_args();
 			g_assert(expressions.pop_op() == Expressions::OP_LOOP);
 			expressions.pop_num(); /* pc */
@@ -552,7 +588,6 @@ StateStart::custom(gchar chr)
 			mode = MODE_PARSE_ONLY_LOOP;
 		}
 		break;
-	}
 
 	/*
 	 * control structures (conditionals)
@@ -610,58 +645,110 @@ StateStart::custom(gchar chr)
 	 */
 	case 'J':
 		BEGIN_EXEC(this);
-		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
-		editor_msg(SCI_GOTOPOS, expressions.pop_num_calc(1, 0));
+		v = expressions.pop_num_calc(1, 0);
+		if (Validate::pos(v)) {
+			undo.push_msg(SCI_GOTOPOS,
+				      editor_msg(SCI_GETCURRENTPOS));
+			editor_msg(SCI_GOTOPOS, v);
+
+			if (eval_colon())
+				expressions.push(SUCCESS);
+		} else if (eval_colon()) {
+			expressions.push(FAILURE);
+		} else {
+			return NULL; /* FIXME */
+		}
 		break;
 
 	case 'C':
 		BEGIN_EXEC(this);
-		move(expressions.pop_num_calc());
+		rc = move_chars(expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case 'R':
 		BEGIN_EXEC(this);
-		move(-expressions.pop_num_calc());
+		rc = move_chars(-expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case 'L':
 		BEGIN_EXEC(this);
-		move_lines(expressions.pop_num_calc());
+		rc = move_lines(expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case 'B':
 		BEGIN_EXEC(this);
-		move_lines(-expressions.pop_num_calc());
+		rc = move_lines(-expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case 'W': {
-		BEGIN_EXEC(this);
-		gint64 words = expressions.pop_num_calc();
+		sptr_t pos;
+		unsigned int msg = SCI_WORDRIGHTEND;
 
-		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+		BEGIN_EXEC(this);
+		v = expressions.pop_num_calc();
+
+		pos = editor_msg(SCI_GETCURRENTPOS);
 		/*
 		 * FIXME: would be nice to do this with constant amount of
 		 * editor messages. E.g. by using custom algorithm accessing
 		 * the internal document buffer.
 		 */
-		if (words >= 0) {
-			while (words--)
-				editor_msg(SCI_WORDRIGHTEND);
+		if (v < 0) {
+			v *= -1;
+			msg = SCI_WORDLEFTEND;
+		}
+		while (v--) {
+			sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
+			editor_msg(msg);
+			if (pos == editor_msg(SCI_GETCURRENTPOS))
+				break;
+		}
+		if (v < 0) {
+			undo.push_msg(SCI_GOTOPOS, pos);
+			if (eval_colon())
+				expressions.push(SUCCESS);
 		} else {
-			while (words++)
-				editor_msg(SCI_WORDLEFTEND);
+			editor_msg(SCI_GOTOPOS, pos);
+			if (eval_colon())
+				expressions.push(FAILURE);
+			else
+				return NULL; /* FIXME */
 		}
 		break;
 	}
 
 	case 'V':
 		BEGIN_EXEC(this);
-		delete_words(expressions.pop_num_calc());
+		rc = delete_words(expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case 'Y':
 		BEGIN_EXEC(this);
-		delete_words(-expressions.pop_num_calc());
+		rc = delete_words(-expressions.pop_num_calc());
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 		break;
 
 	case '=':
@@ -681,30 +768,41 @@ StateStart::custom(gchar chr)
 			from = editor_msg(SCI_GETCURRENTPOS);
 			if (chr == 'D') {
 				len = expressions.pop_num_calc();
+				rc = TECO_BOOL(Validate::pos(from + len));
 			} else /* chr == 'K' */ {
-				sptr_t line = editor_msg(SCI_LINEFROMPOSITION, from) +
-					      expressions.pop_num_calc();
-				len = editor_msg(SCI_POSITIONFROMLINE, line) - from;
+				sptr_t line;
+				line = editor_msg(SCI_LINEFROMPOSITION, from) +
+				       expressions.pop_num_calc();
+				len = editor_msg(SCI_POSITIONFROMLINE, line)
+				    - from;
+				rc = TECO_BOOL(Validate::line(line));
 			}
 			if (len < 0) {
-				from += len;
 				len *= -1;
+				from -= len;
 			}
 		} else {
 			gint64 to = expressions.pop_num();
 			from = expressions.pop_num();
 			len = to - from;
+			rc = TECO_BOOL(len >= 0 && Validate::pos(from) &&
+				       Validate::pos(to));
 		}
 
-		if (len > 0) {
-			undo.push_msg(SCI_GOTOPOS,
-				      editor_msg(SCI_GETCURRENTPOS));
-			undo.push_msg(SCI_UNDO);
+		if (eval_colon())
+			expressions.push(rc);
+		else if (IS_FAILURE(rc))
+			return NULL; /* FIXME */
 
-			editor_msg(SCI_BEGINUNDOACTION);
-			editor_msg(SCI_DELETERANGE, from, len);
-			editor_msg(SCI_ENDUNDOACTION);
-		}
+		if (len == 0 || IS_FAILURE(rc))
+			break;
+
+		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+		undo.push_msg(SCI_UNDO);
+
+		editor_msg(SCI_BEGINUNDOACTION);
+		editor_msg(SCI_DELETERANGE, from, len);
+		editor_msg(SCI_ENDUNDOACTION);
 		break;
 	}
 
@@ -1356,6 +1454,9 @@ StateSearch::done(const gchar *str)
 
 	if (eval_colon())
 		expressions.push(search_reg->integer);
+	else if (IS_FAILURE(search_reg->integer) &&
+		 !expressions.find_op(Expressions::OP_LOOP) /* in loop */)
+		message_display(GTK_MESSAGE_ERROR, "Search string not found!");
 
 	return &States::start;
 }
