@@ -353,8 +353,7 @@ void
 StateStart::move_lines(gint64 n)
 {
 	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
-	sptr_t line = editor_msg(SCI_LINEFROMPOSITION, pos);
-	editor_msg(SCI_GOTOPOS, editor_msg(SCI_POSITIONFROMLINE, line + n));
+	editor_msg(SCI_GOTOLINE, editor_msg(SCI_LINEFROMPOSITION, pos) + n);
 	undo.push_msg(SCI_GOTOPOS, pos);
 }
 
