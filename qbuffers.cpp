@@ -3,6 +3,10 @@
 #include <string.h>
 #include <bsd/sys/queue.h>
 
+#ifdef G_OS_WIN32
+#include <windows.h>
+#endif
+
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
@@ -261,6 +265,91 @@ Ring::edit(const gchar *filename)
 	return new_in_ring;
 }
 
+#if 0
+
+/*
+ * TODO: on UNIX it may be better to open() the current file, unlink() it
+ * and keep the file descriptor in the UndoToken.
+ * When the operation is undone, the file descriptor's contents are written to
+ * the file (which should be efficient enough because it is written to the same
+ * filesystem). This way we could avoid messing around with save point files.
+ */
+
+#else
+
+class UndoTokenRestoreSavePoint : public UndoToken {
+	gchar	*savepoint;
+	Buffer	*buffer;
+
+public:
+#ifdef G_OS_WIN32
+	DWORD attributes;
+#endif
+
+	UndoTokenRestoreSavePoint(gchar *_savepoint, Buffer *_buffer)
+				 : savepoint(_savepoint), buffer(_buffer) {}
+	~UndoTokenRestoreSavePoint()
+	{
+		if (savepoint)
+			g_unlink(savepoint);
+		g_free(savepoint);
+		buffer->savepoint_id--;
+	}
+
+	void
+	run(void)
+	{
+		if (!g_rename(savepoint, buffer->filename)) {
+			g_free(savepoint);
+			savepoint = NULL;
+#ifdef G_OS_WIN32
+			SetFileAttributes((LPCTSTR)buffer->filename,
+					  attributes);
+#endif
+		} else {
+			message_display(GTK_MESSAGE_WARNING,
+					"Unable to restore save point file \"%s\"",
+					savepoint);
+		}
+	}
+};
+
+static inline void
+make_savepoint(Buffer *buffer)
+{
+	gchar *dirname, *basename, *savepoint;
+	gchar savepoint_basename[FILENAME_MAX];
+
+	basename = g_path_get_basename(buffer->filename);
+	g_snprintf(savepoint_basename, sizeof(savepoint_basename),
+		   ".teco.%s.%d", basename, buffer->savepoint_id);
+	g_free(basename);
+	dirname = g_path_get_dirname(buffer->filename);
+	savepoint = g_build_filename(dirname, savepoint_basename, NULL);
+	g_free(dirname);
+
+	if (!g_rename(buffer->filename, savepoint)) {
+		UndoTokenRestoreSavePoint *token;
+
+		buffer->savepoint_id++;
+		token = new UndoTokenRestoreSavePoint(savepoint, buffer);
+#ifdef G_OS_WIN32
+		token->attributes = GetFileAttributes((LPCTSTR)savepoint);
+		if (token->attributes != INVALID_FILE_ATTRIBUTES)
+			SetFileAttributes((LPCTSTR)savepoint,
+					  attrs | FILE_ATTRIBUTE_HIDDEN);
+#endif
+		undo.push(token);
+	} else {
+		message_display(GTK_MESSAGE_WARNING,
+				"Unable to create save point file \"%s\"",
+				savepoint);
+		g_free(savepoint);
+	}
+}
+
+#endif /* !G_OS_UNIX */
+
 bool
 Ring::save(const gchar *filename)
 {
@@ -270,14 +359,23 @@ Ring::save(const gchar *filename)
 	if (!current)
 		return false;
 
-	if (!filename && !current->filename)
+	if (!filename)
+		filename = current->filename;
+	if (!filename)
 		return false;
+
+	if (undo.enabled) {
+		if (current->filename &&
+		    g_file_test(current->filename, G_FILE_TEST_IS_REGULAR))
+			make_savepoint(current);
+		else
+			undo.push(new UndoTokenRemoveFile(filename));
+	}
 
 	buffer = (const gchar *)editor_msg(SCI_GETCHARACTERPOINTER);
 	size = editor_msg(SCI_GETLENGTH);
 
-	if (!g_file_set_contents(filename ? : current->filename,
-				 buffer, size, NULL))
+	if (!g_file_set_contents(filename, buffer, size, NULL))
 		return false;
 
 	/*
@@ -288,7 +386,7 @@ Ring::save(const gchar *filename)
 	 */
 	//if (filename) {
 	undo.push_str(current->filename);
-	current->set_filename(filename ? : current->filename);
+	current->set_filename(filename);
 	//}
 
 	return true;
@@ -324,16 +422,7 @@ Ring::~Ring()
 /*
  * Auxiliary functions
  */
-#ifdef __WIN32__
-
-gchar *
-get_absolute_path(const gchar *path)
-{
-	/* FIXME: see Unix implementation */
-	return path ? g_file_read_link(path, NULL) : NULL;
-}
-
-#else
+#ifdef G_OS_UNIX
 
 gchar *
 get_absolute_path(const gchar *path)
@@ -357,6 +446,15 @@ get_absolute_path(const gchar *path)
 	}
 
 	return resolved;
+}
+
+#else
+
+gchar *
+get_absolute_path(const gchar *path)
+{
+	/* FIXME: see Unix implementation */
+	return path ? g_file_read_link(path, NULL) : NULL;
 }
 
 #endif

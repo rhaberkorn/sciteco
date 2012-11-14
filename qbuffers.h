@@ -154,12 +154,14 @@ public:
 	gchar *filename;
 	gint dot;
 
+	gint savepoint_id;
+
 private:
 	typedef void document;
 	document *doc;
 
 public:
-	Buffer() : filename(NULL), dot(0)
+	Buffer() : filename(NULL), dot(0), savepoint_id(0)
 	{
 		doc = (document *)editor_msg(SCI_CREATEDOCUMENT);
 	}
@@ -225,6 +227,24 @@ extern class Ring {
 		}
 
 		void run(void);
+	};
+
+	class UndoTokenRemoveFile : public UndoToken {
+		gchar *filename;
+
+	public:
+		UndoTokenRemoveFile(const gchar *_filename)
+				   : filename(g_strdup(_filename)) {}
+		~UndoTokenRemoveFile()
+		{
+			g_free(filename);
+		}
+
+		void
+		run(void)
+		{
+			g_unlink(filename);
+		}
 	};
 
 	LIST_HEAD(Head, Buffer) head;
