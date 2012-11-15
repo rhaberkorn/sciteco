@@ -73,7 +73,7 @@ InterfaceGtk::InterfaceGtk()
 }
 
 void
-InterfaceGtk::msg(MessageType type, const gchar *fmt, ...)
+InterfaceGtk::vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
 	static const GtkMessageType type2gtk[] = {
 		/* [MSG_USER]		= */ GTK_MESSAGE_OTHER,
@@ -82,27 +82,13 @@ InterfaceGtk::msg(MessageType type, const gchar *fmt, ...)
 		/* [MSG_ERROR]		= */ GTK_MESSAGE_ERROR
 	};
 
-	va_list ap;
+	va_list aq;
 	gchar buf[255];
 
-	va_start(ap, fmt);
-	g_vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-
-	switch (type) {
-	case MSG_USER:
-		g_printf("%s\n", buf);
-		break;
-	case MSG_INFO:
-		g_printf("Info: %s\n", buf);
-		break;
-	case MSG_WARNING:
-		g_fprintf(stderr, "Warning: %s\n", buf);
-		break;
-	case MSG_ERROR:
-		g_fprintf(stderr, "Error: %s\n", buf);
-		break;
-	}
+	va_copy(aq, ap);
+	stdio_vmsg(type, fmt, ap);
+	g_vsnprintf(buf, sizeof(buf), fmt, aq);
+	va_end(aq);
 
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
 				      type2gtk[type]);

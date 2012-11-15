@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,6 +19,29 @@
 #define INI_FILE ".teco_ini"
 
 static gchar *mung_file = NULL;
+
+void
+Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
+{
+	gchar buf[255];
+
+	g_vsnprintf(buf, sizeof(buf), fmt, ap);
+
+	switch (type) {
+	case MSG_USER:
+		g_printf("%s\n", buf);
+		break;
+	case MSG_INFO:
+		g_printf("Info: %s\n", buf);
+		break;
+	case MSG_WARNING:
+		g_fprintf(stderr, "Warning: %s\n", buf);
+		break;
+	case MSG_ERROR:
+		g_fprintf(stderr, "Error: %s\n", buf);
+		break;
+	}
+}
 
 static inline void
 process_options(int &argc, char **&argv)

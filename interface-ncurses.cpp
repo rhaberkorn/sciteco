@@ -1,9 +1,11 @@
 #include <string.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <locale.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 #include <ncurses.h>
 
@@ -30,7 +32,17 @@ InterfaceNCurses::InterfaceNCurses()
 		  : popup_window(NULL), popup_list(NULL),
 		    popup_list_longest(0), popup_list_length(0)
 {
-	initscr();
+	/*
+	 * Prevent the initial redraw and any escape sequences that may
+	 * clobber stdout, so we may use the terminal in
+	 * cooked mode, for commandline help and batch processing.
+	 * Scintilla must be initialized for batch processing to work.
+	 * (Frankly I have no idea why this works!)
+	 */
+	screen_tty = g_fopen("/dev/tty", "r+b");
+	screen = newterm(NULL, screen_tty, screen_tty);
+	set_term(screen);
+
 	raw();
 	cbreak();
 	noecho();
@@ -53,10 +65,12 @@ InterfaceNCurses::InterfaceNCurses()
 
 	msg(MSG_USER, " ");
 	cmdline_update();
+
+	endwin();
 }
 
 void
-InterfaceNCurses::msg(MessageType type, const gchar *fmt, ...)
+InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
 	static const short type2colorid[] = {
 		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
@@ -65,13 +79,14 @@ InterfaceNCurses::msg(MessageType type, const gchar *fmt, ...)
 		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_RED)	   /* MSG_ERROR */
 	};
 
-	va_list ap;
+	if (isendwin()) { /* batch mode */
+		stdio_vmsg(type, fmt, ap);
+		return;
+	}
 
 	wmove(msg_window, 0, 0);
 	wbkgdset(msg_window, ' ' | COLOR_PAIR(type2colorid[type]));
-	va_start(ap, fmt);
 	vw_printw(msg_window, fmt, ap);
-	va_end(ap);
 	wclrtoeol(msg_window);
 
 	wrefresh(msg_window);
@@ -152,17 +167,22 @@ InterfaceNCurses::popup_show(void)
 void
 InterfaceNCurses::popup_clear(void)
 {
+	if (!popup_window)
+		return;
+
 	scintilla_refresh(sci);
 	redrawwin(msg_window);
 	wrefresh(msg_window);
-	if (popup_window)
-		delwin(popup_window);
+	delwin(popup_window);
 	popup_window = NULL;
 }
 
 void
 InterfaceNCurses::event_loop(void)
 {
+	/* in commandline (visual) mode, enforce redraw */
+	wrefresh(curscr);
+
 	for (;;) {
 		int key;
 
@@ -212,7 +232,10 @@ InterfaceNCurses::~InterfaceNCurses()
 	if (popup_list)
 		g_slist_free(popup_list);
 
-	endwin();
+	if (!isendwin())
+		endwin();
+	delscreen(screen);
+	fclose(screen_tty);
 }
 
 /*

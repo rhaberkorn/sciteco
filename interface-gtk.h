@@ -1,6 +1,8 @@
 #ifndef __INTERFACE_GTK_H
 #define __INTERFACE_GTK_H
 
+#include <stdarg.h>
+
 #include <glib.h>
 #include <gtk/gtk.h>
 
@@ -31,7 +33,7 @@ public:
 		gtk_parse_args(&argc, &argv);
 	}
 
-	void msg(MessageType type, const gchar *fmt, ...) G_GNUC_PRINTF(3, 4);
+	void vmsg(MessageType type, const gchar *fmt, va_list ap);
 
 	inline sptr_t
 	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)

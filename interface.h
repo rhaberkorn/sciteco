@@ -1,6 +1,8 @@
 #ifndef __INTERFACE_H
 #define __INTERFACE_H
 
+#include <stdarg.h>
+
 #include <glib.h>
 
 #include <Scintilla.h>
@@ -28,8 +30,16 @@ public:
 		MSG_WARNING,
 		MSG_ERROR
 	};
-	virtual void msg(MessageType type, const gchar *fmt, ...)
-		     G_GNUC_PRINTF(3, 4) = 0;
+	virtual void vmsg(MessageType type, const gchar *fmt, va_list ap) = 0;
+	inline void
+	msg(MessageType type, const gchar *fmt, ...) G_GNUC_PRINTF(3, 4)
+	{
+		va_list ap;
+
+		va_start(ap, fmt);
+		vmsg(type, fmt, ap);
+		va_end(ap);
+	}
 
 	virtual sptr_t ssm(unsigned int iMessage,
 			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
@@ -48,6 +58,10 @@ public:
 
 	/* main entry point */
 	virtual void event_loop(void) = 0;
+
+protected:
+	/* see main.cpp */
+	void stdio_vmsg(MessageType type, const gchar *fmt, va_list ap);
 };
 
 #ifdef INTERFACE_GTK

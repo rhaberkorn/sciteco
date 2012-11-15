@@ -1,6 +1,8 @@
 #ifndef __INTERFACE_NCURSES_H
 #define __INTERFACE_NCURSES_H
 
+#include <stdarg.h>
+
 #include <glib.h>
 
 #include <ncurses.h>
@@ -11,6 +13,9 @@
 #include "interface.h"
 
 extern class InterfaceNCurses : public Interface {
+	SCREEN *screen;
+	FILE *screen_tty;
+
 	Scintilla *sci;
 
 	WINDOW *sci_window;
@@ -26,7 +31,7 @@ public:
 	InterfaceNCurses();
 	~InterfaceNCurses();
 
-	void msg(MessageType type, const gchar *fmt, ...) G_GNUC_PRINTF(3, 4);
+	void vmsg(MessageType type, const gchar *fmt, va_list ap);
 
 	inline sptr_t
 	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
