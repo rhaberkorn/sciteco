@@ -1,9 +1,11 @@
 
 INTERFACE?=GTK
+PREFIX?=/usr/local
 
 GOB2:=gob2
 CC:=gcc
 CXX:=g++
+INSTALL:=install
 
 GLIB_CFLAGS:=$(shell pkg-config --cflags glib-2.0)
 GLIB_LDFLAGS:=$(shell pkg-config --libs glib-2.0)
@@ -52,6 +54,9 @@ endif
 
 %.c %.h %-private.h : %.gob
 	$(GOB2) $<
+
+install: all
+	$(INSTALL) sciteco $(PREFIX)/bin
 
 clean:
 	$(RM) sciteco *.o *.a
