@@ -15,6 +15,11 @@
  */
 class Interface {
 public:
+	virtual GOptionGroup *
+	get_options(void)
+	{
+		return NULL;
+	}
 	virtual void parse_args(int &argc, char **&argv) {}
 
 	enum MessageType {

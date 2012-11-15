@@ -20,6 +20,11 @@ public:
 	InterfaceGtk();
 	//~InterfaceGtk();
 
+	inline GOptionGroup *
+	get_options(void)
+	{
+		return gtk_get_option_group(TRUE);
+	}
 	inline void
 	parse_args(int &argc, char **&argv)
 	{

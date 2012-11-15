@@ -28,15 +28,20 @@ process_options(int &argc, char **&argv)
 		{NULL}
 	};
 
-	GOptionContext *options;
+	GOptionContext	*options;
+	GOptionGroup	*interface_group = interface.get_options();
 
 	options = g_option_context_new("- Advanced interactive TECO");
+
 	g_option_context_add_main_entries(options, option_entries, NULL);
-	g_option_context_add_group(options, gtk_get_option_group(TRUE));
+	if (interface_group)
+		g_option_context_add_group(options, interface_group);
+
 	if (!g_option_context_parse(options, &argc, &argv, NULL)) {
 		g_printf("Option parsing failed!\n");
 		exit(EXIT_FAILURE);
 	}
+
 	g_option_context_free(options);
 
 	if (mung_file) {
