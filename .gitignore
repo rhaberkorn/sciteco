@@ -2,6 +2,7 @@
 gtk-info-popup*.[ch]
 
 *.o
+*.a
 sciteco
 
 *~
