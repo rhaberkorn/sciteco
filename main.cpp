@@ -65,18 +65,23 @@ main(int argc, char **argv)
 {
 	process_options(argc, argv);
 
-	interface.ssm(SCI_SETFOCUS, 1);
-	interface.ssm(SCI_SETCARETSTYLE, 2);
+	interface.ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
+	interface.ssm(SCI_SETCARETFORE, 0xFFFFFF);
+
+	/*
+	 * FIXME: Styles should probably be set interface-based
+	 * (system defaults) and be changeable by TECO macros
+	 */
+	interface.ssm(SCI_STYLESETFORE, STYLE_DEFAULT, 0xFFFFFF);
+	interface.ssm(SCI_STYLESETBACK, STYLE_DEFAULT, 0x000000);
 	interface.ssm(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");
 	interface.ssm(SCI_STYLECLEARALL);
-	interface.ssm(SCI_SETLEXER, SCLEX_CPP);
-	interface.ssm(SCI_SETKEYWORDS, 0, (sptr_t)"int char");
-	interface.ssm(SCI_STYLESETFORE, SCE_C_COMMENT, 0x008000);
-	interface.ssm(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x008000);
-	interface.ssm(SCI_STYLESETFORE, SCE_C_NUMBER, 0x808000);
-	interface.ssm(SCI_STYLESETFORE, SCE_C_WORD, 0x800000);
-	interface.ssm(SCI_STYLESETFORE, SCE_C_STRING, 0x800080);
-	interface.ssm(SCI_STYLESETBOLD, SCE_C_OPERATOR, 1);
+	interface.ssm(SCI_STYLESETFORE, SCE_C_COMMENT, 0x00FF00);
+	interface.ssm(SCI_STYLESETFORE, SCE_C_COMMENTLINE, 0x00FF00);
+	interface.ssm(SCI_STYLESETFORE, SCE_C_NUMBER, 0xFFFF00);
+	interface.ssm(SCI_STYLESETFORE, SCE_C_WORD, 0xFF0000);
+	interface.ssm(SCI_STYLESETFORE, SCE_C_STRING, 0xFF00FF);
+	interface.ssm(SCI_STYLESETBOLD, SCE_C_OPERATOR, TRUE);
 
 	qregisters.initialize();
 	ring.edit(NULL);
@@ -101,7 +106,6 @@ main(int argc, char **argv)
 
 	undo.enabled = true;
 
-	interface.cmdline_update();
 	interface.event_loop();
 
 	return 0;
