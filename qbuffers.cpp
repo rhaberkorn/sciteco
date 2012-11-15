@@ -321,7 +321,7 @@ make_savepoint(Buffer *buffer)
 
 	basename = g_path_get_basename(buffer->filename);
 	g_snprintf(savepoint_basename, sizeof(savepoint_basename),
-		   ".teco.%s.%d", basename, buffer->savepoint_id);
+		   ".teco-%s-%d", basename, buffer->savepoint_id);
 	g_free(basename);
 	dirname = g_path_get_dirname(buffer->filename);
 	savepoint = g_build_filename(dirname, savepoint_basename, NULL);
