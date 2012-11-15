@@ -46,11 +46,10 @@ InterfaceNCurses::InterfaceNCurses()
 	raw();
 	cbreak();
 	noecho();
-	curs_set(0); // Scintilla draws its own cursor
+	curs_set(0); /* Scintilla draws its own cursor */
 
-	setlocale(LC_CTYPE, ""); // for displaying UTF-8 characters properly
+	setlocale(LC_CTYPE, ""); /* for displaying UTF-8 characters properly */
 
-	/* TODO: handle terminal resize */
 	/* NOTE: initializes color pairs */
 	sci = scintilla_new(scnotification);
 	sci_window = scintilla_get_window(sci);
@@ -60,13 +59,33 @@ InterfaceNCurses::InterfaceNCurses()
 
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
 	keypad(cmdline_window, TRUE);
+	cmdline_current = NULL;
 
 	ssm(SCI_SETFOCUS, TRUE);
 
+	/* scintilla will be refreshed in event loop */
 	msg(MSG_USER, " ");
-	cmdline_update();
+	cmdline_update("");
 
 	endwin();
+}
+
+void
+InterfaceNCurses::resize_all_windows(void)
+{
+	int lines, cols;
+
+	getmaxyx(stdscr, lines, cols);
+
+	wresize(sci_window, lines - 2, cols);
+	wresize(msg_window, 1, cols);
+	mvwin(msg_window, lines - 2, 0);
+	wresize(cmdline_window, 1, cols);
+	mvwin(cmdline_window, lines - 1, 0);
+
+	/* scintilla will be refreshed in event loop */
+	msg(MSG_USER, " "); /* FIXME: use saved message */
+	cmdline_update();
 }
 
 void
@@ -95,9 +114,17 @@ InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 void
 InterfaceNCurses::cmdline_update(const gchar *cmdline)
 {
-	size_t len = strlen(cmdline);
-	int half_line = (COLS - 2) / 2;
+	size_t len;
+	int half_line = (getmaxx(stdscr) - 2) / 2;
 	const gchar *line;
+
+	if (cmdline) {
+		g_free(cmdline_current);
+		cmdline_current = g_strdup(cmdline);
+	} else {
+		cmdline = cmdline_current;
+	}
+	len = strlen(cmdline);
 
 	/* FIXME: optimize */
 	line = cmdline + len - MIN(len, half_line + len % half_line);
@@ -193,6 +220,10 @@ InterfaceNCurses::event_loop(void)
 
 		key = wgetch(cmdline_window);
 		switch (key) {
+		case ERR:
+		case KEY_RESIZE:
+			resize_all_windows();
+			break;
 		case ESCAPE_SURROGATE:
 			cmdline_keypress('\x1B');
 			break;
@@ -225,6 +256,7 @@ InterfaceNCurses::~InterfaceNCurses()
 	delwin(sci_window);
 
 	delwin(cmdline_window);
+	g_free(cmdline_current);
 	delwin(msg_window);
 
 	if (popup_window)

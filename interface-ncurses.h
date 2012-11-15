@@ -21,11 +21,14 @@ extern class InterfaceNCurses : public Interface {
 	WINDOW *sci_window;
 	WINDOW *msg_window;
 	WINDOW *cmdline_window;
+	gchar *cmdline_current;
 
 	WINDOW *popup_window;
 	GSList *popup_list;
 	gint popup_list_longest;
 	gint popup_list_length;
+
+	void resize_all_windows(void);
 
 public:
 	InterfaceNCurses();
@@ -39,7 +42,7 @@ public:
 		return scintilla_send_message(sci, iMessage, wParam, lParam);
 	}
 
-	void cmdline_update(const gchar *cmdline = "");
+	void cmdline_update(const gchar *cmdline = NULL);
 
 	void popup_add_filename(PopupFileType type,
 				const gchar *filename, bool highlight = false);

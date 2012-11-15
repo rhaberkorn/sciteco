@@ -69,7 +69,7 @@ InterfaceGtk::InterfaceGtk()
 
 	ssm(SCI_SETFOCUS, TRUE);
 
-	cmdline_update();
+	cmdline_update("");
 }
 
 void
@@ -99,6 +99,10 @@ void
 InterfaceGtk::cmdline_update(const gchar *cmdline)
 {
 	gint pos = 1;
+
+	if (!cmdline)
+		/* widget automatically redrawn */
+		return;
 
 	gtk_entry_set_text(GTK_ENTRY(cmdline_widget), "*");
 	gtk_editable_insert_text(GTK_EDITABLE(cmdline_widget),
