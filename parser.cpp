@@ -894,7 +894,7 @@ StateCondCommand::StateCondCommand() : State()
 State *
 StateCondCommand::custom(gchar chr)
 {
-	gint64 value;
+	gint64 value = 0;
 	bool result;
 
 	switch (mode) {
