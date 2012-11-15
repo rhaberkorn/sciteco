@@ -2,6 +2,8 @@
 INTERFACE?=GTK
 
 GOB2:=gob2
+CC:=gcc
+CXX:=g++
 
 GLIB_CFLAGS:=$(shell pkg-config --cflags glib-2.0)
 GLIB_LDFLAGS:=$(shell pkg-config --libs glib-2.0)
@@ -13,7 +15,7 @@ ifeq ($(INTERFACE),GTK)
 GTK_CFLAGS:=$(shell pkg-config --cflags gtk+-2.0)
 GTK_LDFLAGS:=$(shell pkg-config --libs gtk+-2.0)
 else ifeq ($(INTERFACE),NCURSES)
-SCI_CFLAGS+=-I../scintilla/scinterm_1.0
+SCI_CFLAGS+=-I../scintilla/scinterm
 NCURSES_CFLAGS:=
 NCURSES_LDFLAGS:=-lncurses
 endif
