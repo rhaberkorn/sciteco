@@ -10,6 +10,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "interface.h"
 #include "undo.h"
 #include "rbtree.h"
 #include "parser.h"
@@ -43,7 +44,7 @@ public:
 	~QRegister()
 	{
 		if (string)
-			editor_msg(SCI_RELEASEDOCUMENT, 0, (sptr_t)string);
+			interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)string);
 		g_free(name);
 	}
 
@@ -57,7 +58,7 @@ public:
 	get_document(void)
 	{
 		if (!string)
-			string = (document *)editor_msg(SCI_CREATEDOCUMENT);
+			string = (document *)interface.ssm(SCI_CREATEDOCUMENT);
 		return string;
 	}
 
@@ -68,8 +69,8 @@ public:
 	inline void
 	edit(void)
 	{
-		editor_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
-		editor_msg(SCI_GOTOPOS, dot);
+		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+		interface.ssm(SCI_GOTOPOS, dot);
 	}
 	inline void
 	undo_edit(void)
@@ -124,7 +125,7 @@ public:
 	inline void
 	undo_edit(void)
 	{
-		current->dot = editor_msg(SCI_GETCURRENTPOS);
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
 
 		undo.push_var<QRegister*>(current);
 		current->undo_edit();
@@ -163,11 +164,11 @@ private:
 public:
 	Buffer() : filename(NULL), dot(0), savepoint_id(0)
 	{
-		doc = (document *)editor_msg(SCI_CREATEDOCUMENT);
+		doc = (document *)interface.ssm(SCI_CREATEDOCUMENT);
 	}
 	~Buffer()
 	{
-		editor_msg(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
+		interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
 		g_free(filename);
 	}
 
@@ -188,8 +189,8 @@ public:
 	inline void
 	edit(void)
 	{
-		editor_msg(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
-		editor_msg(SCI_GOTOPOS, dot);
+		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+		interface.ssm(SCI_GOTOPOS, dot);
 	}
 	inline void
 	undo_edit(void)
@@ -270,7 +271,7 @@ public:
 	inline void
 	undo_edit(void)
 	{
-		current->dot = editor_msg(SCI_GETCURRENTPOS);
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
 
 		undo.push_var<Buffer*>(current);
 		current->undo_edit();
