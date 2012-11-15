@@ -40,7 +40,7 @@ public:
 					      iMessage, wParam, lParam);
 	}
 
-	void cmdline_update(const gchar *cmdline);
+	void cmdline_update(const gchar *cmdline = "");
 
 	void popup_add_filename(PopupFileType type,
 				const gchar *filename, bool highlight = false);

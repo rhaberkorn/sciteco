@@ -13,7 +13,7 @@
 #include "undo.h"
 
 static inline const gchar *process_edit_cmd(gchar key);
-static gchar *macro_echo(const gchar *macro, const gchar *prefix = "");
+static gchar *macro_echo(const gchar *macro);
 static gchar *filename_complete(const gchar *filename, gchar completed = ' ');
 
 static const gchar *last_occurrence(const gchar *str,
@@ -65,7 +65,7 @@ cmdline_keypress(gchar key)
 	/*
 	 * Echo command line
 	 */
-	echo = macro_echo(cmdline, "*");
+	echo = macro_echo(cmdline);
 	interface.cmdline_update(echo);
 	g_free(echo);
 }
@@ -135,15 +135,14 @@ process_edit_cmd(gchar key)
 }
 
 static gchar *
-macro_echo(const gchar *macro, const gchar *prefix)
+macro_echo(const gchar *macro)
 {
 	gchar *result, *rp;
 
 	if (!macro)
-		return g_strdup(prefix);
+		return g_strdup("");
 
-	result = (gchar *)g_malloc(strlen(prefix) + strlen(macro)*5 + 1);
-	rp = g_stpcpy(result, prefix);
+	rp = result = (gchar *)g_malloc(strlen(macro)*5 + 1);
 
 	for (const gchar *p = macro; *p; p++) {
 		switch (*p) {

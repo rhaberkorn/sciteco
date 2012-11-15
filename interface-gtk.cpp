@@ -106,10 +106,14 @@ InterfaceGtk::msg(MessageType type, const gchar *fmt, ...)
 }
 
 void
-InterfaceGtk::cmdline_update(const gchar *cmdline_str)
+InterfaceGtk::cmdline_update(const gchar *cmdline)
 {
-	gtk_entry_set_text(GTK_ENTRY(cmdline_widget), cmdline_str);
-	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), -1);
+	gint pos = 1;
+
+	gtk_entry_set_text(GTK_ENTRY(cmdline_widget), "*");
+	gtk_editable_insert_text(GTK_EDITABLE(cmdline_widget),
+				 cmdline, -1, &pos);
+	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), pos);
 }
 
 void

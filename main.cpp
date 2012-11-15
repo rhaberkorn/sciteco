@@ -101,8 +101,7 @@ main(int argc, char **argv)
 
 	undo.enabled = true;
 
-	interface.cmdline_update("*");
-
+	interface.cmdline_update();
 	interface.event_loop();
 
 	return 0;

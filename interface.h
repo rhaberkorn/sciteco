@@ -34,7 +34,7 @@ public:
 	virtual sptr_t ssm(unsigned int iMessage,
 			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
 
-	virtual void cmdline_update(const gchar *cmdline) = 0;
+	virtual void cmdline_update(const gchar *cmdline = "") = 0;
 
 	enum PopupFileType {
 		POPUP_FILE,
