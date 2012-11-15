@@ -1,26 +1,14 @@
 #ifndef __SCITECO_H
 #define __SCITECO_H
 
-#include <stdarg.h>
-
 #include <glib.h>
-#include <gtk/gtk.h>
-#include "gtk-info-popup.h"
 
-#include <Scintilla.h>
+#include "interface.h"
 
 extern gchar *cmdline;
 extern bool quit_requested;
 
-extern GtkInfoPopup *filename_popup;
-
-void message_display(GtkMessageType type,
-		     const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
-
 void cmdline_keypress(gchar key);
-void cmdline_display(const gchar *cmdline);
-
-sptr_t editor_msg(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0);
 
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)
@@ -34,9 +22,6 @@ typedef gint64 tecoBool;
 
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
-
-/* TECO uses only lower 7 bits for commands */
-#define MAX_TRANSITIONS	127
 
 namespace String {
 
@@ -62,13 +47,13 @@ namespace Validate {
 static inline bool
 pos(gint n)
 {
-	return n >= 0 && n <= editor_msg(SCI_GETLENGTH);
+	return n >= 0 && n <= interface.ssm(SCI_GETLENGTH);
 }
 
 static inline bool
 line(gint n)
 {
-	return n >= 0 && n < editor_msg(SCI_GETLINECOUNT);
+	return n >= 0 && n < interface.ssm(SCI_GETLINECOUNT);
 }
 
 } /* namespace Validate */

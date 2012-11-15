@@ -6,6 +6,7 @@
 #include <glib/gstdio.h>
 
 #include "sciteco.h"
+#include "interface.h"
 #include "parser.h"
 #include "qbuffers.h"
 #include "goto.h"
@@ -33,10 +34,7 @@ cmdline_keypress(gchar key)
 	/*
 	 * Cleanup messages, popups, etc...
 	 */
-	if (gtk_widget_get_visible(GTK_WIDGET(filename_popup))) {
-		gtk_widget_hide(GTK_WIDGET(filename_popup));
-		gtk_info_popup_clear(filename_popup);
-	}
+	interface.popup_clear();
 
 	/*
 	 * Process immediate editing commands
@@ -68,7 +66,7 @@ cmdline_keypress(gchar key)
 	 * Echo command line
 	 */
 	echo = macro_echo(cmdline, "*");
-	cmdline_display(echo);
+	interface.cmdline_update(echo);
 	g_free(echo);
 }
 
@@ -231,23 +229,22 @@ filename_complete(const gchar *filename, gchar completed)
 		for (GList *file = g_list_first(matching);
 		     file != NULL;
 		     file = g_list_next(file)) {
-			GtkInfoPopupFileType type;
-			gboolean in_buffer = FALSE;
+			Interface::PopupFileType type;
+			bool in_buffer = false;
 
 			if (filename_is_dir((gchar *)file->data)) {
-				type = GTK_INFO_POPUP_DIRECTORY;
+				type = Interface::POPUP_DIRECTORY;
 			} else {
-				type = GTK_INFO_POPUP_FILE;
+				type = Interface::POPUP_FILE;
 				/* FIXME: inefficient */
-				in_buffer = ring.find((gchar *)file->data)
-					    != NULL;
+				in_buffer = ring.find((gchar *)file->data);
 			}
-			gtk_info_popup_add_filename(filename_popup,
-						    type, (gchar *)file->data,
-						    in_buffer);
+
+			interface.popup_add_filename(type, (gchar *)file->data,
+						     in_buffer);
 		}
 
-		gtk_widget_show(GTK_WIDGET(filename_popup));
+		interface.popup_show();
 	} else if (g_list_length(matching) == 1 &&
 		   !filename_is_dir((gchar *)g_list_first(matching)->data)) {
 		gchar *new_insert;

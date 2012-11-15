@@ -11,11 +11,10 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
-#include "gtk-info-popup.h"
-
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "interface.h"
 #include "undo.h"
 #include "parser.h"
 #include "expressions.h"
@@ -45,7 +44,7 @@ static QRegister *register_argument = NULL;
 static inline void
 current_save_dot(void)
 {
-	gint dot = editor_msg(SCI_GETCURRENTPOS);
+	gint dot = interface.ssm(SCI_GETCURRENTPOS);
 
 	if (ring.current)
 		ring.current->dot = dot;
@@ -68,9 +67,9 @@ QRegister::set_string(const gchar *str)
 	edit();
 	dot = 0;
 
-	editor_msg(SCI_BEGINUNDOACTION);
-	editor_msg(SCI_SETTEXT, 0, (sptr_t)str);
-	editor_msg(SCI_ENDUNDOACTION);
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_SETTEXT, 0, (sptr_t)str);
+	interface.ssm(SCI_ENDUNDOACTION);
 
 	current_edit();
 }
@@ -99,9 +98,9 @@ QRegister::get_string(void)
 	current_save_dot();
 	edit();
 
-	size = editor_msg(SCI_GETLENGTH) + 1;
+	size = interface.ssm(SCI_GETLENGTH) + 1;
 	str = (gchar *)g_malloc(size);
-	editor_msg(SCI_GETTEXT, size, (sptr_t)str);
+	interface.ssm(SCI_GETTEXT, size, (sptr_t)str);
 
 	current_edit();
 
@@ -122,10 +121,10 @@ QRegister::load(const gchar *filename)
 	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
 
-	editor_msg(SCI_BEGINUNDOACTION);
-	editor_msg(SCI_CLEARALL);
-	editor_msg(SCI_APPENDTEXT, size, (sptr_t)contents);
-	editor_msg(SCI_ENDUNDOACTION);
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_CLEARALL);
+	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
+	interface.ssm(SCI_ENDUNDOACTION);
 
 	g_free(contents);
 
@@ -164,16 +163,16 @@ Buffer::load(const gchar *filename)
 	gsize size;
 
 	edit();
-	editor_msg(SCI_CLEARALL);
+	interface.ssm(SCI_CLEARALL);
 
 	/* FIXME: prevent excessive allocations by reading file into buffer */
 	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
-	editor_msg(SCI_APPENDTEXT, size, (sptr_t)contents);
+	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
 	g_free(contents);
 
-	editor_msg(SCI_GOTOPOS, 0);
-	editor_msg(SCI_SETSAVEPOINT);
+	interface.ssm(SCI_GOTOPOS, 0);
+	interface.ssm(SCI_SETSAVEPOINT);
 
 	set_filename(filename);
 
@@ -186,12 +185,12 @@ Buffer::close(void)
 	LIST_REMOVE(this, buffers);
 
 	if (filename)
-		message_display(GTK_MESSAGE_INFO,
-				"Removed file \"%s\" from the ring",
-				filename);
+		interface.msg(Interface::MSG_INFO,
+			      "Removed file \"%s\" from the ring",
+			      filename);
 	else
-		message_display(GTK_MESSAGE_INFO,
-				"Removed unnamed file from the ring.");
+		interface.msg(Interface::MSG_INFO,
+			      "Removed unnamed file from the ring.");
 }
 
 void
@@ -243,19 +242,19 @@ Ring::edit(const gchar *filename)
 		if (g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
 			buffer->load(filename);
 
-			message_display(GTK_MESSAGE_INFO,
-					"Added file \"%s\" to ring", filename);
+			interface.msg(Interface::MSG_INFO,
+				      "Added file \"%s\" to ring", filename);
 		} else {
 			buffer->edit();
 			buffer->set_filename(filename);
 
 			if (filename)
-				message_display(GTK_MESSAGE_INFO,
-						"Added new file \"%s\" to ring",
-						filename);
+				interface.msg(Interface::MSG_INFO,
+					      "Added new file \"%s\" to ring",
+					      filename);
 			else
-				message_display(GTK_MESSAGE_INFO,
-						"Added new unnamed file to ring.");
+				interface.msg(Interface::MSG_INFO,
+					      "Added new unnamed file to ring.");
 		}
 	}
 
@@ -307,9 +306,9 @@ public:
 					  attributes);
 #endif
 		} else {
-			message_display(GTK_MESSAGE_WARNING,
-					"Unable to restore save point file \"%s\"",
-					savepoint);
+			interface.msg(Interface::MSG_WARNING,
+				      "Unable to restore save point file \"%s\"",
+				      savepoint);
 		}
 	}
 };
@@ -341,9 +340,9 @@ make_savepoint(Buffer *buffer)
 #endif
 		undo.push(token);
 	} else {
-		message_display(GTK_MESSAGE_WARNING,
-				"Unable to create save point file \"%s\"",
-				savepoint);
+		interface.msg(Interface::MSG_WARNING,
+			      "Unable to create save point file \"%s\"",
+			      savepoint);
 		g_free(savepoint);
 	}
 }
@@ -372,8 +371,8 @@ Ring::save(const gchar *filename)
 			undo.push(new UndoTokenRemoveFile(filename));
 	}
 
-	buffer = (const gchar *)editor_msg(SCI_GETCHARACTERPOINTER);
-	size = editor_msg(SCI_GETLENGTH);
+	buffer = (const gchar *)interface.ssm(SCI_GETCHARACTERPOINTER);
+	size = interface.ssm(SCI_GETLENGTH);
 
 	if (!g_file_set_contents(filename, buffer, size, NULL))
 		return false;
@@ -397,7 +396,7 @@ Ring::close(void)
 {
 	Buffer *buffer = current;
 
-	buffer->dot = editor_msg(SCI_GETCURRENTPOS);
+	buffer->dot = interface.ssm(SCI_GETCURRENTPOS);
 	buffer->close();
 	current = buffer->next() ? : first();
 	/* transfer responsibility to UndoToken object */
@@ -481,12 +480,11 @@ StateEditFile::initial(void)
 
 	if (id == 0) {
 		for (Buffer *cur = ring.first(); cur; cur = cur->next())
-			gtk_info_popup_add_filename(filename_popup,
-						    GTK_INFO_POPUP_FILE,
-						    cur->filename ? : "(Unnamed)",
-						    cur == ring.current);
+			interface.popup_add_filename(Interface::POPUP_FILE,
+						     cur->filename ? : "(Unnamed)",
+						     cur == ring.current);
 
-		gtk_widget_show(GTK_WIDGET(filename_popup));
+		interface.popup_show();
 	}
 }
 
@@ -665,10 +663,10 @@ StateCopyToQReg::got_register(QRegister *reg)
 	expressions.eval();
 
 	if (expressions.args() <= 1) {
-		from = editor_msg(SCI_GETCURRENTPOS);
-		sptr_t line = editor_msg(SCI_LINEFROMPOSITION, from) +
+		from = interface.ssm(SCI_GETCURRENTPOS);
+		sptr_t line = interface.ssm(SCI_LINEFROMPOSITION, from) +
 			      expressions.pop_num_calc();
-		len = editor_msg(SCI_POSITIONFROMLINE, line) - from;
+		len = interface.ssm(SCI_POSITIONFROMLINE, line) - from;
 
 		if (len < 0) {
 			from += len;
@@ -683,7 +681,7 @@ StateCopyToQReg::got_register(QRegister *reg)
 	tr.chrg.cpMin = from;
 	tr.chrg.cpMax = from + len;
 	tr.lpstrText = (char *)g_malloc(len + 1);
-	editor_msg(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
+	interface.ssm(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
 
 	reg->undo_set_string();
 	reg->set_string(tr.lpstrText);

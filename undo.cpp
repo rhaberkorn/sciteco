@@ -6,6 +6,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "interface.h"
 #include "undo.h"
 
 UndoStack undo;
@@ -13,7 +14,7 @@ UndoStack undo;
 void
 UndoTokenMessage::run(void)
 {
-	editor_msg(iMessage, wParam, lParam);
+	interface.ssm(iMessage, wParam, lParam);
 }
 
 void

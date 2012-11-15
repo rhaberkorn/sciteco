@@ -5,6 +5,7 @@
 #include <glib/gstdio.h>
 
 #include "sciteco.h"
+#include "interface.h"
 #include "undo.h"
 #include "expressions.h"
 #include "goto.h"
@@ -53,9 +54,8 @@ macro_execute(const gchar *macro)
 #endif
 
 		if (!State::input(macro[macro_pc])) {
-			message_display(GTK_MESSAGE_ERROR,
-					"Syntax error \"%c\"",
-					macro[macro_pc]);
+			interface.msg(Interface::MSG_ERROR,
+				      "Syntax error \"%c\"", macro[macro_pc]);
 			return false;
 		}
 
@@ -344,12 +344,12 @@ StateStart::StateStart() : State()
 tecoBool
 StateStart::move_chars(gint64 n)
 {
-	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
+	sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
 
 	if (!Validate::pos(pos + n))
 		return FAILURE;
 
-	editor_msg(SCI_GOTOPOS, pos + n);
+	interface.ssm(SCI_GOTOPOS, pos + n);
 	undo.push_msg(SCI_GOTOPOS, pos);
 	return SUCCESS;
 }
@@ -357,13 +357,13 @@ StateStart::move_chars(gint64 n)
 tecoBool
 StateStart::move_lines(gint64 n)
 {
-	sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
-	sptr_t line = editor_msg(SCI_LINEFROMPOSITION, pos) + n;
+	sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
+	sptr_t line = interface.ssm(SCI_LINEFROMPOSITION, pos) + n;
 
 	if (!Validate::line(line))
 		return FAILURE;
 
-	editor_msg(SCI_GOTOLINE, line);
+	interface.ssm(SCI_GOTOLINE, line);
 	undo.push_msg(SCI_GOTOPOS, pos);
 	return SUCCESS;
 }
@@ -376,9 +376,9 @@ StateStart::delete_words(gint64 n)
 	if (!n)
 		return SUCCESS;
 
-	pos = editor_msg(SCI_GETCURRENTPOS);
-	size = editor_msg(SCI_GETLENGTH);
-	editor_msg(SCI_BEGINUNDOACTION);
+	pos = interface.ssm(SCI_GETCURRENTPOS);
+	size = interface.ssm(SCI_GETLENGTH);
+	interface.ssm(SCI_BEGINUNDOACTION);
 	/*
 	 * FIXME: would be nice to do this with constant amount of
 	 * editor messages. E.g. by using custom algorithm accessing
@@ -386,28 +386,28 @@ StateStart::delete_words(gint64 n)
 	 */
 	if (n > 0) {
 		while (n--) {
-			sptr_t size = editor_msg(SCI_GETLENGTH);
-			editor_msg(SCI_DELWORDRIGHTEND);
-			if (size == editor_msg(SCI_GETLENGTH))
+			sptr_t size = interface.ssm(SCI_GETLENGTH);
+			interface.ssm(SCI_DELWORDRIGHTEND);
+			if (size == interface.ssm(SCI_GETLENGTH))
 				break;
 		}
 	} else {
 		n *= -1;
 		while (n--) {
-			sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
-			//editor_msg(SCI_DELWORDLEFTEND);
-			editor_msg(SCI_WORDLEFTEND);
-			if (pos == editor_msg(SCI_GETCURRENTPOS))
+			sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
+			//interface.ssm(SCI_DELWORDLEFTEND);
+			interface.ssm(SCI_WORDLEFTEND);
+			if (pos == interface.ssm(SCI_GETCURRENTPOS))
 				break;
-			editor_msg(SCI_DELWORDRIGHTEND);
+			interface.ssm(SCI_DELWORDRIGHTEND);
 		}
 	}
-	editor_msg(SCI_ENDUNDOACTION);
+	interface.ssm(SCI_ENDUNDOACTION);
 
 	if (n >= 0) {
-		if (size != editor_msg(SCI_GETLENGTH)) {
-			editor_msg(SCI_UNDO);
-			editor_msg(SCI_GOTOPOS, pos);
+		if (size != interface.ssm(SCI_GETLENGTH)) {
+			interface.ssm(SCI_UNDO);
+			interface.ssm(SCI_GOTOPOS, pos);
 		}
 		return FAILURE;
 	}
@@ -498,20 +498,20 @@ StateStart::custom(gchar chr)
 	case '.':
 		BEGIN_EXEC(this);
 		expressions.eval();
-		expressions.push(editor_msg(SCI_GETCURRENTPOS));
+		expressions.push(interface.ssm(SCI_GETCURRENTPOS));
 		break;
 
 	case 'Z':
 		BEGIN_EXEC(this);
 		expressions.eval();
-		expressions.push(editor_msg(SCI_GETLENGTH));
+		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
 	case 'H':
 		BEGIN_EXEC(this);
 		expressions.eval();
 		expressions.push(0);
-		expressions.push(editor_msg(SCI_GETLENGTH));
+		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
 	/*
@@ -648,8 +648,8 @@ StateStart::custom(gchar chr)
 		v = expressions.pop_num_calc(1, 0);
 		if (Validate::pos(v)) {
 			undo.push_msg(SCI_GOTOPOS,
-				      editor_msg(SCI_GETCURRENTPOS));
-			editor_msg(SCI_GOTOPOS, v);
+				      interface.ssm(SCI_GETCURRENTPOS));
+			interface.ssm(SCI_GOTOPOS, v);
 
 			if (eval_colon())
 				expressions.push(SUCCESS);
@@ -703,7 +703,7 @@ StateStart::custom(gchar chr)
 		BEGIN_EXEC(this);
 		v = expressions.pop_num_calc();
 
-		pos = editor_msg(SCI_GETCURRENTPOS);
+		pos = interface.ssm(SCI_GETCURRENTPOS);
 		/*
 		 * FIXME: would be nice to do this with constant amount of
 		 * editor messages. E.g. by using custom algorithm accessing
@@ -714,9 +714,9 @@ StateStart::custom(gchar chr)
 			msg = SCI_WORDLEFTEND;
 		}
 		while (v--) {
-			sptr_t pos = editor_msg(SCI_GETCURRENTPOS);
-			editor_msg(msg);
-			if (pos == editor_msg(SCI_GETCURRENTPOS))
+			sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
+			interface.ssm(msg);
+			if (pos == interface.ssm(SCI_GETCURRENTPOS))
 				break;
 		}
 		if (v < 0) {
@@ -724,7 +724,7 @@ StateStart::custom(gchar chr)
 			if (eval_colon())
 				expressions.push(SUCCESS);
 		} else {
-			editor_msg(SCI_GOTOPOS, pos);
+			interface.ssm(SCI_GOTOPOS, pos);
 			if (eval_colon())
 				expressions.push(FAILURE);
 			else
@@ -753,8 +753,8 @@ StateStart::custom(gchar chr)
 
 	case '=':
 		BEGIN_EXEC(this);
-		message_display(GTK_MESSAGE_OTHER, "%" G_GINT64_FORMAT,
-				expressions.pop_num_calc());
+		interface.msg(Interface::MSG_USER, "%" G_GINT64_FORMAT,
+			      expressions.pop_num_calc());
 		break;
 
 	case 'K':
@@ -765,15 +765,15 @@ StateStart::custom(gchar chr)
 		expressions.eval();
 
 		if (expressions.args() <= 1) {
-			from = editor_msg(SCI_GETCURRENTPOS);
+			from = interface.ssm(SCI_GETCURRENTPOS);
 			if (chr == 'D') {
 				len = expressions.pop_num_calc();
 				rc = TECO_BOOL(Validate::pos(from + len));
 			} else /* chr == 'K' */ {
 				sptr_t line;
-				line = editor_msg(SCI_LINEFROMPOSITION, from) +
+				line = interface.ssm(SCI_LINEFROMPOSITION, from) +
 				       expressions.pop_num_calc();
-				len = editor_msg(SCI_POSITIONFROMLINE, line)
+				len = interface.ssm(SCI_POSITIONFROMLINE, line)
 				    - from;
 				rc = TECO_BOOL(Validate::line(line));
 			}
@@ -797,12 +797,12 @@ StateStart::custom(gchar chr)
 		if (len == 0 || IS_FAILURE(rc))
 			break;
 
-		undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+		undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
 		undo.push_msg(SCI_UNDO);
 
-		editor_msg(SCI_BEGINUNDOACTION);
-		editor_msg(SCI_DELETERANGE, from, len);
-		editor_msg(SCI_ENDUNDOACTION);
+		interface.ssm(SCI_BEGINUNDOACTION);
+		interface.ssm(SCI_DELETERANGE, from, len);
+		interface.ssm(SCI_ENDUNDOACTION);
 		break;
 	}
 
@@ -1089,14 +1089,14 @@ StateInsert::initial(void)
 	if (!args)
 		return;
 
-	editor_msg(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_BEGINUNDOACTION);
 	for (int i = args; i > 0; i--) {
 		gchar chr = (gchar)expressions.peek_num(i);
-		editor_msg(SCI_ADDTEXT, 1, (sptr_t)&chr);
+		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)&chr);
 	}
 	for (int i = args; i > 0; i--)
 		expressions.pop_num_calc();
-	editor_msg(SCI_ENDUNDOACTION);
+	interface.ssm(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);
 }
@@ -1104,10 +1104,10 @@ StateInsert::initial(void)
 void
 StateInsert::process(const gchar *str, gint new_chars)
 {
-	editor_msg(SCI_BEGINUNDOACTION);
-	editor_msg(SCI_ADDTEXT, new_chars,
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_ADDTEXT, new_chars,
 		   (sptr_t)(str + strlen(str) - new_chars));
-	editor_msg(SCI_ENDUNDOACTION);
+	interface.ssm(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);
 }
@@ -1126,7 +1126,7 @@ StateSearch::initial(void)
 
 	undo.push_var<Parameters>(parameters);
 
-	parameters.dot = editor_msg(SCI_GETCURRENTPOS);
+	parameters.dot = interface.ssm(SCI_GETCURRENTPOS);
 	v = expressions.pop_num_calc();
 	if (expressions.args()) {
 		/* TODO: optional count argument? */
@@ -1137,7 +1137,7 @@ StateSearch::initial(void)
 		parameters.count = (gint)v;
 		if (v >= 0) {
 			parameters.from = parameters.dot;
-			parameters.to = editor_msg(SCI_GETLENGTH);
+			parameters.to = interface.ssm(SCI_GETLENGTH);
 		} else {
 			parameters.from = 0;
 			parameters.to = parameters.dot;
@@ -1360,7 +1360,7 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 
 	gint matched_from = -1, matched_to = -1;
 
-	undo.push_msg(SCI_GOTOPOS, editor_msg(SCI_GETCURRENTPOS));
+	undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
 
 	undo.push_var<gint64>(search_reg->integer);
 	search_reg->integer = FAILURE;
@@ -1371,18 +1371,18 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 	g_printf("REGEXP: %s\n", re_pattern);
 #endif
 	if (!re_pattern) {
-		editor_msg(SCI_GOTOPOS, parameters.dot);
+		interface.ssm(SCI_GOTOPOS, parameters.dot);
 		return;
 	}
 	re = g_regex_new(re_pattern, (GRegexCompileFlags)flags,
 			 (GRegexMatchFlags)0, NULL);
 	g_free(re_pattern);
 	if (!re) {
-		editor_msg(SCI_GOTOPOS, parameters.dot);
+		interface.ssm(SCI_GOTOPOS, parameters.dot);
 		return;
 	}
 
-	buffer = (const gchar *)editor_msg(SCI_GETCHARACTERPOINTER);
+	buffer = (const gchar *)interface.ssm(SCI_GETCHARACTERPOINTER);
 	g_regex_match_full(re, buffer, (gssize)parameters.to, parameters.from,
 			   (GRegexMatchFlags)0, &info, NULL);
 
@@ -1428,9 +1428,9 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 	if (matched_from >= 0 && matched_to >= 0) {
 		/* match success */
 		search_reg->integer = SUCCESS;
-		editor_msg(SCI_SETSEL, matched_from, matched_to);
+		interface.ssm(SCI_SETSEL, matched_from, matched_to);
 	} else {
-		editor_msg(SCI_GOTOPOS, parameters.dot);
+		interface.ssm(SCI_GOTOPOS, parameters.dot);
 	}
 
 	g_regex_unref(re);
@@ -1456,7 +1456,7 @@ StateSearch::done(const gchar *str)
 		expressions.push(search_reg->integer);
 	else if (IS_FAILURE(search_reg->integer) &&
 		 !expressions.find_op(Expressions::OP_LOOP) /* not in loop */)
-		message_display(GTK_MESSAGE_ERROR, "Search string not found!");
+		interface.msg(Interface::MSG_ERROR, "Search string not found!");
 
 	return &States::start;
 }

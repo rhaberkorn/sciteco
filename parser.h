@@ -6,6 +6,9 @@
 
 #include "sciteco.h"
 
+/* TECO uses only lower 7 bits for commands */
+#define MAX_TRANSITIONS	127
+
 class State {
 protected:
 	/* static transitions */
