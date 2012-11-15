@@ -5,3 +5,5 @@ gtk-info-popup*.[ch]
 sciteco
 
 *~
+# SciTECO save points
+.teco.*.*
