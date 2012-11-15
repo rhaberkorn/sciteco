@@ -94,24 +94,20 @@ class Gtk:Info:Popup from Gtk:Window {
 	add_filename(self, Gtk:Info:Popup:File:Type type, const gchar *filename,
 		     gboolean highlight)
 	{
+		static const gchar *type2stock[] = {
+			[GTK_INFO_POPUP_FILE]		= GTK_STOCK_FILE,
+			[GTK_INFO_POPUP_DIRECTORY]	= GTK_STOCK_DIRECTORY
+		};
+
 		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
 
-		const gchar *stock_id;
 		GtkWidget *hbox;
 		GtkWidget *image, *label;
 		gchar *markup;
 
-		switch (type) {
-		case GTK_INFO_POPUP_FILE:
-			stock_id = GTK_STOCK_FILE;
-			break;
-		case GTK_INFO_POPUP_DIRECTORY:
-			stock_id = GTK_STOCK_DIRECTORY;
-			break;
-		}
-
 		hbox = gtk_hbox_new(FALSE, 5);
-		image = gtk_image_new_from_stock(stock_id, GTK_ICON_SIZE_MENU);
+		image = gtk_image_new_from_stock(type2stock[type],
+						 GTK_ICON_SIZE_MENU);
 		gtk_box_pack_start(GTK_BOX(hbox), image, FALSE, FALSE, 0);
 
 		/*
