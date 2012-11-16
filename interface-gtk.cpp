@@ -103,6 +103,14 @@ InterfaceGtk::vmsg(MessageType type, const gchar *fmt, va_list ap)
 }
 
 void
+InterfaceGtk::msg_clear(void)
+{
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
+				      GTK_MESSAGE_OTHER);
+	gtk_label_set_text(GTK_LABEL(message_widget), "");
+}
+
+void
 InterfaceGtk::info_update(QRegister *reg)
 {
 	gchar buf[255];

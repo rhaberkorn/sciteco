@@ -75,7 +75,7 @@ InterfaceNCurses::InterfaceNCurses()
 
 	draw_info();
 	/* scintilla will be refreshed in event loop */
-	msg(MSG_USER, " ");
+	msg_clear();
 	cmdline_update("");
 
 	endwin();
@@ -97,7 +97,7 @@ InterfaceNCurses::resize_all_windows(void)
 
 	draw_info();
 	/* scintilla will be refreshed in event loop */
-	msg(MSG_USER, " "); /* FIXME: use saved message */
+	msg_clear(); /* FIXME: use saved message */
 	cmdline_update();
 }
 
@@ -119,6 +119,19 @@ InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 	wmove(msg_window, 0, 0);
 	wbkgdset(msg_window, ' ' | type2attr[type]);
 	vw_printw(msg_window, fmt, ap);
+	wclrtoeol(msg_window);
+
+	wrefresh(msg_window);
+}
+
+void
+InterfaceNCurses::msg_clear(void)
+{
+	if (isendwin()) /* batch mode */
+		return;
+
+	wmove(msg_window, 0, 0);
+	wbkgdset(msg_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
 	wclrtoeol(msg_window);
 
 	wrefresh(msg_window);

@@ -62,6 +62,7 @@ public:
 		vmsg(type, fmt, ap);
 		va_end(ap);
 	}
+	virtual void msg_clear(void) {}
 
 	virtual sptr_t ssm(unsigned int iMessage,
 			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;

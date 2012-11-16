@@ -43,6 +43,7 @@ public:
 	~InterfaceNCurses();
 
 	void vmsg(MessageType type, const gchar *fmt, va_list ap);
+	void msg_clear(void);
 
 	inline sptr_t
 	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
