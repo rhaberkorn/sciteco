@@ -82,6 +82,11 @@ public:
 	}
 
 	bool load(const gchar *filename);
+	inline void
+	undo_load(void)
+	{
+		undo_set_string();
+	}
 };
 
 extern class QRegisterTable : public RBTree {

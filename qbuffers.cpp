@@ -113,13 +113,12 @@ QRegister::load(const gchar *filename)
 	gchar *contents;
 	gsize size;
 
-	current_save_dot();
-	edit();
-	dot = 0;
-
 	/* FIXME: prevent excessive allocations by reading file into buffer */
 	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
+
+	edit();
+	dot = 0;
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_CLEARALL);
@@ -577,9 +576,10 @@ StateLoadQReg::done(const gchar *str) throw (Error)
 	BEGIN_EXEC(&States::start);
 
 	if (*str) {
-		undo.push_var<gint>(register_argument->dot);
-		undo.push_msg(SCI_UNDO);
-		register_argument->load(str);
+		register_argument->undo_load();
+		if (!register_argument->load(str))
+			throw Error("Cannot load \"%s\" into Q-Register \"%s\"",
+				    str, register_argument->name);
 	} else {
 		if (ring.current)
 			ring.undo_edit();
