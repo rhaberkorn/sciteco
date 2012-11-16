@@ -1108,6 +1108,7 @@ StateInsert::initial(void) throw (Error)
 	}
 	for (int i = args; i > 0; i--)
 		expressions.pop_num_calc();
+	interface.ssm(SCI_SCROLLCARET);
 	interface.ssm(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);
@@ -1118,7 +1119,8 @@ StateInsert::process(const gchar *str, gint new_chars) throw (Error)
 {
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_ADDTEXT, new_chars,
-		   (sptr_t)(str + strlen(str) - new_chars));
+		      (sptr_t)(str + strlen(str) - new_chars));
+	interface.ssm(SCI_SCROLLCARET);
 	interface.ssm(SCI_ENDUNDOACTION);
 
 	undo.push_msg(SCI_UNDO);
