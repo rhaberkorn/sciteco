@@ -171,7 +171,6 @@ Buffer::load(const gchar *filename)
 	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
 	g_free(contents);
 
-	interface.ssm(SCI_GOTOPOS, 0);
 	interface.ssm(SCI_SETSAVEPOINT);
 	interface.undo_info_update(this);
 	undo.push_var(dirty);

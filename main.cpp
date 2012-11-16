@@ -141,10 +141,9 @@ main(int argc, char **argv)
 
 	/* add remaining arguments to unnamed buffer */
 	for (int i = 1; i < argc; i++) {
-		interface.ssm(SCI_ADDTEXT, strlen(argv[i]), (sptr_t)argv[i]);
-		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)"\r");
+		interface.ssm(SCI_APPENDTEXT, strlen(argv[i]), (sptr_t)argv[i]);
+		interface.ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
 	}
-	interface.ssm(SCI_GOTOPOS, 0);
 
 	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
 		if (!file_execute(mung_file))
