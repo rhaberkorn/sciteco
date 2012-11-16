@@ -35,6 +35,7 @@ cmdline_keypress(gchar key)
 	 * Cleanup messages, popups, etc...
 	 */
 	interface.popup_clear();
+	interface.msg(Interface::MSG_USER, " ");
 
 	/*
 	 * Process immediate editing commands
