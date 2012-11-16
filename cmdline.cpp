@@ -56,7 +56,9 @@ cmdline_keypress(gchar key)
 	for (const gchar *p = insert; *p; p++) {
 		strcat(cmdline, (gchar[]){*p, '\0'});
 
-		if (!macro_execute(cmdline)) {
+		try {
+			macro_execute(cmdline);
+		} catch (...) {
 			cmdline[old_cmdline_len] = '\0';
 			break;
 		}

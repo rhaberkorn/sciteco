@@ -495,7 +495,7 @@ StateEditFile::do_edit(const gchar *filename)
 }
 
 void
-StateEditFile::initial(void)
+StateEditFile::initial(void) throw (Error)
 {
 	gint64 id = expressions.pop_num_calc(1, -1);
 
@@ -510,7 +510,7 @@ StateEditFile::initial(void)
 }
 
 State *
-StateEditFile::done(const gchar *str)
+StateEditFile::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -554,18 +554,18 @@ StateEditFile::done(const gchar *str)
 }
 
 State *
-StateSaveFile::done(const gchar *str)
+StateSaveFile::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
 	if (!ring.save(*str ? str : NULL))
-		return NULL;
+		throw Error("Unable to save file");
 
 	return &States::start;
 }
 
 State *
-StateEQCommand::got_register(QRegister *reg)
+StateEQCommand::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::loadqreg);
 	register_argument = reg;
@@ -573,7 +573,7 @@ StateEQCommand::got_register(QRegister *reg)
 }
 
 State *
-StateLoadQReg::done(const gchar *str)
+StateLoadQReg::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -593,7 +593,7 @@ StateLoadQReg::done(const gchar *str)
 }
 
 State *
-StateCtlUCommand::got_register(QRegister *reg)
+StateCtlUCommand::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::setqregstring);
 	register_argument = reg;
@@ -601,7 +601,7 @@ StateCtlUCommand::got_register(QRegister *reg)
 }
 
 State *
-StateSetQRegString::done(const gchar *str)
+StateSetQRegString::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -612,7 +612,7 @@ StateSetQRegString::done(const gchar *str)
 }
 
 State *
-StateGetQRegInteger::got_register(QRegister *reg)
+StateGetQRegInteger::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -623,7 +623,7 @@ StateGetQRegInteger::got_register(QRegister *reg)
 }
 
 State *
-StateSetQRegInteger::got_register(QRegister *reg)
+StateSetQRegInteger::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -634,7 +634,7 @@ StateSetQRegInteger::got_register(QRegister *reg)
 }
 
 State *
-StateIncreaseQReg::got_register(QRegister *reg)
+StateIncreaseQReg::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -646,11 +646,10 @@ StateIncreaseQReg::got_register(QRegister *reg)
 }
 
 State *
-StateMacro::got_register(QRegister *reg)
+StateMacro::got_register(QRegister *reg) throw (Error)
 {
 	gint pc = macro_pc;
 	gchar *str;
-	bool rc;
 
 	BEGIN_EXEC(&States::start);
 
@@ -664,18 +663,23 @@ StateMacro::got_register(QRegister *reg)
 
 	macro_pc = 0;
 	str = reg->get_string();
-	rc = macro_execute(str);
+	try {
+		macro_execute(str);
+	} catch (...) {
+		g_free(str);
+		macro_pc = pc;
+		States::current = this;
+		throw; /* forward */
+	}
 	g_free(str);
 	macro_pc = pc;
 	States::current = this;
-	if (!rc)
-		return NULL;
 
 	return &States::start;
 }
 
 State *
-StateCopyToQReg::got_register(QRegister *reg)
+StateCopyToQReg::got_register(QRegister *reg) throw (Error)
 {
 	gint64 from, len;
 	Sci_TextRange tr;
@@ -687,6 +691,10 @@ StateCopyToQReg::got_register(QRegister *reg)
 		from = interface.ssm(SCI_GETCURRENTPOS);
 		sptr_t line = interface.ssm(SCI_LINEFROMPOSITION, from) +
 			      expressions.pop_num_calc();
+
+		if (!Validate::line(line))
+			throw RangeError("X");
+
 		len = interface.ssm(SCI_POSITIONFROMLINE, line) - from;
 
 		if (len < 0) {
@@ -696,6 +704,10 @@ StateCopyToQReg::got_register(QRegister *reg)
 	} else {
 		gint64 to = expressions.pop_num();
 		from = expressions.pop_num();
+
+		if (!Validate::pos(from) || !Validate::pos(to))
+			throw RangeError("X");
+
 		len = to - from;
 	}
 

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <string.h>
 
 #include <glib.h>
@@ -43,8 +44,8 @@ static gint nest_level = 0;
 gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
-bool
-macro_execute(const gchar *macro)
+void
+macro_execute(const gchar *macro) throw (State::Error)
 {
 	while (macro[macro_pc]) {
 #ifdef DEBUG
@@ -53,23 +54,15 @@ macro_execute(const gchar *macro)
 			 States::current);
 #endif
 
-		if (!State::input(macro[macro_pc])) {
-			interface.msg(Interface::MSG_ERROR,
-				      "Syntax error \"%c\"", macro[macro_pc]);
-			return false;
-		}
-
+		State::input(macro[macro_pc]);
 		macro_pc++;
 	}
-
-	return true;
 }
 
 bool
 file_execute(const gchar *filename)
 {
 	gchar *macro, *p = NULL;
-	bool rc;
 
 	macro_pc = 0;
 	States::current = &States::start;
@@ -80,14 +73,26 @@ file_execute(const gchar *filename)
 	if (macro[0] == '#')
 		p = MAX(strchr(macro, '\r'), strchr(macro, '\n'));
 
-	rc = macro_execute(p ? p+1 : macro);
-	g_free(macro);
-	if (!rc)
+	try {
+		macro_execute(p ? p+1 : macro);
+	} catch (...) {
+		g_free(macro);
 		return false;
+	}
+	g_free(macro);
 
 	macro_pc = 0;
 	States::current = &States::start;
 	return true;
+}
+
+State::Error::Error(const gchar *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	interface.vmsg(Interface::MSG_ERROR, fmt, ap);
+	va_end(ap);
 }
 
 State::State()
@@ -107,17 +112,13 @@ State::eval_colon(void)
 	return true;
 }
 
-bool
-State::input(gchar chr)
+void
+State::input(gchar chr) throw (Error)
 {
 	State *state = States::current;
 
 	for (;;) {
 		State *next = state->get_next_state(chr);
-
-		if (!next)
-			/* Syntax error */
-			return false;
 
 		if (next == state)
 			break;
@@ -130,12 +131,10 @@ State::input(gchar chr)
 		undo.push_var<State *>(States::current);
 		States::current = state;
 	}
-
-	return true;
 }
 
 State *
-State::get_next_state(gchar chr)
+State::get_next_state(gchar chr) throw (Error)
 {
 	State *next = NULL;
 	guint upper = g_ascii_toupper(chr);
@@ -144,12 +143,14 @@ State::get_next_state(gchar chr)
 		next = transitions[upper];
 	if (!next)
 		next = custom(chr);
+	if (!next)
+		throw SyntaxError(chr);
 
 	return next;
 }
 
 gchar *
-StateExpectString::machine_input(gchar chr)
+StateExpectString::machine_input(gchar chr) throw (Error)
 {
 	switch (machine.mode) {
 	case Machine::MODE_UPPER:
@@ -225,7 +226,7 @@ StateExpectString::machine_input(gchar chr)
 
 		reg = qregisters[g_ascii_toupper(chr)];
 		if (!reg)
-			return NULL;
+			throw InvalidQRegError(chr);
 
 		return state == Machine::STATE_CTL_EQ
 			? reg->get_string()
@@ -243,7 +244,7 @@ original:
 }
 
 State *
-StateExpectString::custom(gchar chr)
+StateExpectString::custom(gchar chr) throw (Error)
 {
 	gchar *insert, *new_str;
 
@@ -311,12 +312,12 @@ StateExpectQReg::StateExpectQReg() : State()
 }
 
 State *
-StateExpectQReg::custom(gchar chr)
+StateExpectQReg::custom(gchar chr) throw (Error)
 {
 	QRegister *reg = qregisters[g_ascii_toupper(chr)];
 
 	if (!reg)
-		return NULL;
+		throw InvalidQRegError(chr);
 
 	return got_register(reg);
 }
@@ -418,7 +419,7 @@ StateStart::delete_words(gint64 n)
 }
 
 State *
-StateStart::custom(gchar chr)
+StateStart::custom(gchar chr) throw (Error)
 {
 	gint64 v;
 	tecoBool rc;
@@ -656,7 +657,7 @@ StateStart::custom(gchar chr)
 		} else if (eval_colon()) {
 			expressions.push(FAILURE);
 		} else {
-			return NULL; /* FIXME */
+			throw MoveError("J");
 		}
 		break;
 
@@ -666,7 +667,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw MoveError("C");
 		break;
 
 	case 'R':
@@ -675,7 +676,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw MoveError("R");
 		break;
 
 	case 'L':
@@ -684,7 +685,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw MoveError("L");
 		break;
 
 	case 'B':
@@ -693,7 +694,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw MoveError("B");
 		break;
 
 	case 'W': {
@@ -728,7 +729,7 @@ StateStart::custom(gchar chr)
 			if (eval_colon())
 				expressions.push(FAILURE);
 			else
-				return NULL; /* FIXME */
+				throw MoveError("W");
 		}
 		break;
 	}
@@ -739,7 +740,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw Error("Not enough words to delete with <V>");
 		break;
 
 	case 'Y':
@@ -748,7 +749,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw Error("Not enough words to delete with <Y>");
 		break;
 
 	case '=':
@@ -792,7 +793,7 @@ StateStart::custom(gchar chr)
 		if (eval_colon())
 			expressions.push(rc);
 		else if (IS_FAILURE(rc))
-			return NULL; /* FIXME */
+			throw RangeError(chr);
 
 		if (len == 0 || IS_FAILURE(rc))
 			break;
@@ -807,7 +808,7 @@ StateStart::custom(gchar chr)
 	}
 
 	default:
-		return NULL;
+		throw SyntaxError(chr);
 	}
 
 	return this;
@@ -819,7 +820,7 @@ StateFlowCommand::StateFlowCommand() : State()
 }
 
 State *
-StateFlowCommand::custom(gchar chr)
+StateFlowCommand::custom(gchar chr) throw (Error)
 {
 	switch (chr) {
 	/*
@@ -880,7 +881,7 @@ StateFlowCommand::custom(gchar chr)
 		break;
 
 	default:
-		return NULL;
+		throw SyntaxError(chr);
 	}
 
 	return &States::start;
@@ -892,7 +893,7 @@ StateCondCommand::StateCondCommand() : State()
 }
 
 State *
-StateCondCommand::custom(gchar chr)
+StateCondCommand::custom(gchar chr) throw (Error)
 {
 	gint64 value = 0;
 	bool result;
@@ -959,7 +960,7 @@ StateCondCommand::custom(gchar chr)
 		result = g_ascii_isupper((gchar)value);
 		break;
 	default:
-		return NULL;
+		throw Error("Invalid conditional type \"%c\"", chr);
 	}
 
 	if (!result) {
@@ -978,7 +979,7 @@ StateControl::StateControl() : State()
 }
 
 State *
-StateControl::custom(gchar chr)
+StateControl::custom(gchar chr) throw (Error)
 {
 	switch (g_ascii_toupper(chr)) {
 	case 'O':
@@ -1036,7 +1037,7 @@ StateControl::custom(gchar chr)
 		break;
 
 	default:
-		return NULL;
+		throw Error("Unsupported command <^%c>", chr);
 	}
 
 	return &States::start;
@@ -1051,17 +1052,18 @@ StateECommand::StateECommand() : State()
 }
 
 State *
-StateECommand::custom(gchar chr)
+StateECommand::custom(gchar chr) throw (Error)
 {
 	switch (g_ascii_toupper(chr)) {
 	case 'F':
 		BEGIN_EXEC(&States::start);
 		if (!ring.current)
-			return NULL; /* FIXME */
+			throw Error("No buffer selected");
 
 		if (IS_FAILURE(expressions.pop_num_calc()) &&
 		    ring.current->dirty)
-			return NULL; /* FIXME */
+			throw Error("Buffer \"%s\" is dirty",
+				    ring.current->filename ? : "(Unnamed)");
 
 		ring.close();
 		break;
@@ -1071,14 +1073,14 @@ StateECommand::custom(gchar chr)
 
 		if (IS_FAILURE(expressions.pop_num_calc()) &&
 		    ring.is_any_dirty())
-			return NULL; /* FIXME */
+			throw Error("Modified buffers exist");
 
 		undo.push_var<bool>(quit_requested);
 		quit_requested = true;
 		break;
 
 	default:
-		return NULL;
+		throw SyntaxError(chr);
 	}
 
 	return &States::start;
@@ -1090,7 +1092,7 @@ StateECommand::custom(gchar chr)
  * syntactically
  */
 void
-StateInsert::initial(void)
+StateInsert::initial(void) throw (Error)
 {
 	int args;
 
@@ -1112,7 +1114,7 @@ StateInsert::initial(void)
 }
 
 void
-StateInsert::process(const gchar *str, gint new_chars)
+StateInsert::process(const gchar *str, gint new_chars) throw (Error)
 {
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_ADDTEXT, new_chars,
@@ -1123,14 +1125,14 @@ StateInsert::process(const gchar *str, gint new_chars)
 }
 
 State *
-StateInsert::done(const gchar *str __attribute__((unused)))
+StateInsert::done(const gchar *str __attribute__((unused))) throw (Error)
 {
 	/* nothing to be done when done */
 	return &States::start;
 }
 
 void
-StateSearch::initial(void)
+StateSearch::initial(void) throw (Error)
 {
 	gint64 v;
 
@@ -1143,6 +1145,10 @@ StateSearch::initial(void)
 		parameters.count = 1;
 		parameters.from = (gint)v;
 		parameters.to = (gint)expressions.pop_num_calc();
+
+		if (!Validate::pos(parameters.from) ||
+		    !Validate::pos(parameters.to))
+			throw RangeError("S");
 	} else {
 		parameters.count = (gint)v;
 		if (v >= 0) {
@@ -1246,7 +1252,8 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 }
 
 gchar *
-StateSearch::pattern2regexp(const gchar *&pattern, bool single_expr)
+StateSearch::pattern2regexp(const gchar *&pattern,
+			    bool single_expr)
 {
 	MatchState state = STATE_START;
 	gchar *re = NULL;
@@ -1357,7 +1364,8 @@ error:
 }
 
 void
-StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
+StateSearch::process(const gchar *str,
+		     gint new_chars __attribute__((unused))) throw (Error)
 {
 	static const gint flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
 				  G_REGEX_DOTALL | G_REGEX_RAW;
@@ -1447,7 +1455,7 @@ StateSearch::process(const gchar *str, gint new_chars __attribute__((unused)))
 }
 
 State *
-StateSearch::done(const gchar *str)
+StateSearch::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 

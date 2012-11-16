@@ -305,58 +305,58 @@ class StateEditFile : public StateExpectString {
 private:
 	void do_edit(const gchar *filename);
 
-	void initial(void);
-	State *done(const gchar *str);
+	void initial(void) throw (Error);
+	State *done(const gchar *str) throw (Error);
 };
 
 class StateSaveFile : public StateExpectString {
 private:
-	State *done(const gchar *str);
+	State *done(const gchar *str) throw (Error);
 };
 
 class StateEQCommand : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateLoadQReg : public StateExpectString {
 private:
-	State *done(const gchar *str);
+	State *done(const gchar *str) throw (Error);
 };
 
 class StateCtlUCommand : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateSetQRegString : public StateExpectString {
 private:
-	State *done(const gchar *str);
+	State *done(const gchar *str) throw (Error);
 };
 
 class StateGetQRegInteger : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateSetQRegInteger : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateIncreaseQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateMacro : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 class StateCopyToQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg);
+	State *got_register(QRegister *reg) throw (Error);
 };
 
 namespace States {

@@ -15,12 +15,12 @@ public:
 	StateLabel();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateGotoCmd : public StateExpectString {
 private:
-	State *done(const gchar *str);
+	State *done(const gchar *str) throw (Error);
 };
 
 namespace States {

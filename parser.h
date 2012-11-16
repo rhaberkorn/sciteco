@@ -10,6 +10,44 @@
 #define MAX_TRANSITIONS	127
 
 class State {
+public:
+	class Error {
+	public:
+		Error(const gchar *fmt, ...);
+	};
+
+	class SyntaxError : public Error {
+	public:
+		SyntaxError(gchar chr)
+			   : Error("Syntax error \"%c\" (%d)", chr, chr) {}
+	};
+
+	class MoveError : public Error {
+	public:
+		MoveError(const gchar *cmd)
+			 : Error("Attempt to move pointer off page with <%s>",
+				 cmd) {}
+		MoveError(gchar cmd)
+			 : Error("Attempt to move pointer off page with <%c>",
+				 cmd) {}
+	};
+
+	class RangeError : public Error {
+	public:
+		RangeError(const gchar *cmd)
+			  : Error("Invalid range specified for <%s>", cmd) {}
+		RangeError(gchar cmd)
+			  : Error("Invalid range specified for <%c>", cmd) {}
+	};
+
+	class InvalidQRegError : public Error {
+	public:
+		InvalidQRegError(const gchar *name)
+				: Error("Invalid Q-Register \"%s\"", name) {}
+		InvalidQRegError(gchar name)
+				: Error("Invalid Q-Register \"%c\"", name) {}
+	};
+
 protected:
 	/* static transitions */
 	State *transitions[MAX_TRANSITIONS];
@@ -29,15 +67,16 @@ protected:
 public:
 	State();
 
-	static bool input(gchar chr);
-	State *get_next_state(gchar chr);
+	static void input(gchar chr) throw (Error);
+	State *get_next_state(gchar chr) throw (Error);
 
 protected:
 	static bool eval_colon(void);
 
 	virtual State *
-	custom(gchar chr)
+	custom(gchar chr) throw (Error)
 	{
+		throw SyntaxError(chr);
 		return NULL;
 	}
 };
@@ -75,13 +114,13 @@ public:
 	StateExpectString() : State() {}
 
 private:
-	gchar *machine_input(gchar key);
-	State *custom(gchar chr);
+	gchar *machine_input(gchar key) throw (Error);
+	State *custom(gchar chr) throw (Error);
 
 protected:
-	virtual void initial(void) {}
-	virtual void process(const gchar *str, gint new_chars) {}
-	virtual State *done(const gchar *str) = 0;
+	virtual void initial(void) throw (Error) {}
+	virtual void process(const gchar *str, gint new_chars) throw (Error) {}
+	virtual State *done(const gchar *str) throw (Error) = 0;
 };
 
 class QRegister;
@@ -94,14 +133,14 @@ public:
 	StateExpectQReg();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 
 protected:
 	/*
 	 * FIXME: would be nice to pass reg as reference, but there are
 	 * circular header dependencies...
 	 */
-	virtual State *got_register(QRegister *reg) = 0;
+	virtual State *got_register(QRegister *reg) throw (Error) = 0;
 };
 
 class StateStart : public State {
@@ -113,7 +152,7 @@ private:
 	tecoBool move_lines(gint64 n);
 	tecoBool delete_words(gint64 n);
 
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateControl : public State {
@@ -121,7 +160,7 @@ public:
 	StateControl();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateFlowCommand : public State {
@@ -129,7 +168,7 @@ public:
 	StateFlowCommand();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateCondCommand : public State {
@@ -137,7 +176,7 @@ public:
 	StateCondCommand();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateECommand : public State {
@@ -145,14 +184,14 @@ public:
 	StateECommand();
 
 private:
-	State *custom(gchar chr);
+	State *custom(gchar chr) throw (Error);
 };
 
 class StateInsert : public StateExpectString {
 private:
-	void initial(void);
-	void process(const gchar *str, gint new_chars);
-	State *done(const gchar *str);
+	void initial(void) throw (Error);
+	void process(const gchar *str, gint new_chars) throw (Error);
+	State *done(const gchar *str) throw (Error);
 };
 
 class StateSearch : public StateExpectString {
@@ -176,9 +215,9 @@ private:
 			    bool escape_default = false);
 	gchar *pattern2regexp(const gchar *&pattern, bool single_expr = false);
 
-	void initial(void);
-	void process(const gchar *str, gint new_chars);
-	State *done(const gchar *str);
+	void initial(void) throw (Error);
+	void process(const gchar *str, gint new_chars) throw (Error);
+	State *done(const gchar *str) throw (Error);
 };
 
 extern gint macro_pc;
@@ -210,7 +249,7 @@ extern enum Mode {
 extern gchar *strings[2];
 extern gchar escape_char;
 
-bool macro_execute(const gchar *macro);
+void macro_execute(const gchar *macro) throw (State::Error);
 bool file_execute(const gchar *filename);
 
 #endif

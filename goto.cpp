@@ -171,7 +171,7 @@ StateLabel::StateLabel() : State()
 }
 
 State *
-StateLabel::custom(gchar chr)
+StateLabel::custom(gchar chr) throw (Error)
 {
 	gchar *new_str;
 
@@ -203,7 +203,7 @@ StateLabel::custom(gchar chr)
 }
 
 State *
-StateGotoCmd::done(const gchar *str)
+StateGotoCmd::done(const gchar *str) throw (Error)
 {
 	gint64 value;
 	gchar **labels;
