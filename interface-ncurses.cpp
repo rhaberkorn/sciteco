@@ -327,9 +327,7 @@ InterfaceNCurses::~InterfaceNCurses()
  */
 
 static void
-scintilla_notify(Scintilla *sci, int idFrom, void *_notify, void *user_data)
+scintilla_notify(Scintilla *sci, int idFrom, void *notify, void *user_data)
 {
-	SCNotification *notify = (SCNotification *)_notify;
-
-	interface.process_notify(notify);
+	interface.process_notify((SCNotification *)notify);
 }
