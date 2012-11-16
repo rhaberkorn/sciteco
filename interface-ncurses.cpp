@@ -40,7 +40,7 @@ InterfaceNCurses::InterfaceNCurses()
 {
 	/*
 	 * Prevent the initial redraw and any escape sequences that may
-	 * clobber stdout, so we may use the terminal in
+	 * interfere with stdout, so we may use the terminal in
 	 * cooked mode, for commandline help and batch processing.
 	 * Scintilla must be initialized for batch processing to work.
 	 * (Frankly I have no idea why this works!)
@@ -282,6 +282,7 @@ InterfaceNCurses::event_loop(void)
 {
 	/* in commandline (visual) mode, enforce redraw */
 	wrefresh(curscr);
+	draw_info();
 
 	for (;;) {
 		int key;
