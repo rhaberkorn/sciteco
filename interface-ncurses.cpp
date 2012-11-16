@@ -127,6 +127,9 @@ InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 void
 InterfaceNCurses::draw_info(void)
 {
+	if (isendwin()) /* batch mode */
+		return;
+
 	wmove(info_window, 0, 0);
 	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
 	waddstr(info_window, info_current);
@@ -186,7 +189,12 @@ void
 InterfaceNCurses::popup_add_filename(PopupFileType type,
 				     const gchar *filename, bool highlight)
 {
-	gchar *entry = g_strconcat(highlight ? "*" : " ", filename, NULL);
+	gchar *entry;
+
+	if (isendwin()) /* batch mode */
+		return;
+
+	entry = g_strconcat(highlight ? "*" : " ", filename, NULL);
 
 	popup.longest = MAX(popup.longest, (gint)strlen(filename));
 	popup.length++;
@@ -200,6 +208,9 @@ InterfaceNCurses::popup_show(void)
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
 	gint popup_cols, cur_file;
+
+	if (isendwin()) /* batch mode */
+		goto cleanup;
 
 	getmaxyx(stdscr, lines, cols);
 
@@ -231,6 +242,7 @@ InterfaceNCurses::popup_show(void)
 	}
 	wclrtoeol(popup.window);
 
+cleanup:
 	g_slist_free(popup.list);
 	popup.list = NULL;
 	popup.longest = popup.length = 0;
