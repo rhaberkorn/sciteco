@@ -173,6 +173,9 @@ Buffer::load(const gchar *filename)
 
 	interface.ssm(SCI_GOTOPOS, 0);
 	interface.ssm(SCI_SETSAVEPOINT);
+	interface.undo_info_update(this);
+	undo.push_var(dirty);
+	dirty = false;
 
 	set_filename(filename);
 
@@ -231,13 +234,17 @@ Ring::edit(const gchar *filename)
 
 	current_save_dot();
 
+	qregisters.current = NULL;
 	if (buffer) {
+		current = buffer;
 		buffer->edit();
 	} else {
 		new_in_ring = true;
 
 		buffer = new Buffer();
 		LIST_INSERT_HEAD(&head, buffer, buffers);
+
+		current = buffer;
 
 		if (g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
 			buffer->load(filename);
@@ -257,9 +264,6 @@ Ring::edit(const gchar *filename)
 					      "Added new unnamed file to ring.");
 		}
 	}
-
-	qregisters.current = NULL;
-	current = buffer;
 
 	return new_in_ring;
 }
@@ -376,6 +380,11 @@ Ring::save(const gchar *filename)
 
 	if (!g_file_set_contents(filename, buffer, size, NULL))
 		return false;
+
+	interface.ssm(SCI_SETSAVEPOINT);
+	interface.undo_info_update(current);
+	undo.push_var(current->dirty);
+	current->dirty = false;
 
 	/*
 	 * FIXME: necessary also if the filename was not specified but the file

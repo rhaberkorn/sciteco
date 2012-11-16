@@ -13,24 +13,30 @@
 #include <ScintillaTerm.h>
 
 #include "sciteco.h"
+#include "qbuffers.h"
 #include "interface.h"
 #include "interface-ncurses.h"
 
 InterfaceNCurses interface;
 
 extern "C" {
-static void scnotification(Scintilla *view, int i, void *p1, void *p2);
+static void scintilla_notify(Scintilla *sci, int idFrom,
+			     void *notify, void *user_data);
 }
 
-/* FIXME: should be configurable in TECO */
+#define UNNAMED_FILE "(Unnamed)"
+
+/* FIXME: should be configurable in TECO (Function key substitutes) */
 #define ESCAPE_SURROGATE KEY_DC
 
 /* from ScintillaTerm.cxx */
-#define SCI_COLOR_PAIR(f, b) ((b) * COLORS + (f) + 1)
+#define SCI_COLOR_PAIR(f, b) \
+	((b) * COLORS + (f) + 1)
+
+#define SCI_COLOR_ATTR(f, b) \
+	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
 InterfaceNCurses::InterfaceNCurses()
-		  : popup_window(NULL), popup_list(NULL),
-		    popup_list_longest(0), popup_list_length(0)
 {
 	/*
 	 * Prevent the initial redraw and any escape sequences that may
@@ -50,10 +56,14 @@ InterfaceNCurses::InterfaceNCurses()
 
 	setlocale(LC_CTYPE, ""); /* for displaying UTF-8 characters properly */
 
-	/* NOTE: initializes color pairs */
-	sci = scintilla_new(scnotification);
+	info_window = newwin(1, 0, 0, 0);
+	info_current = g_strdup(PACKAGE_NAME);
+
+	/* NOTE: Scintilla initializes color pairs */
+	sci = scintilla_new(scintilla_notify);
 	sci_window = scintilla_get_window(sci);
-	wresize(sci_window, LINES - 2, COLS);
+	wresize(sci_window, LINES - 3, COLS);
+	mvwin(sci_window, 1, 0);
 
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
@@ -63,6 +73,7 @@ InterfaceNCurses::InterfaceNCurses()
 
 	ssm(SCI_SETFOCUS, TRUE);
 
+	draw_info();
 	/* scintilla will be refreshed in event loop */
 	msg(MSG_USER, " ");
 	cmdline_update("");
@@ -73,16 +84,18 @@ InterfaceNCurses::InterfaceNCurses()
 void
 InterfaceNCurses::resize_all_windows(void)
 {
-	int lines, cols;
+	int lines, cols; /* screen dimensions */
 
 	getmaxyx(stdscr, lines, cols);
 
-	wresize(sci_window, lines - 2, cols);
+	wresize(info_window, 1, cols);
+	wresize(sci_window, lines - 3, cols);
 	wresize(msg_window, 1, cols);
 	mvwin(msg_window, lines - 2, 0);
 	wresize(cmdline_window, 1, cols);
 	mvwin(cmdline_window, lines - 1, 0);
 
+	draw_info();
 	/* scintilla will be refreshed in event loop */
 	msg(MSG_USER, " "); /* FIXME: use saved message */
 	cmdline_update();
@@ -91,11 +104,11 @@ InterfaceNCurses::resize_all_windows(void)
 void
 InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
-	static const short type2colorid[] = {
-		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
-		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_GREEN),  /* MSG_INFO */
-		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_YELLOW), /* MSG_WARNING */
-		SCI_COLOR_PAIR(COLOR_BLACK, COLOR_RED)	   /* MSG_ERROR */
+	static const int type2attr[] = {
+		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
+		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN),  /* MSG_INFO */
+		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW), /* MSG_WARNING */
+		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_RED)	   /* MSG_ERROR */
 	};
 
 	if (isendwin()) { /* batch mode */
@@ -104,11 +117,43 @@ InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 	}
 
 	wmove(msg_window, 0, 0);
-	wbkgdset(msg_window, ' ' | COLOR_PAIR(type2colorid[type]));
+	wbkgdset(msg_window, ' ' | type2attr[type]);
 	vw_printw(msg_window, fmt, ap);
 	wclrtoeol(msg_window);
 
 	wrefresh(msg_window);
+}
+
+void
+InterfaceNCurses::draw_info(void)
+{
+	wmove(info_window, 0, 0);
+	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
+	waddstr(info_window, info_current);
+	wclrtoeol(info_window);
+
+	wrefresh(info_window);
+}
+
+void
+InterfaceNCurses::info_update(QRegister *reg)
+{
+	g_free(info_current);
+	info_current = g_strdup_printf("%s - <QRegister> %s", PACKAGE_NAME,
+				       reg->name);
+
+	draw_info();
+}
+
+void
+InterfaceNCurses::info_update(Buffer *buffer)
+{
+	g_free(info_current);
+	info_current = g_strdup_printf("%s - <Buffer> %s%s", PACKAGE_NAME,
+				       buffer->filename ? : UNNAMED_FILE,
+				       buffer->dirty ? "*" : "");
+
+	draw_info();
 }
 
 void
@@ -143,65 +188,68 @@ InterfaceNCurses::popup_add_filename(PopupFileType type,
 {
 	gchar *entry = g_strconcat(highlight ? "*" : " ", filename, NULL);
 
-	popup_list_longest = MAX(popup_list_longest, (gint)strlen(filename));
-	popup_list_length++;
+	popup.longest = MAX(popup.longest, (gint)strlen(filename));
+	popup.length++;
 
-	popup_list = g_slist_prepend(popup_list, entry);
+	popup.list = g_slist_prepend(popup.list, entry);
 }
 
 void
 InterfaceNCurses::popup_show(void)
 {
+	int lines, cols; /* screen dimensions */
 	int popup_lines;
 	gint popup_cols, cur_file;
 
-	popup_list_longest += 3;
-	popup_list = g_slist_reverse(popup_list);
+	getmaxyx(stdscr, lines, cols);
 
-	popup_cols = MIN(popup_list_length, COLS / popup_list_longest);
-	popup_lines = (popup_list_length + popup_list_length % popup_cols)/
-		      popup_cols;
+	popup.longest += 3;
+	popup.list = g_slist_reverse(popup.list);
+
+	popup_cols = MIN(popup.length, cols / popup.longest);
+	popup_lines = (popup.length + popup.length % popup_cols)/popup_cols;
 	/* window covers message and scintilla windows */
-	popup_window = newwin(popup_lines, 0, LINES - 1 - popup_lines, 0);
-	wbkgdset(popup_window,
-		 ' ' | COLOR_PAIR(SCI_COLOR_PAIR(COLOR_BLACK, COLOR_BLUE)));
+	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
+	wbkgdset(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
 
 	cur_file = 0;
-	for (GSList *cur = popup_list; cur; cur = g_slist_next(cur)) {
+	for (GSList *cur = popup.list; cur; cur = g_slist_next(cur)) {
 		gchar *entry = (gchar *)cur->data;
 
 		if (cur_file && !(cur_file % popup_cols)) {
-			wclrtoeol(popup_window);
-			waddch(popup_window, '\n');
+			wclrtoeol(popup.window);
+			waddch(popup.window, '\n');
 		}
 
-		(void)wattrset(popup_window, *entry == '*' ? A_BOLD : A_NORMAL);
-		waddstr(popup_window, entry + 1);
-		for (int i = popup_list_longest - strlen(entry) + 1; i; i--)
-			waddch(popup_window, ' ');
+		(void)wattrset(popup.window, *entry == '*' ? A_BOLD : A_NORMAL);
+		waddstr(popup.window, entry + 1);
+		for (int i = popup.longest - strlen(entry) + 1; i; i--)
+			waddch(popup.window, ' ');
 
 		g_free(cur->data);
 		cur_file++;
 	}
-	wclrtoeol(popup_window);
+	wclrtoeol(popup.window);
 
-	g_slist_free(popup_list);
-	popup_list = NULL;
-	popup_list_longest = 0;
-	popup_list_length = 0;
+	g_slist_free(popup.list);
+	popup.list = NULL;
+	popup.longest = popup.length = 0;
 }
 
 void
 InterfaceNCurses::popup_clear(void)
 {
-	if (!popup_window)
+	if (!popup.window)
 		return;
 
+	redrawwin(info_window);
+	wrefresh(info_window);
 	scintilla_refresh(sci);
 	redrawwin(msg_window);
 	wrefresh(msg_window);
-	delwin(popup_window);
-	popup_window = NULL;
+
+	delwin(popup.window);
+	popup.window = NULL;
 }
 
 void
@@ -215,8 +263,8 @@ InterfaceNCurses::event_loop(void)
 
 		/* also handles initial refresh (styles are configured...) */
 		scintilla_refresh(sci);
-		if (popup_window)
-			wrefresh(popup_window);
+		if (popup.window)
+			wrefresh(popup.window);
 
 		key = wgetch(cmdline_window);
 		switch (key) {
@@ -250,19 +298,23 @@ InterfaceNCurses::event_loop(void)
 	}
 }
 
+InterfaceNCurses::Popup::~Popup()
+{
+	if (window)
+		delwin(window);
+	if (list)
+		g_slist_free(list);
+}
+
 InterfaceNCurses::~InterfaceNCurses()
 {
+	delwin(info_window);
+	g_free(info_current);
 	scintilla_delete(sci);
 	delwin(sci_window);
-
 	delwin(cmdline_window);
 	g_free(cmdline_current);
 	delwin(msg_window);
-
-	if (popup_window)
-		delwin(popup_window);
-	if (popup_list)
-		g_slist_free(popup_list);
 
 	if (!isendwin())
 		endwin();
@@ -275,7 +327,9 @@ InterfaceNCurses::~InterfaceNCurses()
  */
 
 static void
-scnotification(Scintilla *view, int i, void *p1, void *p2)
+scintilla_notify(Scintilla *sci, int idFrom, void *_notify, void *user_data)
 {
-	/* TODO */
+	SCNotification *notify = (SCNotification *)_notify;
+
+	interface.process_notify(notify);
 }

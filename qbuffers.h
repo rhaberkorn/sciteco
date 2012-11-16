@@ -71,10 +71,12 @@ public:
 	{
 		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 		interface.ssm(SCI_GOTOPOS, dot);
+		interface.info_update(this);
 	}
 	inline void
 	undo_edit(void)
 	{
+		interface.undo_info_update(this);
 		undo.push_msg(SCI_GOTOPOS, dot);
 		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 	}
@@ -157,12 +159,15 @@ public:
 
 	gint savepoint_id;
 
+	/* set by Interfaces using Scintilla notifications */
+	bool dirty;
+
 private:
 	typedef void document;
 	document *doc;
 
 public:
-	Buffer() : filename(NULL), dot(0), savepoint_id(0)
+	Buffer() : filename(NULL), dot(0), savepoint_id(0), dirty(false)
 	{
 		doc = (document *)interface.ssm(SCI_CREATEDOCUMENT);
 	}
@@ -184,6 +189,7 @@ public:
 		gchar *resolved = get_absolute_path(filename);
 		g_free(Buffer::filename);
 		Buffer::filename = resolved;
+		interface.info_update(this);
 	}
 
 	inline void
@@ -191,10 +197,12 @@ public:
 	{
 		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 		interface.ssm(SCI_GOTOPOS, dot);
+		interface.info_update(this);
 	}
 	inline void
 	undo_edit(void)
 	{
+		interface.undo_info_update(this);
 		undo.push_msg(SCI_GOTOPOS, dot);
 		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 	}

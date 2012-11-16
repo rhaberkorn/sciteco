@@ -14,26 +14,31 @@
 #include <ScintillaWidget.h>
 
 #include "sciteco.h"
+#include "qbuffers.h"
 #include "interface.h"
 #include "interface-gtk.h"
 
 InterfaceGtk interface;
 
 extern "C" {
+static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
+			     SCNotification *notify, gpointer user_data);
 static gboolean cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 				    gpointer user_data);
 static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 }
 
+#define UNNAMED_FILE "(Unnamed)"
+
 InterfaceGtk::InterfaceGtk()
 {
-	GtkWidget *window, *vbox;
+	GtkWidget *vbox;
 	GtkWidget *info_content;
 
 	gtk_init(NULL, NULL);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(window), "SciTECO");
+	gtk_window_set_title(GTK_WINDOW(window), PACKAGE_NAME);
 	g_signal_connect(G_OBJECT(window), "delete-event",
 			 G_CALLBACK(exit_app), NULL);
 
@@ -43,6 +48,8 @@ InterfaceGtk::InterfaceGtk()
 	scintilla_set_id(SCINTILLA(editor_widget), 0);
 	gtk_widget_set_usize(editor_widget, 500, 300);
 	gtk_widget_set_can_focus(editor_widget, FALSE);
+	g_signal_connect(G_OBJECT(editor_widget), SCINTILLA_NOTIFY,
+			 G_CALLBACK(scintilla_notify), NULL);
 	gtk_box_pack_start(GTK_BOX(vbox), editor_widget, TRUE, TRUE, 0);
 
 	info_widget = gtk_info_bar_new();
@@ -96,6 +103,27 @@ InterfaceGtk::vmsg(MessageType type, const gchar *fmt, va_list ap)
 }
 
 void
+InterfaceGtk::info_update(QRegister *reg)
+{
+	gchar buf[255];
+
+	g_snprintf(buf, sizeof(buf), "%s - <QRegister> %s", PACKAGE_NAME,
+		   reg->name);
+	gtk_window_set_title(GTK_WINDOW(window), buf);
+}
+
+void
+InterfaceGtk::info_update(Buffer *buffer)
+{
+	gchar buf[255];
+
+	g_snprintf(buf, sizeof(buf), "%s - <Buffer> %s%s", PACKAGE_NAME,
+		   buffer->filename ? : UNNAMED_FILE,
+		   buffer->dirty ? "*" : "");
+	gtk_window_set_title(GTK_WINDOW(window), buf);
+}
+
+void
 InterfaceGtk::cmdline_update(const gchar *cmdline)
 {
 	gint pos = 1;
@@ -142,9 +170,26 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 	pango_font_description_free(font_desc);
 }
 
+InterfaceGtk::~InterfaceGtk()
+{
+	gtk_widget_destroy(popup_widget);
+	gtk_widget_destroy(window);
+
+	scintilla_release_resources();
+}
+
 /*
  * GTK+ callbacks
  */
+
+static void
+scintilla_notify(ScintillaObject *sci __attribute__((unused)),
+		 uptr_t idFrom __attribute__((unused)),
+		 SCNotification *notify,
+		 gpointer user_data __attribute__((unused)))
+{
+	interface.process_notify(notify);
+}
 
 static gboolean
 cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,

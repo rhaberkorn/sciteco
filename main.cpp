@@ -43,6 +43,34 @@ Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
 	}
 }
 
+void
+Interface::process_notify(SCNotification *notify)
+{
+	switch (notify->nmhdr.code) {
+#ifdef DEBUG
+	case SCN_SAVEPOINTREACHED:
+		g_printf("SCINTILLA SAVEPOINT REACHED\n");
+		break;
+#endif
+	case SCN_SAVEPOINTLEFT:
+#ifdef DEBUG
+		g_printf("SCINTILLA SAVEPOINT LEFT\n");
+#endif
+
+		if (!ring.current || ring.current->dirty)
+			break;
+
+		undo.push_msg(SCI_SETSAVEPOINT);
+		undo_info_update(ring.current);
+		undo.push_var(ring.current->dirty);
+		ring.current->dirty = true;
+		info_update(ring.current);
+		break;
+	default:
+		break;
+	}
+}
+
 static inline void
 process_options(int &argc, char **&argv)
 {
@@ -55,7 +83,7 @@ process_options(int &argc, char **&argv)
 	GOptionContext	*options;
 	GOptionGroup	*interface_group = interface.get_options();
 
-	options = g_option_context_new("- Advanced interactive TECO");
+	options = g_option_context_new("- " PACKAGE_STRING);
 
 	g_option_context_add_main_entries(options, option_entries, NULL);
 	if (interface_group)

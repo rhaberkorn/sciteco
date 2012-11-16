@@ -12,6 +12,7 @@
 #include "interface.h"
 
 extern class InterfaceGtk : public Interface {
+	GtkWidget *window;
 	GtkWidget *editor_widget;
 	GtkWidget *cmdline_widget;
 	GtkWidget *info_widget, *message_widget;
@@ -20,7 +21,7 @@ extern class InterfaceGtk : public Interface {
 
 public:
 	InterfaceGtk();
-	//~InterfaceGtk();
+	~InterfaceGtk();
 
 	inline GOptionGroup *
 	get_options(void)
@@ -41,6 +42,9 @@ public:
 		return scintilla_send_message(SCINTILLA(editor_widget),
 					      iMessage, wParam, lParam);
 	}
+
+	void info_update(QRegister *reg);
+	void info_update(Buffer *buffer);
 
 	void cmdline_update(const gchar *cmdline = NULL);
 

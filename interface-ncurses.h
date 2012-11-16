@@ -18,17 +18,25 @@ extern class InterfaceNCurses : public Interface {
 
 	Scintilla *sci;
 
+	WINDOW *info_window;
+	gchar *info_current;
 	WINDOW *sci_window;
 	WINDOW *msg_window;
 	WINDOW *cmdline_window;
 	gchar *cmdline_current;
 
-	WINDOW *popup_window;
-	GSList *popup_list;
-	gint popup_list_longest;
-	gint popup_list_length;
+	struct Popup {
+		WINDOW *window;
+		GSList *list;
+		gint longest;
+		gint length;
+
+		Popup() : window(NULL), list(NULL), longest(0), length(0) {}
+		~Popup();
+	} popup;
 
 	void resize_all_windows(void);
+	void draw_info(void);
 
 public:
 	InterfaceNCurses();
@@ -41,6 +49,9 @@ public:
 	{
 		return scintilla_send_message(sci, iMessage, wParam, lParam);
 	}
+
+	void info_update(QRegister *reg);
+	void info_update(Buffer *buffer);
 
 	void cmdline_update(const gchar *cmdline = NULL);
 
