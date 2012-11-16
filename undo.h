@@ -18,6 +18,8 @@ public:
 
 	gint pos;
 
+	virtual ~UndoToken() {}
+
 	virtual void run() = 0;
 };
 

@@ -21,6 +21,8 @@ public:
 	public:
 		RB_ENTRY(RBEntry) nodes;
 
+		virtual ~RBEntry() {}
+
 		inline RBEntry *
 		next(void)
 		{

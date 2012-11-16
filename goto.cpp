@@ -36,9 +36,6 @@ class GotoTable : public RBTree {
 		run(void)
 		{
 			table->set(name, pc);
-			g_free(name);
-			name = NULL;
-
 #ifdef DEBUG
 			table->dump();
 #endif
