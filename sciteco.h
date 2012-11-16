@@ -5,6 +5,11 @@
 
 #include "interface.h"
 
+/* Autoconf-like */
+#define PACKAGE_VERSION	"0.1"
+#define PACKAGE_NAME	"SciTECO"
+#define PACKAGE_STRING	PACKAGE_NAME " " PACKAGE_VERSION
+
 extern gchar *cmdline;
 extern bool quit_requested;
 
