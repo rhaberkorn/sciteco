@@ -227,6 +227,18 @@ Ring::find(const gchar *filename)
 }
 
 bool
+Ring::is_any_dirty(void)
+{
+	Buffer *cur;
+
+	LIST_FOREACH(cur, &head, buffers)
+		if (cur->dirty)
+			return true;
+
+	return false;
+}
+
+bool
 Ring::edit(const gchar *filename)
 {
 	bool new_in_ring = false;

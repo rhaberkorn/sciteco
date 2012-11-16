@@ -1058,11 +1058,21 @@ StateECommand::custom(gchar chr)
 		BEGIN_EXEC(&States::start);
 		if (!ring.current)
 			return NULL; /* FIXME */
+
+		if (IS_FAILURE(expressions.pop_num_calc()) &&
+		    ring.current->dirty)
+			return NULL; /* FIXME */
+
 		ring.close();
 		break;
 
 	case 'X':
 		BEGIN_EXEC(&States::start);
+
+		if (IS_FAILURE(expressions.pop_num_calc()) &&
+		    ring.is_any_dirty())
+			return NULL; /* FIXME */
+
 		undo.push_var<bool>(quit_requested);
 		quit_requested = true;
 		break;
