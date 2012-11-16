@@ -13,6 +13,7 @@
 #include "sciteco.h"
 #include "interface.h"
 #include "parser.h"
+#include "goto.h"
 #include "qbuffers.h"
 #include "undo.h"
 
@@ -156,6 +157,8 @@ main(int argc, char **argv)
 	}
 	g_free(mung_file);
 
+	interface.ssm(SCI_EMPTYUNDOBUFFER);
+	goto_table_clear();
 	undo.enabled = true;
 
 	interface.event_loop();

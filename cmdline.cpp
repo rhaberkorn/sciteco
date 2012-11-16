@@ -118,6 +118,7 @@ process_edit_cmd(gchar key)
 				exit(EXIT_SUCCESS);
 			}
 
+			interface.ssm(SCI_EMPTYUNDOBUFFER);
 			undo.clear();
 			goto_table_clear();
 
