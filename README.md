@@ -14,7 +14,7 @@ When you delete a character from the end of the command line macro (called rubou
 side-effects of that character which may be a command or part of a command, are undone.
 
 SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
-GTK+ as well as NCurses frontends (using [Scinterm](http://foicica.com/scinterm/).
+GTK+ as well as NCurses frontends (using [Scinterm](http://foicica.com/scinterm/)).
 
 Features
 ========
@@ -40,7 +40,8 @@ Some of these features are not yet present but expected to be supported in the n
 Installation
 ============
 
-SciTECO has the following build-time dependencies:
+SciTECO has the following build and runtime dependencies:
+* GNU C, C++ and [Gob2](http://www.jirka.org/gob.html)
 * [Glib](http://developer.gnome.org/glib/), as a cross-platform runtime library
 * [Scintilla](http://www.scintilla.org/), and possibly [Scinterm](http://foicica.com/scinterm/)
 * [GTK+ 2](http://www.gtk.org/) or [NCurses](http://www.gnu.org/software/ncurses/).
