@@ -32,7 +32,7 @@ Some of these features are not yet present but expected to be supported in the n
   characters, exotic match characters
 * Interactivity: supports filename completion via immediate editing commands (e.g. `<TAB>` in
   commands accepting filenames); immediate searching (similar to search-as-you-type)
-* Command rubout: SciTECO can even undo file writes (`EF` command)
+* Command rubout: SciTECO can even undo file writes (`EW` command)
 * Munging: Macros may be munged, that is executed in batch mode. By default, a profile
   is munged.
 * Syntax highlighting, styles, line numbers, etc. thanks to Scintilla
