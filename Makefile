@@ -10,7 +10,7 @@ INSTALL:=install
 GLIB_CFLAGS:=$(shell pkg-config --cflags glib-2.0)
 GLIB_LDFLAGS:=$(shell pkg-config --libs glib-2.0)
 
-SCI_DIR:=../scintilla
+SCI_DIR:=..
 SCI_CFLAGS:=-I$(SCI_DIR)/include -D$(INTERFACE) -DSCI_LEXER
 SCI_LDFLAGS:=$(SCI_DIR)/bin/scintilla.a
 
