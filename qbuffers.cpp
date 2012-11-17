@@ -76,7 +76,7 @@ QRegister::set_string(const gchar *str)
 
 	dirty_check_enabled = false;
 	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_SETTEXT, 0, (sptr_t)str);
+	interface.ssm(SCI_SETTEXT, 0, (sptr_t)(str ? : ""));
 	interface.ssm(SCI_ENDUNDOACTION);
 	dirty_check_enabled = true;
 
@@ -154,6 +154,8 @@ QRegisterTable::initialize(void)
 
 	/* search string and status register */
 	initialize_register("_");
+	/* current buffer name and number */
+	initialize_register("*");
 }
 
 void
@@ -290,7 +292,22 @@ Ring::edit(const gchar *filename)
 		}
 	}
 
+	/* TODO: set integer part */
+	qregisters["*"]->set_string(current->filename);
+
 	return new_in_ring;
+}
+
+void
+Ring::undo_edit(void)
+{
+	current->dot = interface.ssm(SCI_GETCURRENTPOS);
+
+	undo.push_var<Buffer*>(current);
+	current->undo_edit();
+
+	/* TODO: undo integer part */
+	qregisters["*"]->undo_set_string();
 }
 
 #if 0

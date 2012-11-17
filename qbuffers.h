@@ -283,14 +283,7 @@ public:
 	bool is_any_dirty(void);
 
 	bool edit(const gchar *filename);
-	inline void
-	undo_edit(void)
-	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
-
-		undo.push_var<Buffer*>(current);
-		current->undo_edit();
-	}
+	void undo_edit(void);
 
 	bool save(const gchar *filename);
 
