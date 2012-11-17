@@ -38,6 +38,13 @@ namespace States {
 Ring ring;
 QRegisterTable qregisters;
 
+/*
+ * Can be used to temporarily disable SCN_SAVEPOINTLEFT processing since
+ * a Q-Register may be modified without changing the logical current
+ * document and we don't want the wrong file to get modified.
+ */
+bool dirty_check_enabled = true;
+
 static QRegister *register_argument = NULL;
 
 /* FIXME: clean up current_save_dot() usage */
@@ -67,9 +74,11 @@ QRegister::set_string(const gchar *str)
 	edit();
 	dot = 0;
 
+	dirty_check_enabled = false;
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_SETTEXT, 0, (sptr_t)str);
 	interface.ssm(SCI_ENDUNDOACTION);
+	dirty_check_enabled = true;
 
 	current_edit();
 }
@@ -120,10 +129,12 @@ QRegister::load(const gchar *filename)
 	edit();
 	dot = 0;
 
+	dirty_check_enabled = false;
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_CLEARALL);
 	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
 	interface.ssm(SCI_ENDUNDOACTION);
+	dirty_check_enabled = true;
 
 	g_free(contents);
 
@@ -161,13 +172,17 @@ Buffer::load(const gchar *filename)
 	gchar *contents;
 	gsize size;
 
-	edit();
-	interface.ssm(SCI_CLEARALL);
-
 	/* FIXME: prevent excessive allocations by reading file into buffer */
 	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
+
+	edit();
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_CLEARALL);
 	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
+	interface.ssm(SCI_ENDUNDOACTION);
+
 	g_free(contents);
 
 	interface.ssm(SCI_SETSAVEPOINT);

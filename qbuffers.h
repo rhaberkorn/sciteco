@@ -379,4 +379,6 @@ namespace States {
 	extern StateCopyToQReg		copytoqreg;
 }
 
+extern bool dirty_check_enabled;
+
 #endif

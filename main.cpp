@@ -58,7 +58,8 @@ Interface::process_notify(SCNotification *notify)
 		g_printf("SCINTILLA SAVEPOINT LEFT\n");
 #endif
 
-		if (!ring.current || ring.current->dirty)
+		if (!dirty_check_enabled ||
+		    !ring.current || ring.current->dirty)
 			break;
 
 		undo.push_msg(SCI_SETSAVEPOINT);
