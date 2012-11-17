@@ -27,8 +27,8 @@ bool quit_requested = false;
 void
 cmdline_keypress(gchar key)
 {
+	gchar *cmdline_p;
 	const gchar *insert;
-	gint old_cmdline_len = 0;
 	gchar *echo;
 
 	/*
@@ -46,21 +46,34 @@ cmdline_keypress(gchar key)
 	 * Parse/execute characters
 	 */
 	if (cmdline) {
-		old_cmdline_len = strlen(cmdline);
-		cmdline = (gchar *)g_realloc(cmdline, old_cmdline_len +
-						      strlen(insert) + 1);
+		gint len = strlen(cmdline);
+		cmdline = (gchar *)g_realloc(cmdline, len + strlen(insert) + 1);
+		cmdline_p = cmdline + len;
 	} else {
 		cmdline = (gchar *)g_malloc(strlen(insert) + 1);
 		*cmdline = '\0';
+		cmdline_p = cmdline;
 	}
 
+	/*
+	 * Execute one insertion character, extending cmdline, at a time so
+	 * undo tokens get emitted for the corresponding characters.
+	 */
 	for (const gchar *p = insert; *p; p++) {
-		strcat(cmdline, (gchar[]){*p, '\0'});
+		*cmdline_p++ = *p;
+		*cmdline_p = '\0';
 
 		try {
 			macro_execute(cmdline);
 		} catch (...) {
-			cmdline[old_cmdline_len] = '\0';
+			/*
+			 * Undo tokens may have been emitted (or had to be)
+			 * before the exception is thrown. They must be
+			 * executed so as if the character had never been
+			 * inserted.
+			 */
+			undo.pop(cmdline_p - cmdline);
+			cmdline_p[-1] = '\0';
 			break;
 		}
 	}
