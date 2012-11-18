@@ -164,7 +164,6 @@ public:
 
 	gint savepoint_id;
 
-	/* set by Interfaces using Scintilla notifications */
 	bool dirty;
 
 private:
@@ -280,6 +279,7 @@ public:
 
 	Buffer *find(const gchar *filename);
 
+	void dirtify(void);
 	bool is_any_dirty(void);
 
 	bool edit(const gchar *filename);
@@ -371,7 +371,5 @@ namespace States {
 	extern StateMacro		macro;
 	extern StateCopyToQReg		copytoqreg;
 }
-
-extern bool dirty_check_enabled;
 
 #endif

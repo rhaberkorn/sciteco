@@ -415,6 +415,8 @@ StateStart::delete_words(gint64 n)
 
 	undo.push_msg(SCI_GOTOPOS, pos);
 	undo.push_msg(SCI_UNDO);
+	ring.dirtify();
+
 	return SUCCESS;
 }
 
@@ -804,6 +806,7 @@ StateStart::custom(gchar chr) throw (Error)
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_DELETERANGE, from, len);
 		interface.ssm(SCI_ENDUNDOACTION);
+		ring.dirtify();
 		break;
 	}
 
@@ -1110,6 +1113,7 @@ StateInsert::initial(void) throw (Error)
 		expressions.pop_num_calc();
 	interface.ssm(SCI_SCROLLCARET);
 	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
 
 	undo.push_msg(SCI_UNDO);
 }
@@ -1122,6 +1126,7 @@ StateInsert::process(const gchar *str, gint new_chars) throw (Error)
 		      (sptr_t)(str + strlen(str) - new_chars));
 	interface.ssm(SCI_SCROLLCARET);
 	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
 
 	undo.push_msg(SCI_UNDO);
 }

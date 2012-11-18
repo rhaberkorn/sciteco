@@ -47,30 +47,9 @@ Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
 void
 Interface::process_notify(SCNotification *notify)
 {
-	switch (notify->nmhdr.code) {
 #ifdef DEBUG
-	case SCN_SAVEPOINTREACHED:
-		g_printf("SCINTILLA SAVEPOINT REACHED\n");
-		break;
+	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
 #endif
-	case SCN_SAVEPOINTLEFT:
-#ifdef DEBUG
-		g_printf("SCINTILLA SAVEPOINT LEFT\n");
-#endif
-
-		if (!dirty_check_enabled ||
-		    !ring.current || ring.current->dirty)
-			break;
-
-		undo.push_msg(SCI_SETSAVEPOINT);
-		undo_info_update(ring.current);
-		undo.push_var(ring.current->dirty);
-		ring.current->dirty = true;
-		info_update(ring.current);
-		break;
-	default:
-		break;
-	}
 }
 
 static inline void
