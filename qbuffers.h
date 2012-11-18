@@ -41,6 +41,7 @@ public:
 
 	QRegister(const gchar *_name)
 		 : name(g_strdup(_name)), integer(0), string(NULL), dot(0) {}
+	virtual
 	~QRegister()
 	{
 		if (string)
@@ -62,24 +63,12 @@ public:
 		return string;
 	}
 
-	void set_string(const gchar *str);
-	void undo_set_string(void);
-	gchar *get_string(void);
+	virtual void set_string(const gchar *str);
+	virtual void undo_set_string(void);
+	virtual gchar *get_string(void);
 
-	inline void
-	edit(void)
-	{
-		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
-		interface.ssm(SCI_GOTOPOS, dot);
-		interface.info_update(this);
-	}
-	inline void
-	undo_edit(void)
-	{
-		interface.undo_info_update(this);
-		undo.push_msg(SCI_GOTOPOS, dot);
-		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
-	}
+	virtual void edit(void);
+	virtual void undo_edit(void);
 
 	bool load(const gchar *filename);
 	inline void
@@ -87,6 +76,20 @@ public:
 	{
 		undo_set_string();
 	}
+};
+
+class QRegisterBufferInfo : public QRegister {
+public:
+	QRegisterBufferInfo() : QRegister("*")
+	{
+		get_document();
+	}
+
+	void set_string(const gchar *str) {}
+	void undo_set_string(void) {}
+	gchar *get_string(void);
+
+	void edit(void);
 };
 
 extern class QRegisterTable : public RBTree {
@@ -283,7 +286,13 @@ public:
 	bool is_any_dirty(void);
 
 	bool edit(const gchar *filename);
-	void undo_edit(void);
+	inline void
+	undo_edit(void)
+	{
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+		undo.push_var(current);
+		current->undo_edit();
+	}
 
 	bool save(const gchar *filename);
 

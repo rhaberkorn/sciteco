@@ -107,6 +107,22 @@ QRegister::get_string(void)
 	return str;
 }
 
+void
+QRegister::edit(void)
+{
+	interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+	interface.ssm(SCI_GOTOPOS, dot);
+	interface.info_update(this);
+}
+
+void
+QRegister::undo_edit(void)
+{
+	interface.undo_info_update(this);
+	undo.push_msg(SCI_GOTOPOS, dot);
+	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+}
+
 bool
 QRegister::load(const gchar *filename)
 {
@@ -132,6 +148,28 @@ QRegister::load(const gchar *filename)
 	return true;
 }
 
+gchar *
+QRegisterBufferInfo::get_string(void)
+{
+	gchar *filename = ring.current ? ring.current->filename : NULL;
+
+	return g_strdup(filename ? : "");
+}
+
+void
+QRegisterBufferInfo::edit(void)
+{
+	gchar *filename = ring.current ? ring.current->filename : NULL;
+
+	QRegister::edit();
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_SETTEXT, 0, (sptr_t)(filename ? : ""));
+	interface.ssm(SCI_ENDUNDOACTION);
+
+	undo.push_msg(SCI_UNDO);
+}
+
 void
 QRegisterTable::initialize(void)
 {
@@ -143,8 +181,8 @@ QRegisterTable::initialize(void)
 
 	/* search string and status register */
 	initialize_register("_");
-	/* current buffer name and number */
-	initialize_register("*");
+	/* current buffer name and number ("*") */
+	insert(new QRegisterBufferInfo());
 }
 
 void
@@ -295,22 +333,7 @@ Ring::edit(const gchar *filename)
 		}
 	}
 
-	/* TODO: set integer part */
-	qregisters["*"]->set_string(current->filename);
-
 	return new_in_ring;
-}
-
-void
-Ring::undo_edit(void)
-{
-	current->dot = interface.ssm(SCI_GETCURRENTPOS);
-
-	undo.push_var<Buffer*>(current);
-	current->undo_edit();
-
-	/* TODO: undo integer part */
-	qregisters["*"]->undo_set_string();
 }
 
 #if 0
