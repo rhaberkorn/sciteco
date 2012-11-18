@@ -13,7 +13,7 @@
 #include "qbuffers.h"
 #include "parser.h"
 
-//#define DEBUG
+#define DEBUG
 
 gint macro_pc = 0;
 
@@ -1070,6 +1070,20 @@ StateECommand::custom(gchar chr) throw (Error)
 
 		ring.close();
 		break;
+
+	case 'S': {
+		BEGIN_EXEC(&States::start);
+		expressions.eval();
+		if (!expressions.args())
+			throw Error("<ES> command requires at least a message code");
+
+		unsigned int iMessage = expressions.pop_num_calc(1, 0);
+		uptr_t wParam = expressions.pop_num_calc(1, 0);
+		sptr_t lParam = expressions.pop_num_calc(1, 0);
+
+		expressions.push(interface.ssm(iMessage, wParam, lParam));
+		break;
+	}
 
 	case 'X':
 		BEGIN_EXEC(&States::start);

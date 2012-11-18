@@ -70,6 +70,8 @@ public:
 	virtual void edit(void);
 	virtual void undo_edit(void);
 
+	void execute(void) throw (State::Error);
+
 	bool load(const gchar *filename);
 	inline void
 	undo_load(void)

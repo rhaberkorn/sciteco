@@ -123,6 +123,38 @@ QRegister::undo_edit(void)
 	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 }
 
+void
+QRegister::execute(void) throw (State::Error)
+{
+	State *parent_state = States::current;
+	gint parent_pc = macro_pc;
+	gchar *str;
+
+	/*
+	 * need this to fixup state on rubout: state machine emits undo token
+	 * resetting state to parent's one, but the macro executed also emitted
+	 * undo tokens resetting the state to StateStart
+	 */
+	undo.push_var(States::current);
+	States::current = &States::start;
+
+	macro_pc = 0;
+	str = get_string();
+
+	try {
+		macro_execute(str);
+	} catch (...) {
+		g_free(str);
+		macro_pc = parent_pc;
+		States::current = parent_state;
+		throw; /* forward */
+	}
+
+	g_free(str);
+	macro_pc = parent_pc;
+	States::current = parent_state;
+}
+
 bool
 QRegister::load(const gchar *filename)
 {
@@ -332,6 +364,12 @@ Ring::edit(const gchar *filename)
 					      "Added new unnamed file to ring.");
 		}
 	}
+
+	/*
+	 * Execute file load hook
+	 * FIXME: should be configurable whether it is executed or not
+	 */
+	//qregisters["0"]->execute();
 
 	return new_in_ring;
 }
@@ -704,32 +742,9 @@ StateIncreaseQReg::got_register(QRegister *reg) throw (Error)
 State *
 StateMacro::got_register(QRegister *reg) throw (Error)
 {
-	gint pc = macro_pc;
-	gchar *str;
-
 	BEGIN_EXEC(&States::start);
 
-	/*
-	 * need this to fixup state on rubout: state machine emits undo token
-	 * resetting state to StateMacro, but the macro executed also emitted
-	 * undo tokens resetting the state to StateStart
-	 */
-	undo.push_var<State*>(States::current);
-	States::current = &States::start;
-
-	macro_pc = 0;
-	str = reg->get_string();
-	try {
-		macro_execute(str);
-	} catch (...) {
-		g_free(str);
-		macro_pc = pc;
-		States::current = this;
-		throw; /* forward */
-	}
-	g_free(str);
-	macro_pc = pc;
-	States::current = this;
+	reg->execute();
 
 	return &States::start;
 }
