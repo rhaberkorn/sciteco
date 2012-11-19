@@ -187,6 +187,11 @@ private:
 	State *custom(gchar chr) throw (Error);
 };
 
+class StateScintilla : public StateExpectString {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
 class StateInsert : public StateExpectString {
 private:
 	void initial(void) throw (Error);
@@ -228,6 +233,7 @@ namespace States {
 	extern StateFlowCommand	flowcommand;
 	extern StateCondCommand	condcommand;
 	extern StateECommand	ecommand;
+	extern StateScintilla	scintilla;
 	extern StateInsert	insert;
 	extern StateSearch	search;
 

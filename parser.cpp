@@ -23,6 +23,7 @@ namespace States {
 	StateFlowCommand	flowcommand;
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
+	StateScintilla		scintilla;
 	StateInsert		insert;
 	StateSearch		search;
 
@@ -1052,8 +1053,9 @@ StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['B'] = &States::editfile;
-	transitions['W'] = &States::savefile;
+	transitions['S'] = &States::scintilla;
 	transitions['Q'] = &States::eqcommand;
+	transitions['W'] = &States::savefile;
 }
 
 State *
@@ -1073,20 +1075,6 @@ StateECommand::custom(gchar chr) throw (Error)
 		ring.close();
 		break;
 
-	case 'S': {
-		BEGIN_EXEC(&States::start);
-		expressions.eval();
-		if (!expressions.args())
-			throw Error("<ES> command requires at least a message code");
-
-		unsigned int iMessage = expressions.pop_num_calc(1, 0);
-		uptr_t wParam = expressions.pop_num_calc(1, 0);
-		sptr_t lParam = expressions.pop_num_calc(1, 0);
-
-		expressions.push(interface.ssm(iMessage, wParam, lParam));
-		break;
-	}
-
 	case 'X':
 		BEGIN_EXEC(&States::start);
 
@@ -1101,6 +1089,28 @@ StateECommand::custom(gchar chr) throw (Error)
 	default:
 		throw SyntaxError(chr);
 	}
+
+	return &States::start;
+}
+
+State *
+StateScintilla::done(const gchar *str) throw (Error)
+{
+	unsigned int	iMessage;
+	uptr_t		wParam;
+	sptr_t		lParam;
+
+	BEGIN_EXEC(&States::start);
+
+	expressions.eval();
+	if (!expressions.args())
+		throw Error("<ES> command requires at least a message code");
+
+	iMessage = expressions.pop_num_calc(1, 0);
+	wParam = expressions.pop_num_calc(1, 0);
+	lParam = *str ? (sptr_t)str : expressions.pop_num_calc(1, 0);
+
+	expressions.push(interface.ssm(iMessage, wParam, lParam));
 
 	return &States::start;
 }
