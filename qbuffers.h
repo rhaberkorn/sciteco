@@ -29,30 +29,21 @@ gchar *get_absolute_path(const gchar *path);
 /*
  * Classes
  */
-class QRegister : public RBTree::RBEntry {
-public:
-	gchar *name;
 
+class QRegisterData {
+public:
 	gint64 integer;
 
 	typedef void document;
 	document *string;
 	gint dot;
 
-	QRegister(const gchar *_name)
-		 : name(g_strdup(_name)), integer(0), string(NULL), dot(0) {}
+	QRegisterData() : integer(0), string(NULL), dot(0) {}
 	virtual
-	~QRegister()
+	~QRegisterData()
 	{
 		if (string)
 			interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)string);
-		g_free(name);
-	}
-
-	int
-	operator <(RBEntry &entry)
-	{
-		return g_strcmp0(name, ((QRegister &)entry).name);
 	}
 
 	inline document *
@@ -66,6 +57,28 @@ public:
 	virtual void set_string(const gchar *str);
 	virtual void undo_set_string(void);
 	virtual gchar *get_string(void);
+
+	virtual void edit(void);
+	virtual void undo_edit(void);
+};
+
+class QRegister : public RBTree::RBEntry, public QRegisterData {
+public:
+	gchar *name;
+
+	QRegister(const gchar *_name)
+		 : QRegisterData(), name(g_strdup(_name)) {}
+	virtual
+	~QRegister()
+	{
+		g_free(name);
+	}
+
+	int
+	operator <(RBEntry &entry)
+	{
+		return g_strcmp0(name, ((QRegister &)entry).name);
+	}
 
 	virtual void edit(void);
 	virtual void undo_edit(void);
@@ -143,6 +156,55 @@ public:
 		current->undo_edit();
 	}
 } qregisters;
+
+class QRegisterStack {
+	class Entry : public QRegisterData {
+	public:
+		SLIST_ENTRY(Entry) entries;
+
+		Entry() : QRegisterData() {}
+	};
+
+	class UndoTokenPush : public UndoToken {
+		QRegisterStack *stack;
+		/* only remaining reference to stack entry */
+		Entry *entry;
+
+	public:
+		UndoTokenPush(QRegisterStack *_stack, Entry *_entry)
+			     : UndoToken(), stack(_stack), entry(_entry) {}
+
+		~UndoTokenPush()
+		{
+			if (entry)
+				delete entry;
+		}
+
+		void run(void);
+	};
+
+	class UndoTokenPop : public UndoToken {
+		QRegisterStack *stack;
+
+	public:
+		UndoTokenPop(QRegisterStack *_stack)
+			    : UndoToken(), stack(_stack) {}
+
+		void run(void);
+	};
+
+	SLIST_HEAD(Head, Entry) head;
+
+public:
+	QRegisterStack()
+	{
+		SLIST_INIT(&head);
+	}
+	~QRegisterStack();
+
+	void push(QRegister *reg);
+	bool pop(QRegister *reg);
+};
 
 class Buffer {
 	class UndoTokenClose : public UndoToken {
@@ -323,6 +385,16 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+class StatePushQReg : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg) throw (Error);
+};
+
+class StatePopQReg : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg) throw (Error);
+};
+
 class StateEQCommand : public StateExpectQReg {
 private:
 	State *got_register(QRegister *reg) throw (Error);
@@ -372,6 +444,8 @@ namespace States {
 	extern StateEditFile		editfile;
 	extern StateSaveFile		savefile;
 
+	extern StatePushQReg		pushqreg;
+	extern StatePopQReg		popqreg;
 	extern StateEQCommand		eqcommand;
 	extern StateLoadQReg		loadqreg;
 	extern StateCtlUCommand		ctlucommand;

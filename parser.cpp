@@ -338,6 +338,9 @@ StateStart::StateStart() : State()
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
 	transitions['S'] = &States::search;
+
+	transitions['['] = &States::pushqreg;
+	transitions[']'] = &States::popqreg;
 	transitions['Q'] = &States::getqreginteger;
 	transitions['U'] = &States::setqreginteger;
 	transitions['%'] = &States::increaseqreg;

@@ -24,6 +24,8 @@ namespace States {
 	StateEditFile		editfile;
 	StateSaveFile		savefile;
 
+	StatePushQReg		pushqreg;
+	StatePopQReg		popqreg;
 	StateEQCommand		eqcommand;
 	StateLoadQReg		loadqreg;
 	StateCtlUCommand	ctlucommand;
@@ -35,10 +37,12 @@ namespace States {
 	StateCopyToQReg		copytoqreg;
 }
 
-Ring ring;
 QRegisterTable qregisters;
+static QRegisterStack qregister_stack;
 
 static QRegister *register_argument = NULL;
+
+Ring ring;
 
 /* FIXME: clean up current_save_dot() usage */
 static inline void
@@ -62,7 +66,7 @@ current_edit(void)
 }
 
 void
-QRegister::set_string(const gchar *str)
+QRegisterData::set_string(const gchar *str)
 {
 	edit();
 	dot = 0;
@@ -75,7 +79,7 @@ QRegister::set_string(const gchar *str)
 }
 
 void
-QRegister::undo_set_string(void)
+QRegisterData::undo_set_string(void)
 {
 	current_save_dot();
 	if (ring.current)
@@ -90,7 +94,7 @@ QRegister::undo_set_string(void)
 }
 
 gchar *
-QRegister::get_string(void)
+QRegisterData::get_string(void)
 {
 	gint size;
 	gchar *str;
@@ -108,10 +112,23 @@ QRegister::get_string(void)
 }
 
 void
-QRegister::edit(void)
+QRegisterData::edit(void)
 {
 	interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 	interface.ssm(SCI_GOTOPOS, dot);
+}
+
+void
+QRegisterData::undo_edit(void)
+{
+	undo.push_msg(SCI_GOTOPOS, dot);
+	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+}
+
+void
+QRegister::edit(void)
+{
+	QRegisterData::edit();
 	interface.info_update(this);
 }
 
@@ -119,8 +136,7 @@ void
 QRegister::undo_edit(void)
 {
 	interface.undo_info_update(this);
-	undo.push_msg(SCI_GOTOPOS, dot);
-	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+	QRegisterData::undo_edit();
 }
 
 void
@@ -235,6 +251,76 @@ execute_hook(Hook type)
 
 	expressions.push(type);
 	qregisters["0"]->execute();
+}
+
+void
+QRegisterStack::UndoTokenPush::run(void)
+{
+	SLIST_INSERT_HEAD(&stack->head, entry, entries);
+	entry = NULL;
+}
+
+void
+QRegisterStack::UndoTokenPop::run(void)
+{
+	Entry *entry = SLIST_FIRST(&stack->head);
+
+	SLIST_REMOVE_HEAD(&stack->head, entries);
+	delete entry;
+}
+
+void
+QRegisterStack::push(QRegister *reg)
+{
+	Entry *entry = new Entry();
+
+	entry->integer = reg->integer;
+	if (reg->string) {
+		gchar *str = reg->get_string();
+		entry->set_string(str);
+		g_free(str);
+	}
+	entry->dot = reg->dot;
+
+	SLIST_INSERT_HEAD(&head, entry, entries);
+	undo.push(new UndoTokenPop(this));
+}
+
+bool
+QRegisterStack::pop(QRegister *reg)
+{
+	Entry *entry = SLIST_FIRST(&head);
+	QRegisterData::document *string;
+
+	if (!entry)
+		return false;
+
+	undo.push_var(reg->integer);
+	reg->integer = entry->integer;
+
+	/* exchange document ownership between Stack entry and Q-Register */
+	string = reg->string;
+	undo.push_var(reg->string);
+	reg->string = entry->string;
+	undo.push_var(entry->string);
+	entry->string = string;
+
+	undo.push_var(reg->dot);
+	reg->dot = entry->dot;
+
+	SLIST_REMOVE_HEAD(&head, entries);
+	/* pass entry ownership to undo stack */
+	undo.push(new UndoTokenPush(this, entry));
+
+	return true;
+}
+
+QRegisterStack::~QRegisterStack()
+{
+	Entry *entry, *next;
+
+	SLIST_FOREACH_SAFE(entry, &head, entries, next)
+		delete entry;
 }
 
 bool
@@ -663,6 +749,27 @@ StateSaveFile::done(const gchar *str) throw (Error)
 
 	if (!ring.save(*str ? str : NULL))
 		throw Error("Unable to save file");
+
+	return &States::start;
+}
+
+State *
+StatePushQReg::got_register(QRegister *reg) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	qregister_stack.push(reg);
+
+	return &States::start;
+}
+
+State *
+StatePopQReg::got_register(QRegister *reg) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	if (!qregister_stack.pop(reg))
+		throw Error("Q-Register stack is empty");
 
 	return &States::start;
 }
