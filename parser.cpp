@@ -259,24 +259,38 @@ StateExpectString::custom(gchar chr) throw (Error)
 	 * String termination handling
 	 */
 	if (Modifiers::at) {
-		undo.push_var<bool>(Modifiers::at);
+		undo.push_var(Modifiers::at);
 		Modifiers::at = false;
-		undo.push_var<gchar>(escape_char);
+		undo.push_var(escape_char);
 		escape_char = g_ascii_toupper(chr);
 
 		return this;
 	}
 
-	if (g_ascii_toupper(chr) == escape_char) {
+	if (escape_char == '{') {
+		switch (chr) {
+		case '{':
+			undo.push_var(nesting);
+			nesting++;
+			break;
+		case '}':
+			undo.push_var(nesting);
+			nesting--;
+			break;
+		}
+	} else if (g_ascii_toupper(chr) == escape_char) {
+		undo.push_var(nesting);
+		nesting--;
+	}
+
+	if (!nesting) {
+		State *next;
 		gchar *string = strings[0];
 		undo.push_str(strings[0]);
 		strings[0] = NULL;
-
-		State *next = done(string ? : "");
-		g_free(string);
-
 		undo.push_var(escape_char);
 		escape_char = '\x1B';
+		nesting = 1;
 
 		if (string_building) {
 			undo.push_var(machine);
@@ -285,6 +299,8 @@ StateExpectString::custom(gchar chr) throw (Error)
 			machine.toctl = false;
 		}
 
+		next = done(string ? : "");
+		g_free(string);
 		return next;
 	}
 

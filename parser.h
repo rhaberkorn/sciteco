@@ -110,11 +110,13 @@ class StateExpectString : public State {
 			    mode(MODE_NORMAL), toctl(false) {}
 	} machine;
 
+	gint nesting;
+
 	bool string_building;
 
 public:
 	StateExpectString(bool _building = true)
-			 : State(), string_building(_building) {}
+			 : State(), nesting(1), string_building(_building) {}
 
 private:
 	gchar *machine_input(gchar key) throw (Error);
