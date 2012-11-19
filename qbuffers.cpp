@@ -143,7 +143,7 @@ QRegister::undo_edit(void)
 void
 QRegister::execute(void) throw (State::Error)
 {
-	GotoTable *parent_goto_table = goto_table;
+	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table;
 
 	State *parent_state = States::current;
@@ -160,7 +160,7 @@ QRegister::execute(void) throw (State::Error)
 
 	macro_pc = 0;
 	str = get_string();
-	goto_table = &macro_goto_table;
+	Goto::table = &macro_goto_table;
 
 	try {
 		macro_execute(str);
@@ -168,14 +168,14 @@ QRegister::execute(void) throw (State::Error)
 		g_free(str);
 		macro_pc = parent_pc;
 		States::current = parent_state;
-		goto_table = parent_goto_table;
+		Goto::table = parent_goto_table;
 		throw; /* forward */
 	}
 
 	g_free(str);
 	macro_pc = parent_pc;
 	States::current = parent_state;
-	goto_table = parent_goto_table;
+	Goto::table = parent_goto_table;
 }
 
 bool

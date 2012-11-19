@@ -136,7 +136,7 @@ main(int argc, char **argv)
 	}
 	g_free(mung_file);
 
-	goto_table = &cmdline_goto_table;
+	Goto::table = &cmdline_goto_table;
 	interface.ssm(SCI_EMPTYUNDOBUFFER);
 	undo.enabled = true;
 

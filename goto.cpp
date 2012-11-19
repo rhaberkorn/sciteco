@@ -12,9 +12,10 @@ namespace States {
 	StateGotoCmd	gotocmd;
 }
 
-static gchar *skip_label = NULL;
-
-GotoTable *goto_table = NULL;
+namespace Goto {
+	GotoTable *table = NULL;
+	gchar *skip_label = NULL;
+}
 
 gint
 GotoTable::remove(gchar *name)
@@ -96,18 +97,16 @@ StateLabel::StateLabel() : State()
 State *
 StateLabel::custom(gchar chr) throw (Error)
 {
-	gchar *new_str;
-
 	if (chr == '!') {
-		goto_table->undo_set(strings[0],
-				     goto_table->set(strings[0], macro_pc));
+		Goto::table->undo_set(strings[0],
+				      Goto::table->set(strings[0], macro_pc));
 
-		if (!g_strcmp0(strings[0], skip_label)) {
-			undo.push_str(skip_label);
-			g_free(skip_label);
-			skip_label = NULL;
+		if (!g_strcmp0(strings[0], Goto::skip_label)) {
+			undo.push_str(Goto::skip_label);
+			g_free(Goto::skip_label);
+			Goto::skip_label = NULL;
 
-			undo.push_var<Mode>(mode);
+			undo.push_var(mode);
 			mode = MODE_NORMAL;
 		}
 
@@ -119,9 +118,7 @@ StateLabel::custom(gchar chr) throw (Error)
 	}
 
 	undo.push_str(strings[0]);
-	new_str = g_strdup_printf("%s%c", strings[0] ? : "", chr);
-	g_free(strings[0]);
-	strings[0] = new_str;
+	String::append(strings[0], chr);
 
 	return this;
 }
@@ -138,15 +135,15 @@ StateGotoCmd::done(const gchar *str) throw (Error)
 	labels = g_strsplit(str, ",", -1);
 
 	if (value > 0 && value <= g_strv_length(labels) && *labels[value-1]) {
-		gint pc = goto_table->find(labels[value-1]);
+		gint pc = Goto::table->find(labels[value-1]);
 
 		if (pc >= 0) {
 			macro_pc = pc;
 		} else {
 			/* skip till label is defined */
-			undo.push_str(skip_label);
-			skip_label = g_strdup(labels[value-1]);
-			undo.push_var<Mode>(mode);
+			undo.push_str(Goto::skip_label);
+			Goto::skip_label = g_strdup(labels[value-1]);
+			undo.push_var(mode);
 			mode = MODE_PARSE_ONLY_GOTO;
 		}
 	}

@@ -136,7 +136,7 @@ process_edit_cmd(gchar key)
 
 			interface.ssm(SCI_EMPTYUNDOBUFFER);
 			undo.clear();
-			goto_table->clear();
+			Goto::table->clear();
 
 			*cmdline = '\0';
 			macro_pc = 0;

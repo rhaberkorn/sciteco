@@ -71,7 +71,7 @@ file_execute(const gchar *filename)
 
 	macro_pc = 0;
 	States::current = &States::start;
-	goto_table = &file_goto_table;
+	Goto::table = &file_goto_table;
 
 	if (!g_file_get_contents(filename, &macro, NULL, NULL))
 		return false;
@@ -89,7 +89,7 @@ file_execute(const gchar *filename)
 
 	macro_pc = 0;
 	States::current = &States::start;
-	goto_table = NULL;
+	Goto::table = NULL;
 	return true;
 }
 

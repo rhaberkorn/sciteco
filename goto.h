@@ -71,7 +71,10 @@ public:
 #endif
 };
 
-extern GotoTable *goto_table;
+namespace Goto {
+	extern GotoTable *table;
+	extern gchar *skip_label;
+}
 
 /*
  * Command states
