@@ -53,10 +53,12 @@ public:
 	virtual
 	~RBTree()
 	{
-		RBEntry *cur, *next;
+		RBEntry *cur;
 
-		RB_FOREACH_SAFE(cur, Tree, &head, next)
+		while ((cur = min())) {
+			remove(cur);
 			delete cur;
+		}
 	}
 
 	inline RBEntry *
