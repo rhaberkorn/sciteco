@@ -49,16 +49,10 @@ public:
 	{
 		RB_INIT(&head);
 	}
-
 	virtual
 	~RBTree()
 	{
-		RBEntry *cur;
-
-		while ((cur = min())) {
-			remove(cur);
-			delete cur;
-		}
+		clear();
 	}
 
 	inline RBEntry *
@@ -91,6 +85,17 @@ public:
 	max(void)
 	{
 		return RB_MAX(Tree, &head);
+	}
+
+	inline void
+	clear(void)
+	{
+		RBEntry *cur;
+
+		while ((cur = min())) {
+			remove(cur);
+			delete cur;
+		}
 	}
 };
 

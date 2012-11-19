@@ -60,13 +60,18 @@ macro_execute(const gchar *macro) throw (State::Error)
 	}
 }
 
+/*
+ * TODO: make this usable from other macro invocations as well
+ */
 bool
 file_execute(const gchar *filename)
 {
 	gchar *macro, *p = NULL;
+	GotoTable file_goto_table;
 
 	macro_pc = 0;
 	States::current = &States::start;
+	goto_table = &file_goto_table;
 
 	if (!g_file_get_contents(filename, &macro, NULL, NULL))
 		return false;
@@ -84,6 +89,7 @@ file_execute(const gchar *filename)
 
 	macro_pc = 0;
 	States::current = &States::start;
+	goto_table = NULL;
 	return true;
 }
 

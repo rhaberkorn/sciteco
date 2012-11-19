@@ -18,6 +18,7 @@
 #include "undo.h"
 #include "parser.h"
 #include "expressions.h"
+#include "goto.h"
 #include "qbuffers.h"
 
 namespace States {
@@ -142,6 +143,9 @@ QRegister::undo_edit(void)
 void
 QRegister::execute(void) throw (State::Error)
 {
+	GotoTable *parent_goto_table = goto_table;
+	GotoTable macro_goto_table;
+
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
 	gchar *str;
@@ -156,6 +160,7 @@ QRegister::execute(void) throw (State::Error)
 
 	macro_pc = 0;
 	str = get_string();
+	goto_table = &macro_goto_table;
 
 	try {
 		macro_execute(str);
@@ -163,12 +168,14 @@ QRegister::execute(void) throw (State::Error)
 		g_free(str);
 		macro_pc = parent_pc;
 		States::current = parent_state;
+		goto_table = parent_goto_table;
 		throw; /* forward */
 	}
 
 	g_free(str);
 	macro_pc = parent_pc;
 	States::current = parent_state;
+	goto_table = parent_goto_table;
 }
 
 bool

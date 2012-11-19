@@ -100,6 +100,8 @@ process_options(int &argc, char **&argv)
 int
 main(int argc, char **argv)
 {
+	static GotoTable cmdline_goto_table;
+
 	process_options(argc, argv);
 
 	interface.ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
@@ -134,8 +136,8 @@ main(int argc, char **argv)
 	}
 	g_free(mung_file);
 
+	goto_table = &cmdline_goto_table;
 	interface.ssm(SCI_EMPTYUNDOBUFFER);
-	goto_table_clear();
 	undo.enabled = true;
 
 	interface.event_loop();
