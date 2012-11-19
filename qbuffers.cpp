@@ -227,6 +227,16 @@ QRegisterTable::edit(QRegister *reg)
 	current = reg;
 }
 
+void
+execute_hook(Hook type)
+{
+	if (!(Flags::ed & Flags::ED_HOOKS))
+		return;
+
+	expressions.push(type);
+	qregisters["0"]->execute();
+}
+
 bool
 Buffer::load(const gchar *filename)
 {
@@ -338,6 +348,8 @@ Ring::edit(const gchar *filename)
 	if (buffer) {
 		current = buffer;
 		buffer->edit();
+
+		execute_hook(HOOK_EDIT);
 	} else {
 		new_in_ring = true;
 
@@ -363,13 +375,9 @@ Ring::edit(const gchar *filename)
 				interface.msg(Interface::MSG_INFO,
 					      "Added new unnamed file to ring.");
 		}
-	}
 
-	/*
-	 * Execute file load hook
-	 * FIXME: should be configurable whether it is executed or not
-	 */
-	qregisters["0"]->execute();
+		execute_hook(HOOK_ADD);
+	}
 
 	return new_in_ring;
 }
@@ -519,7 +527,7 @@ Ring::close(void)
 	if (current) {
 		current->edit();
 
-		qregisters["0"]->execute();
+		execute_hook(HOOK_EDIT);
 	} else {
 		edit(NULL);
 		undo_close();

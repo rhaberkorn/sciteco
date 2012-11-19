@@ -10,6 +10,14 @@
 #define PACKAGE_NAME	"SciTECO"
 #define PACKAGE_STRING	PACKAGE_NAME " " PACKAGE_VERSION
 
+namespace Flags {
+	enum {
+		ED_HOOKS = (1 << 5)
+	};
+
+	extern gint64 ed;
+}
+
 extern gchar *cmdline;
 extern bool quit_requested;
 

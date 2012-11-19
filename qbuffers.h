@@ -383,4 +383,12 @@ namespace States {
 	extern StateCopyToQReg		copytoqreg;
 }
 
+enum Hook {
+	HOOK_ADD = 1,
+	HOOK_EDIT,
+	HOOK_CLOSE,
+	HOOL_QUIT
+};
+void execute_hook(Hook type);
+
 #endif

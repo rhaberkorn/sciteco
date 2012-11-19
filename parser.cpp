@@ -1075,6 +1075,20 @@ StateECommand::custom(gchar chr) throw (Error)
 		ring.close();
 		break;
 
+	case 'D':
+		BEGIN_EXEC(&States::start);
+		expressions.eval();
+		if (!expressions.args()) {
+			expressions.push(Flags::ed);
+		} else {
+			gint64 on = expressions.pop_num_calc();
+			gint64 off = expressions.pop_num_calc(1, ~(gint64)0);
+
+			undo.push_var(Flags::ed);
+			Flags::ed = (Flags::ed & ~off) | on;
+		}
+		break;
+
 	case 'X':
 		BEGIN_EXEC(&States::start);
 

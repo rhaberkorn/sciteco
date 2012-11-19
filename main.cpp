@@ -19,6 +19,10 @@
 
 #define INI_FILE ".teco_ini"
 
+namespace Flags {
+	gint64 ed = 0;
+}
+
 static gchar *mung_file = NULL;
 
 void
