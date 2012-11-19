@@ -164,11 +164,16 @@ QRegister::execute(void) throw (State::Error)
 
 	try {
 		macro_execute(str);
+		if (Goto::skip_label)
+			throw State::Error("Label \"%s\" not found",
+					   Goto::skip_label);
 	} catch (...) {
 		g_free(str);
 		macro_pc = parent_pc;
 		States::current = parent_state;
 		Goto::table = parent_goto_table;
+		g_free(Goto::skip_label);
+		Goto::skip_label = NULL;
 		throw; /* forward */
 	}
 

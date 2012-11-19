@@ -81,8 +81,13 @@ file_execute(const gchar *filename)
 
 	try {
 		macro_execute(p ? p+1 : macro);
+		if (Goto::skip_label)
+			throw State::Error("Label \"%s\" not found",
+					   Goto::skip_label);
 	} catch (...) {
 		g_free(macro);
+		g_free(Goto::skip_label);
+		Goto::skip_label = NULL;
 		return false;
 	}
 	g_free(macro);

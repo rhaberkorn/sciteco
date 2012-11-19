@@ -129,6 +129,13 @@ process_edit_cmd(gchar key)
 
 	case '\x1B':
 		if (cmdline && cmdline[cmdline_len - 1] == '\x1B') {
+			if (Goto::skip_label) {
+				interface.msg(Interface::MSG_ERROR,
+					      "Label \"%s\" not found",
+					      Goto::skip_label);
+				break;
+			}
+
 			if (quit_requested) {
 				/* FIXME */
 				exit(EXIT_SUCCESS);
