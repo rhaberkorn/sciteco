@@ -100,28 +100,30 @@ public:
 		      uptr_t wParam = 0, sptr_t lParam = 0);
 
 	template <typename Type>
-	inline void
+	inline Type &
 	push_var(Type &variable, Type value)
 	{
 		push(new UndoTokenVariable<Type>(variable, value));
+		return variable;
 	}
 
 	template <typename Type>
-	inline void
+	inline Type &
 	push_var(Type &variable)
 	{
-		push_var<Type>(variable, variable);
+		return push_var<Type>(variable, variable);
 	}
 
-	inline void
+	inline gchar *&
 	push_str(gchar *&variable, gchar *str)
 	{
 		push(new UndoTokenString(variable, str));
+		return variable;
 	}
-	inline void
+	inline gchar *&
 	push_str(gchar *&variable)
 	{
-		push_str(variable, variable);
+		return push_str(variable, variable);
 	}
 
 	void pop(gint pos);
