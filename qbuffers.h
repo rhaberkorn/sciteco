@@ -349,7 +349,7 @@ public:
 	void dirtify(void);
 	bool is_any_dirty(void);
 
-	bool edit(const gchar *filename);
+	void edit(const gchar *filename);
 	inline void
 	undo_edit(void)
 	{

@@ -422,10 +422,9 @@ Ring::is_any_dirty(void)
 	return false;
 }
 
-bool
+void
 Ring::edit(const gchar *filename)
 {
-	bool new_in_ring = false;
 	Buffer *buffer = find(filename);
 
 	current_save_dot();
@@ -437,12 +436,11 @@ Ring::edit(const gchar *filename)
 
 		execute_hook(HOOK_EDIT);
 	} else {
-		new_in_ring = true;
-
 		buffer = new Buffer();
 		LIST_INSERT_HEAD(&head, buffer, buffers);
 
 		current = buffer;
+		undo_close();
 
 		if (g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
 			buffer->load(filename);
@@ -464,8 +462,6 @@ Ring::edit(const gchar *filename)
 
 		execute_hook(HOOK_ADD);
 	}
-
-	return new_in_ring;
 }
 
 #if 0
@@ -679,8 +675,7 @@ StateEditFile::do_edit(const gchar *filename)
 		ring.undo_edit();
 	else /* qregisters.current != NULL */
 		qregisters.undo_edit();
-	if (ring.edit(filename))
-		ring.undo_close();
+	ring.edit(filename);
 }
 
 void
