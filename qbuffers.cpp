@@ -369,7 +369,7 @@ Ring::edit(const gchar *filename)
 	 * Execute file load hook
 	 * FIXME: should be configurable whether it is executed or not
 	 */
-	//qregisters["0"]->execute();
+	qregisters["0"]->execute();
 
 	return new_in_ring;
 }
@@ -518,6 +518,8 @@ Ring::close(void)
 
 	if (current) {
 		current->edit();
+
+		qregisters["0"]->execute();
 	} else {
 		edit(NULL);
 		undo_close();

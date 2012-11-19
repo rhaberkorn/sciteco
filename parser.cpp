@@ -13,7 +13,7 @@
 #include "qbuffers.h"
 #include "parser.h"
 
-#define DEBUG
+//#define DEBUG
 
 gint macro_pc = 0;
 
@@ -49,9 +49,9 @@ macro_execute(const gchar *macro) throw (State::Error)
 {
 	while (macro[macro_pc]) {
 #ifdef DEBUG
-		g_printf("EXEC(%d): input='%c'/%x, state=%p\n",
+		g_printf("EXEC(%d): input='%c'/%x, state=%p, mode=%d\n",
 			 macro_pc, macro[macro_pc], macro[macro_pc],
-			 States::current);
+			 States::current, mode);
 #endif
 
 		State::input(macro[macro_pc]);
@@ -267,13 +267,15 @@ StateExpectString::custom(gchar chr) throw (Error)
 	}
 
 	if (g_ascii_toupper(chr) == escape_char) {
-		State *next = done(strings[0] ? : "");
+		gchar *string = strings[0];
+		undo.push_str(strings[0]);
+		strings[0] = NULL;
+
+		State *next = done(string ? : "");
+		g_free(string);
 
 		undo.push_var<gchar>(escape_char);
 		escape_char = '\x1B';
-		undo.push_str(strings[0]);
-		g_free(strings[0]);
-		strings[0] = NULL;
 
 		undo.push_var<Machine>(machine);
 		machine.state = Machine::STATE_START;
