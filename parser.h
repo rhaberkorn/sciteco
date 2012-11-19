@@ -110,8 +110,11 @@ class StateExpectString : public State {
 			    mode(MODE_NORMAL), toctl(false) {}
 	} machine;
 
+	bool string_building;
+
 public:
-	StateExpectString() : State() {}
+	StateExpectString(bool _building = true)
+			 : State(), string_building(_building) {}
 
 private:
 	gchar *machine_input(gchar key) throw (Error);

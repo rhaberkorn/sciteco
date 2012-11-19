@@ -411,6 +411,8 @@ private:
 };
 
 class StateSetQRegString : public StateExpectString {
+public:
+	StateSetQRegString() : StateExpectString(false) {}
 private:
 	State *done(const gchar *str) throw (Error);
 };

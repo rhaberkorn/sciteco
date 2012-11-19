@@ -247,7 +247,7 @@ original:
 State *
 StateExpectString::custom(gchar chr) throw (Error)
 {
-	gchar *insert, *new_str;
+	gchar *insert;
 
 	if (chr == '\0') {
 		BEGIN_EXEC(this);
@@ -275,13 +275,15 @@ StateExpectString::custom(gchar chr) throw (Error)
 		State *next = done(string ? : "");
 		g_free(string);
 
-		undo.push_var<gchar>(escape_char);
+		undo.push_var(escape_char);
 		escape_char = '\x1B';
 
-		undo.push_var<Machine>(machine);
-		machine.state = Machine::STATE_START;
-		machine.mode = Machine::MODE_NORMAL;
-		machine.toctl = false;
+		if (string_building) {
+			undo.push_var(machine);
+			machine.state = Machine::STATE_START;
+			machine.mode = Machine::MODE_NORMAL;
+			machine.toctl = false;
+		}
 
 		return next;
 	}
@@ -291,18 +293,20 @@ StateExpectString::custom(gchar chr) throw (Error)
 	/*
 	 * String building characters
 	 */
-	undo.push_var<Machine>(machine);
-	insert = machine_input(chr);
-	if (!insert)
-		return this;
+	if (string_building) {
+		undo.push_var(machine);
+		insert = machine_input(chr);
+		if (!insert)
+			return this;
+	} else {
+		insert = g_strdup((gchar []){chr, '\0'});
+	}
 
 	/*
 	 * String accumulation
 	 */
 	undo.push_str(strings[0]);
-	new_str = g_strconcat(strings[0] ? : "", insert, NULL);
-	g_free(strings[0]);
-	strings[0] = new_str;
+	String::append(strings[0], insert);
 
 	process(strings[0], strlen(insert));
 	g_free(insert);
