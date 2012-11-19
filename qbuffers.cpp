@@ -38,8 +38,13 @@ namespace States {
 	StateCopyToQReg		copytoqreg;
 }
 
-QRegisterTable qregisters;
-static QRegisterStack qregister_stack;
+namespace QRegisters {
+	QRegisterTable	globals;
+	QRegisterTable	*locals = NULL;
+	QRegister	*current = NULL;
+
+	static QRegisterStack stack;
+}
 
 static QRegister *register_argument = NULL;
 
@@ -53,8 +58,8 @@ current_save_dot(void)
 
 	if (ring.current)
 		ring.current->dot = dot;
-	else if (qregisters.current)
-		qregisters.current->dot = dot;
+	else if (QRegisters::current)
+		QRegisters::current->dot = dot;
 }
 
 static inline void
@@ -62,8 +67,8 @@ current_edit(void)
 {
 	if (ring.current)
 		ring.current->edit();
-	else if (qregisters.current)
-		qregisters.current->edit();
+	else if (QRegisters::current)
+		QRegisters::current->edit();
 }
 
 void
@@ -85,8 +90,8 @@ QRegisterData::undo_set_string(void)
 	current_save_dot();
 	if (ring.current)
 		ring.current->undo_edit();
-	else if (qregisters.current)
-		qregisters.current->undo_edit();
+	else if (QRegisters::current)
+		QRegisters::current->undo_edit();
 
 	undo.push_var<gint>(dot);
 	undo.push_msg(SCI_UNDO);
@@ -141,10 +146,12 @@ QRegister::undo_edit(void)
 }
 
 void
-QRegister::execute(void) throw (State::Error)
+QRegister::execute(bool locals) throw (State::Error)
 {
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table;
+
+	QRegisterTable *parent_locals = QRegisters::locals;
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
@@ -160,7 +167,12 @@ QRegister::execute(void) throw (State::Error)
 
 	macro_pc = 0;
 	str = get_string();
+
 	Goto::table = &macro_goto_table;
+	if (locals) {
+		QRegisters::locals = new QRegisterTable();
+		QRegisters::locals->initialize();
+	}
 
 	try {
 		macro_execute(str);
@@ -172,6 +184,9 @@ QRegister::execute(void) throw (State::Error)
 		macro_pc = parent_pc;
 		States::current = parent_state;
 		Goto::table = parent_goto_table;
+		if (locals)
+			delete QRegisters::locals;
+		QRegisters::locals = parent_locals;
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
 		throw; /* forward */
@@ -181,6 +196,9 @@ QRegister::execute(void) throw (State::Error)
 	macro_pc = parent_pc;
 	States::current = parent_state;
 	Goto::table = parent_goto_table;
+	if (locals)
+		delete QRegisters::locals;
+	QRegisters::locals = parent_locals;
 }
 
 bool
@@ -235,14 +253,9 @@ QRegisterTable::initialize(void)
 {
 	/* general purpose registers */
 	for (gchar q = 'A'; q <= 'Z'; q++)
-		initialize_register((gchar []){q, '\0'});
+		initialize(q);
 	for (gchar q = '0'; q <= '9'; q++)
-		initialize_register((gchar []){q, '\0'});
-
-	/* search string and status register */
-	initialize_register("_");
-	/* current buffer name and number ("*") */
-	insert(new QRegisterBufferInfo());
+		initialize(q);
 }
 
 void
@@ -252,17 +265,7 @@ QRegisterTable::edit(QRegister *reg)
 	reg->edit();
 
 	ring.current = NULL;
-	current = reg;
-}
-
-void
-execute_hook(Hook type)
-{
-	if (!(Flags::ed & Flags::ED_HOOKS))
-		return;
-
-	expressions.push(type);
-	qregisters["0"]->execute();
+	QRegisters::current = reg;
 }
 
 void
@@ -333,6 +336,16 @@ QRegisterStack::~QRegisterStack()
 
 	SLIST_FOREACH_SAFE(entry, &head, entries, next)
 		delete entry;
+}
+
+void
+QRegisters::hook(Hook type)
+{
+	if (!(Flags::ed & Flags::ED_HOOKS))
+		return;
+
+	expressions.push(type);
+	globals["0"]->execute();
 }
 
 bool
@@ -441,12 +454,12 @@ Ring::edit(const gchar *filename)
 
 	current_save_dot();
 
-	qregisters.current = NULL;
+	QRegisters::current = NULL;
 	if (buffer) {
 		current = buffer;
 		buffer->edit();
 
-		execute_hook(HOOK_EDIT);
+		QRegisters::hook(QRegisters::HOOK_EDIT);
 	} else {
 		buffer = new Buffer();
 		LIST_INSERT_HEAD(&head, buffer, buffers);
@@ -472,7 +485,7 @@ Ring::edit(const gchar *filename)
 					      "Added new unnamed file to ring.");
 		}
 
-		execute_hook(HOOK_ADD);
+		QRegisters::hook(QRegisters::HOOK_ADD);
 	}
 }
 
@@ -621,7 +634,7 @@ Ring::close(void)
 	if (current) {
 		current->edit();
 
-		execute_hook(HOOK_EDIT);
+		QRegisters::hook(QRegisters::HOOK_EDIT);
 	} else {
 		edit(NULL);
 		undo_close();
@@ -685,8 +698,8 @@ StateEditFile::do_edit(const gchar *filename)
 {
 	if (ring.current)
 		ring.undo_edit();
-	else /* qregisters.current != NULL */
-		qregisters.undo_edit();
+	else /* QRegisters::current != NULL */
+		QRegisters::undo_edit();
 	ring.edit(filename);
 }
 
@@ -765,7 +778,7 @@ StatePushQReg::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	qregister_stack.push(reg);
+	QRegisters::stack.push(reg);
 
 	return &States::start;
 }
@@ -775,7 +788,7 @@ StatePopQReg::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	if (!qregister_stack.pop(reg))
+	if (!QRegisters::stack.pop(reg))
 		throw Error("Q-Register stack is empty");
 
 	return &States::start;
@@ -802,9 +815,9 @@ StateLoadQReg::done(const gchar *str) throw (Error)
 	} else {
 		if (ring.current)
 			ring.undo_edit();
-		else /* qregisters.current != NULL */
-			qregisters.undo_edit();
-		qregisters.edit(register_argument);
+		else /* QRegisters::current != NULL */
+			QRegisters::undo_edit();
+		QRegisters::globals.edit(register_argument);
 	}
 
 	return &States::start;
@@ -868,7 +881,8 @@ StateMacro::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	reg->execute();
+	/* don't create new local Q-Registers if colon modifier is given */
+	reg->execute(!eval_colon());
 
 	return &States::start;
 }

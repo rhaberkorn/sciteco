@@ -64,14 +64,20 @@ macro_execute(const gchar *macro) throw (State::Error)
  * TODO: make this usable from other macro invocations as well
  */
 bool
-file_execute(const gchar *filename)
+file_execute(const gchar *filename, bool locals)
 {
 	gchar *macro, *p = NULL;
 	GotoTable file_goto_table;
+	QRegisterTable *parent_locals = QRegisters::locals;
 
 	macro_pc = 0;
 	States::current = &States::start;
+
 	Goto::table = &file_goto_table;
+	if (locals) {
+		QRegisters::locals = new QRegisterTable();
+		QRegisters::locals->initialize();
+	}
 
 	if (!g_file_get_contents(filename, &macro, NULL, NULL))
 		return false;
@@ -95,6 +101,9 @@ file_execute(const gchar *filename)
 	macro_pc = 0;
 	States::current = &States::start;
 	Goto::table = NULL;
+	if (locals)
+		delete QRegisters::locals;
+	QRegisters::locals = parent_locals;
 	return true;
 }
 
@@ -227,22 +236,52 @@ StateExpectString::machine_input(gchar chr) throw (Error)
 		}
 		break;
 
-	/*
-	 * FIXME: Q-Register specifications might get more complicated
-	 */
 	case Machine::STATE_CTL_EU:
-	case Machine::STATE_CTL_EQ: {
+		if (chr == '.') {
+			machine.state = Machine::STATE_CTL_EU_LOCAL;
+		} else {
+			QRegister *reg;
+
+			machine.state = Machine::STATE_START;
+			reg = QRegisters::globals[g_ascii_toupper(chr)];
+			if (!reg)
+				throw InvalidQRegError(chr);
+			return g_strdup((gchar []){(gchar)reg->integer, '\0'});
+		}
+		break;
+
+	case Machine::STATE_CTL_EU_LOCAL: {
 		QRegister *reg;
-		Machine::State state = machine.state;
+
 		machine.state = Machine::STATE_START;
-
-		reg = qregisters[g_ascii_toupper(chr)];
+		reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
 		if (!reg)
-			throw InvalidQRegError(chr);
+			throw InvalidQRegError(chr, true);
+		return g_strdup((gchar []){(gchar)reg->integer, '\0'});
+	}
 
-		return state == Machine::STATE_CTL_EQ
-			? reg->get_string()
-			: g_strdup((gchar []){(gchar)reg->integer, '\0'});
+	case Machine::STATE_CTL_EQ:
+		if (chr == '.') {
+			machine.state = Machine::STATE_CTL_EQ_LOCAL;
+		} else {
+			QRegister *reg;
+
+			machine.state = Machine::STATE_START;
+			reg = QRegisters::globals[g_ascii_toupper(chr)];
+			if (!reg)
+				throw InvalidQRegError(chr);
+			return reg->get_string();
+		}
+		break;
+
+	case Machine::STATE_CTL_EQ_LOCAL: {
+		QRegister *reg;
+
+		machine.state = Machine::STATE_START;
+		reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
+		if (!reg)
+			throw InvalidQRegError(chr, true);
+		return reg->get_string();
 	}
 
 	default:
@@ -340,7 +379,7 @@ StateExpectString::custom(gchar chr) throw (Error)
 	return this;
 }
 
-StateExpectQReg::StateExpectQReg() : State()
+StateExpectQReg::StateExpectQReg() : State(), got_local(false)
 {
 	transitions['\0'] = this;
 }
@@ -348,10 +387,22 @@ StateExpectQReg::StateExpectQReg() : State()
 State *
 StateExpectQReg::custom(gchar chr) throw (Error)
 {
-	QRegister *reg = qregisters[g_ascii_toupper(chr)];
+	QRegister *reg;
 
+	if (chr == '.') {
+		undo.push_var(got_local) = true;
+		return this;
+	}
+	chr = g_ascii_toupper(chr);
+
+	if (got_local) {
+		undo.push_var(got_local) = false;
+		reg = (*QRegisters::locals)[chr];
+	} else {
+		reg = QRegisters::globals[chr];
+	}
 	if (!reg)
-		throw InvalidQRegError(chr);
+		throw InvalidQRegError(chr, got_local);
 
 	return got_register(reg);
 }
@@ -613,7 +664,8 @@ StateStart::custom(gchar chr) throw (Error)
 	case ';':
 		BEGIN_EXEC(this);
 
-		rc = expressions.pop_num_calc(1, qregisters["_"]->integer);
+		v = QRegisters::globals["_"]->integer;
+		rc = expressions.pop_num_calc(1, v);
 		if (eval_colon())
 			rc = ~rc;
 
@@ -1312,7 +1364,7 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 
 		case STATE_ANYQ:
 			/* FIXME: Q-Register spec might get more complicated */
-			reg = qregisters[g_ascii_toupper(*pattern)];
+			reg = QRegisters::globals[g_ascii_toupper(*pattern)];
 			if (!reg)
 				return NULL;
 
@@ -1451,7 +1503,7 @@ StateSearch::process(const gchar *str,
 	static const gint flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
 				  G_REGEX_DOTALL | G_REGEX_RAW;
 
-	QRegister *search_reg = qregisters["_"];
+	QRegister *search_reg = QRegisters::globals["_"];
 	gchar *re_pattern;
 	GRegex *re;
 	GMatchInfo *info;
@@ -1540,7 +1592,7 @@ StateSearch::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	QRegister *search_reg = qregisters["_"];
+	QRegister *search_reg = QRegisters::globals["_"];
 
 	if (*str) {
 		search_reg->undo_set_string();

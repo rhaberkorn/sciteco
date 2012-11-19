@@ -83,7 +83,7 @@ public:
 	virtual void edit(void);
 	virtual void undo_edit(void);
 
-	void execute(void) throw (State::Error);
+	void execute(bool locals = true) throw (State::Error);
 
 	bool load(const gchar *filename);
 	inline void
@@ -107,21 +107,23 @@ public:
 	void edit(void);
 };
 
-extern class QRegisterTable : public RBTree {
+class QRegisterTable : public RBTree {
+public:
+	QRegisterTable() : RBTree() {}
+
 	inline void
-	initialize_register(const gchar *name)
+	initialize(const gchar *name)
 	{
 		QRegister *reg = new QRegister(name);
 		insert(reg);
 		/* make sure document is initialized */
 		reg->get_document();
 	}
-
-public:
-	QRegister *current;
-
-	QRegisterTable() : RBTree(), current(NULL) {}
-
+	inline void
+	initialize(gchar name)
+	{
+		initialize((gchar []){name, '\0'});
+	}
 	void initialize(void);
 
 	inline QRegister *
@@ -147,15 +149,7 @@ public:
 		edit(reg);
 		return reg;
 	}
-	inline void
-	undo_edit(void)
-	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
-
-		undo.push_var<QRegister*>(current);
-		current->undo_edit();
-	}
-} qregisters;
+};
 
 class QRegisterStack {
 	class Entry : public QRegisterData {
@@ -459,12 +453,27 @@ namespace States {
 	extern StateCopyToQReg		copytoqreg;
 }
 
-enum Hook {
-	HOOK_ADD = 1,
-	HOOK_EDIT,
-	HOOK_CLOSE,
-	HOOL_QUIT
-};
-void execute_hook(Hook type);
+namespace QRegisters {
+	extern QRegisterTable	globals;
+	extern QRegisterTable	*locals;
+	extern QRegister	*current;
+
+	inline void
+	undo_edit(void)
+	{
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+
+		undo.push_var<QRegister*>(current);
+		current->undo_edit();
+	}
+
+	enum Hook {
+		HOOK_ADD = 1,
+		HOOK_EDIT,
+		HOOK_CLOSE,
+		HOOK_QUIT
+	};
+	void hook(Hook type);
+}
 
 #endif

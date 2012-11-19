@@ -42,10 +42,12 @@ public:
 
 	class InvalidQRegError : public Error {
 	public:
-		InvalidQRegError(const gchar *name)
-				: Error("Invalid Q-Register \"%s\"", name) {}
-		InvalidQRegError(gchar name)
-				: Error("Invalid Q-Register \"%c\"", name) {}
+		InvalidQRegError(const gchar *name, bool local = false)
+				: Error("Invalid Q-Register \"%s%s\"",
+					local ? "." : "", name) {}
+		InvalidQRegError(gchar name, bool local = false)
+				: Error("Invalid Q-Register \"%s%c\"",
+					local ? "." : "", name) {}
 	};
 
 protected:
@@ -95,7 +97,9 @@ class StateExpectString : public State {
 			STATE_UPPER,
 			STATE_CTL_E,
 			STATE_CTL_EQ,
-			STATE_CTL_EU
+			STATE_CTL_EQ_LOCAL,
+			STATE_CTL_EU,
+			STATE_CTL_EU_LOCAL
 		} state;
 
 		enum Mode {
@@ -134,6 +138,8 @@ class QRegister;
  * Super class for states accepting Q-Register specifications
  */
 class StateExpectQReg : public State {
+	bool got_local;
+
 public:
 	StateExpectQReg();
 
@@ -261,6 +267,6 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 void macro_execute(const gchar *macro) throw (State::Error);
-bool file_execute(const gchar *filename);
+bool file_execute(const gchar *filename, bool locals = true);
 
 #endif
