@@ -46,7 +46,7 @@ gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
 void
-macro_execute(const gchar *macro) throw (State::Error)
+Execute::step(const gchar *macro) throw (State::Error)
 {
 	while (macro[macro_pc]) {
 #ifdef DEBUG
@@ -60,50 +60,83 @@ macro_execute(const gchar *macro) throw (State::Error)
 	}
 }
 
-/*
- * TODO: make this usable from other macro invocations as well
- */
-bool
-file_execute(const gchar *filename, bool locals)
+void
+Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 {
-	gchar *macro, *p = NULL;
-	GotoTable file_goto_table;
-	QRegisterTable *parent_locals = QRegisters::locals;
+	GotoTable *parent_goto_table = Goto::table;
+	GotoTable macro_goto_table;
 
+	QRegisterTable *parent_locals;
+	QRegisterTable macro_locals;
+
+	State *parent_state = States::current;
+	gint parent_pc = macro_pc;
+
+	/*
+	 * need this to fixup state on rubout: state machine emits undo token
+	 * resetting state to parent's one, but the macro executed also emitted
+	 * undo tokens resetting the state to StateStart
+	 */
+	undo.push_var(States::current) = &States::start;
 	macro_pc = 0;
-	States::current = &States::start;
 
-	Goto::table = &file_goto_table;
+	Goto::table = &macro_goto_table;
 	if (locals) {
-		QRegisters::locals = new QRegisterTable();
-		QRegisters::locals->initialize();
+		parent_locals = QRegisters::locals;
+		macro_locals.initialize();
+		QRegisters::locals = &macro_locals;
 	}
 
-	if (!g_file_get_contents(filename, &macro, NULL, NULL))
-		return false;
-	/* only when executing files, ignore Hash-Bang line */
-	if (macro[0] == '#')
-		p = MAX(strchr(macro, '\r'), strchr(macro, '\n'));
-
 	try {
-		macro_execute(p ? p+1 : macro);
+		step(macro);
 		if (Goto::skip_label)
 			throw State::Error("Label \"%s\" not found",
 					   Goto::skip_label);
 	} catch (...) {
-		g_free(macro);
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
+
+		if (locals) {
+			delete QRegisters::locals;
+			QRegisters::locals = parent_locals;
+		}
+		Goto::table = parent_goto_table;
+
+		macro_pc = parent_pc;
+		States::current = parent_state;
+
+		throw; /* forward */
+	}
+
+	if (locals) {
+		delete QRegisters::locals;
+		QRegisters::locals = parent_locals;
+	}
+	Goto::table = parent_goto_table;
+
+	macro_pc = parent_pc;
+	States::current = parent_state;
+}
+
+bool
+Execute::file(const gchar *filename, bool locals)
+{
+	gchar *macro_str, *p = NULL;
+
+	if (!g_file_get_contents(filename, &macro_str, NULL, NULL))
+		return false;
+	/* only when executing files, ignore Hash-Bang line */
+	if (*macro_str == '#')
+		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'));
+
+	try {
+		macro(p ? p+1 : macro_str, locals);
+	} catch (...) {
+		g_free(macro_str);
 		return false;
 	}
-	g_free(macro);
 
-	macro_pc = 0;
-	States::current = &States::start;
-	Goto::table = NULL;
-	if (locals)
-		delete QRegisters::locals;
-	QRegisters::locals = parent_locals;
+	g_free(macro_str);
 	return true;
 }
 

@@ -64,7 +64,7 @@ cmdline_keypress(gchar key)
 		*cmdline_p = '\0';
 
 		try {
-			macro_execute(cmdline);
+			Execute::step(cmdline);
 		} catch (...) {
 			/*
 			 * Undo tokens may have been emitted (or had to be)

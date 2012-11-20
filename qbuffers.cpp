@@ -39,11 +39,17 @@ namespace States {
 }
 
 namespace QRegisters {
-	QRegisterTable	globals;
-	QRegisterTable	*locals = NULL;
-	QRegister	*current = NULL;
+	QRegisterTable		globals;
+	QRegisterTable		*locals = NULL;
+	static QRegister	*current = NULL;
+	static QRegisterStack	stack;
 
-	static QRegisterStack stack;
+	static inline void
+	undo_edit(void)
+	{
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+		undo.push_var(current)->undo_edit();
+	}
 }
 
 static QRegister *register_argument = NULL;
@@ -148,57 +154,16 @@ QRegister::undo_edit(void)
 void
 QRegister::execute(bool locals) throw (State::Error)
 {
-	GotoTable *parent_goto_table = Goto::table;
-	GotoTable macro_goto_table;
-
-	QRegisterTable *parent_locals = QRegisters::locals;
-
-	State *parent_state = States::current;
-	gint parent_pc = macro_pc;
-	gchar *str;
-
-	/*
-	 * need this to fixup state on rubout: state machine emits undo token
-	 * resetting state to parent's one, but the macro executed also emitted
-	 * undo tokens resetting the state to StateStart
-	 */
-	undo.push_var(States::current);
-	States::current = &States::start;
-
-	macro_pc = 0;
-	str = get_string();
-
-	Goto::table = &macro_goto_table;
-	if (locals) {
-		QRegisters::locals = new QRegisterTable();
-		QRegisters::locals->initialize();
-	}
+	gchar *str = get_string();
 
 	try {
-		macro_execute(str);
-		if (Goto::skip_label)
-			throw State::Error("Label \"%s\" not found",
-					   Goto::skip_label);
+		Execute::macro(str, locals);
 	} catch (...) {
 		g_free(str);
-		macro_pc = parent_pc;
-		States::current = parent_state;
-		Goto::table = parent_goto_table;
-		if (locals)
-			delete QRegisters::locals;
-		QRegisters::locals = parent_locals;
-		g_free(Goto::skip_label);
-		Goto::skip_label = NULL;
 		throw; /* forward */
 	}
 
 	g_free(str);
-	macro_pc = parent_pc;
-	States::current = parent_state;
-	Goto::table = parent_goto_table;
-	if (locals)
-		delete QRegisters::locals;
-	QRegisters::locals = parent_locals;
 }
 
 bool

@@ -100,8 +100,8 @@ process_options(int &argc, char **&argv)
 int
 main(int argc, char **argv)
 {
-	static GotoTable cmdline_goto_table;
-	static QRegisterTable local_qregs;
+	static GotoTable	cmdline_goto_table;
+	static QRegisterTable	local_qregs;
 
 	process_options(argc, argv);
 
@@ -135,9 +135,10 @@ main(int argc, char **argv)
 	}
 
 	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-		if (!file_execute(mung_file, false))
+		if (!Execute::file(mung_file, false))
 			exit(EXIT_FAILURE);
-		/* FIXME: make quit immediate in commandline mode (non-UNDO)? */
+
+		/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */
 		if (quit_requested) {
 			/* FIXME */
 			exit(EXIT_SUCCESS);

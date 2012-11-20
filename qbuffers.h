@@ -456,16 +456,6 @@ namespace States {
 namespace QRegisters {
 	extern QRegisterTable	globals;
 	extern QRegisterTable	*locals;
-	extern QRegister	*current;
-
-	inline void
-	undo_edit(void)
-	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
-
-		undo.push_var<QRegister*>(current);
-		current->undo_edit();
-	}
 
 	enum Hook {
 		HOOK_ADD = 1,

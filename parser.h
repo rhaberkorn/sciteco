@@ -236,8 +236,6 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
-extern gint macro_pc;
-
 namespace States {
 	extern StateStart 	start;
 	extern StateControl	control;
@@ -263,10 +261,15 @@ extern enum Mode {
 		return STATE;			\
 } G_STMT_END
 
+extern gint macro_pc;
+
 extern gchar *strings[2];
 extern gchar escape_char;
 
-void macro_execute(const gchar *macro) throw (State::Error);
-bool file_execute(const gchar *filename, bool locals = true);
+namespace Execute {
+	void step(const gchar *macro) throw (State::Error);
+	void macro(const gchar *macro, bool locals = true) throw (State::Error);
+	bool file(const gchar *filename, bool locals = true);
+}
 
 #endif
