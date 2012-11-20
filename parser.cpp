@@ -925,6 +925,15 @@ StateStart::custom(gchar chr) throw (Error)
 		break;
 	}
 
+	case 'A':
+		BEGIN_EXEC(this);
+		v = interface.ssm(SCI_GETCURRENTPOS) +
+		    expressions.pop_num_calc();
+		if (!Validate::pos(v))
+			throw RangeError("A");
+		expressions.push(interface.ssm(SCI_GETCHARAT, v));
+		break;
+
 	default:
 		throw SyntaxError(chr);
 	}
