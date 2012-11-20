@@ -102,24 +102,19 @@ StateLabel::custom(gchar chr) throw (Error)
 				      Goto::table->set(strings[0], macro_pc));
 
 		if (!g_strcmp0(strings[0], Goto::skip_label)) {
-			undo.push_str(Goto::skip_label);
-			g_free(Goto::skip_label);
+			g_free(undo.push_str(Goto::skip_label));
 			Goto::skip_label = NULL;
 
-			undo.push_var(mode);
-			mode = MODE_NORMAL;
+			undo.push_var(mode) = MODE_NORMAL;
 		}
 
-		undo.push_str(strings[0]);
-		g_free(strings[0]);
+		g_free(undo.push_str(strings[0]));
 		strings[0] = NULL;
 
 		return &States::start;
 	}
 
-	undo.push_str(strings[0]);
-	String::append(strings[0], chr);
-
+	String::append(undo.push_str(strings[0]), chr);
 	return this;
 }
 
@@ -143,8 +138,7 @@ StateGotoCmd::done(const gchar *str) throw (Error)
 			/* skip till label is defined */
 			undo.push_str(Goto::skip_label);
 			Goto::skip_label = g_strdup(labels[value-1]);
-			undo.push_var(mode);
-			mode = MODE_PARSE_ONLY_GOTO;
+			undo.push_var(mode) = MODE_PARSE_ONLY_GOTO;
 		}
 	}
 
