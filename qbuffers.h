@@ -31,14 +31,19 @@ gchar *get_absolute_path(const gchar *path);
  */
 
 class QRegisterData {
-public:
 	gint64 integer;
 
+public:
 	typedef void document;
 	document *string;
 	gint dot;
 
-	QRegisterData() : integer(0), string(NULL), dot(0) {}
+	/*
+	 * whether to generate UndoTokens (unnecessary in macro invocations)
+	 */
+	bool must_undo;
+
+	QRegisterData() : integer(0), string(NULL), dot(0), must_undo(true) {}
 	virtual
 	~QRegisterData()
 	{
@@ -52,6 +57,23 @@ public:
 		if (!string)
 			string = (document *)interface.ssm(SCI_CREATEDOCUMENT);
 		return string;
+	}
+
+	virtual gint64
+	set_integer(gint64 i)
+	{
+		return integer = i;
+	}
+	virtual void
+	undo_set_integer(void)
+	{
+		if (must_undo)
+			undo.push_var(integer);
+	}
+	virtual gint64
+	get_integer(void)
+	{
+		return integer;
 	}
 
 	virtual void set_string(const gchar *str);
@@ -108,8 +130,18 @@ public:
 };
 
 class QRegisterTable : public RBTree {
+	bool must_undo;
+
 public:
-	QRegisterTable() : RBTree() {}
+	QRegisterTable(bool _undo = true) : RBTree(), must_undo(_undo) {}
+
+	inline QRegister *
+	insert(QRegister *reg)
+	{
+		reg->must_undo = must_undo;
+		RBTree::insert(reg);
+		return reg;
+	}
 
 	inline void
 	initialize(const gchar *name)

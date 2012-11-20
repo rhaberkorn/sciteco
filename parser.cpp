@@ -64,10 +64,10 @@ void
 Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 {
 	GotoTable *parent_goto_table = Goto::table;
-	GotoTable macro_goto_table;
+	GotoTable macro_goto_table(false);
 
-	QRegisterTable *parent_locals;
-	QRegisterTable macro_locals;
+	QRegisterTable *parent_locals = QRegisters::locals;
+	QRegisterTable macro_locals(false);
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
@@ -82,7 +82,6 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 
 	Goto::table = &macro_goto_table;
 	if (locals) {
-		parent_locals = QRegisters::locals;
 		macro_locals.initialize();
 		QRegisters::locals = &macro_locals;
 	}
@@ -96,10 +95,7 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
 
-		if (locals) {
-			delete QRegisters::locals;
-			QRegisters::locals = parent_locals;
-		}
+		QRegisters::locals = parent_locals;
 		Goto::table = parent_goto_table;
 
 		macro_pc = parent_pc;
@@ -108,10 +104,7 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 		throw; /* forward */
 	}
 
-	if (locals) {
-		delete QRegisters::locals;
-		QRegisters::locals = parent_locals;
-	}
+	QRegisters::locals = parent_locals;
 	Goto::table = parent_goto_table;
 
 	macro_pc = parent_pc;
@@ -279,7 +272,7 @@ StateExpectString::machine_input(gchar chr) throw (Error)
 			reg = QRegisters::globals[g_ascii_toupper(chr)];
 			if (!reg)
 				throw InvalidQRegError(chr);
-			return g_strdup((gchar []){(gchar)reg->integer, '\0'});
+			return g_strdup(CHR2STR(reg->get_integer()));
 		}
 		break;
 
@@ -290,7 +283,7 @@ StateExpectString::machine_input(gchar chr) throw (Error)
 		reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
 		if (!reg)
 			throw InvalidQRegError(chr, true);
-		return g_strdup((gchar []){(gchar)reg->integer, '\0'});
+		return g_strdup(CHR2STR(reg->get_integer()));
 	}
 
 	case Machine::STATE_CTL_EQ:
@@ -697,7 +690,7 @@ StateStart::custom(gchar chr) throw (Error)
 	case ';':
 		BEGIN_EXEC(this);
 
-		v = QRegisters::globals["_"]->integer;
+		v = QRegisters::globals["_"]->get_integer();
 		rc = expressions.pop_num_calc(1, v);
 		if (eval_colon())
 			rc = ~rc;
@@ -1546,8 +1539,8 @@ StateSearch::process(const gchar *str,
 
 	undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
 
-	undo.push_var<gint64>(search_reg->integer);
-	search_reg->integer = FAILURE;
+	search_reg->undo_set_integer();
+	search_reg->set_integer(FAILURE);
 
 	/* NOTE: pattern2regexp() modifies str pointer */
 	re_pattern = pattern2regexp(str);
@@ -1611,7 +1604,7 @@ StateSearch::process(const gchar *str,
 
 	if (matched_from >= 0 && matched_to >= 0) {
 		/* match success */
-		search_reg->integer = SUCCESS;
+		search_reg->set_integer(SUCCESS);
 		interface.ssm(SCI_SETSEL, matched_from, matched_to);
 	} else {
 		interface.ssm(SCI_GOTOPOS, parameters.dot);
@@ -1637,8 +1630,8 @@ StateSearch::done(const gchar *str) throw (Error)
 	}
 
 	if (eval_colon())
-		expressions.push(search_reg->integer);
-	else if (IS_FAILURE(search_reg->integer) &&
+		expressions.push(search_reg->get_integer());
+	else if (IS_FAILURE(search_reg->get_integer()) &&
 		 !expressions.find_op(Expressions::OP_LOOP) /* not in loop */)
 		interface.msg(Interface::MSG_ERROR, "Search string not found!");
 

@@ -93,6 +93,9 @@ QRegisterData::set_string(const gchar *str)
 void
 QRegisterData::undo_set_string(void)
 {
+	if (!must_undo)
+		return;
+
 	current_save_dot();
 	if (ring.current)
 		ring.current->undo_edit();
@@ -133,6 +136,9 @@ QRegisterData::edit(void)
 void
 QRegisterData::undo_edit(void)
 {
+	if (!must_undo)
+		return;
+
 	undo.push_msg(SCI_GOTOPOS, dot);
 	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
 }
@@ -147,6 +153,9 @@ QRegister::edit(void)
 void
 QRegister::undo_edit(void)
 {
+	if (!must_undo)
+		return;
+
 	interface.undo_info_update(this);
 	QRegisterData::undo_edit();
 }
@@ -254,7 +263,7 @@ QRegisterStack::push(QRegister *reg)
 {
 	Entry *entry = new Entry();
 
-	entry->integer = reg->integer;
+	entry->set_integer(reg->get_integer());
 	if (reg->string) {
 		gchar *str = reg->get_string();
 		entry->set_string(str);
@@ -275,17 +284,19 @@ QRegisterStack::pop(QRegister *reg)
 	if (!entry)
 		return false;
 
-	undo.push_var(reg->integer);
-	reg->integer = entry->integer;
+	reg->undo_set_integer();
+	reg->set_integer(entry->get_integer());
 
 	/* exchange document ownership between Stack entry and Q-Register */
 	string = reg->string;
-	undo.push_var(reg->string);
+	if (reg->must_undo)
+		undo.push_var(reg->string);
 	reg->string = entry->string;
 	undo.push_var(entry->string);
 	entry->string = string;
 
-	undo.push_var(reg->dot);
+	if (reg->must_undo)
+		undo.push_var(reg->dot);
 	reg->dot = entry->dot;
 
 	SLIST_REMOVE_HEAD(&head, entries);
@@ -813,7 +824,7 @@ StateGetQRegInteger::got_register(QRegister *reg) throw (Error)
 	BEGIN_EXEC(&States::start);
 
 	expressions.eval();
-	expressions.push(reg->integer);
+	expressions.push(reg->get_integer());
 
 	return &States::start;
 }
@@ -823,8 +834,8 @@ StateSetQRegInteger::got_register(QRegister *reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	undo.push_var<gint64>(reg->integer);
-	reg->integer = expressions.pop_num_calc();
+	reg->undo_set_integer();
+	reg->set_integer(expressions.pop_num_calc());
 
 	return &States::start;
 }
@@ -832,11 +843,13 @@ StateSetQRegInteger::got_register(QRegister *reg) throw (Error)
 State *
 StateIncreaseQReg::got_register(QRegister *reg) throw (Error)
 {
+	gint64 res;
+
 	BEGIN_EXEC(&States::start);
 
-	undo.push_var<gint64>(reg->integer);
-	reg->integer += expressions.pop_num_calc();
-	expressions.push(reg->integer);
+	reg->undo_set_integer();
+	res = reg->get_integer() + expressions.pop_num_calc();
+	expressions.push(reg->set_integer(res));
 
 	return &States::start;
 }

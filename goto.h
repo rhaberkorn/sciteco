@@ -53,8 +53,13 @@ class GotoTable : public RBTree {
 		}
 	};
 
+	/*
+	 * whether to generate UndoTokens (unnecessary in macro invocations)
+	 */
+	bool must_undo;
+
 public:
-	GotoTable() : RBTree() {}
+	GotoTable(bool _undo = true) : RBTree(), must_undo(_undo) {}
 
 	gint remove(gchar *name);
 	gint find(gchar *name);
@@ -63,7 +68,8 @@ public:
 	inline void
 	undo_set(gchar *name, gint pc = -1)
 	{
-		undo.push(new UndoTokenSet(this, name, pc));
+		if (must_undo)
+			undo.push(new UndoTokenSet(this, name, pc));
 	}
 
 #ifdef DEBUG
