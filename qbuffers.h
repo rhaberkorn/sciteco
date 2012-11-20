@@ -78,6 +78,12 @@ public:
 
 	virtual void set_string(const gchar *str);
 	virtual void undo_set_string(void);
+	virtual void append_string(const gchar *str);
+	virtual inline void
+	undo_append_string(void)
+	{
+		undo_set_string();
+	}
 	virtual gchar *get_string(void);
 
 	virtual void edit(void);
@@ -124,6 +130,9 @@ public:
 
 	void set_string(const gchar *str) {}
 	void undo_set_string(void) {}
+	void append_string(const gchar *str) {}
+	void undo_append_string(void) {}
+
 	gchar *get_string(void);
 
 	void edit(void);

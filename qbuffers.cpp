@@ -108,6 +108,21 @@ QRegisterData::undo_set_string(void)
 	undo_edit();
 }
 
+void
+QRegisterData::append_string(const gchar *str)
+{
+	if (!str)
+		return;
+
+	edit();
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_APPENDTEXT, strlen(str), (sptr_t)str);
+	interface.ssm(SCI_ENDUNDOACTION);
+
+	current_edit();
+}
+
 gchar *
 QRegisterData::get_string(void)
 {
@@ -903,8 +918,13 @@ StateCopyToQReg::got_register(QRegister *reg) throw (Error)
 	tr.lpstrText = (char *)g_malloc(len + 1);
 	interface.ssm(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
 
-	reg->undo_set_string();
-	reg->set_string(tr.lpstrText);
+	if (eval_colon()) {
+		reg->undo_append_string();
+		reg->append_string(tr.lpstrText);
+	} else {
+		reg->undo_set_string();
+		reg->set_string(tr.lpstrText);
+	}
 	g_free(tr.lpstrText);
 
 	return &States::start;
