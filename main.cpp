@@ -83,13 +83,19 @@ process_options(int &argc, char **&argv)
 
 	if (mung_file) {
 		if (!g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-			g_printf("Cannot mung %s. File does not exist!\n",
+			g_printf("Cannot mung \"%s\". File does not exist!\n",
 				 mung_file);
 			exit(EXIT_FAILURE);
 		}
 	} else {
-		mung_file = g_build_filename(g_get_user_config_dir(),
-					     INI_FILE, NULL);
+		const gchar *home;
+
+#ifdef G_OS_UNIX
+		home = g_get_home_dir();
+#else
+		home = g_get_user_config_dir();
+#endif
+		mung_file = g_build_filename(home, INI_FILE, NULL);
 	}
 
 	interface.parse_args(argc, argv);

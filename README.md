@@ -48,11 +48,11 @@ SciTECO has the following build and runtime dependencies:
 
 1. Build Scintilla as described in its README. If you want to build the ncurses version,
    install Scinterm from a subdirectory of Scintilla called "scinterm".
-2. Untar/unzip SciTECO into a subdirectory of Scintilla.
+2. Untar/unzip/check-out SciTECO into a subdirectory of Scintilla.
 3. Build with `make INTERFACE=GTK` or `make INTERFACE=NCURSES` respectively.
 3. Install with `make install`.
 4. You are recommended to use the included "teco.ini" as a starting point for your profile,
-   so copy it to "~/.config/.teco_ini". The default teco.ini opens files specified on the
+   so copy it to "~/.teco_ini". The default "teco.ini" opens files specified on the
    commandline for you, uses a file open hook to configure syntax highlighting (only
    C/C++ and Makefiles for now) and enables line numbers.
 
