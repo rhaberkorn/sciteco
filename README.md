@@ -52,7 +52,8 @@ SciTECO has the following build and runtime dependencies:
 3. Build with `make INTERFACE=GTK` or `make INTERFACE=NCURSES` respectively.
 3. Install with `make install`.
 4. You are recommended to use the included "teco.ini" as a starting point for your profile,
-   so copy it to "~/.config/.teco_ini". The default teco.ini doesn't do much currently,
-   but it opens files specified on the shell commandline for you.
+   so copy it to "~/.config/.teco_ini". The default teco.ini opens files specified on the
+   commandline for you, uses a file open hook to configure syntax highlighting (only
+   C/C++ and Makefiles for now) and enables line numbers.
 
 More documentation is coming soon.
