@@ -36,6 +36,8 @@ typedef gint64 tecoBool;
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
 
+#define CHR2STR(X)	((gchar []){X, '\0'})
+
 namespace String {
 
 static inline void
@@ -50,7 +52,7 @@ append(gchar *&str1, const gchar *str2)
 static inline void
 append(gchar *&str, gchar chr)
 {
-	append(str, (gchar []){chr, '\0'});
+	append(str, CHR2STR(chr));
 }
 
 } /* namespace String */
