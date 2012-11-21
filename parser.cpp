@@ -457,6 +457,61 @@ StateStart::StateStart() : State()
 	transitions['X'] = &States::copytoqreg;
 }
 
+void
+StateStart::insert_integer(gint64 v)
+{
+	gchar buf[64+1]; /* maximum length if radix = 2 */
+	gchar *p = buf + sizeof(buf);
+
+	*--p = '\0';
+	interface.ssm(SCI_BEGINUNDOACTION);
+	if (v < 0) {
+		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)"-");
+		v *= -1;
+	}
+	do {
+		*--p = '0' + (v % expressions.radix);
+		if (*p > '9')
+			*p += 'A' - '9';
+	} while ((v /= expressions.radix));
+	interface.ssm(SCI_ADDTEXT, buf + sizeof(buf) - p - 1,
+		      (sptr_t)p);
+	interface.ssm(SCI_SCROLLCARET);
+	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
+
+	undo.push_msg(SCI_UNDO);
+}
+
+gint64
+StateStart::read_integer(void)
+{
+	uptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
+	gchar c = (gchar)interface.ssm(SCI_GETCHARAT, pos);
+	gint64 v = 0;
+	gint sign = 1;
+
+	if (c == '-') {
+		pos++;
+		sign = -1;
+	}
+
+	for (;;) {
+		c = g_ascii_toupper((gchar)interface.ssm(SCI_GETCHARAT, pos));
+		if (c >= '0' && c <= '0' + MIN(expressions.radix, 10) - 1)
+			v = (v*expressions.radix) + (c - '0');
+		else if (c >= 'A' &&
+			 c <= 'A' + MIN(expressions.radix - 10, 26) - 1)
+			v = (v*expressions.radix) + 10 + (c - 'A');
+		else
+			break;
+
+		pos++;
+	}
+
+	return sign * v;
+}
+
 tecoBool
 StateStart::move_chars(gint64 n)
 {
@@ -630,6 +685,15 @@ StateStart::custom(gchar chr) throw (Error)
 		expressions.eval();
 		expressions.push(0);
 		expressions.push(interface.ssm(SCI_GETLENGTH));
+		break;
+
+	case '\\':
+		BEGIN_EXEC(this);
+		expressions.eval();
+		if (expressions.args())
+			insert_integer(expressions.pop_num_calc());
+		else
+			expressions.push(read_integer());
 		break;
 
 	/*

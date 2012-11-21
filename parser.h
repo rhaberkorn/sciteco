@@ -159,8 +159,12 @@ public:
 	StateStart();
 
 private:
+	void insert_integer(gint64 v);
+	gint64 read_integer(void);
+
 	tecoBool move_chars(gint64 n);
 	tecoBool move_lines(gint64 n);
+
 	tecoBool delete_words(gint64 n);
 
 	State *custom(gchar chr) throw (Error);
