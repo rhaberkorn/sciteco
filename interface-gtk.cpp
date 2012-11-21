@@ -72,7 +72,6 @@ InterfaceGtk::InterfaceGtk()
 	popup_widget = gtk_info_popup_new(cmdline_widget);
 
 	gtk_widget_grab_focus(cmdline_widget);
-	gtk_widget_show_all(window);
 
 	ssm(SCI_SETFOCUS, TRUE);
 

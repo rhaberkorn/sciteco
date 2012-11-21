@@ -62,6 +62,7 @@ public:
 	inline void
 	event_loop(void)
 	{
+		gtk_widget_show_all(window);
 		gtk_main();
 	}
 
