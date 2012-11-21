@@ -31,6 +31,7 @@ namespace States {
 	StateLoadQReg		loadqreg;
 	StateCtlUCommand	ctlucommand;
 	StateSetQRegString	setqregstring;
+	StateGetQRegString	getqregstring;
 	StateGetQRegInteger	getqreginteger;
 	StateSetQRegInteger	setqreginteger;
 	StateIncreaseQReg	increaseqreg;
@@ -829,6 +830,28 @@ StateSetQRegString::done(const gchar *str) throw (Error)
 
 	register_argument->undo_set_string();
 	register_argument->set_string(str);
+
+	return &States::start;
+}
+
+State *
+StateGetQRegString::got_register(QRegister *reg) throw (Error)
+{
+	gchar *str;
+
+	BEGIN_EXEC(&States::start);
+
+	str = reg->get_string();
+	if (*str) {
+		interface.ssm(SCI_BEGINUNDOACTION);
+		interface.ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
+		interface.ssm(SCI_SCROLLCARET);
+		interface.ssm(SCI_ENDUNDOACTION);
+		ring.dirtify();
+
+		undo.push_msg(SCI_UNDO);
+	}
+	g_free(str);
 
 	return &States::start;
 }

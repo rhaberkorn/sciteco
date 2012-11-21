@@ -452,6 +452,11 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+class StateGetQRegString : public StateExpectQReg {
+private:
+	State *got_register(QRegister *reg) throw (Error);
+};
+
 class StateGetQRegInteger : public StateExpectQReg {
 private:
 	State *got_register(QRegister *reg) throw (Error);
@@ -487,6 +492,7 @@ namespace States {
 	extern StateLoadQReg		loadqreg;
 	extern StateCtlUCommand		ctlucommand;
 	extern StateSetQRegString	setqregstring;
+	extern StateGetQRegString	getqregstring;
 	extern StateGetQRegInteger	getqreginteger;
 	extern StateSetQRegInteger	setqreginteger;
 	extern StateIncreaseQReg	increaseqreg;
