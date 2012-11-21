@@ -94,10 +94,12 @@ QRegisterData::set_string(const gchar *str)
 void
 QRegisterData::undo_set_string(void)
 {
+	/* set_string() assumes that dot has been saved */
+	current_save_dot();
+
 	if (!must_undo)
 		return;
 
-	current_save_dot();
 	if (ring.current)
 		ring.current->undo_edit();
 	else if (QRegisters::current)
