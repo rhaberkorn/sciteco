@@ -8,6 +8,10 @@
 #include <glib/gstdio.h>
 
 #include <curses.h>
+/* only a hack until we have Autoconf checks */
+#if defined(__PDCURSES__) && CHTYPE_LONG >= 2
+#define PDCURSES_WIN32A
+#endif
 
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
@@ -29,31 +33,18 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 /* FIXME: should be configurable in TECO (Function key substitutes) */
 #define ESCAPE_SURROGATE KEY_DC
 
+#ifndef SCI_COLOR_PAIR
 /* from ScintillaTerm.cxx */
 #define SCI_COLOR_PAIR(f, b) \
-	((b) * COLORS + (f) + 1)
+	((b) * 8 + (f) + 1)
+#endif
 
 #define SCI_COLOR_ATTR(f, b) \
 	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
 InterfaceNCurses::InterfaceNCurses()
 {
-#ifdef __PDCURSES__
-	initscr();
-	screen = NULL;
-#else
-	/*
-	 * Prevent the initial redraw and any escape sequences that may
-	 * interfere with stdout, so we may use the terminal in
-	 * cooked mode, for commandline help and batch processing.
-	 * Scintilla must be initialized for batch processing to work.
-	 * (Frankly I have no idea why this works!)
-	 */
-	screen_tty = g_fopen("/dev/tty", "r+b");
-	screen = newterm(NULL, screen_tty, screen_tty);
-	set_term(screen);
-#endif
-
+	init_screen();
 	raw();
 	cbreak();
 	noecho();
@@ -83,8 +74,46 @@ InterfaceNCurses::InterfaceNCurses()
 	msg_clear();
 	cmdline_update("");
 
+#ifndef PDCURSES_WIN32A
+	/* workaround: endwin() is somewhat broken in the win32a port */
 	endwin();
+#endif
 }
+
+#ifdef __PDCURSES__
+
+void
+InterfaceNCurses::init_screen(void)
+{
+#ifdef PDCURSES_WIN32A
+	/* enables window resizing on Win32a port */
+	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
+#endif
+
+	initscr();
+
+	screen_tty = NULL;
+	screen = NULL;
+}
+
+#else
+
+void
+InterfaceNCurses::init_screen(void)
+{
+	/*
+	 * Prevent the initial redraw and any escape sequences that may
+	 * interfere with stdout, so we may use the terminal in
+	 * cooked mode, for commandline help and batch processing.
+	 * Scintilla must be initialized for batch processing to work.
+	 * (Frankly I have no idea why this works!)
+	 */
+	screen_tty = g_fopen("/dev/tty", "r+b");
+	screen = newterm(NULL, screen_tty, screen_tty);
+	set_term(screen);
+}
+
+#endif /* !__PDCURSES__ */
 
 void
 InterfaceNCurses::resize_all_windows(void)
@@ -109,17 +138,21 @@ InterfaceNCurses::resize_all_windows(void)
 void
 InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
-	static const int type2attr[] = {
+	static const chtype type2attr[] = {
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN),  /* MSG_INFO */
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW), /* MSG_WARNING */
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_RED)	   /* MSG_ERROR */
 	};
 
+#ifdef PDCURSES_WIN32A
+	stdio_vmsg(type, fmt, ap);
+#else
 	if (isendwin()) { /* batch mode */
 		stdio_vmsg(type, fmt, ap);
 		return;
 	}
+#endif
 
 	wmove(msg_window, 0, 0);
 	wbkgdset(msg_window, ' ' | type2attr[type]);
@@ -355,10 +388,10 @@ InterfaceNCurses::~InterfaceNCurses()
 
 	if (!isendwin())
 		endwin();
-#ifndef __PDCURSES__
+
 	delscreen(screen);
-	fclose(screen_tty);
-#endif
+	if (screen_tty)
+		fclose(screen_tty);
 }
 
 /*

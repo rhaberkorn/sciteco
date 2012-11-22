@@ -35,6 +35,7 @@ extern class InterfaceNCurses : public Interface {
 		~Popup();
 	} popup;
 
+	void init_screen(void);
 	void resize_all_windows(void);
 	void draw_info(void);
 
