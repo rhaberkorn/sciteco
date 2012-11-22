@@ -72,6 +72,19 @@ get_teco_ini(void)
 	return g_strdup(INI_FILE);
 }
 
+/*
+ * Windows sometimes sets the current working directory to very obscure
+ * paths when opening files in the Explorer, but we have to read the
+ * teco.ini from the directory where our binary resides.
+ */
+static inline void
+fix_cwd(const gchar *program)
+{
+	gchar *bin_dir = g_path_get_dirname(program);
+	g_chdir(bin_dir);
+	g_free(bin_dir);
+}
+
 #else
 
 static inline gchar *
@@ -86,6 +99,8 @@ get_teco_ini(void)
 #endif
 	return g_build_filename(home, INI_FILE, NULL);
 }
+
+static inline void fix_cwd(const gchar *program __attribute__((unused))) {}
 
 #endif /* !G_OS_WIN32 */
 
@@ -134,6 +149,8 @@ main(int argc, char **argv)
 {
 	static GotoTable	cmdline_goto_table;
 	static QRegisterTable	local_qregs;
+
+	fix_cwd(argv[0]);
 
 	process_options(argc, argv);
 
