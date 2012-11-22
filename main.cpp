@@ -17,7 +17,11 @@
 #include "qbuffers.h"
 #include "undo.h"
 
+#ifdef G_OS_UNIX
 #define INI_FILE ".teco_ini"
+#else
+#define INI_FILE "teco.ini"
+#endif
 
 namespace Flags {
 	gint64 ed = 0;
@@ -56,6 +60,35 @@ Interface::process_notify(SCNotification *notify)
 #endif
 }
 
+#ifdef G_OS_WIN32
+
+/*
+ * keep program self-contained under Windows
+ * (look for profile in current directory)
+ */
+static inline gchar *
+get_teco_ini(void)
+{
+	return g_strdup(INI_FILE);
+}
+
+#else
+
+static inline gchar *
+get_teco_ini(void)
+{
+	const gchar *home;
+
+#ifdef G_OS_UNIX
+	home = g_get_home_dir();
+#else
+	home = g_get_user_config_dir();
+#endif
+	return g_build_filename(home, INI_FILE, NULL);
+}
+
+#endif /* !G_OS_WIN32 */
+
 static inline void
 process_options(int &argc, char **&argv)
 {
@@ -88,14 +121,7 @@ process_options(int &argc, char **&argv)
 			exit(EXIT_FAILURE);
 		}
 	} else {
-		const gchar *home;
-
-#ifdef G_OS_UNIX
-		home = g_get_home_dir();
-#else
-		home = g_get_user_config_dir();
-#endif
-		mung_file = g_build_filename(home, INI_FILE, NULL);
+		mung_file = get_teco_ini();
 	}
 
 	interface.parse_args(argc, argv);
