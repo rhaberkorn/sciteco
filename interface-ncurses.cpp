@@ -7,7 +7,7 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
-#include <ncurses.h>
+#include <curses.h>
 
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
@@ -38,6 +38,10 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 
 InterfaceNCurses::InterfaceNCurses()
 {
+#ifdef __PDCURSES__
+	initscr();
+	screen = NULL;
+#else
 	/*
 	 * Prevent the initial redraw and any escape sequences that may
 	 * interfere with stdout, so we may use the terminal in
@@ -48,6 +52,7 @@ InterfaceNCurses::InterfaceNCurses()
 	screen_tty = g_fopen("/dev/tty", "r+b");
 	screen = newterm(NULL, screen_tty, screen_tty);
 	set_term(screen);
+#endif
 
 	raw();
 	cbreak();
@@ -269,6 +274,7 @@ InterfaceNCurses::popup_clear(void)
 
 	redrawwin(info_window);
 	wrefresh(info_window);
+	redrawwin(sci_window);
 	scintilla_refresh(sci);
 	redrawwin(msg_window);
 	wrefresh(msg_window);
@@ -336,16 +342,18 @@ InterfaceNCurses::~InterfaceNCurses()
 {
 	delwin(info_window);
 	g_free(info_current);
+	/* also deletes curses window */
 	scintilla_delete(sci);
-	delwin(sci_window);
 	delwin(cmdline_window);
 	g_free(cmdline_current);
 	delwin(msg_window);
 
 	if (!isendwin())
 		endwin();
+#ifndef __PDCURSES__
 	delscreen(screen);
 	fclose(screen_tty);
+#endif
 }
 
 /*

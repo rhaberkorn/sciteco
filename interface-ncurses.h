@@ -5,7 +5,7 @@
 
 #include <glib.h>
 
-#include <ncurses.h>
+#include <curses.h>
 
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
