@@ -15,6 +15,9 @@ side-effects of that character which may be a command or part of a command, are 
 
 SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
 GTK+ as well as NCurses frontends (using [Scinterm](http://foicica.com/scinterm/)).
+The NCurses frontend also works with [PDCurses/XCurses](http://pdcurses.sourceforge.net/)
+and its [win32a port](http://www.projectpluto.com/win32a.htm).
+Both Linux and Windows are supported.
 
 Features
 ========
@@ -44,7 +47,10 @@ SciTECO has the following build and runtime dependencies:
 * GNU C, C++ and [Gob2](http://www.jirka.org/gob.html)
 * [Glib](http://developer.gnome.org/glib/), as a cross-platform runtime library
 * [Scintilla](http://www.scintilla.org/), and possibly [Scinterm](http://foicica.com/scinterm/)
-* [GTK+ 2](http://www.gtk.org/) or [NCurses](http://www.gnu.org/software/ncurses/).
+* [GTK+ 2](http://www.gtk.org/), [NCurses](http://www.gnu.org/software/ncurses/),
+  [PDCurses/XCurses](http://pdcurses.sourceforge.net/) or
+  [PDCurses/Win32a](http://www.projectpluto.com/win32a.htm).
+* Other curses implementations might work as well but are untested.
 
 1. Build Scintilla as described in its README. If you want to build the ncurses version,
    install Scinterm from a subdirectory of Scintilla called "scinterm".
