@@ -3,6 +3,7 @@ gtk-info-popup*.[ch]
 
 *.o
 *.a
+*.exe
 sciteco
 
 *~
