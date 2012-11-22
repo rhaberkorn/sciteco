@@ -300,10 +300,15 @@ InterfaceNCurses::event_loop(void)
 
 		key = wgetch(cmdline_window);
 		switch (key) {
+#ifdef KEY_RESIZE
 		case ERR:
 		case KEY_RESIZE:
+#ifdef PDCURSES
+			resize_term(0, 0);
+#endif
 			resize_all_windows();
 			break;
+#endif
 		case ESCAPE_SURROGATE:
 			cmdline_keypress('\x1B');
 			break;
