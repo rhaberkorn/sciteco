@@ -349,6 +349,7 @@ InterfaceNCurses::event_loop(void)
 			cmdline_keypress('\b');
 			break;
 		case KEY_ENTER:
+		case '\r':
 			switch (ssm(SCI_GETEOLMODE)) {
 			case SC_EOL_CR:
 				cmdline_keypress('\r');
