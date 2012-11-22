@@ -467,7 +467,7 @@ Ring::edit(const gchar *filename)
 		current = buffer;
 		undo_close();
 
-		if (g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
+		if (filename && g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
 			buffer->load(filename);
 
 			interface.msg(Interface::MSG_INFO,
@@ -687,7 +687,7 @@ get_absolute_path(const gchar *path)
 	TCHAR buf[MAX_PATH];
 	gchar *resolved = NULL;
 
-	if (GetFullPathName(path, sizeof(buf), buf, NULL))
+	if (path && GetFullPathName(path, sizeof(buf), buf, NULL))
 		resolved = g_strdup(buf);
 
 	return resolved;
