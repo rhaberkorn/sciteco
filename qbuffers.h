@@ -24,6 +24,11 @@ is_glob_pattern(const gchar *str)
 	return strchr(str, '*') || strchr(str, '?');
 }
 
+/*
+ * Get absolute/full version of a possibly relative path.
+ * Works with existing and non-existing paths (in the latter case,
+ * heuristics may be applied.)
+ */
 gchar *get_absolute_path(const gchar *path);
 
 /*

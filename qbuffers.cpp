@@ -3,10 +3,6 @@
 #include <string.h>
 #include <bsd/sys/queue.h>
 
-#ifdef G_OS_WIN32
-#include <windows.h>
-#endif
-
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
@@ -20,6 +16,16 @@
 #include "expressions.h"
 #include "goto.h"
 #include "qbuffers.h"
+
+#ifdef G_OS_WIN32
+/* here it shouldn't cause conflicts with other headers */
+#include <windows.h>
+
+/* still need to clean up */
+#ifdef interface
+#undef interface
+#endif
+#endif
 
 namespace States {
 	StateEditFile		editfile;
@@ -555,7 +561,8 @@ make_savepoint(Buffer *buffer)
 		token->attributes = GetFileAttributes((LPCTSTR)savepoint);
 		if (token->attributes != INVALID_FILE_ATTRIBUTES)
 			SetFileAttributes((LPCTSTR)savepoint,
-					  attrs | FILE_ATTRIBUTE_HIDDEN);
+					  token->attributes |
+					  FILE_ATTRIBUTE_HIDDEN);
 #endif
 		undo.push(token);
 	} else {
@@ -672,16 +679,32 @@ get_absolute_path(const gchar *path)
 	return resolved;
 }
 
-#else
+#elif defined(G_OS_WIN32)
 
 gchar *
 get_absolute_path(const gchar *path)
 {
-	/* FIXME: see Unix implementation */
+	TCHAR buf[MAX_PATH];
+	gchar *resolved = NULL;
+
+	if (GetFullPathName(path, sizeof(buf), buf, NULL))
+		resolved = g_strdup(buf);
+
+	return resolved;
+}
+
+#else
+
+/*
+ * FIXME: I doubt that works on any platform...
+ */
+gchar *
+get_absolute_path(const gchar *path)
+{
 	return path ? g_file_read_link(path, NULL) : NULL;
 }
 
-#endif
+#endif /* !G_OS_UNIX && !G_OS_WIN32 */
 
 /*
  * Command states
