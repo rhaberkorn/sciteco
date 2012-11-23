@@ -53,12 +53,21 @@ ifneq ($(findstring MINGW32,$(OS)),)
 CPPFLAGS+=-Icompat
 endif
 
+MINIMAL_OBJS:=main.o cmdline.o undo.o expressions.o qbuffers.o \
+	      parser.o goto.o rbtree.o symbols.o \
+	      interface.a
+
 all : sciteco
 
-sciteco : main.o cmdline.o undo.o expressions.o qbuffers.o \
-	  parser.o goto.o rbtree.o \
-	  interface.a
+sciteco : $(MINIMAL_OBJS) symbols-scintilla.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
+
+sciteco-minimal : $(MINIMAL_OBJS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+symbols-scintilla.cpp : $(SCI_DIR)/include/Scintilla.h \
+			sciteco-minimal symbols-extract.tes
+	./sciteco-minimal -m symbols-extract.tes $< $@ SCI_ scintilla
 
 ifeq ($(INTERFACE),GTK)
 
@@ -82,5 +91,6 @@ install: all
 	$(INSTALL) sciteco $(PREFIX)/bin
 
 clean:
-	$(RM) sciteco *.o *.a *.exe
-	$(RM) gtk-info-popup*.[ch]
+	$(RM) sciteco sciteco-minimal
+	$(RM) *.o *.a *.exe
+	$(RM) gtk-info-popup*.[ch] symbols-*.cpp
