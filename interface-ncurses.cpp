@@ -260,7 +260,8 @@ InterfaceNCurses::popup_show(void)
 {
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
-	gint popup_cols, cur_file;
+	gint popup_cols;
+	gint cur_file, cur_line;
 
 	if (isendwin()) /* batch mode */
 		goto cleanup;
@@ -272,17 +273,29 @@ InterfaceNCurses::popup_show(void)
 
 	popup_cols = MIN(popup.length, cols / popup.longest);
 	popup_lines = (popup.length + popup.length % popup_cols)/popup_cols;
-	/* window covers message and scintilla windows */
+	popup_lines = MIN(popup_lines, lines - 1);
+	/* window covers message, scintilla and info windows */
 	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
 	wbkgdset(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
 
 	cur_file = 0;
+	cur_line = 1;
 	for (GSList *cur = popup.list; cur; cur = g_slist_next(cur)) {
 		gchar *entry = (gchar *)cur->data;
 
 		if (cur_file && !(cur_file % popup_cols)) {
 			wclrtoeol(popup.window);
 			waddch(popup.window, '\n');
+			cur_line++;
+		}
+
+		cur_file++;
+
+		if (cur_line == popup_lines && cur_file < popup.length &&
+		    !(cur_file % popup_cols)) {
+			(void)wattrset(popup.window, A_BOLD);
+			waddstr(popup.window, "...");
+			break;
 		}
 
 		(void)wattrset(popup.window, *entry == '*' ? A_BOLD : A_NORMAL);
@@ -291,7 +304,6 @@ InterfaceNCurses::popup_show(void)
 			waddch(popup.window, ' ');
 
 		g_free(cur->data);
-		cur_file++;
 	}
 	wclrtoeol(popup.window);
 
