@@ -18,12 +18,14 @@ public:
 	SymbolList(const Entry *_entries = NULL, gint _size = 0)
 		  : entries(_entries), size(_size) {}
 
-	gint lookup(const gchar *name);
+	gint lookup(const gchar *name, const gchar *prefix = "",
+		    bool case_sensitive = false);
 	GList *get_glist(void);
 };
 
 namespace Symbols {
 	extern SymbolList __attribute__((weak)) scintilla;
+	extern SymbolList __attribute__((weak)) scilexer;
 }
 
 #endif

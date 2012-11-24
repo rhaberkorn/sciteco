@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <glib.h>
 
 #include "symbols.h"
@@ -7,6 +9,7 @@
  */
 namespace Symbols {
 	SymbolList __attribute__((weak)) scintilla;
+	SymbolList __attribute__((weak)) scilexer;
 }
 
 /*
@@ -14,14 +17,24 @@ namespace Symbols {
  * binary search.
  */
 gint
-SymbolList::lookup(const gchar *name)
+SymbolList::lookup(const gchar *name, const gchar *prefix, bool case_sensitive)
 {
+	int (*cmp_fnc)(const char *, const char *, size_t);
+	gint prefix_skip = strlen(prefix);
+	gint name_len = strlen(name);
+
 	gint left = 0;
 	gint right = size - 1;
 
+	cmp_fnc = case_sensitive ? strncmp : g_ascii_strncasecmp;
+
+	if (!cmp_fnc(name, prefix, prefix_skip))
+		prefix_skip = 0;
+
 	while (left <= right) {
 		gint cur = left + (right-left)/2;
-		gint cmp = g_strcmp0(entries[cur].name, name);
+		gint cmp = cmp_fnc(entries[cur].name + prefix_skip,
+				   name, name_len + 1);
 
 		if (!cmp)
 			return entries[cur].value;

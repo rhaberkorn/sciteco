@@ -117,10 +117,12 @@ class StateExpectString : public State {
 	gint nesting;
 
 	bool string_building;
+	bool last;
 
 public:
-	StateExpectString(bool _building = true)
-			 : State(), nesting(1), string_building(_building) {}
+	StateExpectString(bool _building = true, bool _last = true)
+			 : State(), nesting(1),
+			   string_building(_building), last(_last) {}
 
 private:
 	gchar *machine_input(gchar key) throw (Error);
@@ -202,7 +204,15 @@ private:
 	State *custom(gchar chr) throw (Error);
 };
 
-class StateScintilla : public StateExpectString {
+class StateScintilla_symbols : public StateExpectString {
+public:
+	StateScintilla_symbols() : StateExpectString(true, false) {}
+
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
+class StateScintilla_lParam : public StateExpectString {
 private:
 	State *done(const gchar *str) throw (Error);
 };
@@ -241,14 +251,15 @@ private:
 };
 
 namespace States {
-	extern StateStart 	start;
-	extern StateControl	control;
-	extern StateFlowCommand	flowcommand;
-	extern StateCondCommand	condcommand;
-	extern StateECommand	ecommand;
-	extern StateScintilla	scintilla;
-	extern StateInsert	insert;
-	extern StateSearch	search;
+	extern StateStart 		start;
+	extern StateControl		control;
+	extern StateFlowCommand		flowcommand;
+	extern StateCondCommand		condcommand;
+	extern StateECommand		ecommand;
+	extern StateScintilla_symbols	scintilla_symbols;
+	extern StateScintilla_lParam	scintilla_lparam;
+	extern StateInsert		insert;
+	extern StateSearch		search;
 
 	extern State *current;
 }

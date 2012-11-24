@@ -12,6 +12,7 @@
 #include "goto.h"
 #include "qbuffers.h"
 #include "parser.h"
+#include "symbols.h"
 
 //#define DEBUG
 
@@ -23,7 +24,8 @@ namespace States {
 	StateFlowCommand	flowcommand;
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
-	StateScintilla		scintilla;
+	StateScintilla_symbols	scintilla_symbols;
+	StateScintilla_lParam	scintilla_lparam;
 	StateInsert		insert;
 	StateSearch		search;
 
@@ -335,12 +337,15 @@ StateExpectString::custom(gchar chr) throw (Error)
 	 * String termination handling
 	 */
 	if (Modifiers::at) {
-		undo.push_var(Modifiers::at);
-		Modifiers::at = false;
-		undo.push_var(escape_char);
-		escape_char = g_ascii_toupper(chr);
+		if (last)
+			undo.push_var(Modifiers::at) = false;
 
-		return this;
+		switch (escape_char) {
+		case '\x1B':
+		case '{':
+			undo.push_var(escape_char) = g_ascii_toupper(chr);
+			return this;
+		}
 	}
 
 	if (escape_char == '{') {
@@ -362,10 +367,10 @@ StateExpectString::custom(gchar chr) throw (Error)
 	if (!nesting) {
 		State *next;
 		gchar *string = strings[0];
-		undo.push_str(strings[0]);
-		strings[0] = NULL;
-		undo.push_var(escape_char);
-		escape_char = '\x1B';
+
+		undo.push_str(strings[0]) = NULL;
+		if (last)
+			undo.push_var(escape_char) = '\x1B';
 		nesting = 1;
 
 		if (string_building) {
@@ -1109,8 +1114,8 @@ StateCondCommand::custom(gchar chr) throw (Error)
 		break;
 	case 'C':
 		BEGIN_EXEC(&States::start);
-		/* FIXME */
-		result = g_ascii_isalnum((gchar)value);
+		result = g_ascii_isalnum((gchar)value) ||
+			 value == '.' || value == '$' || value == '_';
 		break;
 	case 'D':
 		BEGIN_EXEC(&States::start);
@@ -1239,7 +1244,7 @@ StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['B'] = &States::editfile;
-	transitions['S'] = &States::scintilla;
+	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;
 	transitions['W'] = &States::savefile;
 }
@@ -1293,24 +1298,84 @@ StateECommand::custom(gchar chr) throw (Error)
 	return &States::start;
 }
 
-State *
-StateScintilla::done(const gchar *str) throw (Error)
-{
+static struct ScintillaMessage {
 	unsigned int	iMessage;
 	uptr_t		wParam;
 	sptr_t		lParam;
+} scintilla_message = {0, 0, 0};
 
-	BEGIN_EXEC(&States::start);
+State *
+StateScintilla_symbols::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::scintilla_lparam);
+
+	undo.push_var(scintilla_message);
+	if (*str) {
+		gchar **symbols = g_strsplit(str, ",", -1);
+		gint64 v;
+
+		if (!symbols[0])
+			goto cleanup;
+		if (*symbols[0]) {
+			v = Symbols::scintilla.lookup(symbols[0], "SCI_");
+			if (v < 0)
+				throw Error("Unknown Scintilla message symbol \"%s\"",
+					    symbols[0]);
+			scintilla_message.iMessage = v;
+		}
+
+		if (!symbols[1])
+			goto cleanup;
+		if (*symbols[1]) {
+			v = Symbols::scilexer.lookup(symbols[1]);
+			if (v < 0)
+				throw Error("Unknown Scintilla Lexer symbol \"%s\"",
+					    symbols[1]);
+			scintilla_message.wParam = v;
+		}
+
+		if (!symbols[2])
+			goto cleanup;
+		if (*symbols[2]) {
+			v = Symbols::scilexer.lookup(symbols[2]);
+			if (v < 0)
+				throw Error("Unknown Scintilla Lexer symbol \"%s\"",
+					    symbols[2]);
+			scintilla_message.lParam = v;
+		}
+
+cleanup:
+		g_strfreev(symbols);
+	}
 
 	expressions.eval();
-	if (!expressions.args())
-		throw Error("<ES> command requires at least a message code");
+	if (!scintilla_message.iMessage) {
+		if (!expressions.args())
+			throw Error("<ES> command requires at least a message code");
 
-	iMessage = expressions.pop_num_calc(1, 0);
-	wParam = expressions.pop_num_calc(1, 0);
-	lParam = *str ? (sptr_t)str : expressions.pop_num_calc(1, 0);
+		scintilla_message.iMessage = expressions.pop_num_calc(1, 0);
+	}
+	if (!scintilla_message.wParam)
+		scintilla_message.wParam = expressions.pop_num_calc(1, 0);
 
-	expressions.push(interface.ssm(iMessage, wParam, lParam));
+	return &States::scintilla_lparam;
+}
+
+State *
+StateScintilla_lParam::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	if (!scintilla_message.lParam)
+		scintilla_message.lParam = *str ? (sptr_t)str
+						: expressions.pop_num_calc(1, 0);
+
+	expressions.push(interface.ssm(scintilla_message.iMessage,
+				       scintilla_message.wParam,
+				       scintilla_message.lParam));
+
+	undo.push_var(scintilla_message);
+	memset(&scintilla_message, 0, sizeof(scintilla_message));
 
 	return &States::start;
 }

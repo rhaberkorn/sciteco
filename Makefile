@@ -59,7 +59,8 @@ MINIMAL_OBJS:=main.o cmdline.o undo.o expressions.o qbuffers.o \
 
 all : sciteco
 
-sciteco : $(MINIMAL_OBJS) symbols-scintilla.o
+sciteco : $(MINIMAL_OBJS) \
+	  symbols-scintilla.o symbols-scilexer.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 sciteco-minimal : $(MINIMAL_OBJS)
@@ -67,7 +68,11 @@ sciteco-minimal : $(MINIMAL_OBJS)
 
 symbols-scintilla.cpp : $(SCI_DIR)/include/Scintilla.h \
 			sciteco-minimal symbols-extract.tes
-	./sciteco-minimal -m symbols-extract.tes $< $@ SCI_ scintilla
+	./sciteco-minimal -m symbols-extract.tes $< $@ "SCI_" scintilla
+
+symbols-scilexer.cpp : $(SCI_DIR)/include/SciLexer.h \
+		       sciteco-minimal symbols-extract.tes
+	./sciteco-minimal -m symbols-extract.tes $< $@ "SCLEX_,SCE_" scilexer
 
 ifeq ($(INTERFACE),GTK)
 

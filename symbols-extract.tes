@@ -1,10 +1,10 @@
 #!./sciteco-minimal -m
-! ./symbols-extract.tes <input file> <output file> <prefix> <array name> !
+! ./symbols-extract.tes <input file> <output file> <prefix pattern list> <array name> !
 
 ! <pos1,pos2>Mc - Compare string at pos1 with string at pos2 !
 @^Uc{
   U.2U.1 -.%.1^[ -.%.2^[
-  <Q.1A-(Q.2A)U.c Q.1A"A|Q.2A"A|;'' Q.c"N;' %.1^[%.2>
+  <Q.1A-(Q.2A)U.c Q.1A"C|Q.2A"C|;'' Q.c"N;' %.1^[%.2>
   Q.c
 }
 
@@ -44,7 +44,7 @@
 LR 0Xi 2LR 0Xo 2LR 0Xp 2LR 0Xn HK
 
 ! copy all defines in input file beginning with prefix !
-EBQi <S#define^SQp; :Xa> EF
+EBQi <S#defineS[Qp]; -SS :Xa> EF
 
 ! sort all defines !
 Ga ZJB 0,.Mq J
@@ -61,13 +61,12 @@ I/*
 static const SymbolList::Entry entries[] = {
 
 <
-  .,W.Xa 0K
-  I#ifdef QpQa
+  .,W.Xa 0KK
+  I#ifdef Qa
+	{"Qa", ^EQa},
+#endif
 
-  ^I{"Qa", V I ^EQp^EQa},
-#endif
-  L .-Z;
->
+.-Z;>
 I};
 
 /* overwrites weak object in symbols.cpp */
