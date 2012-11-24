@@ -80,13 +80,13 @@ public:
 	/* NULL means to redraw the current cmdline if necessary */
 	virtual void cmdline_update(const gchar *cmdline = NULL) = 0;
 
-	enum PopupFileType {
+	enum PopupEntryType {
+		POPUP_PLAIN,
 		POPUP_FILE,
 		POPUP_DIRECTORY
 	};
-	virtual void popup_add_filename(PopupFileType type,
-					const gchar *filename,
-		     			bool highlight = false) = 0;
+	virtual void popup_add(PopupEntryType type,
+			       const gchar *name, bool highlight = false) = 0;
 	virtual void popup_show(void) = 0;
 	virtual void popup_clear(void) = 0;
 

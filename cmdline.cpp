@@ -12,10 +12,14 @@
 #include "qbuffers.h"
 #include "goto.h"
 #include "undo.h"
+#include "symbols.h"
 
 static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro);
+
 static gchar *filename_complete(const gchar *filename, gchar completed = ' ');
+static gchar *symbol_complete(SymbolList &list, const gchar *symbol,
+			      gchar completed = ' ');
 
 static const gchar *last_occurrence(const gchar *str,
 				    const gchar *chars = " \t\v\r\n\f<>,;@");
@@ -118,7 +122,25 @@ process_edit_cmd(gchar key)
 		if (States::current == &States::editfile ||
 		    States::current == &States::savefile ||
 		    States::current == &States::loadqreg) {
-			gchar *new_chars = filename_complete(strings[0], escape_char);
+			gchar *new_chars = filename_complete(strings[0],
+							     escape_char);
+			if (new_chars)
+				g_stpcpy(insert, new_chars);
+			g_free(new_chars);
+		} else if (States::current == &States::scintilla_symbols) {
+			const gchar *symbol = NULL;
+			SymbolList &list = Symbols::scintilla;
+			gchar *new_chars;
+
+			if (strings[0]) {
+				symbol = last_occurrence(strings[0], ",");
+				if (*symbol == ',') {
+					symbol++;
+					list = Symbols::scilexer;
+				}
+			}
+
+			new_chars = symbol_complete(list, symbol, ',');
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
@@ -255,7 +277,7 @@ filename_complete(const gchar *filename, gchar completed)
 		for (GList *file = g_list_first(matching);
 		     file != NULL;
 		     file = g_list_next(file)) {
-			Interface::PopupFileType type;
+			Interface::PopupEntryType type;
 			bool in_buffer = false;
 
 			if (filename_is_dir((gchar *)file->data)) {
@@ -266,19 +288,14 @@ filename_complete(const gchar *filename, gchar completed)
 				in_buffer = ring.find((gchar *)file->data);
 			}
 
-			interface.popup_add_filename(type, (gchar *)file->data,
-						     in_buffer);
+			interface.popup_add(type, (gchar *)file->data,
+					    in_buffer);
 		}
 
 		interface.popup_show();
 	} else if (g_list_length(matching) == 1 &&
 		   !filename_is_dir((gchar *)g_list_first(matching)->data)) {
-		gchar *new_insert;
-
-		new_insert = g_strconcat(insert ? : "",
-					 (gchar []){completed, '\0'}, NULL);
-		g_free(insert);
-		insert = new_insert;
+		String::append(insert, completed);
 	}
 
 	g_completion_free(completion);
@@ -286,6 +303,48 @@ filename_complete(const gchar *filename, gchar completed)
 	for (GList *file = g_list_first(files); file; file = g_list_next(file))
 		g_free(file->data);
 	g_list_free(files);
+
+	return insert;
+}
+
+static gchar *
+symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
+{
+	GList *glist;
+	GList *matching;
+	GCompletion *completion;
+	gchar *new_prefix;
+	gchar *insert = NULL;
+
+	if (!symbol)
+		symbol = "";
+
+	glist = list.get_glist();
+	if (!glist)
+		return NULL;
+
+	completion = g_completion_new(NULL);
+	g_completion_add_items(completion, glist);
+
+	matching = g_completion_complete(completion, symbol, &new_prefix);
+	if (new_prefix && strlen(new_prefix) > strlen(symbol))
+		insert = g_strdup(new_prefix + strlen(symbol));
+	g_free(new_prefix);
+
+	if (!insert && g_list_length(matching) > 1) {
+		for (GList *entry = g_list_first(matching);
+		     entry != NULL;
+		     entry = g_list_next(entry)) {
+			interface.popup_add(Interface::POPUP_PLAIN,
+					    (gchar *)entry->data);
+		}
+
+		interface.popup_show();
+	} else if (g_list_length(matching) == 1) {
+		String::append(insert, completed);
+	}
+
+	g_completion_free(completion);
 
 	return insert;
 }

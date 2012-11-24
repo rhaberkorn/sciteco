@@ -147,6 +147,8 @@ InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
 
 #ifdef PDCURSES_WIN32A
 	stdio_vmsg(type, fmt, ap);
+	if (isendwin()) /* batch mode */
+		return;
 #else
 	if (isendwin()) { /* batch mode */
 		stdio_vmsg(type, fmt, ap);
@@ -237,17 +239,17 @@ InterfaceNCurses::cmdline_update(const gchar *cmdline)
 }
 
 void
-InterfaceNCurses::popup_add_filename(PopupFileType type,
-				     const gchar *filename, bool highlight)
+InterfaceNCurses::popup_add(PopupEntryType type __attribute__((unused)),
+			    const gchar *name, bool highlight)
 {
 	gchar *entry;
 
 	if (isendwin()) /* batch mode */
 		return;
 
-	entry = g_strconcat(highlight ? "*" : " ", filename, NULL);
+	entry = g_strconcat(highlight ? "*" : " ", name, NULL);
 
-	popup.longest = MAX(popup.longest, (gint)strlen(filename));
+	popup.longest = MAX(popup.longest, (gint)strlen(name));
 	popup.length++;
 
 	popup.list = g_slist_prepend(popup.list, entry);

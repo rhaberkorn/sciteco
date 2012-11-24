@@ -727,9 +727,9 @@ StateEditFile::initial(void) throw (Error)
 
 	if (id == 0) {
 		for (Buffer *cur = ring.first(); cur; cur = cur->next())
-			interface.popup_add_filename(Interface::POPUP_FILE,
-						     cur->filename ? : "(Unnamed)",
-						     cur == ring.current);
+			interface.popup_add(Interface::POPUP_FILE,
+					    cur->filename ? : "(Unnamed)",
+					    cur == ring.current);
 
 		interface.popup_show();
 	}

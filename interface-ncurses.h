@@ -57,8 +57,8 @@ public:
 
 	void cmdline_update(const gchar *cmdline = NULL);
 
-	void popup_add_filename(PopupFileType type,
-				const gchar *filename, bool highlight = false);
+	void popup_add(PopupEntryType type,
+		       const gchar *name, bool highlight = false);
 	void popup_show(void);
 	void popup_clear(void);
 

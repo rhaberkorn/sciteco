@@ -9,9 +9,10 @@ requires 2.0.16
 %}
 
 enum GTK_INFO_POPUP {
+	PLAIN,
 	FILE,
 	DIRECTORY
-} Gtk:Info:Popup:File:Type;
+} Gtk:Info:Popup:Entry:Type;
 
 class Gtk:Info:Popup from Gtk:Window {
 	private GtkWidget *parent;
@@ -91,10 +92,11 @@ class Gtk:Info:Popup from Gtk:Window {
 	}
 
 	public void
-	add_filename(self, Gtk:Info:Popup:File:Type type, const gchar *filename,
-		     gboolean highlight)
+	add(self, Gtk:Info:Popup:Entry:Type type,
+	    const gchar *name, gboolean highlight)
 	{
 		static const gchar *type2stock[] = {
+			[GTK_INFO_POPUP_PLAIN]		= NULL,
 			[GTK_INFO_POPUP_FILE]		= GTK_STOCK_FILE,
 			[GTK_INFO_POPUP_DIRECTORY]	= GTK_STOCK_DIRECTORY
 		};
@@ -102,13 +104,19 @@ class Gtk:Info:Popup from Gtk:Window {
 		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
 
 		GtkWidget *hbox;
-		GtkWidget *image, *label;
+		GtkWidget *label;
 		gchar *markup;
 
 		hbox = gtk_hbox_new(FALSE, 5);
-		image = gtk_image_new_from_stock(type2stock[type],
-						 GTK_ICON_SIZE_MENU);
-		gtk_box_pack_start(GTK_BOX(hbox), image, FALSE, FALSE, 0);
+
+		if (type2stock[type]) {
+			GtkWidget *image;
+
+			image = gtk_image_new_from_stock(type2stock[type],
+							 GTK_ICON_SIZE_MENU);
+			gtk_box_pack_start(GTK_BOX(hbox), image,
+					   FALSE, FALSE, 0);
+		}
 
 		/*
 		 * FIXME: setting Pango attributes directly would be
@@ -117,7 +125,7 @@ class Gtk:Info:Popup from Gtk:Window {
 		label = gtk_label_new(NULL);
 		markup = g_markup_printf_escaped("<span weight=\"%s\">%s</span>",
 						 highlight ? "bold" : "normal",
-						 filename);
+						 name);
 		gtk_label_set_markup(GTK_LABEL(label), markup);
 		g_free(markup);
 		gtk_misc_set_alignment(GTK_MISC(label), 0., 0.5);

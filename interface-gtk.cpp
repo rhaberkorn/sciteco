@@ -146,16 +146,17 @@ InterfaceGtk::cmdline_update(const gchar *cmdline)
 }
 
 void
-InterfaceGtk::popup_add_filename(PopupFileType type,
-				 const gchar *filename, bool highlight)
+InterfaceGtk::popup_add(PopupEntryType type,
+			const gchar *name, bool highlight)
 {
-	static const GtkInfoPopupFileType type2gtk[] = {
+	static const GtkInfoPopupEntryType type2gtk[] = {
+		/* [POPUP_PLAIN]	= */ GTK_INFO_POPUP_PLAIN,
 		/* [POPUP_FILE]		= */ GTK_INFO_POPUP_FILE,
 		/* [POPUP_DIRECTORY]	= */ GTK_INFO_POPUP_DIRECTORY
 	};
 
-	gtk_info_popup_add_filename(GTK_INFO_POPUP(popup_widget),
-				    type2gtk[type], filename, highlight);
+	gtk_info_popup_add(GTK_INFO_POPUP(popup_widget),
+			   type2gtk[type], name, highlight);
 }
 
 void
