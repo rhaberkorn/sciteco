@@ -1,6 +1,6 @@
 
 # GTK or NCURSES
-INTERFACE?=GTK
+INTERFACE?=NCURSES
 
 OS:=$(shell uname)
 
