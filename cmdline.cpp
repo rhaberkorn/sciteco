@@ -7,6 +7,7 @@
 
 #include "sciteco.h"
 #include "interface.h"
+#include "expressions.h"
 #include "parser.h"
 #include "qbuffers.h"
 #include "goto.h"
@@ -128,7 +129,8 @@ process_edit_cmd(gchar key)
 		break;
 
 	case '\x1B':
-		if (cmdline && cmdline[cmdline_len - 1] == '\x1B') {
+		if (States::current == &States::start &&
+		    cmdline && cmdline[cmdline_len - 1] == '\x1B') {
 			if (Goto::skip_label) {
 				interface.msg(Interface::MSG_ERROR,
 					      "Label \"%s\" not found",
@@ -141,9 +143,10 @@ process_edit_cmd(gchar key)
 				exit(EXIT_SUCCESS);
 			}
 
-			interface.ssm(SCI_EMPTYUNDOBUFFER);
 			undo.clear();
+			interface.ssm(SCI_EMPTYUNDOBUFFER);
 			Goto::table->clear();
+			expressions.clear();
 
 			*cmdline = '\0';
 			macro_pc = 0;

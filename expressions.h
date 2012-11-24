@@ -100,6 +100,12 @@ public:
 	{
 		return top[-index];
 	}
+
+	inline void
+	clear(void)
+	{
+		top = stack;
+	}
 };
 
 /*
@@ -171,6 +177,13 @@ public:
 	void discard_args(void);
 
 	int find_op(Operator op);
+
+	inline void
+	clear(void)
+	{
+		numbers.clear();
+		operators.clear();
+	}
 
 private:
 	void calc(void);
