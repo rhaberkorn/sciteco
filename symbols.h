@@ -14,9 +14,16 @@ private:
 	const Entry	*entries;
 	gint		size;
 
+	/* for auto-completions */
+	GList		*list;
+
 public:
 	SymbolList(const Entry *_entries = NULL, gint _size = 0)
-		  : entries(_entries), size(_size) {}
+		  : entries(_entries), size(_size), list(NULL) {}
+	~SymbolList()
+	{
+		g_list_free(list);
+	}
 
 	gint lookup(const gchar *name, const gchar *prefix = "",
 		    bool case_sensitive = false);

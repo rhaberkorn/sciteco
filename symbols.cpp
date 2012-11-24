@@ -51,10 +51,10 @@ SymbolList::lookup(const gchar *name, const gchar *prefix, bool case_sensitive)
 GList *
 SymbolList::get_glist(void)
 {
-	GList *list = NULL;
-
-	while (size--)
-		list = g_list_prepend(list, (gchar *)entries[size].name);
+	if (!list) {
+		for (gint i = size; i; i--)
+			list = g_list_prepend(list, (gchar *)entries[i-1].name);
+	}
 
 	return list;
 }
