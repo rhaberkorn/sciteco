@@ -122,8 +122,9 @@ process_edit_cmd(gchar key)
 		if (States::current == &States::editfile ||
 		    States::current == &States::savefile ||
 		    States::current == &States::loadqreg) {
+			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0],
-							     escape_char);
+							     complete);
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
