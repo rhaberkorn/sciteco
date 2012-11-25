@@ -1441,12 +1441,19 @@ StateSearch::initial(void) throw (Error)
 	if (expressions.args()) {
 		/* TODO: optional count argument? */
 		parameters.count = 1;
-		parameters.from = (gint)v;
-		parameters.to = (gint)expressions.pop_num_calc();
+		parameters.from = (gint)expressions.pop_num_calc();
+		parameters.to = (gint)v;
 
 		if (!Validate::pos(parameters.from) ||
 		    !Validate::pos(parameters.to))
 			throw RangeError("S");
+
+		if (parameters.from > parameters.to) {
+			v = parameters.from;
+			parameters.from = parameters.to;
+			parameters.to = v;
+			parameters.count *= -1;
+		}
 	} else {
 		parameters.count = (gint)v;
 		if (v >= 0) {
