@@ -271,9 +271,14 @@ InterfaceNCurses::popup_show(void)
 	popup.longest += 3;
 	popup.list = g_slist_reverse(popup.list);
 
-	popup_cols = MIN(popup.length, cols / popup.longest);
-	popup_lines = (popup.length + popup.length % popup_cols)/popup_cols;
+	/* popup_cols = floor(cols / popup.longest) */
+	popup_cols = MAX(cols / popup.longest, 1);
+	/* popup_lines = ceil(popup.length / popup_cols) */
+	popup_lines = popup.length / popup_cols;
+	if ((popup.length % popup_cols))
+		popup_lines++;
 	popup_lines = MIN(popup_lines, lines - 1);
+
 	/* window covers message, scintilla and info windows */
 	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
 	wbkgdset(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
@@ -291,8 +296,8 @@ InterfaceNCurses::popup_show(void)
 
 		cur_file++;
 
-		if (cur_line == popup_lines && cur_file < popup.length &&
-		    !(cur_file % popup_cols)) {
+		if (cur_line == popup_lines && !(cur_file % popup_cols) &&
+		    cur_file < popup.length) {
 			(void)wattrset(popup.window, A_BOLD);
 			waddstr(popup.window, "...");
 			break;
