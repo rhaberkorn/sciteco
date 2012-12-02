@@ -175,7 +175,7 @@ main(int argc, char **argv)
 	local_qregs.initialize();
 	QRegisters::locals = &local_qregs;
 
-	ring.edit(NULL);
+	ring.edit((const gchar *)NULL);
 
 	/* add remaining arguments to unnamed buffer */
 	for (int i = 1; i < argc; i++) {

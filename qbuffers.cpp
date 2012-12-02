@@ -224,6 +224,22 @@ QRegister::load(const gchar *filename)
 	return true;
 }
 
+gint64
+QRegisterBufferInfo::get_integer(void)
+{
+	gint64 id = 1;
+
+	if (!ring.current)
+		return 0;
+
+	for (Buffer *buffer = ring.first();
+	     buffer != ring.current;
+	     buffer = buffer->next())
+		id++;
+
+	return id;
+}
+
 gchar *
 QRegisterBufferInfo::get_string(void)
 {
@@ -423,6 +439,18 @@ Ring::find(const gchar *filename)
 	return cur;
 }
 
+Buffer *
+Ring::find(gint64 id)
+{
+	Buffer *cur;
+
+	LIST_FOREACH(cur, &head, buffers)
+		if (!--id)
+			break;
+
+	return cur;
+}
+
 void
 Ring::dirtify(void)
 {
@@ -445,6 +473,25 @@ Ring::is_any_dirty(void)
 			return true;
 
 	return false;
+}
+
+bool
+Ring::edit(gint64 id)
+{
+	Buffer *buffer = find(id);
+
+	if (!buffer)
+		return false;
+
+	current_save_dot();
+
+	QRegisters::current = NULL;
+	current = buffer;
+	buffer->edit();
+
+	QRegisters::hook(QRegisters::HOOK_EDIT);
+
+	return true;
 }
 
 void
@@ -637,7 +684,7 @@ Ring::close(void)
 
 		QRegisters::hook(QRegisters::HOOK_EDIT);
 	} else {
-		edit(NULL);
+		edit((const gchar *)NULL);
 		undo_close();
 	}
 }
@@ -711,7 +758,7 @@ get_absolute_path(const gchar *path)
  */
 
 void
-StateEditFile::do_edit(const gchar *filename)
+StateEditFile::do_edit(const gchar *filename) throw (Error)
 {
 	if (ring.current)
 		ring.undo_edit();
@@ -721,9 +768,22 @@ StateEditFile::do_edit(const gchar *filename)
 }
 
 void
+StateEditFile::do_edit(gint64 id) throw (Error)
+{
+	if (ring.current)
+		ring.undo_edit();
+	else /* QRegisters::current != NULL */
+		QRegisters::undo_edit();
+	if (!ring.edit(id))
+		throw Error("Invalid buffer id %" G_GINT64_FORMAT, id);
+}
+
+void
 StateEditFile::initial(void) throw (Error)
 {
 	gint64 id = expressions.pop_num_calc(1, -1);
+
+	allowFilename = true;
 
 	if (id == 0) {
 		for (Buffer *cur = ring.first(); cur; cur = cur->next())
@@ -732,6 +792,9 @@ StateEditFile::initial(void) throw (Error)
 					    cur == ring.current);
 
 		interface.popup_show();
+	} else if (id > 0) {
+		allowFilename = false;
+		do_edit(id);
 	}
 }
 
@@ -739,6 +802,14 @@ State *
 StateEditFile::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
+
+	if (!allowFilename) {
+		if (*str)
+			throw Error("If a buffer is selected by id, the <EB> "
+				    "string argument must be empty");
+
+		return &States::start;
+	}
 
 	if (is_glob_pattern(str)) {
 		gchar *dirname;

@@ -133,6 +133,15 @@ public:
 		get_document();
 	}
 
+	gint64
+	set_integer(gint64 v)
+	{
+		return v;
+	}
+	void undo_set_integer(void) {}
+
+	gint64 get_integer(void);
+
 	void set_string(const gchar *str) {}
 	void undo_set_string(void) {}
 	void append_string(const gchar *str) {}
@@ -385,10 +394,12 @@ public:
 	}
 
 	Buffer *find(const gchar *filename);
+	Buffer *find(gint64 id);
 
 	void dirtify(void);
 	bool is_any_dirty(void);
 
+	bool edit(gint64 id);
 	void edit(const gchar *filename);
 	inline void
 	undo_edit(void)
@@ -414,7 +425,10 @@ public:
 
 class StateEditFile : public StateExpectString {
 private:
-	void do_edit(const gchar *filename);
+	bool allowFilename;
+
+	void do_edit(const gchar *filename) throw (Error);
+	void do_edit(gint64 id) throw (Error);
 
 	void initial(void) throw (Error);
 	State *done(const gchar *str) throw (Error);
