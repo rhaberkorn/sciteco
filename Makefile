@@ -54,7 +54,7 @@ CPPFLAGS+=-Icompat
 endif
 
 MINIMAL_OBJS:=main.o cmdline.o undo.o expressions.o qbuffers.o \
-	      parser.o goto.o rbtree.o symbols.o \
+	      parser.o search.o goto.o rbtree.o symbols.o \
 	      interface.a
 
 all : sciteco
