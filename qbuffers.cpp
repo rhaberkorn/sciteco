@@ -690,11 +690,9 @@ Ring::close(void)
 
 	if (current) {
 		current->edit();
-
 		QRegisters::hook(QRegisters::HOOK_EDIT);
 	} else {
 		edit((const gchar *)NULL);
-		undo_close();
 	}
 }
 
