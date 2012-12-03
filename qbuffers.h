@@ -263,17 +263,11 @@ class Buffer {
 		UndoTokenClose(Buffer *_buffer)
 			      : UndoToken(), buffer(_buffer) {}
 
-		void
-		run(void)
-		{
-			buffer->close();
-			/* NOTE: the buffer is NOT deleted on Token destruction */
-			delete buffer;
-		}
+		void run(void);
 	};
 
 public:
-	LIST_ENTRY(Buffer) buffers;
+	TAILQ_ENTRY(Buffer) buffers;
 
 	gchar *filename;
 	gint dot;
@@ -300,7 +294,14 @@ public:
 	inline Buffer *&
 	next(void)
 	{
-		return LIST_NEXT(this, buffers);
+		return TAILQ_NEXT(this, buffers);
+	}
+	inline Buffer *&
+	prev(void)
+	{
+		TAILQ_HEAD(Head, Buffer);
+
+		return TAILQ_PREV(this, Head, buffers);
 	}
 
 	inline void
@@ -329,7 +330,6 @@ public:
 
 	bool load(const gchar *filename);
 
-	void close(void);
 	inline void
 	undo_close(void)
 	{
@@ -376,21 +376,26 @@ extern class Ring {
 		}
 	};
 
-	LIST_HEAD(Head, Buffer) head;
+	TAILQ_HEAD(Head, Buffer) head;
 
 public:
 	Buffer *current;
 
 	Ring() : current(NULL)
 	{
-		LIST_INIT(&head);
+		TAILQ_INIT(&head);
 	}
 	~Ring();
 
 	inline Buffer *
 	first(void)
 	{
-		return LIST_FIRST(&head);
+		return TAILQ_FIRST(&head);
+	}
+	inline Buffer *
+	last(void)
+	{
+		return TAILQ_LAST(&head, Head);
 	}
 
 	Buffer *find(const gchar *filename);
@@ -411,6 +416,7 @@ public:
 
 	bool save(const gchar *filename);
 
+	void close(Buffer *buffer);
 	void close(void);
 	inline void
 	undo_close(void)

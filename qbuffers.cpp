@@ -364,6 +364,14 @@ QRegisters::hook(Hook type)
 	globals["0"]->execute();
 }
 
+void
+Buffer::UndoTokenClose::run(void)
+{
+	ring.close(buffer);
+	/* NOTE: the buffer is NOT deleted on Token destruction */
+	delete buffer;
+}
+
 bool
 Buffer::load(const gchar *filename)
 {
@@ -396,29 +404,16 @@ Buffer::load(const gchar *filename)
 }
 
 void
-Buffer::close(void)
-{
-	LIST_REMOVE(this, buffers);
-
-	if (filename)
-		interface.msg(Interface::MSG_INFO,
-			      "Removed file \"%s\" from the ring",
-			      filename);
-	else
-		interface.msg(Interface::MSG_INFO,
-			      "Removed unnamed file from the ring.");
-}
-
-void
 Ring::UndoTokenEdit::run(void)
 {
 	/*
 	 * assumes that buffer still has correct prev/next
 	 * pointers
 	 */
-	*buffer->buffers.le_prev = buffer;
 	if (buffer->next())
-		buffer->next()->buffers.le_prev = &buffer->next();
+		TAILQ_INSERT_BEFORE(buffer->next(), buffer, buffers);
+	else
+		TAILQ_INSERT_TAIL(&ring->head, buffer, buffers);
 
 	ring->current = buffer;
 	buffer->edit();
@@ -431,7 +426,7 @@ Ring::find(const gchar *filename)
 	gchar *resolved = get_absolute_path(filename);
 	Buffer *cur;
 
-	LIST_FOREACH(cur, &head, buffers)
+	TAILQ_FOREACH(cur, &head, buffers)
 		if (!g_strcmp0(cur->filename, resolved))
 			break;
 
@@ -444,7 +439,7 @@ Ring::find(gint64 id)
 {
 	Buffer *cur;
 
-	LIST_FOREACH(cur, &head, buffers)
+	TAILQ_FOREACH(cur, &head, buffers)
 		if (!--id)
 			break;
 
@@ -468,7 +463,7 @@ Ring::is_any_dirty(void)
 {
 	Buffer *cur;
 
-	LIST_FOREACH(cur, &head, buffers)
+	TAILQ_FOREACH(cur, &head, buffers)
 		if (cur->dirty)
 			return true;
 
@@ -509,7 +504,7 @@ Ring::edit(const gchar *filename)
 		QRegisters::hook(QRegisters::HOOK_EDIT);
 	} else {
 		buffer = new Buffer();
-		LIST_INSERT_HEAD(&head, buffer, buffers);
+		TAILQ_INSERT_TAIL(&head, buffer, buffers);
 
 		current = buffer;
 		undo_close();
@@ -669,13 +664,27 @@ Ring::save(const gchar *filename)
 }
 
 void
+Ring::close(Buffer *buffer)
+{
+	TAILQ_REMOVE(&head, buffer, buffers);
+
+	if (buffer->filename)
+		interface.msg(Interface::MSG_INFO,
+			      "Removed file \"%s\" from the ring",
+			      buffer->filename);
+	else
+		interface.msg(Interface::MSG_INFO,
+			      "Removed unnamed file from the ring.");
+}
+
+void
 Ring::close(void)
 {
 	Buffer *buffer = current;
 
 	buffer->dot = interface.ssm(SCI_GETCURRENTPOS);
-	buffer->close();
-	current = buffer->next() ? : first();
+	close(buffer);
+	current = buffer->next() ? : buffer->prev();
 	/* transfer responsibility to UndoToken object */
 	undo.push(new UndoTokenEdit(this, buffer));
 
@@ -693,7 +702,7 @@ Ring::~Ring()
 {
 	Buffer *buffer, *next;
 
-	LIST_FOREACH_SAFE(buffer, &head, buffers, next)
+	TAILQ_FOREACH_SAFE(buffer, &head, buffers, next)
 		delete buffer;
 }
 
