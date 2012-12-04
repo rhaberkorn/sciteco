@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -9,10 +11,12 @@
 #include "search.h"
 
 namespace States {
-	StateSearch		search;
-	StateSearchAll		searchall;
-	StateReplace		replace;
-	StateReplace_insert	replace_insert;
+	StateSearch			search;
+	StateSearchAll			searchall;
+	StateReplace			replace;
+	StateReplace_insert		replace_insert;
+	StateReplaceDefault		replacedefault;
+	StateReplaceDefault_insert	replacedefault_insert;
 }
 
 /*
@@ -504,4 +508,30 @@ StateReplace::done(const gchar *str) throw (Error)
 	undo.push_msg(SCI_UNDO);
 
 	return &States::replace_insert;
+}
+
+State *
+StateReplaceDefault::done(const gchar *str) throw (Error)
+{
+	StateReplace::done(str);
+	return &States::replacedefault_insert;
+}
+
+State *
+StateReplaceDefault_insert::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	QRegister *replace_reg = QRegisters::globals["-"];
+
+	if (*str) {
+		replace_reg->undo_set_string();
+		replace_reg->set_string(str);
+	} else {
+		gchar *replace_str = replace_reg->get_string();
+		StateInsert::process(replace_str, strlen(replace_str));
+		g_free(replace_str);
+	}
+
+	return &States::start;
 }

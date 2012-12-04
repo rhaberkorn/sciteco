@@ -169,6 +169,8 @@ main(int argc, char **argv)
 	QRegisters::globals.initialize();
 	/* search string and status register */
 	QRegisters::globals.initialize("_");
+	/* replacement string register */
+	QRegisters::globals.initialize("-");
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
 

@@ -52,7 +52,7 @@ class StateReplace : public StateSearch {
 public:
 	StateReplace() : StateSearch(false) {}
 
-private:
+protected:
 	State *done(const gchar *str) throw (Error);
 };
 
@@ -61,11 +61,24 @@ private:
 	void initial(void) throw (Error) {}
 };
 
+class StateReplaceDefault : public StateReplace {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
+class StateReplaceDefault_insert : public StateInsert {
+private:
+	void initial(void) throw (Error) {}
+	State *done(const gchar *str) throw (Error);
+};
+
 namespace States {
-	extern StateSearch		search;
-	extern StateSearchAll		searchall;
-	extern StateReplace		replace;
-	extern StateReplace_insert	replace_insert;
+	extern StateSearch			search;
+	extern StateSearchAll			searchall;
+	extern StateReplace			replace;
+	extern StateReplace_insert		replace_insert;
+	extern StateReplaceDefault		replacedefault;
+	extern StateReplaceDefault_insert	replacedefault_insert;
 }
 
 #endif

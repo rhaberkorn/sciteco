@@ -1016,6 +1016,7 @@ StateFCommand::StateFCommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['S'] = &States::replace;
+	transitions['R'] = &States::replacedefault;
 }
 
 State *
