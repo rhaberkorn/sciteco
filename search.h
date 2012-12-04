@@ -48,6 +48,11 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+class StateSearchKill : public StateSearch {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
 class StateSearchDelete : public StateSearch {
 public:
 	StateSearchDelete(bool last = true) : StateSearch(last) {}
@@ -86,6 +91,7 @@ private:
 namespace States {
 	extern StateSearch			search;
 	extern StateSearchAll			searchall;
+	extern StateSearchKill			searchkill;
 	extern StateSearchDelete		searchdelete;
 	extern StateReplace			replace;
 	extern StateReplace_insert		replace_insert;

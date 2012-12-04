@@ -13,6 +13,7 @@
 namespace States {
 	StateSearch			search;
 	StateSearchAll			searchall;
+	StateSearchKill			searchkill;
 	StateSearchDelete		searchdelete;
 	StateReplace			replace;
 	StateReplace_insert		replace_insert;
@@ -490,6 +491,30 @@ StateSearchAll::done(const gchar *str) throw (Error)
 
 	StateSearch::done(str);
 	QRegisters::hook(QRegisters::HOOK_EDIT);
+
+	return &States::start;
+}
+
+State *
+StateSearchKill::done(const gchar *str) throw (Error)
+{
+	gint anchor;
+
+	BEGIN_EXEC(&States::start);
+
+	StateSearch::done(str);
+
+	undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+	anchor = interface.ssm(SCI_GETANCHOR);
+	interface.ssm(SCI_GOTOPOS, anchor);
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_DELETERANGE,
+		      parameters.dot, anchor - parameters.dot);
+	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
+
+	undo.push_msg(SCI_UNDO);
 
 	return &States::start;
 }

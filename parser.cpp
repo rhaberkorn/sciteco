@@ -1015,6 +1015,7 @@ StateStart::custom(gchar chr) throw (Error)
 StateFCommand::StateFCommand() : State()
 {
 	transitions['\0'] = this;
+	transitions['K'] = &States::searchkill;
 	transitions['D'] = &States::searchdelete;
 	transitions['S'] = &States::replace;
 	transitions['R'] = &States::replacedefault;
