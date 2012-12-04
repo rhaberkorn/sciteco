@@ -1,13 +1,30 @@
-# Generated code
-gtk-info-popup*.[ch]
-symbols-*.cpp
-
+# Autotools
+/configure
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config
+/aclocal.m4
+/autom4te.cache
+/libtool
+.deps/
+.libs/
+*.la
+*.lo
 *.o
-*.a
 *.exe
-sciteco
-sciteco-minimal
+Makefile
+Makefile.in
+stamp-*
+src/sciteco
+src/sciteco-minimal
 
+# Generated code
+src/gtk-info-popup*.[ch]
+src/symbols-*.cpp
+
+# Backups
 *~
 # SciTECO save points
 .teco-*-*

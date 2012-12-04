@@ -5,11 +5,6 @@
 
 #include "interface.h"
 
-/* Autoconf-like */
-#define PACKAGE_VERSION	"0.1"
-#define PACKAGE_NAME	"SciTECO"
-#define PACKAGE_STRING	PACKAGE_NAME " " PACKAGE_VERSION
-
 namespace Flags {
 	enum {
 		ED_HOOKS = (1 << 5)

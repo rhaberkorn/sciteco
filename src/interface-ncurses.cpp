@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -8,10 +12,6 @@
 #include <glib/gstdio.h>
 
 #include <curses.h>
-/* only a hack until we have Autoconf checks */
-#if defined(__PDCURSES__) && CHTYPE_LONG >= 2
-#define PDCURSES_WIN32A
-#endif
 
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
