@@ -13,6 +13,7 @@
 namespace States {
 	StateSearch			search;
 	StateSearchAll			searchall;
+	StateSearchDelete		searchdelete;
 	StateReplace			replace;
 	StateReplace_insert		replace_insert;
 	StateReplaceDefault		replacedefault;
@@ -494,9 +495,9 @@ StateSearchAll::done(const gchar *str) throw (Error)
 }
 
 State *
-StateReplace::done(const gchar *str) throw (Error)
+StateSearchDelete::done(const gchar *str) throw (Error)
 {
-	BEGIN_EXEC(&States::replace_insert);
+	BEGIN_EXEC(&States::start);
 
 	StateSearch::done(str);
 
@@ -507,13 +508,20 @@ StateReplace::done(const gchar *str) throw (Error)
 
 	undo.push_msg(SCI_UNDO);
 
+	return &States::start;
+}
+
+State *
+StateReplace::done(const gchar *str) throw (Error)
+{
+	StateSearchDelete::done(str);
 	return &States::replace_insert;
 }
 
 State *
 StateReplaceDefault::done(const gchar *str) throw (Error)
 {
-	StateReplace::done(str);
+	StateSearchDelete::done(str);
 	return &States::replacedefault_insert;
 }
 

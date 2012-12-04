@@ -48,11 +48,19 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
-class StateReplace : public StateSearch {
+class StateSearchDelete : public StateSearch {
 public:
-	StateReplace() : StateSearch(false) {}
+	StateSearchDelete(bool last = true) : StateSearch(last) {}
 
 protected:
+	State *done(const gchar *str) throw (Error);
+};
+
+class StateReplace : public StateSearchDelete {
+public:
+	StateReplace() : StateSearchDelete(false) {}
+
+private:
 	State *done(const gchar *str) throw (Error);
 };
 
@@ -61,7 +69,10 @@ private:
 	void initial(void) throw (Error) {}
 };
 
-class StateReplaceDefault : public StateReplace {
+class StateReplaceDefault : public StateSearchDelete {
+public:
+	StateReplaceDefault() : StateSearchDelete(false) {}
+
 private:
 	State *done(const gchar *str) throw (Error);
 };
@@ -75,6 +86,7 @@ private:
 namespace States {
 	extern StateSearch			search;
 	extern StateSearchAll			searchall;
+	extern StateSearchDelete		searchdelete;
 	extern StateReplace			replace;
 	extern StateReplace_insert		replace_insert;
 	extern StateReplaceDefault		replacedefault;
