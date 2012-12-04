@@ -31,6 +31,12 @@ if [[ x$READLINK = x ]]; then
 	AC_MSG_ERROR([Required tool readlink not found!])
 fi
 
+# For bootstrapping via installed sciteco
+AC_CHECK_PROG(SCITECO, sciteco, sciteco)
+if [[ x$SCITECO = x ]]; then
+	bootstrap = yes
+fi
+
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBGLIB, [glib-2.0], [
 	CFLAGS="$CFLAGS $LIBGLIB_CFLAGS"
@@ -138,7 +144,12 @@ esac
 
 AM_CONDITIONAL(INTERFACE_GTK, [test x$INTERFACE = xgtk])
 
-#CXXFLAGS="$CXXFLAGS $CFLAGS"
+AC_ARG_ENABLE(bootstrap,
+	AS_HELP_STRING([--enable-bootstrap],
+		       [Bootstrap using sciteco-minimal,
+		        otherwise use preinstalled sciteco [default=check]]),
+	[bootstrap=$enableval])
+AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT

@@ -10,7 +10,13 @@ BUILT_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
 EXTRA_DIST = gtk-info-popup.gob \
 	     symbols-extract.tes
 
+if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
+BOOTSTRAP_SCITECO = ./sciteco-minimal
+symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal
+else
+BOOTSTRAP_SCITECO = @SCITECO@
+endif
 sciteco_minimal_SOURCES = main.cpp sciteco.h \
 			  cmdline.cpp \
 			  undo.cpp undo.h \
@@ -44,13 +50,15 @@ sciteco_SOURCES = $(sciteco_minimal_SOURCES)
 nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
 			 symbols-scintilla.cpp symbols-scilexer.cpp
 
+CLEANFILES = $(BUILT_SOURCES)
+
 %.c %.h %-private.h : %.gob
 	@GOB2@ $<
 
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
-			sciteco-minimal symbols-extract.tes
-	./sciteco-minimal -m symbols-extract.tes $< $@ "SCI_" scintilla
+			symbols-extract.tes
+	$(BOOTSTRAP_SCITECO) -m symbols-extract.tes $< $@ "SCI_" scintilla
 
 symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
-		       sciteco-minimal symbols-extract.tes
-	./sciteco-minimal -m symbols-extract.tes $< $@ "SCLEX_,SCE_" scilexer
+		       symbols-extract.tes
+	$(BOOTSTRAP_SCITECO) -m symbols-extract.tes $< $@ "SCLEX_,SCE_" scilexer
