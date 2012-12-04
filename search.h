@@ -7,7 +7,13 @@
 #include "parser.h"
 #include "qbuffers.h"
 
+/*
+ * "S" command state and base class for all other search/replace commands
+ */
 class StateSearch : public StateExpectString {
+public:
+	StateSearch(bool last = true) : StateExpectString(true, last) {}
+
 protected:
 	struct Parameters {
 		gint dot;
@@ -42,9 +48,24 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+class StateReplace : public StateSearch {
+public:
+	StateReplace() : StateSearch(false) {}
+
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
+class StateReplace_insert : public StateInsert {
+private:
+	void initial(void) throw (Error) {}
+};
+
 namespace States {
-	extern StateSearch	search;
-	extern StateSearchAll	searchall;
+	extern StateSearch		search;
+	extern StateSearchAll		searchall;
+	extern StateReplace		replace;
+	extern StateReplace_insert	replace_insert;
 }
 
 #endif

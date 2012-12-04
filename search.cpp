@@ -9,9 +9,15 @@
 #include "search.h"
 
 namespace States {
-	StateSearch	search;
-	StateSearchAll	searchall;
+	StateSearch		search;
+	StateSearchAll		searchall;
+	StateReplace		replace;
+	StateReplace_insert	replace_insert;
 }
+
+/*
+ * Command states
+ */
 
 void
 StateSearch::initial(void) throw (Error)
@@ -324,7 +330,9 @@ StateSearch::process(const gchar *str,
 
 	gint count = parameters.count;
 
-	undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+	undo.push_msg(SCI_SETSEL,
+		      interface.ssm(SCI_GETANCHOR),
+		      interface.ssm(SCI_GETCURRENTPOS));
 
 	search_reg->undo_set_integer();
 	search_reg->set_integer(FAILURE);
@@ -407,8 +415,14 @@ StateSearch::done(const gchar *str) throw (Error)
 	QRegister *search_reg = QRegisters::globals["_"];
 
 	if (*str) {
+		/* workaround: preserve selection (also on rubout) */
+		gint anchor = interface.ssm(SCI_GETANCHOR);
+		undo.push_msg(SCI_SETANCHOR, anchor);
+
 		search_reg->undo_set_string();
 		search_reg->set_string(str);
+
+		interface.ssm(SCI_SETANCHOR, anchor);
 	} else {
 		gchar *search_str = search_reg->get_string();
 		process(search_str, 0 /* unused */);
@@ -470,7 +484,24 @@ StateSearchAll::done(const gchar *str) throw (Error)
 	BEGIN_EXEC(&States::start);
 
 	StateSearch::done(str);
-
 	QRegisters::hook(QRegisters::HOOK_EDIT);
+
 	return &States::start;
+}
+
+State *
+StateReplace::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::replace_insert);
+
+	StateSearch::done(str);
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	interface.ssm(SCI_REPLACESEL, 0, (sptr_t)"");
+	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
+
+	undo.push_msg(SCI_UNDO);
+
+	return &States::replace_insert;
 }

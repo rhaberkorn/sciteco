@@ -22,7 +22,7 @@ gint macro_pc = 0;
 namespace States {
 	StateStart 		start;
 	StateControl		control;
-	StateFlowCommand	flowcommand;
+	StateFCommand		fcommand;
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
 	StateScintilla_symbols	scintilla_symbols;
@@ -446,7 +446,7 @@ StateStart::StateStart() : State()
 	transitions['!'] = &States::label;
 	transitions['O'] = &States::gotocmd;
 	transitions['^'] = &States::control;
-	transitions['F'] = &States::flowcommand;
+	transitions['F'] = &States::fcommand;
 	transitions['"'] = &States::condcommand;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert;
@@ -1012,13 +1012,14 @@ StateStart::custom(gchar chr) throw (Error)
 	return this;
 }
 
-StateFlowCommand::StateFlowCommand() : State()
+StateFCommand::StateFCommand() : State()
 {
 	transitions['\0'] = this;
+	transitions['S'] = &States::replace;
 }
 
 State *
-StateFlowCommand::custom(gchar chr) throw (Error)
+StateFCommand::custom(gchar chr) throw (Error)
 {
 	switch (chr) {
 	/*

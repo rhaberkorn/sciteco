@@ -180,9 +180,9 @@ private:
 	State *custom(gchar chr) throw (Error);
 };
 
-class StateFlowCommand : public State {
+class StateFCommand : public State {
 public:
-	StateFlowCommand();
+	StateFCommand();
 
 private:
 	State *custom(gchar chr) throw (Error);
@@ -217,8 +217,11 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+/*
+ * also serves as base class for replace-insertion states
+ */
 class StateInsert : public StateExpectString {
-private:
+protected:
 	void initial(void) throw (Error);
 	void process(const gchar *str, gint new_chars) throw (Error);
 	State *done(const gchar *str) throw (Error);
@@ -227,7 +230,7 @@ private:
 namespace States {
 	extern StateStart 		start;
 	extern StateControl		control;
-	extern StateFlowCommand		flowcommand;
+	extern StateFCommand		fcommand;
 	extern StateCondCommand		condcommand;
 	extern StateECommand		ecommand;
 	extern StateScintilla_symbols	scintilla_symbols;
