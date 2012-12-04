@@ -23,14 +23,15 @@ sciteco_minimal_SOURCES = main.cpp sciteco.h \
 			  rbtree.cpp rbtree.h \
 			  symbols.cpp symbols.h \
 			  interface.h
+nodist_sciteco_minimal_SOURCES =
 
 if INTERFACE_GTK
 
 BUILT_SOURCES += gtk-info-popup.c \
 		 gtk-info-popup.h gtk-info-popup-private.h
 
-sciteco_minimal_SOURCES += interface-gtk.cpp interface-gtk.h \
-			   gtk-info-popup.c
+sciteco_minimal_SOURCES += interface-gtk.cpp interface-gtk.h
+nodist_sciteco_minimal_SOURCES += gtk-info-popup.c
 
 else
 
@@ -39,8 +40,9 @@ sciteco_minimal_SOURCES += interface-ncurses.cpp interface-ncurses.h
 endif
 
 bin_PROGRAMS = sciteco
-sciteco_SOURCES = $(sciteco_minimal_SOURCES) \
-		  symbols-scintilla.cpp symbols-scilexer.cpp
+sciteco_SOURCES = $(sciteco_minimal_SOURCES)
+nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
+			 symbols-scintilla.cpp symbols-scilexer.cpp
 
 %.c %.h %-private.h : %.gob
 	@GOB2@ $<

@@ -20,7 +20,7 @@
 #include "expressions.h"
 #include "ring.h"
 
-#ifdef G_OS_WIN32
+#ifdef HAVE_WINDOWS_H
 /* here it shouldn't cause conflicts with other headers */
 #include <windows.h>
 
