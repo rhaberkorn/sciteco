@@ -14,7 +14,8 @@
 #include <ScintillaWidget.h>
 
 #include "sciteco.h"
-#include "qbuffers.h"
+#include "qregisters.h"
+#include "ring.h"
 #include "interface.h"
 #include "interface-gtk.h"
 

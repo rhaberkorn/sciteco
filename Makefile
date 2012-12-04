@@ -53,7 +53,7 @@ ifneq ($(findstring MINGW32,$(OS)),)
 CPPFLAGS+=-Icompat
 endif
 
-MINIMAL_OBJS:=main.o cmdline.o undo.o expressions.o qbuffers.o \
+MINIMAL_OBJS:=main.o cmdline.o undo.o expressions.o qregisters.o ring.o \
 	      parser.o search.o goto.o rbtree.o symbols.o \
 	      interface.a
 

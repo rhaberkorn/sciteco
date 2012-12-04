@@ -5,7 +5,7 @@
 
 #include "sciteco.h"
 #include "parser.h"
-#include "qbuffers.h"
+#include "ring.h"
 
 /*
  * "S" command state and base class for all other search/replace commands

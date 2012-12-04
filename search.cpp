@@ -6,7 +6,8 @@
 #include "sciteco.h"
 #include "expressions.h"
 #include "undo.h"
-#include "qbuffers.h"
+#include "qregisters.h"
+#include "ring.h"
 #include "parser.h"
 #include "search.h"
 

@@ -14,7 +14,8 @@
 #include "interface.h"
 #include "parser.h"
 #include "goto.h"
-#include "qbuffers.h"
+#include "qregisters.h"
+#include "ring.h"
 #include "undo.h"
 
 #ifdef G_OS_UNIX
