@@ -12,8 +12,8 @@ EXTRA_DIST = gtk-info-popup.gob \
 
 if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
-BOOTSTRAP_SCITECO = ./sciteco-minimal
-symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal
+BOOTSTRAP_SCITECO = ./sciteco-minimal$(EXEEXT)
+symbols-scintilla.cpp symbols-scilexer.cpp : $(BOOTSTRAP_SCITECO)
 else
 BOOTSTRAP_SCITECO = @SCITECO@
 endif

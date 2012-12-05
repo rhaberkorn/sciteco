@@ -69,8 +69,13 @@ static const SymbolList::Entry entries[] = {
 .-Z;>
 I};
 
-/* overwrites weak object in symbols.cpp */
-SymbolList Symbols::Qn(entries, G_N_ELEMENTS(entries));
+__attribute__((constructor(2000)))
+static void
+initialize(void)
+{
+	Symbols::Qn.entries = entries;
+	Symbols::Qn.size = G_N_ELEMENTS(entries);
+}
 
 
 ! write output file !

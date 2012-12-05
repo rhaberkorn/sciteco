@@ -27,10 +27,10 @@ public:
 		gint		value;
 	};
 
-private:
 	const Entry	*entries;
 	gint		size;
 
+private:
 	/* for auto-completions */
 	GList		*list;
 
@@ -48,8 +48,8 @@ public:
 };
 
 namespace Symbols {
-	extern SymbolList __attribute__((weak)) scintilla;
-	extern SymbolList __attribute__((weak)) scilexer;
+	extern SymbolList scintilla;
+	extern SymbolList scilexer;
 }
 
 #endif

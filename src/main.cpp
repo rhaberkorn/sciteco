@@ -85,32 +85,22 @@ Interface::process_notify(SCNotification *notify)
 #ifdef G_OS_WIN32
 
 /*
- * keep program self-contained under Windows
- * (look for profile in current directory)
+ * Keep program self-contained under Windows
+ * (look for profile in program's directory)
  */
 static inline gchar *
-get_teco_ini(void)
-{
-	return g_strdup(INI_FILE);
-}
-
-/*
- * Windows sometimes sets the current working directory to very obscure
- * paths when opening files in the Explorer, but we have to read the
- * teco.ini from the directory where our binary resides.
- */
-static inline void
-fix_cwd(const gchar *program)
+get_teco_ini(const gchar *program)
 {
 	gchar *bin_dir = g_path_get_dirname(program);
-	g_chdir(bin_dir);
+	gchar *ini = g_build_filename(bin_dir, INI_FILE, NULL);
 	g_free(bin_dir);
+	return ini;
 }
 
 #else
 
 static inline gchar *
-get_teco_ini(void)
+get_teco_ini(const gchar *program __attribute__((unused)))
 {
 	const gchar *home;
 
@@ -121,8 +111,6 @@ get_teco_ini(void)
 #endif
 	return g_build_filename(home, INI_FILE, NULL);
 }
-
-static inline void fix_cwd(const gchar *program __attribute__((unused))) {}
 
 #endif /* !G_OS_WIN32 */
 
@@ -158,7 +146,7 @@ process_options(int &argc, char **&argv)
 			exit(EXIT_FAILURE);
 		}
 	} else {
-		mung_file = get_teco_ini();
+		mung_file = get_teco_ini(argv[0]);
 	}
 
 	interface.parse_args(argc, argv);
@@ -171,8 +159,6 @@ main(int argc, char **argv)
 {
 	static GotoTable	cmdline_goto_table;
 	static QRegisterTable	local_qregs;
-
-	fix_cwd(argv[0]);
 
 	process_options(argc, argv);
 

@@ -26,11 +26,11 @@
 #include "symbols.h"
 
 /*
- * defaults for sciteco-minimal
+ * Constructors executed before the ones defined in generated code.
  */
 namespace Symbols {
-	SymbolList __attribute__((weak)) scintilla;
-	SymbolList __attribute__((weak)) scilexer;
+	SymbolList __attribute__((init_priority(1000))) scintilla;
+	SymbolList __attribute__((init_priority(1000))) scilexer;
 }
 
 /*
