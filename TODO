@@ -1,0 +1,30 @@
+Known Bugs:
+ * Dot is not always restored properly (e.g. after closing file)
+ * FS broken in loops - inserts even if search failed
+ * Strange behaviour after loop interruption (e.g. "<%a>")
+ * Null-byte in strings not always handled transparently
+
+Features:
+ * Patch Scintilla for TECO-style control code echoing (^X) instead of mnemonics
+ * Progress indication in commandline cursor
+ * catch OOM errors (can happen easily due to infinite loops)
+ * undo-tokens per char limit (additional infinite loop safety)
+ * Function-key support
+   * generic function-key substitution, or
+   * function-key encoding (e.g. Page-down -> ^FPD)
+ * extended Q-Register namespace
+   * 2 char q-registers like in Troff (e.g. "Q(xy")
+   * arbitrary length names (e.g. "Q$xyz$", see ITS TECO)
+   -> Macro libraries
+ * Q-Register aliasing/linking
+ * EC command
+ * command-line push-down mechanism
+ * TECO syntax highlighting
+ * multiline commandline
+ * improve GTK interface
+
+Documentation:
+ * Code docs (Doxygen)
+ * Manpage
+ * Language reference?
+ * Command reference
