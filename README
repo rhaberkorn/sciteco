@@ -47,6 +47,7 @@ SciTECO has the following build and runtime dependencies:
 * Autotools, GNU C, C++ and [Gob2](http://www.jirka.org/gob.html)
 * [Glib](http://developer.gnome.org/glib/), as a cross-platform runtime library
 * [Scintilla](http://www.scintilla.org/), and possibly [Scinterm](http://foicica.com/scinterm/)
+  (v1.1 or later)
 * [GTK+ 2](http://www.gtk.org/), [NCurses](http://www.gnu.org/software/ncurses/),
   [PDCurses/XCurses](http://pdcurses.sourceforge.net/) or
   [PDCurses/Win32a](http://www.projectpluto.com/win32a.htm).

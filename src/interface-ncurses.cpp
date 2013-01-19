@@ -51,12 +51,6 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 /* FIXME: should be configurable in TECO (Function key substitutes) */
 #define ESCAPE_SURROGATE KEY_DC
 
-#ifndef SCI_COLOR_PAIR
-/* from ScintillaTerm.cxx */
-#define SCI_COLOR_PAIR(f, b) \
-	((b) * 8 + (f) + 1)
-#endif
-
 #define SCI_COLOR_ATTR(f, b) \
 	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
