@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -50,6 +51,12 @@ namespace Flags {
 }
 
 static gchar *mung_file = NULL;
+
+sig_atomic_t sigint_occurred = FALSE;
+
+extern "C" {
+static void sigint_handler(int signal);
+}
 
 void
 Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
@@ -160,6 +167,8 @@ main(int argc, char **argv)
 	static GotoTable	cmdline_goto_table;
 	static QRegisterTable	local_qregs;
 
+	signal(SIGINT, sigint_handler);
+
 	process_options(argc, argv);
 
 	interface.ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
@@ -212,4 +221,14 @@ main(int argc, char **argv)
 	interface.event_loop();
 
 	return 0;
+}
+
+/*
+ * Callbacks
+ */
+
+static void
+sigint_handler(int signal __attribute__((unused)))
+{
+	sigint_occurred = TRUE;
 }

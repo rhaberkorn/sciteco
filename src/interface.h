@@ -19,6 +19,7 @@
 #define __INTERFACE_H
 
 #include <stdarg.h>
+#include <signal.h>
 
 #include <glib.h>
 
@@ -29,6 +30,7 @@
 /* avoid include dependency conflict */
 class QRegister;
 class Buffer;
+extern sig_atomic_t sigint_occurred;
 
 /*
  * Base class for all user interfaces - used mereley as a class interface.
@@ -106,6 +108,12 @@ public:
 			       const gchar *name, bool highlight = false) = 0;
 	virtual void popup_show(void) = 0;
 	virtual void popup_clear(void) = 0;
+
+	virtual inline bool
+	is_interrupted(void)
+	{
+		return sigint_occurred != FALSE;
+	}
 
 	/* main entry point */
 	virtual void event_loop(void) = 0;

@@ -79,6 +79,9 @@ Execute::step(const gchar *macro) throw (State::Error)
 			 States::current, mode);
 #endif
 
+		if (interface.is_interrupted())
+			throw State::Error("Interrupted");
+
 		State::input(macro[macro_pc]);
 		macro_pc++;
 	}

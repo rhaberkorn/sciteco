@@ -43,7 +43,7 @@ InterfaceNCurses interface;
 
 extern "C" {
 static void scintilla_notify(Scintilla *sci, int idFrom,
-			     void *notify, void *user_data);
+			    void *notify, void *user_data);
 }
 
 #define UNNAMED_FILE "(Unnamed)"
@@ -63,7 +63,6 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 InterfaceNCurses::InterfaceNCurses()
 {
 	init_screen();
-	raw();
 	cbreak();
 	noecho();
 	curs_set(0); /* Scintilla draws its own cursor */
@@ -368,7 +367,12 @@ InterfaceNCurses::event_loop(void)
 		if (popup.window)
 			wrefresh(popup.window);
 
+		/* no special <CTRL/C> handling */
+		raw();
 		key = wgetch(cmdline_window);
+		/* allow asynchronous interruptions on <CTRL/C> */
+		cbreak();
+
 		switch (key) {
 #ifdef KEY_RESIZE
 		case ERR:
@@ -403,6 +407,8 @@ InterfaceNCurses::event_loop(void)
 			if (key <= 0xFF)
 				cmdline_keypress((gchar)key);
 		}
+
+		sigint_occurred = FALSE;
 	}
 }
 

@@ -18,6 +18,8 @@
 #ifndef __SCITECO_H
 #define __SCITECO_H
 
+#include <signal.h>
+
 #include <glib.h>
 
 #include "interface.h"
@@ -29,6 +31,8 @@ namespace Flags {
 
 	extern gint64 ed;
 }
+
+extern sig_atomic_t sigint_occurred;
 
 extern gchar *cmdline;
 extern bool quit_requested;
