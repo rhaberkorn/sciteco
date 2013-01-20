@@ -21,6 +21,7 @@ src/sciteco
 src/sciteco-minimal
 
 # Generated code
+/sciteco.1
 src/gtk-info-popup*.[ch]
 src/symbols-*.cpp
 

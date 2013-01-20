@@ -1,0 +1,165 @@
+.ds ST \\fB@PACKAGE_NAME@\\fP
+.
+.
+.TH "@PACKAGE_TARNAME@" 1 \
+    "20 Jan 2013" \
+    "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
+..
+.
+.SH NAME
+@PACKAGE_TARNAME@ \-\- Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
+.
+.
+.SH SYNOPSIS
+.
+.SY @PACKAGE_TARNAME@
+.OP \-h|\-\-help
+.OP \-m|\-\-mung file
+.OP \-\-
+.RI [ argument
+.IR .\|.\|. ]
+.YS
+.
+.
+.SH DESCRIPTION
+.
+\*(ST is an interactive
+.B TECO
+dialect, similar to
+.B VideoTECO.
+It also adds features from classic
+.BR "Standard TECO-11" ,
+and incorporates many unique new ideas.
+It is geared towards UNIX-like operating systems but also
+natively supports Microsoft Windows NT\*(Tm.
+.
+.LP
+When executed, \*(ST mungs (executes) the TECO macro stored in the file
+specified by the
+.B \-\-mung
+option.
+The munged file is executed in non-interactive
+.RI ( batch )
+mode, allowing the user to write stand-alone TECO scripts.
+In contrast to ordinary macro execution,
+if the first two characters of the file are \(lq#!\(rq its first line
+is ignored.
+Therefore under UNIX-like operating systems, TECO macro files may be
+invoked as scripts using a Hashbang line like
+.EX
+#!/bin/sciteco -m
+.EE
+If the munged macro does not request program termination using the
+.I EX
+command, \*(ST will automatically switch into its graphical
+.I interactive
+mode.
+\*(ST may be built with different graphical user interfaces,
+including Curses and GTK+ based ones.
+.
+.LP
+Upon startup \*(ST's buffer ring contains only one unnamed buffer.
+Any command line argument after the \*(ST options is
+passed as an
+.I argument
+to the munged macro by placing each argument on its own line in
+the default unnamed buffer.
+In any case the current buffer position (called
+.IR dot )
+is left at the beginning of the buffer.
+Optionally \(lq\-\-\(rq might be used to separate \*(ST options and
+macro arguments.
+.
+.LP
+Batch mode also has the following differences compared to interactive mode:
+.RS
+.IP \(bu
+Messages are logged to
+.I stdout
+or
+.I stderr
+prefixed with a string signifying message severity.
+.IP \(bu
+Any error will terminate the program.
+.IP \(bu
+Character rubout is disabled.
+Therefore code runs significantly faster than in interactive mode
+and less care needs to be taken regarding memory clutter due to
+undo token accumulation.
+.RE
+.
+.LP
+If the
+.B \-\-mung
+option is absent, \*(ST will mung
+.I ~/.teco_ini
+(if existing) which is called the profile.
+The profile will usually set up various Scintilla and \*(ST options,
+configure syntax highlighting,
+define commonly used macros and open files specified as arguments to \*(ST.
+It will usually leave the editor in interactive mode.
+.
+.
+.SH OPTIONS
+.
+.IP "\fB-h\fR, \fB--help\fR"
+Display a short help text on the console. 
+.IP "\fB-m\fR, \fB--mung\fR \fIfile"
+Mung
+.IR file .
+Default is
+.IR ~/.teco_ini .
+.
+.
+.SH EXIT STATUS
+.
+\*(ST will return a non-null exit code if an error occurred during
+batch mode processing.
+.
+.
+.SH FILES
+.
+.TP
+.B ~/.teco_ini
+Default profile macro.
+.TP
+.B /usr/share/@PACKAGE_TARNAME@/teco.ini
+Sample profile macro configuring commonly used run-time options
+and opening files specified as arguments.
+.
+.
+.SH BUGS
+.
+\*(ST does not have any such thing called \(lqbug\(rq.
+Any conceived misbehaviour must be totally your fault.
+.
+.
+.SH SEE ALSO
+.
+.TP
+Repository:
+.UR https://github.com/rhaberkorn/sciteco
+\*(ST
+.UE
+.TP
+Related dialects:
+.UR http://sourceforge.net/projects/videoteco/
+VideoTECO
+.UE
+(\c
+.UR http://www.copters.com/teco.html
+Manual
+.UE ),
+.br
+.UR h71000.www7.hp.com/doc/73final/documentation/pdf/teco.pdf
+DEC Standard TECO-11
+.UE
+.
+.
+.SH AUTHOR
+.
+This manpage and the \*(ST program was written by
+.MT robin.haberkorn@googlemail.com
+Robin Haberkorn
+.ME .
+\# EOF
