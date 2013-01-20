@@ -7,7 +7,8 @@
 ..
 .
 .SH NAME
-@PACKAGE_TARNAME@ \-\- Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
+@PACKAGE_TARNAME@ \-\-
+Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
 .
 .
 .SH SYNOPSIS
@@ -26,7 +27,7 @@
 \*(ST is an interactive
 .B TECO
 dialect, similar to
-.B VideoTECO.
+.BR VideoTECO .
 It also adds features from classic
 .BR "Standard TECO-11" ,
 and incorporates many unique new ideas.
@@ -45,10 +46,12 @@ In contrast to ordinary macro execution,
 if the first two characters of the file are \(lq#!\(rq its first line
 is ignored.
 Therefore under UNIX-like operating systems, TECO macro files may be
-invoked as scripts using a Hashbang line like
+invoked as scripts by using a Hashbang line like
+.RS
 .EX
 #!/bin/sciteco -m
 .EE
+.RE
 If the munged macro does not request program termination using the
 .I EX
 command, \*(ST will automatically switch into its graphical
@@ -58,12 +61,11 @@ mode.
 including Curses and GTK+ based ones.
 .
 .LP
-Upon startup \*(ST's buffer ring contains only one unnamed buffer.
-Any command line argument after the \*(ST options is
-passed as an
-.I argument
+Upon startup \*(ST's buffer ring contains only one unnamed empty buffer.
+All command line arguments after the \*(ST options are passed as
+.I arguments
 to the munged macro by placing each argument on its own line in
-the default unnamed buffer.
+the buffer.
 In any case the current buffer position (called
 .IR dot )
 is left at the beginning of the buffer.

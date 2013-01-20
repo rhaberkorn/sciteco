@@ -68,4 +68,10 @@ SciTECO has the following build and runtime dependencies:
    commandline for you, uses a file open hook to configure syntax highlighting (only
    C/C++ and Makefiles for now) and enables line numbers.
 
+Additional Documentation
+========================
+
+* There is a manpage sciteco(1) describing program invocation and SciTECO's
+  batch mode processing.
+
 More documentation is coming soon.
