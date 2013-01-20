@@ -5,7 +5,6 @@ Known Bugs:
  * Null-byte in strings not always handled transparently
 
 Features:
- * Patch Scintilla for TECO-style control code echoing (^X) instead of mnemonics
  * Progress indication in commandline cursor
  * catch OOM errors (can happen easily due to infinite loops)
  * undo-tokens per char limit (additional infinite loop safety)
@@ -22,6 +21,7 @@ Features:
  * TECO syntax highlighting
  * multiline commandline
  * improve GTK interface
+ * modifier for toggling string building processing
 
 Documentation:
  * Code docs (Doxygen)

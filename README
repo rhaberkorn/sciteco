@@ -55,6 +55,8 @@ SciTECO has the following build and runtime dependencies:
 
 1. Build Scintilla as described in its README. If you want to build the ncurses version,
    install Scinterm from a subdirectory of Scintilla called "scinterm".
+   * For TECO-style control code echoing, apply `patches/scintilla-teco-control-codes.patch`
+     from the SciTECO archive/repository. This will hopefully be simplified in the future.
 2. Untar/unzip/check-out SciTECO into a subdirectory of Scintilla.
    Alternatively, have a look at `--with-scintilla`.
 3. Build like any other Autoconf-based project. `autoreconf` (only necessary if building from
