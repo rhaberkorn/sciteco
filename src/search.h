@@ -91,6 +91,11 @@ private:
 	void initial(void) throw (Error) {}
 };
 
+class StateReplace_ignore : public StateExpectString {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
 class StateReplaceDefault : public StateSearchDelete {
 public:
 	StateReplaceDefault() : StateSearchDelete(false) {}
@@ -105,15 +110,24 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
+class StateReplaceDefault_ignore : public StateExpectString {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
 namespace States {
 	extern StateSearch			search;
 	extern StateSearchAll			searchall;
 	extern StateSearchKill			searchkill;
-	extern StateSearchDelete		searchdelete;
+	extern StateSearchDelete			searchdelete;
+
 	extern StateReplace			replace;
 	extern StateReplace_insert		replace_insert;
+	extern StateReplace_ignore		replace_ignore;
+
 	extern StateReplaceDefault		replacedefault;
-	extern StateReplaceDefault_insert	replacedefault_insert;
+	extern StateReplaceDefault_insert		replacedefault_insert;
+	extern StateReplaceDefault_ignore		replacedefault_ignore;
 }
 
 #endif

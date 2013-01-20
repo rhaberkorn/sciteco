@@ -37,10 +37,14 @@ namespace States {
 	StateSearchAll			searchall;
 	StateSearchKill			searchkill;
 	StateSearchDelete		searchdelete;
+
 	StateReplace			replace;
 	StateReplace_insert		replace_insert;
+	StateReplace_ignore		replace_ignore;
+
 	StateReplaceDefault		replacedefault;
 	StateReplaceDefault_insert	replacedefault_insert;
+	StateReplaceDefault_ignore	replacedefault_ignore;
 }
 
 /*
@@ -561,15 +565,35 @@ StateSearchDelete::done(const gchar *str) throw (Error)
 State *
 StateReplace::done(const gchar *str) throw (Error)
 {
+	BEGIN_EXEC(&States::replace_ignore);
+
+	QRegister *search_reg = QRegisters::globals["_"];
+
 	StateSearchDelete::done(str);
-	return &States::replace_insert;
+
+	return IS_SUCCESS(search_reg->get_integer())
+		? (State *)&States::replace_insert
+		: (State *)&States::replace_ignore;
+}
+
+State *
+StateReplace_ignore::done(const gchar *str __attribute__((unused))) throw (Error)
+{
+	return &States::start;
 }
 
 State *
 StateReplaceDefault::done(const gchar *str) throw (Error)
 {
+	BEGIN_EXEC(&States::replacedefault_ignore);
+
+	QRegister *search_reg = QRegisters::globals["_"];
+
 	StateSearchDelete::done(str);
-	return &States::replacedefault_insert;
+
+	return IS_SUCCESS(search_reg->get_integer())
+		? (State *)&States::replacedefault_insert
+		: (State *)&States::replacedefault_ignore;
 }
 
 State *
@@ -586,6 +610,21 @@ StateReplaceDefault_insert::done(const gchar *str) throw (Error)
 		gchar *replace_str = replace_reg->get_string();
 		StateInsert::process(replace_str, strlen(replace_str));
 		g_free(replace_str);
+	}
+
+	return &States::start;
+}
+
+State *
+StateReplaceDefault_ignore::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	if (*str) {
+		QRegister *replace_reg = QRegisters::globals["-"];
+
+		replace_reg->undo_set_string();
+		replace_reg->set_string(str);
 	}
 
 	return &States::start;

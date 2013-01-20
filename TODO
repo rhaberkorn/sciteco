@@ -1,16 +1,17 @@
 Known Bugs:
  * Dot is not always restored properly (e.g. after closing file)
- * FS broken in loops - inserts even if search failed
  * Strange behaviour after loop interruption (e.g. "<%a>")
  * Null-byte in strings not always handled transparently
+ * safe-point mechanism discards file attributes (must be applied to new files)
 
 Features:
  * Progress indication in commandline cursor
  * catch OOM errors (can happen easily due to infinite loops)
  * undo-tokens per char limit (additional infinite loop safety)
- * Function-key support
+ * Function-key support, configurable
    * generic function-key substitution, or
-   * function-key encoding (e.g. Page-down -> ^FPD)
+   * function-key encoding (e.g. Page-down -> ^FPD), or
+   * function-key to ASCII/UTF mapping (as command executes macro of the same name)
  * extended Q-Register namespace
    * 2 char q-registers like in Troff (e.g. "Q(xy")
    * arbitrary length names (e.g. "Q$xyz$", see ITS TECO)
@@ -22,6 +23,9 @@ Features:
  * multiline commandline
  * improve GTK interface
  * modifier for toggling string building processing
+ * simplify parser (static jump tables are unnecessary!)
+ * ??? optional modified-detection based on hash sums ???
+ * backup files
 
 Documentation:
  * Code docs (Doxygen)
