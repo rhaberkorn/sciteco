@@ -22,6 +22,8 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdio.h>
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
@@ -53,6 +55,44 @@ namespace States {
 }
 
 Ring ring;
+
+#ifdef G_OS_WIN32
+
+typedef DWORD FileAttributes;
+/* INVALID_FILE_ATTRIBUTES already defined */
+
+static inline FileAttributes
+get_file_attributes(const gchar *filename)
+{
+	return GetFileAttributes((LPCTSTR)filename);
+}
+
+static inline void
+set_file_attributes(const gchar *filename, FileAttributes attrs)
+{
+	SetFileAttributes((LPCTSTR)filename, attrs);
+}
+
+#else
+
+typedef int FileAttributes;
+#define INVALID_FILE_ATTRIBUTES (-1)
+
+static inline FileAttributes
+get_file_attributes(const gchar *filename)
+{
+	struct stat buf;
+
+	return g_stat(filename, &buf) ? INVALID_FILE_ATTRIBUTES : buf.st_mode;
+}
+
+static inline void
+set_file_attributes(const gchar *filename, FileAttributes attrs)
+{
+	g_chmod(filename, attrs);
+}
+
+#endif /* !G_OS_WIN32 */
 
 void
 Buffer::UndoTokenClose::run(void)
@@ -239,7 +279,7 @@ class UndoTokenRestoreSavePoint : public UndoToken {
 
 public:
 #ifdef G_OS_WIN32
-	DWORD attributes;
+	FileAttributes orig_attrs;
 #endif
 
 	UndoTokenRestoreSavePoint(gchar *_savepoint, Buffer *_buffer)
@@ -259,8 +299,9 @@ public:
 			g_free(savepoint);
 			savepoint = NULL;
 #ifdef G_OS_WIN32
-			SetFileAttributes((LPCTSTR)buffer->filename,
-					  attributes);
+			if (orig_attrs != INVALID_FILE_ATTRIBUTES)
+				set_file_attributes(buffer->filename,
+						    orig_attrs);
 #endif
 		} else {
 			interface.msg(Interface::MSG_WARNING,
@@ -270,11 +311,13 @@ public:
 	}
 };
 
-static inline void
+static inline FileAttributes
 make_savepoint(Buffer *buffer)
 {
 	gchar *dirname, *basename, *savepoint;
 	gchar savepoint_basename[FILENAME_MAX];
+
+	FileAttributes attributes = get_file_attributes(buffer->filename);
 
 	basename = g_path_get_basename(buffer->filename);
 	g_snprintf(savepoint_basename, sizeof(savepoint_basename),
@@ -290,11 +333,10 @@ make_savepoint(Buffer *buffer)
 		buffer->savepoint_id++;
 		token = new UndoTokenRestoreSavePoint(savepoint, buffer);
 #ifdef G_OS_WIN32
-		token->attributes = GetFileAttributes((LPCTSTR)savepoint);
-		if (token->attributes != INVALID_FILE_ATTRIBUTES)
-			SetFileAttributes((LPCTSTR)savepoint,
-					  token->attributes |
-					  FILE_ATTRIBUTE_HIDDEN);
+		token->orig_attrs = attributes;
+		if (attributes != INVALID_FILE_ATTRIBUTES)
+			set_file_attributes(savepoint,
+					    attributes | FILE_ATTRIBUTE_HIDDEN);
 #endif
 		undo.push(token);
 	} else {
@@ -303,6 +345,8 @@ make_savepoint(Buffer *buffer)
 			      savepoint);
 		g_free(savepoint);
 	}
+
+	return attributes;
 }
 
 #endif /* !G_OS_UNIX */
@@ -310,8 +354,17 @@ make_savepoint(Buffer *buffer)
 bool
 Ring::save(const gchar *filename)
 {
-	const gchar *buffer;
-	gssize size;
+	const void *buffer;
+	sptr_t gap;
+	size_t size;
+	FILE *file;
+
+#ifdef G_OS_UNIX
+	struct stat file_stat;
+	file_stat.st_uid = -1;
+	file_stat.st_gid = -1;
+#endif
+	FileAttributes attributes = INVALID_FILE_ATTRIBUTES;
 
 	if (!current)
 		return false;
@@ -323,18 +376,55 @@ Ring::save(const gchar *filename)
 
 	if (undo.enabled) {
 		if (current->filename &&
-		    g_file_test(current->filename, G_FILE_TEST_IS_REGULAR))
-			make_savepoint(current);
-		else
+		    g_file_test(current->filename, G_FILE_TEST_IS_REGULAR)) {
+#ifdef G_OS_UNIX
+			g_stat(current->filename, &file_stat);
+#endif
+			attributes = make_savepoint(current);
+		} else {
 			undo.push(new UndoTokenRemoveFile(filename));
+		}
 	}
 
-	/* FIXME: improve by writing before and after document gap */
-	buffer = (const gchar *)interface.ssm(SCI_GETCHARACTERPOINTER);
-	size = interface.ssm(SCI_GETLENGTH);
-
-	if (!g_file_set_contents(filename, buffer, size, NULL))
+	/* leaves mode intact if file exists */
+	file = g_fopen(filename, "w");
+	if (!file)
 		return false;
+
+	/* write part of buffer before gap */
+	gap = interface.ssm(SCI_GETGAPPOSITION);
+	if (gap > 0) {
+		buffer = (const void *)interface.ssm(SCI_GETRANGEPOINTER,
+						     0, gap);
+		if (!fwrite(buffer, (size_t)gap, 1, file)) {
+			fclose(file);
+			return false;
+		}
+	}
+
+	/* write part of buffer after gap */
+	size = interface.ssm(SCI_GETLENGTH) - gap;
+	if (size > 0) {
+		buffer = (const void *)interface.ssm(SCI_GETRANGEPOINTER,
+						     gap, size);
+		if (!fwrite(buffer, size, 1, file)) {
+			fclose(file);
+			return false;
+		}
+	}
+
+	/* if file existed but has been renamed, restore attributes */
+	if (attributes != INVALID_FILE_ATTRIBUTES)
+		set_file_attributes(filename, attributes);
+#ifdef G_OS_UNIX
+	/*
+	 * only a good try to inherit owner since process user must have
+	 * CHOWN capability traditionally reserved to root only
+	 */
+	fchown(fileno(file), file_stat.st_uid, file_stat.st_gid);
+#endif
+
+	fclose(file);
 
 	interface.undo_info_update(current);
 	undo.push_var(current->dirty);

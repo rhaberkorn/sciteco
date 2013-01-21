@@ -2,7 +2,8 @@ Known Bugs:
  * Dot is not always restored properly (e.g. after closing file)
  * Strange behaviour after loop interruption (e.g. "<%a>")
  * Null-byte in strings not always handled transparently
- * safe-point mechanism discards file attributes (must be applied to new files)
+ * saving another user's file will only preserve the user when run as root
+   (WON'T FIX!?)
 
 Features:
  * Progress indication in commandline cursor
@@ -26,6 +27,8 @@ Features:
  * simplify parser (static jump tables are unnecessary!)
  * ??? optional modified-detection based on hash sums ???
  * backup files
+ * search and other commands can be significantly optimized:
+   in batch mode, or in loops there is no need to rematch every character!
 
 Documentation:
  * Code docs (Doxygen)
