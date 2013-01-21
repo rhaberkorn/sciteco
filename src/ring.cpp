@@ -105,21 +105,24 @@ Buffer::UndoTokenClose::run(void)
 bool
 Buffer::load(const gchar *filename)
 {
-	gchar *contents;
-	gsize size;
+	GMappedFile *file;
+	gsize length;
 
-	/* FIXME: prevent excessive allocations by reading file into buffer */
-	if (!g_file_get_contents(filename, &contents, &size, NULL))
+	file = g_mapped_file_new(filename, FALSE, NULL);
+	if (!file)
 		return false;
+	length = g_mapped_file_get_length(file);
 
 	edit();
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_CLEARALL);
-	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
+	if (length > 0)
+		interface.ssm(SCI_APPENDTEXT, length,
+			      (sptr_t)g_mapped_file_get_contents(file));
 	interface.ssm(SCI_ENDUNDOACTION);
 
-	g_free(contents);
+	g_mapped_file_unref(file);
 
 	/* NOTE: currently buffer cannot be dirty */
 #if 0
