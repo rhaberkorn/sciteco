@@ -102,27 +102,48 @@ Buffer::UndoTokenClose::run(void)
 	delete buffer;
 }
 
+/*
+ * The following simple implementation of file reading is actually the
+ * most efficient and useful in the common case of editing small files,
+ * since
+ * a) it works with minimal number of syscalls and
+ * b) small files cause little temporary memory overhead.
+ * Reading large files however could be very inefficient since the file
+ * must first be read into memory and then copied in-memory. Also it could
+ * result in thrashing.
+ * Alternatively we could iteratively read into a smaller buffer trading
+ * in speed against (temporary) memory consumption.
+ * The best way to do it could be memory mapping the file as we could
+ * let Scintilla copy from the file's virtual memory directly.
+ * Unfortunately since every page of the mapped file is
+ * only touched once by Scintilla TLB caching is useless and the TLB is
+ * effectively thrashed with entries of the mapped file.
+ * This results in the doubling of page faults and weighs out the other
+ * advantages of memory mapping (has been benchmarked).
+ *
+ * So in the future, the following approach could be implemented:
+ * 1.) On Unix/Posix, mmap() one page at a time, hopefully preventing
+ *     TLB thrashing.
+ * 2.) On other platforms read into and copy from a statically sized buffer
+ *     (perhaps page-sized)
+ */
 bool
 Buffer::load(const gchar *filename)
 {
-	GMappedFile *file;
-	gsize length;
+	gchar *contents;
+	gsize size;
 
-	file = g_mapped_file_new(filename, FALSE, NULL);
-	if (!file)
+	if (!g_file_get_contents(filename, &contents, &size, NULL))
 		return false;
-	length = g_mapped_file_get_length(file);
 
 	edit();
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_CLEARALL);
-	if (length > 0)
-		interface.ssm(SCI_APPENDTEXT, length,
-			      (sptr_t)g_mapped_file_get_contents(file));
+	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
 	interface.ssm(SCI_ENDUNDOACTION);
 
-	g_mapped_file_unref(file);
+	g_free(contents);
 
 	/* NOTE: currently buffer cannot be dirty */
 #if 0
