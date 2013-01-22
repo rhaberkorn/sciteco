@@ -101,6 +101,8 @@ cmdline_keypress(gchar key)
 			 */
 			undo.pop(cmdline_p - cmdline);
 			cmdline_p[-1] = '\0';
+			/* program counter could be messed up */
+			macro_pc = cmdline_p - cmdline - 1;
 			break;
 		}
 	}

@@ -1,6 +1,6 @@
 Known Bugs:
- * Dot is not always restored properly (e.g. after closing file)
- * Strange behaviour after loop interruption (e.g. "<%a>")
+ * ??? Dot is not always restored properly (e.g. after closing file)
+   need test case!!!
  * Null-byte in strings not always handled transparently
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
