@@ -18,7 +18,7 @@ else
 BOOTSTRAP_SCITECO = @SCITECO@
 endif
 sciteco_minimal_SOURCES = main.cpp sciteco.h \
-			  cmdline.cpp \
+			  cmdline.cpp cmdline.h \
 			  undo.cpp undo.h \
 			  expressions.cpp expressions.h \
 			  qregisters.cpp qregisters.h \
