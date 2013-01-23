@@ -15,16 +15,17 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
-# Data directory
-sciteco_datadir=$datarootdir/$PACKAGE_TARNAME
-AC_SUBST(sciteco_datadir)
-
 # Checks for programs.
 LT_INIT
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_INSTALL
+
+AC_CHECK_PROG(DATE, date, date)
+if [[ x$DATE = x ]]; then
+	AC_MSG_ERROR([Required tool date not found!])
+fi
 
 AC_CHECK_PROG(READLINK, readlink, readlink)
 if [[ x$READLINK = x ]]; then
@@ -151,6 +152,5 @@ AC_ARG_ENABLE(bootstrap,
 	[bootstrap=$enableval])
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
-AC_CONFIG_FILES([sciteco.1])
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT

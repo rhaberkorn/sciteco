@@ -1,19 +1,19 @@
 .ds ST \\fB@PACKAGE_NAME@\\fP
 .
 .
-.TH "@PACKAGE_TARNAME@" 1 \
-    "20 Jan 2013" \
+.TH "@PACKAGE@" 1 \
+    "@DATE@" \
     "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
 ..
 .
 .SH NAME
-@PACKAGE_TARNAME@ \-\-
+@PACKAGE@ \-\-
 Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
 .
 .
 .SH SYNOPSIS
 .
-.SY @PACKAGE_TARNAME@
+.SY @PACKAGE@
 .OP \-h|\-\-help
 .OP \-m|\-\-mung file
 .OP \-\-
@@ -125,7 +125,7 @@ batch mode processing.
 .B ~/.teco_ini
 Default profile macro.
 .TP
-.B /usr/share/@PACKAGE_TARNAME@/teco.ini
+.B @pkgdatadir@/teco.ini
 Sample profile macro configuring commonly used run-time options
 and opening files specified as arguments.
 .
@@ -140,7 +140,7 @@ Any conceived misbehaviour must be totally your fault.
 .
 .TP
 Repository:
-.UR https://github.com/rhaberkorn/sciteco
+.UR @PACKAGE_URL@
 \*(ST
 .UE
 .TP
