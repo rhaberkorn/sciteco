@@ -51,6 +51,7 @@ namespace Flags {
 	gint64 ed = 0;
 }
 
+static gchar *eval_macro = NULL;
 static gchar *mung_file = NULL;
 
 sig_atomic_t sigint_occurred = FALSE;
@@ -126,8 +127,10 @@ static inline void
 process_options(int &argc, char **&argv)
 {
 	static const GOptionEntry option_entries[] = {
+		{"eval", 'e', 0, G_OPTION_ARG_STRING, &eval_macro,
+		 "Evaluate macro", "macro"},
 		{"mung", 'm', 0, G_OPTION_ARG_FILENAME, &mung_file,
-		 "Mung file instead of " INI_FILE, "filename"},
+		 "Mung file instead of " INI_FILE, "file"},
 		{NULL}
 	};
 
@@ -203,6 +206,18 @@ main(int argc, char **argv)
 		interface.ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
 	}
 
+	/*
+	 * Execute macro or mung file
+	 */
+	if (eval_macro) {
+		try {
+			Execute::macro(eval_macro, false);
+		} catch (...) {
+			exit(EXIT_FAILURE);
+		}
+		exit(EXIT_SUCCESS);
+	}
+
 	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
 		if (!Execute::file(mung_file, false))
 			exit(EXIT_FAILURE);
@@ -215,6 +230,9 @@ main(int argc, char **argv)
 	}
 	g_free(mung_file);
 
+	/*
+	 * If munged file didn't quit, switch into interactive mode
+	 */
 	Goto::table = &cmdline_goto_table;
 	interface.ssm(SCI_EMPTYUNDOBUFFER);
 	undo.enabled = true;
