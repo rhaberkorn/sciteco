@@ -251,8 +251,8 @@ public:
 	}
 	~QRegisterStack();
 
-	void push(QRegister *reg);
-	bool pop(QRegister *reg);
+	void push(QRegister &reg);
+	bool pop(QRegister &reg);
 };
 
 /*
@@ -272,25 +272,22 @@ private:
 	State *custom(gchar chr) throw (Error);
 
 protected:
-	/*
-	 * FIXME: would be nice to pass reg as reference
-	 */
-	virtual State *got_register(QRegister *reg) throw (Error) = 0;
+	virtual State *got_register(QRegister &reg) throw (Error) = 0;
 };
 
 class StatePushQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StatePopQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateEQCommand : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateLoadQReg : public StateExpectString {
@@ -300,7 +297,7 @@ private:
 
 class StateCtlUCommand : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateSetQRegString : public StateExpectString {
@@ -312,32 +309,32 @@ private:
 
 class StateGetQRegString : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateGetQRegInteger : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateSetQRegInteger : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateIncreaseQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateMacro : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateCopyToQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister *reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error);
 };
 
 namespace States {

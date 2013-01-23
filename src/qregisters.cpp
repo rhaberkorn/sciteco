@@ -285,24 +285,24 @@ QRegisterStack::UndoTokenPop::run(void)
 }
 
 void
-QRegisterStack::push(QRegister *reg)
+QRegisterStack::push(QRegister &reg)
 {
 	Entry *entry = new Entry();
 
-	entry->set_integer(reg->get_integer());
-	if (reg->string) {
-		gchar *str = reg->get_string();
+	entry->set_integer(reg.get_integer());
+	if (reg.string) {
+		gchar *str = reg.get_string();
 		entry->set_string(str);
 		g_free(str);
 	}
-	entry->dot = reg->dot;
+	entry->dot = reg.dot;
 
 	SLIST_INSERT_HEAD(&head, entry, entries);
 	undo.push(new UndoTokenPop(this));
 }
 
 bool
-QRegisterStack::pop(QRegister *reg)
+QRegisterStack::pop(QRegister &reg)
 {
 	Entry *entry = SLIST_FIRST(&head);
 	QRegisterData::document *string;
@@ -310,20 +310,20 @@ QRegisterStack::pop(QRegister *reg)
 	if (!entry)
 		return false;
 
-	reg->undo_set_integer();
-	reg->set_integer(entry->get_integer());
+	reg.undo_set_integer();
+	reg.set_integer(entry->get_integer());
 
 	/* exchange document ownership between Stack entry and Q-Register */
-	string = reg->string;
-	if (reg->must_undo)
-		undo.push_var(reg->string);
-	reg->string = entry->string;
+	string = reg.string;
+	if (reg.must_undo)
+		undo.push_var(reg.string);
+	reg.string = entry->string;
 	undo.push_var(entry->string);
 	entry->string = string;
 
-	if (reg->must_undo)
-		undo.push_var(reg->dot);
-	reg->dot = entry->dot;
+	if (reg.must_undo)
+		undo.push_var(reg.dot);
+	reg.dot = entry->dot;
 
 	SLIST_REMOVE_HEAD(&head, entries);
 	/* pass entry ownership to undo stack */
@@ -379,11 +379,11 @@ StateExpectQReg::custom(gchar chr) throw (Error)
 	if (!reg)
 		throw InvalidQRegError(chr, got_local);
 
-	return got_register(reg);
+	return got_register(*reg);
 }
 
 State *
-StatePushQReg::got_register(QRegister *reg) throw (Error)
+StatePushQReg::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -393,7 +393,7 @@ StatePushQReg::got_register(QRegister *reg) throw (Error)
 }
 
 State *
-StatePopQReg::got_register(QRegister *reg) throw (Error)
+StatePopQReg::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -404,10 +404,10 @@ StatePopQReg::got_register(QRegister *reg) throw (Error)
 }
 
 State *
-StateEQCommand::got_register(QRegister *reg) throw (Error)
+StateEQCommand::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::loadqreg);
-	register_argument = reg;
+	register_argument = &reg;
 	return &States::loadqreg;
 }
 
@@ -433,10 +433,10 @@ StateLoadQReg::done(const gchar *str) throw (Error)
 }
 
 State *
-StateCtlUCommand::got_register(QRegister *reg) throw (Error)
+StateCtlUCommand::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::setqregstring);
-	register_argument = reg;
+	register_argument = &reg;
 	return &States::setqregstring;
 }
 
@@ -452,13 +452,13 @@ StateSetQRegString::done(const gchar *str) throw (Error)
 }
 
 State *
-StateGetQRegString::got_register(QRegister *reg) throw (Error)
+StateGetQRegString::got_register(QRegister &reg) throw (Error)
 {
 	gchar *str;
 
 	BEGIN_EXEC(&States::start);
 
-	str = reg->get_string();
+	str = reg.get_string();
 	if (*str) {
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
@@ -474,54 +474,54 @@ StateGetQRegString::got_register(QRegister *reg) throw (Error)
 }
 
 State *
-StateGetQRegInteger::got_register(QRegister *reg) throw (Error)
+StateGetQRegInteger::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
 	expressions.eval();
-	expressions.push(reg->get_integer());
+	expressions.push(reg.get_integer());
 
 	return &States::start;
 }
 
 State *
-StateSetQRegInteger::got_register(QRegister *reg) throw (Error)
+StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
-	reg->undo_set_integer();
-	reg->set_integer(expressions.pop_num_calc());
+	reg.undo_set_integer();
+	reg.set_integer(expressions.pop_num_calc());
 
 	return &States::start;
 }
 
 State *
-StateIncreaseQReg::got_register(QRegister *reg) throw (Error)
+StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
 {
 	gint64 res;
 
 	BEGIN_EXEC(&States::start);
 
-	reg->undo_set_integer();
-	res = reg->get_integer() + expressions.pop_num_calc();
-	expressions.push(reg->set_integer(res));
+	reg.undo_set_integer();
+	res = reg.get_integer() + expressions.pop_num_calc();
+	expressions.push(reg.set_integer(res));
 
 	return &States::start;
 }
 
 State *
-StateMacro::got_register(QRegister *reg) throw (Error)
+StateMacro::got_register(QRegister &reg) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
 	/* don't create new local Q-Registers if colon modifier is given */
-	reg->execute(!eval_colon());
+	reg.execute(!eval_colon());
 
 	return &States::start;
 }
 
 State *
-StateCopyToQReg::got_register(QRegister *reg) throw (Error)
+StateCopyToQReg::got_register(QRegister &reg) throw (Error)
 {
 	gint64 from, len;
 	Sci_TextRange tr;
@@ -559,11 +559,11 @@ StateCopyToQReg::got_register(QRegister *reg) throw (Error)
 	interface.ssm(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
 
 	if (eval_colon()) {
-		reg->undo_append_string();
-		reg->append_string(tr.lpstrText);
+		reg.undo_append_string();
+		reg.append_string(tr.lpstrText);
 	} else {
-		reg->undo_set_string();
-		reg->set_string(tr.lpstrText);
+		reg.undo_set_string();
+		reg.set_string(tr.lpstrText);
 	}
 	g_free(tr.lpstrText);
 
