@@ -15,6 +15,7 @@ Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
 .
 .SY @PACKAGE@
 .OP \-h|\-\-help
+.OP \-e|\-\-eval macro
 .OP \-m|\-\-mung file
 .OP \-\-
 .RI [ argument
@@ -106,6 +107,14 @@ It will usually leave the editor in interactive mode.
 .
 .IP "\fB-h\fR, \fB--help\fR"
 Display a short help text on the console. 
+.IP "\fB-e\fR, \fB--eval\fR \fImacro"
+Evaluate (execute)
+.I macro
+specified as a command-line option.
+Similar to munging but always exits afterwards.
+If the option is specified, the
+.B \-\-mung
+option has no effect.
 .IP "\fB-m\fR, \fB--mung\fR \fIfile"
 Mung
 .IR file .
