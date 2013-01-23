@@ -34,6 +34,7 @@
 #include <ScintillaTerm.h>
 
 #include "sciteco.h"
+#include "cmdline.h"
 #include "qregisters.h"
 #include "ring.h"
 #include "interface.h"

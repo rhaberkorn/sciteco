@@ -29,6 +29,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "cmdline.h"
 #include "interface.h"
 #include "undo.h"
 

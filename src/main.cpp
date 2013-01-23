@@ -33,6 +33,7 @@
 #include <SciLexer.h>
 
 #include "sciteco.h"
+#include "cmdline.h"
 #include "interface.h"
 #include "parser.h"
 #include "goto.h"

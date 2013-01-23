@@ -34,11 +34,6 @@ namespace Flags {
 
 extern sig_atomic_t sigint_occurred;
 
-extern gchar *cmdline;
-extern bool quit_requested;
-
-void cmdline_keypress(gchar key);
-
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)
 #define CTL_KEY(C)	((C) & ~0x40)

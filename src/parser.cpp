@@ -36,6 +36,7 @@
 #include "parser.h"
 #include "symbols.h"
 #include "search.h"
+#include "cmdline.h"
 
 //#define DEBUG
 
@@ -650,6 +651,10 @@ StateStart::custom(gchar chr) throw (Error)
 		break;
 
 	case '*':
+		if (!g_strcmp0(cmdline, "*"))
+			/* special save last commandline command */
+			return &States::save_cmdline;
+
 		BEGIN_EXEC(this);
 		expressions.push_calc(Expressions::OP_MUL);
 		break;

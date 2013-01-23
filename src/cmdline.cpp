@@ -35,6 +35,7 @@
 #include "goto.h"
 #include "undo.h"
 #include "symbols.h"
+#include "cmdline.h"
 
 static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro);
@@ -48,8 +49,13 @@ static const gchar *last_occurrence(const gchar *str,
 static inline gboolean filename_is_dir(const gchar *filename);
 
 gchar *cmdline = NULL;
+static gchar *last_cmdline = NULL;
 
 bool quit_requested = false;
+
+namespace States {
+	StateSaveCmdline save_cmdline;
+}
 
 void
 cmdline_keypress(gchar key)
@@ -195,7 +201,9 @@ process_edit_cmd(gchar key)
 			Goto::table->clear();
 			expressions.clear();
 
-			*cmdline = '\0';
+			g_free(last_cmdline);
+			last_cmdline = cmdline;
+			cmdline = NULL;
 			macro_pc = 0;
 			break;
 		}
@@ -372,6 +380,21 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
 	g_completion_free(completion);
 
 	return insert;
+}
+
+/*
+ * Command states
+ */
+
+State *
+StateSaveCmdline::got_register(QRegister *reg) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	reg->undo_set_string();
+	reg->set_string(last_cmdline);
+
+	return &States::start;
 }
 
 /*
