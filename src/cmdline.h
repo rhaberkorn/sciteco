@@ -22,6 +22,7 @@
 
 #include "sciteco.h"
 #include "parser.h"
+#include "qregisters.h"
 
 extern gchar *cmdline;
 extern bool quit_requested;

@@ -259,6 +259,25 @@ public:
  * Command states
  */
 
+/*
+ * Super class for states accepting Q-Register specifications
+ */
+class StateExpectQReg : public State {
+	bool got_local;
+
+public:
+	StateExpectQReg();
+
+private:
+	State *custom(gchar chr) throw (Error);
+
+protected:
+	/*
+	 * FIXME: would be nice to pass reg as reference
+	 */
+	virtual State *got_register(QRegister *reg) throw (Error) = 0;
+};
+
 class StatePushQReg : public StateExpectQReg {
 private:
 	State *got_register(QRegister *reg) throw (Error);

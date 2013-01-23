@@ -436,34 +436,6 @@ StateExpectString::custom(gchar chr) throw (Error)
 	return this;
 }
 
-StateExpectQReg::StateExpectQReg() : State(), got_local(false)
-{
-	transitions['\0'] = this;
-}
-
-State *
-StateExpectQReg::custom(gchar chr) throw (Error)
-{
-	QRegister *reg;
-
-	if (chr == '.') {
-		undo.push_var(got_local) = true;
-		return this;
-	}
-	chr = g_ascii_toupper(chr);
-
-	if (got_local) {
-		undo.push_var(got_local) = false;
-		reg = (*QRegisters::locals)[chr];
-	} else {
-		reg = QRegisters::globals[chr];
-	}
-	if (!reg)
-		throw InvalidQRegError(chr, got_local);
-
-	return got_register(reg);
-}
-
 StateStart::StateStart() : State()
 {
 	transitions['\0'] = this;

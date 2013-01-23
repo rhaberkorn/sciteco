@@ -354,6 +354,34 @@ QRegisters::hook(Hook type)
  * Command states
  */
 
+StateExpectQReg::StateExpectQReg() : State(), got_local(false)
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateExpectQReg::custom(gchar chr) throw (Error)
+{
+	QRegister *reg;
+
+	if (chr == '.') {
+		undo.push_var(got_local) = true;
+		return this;
+	}
+	chr = g_ascii_toupper(chr);
+
+	if (got_local) {
+		undo.push_var(got_local) = false;
+		reg = (*QRegisters::locals)[chr];
+	} else {
+		reg = QRegisters::globals[chr];
+	}
+	if (!reg)
+		throw InvalidQRegError(chr, got_local);
+
+	return got_register(reg);
+}
+
 State *
 StatePushQReg::got_register(QRegister *reg) throw (Error)
 {
