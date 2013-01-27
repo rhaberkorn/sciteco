@@ -21,7 +21,7 @@ stamp-*
 /src/sciteco-minimal
 
 # Generated code
-/sciteco.1
+/doc/sciteco.1
 /teco.ini
 /src/gtk-info-popup*.[ch]
 /src/symbols-*.cpp
