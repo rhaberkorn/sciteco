@@ -1,3 +1,5 @@
+include $(top_srcdir)/bootstrap.am
+
 AM_CFLAGS = -Wall -std=c99
 AM_CXXFLAGS = -Wall
 AM_CPPFLAGS =
@@ -12,10 +14,7 @@ EXTRA_DIST = gtk-info-popup.gob \
 
 if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
-BOOTSTRAP_SCITECO = ./sciteco-minimal$(EXEEXT)
 symbols-scintilla.cpp symbols-scilexer.cpp : $(BOOTSTRAP_SCITECO)
-else
-BOOTSTRAP_SCITECO = @SCITECO@
 endif
 sciteco_minimal_SOURCES = main.cpp sciteco.h \
 			  cmdline.cpp cmdline.h \
