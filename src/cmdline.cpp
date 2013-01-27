@@ -160,18 +160,18 @@ process_edit_cmd(gchar key)
 			g_free(new_chars);
 		} else if (States::current == &States::scintilla_symbols) {
 			const gchar *symbol = NULL;
-			SymbolList &list = Symbols::scintilla;
+			SymbolList *list = &Symbols::scintilla;
 			gchar *new_chars;
 
 			if (strings[0]) {
 				symbol = last_occurrence(strings[0], ",");
 				if (*symbol == ',') {
 					symbol++;
-					list = Symbols::scilexer;
+					list = &Symbols::scilexer;
 				}
 			}
 
-			new_chars = symbol_complete(list, symbol, ',');
+			new_chars = symbol_complete(*list, symbol, ',');
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
