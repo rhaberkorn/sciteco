@@ -1,6 +1,6 @@
 ! Lexer configuration and styles (ED hook) !
 
-U.0 Q.0Oadd,edit,close,quit
+[_ U.0 Q.0Oadd,edit,close,quit
 
 !add!
 ! black, red, green, yellow, blue, magenta, cyan, white !
@@ -65,6 +65,77 @@ Oedit'
   ! Error        ! 1,0,1,6:M.r
 Oedit'
 
+:S.[diff,patch]"S
+  -D EBQ.f
+  ESSETLEXER,SCLEX_DIFF
+  ! Comments     ! 1,0,0,1:M.r
+  ! Command      ! 1,0,7,2:M.r
+  ! Source/Dest  ! 0,0,4,3:M.r
+  ! Position @@  ! 1,0,4,4:M.r
+  ! Deletion     ! 1,0,1,5:M.r
+  ! Addition     ! 1,0,2,6:M.r
+  ! Change       ! 1,0,3,7:M.r
+Oedit'
+
+:S[.sh,.bsh,configure,.ksh]"S
+  -D EBQ.f
+  ESSETLEXER,SCLEX_BASH
+  0ESSETKEYWORDS
+    alias ar asa awk banner basename bash bc bdiff break
+    bunzip2 bzip2 cal calendar case cat cc cd chmod cksum
+    clear cmp col comm compress continue cp cpio crypt
+    csplit ctags cut date dc dd declare deroff dev df diff diff3
+    dircmp dirname do done du echo ed egrep elif else env
+    esac eval ex exec exit expand export expr false fc
+    fgrep fi file find fmt fold for function functions
+    getconf getopt getopts grep gres hash head help
+    history iconv id if in integer jobs join kill local lc
+    let line ln logname look ls m4 mail mailx make
+    man mkdir more mt mv newgrp nl nm nohup ntps od
+    pack paste patch pathchk pax pcat perl pg pr print
+    printf ps pwd read readonly red return rev rm rmdir
+    sed select set sh shift size sleep sort spell
+    split start stop strings strip stty sum suspend
+    sync tail tar tee test then time times touch tr
+    trap true tsort tty type typeset ulimit umask unalias
+    uname uncompress unexpand uniq unpack unset until
+    uudecode uuencode vi vim vpax wait wc whence which
+    while who wpaste wstart xargs zcat
+
+    chgrp chown chroot dir dircolors
+    factor groups hostid install link md5sum mkfifo
+    mknod nice pinky printenv ptx readlink seq
+    sha1sum shred stat su tac unlink users vdir whoami yes
+  ! Error        ! 1,0,1,1:M.r
+  ! Comments     ! 1,0,0,2:M.r
+  ! Numbers      ! 0,0,6,3:M.r
+  ! Keywords     ! 1,0,7,4:M.r
+  ! Strings      ! 0,0,2,5:M.r 0,0,2,6:M.r
+  ! Operators    ! 0,0,3,7:M.r
+  ! Identifiers  ! 0,0,4,8:M.r
+  ! Variables $  ! 1,0,4,9:M.r 1,0,4,10:M.r
+  ! Backticks    ! 0,0,2,11:M.r
+Oedit'
+
+:S.[bat,cmd,nt]"S
+  -D EBQ.f
+  ESSETLEXER,SCLEX_BATCH
+  0ESSETKEYWORDS
+    rem set if exist errorlevel for in do
+    break call chcp cd chdir choice cls country ctty date del erase dir echo
+    exit goto loadfix loadhigh mkdir md move path pause prompt rename ren
+    rmdir rd shift time type ver verify vol
+    com con lpt nul
+    color copy defined else not start
+  ! Comments     ! 1,0,0,1:M.r
+  ! Keywords     ! 1,0,7,2:M.r
+  ! Labels       ! 1,0,1,3:M.r
+  ! Hide Cmd @   ! 0,0,5,4:M.r
+  ! External Cmd ! 0,0,4,5:M.r
+  ! Variables    ! 1,0,4,6:M.r
+  ! Operators    ! 0,0,3,7:M.r
+Oedit'
+
 Z-1,ZD EBQ.f
 ! fall through !
 
@@ -76,3 +147,4 @@ Z-1,ZD EBQ.f
 !end!
 ! Dispatch to user-defined macro 1 !
 Q.0M1
+]_
