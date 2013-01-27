@@ -50,7 +50,7 @@ Therefore under UNIX-like operating systems, TECO macro files may be
 invoked as scripts by using a Hashbang line like
 .RS
 .EX
-#!/bin/sciteco -m
+#!@bindir@/sciteco -m
 .EE
 .RE
 If the munged macro does not request program termination using the
