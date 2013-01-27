@@ -1,0 +1,18 @@
+! TECO.INI !
+
+EQ0@pkgdatadir@/lexer.tes
+@1{
+  ! lexer.tes calls this !
+}
+ED#32ED
+
+! margins !
+5,0ESSETMARGINWIDTHN
+0,1ESSETMARGINWIDTHN
+1,2ESSETMARGINWIDTHN
+
+! open all files specified on the commandline !
+[.f
+  <:L;R 0X.f EBQ.f EB L>
+].f
+-EF

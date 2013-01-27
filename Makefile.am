@@ -15,11 +15,14 @@ REPL_MACRO = eb$<\e \
 	     <fs@DATE^Q@\e$(shell @DATE@ "+%d %b %Y")\e;>j \
 	     ew$@\e
 
-dist_pkgdata_DATA = teco.ini
+pkgdata_DATA = teco.ini
+EXTRA_DIST = teco.ini.in
+CLEANFILES = teco.ini
+dist_pkgdata_DATA = lexer.tes
 
 man_MANS = sciteco.1
-EXTRA_DIST = sciteco.1.in
-CLEANFILES = sciteco.1
+EXTRA_DIST += sciteco.1.in
+CLEANFILES += sciteco.1
 
 noinst_HEADERS = compat/bsd/sys/cdefs.h \
 		 compat/bsd/sys/queue.h \
@@ -29,5 +32,5 @@ EXTRA_DIST += patches/scintilla-teco-control-codes.patch
 
 EXTRA_DIST += TODO
 
-sciteco.1 : sciteco.1.in
+% : %.in
 	$(BOOTSTRAP_SCITECO) -e $$'$(REPL_MACRO)'

@@ -1,0 +1,78 @@
+! Lexer configuration and styles (ED hook) !
+
+U.0 Q.0Oadd,edit,close,quit
+
+!add!
+! black, red, green, yellow, blue, magenta, cyan, white !
+@.c{
+  U.c ((Q.c&1)*255) # ((Q.c/2 & 1)*255*256) # ((Q.c/4 & 1)*255*256*256)
+}
+
+! <bold,bg,fg,style>M.r !
+@.r{
+  U.sU.vU.bU.h
+  Q.v:M.c,Q.sESSTYLESETFORE
+  Q.b:M.c,Q.sESSTYLESETBACK
+  Q.h,Q.sESSTYLESETBOLD
+}
+
+! Bracelight   ! 0,7,0,34:M.r
+! Bracebad     ! 1,0,1,35:M.r
+
+EQ* HX.f EQ.f ZJ i J
+
+! C/C++ !
+:S.[c,cc,cpp,cxx,h,hh,hpp,hxx,ipp,m,mm,sma]"S
+  -D EBQ.f
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    and and_eq asm auto bitand bitor bool break
+    case catch char class compl const const_cast continue
+    default delete do double dynamic_cast else enum explicit export extern false float for
+    friend goto if inline int long mutable namespace new not not_eq
+    operator or or_eq private protected public
+    register reinterpret_cast return short signed sizeof static static_cast struct switch
+    template this throw true try typedef typeid typename union unsigned using
+    virtual void volatile wchar_t while xor xor_eq
+  ! Doxygen keywords !
+  2ESSETKEYWORDS
+    a addindex addtogroup anchor arg attention
+    author b brief bug c class code date def defgroup deprecated dontinclude
+    e em endcode endhtmlonly endif endlatexonly endlink endverbatim enum example exception
+    f$ f[ f] file fn hideinitializer htmlinclude htmlonly
+    if image include ingroup internal invariant interface latexonly li line link
+    mainpage name namespace nosubgrouping note overload
+    p page par param post pre ref relates remarks return retval
+    sa section see showinitializer since skip skipline struct subsection
+    test throw todo typedef union until
+    var verbatim verbinclude version warning weakgroup $ @ \ & < > # { }
+  ! Comments     ! 1,0,0,1:M.r 1,0,0,2:M.r 1,0,0,3:M.r
+  ! Number       ! 0,0,6,4:M.r
+  ! Keywords     ! 1,0,7,5:M.r
+  ! Strings      ! 0,0,2,6:M.r 0,0,2,7:M.r
+  ! Preprocessor ! 0,0,5,9:M.r
+  ! Operators    ! 0,0,3,10:M.r
+Oedit'
+
+:S[makefile,.mak]"S
+  -D EBQ.f
+  ESSETLEXER,SCLEX_MAKEFILE
+  ! Comments     ! 1,0,0,1:M.r
+  ! Preprocessor ! 0,0,5,2:M.r
+  ! Variables    ! 1,0,4,3:M.r
+  ! Operators    ! 0,0,3,4:M.r
+  ! Target       ! 1,0,3,5:M.r
+  ! Error        ! 1,0,1,6:M.r
+Oedit'
+
+Z-1,ZD EBQ.f
+! fall through !
+
+!edit!
+!close!
+!quit!
+! fall through !
+
+!end!
+! Dispatch to user-defined macro 1 !
+Q.0M1
