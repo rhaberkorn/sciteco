@@ -528,19 +528,23 @@ StateSearchKill::done(const gchar *str) throw (Error)
 
 	BEGIN_EXEC(&States::start);
 
+	QRegister *search_reg = QRegisters::globals["_"];
+
 	StateSearch::done(str);
 
-	undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
-	anchor = interface.ssm(SCI_GETANCHOR);
-	interface.ssm(SCI_GOTOPOS, anchor);
+	if (IS_SUCCESS(search_reg->get_integer())) {
+		undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+		anchor = interface.ssm(SCI_GETANCHOR);
+		interface.ssm(SCI_GOTOPOS, anchor);
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_DELETERANGE,
-		      parameters.dot, anchor - parameters.dot);
-	interface.ssm(SCI_ENDUNDOACTION);
-	ring.dirtify();
+		interface.ssm(SCI_BEGINUNDOACTION);
+		interface.ssm(SCI_DELETERANGE,
+			      parameters.dot, anchor - parameters.dot);
+		interface.ssm(SCI_ENDUNDOACTION);
+		ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+		undo.push_msg(SCI_UNDO);
+	}
 
 	return &States::start;
 }
@@ -550,14 +554,18 @@ StateSearchDelete::done(const gchar *str) throw (Error)
 {
 	BEGIN_EXEC(&States::start);
 
+	QRegister *search_reg = QRegisters::globals["_"];
+
 	StateSearch::done(str);
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_REPLACESEL, 0, (sptr_t)"");
-	interface.ssm(SCI_ENDUNDOACTION);
-	ring.dirtify();
+	if (IS_SUCCESS(search_reg->get_integer())) {
+		interface.ssm(SCI_BEGINUNDOACTION);
+		interface.ssm(SCI_REPLACESEL, 0, (sptr_t)"");
+		interface.ssm(SCI_ENDUNDOACTION);
+		ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+		undo.push_msg(SCI_UNDO);
+	}
 
 	return &States::start;
 }
