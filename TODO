@@ -4,8 +4,11 @@ Known Bugs:
  * Null-byte in strings not always handled transparently
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
+ * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
 
 Features:
+ * protect ED hook executions (process like "(<x>M0$)")
+ * refactor search commands (create proper base class)
  * Progress indication in commandline cursor
  * catch OOM errors (can happen easily due to infinite loops)
  * undo-tokens per char limit (additional infinite loop safety)
@@ -22,6 +25,7 @@ Features:
  * command-line push-down mechanism
  * TECO syntax highlighting
  * multiline commandline
+   * perhaps use Scintilla view as mini buffer
  * improve GTK interface
  * modifier for toggling string building processing
  * simplify parser (static jump tables are unnecessary!)
