@@ -524,7 +524,7 @@ StateSearchAll::done(const gchar *str) throw (Error)
 State *
 StateSearchKill::done(const gchar *str) throw (Error)
 {
-	gint anchor;
+	gint dot;
 
 	BEGIN_EXEC(&States::start);
 
@@ -532,19 +532,29 @@ StateSearchKill::done(const gchar *str) throw (Error)
 
 	StateSearch::done(str);
 
-	if (IS_SUCCESS(search_reg->get_integer())) {
-		undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
-		anchor = interface.ssm(SCI_GETANCHOR);
+	if (IS_FAILURE(search_reg->get_integer()))
+		return &States::start;
+
+	dot = interface.ssm(SCI_GETCURRENTPOS);
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	if (parameters.dot < dot) {
+		/* kill forwards */
+		gint anchor = interface.ssm(SCI_GETANCHOR);
+
+		undo.push_msg(SCI_GOTOPOS, dot);
 		interface.ssm(SCI_GOTOPOS, anchor);
 
-		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_DELETERANGE,
 			      parameters.dot, anchor - parameters.dot);
-		interface.ssm(SCI_ENDUNDOACTION);
-		ring.dirtify();
-
-		undo.push_msg(SCI_UNDO);
+	} else {
+		/* kill backwards */
+		interface.ssm(SCI_DELETERANGE, dot, parameters.dot - dot);
 	}
+	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
+
+	undo.push_msg(SCI_UNDO);
 
 	return &States::start;
 }
