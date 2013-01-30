@@ -71,9 +71,9 @@ gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
 void
-Execute::step(const gchar *macro) throw (State::Error)
+Execute::step(const gchar *&macro, gint &stop_pos) throw (State::Error)
 {
-	while (macro[macro_pc]) {
+	while (macro_pc < stop_pos) {
 #ifdef DEBUG
 		g_printf("EXEC(%d): input='%c'/%x, state=%p, mode=%d\n",
 			 macro_pc, macro[macro_pc], macro[macro_pc],
@@ -91,6 +91,8 @@ Execute::step(const gchar *macro) throw (State::Error)
 void
 Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 {
+	gint macro_len = strlen(macro);
+
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
 
@@ -114,7 +116,7 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 	}
 
 	try {
-		step(macro);
+		step(macro, macro_len);
 		if (Goto::skip_label)
 			throw State::Error("Label \"%s\" not found",
 					   Goto::skip_label);
@@ -817,6 +819,76 @@ StateStart::custom(gchar chr) throw (Error)
 			nest_level--;
 		}
 		break;
+
+	/*
+	 * Command-line editing
+	 */
+	case '{': {
+		void *document;
+
+		BEGIN_EXEC(this);
+		if (!undo.enabled)
+			throw Error("Command-line editing only possible in "
+				    "interactive mode");
+
+		current_save_dot();
+
+		if (ring.current)
+			ring.current->undo_edit();
+		else if (QRegisters::current)
+			QRegisters::current->undo_edit();
+
+		document = (void *)interface.ssm(SCI_CREATEDOCUMENT);
+		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)document);
+		interface.ssm(SCI_ADDTEXT, cmdline_pos-1, (sptr_t)cmdline);
+
+		undo.push_msg(SCI_RELEASEDOCUMENT, 0, (sptr_t)document);
+		break;
+	}
+
+	case '}': {
+		gint size, i;
+		gchar *old_cmdline, *new_cmdline;
+
+		BEGIN_EXEC(this);
+		if (!undo.enabled)
+			throw Error("Command-line editing only possible in "
+				    "interactive mode");
+
+		size = interface.ssm(SCI_GETLENGTH) + 1;
+		new_cmdline = (gchar *)g_malloc(size);
+		interface.ssm(SCI_GETTEXT, size, (sptr_t)new_cmdline);
+
+		for (i = 0; cmdline[i] && cmdline[i] == new_cmdline[i]; i++);
+		undo.pop(i+1);
+
+		old_cmdline = cmdline;
+		cmdline = new_cmdline;
+		cmdline_pos = i+1;
+		macro_pc = i; /* FIXME */
+
+		while (cmdline_pos <= (gint)strlen(cmdline)) {
+			try {
+				Execute::step((const gchar *&)cmdline, cmdline_pos);
+			} catch (...) {
+				undo.pop(i+1);
+				cmdline = old_cmdline;
+				cmdline[strlen(cmdline)-1] = '\0';
+				g_free(new_cmdline);
+				old_cmdline = NULL;
+				cmdline_pos = i;
+				macro_pc = i-1; /* FIXME */
+				break;
+			}
+
+			cmdline_pos++;
+		}
+
+		g_free(old_cmdline);
+
+		/* state may have changed due to undoing */
+		return States::current;
+	}
 
 	/*
 	 * modifiers

@@ -253,7 +253,7 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 namespace Execute {
-	void step(const gchar *macro) throw (State::Error);
+	void step(const gchar *&macro, gint &stop_pos) throw (State::Error);
 	void macro(const gchar *macro, bool locals = true) throw (State::Error);
 	bool file(const gchar *filename, bool locals = true);
 }

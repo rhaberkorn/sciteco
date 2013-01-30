@@ -25,6 +25,7 @@
 #include "qregisters.h"
 
 extern gchar *cmdline;
+extern gint cmdline_pos;
 extern bool quit_requested;
 
 void cmdline_keypress(gchar key);

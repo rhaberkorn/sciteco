@@ -49,6 +49,7 @@ static const gchar *last_occurrence(const gchar *str,
 static inline gboolean filename_is_dir(const gchar *filename);
 
 gchar *cmdline = NULL;
+gint cmdline_pos = 0;
 static gchar *last_cmdline = NULL;
 
 bool quit_requested = false;
@@ -60,7 +61,6 @@ namespace States {
 void
 cmdline_keypress(gchar key)
 {
-	gchar *cmdline_p;
 	const gchar *insert;
 	gchar *echo;
 
@@ -76,28 +76,15 @@ cmdline_keypress(gchar key)
 	insert = process_edit_cmd(key);
 
 	/*
-	 * Parse/execute characters
-	 */
-	if (cmdline) {
-		gint len = strlen(cmdline);
-		cmdline = (gchar *)g_realloc(cmdline, len + strlen(insert) + 1);
-		cmdline_p = cmdline + len;
-	} else {
-		cmdline = (gchar *)g_malloc(strlen(insert) + 1);
-		*cmdline = '\0';
-		cmdline_p = cmdline;
-	}
-
-	/*
-	 * Execute one insertion character, extending cmdline, at a time so
+	 * Parse/execute characters, one at a time so
 	 * undo tokens get emitted for the corresponding characters.
 	 */
-	for (const gchar *p = insert; *p; p++) {
-		*cmdline_p++ = *p;
-		*cmdline_p = '\0';
+	cmdline_pos = cmdline ? strlen(cmdline)+1 : 1;
+	String::append(cmdline, insert);
 
+	while (cmdline_pos <= (gint)strlen(cmdline)) {
 		try {
-			Execute::step(cmdline);
+			Execute::step((const gchar *&)cmdline, cmdline_pos);
 		} catch (...) {
 			/*
 			 * Undo tokens may have been emitted (or had to be)
@@ -105,12 +92,14 @@ cmdline_keypress(gchar key)
 			 * executed so as if the character had never been
 			 * inserted.
 			 */
-			undo.pop(cmdline_p - cmdline);
-			cmdline_p[-1] = '\0';
+			undo.pop(cmdline_pos);
+			cmdline[cmdline_pos-1] = '\0';
 			/* program counter could be messed up */
-			macro_pc = cmdline_p - cmdline - 1;
+			macro_pc = cmdline_pos - 1;
 			break;
 		}
+
+		cmdline_pos++;
 	}
 
 	/*
