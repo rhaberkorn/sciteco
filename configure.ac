@@ -35,7 +35,7 @@ fi
 # For bootstrapping via installed sciteco
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
 if [[ x$SCITECO = x ]]; then
-	bootstrap = yes
+	bootstrap=yes
 fi
 
 # Checks for libraries.
