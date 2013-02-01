@@ -52,7 +52,7 @@ namespace States {
 }
 
 namespace QRegisters {
-	QRegisterTable		globals;
+	QRegisterTable		globals INIT_PRIO(PRIO_INTERFACE+1);
 	QRegisterTable		*locals = NULL;
 	QRegister		*current = NULL;
 
@@ -248,8 +248,7 @@ QRegisterBufferInfo::edit(void)
 	undo.push_msg(SCI_UNDO);
 }
 
-void
-QRegisterTable::initialize(void)
+QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
 {
 	/* general purpose registers */
 	for (gchar q = 'A'; q <= 'Z'; q++)

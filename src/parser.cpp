@@ -94,8 +94,7 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
 
-	QRegisterTable *parent_locals = QRegisters::locals;
-	QRegisterTable macro_locals(false);
+	QRegisterTable *parent_locals;
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
@@ -110,8 +109,8 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 
 	Goto::table = &macro_goto_table;
 	if (locals) {
-		macro_locals.initialize();
-		QRegisters::locals = &macro_locals;
+		parent_locals = QRegisters::locals;
+		QRegisters::locals = new QRegisterTable(false);
 	}
 
 	try {
@@ -123,7 +122,10 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
 
-		QRegisters::locals = parent_locals;
+		if (locals) {
+			delete QRegisters::locals;
+			QRegisters::locals = parent_locals;
+		}
 		Goto::table = parent_goto_table;
 
 		macro_pc = parent_pc;
@@ -132,7 +134,10 @@ Execute::macro(const gchar *macro, bool locals) throw (State::Error)
 		throw; /* forward */
 	}
 
-	QRegisters::locals = parent_locals;
+	if (locals) {
+		delete QRegisters::locals;
+		QRegisters::locals = parent_locals;
+	}
 	Goto::table = parent_goto_table;
 
 	macro_pc = parent_pc;

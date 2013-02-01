@@ -34,6 +34,10 @@ namespace Flags {
 
 extern sig_atomic_t sigint_occurred;
 
+#define INIT_PRIO(X)	__attribute__((init_priority(X)))
+#define PRIO_INTERFACE	1000
+#define PRIO_SYMBOLS	1000
+
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)
 #define CTL_KEY(C)	((C) & ~0x40)

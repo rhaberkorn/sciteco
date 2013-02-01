@@ -54,7 +54,8 @@ namespace States {
 	StateSaveFile	savefile;
 }
 
-Ring ring;
+/* dtor must be executed before Interface dtor */
+Ring ring INIT_PRIO(PRIO_INTERFACE+1);
 
 #ifdef G_OS_WIN32
 

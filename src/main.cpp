@@ -187,7 +187,6 @@ main(int argc, char **argv)
 	interface.ssm(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");
 	interface.ssm(SCI_STYLECLEARALL);
 
-	QRegisters::globals.initialize();
 	/* search string and status register */
 	QRegisters::globals.initialize("_");
 	/* replacement string register */
@@ -195,7 +194,6 @@ main(int argc, char **argv)
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
 
-	local_qregs.initialize();
 	QRegisters::locals = &local_qregs;
 
 	ring.edit((const gchar *)NULL);

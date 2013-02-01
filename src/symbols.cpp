@@ -23,14 +23,15 @@
 
 #include <glib.h>
 
+#include "sciteco.h"
 #include "symbols.h"
 
 /*
  * Constructors executed before the ones defined in generated code.
  */
 namespace Symbols {
-	SymbolList __attribute__((init_priority(1000))) scintilla;
-	SymbolList __attribute__((init_priority(1000))) scilexer;
+	SymbolList scintilla INIT_PRIO(PRIO_SYMBOLS-1);
+	SymbolList scilexer INIT_PRIO(PRIO_SYMBOLS-1);
 }
 
 /*
