@@ -35,7 +35,7 @@ fi
 # For bootstrapping via installed sciteco
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
 if [[ x$SCITECO = x ]]; then
-	bootstrap = yes
+	bootstrap=yes
 fi
 
 # Checks for libraries.
@@ -80,7 +80,9 @@ AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
 		       [Specify Scintilla's path [default=..]]),
 	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=..])
-SCINTILLA_PATH=`$READLINK -e $SCINTILLA_PATH`
+# eval necessary to perform necessary expansions that may not
+# have been done by the calling shell
+SCINTILLA_PATH=`eval $READLINK -e $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
 CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include -DSCI_LEXER"

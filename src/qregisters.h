@@ -156,7 +156,7 @@ class QRegisterTable : public RBTree {
 	bool must_undo;
 
 public:
-	QRegisterTable(bool _undo = true) : RBTree(), must_undo(_undo) {}
+	QRegisterTable(bool _undo = true);
 
 	inline QRegister *
 	insert(QRegister *reg)
@@ -177,9 +177,8 @@ public:
 	inline void
 	initialize(gchar name)
 	{
-		initialize((gchar []){name, '\0'});
+		initialize(CHR2STR(name));
 	}
-	void initialize(void);
 
 	inline QRegister *
 	operator [](const gchar *name)
