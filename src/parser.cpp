@@ -71,7 +71,8 @@ gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
 void
-Execute::step(const gchar *&macro, gint &stop_pos) throw (State::Error)
+Execute::step(const gchar *&macro, gint &stop_pos)
+	     throw (State::Error, ReplaceCmdline)
 {
 	while (macro_pc < stop_pos) {
 #ifdef DEBUG
@@ -89,7 +90,8 @@ Execute::step(const gchar *&macro, gint &stop_pos) throw (State::Error)
 }
 
 void
-Execute::macro(const gchar *macro, bool locals) throw (State::Error)
+Execute::macro(const gchar *macro, bool locals)
+	      throw (State::Error, ReplaceCmdline)
 {
 	gint macro_len = strlen(macro);
 
@@ -168,6 +170,13 @@ Execute::file(const gchar *filename, bool locals)
 	return true;
 }
 
+ReplaceCmdline::ReplaceCmdline(gchar *_new_cmdline)
+			      : new_cmdline(_new_cmdline)
+{
+	for (pos = 0; cmdline[pos] && cmdline[pos] == new_cmdline[pos]; pos++);
+	pos++;
+}
+
 State::Error::Error(const gchar *fmt, ...)
 {
 	va_list ap;
@@ -195,7 +204,7 @@ State::eval_colon(void)
 }
 
 void
-State::input(gchar chr) throw (Error)
+State::input(gchar chr) throw (Error, ReplaceCmdline)
 {
 	State *state = States::current;
 
@@ -216,7 +225,7 @@ State::input(gchar chr) throw (Error)
 }
 
 State *
-State::get_next_state(gchar chr) throw (Error)
+State::get_next_state(gchar chr) throw (Error, ReplaceCmdline)
 {
 	State *next = NULL;
 	guint upper = g_ascii_toupper(chr);
@@ -602,7 +611,7 @@ StateStart::delete_words(gint64 n)
 }
 
 State *
-StateStart::custom(gchar chr) throw (Error)
+StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 {
 	gint64 v;
 	tecoBool rc;
@@ -847,8 +856,8 @@ StateStart::custom(gchar chr) throw (Error)
 	}
 
 	case '}': {
-		gint size, i;
-		gchar *old_cmdline, *new_cmdline;
+		gint size;
+		gchar *new_cmdline;
 
 		BEGIN_EXEC(this);
 		if (!undo.enabled)
@@ -859,35 +868,8 @@ StateStart::custom(gchar chr) throw (Error)
 		new_cmdline = (gchar *)g_malloc(size);
 		interface.ssm(SCI_GETTEXT, size, (sptr_t)new_cmdline);
 
-		for (i = 0; cmdline[i] && cmdline[i] == new_cmdline[i]; i++);
-		undo.pop(i+1);
-
-		old_cmdline = cmdline;
-		cmdline = new_cmdline;
-		cmdline_pos = i+1;
-		macro_pc = i; /* FIXME */
-
-		while (cmdline_pos <= (gint)strlen(cmdline)) {
-			try {
-				Execute::step((const gchar *&)cmdline, cmdline_pos);
-			} catch (...) {
-				undo.pop(i+1);
-				cmdline = old_cmdline;
-				cmdline[strlen(cmdline)-1] = '\0';
-				g_free(new_cmdline);
-				old_cmdline = NULL;
-				cmdline_pos = i;
-				macro_pc = i-1; /* FIXME */
-				break;
-			}
-
-			cmdline_pos++;
-		}
-
-		g_free(old_cmdline);
-
-		/* state may have changed due to undoing */
-		return States::current;
+		/* replace cmdline in the outer macro environment */
+		throw ReplaceCmdline(new_cmdline);
 	}
 
 	/*

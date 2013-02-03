@@ -171,7 +171,7 @@ QRegister::undo_edit(void)
 }
 
 void
-QRegister::execute(bool locals) throw (State::Error)
+QRegister::execute(bool locals) throw (State::Error, ReplaceCmdline)
 {
 	gchar *str = get_string();
 
@@ -359,7 +359,7 @@ StateExpectQReg::StateExpectQReg() : State(), got_local(false)
 }
 
 State *
-StateExpectQReg::custom(gchar chr) throw (Error)
+StateExpectQReg::custom(gchar chr) throw (Error, ReplaceCmdline)
 {
 	QRegister *reg;
 
@@ -509,7 +509,7 @@ StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
 }
 
 State *
-StateMacro::got_register(QRegister &reg) throw (Error)
+StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
 {
 	BEGIN_EXEC(&States::start);
 

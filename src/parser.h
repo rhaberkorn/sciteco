@@ -26,6 +26,15 @@
 /* TECO uses only lower 7 bits for commands */
 #define MAX_TRANSITIONS	127
 
+/* thrown as exception, executed at cmdline macro level */
+class ReplaceCmdline {
+public:
+	gchar *new_cmdline;
+	gint pos;
+
+	ReplaceCmdline(gchar *_new_cmdline);
+};
+
 class State {
 public:
 	class Error {
@@ -86,14 +95,14 @@ protected:
 public:
 	State();
 
-	static void input(gchar chr) throw (Error);
-	State *get_next_state(gchar chr) throw (Error);
+	static void input(gchar chr) throw (Error, ReplaceCmdline);
+	State *get_next_state(gchar chr) throw (Error, ReplaceCmdline);
 
 protected:
 	static bool eval_colon(void);
 
 	virtual State *
-	custom(gchar chr) throw (Error)
+	custom(gchar chr) throw (Error, ReplaceCmdline)
 	{
 		throw SyntaxError(chr);
 		return NULL;
@@ -164,7 +173,7 @@ private:
 
 	tecoBool delete_words(gint64 n);
 
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr) throw (Error, ReplaceCmdline);
 };
 
 class StateControl : public State {
@@ -253,8 +262,10 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 namespace Execute {
-	void step(const gchar *&macro, gint &stop_pos) throw (State::Error);
-	void macro(const gchar *macro, bool locals = true) throw (State::Error);
+	void step(const gchar *&macro, gint &stop_pos)
+		 throw (State::Error, ReplaceCmdline);
+	void macro(const gchar *macro, bool locals = true)
+		  throw (State::Error, ReplaceCmdline);
 	bool file(const gchar *filename, bool locals = true);
 }
 

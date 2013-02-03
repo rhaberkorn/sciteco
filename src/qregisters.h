@@ -116,7 +116,7 @@ public:
 	virtual void edit(void);
 	virtual void undo_edit(void);
 
-	void execute(bool locals = true) throw (State::Error);
+	void execute(bool locals = true) throw (State::Error, ReplaceCmdline);
 
 	bool load(const gchar *filename);
 	inline void
@@ -268,10 +268,11 @@ public:
 	StateExpectQReg();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr) throw (Error, ReplaceCmdline);
 
 protected:
-	virtual State *got_register(QRegister &reg) throw (Error) = 0;
+	virtual State *got_register(QRegister &reg)
+				   throw (Error, ReplaceCmdline) = 0;
 };
 
 class StatePushQReg : public StateExpectQReg {
@@ -328,7 +329,7 @@ private:
 
 class StateMacro : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg) throw (Error, ReplaceCmdline);
 };
 
 class StateCopyToQReg : public StateExpectQReg {

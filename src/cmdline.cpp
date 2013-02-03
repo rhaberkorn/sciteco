@@ -61,6 +61,9 @@ namespace States {
 void
 cmdline_keypress(gchar key)
 {
+	gchar *old_cmdline = NULL;
+	gint repl_pos;
+
 	const gchar *insert;
 	gchar *echo;
 
@@ -85,22 +88,42 @@ cmdline_keypress(gchar key)
 	while (cmdline_pos <= (gint)strlen(cmdline)) {
 		try {
 			Execute::step((const gchar *&)cmdline, cmdline_pos);
+		} catch (ReplaceCmdline &r) {
+			undo.pop(r.pos);
+
+			old_cmdline = cmdline;
+			cmdline = r.new_cmdline;
+			cmdline_pos = repl_pos = r.pos;
+			macro_pc = r.pos-1;
 		} catch (...) {
-			/*
-			 * Undo tokens may have been emitted (or had to be)
-			 * before the exception is thrown. They must be
-			 * executed so as if the character had never been
-			 * inserted.
-			 */
-			undo.pop(cmdline_pos);
-			cmdline[cmdline_pos-1] = '\0';
-			/* program counter could be messed up */
-			macro_pc = cmdline_pos - 1;
-			break;
+			if (old_cmdline) {
+				undo.pop(repl_pos);
+
+				g_free(cmdline);
+				cmdline = old_cmdline;
+				cmdline[strlen(cmdline)-1] = '\0';
+				old_cmdline = NULL;
+				cmdline_pos = repl_pos-1;
+				macro_pc = repl_pos-1;
+			} else {
+				/*
+				 * Undo tokens may have been emitted (or had to be)
+				 * before the exception is thrown. They must be
+				 * executed so as if the character had never been
+				 * inserted.
+				 */
+				undo.pop(cmdline_pos);
+				cmdline[cmdline_pos-1] = '\0';
+				/* program counter could be messed up */
+				macro_pc = cmdline_pos - 1;
+				break;
+			}
 		}
 
 		cmdline_pos++;
 	}
+
+	g_free(old_cmdline);
 
 	/*
 	 * Echo command line
