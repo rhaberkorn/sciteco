@@ -29,9 +29,20 @@ Features:
  * modifier for toggling string building processing
  * simplify parser (static jump tables are unnecessary!)
  * ??? optional modified-detection based on hash sums ???
- * backup files
+ * backup files, or even better Journal files:
+   could write a Macro file for each modified file containing
+   only basic commands (no loops etc.). it is removed when the file is
+   saved. in case of an abnormal program termination the
+   journal file can be replayed.
  * search and other commands can be significantly optimized:
-   in batch mode, or in loops there is no need to rematch every character!
+   in batch mode, or in loops/macros there is no need to rematch every character!
+   -> immediate vs. non-immediate command execution
+ * batch mode can be optimized by preventing unnecessary allocations/deallocations
+   for UNDO token creation. Check for undo.enabled in constructors like
+   undo.push_msg|var() where the undo token destruction does not have any
+   significant side effects.
+ * use "friend" functions for C-linkage callbacks that must access a class'
+   member instead of making that member public
 
 Documentation:
  * Code docs (Doxygen)
