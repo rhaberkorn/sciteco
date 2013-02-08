@@ -22,7 +22,6 @@ Features:
    -> Macro libraries
  * Q-Register aliasing/linking
  * EC command
- * command-line push-down mechanism
  * TECO syntax highlighting
  * multiline commandline
    * perhaps use Scintilla view as mini buffer
