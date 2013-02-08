@@ -56,6 +56,14 @@ namespace QRegisters {
 	QRegisterTable		*locals = NULL;
 	QRegister		*current = NULL;
 
+	void
+	undo_edit(void)
+	{
+		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+		undo.push_var(ring.current);
+		undo.push_var(current)->undo_edit();
+	}
+
 	static QRegisterStack	stack;
 }
 

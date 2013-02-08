@@ -208,8 +208,8 @@ public:
 	undo_edit(void)
 	{
 		current->dot = interface.ssm(SCI_GETCURRENTPOS);
-		undo.push_var(current);
-		current->undo_edit();
+		undo.push_var(QRegisters::current);
+		undo.push_var(current)->undo_edit();
 	}
 
 	bool save(const gchar *filename);

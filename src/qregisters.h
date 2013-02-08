@@ -357,12 +357,7 @@ namespace QRegisters {
 	extern QRegisterTable	*locals;
 	extern QRegister	*current;
 
-	static inline void
-	undo_edit(void)
-	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
-		undo.push_var(current)->undo_edit();
-	}
+	void undo_edit(void);
 
 	enum Hook {
 		HOOK_ADD = 1,
