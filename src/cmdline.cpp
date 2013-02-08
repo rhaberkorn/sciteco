@@ -87,7 +87,7 @@ cmdline_keypress(gchar key)
 
 	while (cmdline_pos <= (gint)strlen(cmdline)) {
 		try {
-			Execute::step((const gchar *&)cmdline, cmdline_pos);
+			Execute::step(cmdline, cmdline_pos);
 		} catch (ReplaceCmdline &r) {
 			undo.pop(r.pos);
 

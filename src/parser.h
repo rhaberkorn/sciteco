@@ -262,7 +262,7 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 namespace Execute {
-	void step(const gchar *&macro, gint &stop_pos)
+	void step(const gchar *macro, gint stop_pos)
 		 throw (State::Error, ReplaceCmdline);
 	void macro(const gchar *macro, bool locals = true)
 		  throw (State::Error, ReplaceCmdline);

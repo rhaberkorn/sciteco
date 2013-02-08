@@ -71,7 +71,7 @@ gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
 void
-Execute::step(const gchar *&macro, gint &stop_pos)
+Execute::step(const gchar *macro, gint stop_pos)
 	     throw (State::Error, ReplaceCmdline)
 {
 	while (macro_pc < stop_pos) {
@@ -93,8 +93,6 @@ void
 Execute::macro(const gchar *macro, bool locals)
 	      throw (State::Error, ReplaceCmdline)
 {
-	gint macro_len = strlen(macro);
-
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
 
@@ -118,7 +116,7 @@ Execute::macro(const gchar *macro, bool locals)
 	}
 
 	try {
-		step(macro, macro_len);
+		step(macro, strlen(macro));
 		if (Goto::skip_label)
 			throw State::Error("Label \"%s\" not found",
 					   Goto::skip_label);
