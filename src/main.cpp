@@ -231,6 +231,9 @@ main(int argc, char **argv)
 	/*
 	 * If munged file didn't quit, switch into interactive mode
 	 */
+	/* commandline replacement string register */
+	QRegisters::globals.initialize("\x1B");
+
 	Goto::table = &cmdline_goto_table;
 	interface.ssm(SCI_EMPTYUNDOBUFFER);
 	undo.enabled = true;

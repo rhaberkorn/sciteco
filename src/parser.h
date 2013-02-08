@@ -32,7 +32,7 @@ public:
 	gchar *new_cmdline;
 	gint pos;
 
-	ReplaceCmdline(gchar *_new_cmdline);
+	ReplaceCmdline();
 };
 
 class State {

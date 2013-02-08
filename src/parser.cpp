@@ -170,9 +170,11 @@ Execute::file(const gchar *filename, bool locals)
 	return true;
 }
 
-ReplaceCmdline::ReplaceCmdline(gchar *_new_cmdline)
-			      : new_cmdline(_new_cmdline)
+ReplaceCmdline::ReplaceCmdline()
 {
+	QRegister *cmdline_reg = QRegisters::globals["\x1B"];
+
+	new_cmdline = cmdline_reg->get_string();
 	for (pos = 0; cmdline[pos] && cmdline[pos] == new_cmdline[pos]; pos++);
 	pos++;
 }
@@ -832,45 +834,35 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	/*
 	 * Command-line editing
 	 */
-	case '{': {
-		void *document;
-
+	case '{':
 		BEGIN_EXEC(this);
 		if (!undo.enabled)
 			throw Error("Command-line editing only possible in "
 				    "interactive mode");
-
-		current_save_dot();
 
 		if (ring.current)
-			ring.current->undo_edit();
-		else if (QRegisters::current)
-			QRegisters::current->undo_edit();
+			ring.undo_edit();
+		else /* QRegisters::current != NULL */
+			QRegisters::undo_edit();
+		QRegisters::globals.edit("\x1B");
 
-		document = (void *)interface.ssm(SCI_CREATEDOCUMENT);
-		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)document);
+		interface.ssm(SCI_BEGINUNDOACTION);
+		interface.ssm(SCI_CLEARALL);
 		interface.ssm(SCI_ADDTEXT, cmdline_pos-1, (sptr_t)cmdline);
+		/* FIXME: scroll into view */
+		interface.ssm(SCI_ENDUNDOACTION);
 
-		undo.push_msg(SCI_RELEASEDOCUMENT, 0, (sptr_t)document);
+		undo.push_msg(SCI_UNDO);
 		break;
-	}
 
-	case '}': {
-		gint size;
-		gchar *new_cmdline;
-
+	case '}':
 		BEGIN_EXEC(this);
 		if (!undo.enabled)
 			throw Error("Command-line editing only possible in "
 				    "interactive mode");
 
-		size = interface.ssm(SCI_GETLENGTH) + 1;
-		new_cmdline = (gchar *)g_malloc(size);
-		interface.ssm(SCI_GETTEXT, size, (sptr_t)new_cmdline);
-
 		/* replace cmdline in the outer macro environment */
-		throw ReplaceCmdline(new_cmdline);
-	}
+		throw ReplaceCmdline();
 
 	/*
 	 * modifiers
