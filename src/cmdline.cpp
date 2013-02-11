@@ -139,7 +139,8 @@ process_edit_cmd(gchar key)
 	static gchar insert[255];
 	gint cmdline_len = cmdline ? strlen(cmdline) : 0;
 
-	insert[0] = '\0';
+	insert[0] = key;
+	insert[1] = '\0';
 
 	switch (key) {
 	case '\b':
@@ -148,17 +149,20 @@ process_edit_cmd(gchar key)
 			cmdline[cmdline_len - 1] = '\0';
 			macro_pc--;
 		}
+		*insert = '\0';
 		break;
 
-	case CTL_KEY('T'): {
-		const gchar *filename = cmdline ? last_occurrence(cmdline) + 1
-						: NULL;
-		gchar *new_chars = filename_complete(filename);
-		if (new_chars)
-			g_stpcpy(insert, new_chars);
-		g_free(new_chars);
+	case CTL_KEY('T'):
+		if (dynamic_cast<StateExpectString *>(States::current)) {
+			const gchar *filename = last_occurrence(strings[0]);
+			gchar *new_chars = filename_complete(filename);
+
+			*insert = '\0';
+			if (new_chars)
+				g_stpcpy(insert, new_chars);
+			g_free(new_chars);
+		}
 		break;
-	}
 
 	case '\t':
 		if (States::current == &States::editfile ||
@@ -167,35 +171,30 @@ process_edit_cmd(gchar key)
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0],
 							     complete);
+
+			*insert = '\0';
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
 		} else if (States::current == &States::scintilla_symbols) {
-			const gchar *symbol = NULL;
-			SymbolList *list = &Symbols::scintilla;
-			gchar *new_chars;
+			const gchar *symbol = last_occurrence(strings[0], ",");
+			SymbolList &list = symbol == strings[0]
+						? Symbols::scintilla
+						: Symbols::scilexer;
+			gchar *new_chars = symbol_complete(list, symbol, ',');
 
-			if (strings[0]) {
-				symbol = last_occurrence(strings[0], ",");
-				if (*symbol == ',') {
-					symbol++;
-					list = &Symbols::scilexer;
-				}
-			}
-
-			new_chars = symbol_complete(*list, symbol, ',');
+			*insert = '\0';
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
-		} else {
-			insert[0] = key;
-			insert[1] = '\0';
 		}
 		break;
 
 	case '\x1B':
 		if (States::current == &States::start &&
 		    cmdline && cmdline[cmdline_len - 1] == '\x1B') {
+			*insert = '\0';
+
 			if (Goto::skip_label) {
 				interface.msg(Interface::MSG_ERROR,
 					      "Label \"%s\" not found",
@@ -217,12 +216,8 @@ process_edit_cmd(gchar key)
 			last_cmdline = cmdline;
 			cmdline = NULL;
 			macro_pc = 0;
-			break;
 		}
-		/* fall through */
-	default:
-		insert[0] = key;
-		insert[1] = '\0';
+		break;
 	}
 
 	return insert;
@@ -416,8 +411,14 @@ StateSaveCmdline::got_register(QRegister &reg) throw (Error)
 static const gchar *
 last_occurrence(const gchar *str, const gchar *chars)
 {
-	while (*chars)
-		str = strrchr(str, *chars++) ? : str;
+	if (!str)
+		return NULL;
+
+	while (*chars) {
+		const gchar *p = strrchr(str, *chars++);
+		if (p)
+			str = p+1;
+	}
 
 	return str;
 }
