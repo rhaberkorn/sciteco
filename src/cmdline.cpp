@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -250,6 +251,17 @@ process_edit_cmd(gchar key)
 			cmdline = NULL;
 			macro_pc = 0;
 		}
+		break;
+
+	case CTL_KEY('Z'):
+		/*
+		 * <CTL/Z> does not raise signal if handling of
+		 * special characters temporarily disabled in terminal
+		 * (Curses), or command-line is detached from
+		 * terminal (GTK+)
+		 */
+		raise(SIGTSTP);
+		*insert = '\0';
 		break;
 	}
 
