@@ -176,6 +176,15 @@ process_edit_cmd(gchar key)
 		*insert = '\0';
 		break;
 
+	case CTL_KEY('U'):
+		if (States::is_string()) {
+			while (strings[0] && strlen(strings[0]) > 0)
+				undo.pop(macro_pc--);
+			cmdline[macro_pc] = '\0';
+			*insert = '\0';
+		}
+		break;
+
 	case CTL_KEY('T'):
 		if (States::is_string()) {
 			const gchar *filename = last_occurrence(strings[0]);
