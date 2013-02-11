@@ -159,13 +159,12 @@ process_edit_cmd(gchar key)
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
 			/* rubout non-word chars */
-			do
+			while (strings[0] && strlen(strings[0]) > 0 &&
+			       !strchr(wchars, cmdline[macro_pc-1]))
 				undo.pop(macro_pc--);
-			while (States::is_string() &&
-			       !strchr(wchars, cmdline[macro_pc-1]));
 
 			/* rubout word chars */
-			while (States::is_string() &&
+			while (strings[0] && strlen(strings[0]) > 0 &&
 			       strchr(wchars, cmdline[macro_pc-1]))
 				undo.pop(macro_pc--);
 		} else if (cmdline_len) {
