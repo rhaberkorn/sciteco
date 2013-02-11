@@ -152,6 +152,30 @@ process_edit_cmd(gchar key)
 		*insert = '\0';
 		break;
 
+	case CTL_KEY('W'):
+		if (dynamic_cast<StateExpectString *>(States::current)) {
+			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
+			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
+
+			/* rubout non-word chars */
+			do
+				undo.pop(macro_pc--);
+			while (dynamic_cast<StateExpectString *>(States::current) &&
+			       !strchr(wchars, cmdline[macro_pc-1]));
+
+			/* rubout word chars */
+			while (dynamic_cast<StateExpectString *>(States::current) &&
+			       strchr(wchars, cmdline[macro_pc-1]))
+				undo.pop(macro_pc--);
+		} else if (cmdline_len) {
+			do
+				undo.pop(macro_pc--);
+			while (States::current != &States::start);
+		}
+		cmdline[macro_pc] = '\0';
+		*insert = '\0';
+		break;
+
 	case CTL_KEY('T'):
 		if (dynamic_cast<StateExpectString *>(States::current)) {
 			const gchar *filename = last_occurrence(strings[0]);
