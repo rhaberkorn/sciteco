@@ -242,6 +242,12 @@ namespace States {
 	extern StateInsert		insert;
 
 	extern State *current;
+
+	static inline bool
+	is_string()
+	{
+		return dynamic_cast<StateExpectString *>(current);
+	}
 }
 
 extern enum Mode {

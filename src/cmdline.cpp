@@ -107,9 +107,10 @@ cmdline_keypress(gchar key)
 				macro_pc = repl_pos-1;
 			} else {
 				/*
-				 * Undo tokens may have been emitted (or had to be)
-				 * before the exception is thrown. They must be
-				 * executed so as if the character had never been
+				 * Undo tokens may have been emitted
+				 * (or had to be) before the exception
+				 * is thrown. They must be executed so
+				 * as if the character had never been
 				 * inserted.
 				 */
 				undo.pop(cmdline_pos);
@@ -153,18 +154,18 @@ process_edit_cmd(gchar key)
 		break;
 
 	case CTL_KEY('W'):
-		if (dynamic_cast<StateExpectString *>(States::current)) {
+		if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
 			/* rubout non-word chars */
 			do
 				undo.pop(macro_pc--);
-			while (dynamic_cast<StateExpectString *>(States::current) &&
+			while (States::is_string() &&
 			       !strchr(wchars, cmdline[macro_pc-1]));
 
 			/* rubout word chars */
-			while (dynamic_cast<StateExpectString *>(States::current) &&
+			while (States::is_string() &&
 			       strchr(wchars, cmdline[macro_pc-1]))
 				undo.pop(macro_pc--);
 		} else if (cmdline_len) {
@@ -177,7 +178,7 @@ process_edit_cmd(gchar key)
 		break;
 
 	case CTL_KEY('T'):
-		if (dynamic_cast<StateExpectString *>(States::current)) {
+		if (States::is_string()) {
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
