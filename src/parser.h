@@ -21,6 +21,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "undo.h"
 #include "sciteco.h"
 
 /* TECO uses only lower 7 bits for commands */
@@ -109,36 +110,62 @@ protected:
 	}
 };
 
+template <typename Type>
+class MicroStateMachine {
+protected:
+	typedef void *MicroState;
+	MicroState state;
+
+public:
+	MicroStateMachine() : state(NULL) {}
+
+	inline void
+	set(MicroState next)
+	{
+		if (next != state)
+			undo.push_var(state) = next;
+	}
+
+	virtual inline void
+	reset(void)
+	{
+		set(NULL);
+	}
+
+	virtual Type input(gchar chr) throw (State::Error) = 0;
+};
+
+class StringBuildingMachine : public MicroStateMachine<gchar *> {
+	enum Mode {
+		MODE_NORMAL,
+		MODE_UPPER,
+		MODE_LOWER
+	} mode;
+
+	bool toctl;
+
+public:
+	StringBuildingMachine() : MicroStateMachine(),
+				  mode(MODE_NORMAL), toctl(false) {}
+
+	void
+	reset(void)
+	{
+		MicroStateMachine::reset();
+		undo.push_var(mode) = MODE_NORMAL;
+		undo.push_var(toctl) = false;
+	}
+
+	gchar *input(gchar chr) throw (State::Error);
+};
+
 /*
  * Super-class for states accepting string arguments
  * Opaquely cares about alternative-escape characters,
  * string building commands and accumulation into a string
  */
 class StateExpectString : public State {
-	struct Machine {
-		enum State {
-			STATE_START,
-			STATE_ESCAPED,
-			STATE_LOWER,
-			STATE_UPPER,
-			STATE_CTL_E,
-			STATE_CTL_EQ,
-			STATE_CTL_EQ_LOCAL,
-			STATE_CTL_EU,
-			STATE_CTL_EU_LOCAL
-		} state;
-
-		enum Mode {
-			MODE_NORMAL,
-			MODE_UPPER,
-			MODE_LOWER
-		} mode;
-
-		bool toctl;
-
-		Machine() : state(STATE_START),
-			    mode(MODE_NORMAL), toctl(false) {}
-	} machine;
+	StringBuildingMachine machine;
 
 	gint nesting;
 
@@ -151,7 +178,6 @@ public:
 			   string_building(_building), last(_last) {}
 
 private:
-	gchar *machine_input(gchar key) throw (Error);
 	State *custom(gchar chr) throw (Error);
 
 protected:

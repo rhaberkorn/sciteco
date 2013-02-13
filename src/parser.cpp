@@ -241,127 +241,124 @@ State::get_next_state(gchar chr) throw (Error, ReplaceCmdline)
 }
 
 gchar *
-StateExpectString::machine_input(gchar chr) throw (Error)
+StringBuildingMachine::input(gchar chr) throw (State::Error)
 {
-	switch (machine.mode) {
-	case Machine::MODE_UPPER:
+	switch (mode) {
+	case MODE_UPPER:
 		chr = g_ascii_toupper(chr);
 		break;
-	case Machine::MODE_LOWER:
+	case MODE_LOWER:
 		chr = g_ascii_tolower(chr);
 		break;
 	default:
 		break;
 	}
 
-	if (machine.toctl) {
-		chr = CTL_KEY(g_ascii_toupper(chr));
-		machine.toctl = false;
-	}
-
-	if (machine.state == Machine::STATE_ESCAPED) {
-		machine.state = Machine::STATE_START;
-		goto original;
-	}
-
-	if (chr == '^') {
-		machine.toctl = true;
+	if (toctl) {
+		if (chr != '^')
+			chr = CTL_KEY(g_ascii_toupper(chr));
+		undo.push_var(toctl) = false;
+	} else if (chr == '^') {
+		undo.push_var(toctl) = true;
 		return NULL;
 	}
 
-	switch (machine.state) {
-	case Machine::STATE_START:
-		switch (chr) {
-		case CTL_KEY('Q'):
-		case CTL_KEY('R'): machine.state = Machine::STATE_ESCAPED; break;
-		case CTL_KEY('V'): machine.state = Machine::STATE_LOWER; break;
-		case CTL_KEY('W'): machine.state = Machine::STATE_UPPER; break;
-		case CTL_KEY('E'): machine.state = Machine::STATE_CTL_E; break;
-		default:
-			goto original;
-		}
-		break;
+	if (state)
+		goto *state;
 
-	case Machine::STATE_LOWER:
-		machine.state = Machine::STATE_START;
-		if (chr != CTL_KEY('V'))
-			return g_strdup((gchar []){g_ascii_tolower(chr), '\0'});
-		machine.mode = Machine::MODE_LOWER;
-		break;
-
-	case Machine::STATE_UPPER:
-		machine.state = Machine::STATE_START;
-		if (chr != CTL_KEY('W'))
-			return g_strdup((gchar []){g_ascii_toupper(chr), '\0'});
-		machine.mode = Machine::MODE_UPPER;
-		break;
-
-	case Machine::STATE_CTL_E:
-		switch (g_ascii_toupper(chr)) {
-		case 'Q': machine.state = Machine::STATE_CTL_EQ; break;
-		case 'U': machine.state = Machine::STATE_CTL_EU; break;
-		default:
-			machine.state = Machine::STATE_START;
-			return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
-		}
-		break;
-
-	case Machine::STATE_CTL_EU:
-		if (chr == '.') {
-			machine.state = Machine::STATE_CTL_EU_LOCAL;
-		} else {
-			QRegister *reg;
-
-			machine.state = Machine::STATE_START;
-			reg = QRegisters::globals[g_ascii_toupper(chr)];
-			if (!reg)
-				throw InvalidQRegError(chr);
-			return g_strdup(CHR2STR(reg->get_integer()));
-		}
-		break;
-
-	case Machine::STATE_CTL_EU_LOCAL: {
-		QRegister *reg;
-
-		machine.state = Machine::STATE_START;
-		reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
-		if (!reg)
-			throw InvalidQRegError(chr, true);
-		return g_strdup(CHR2STR(reg->get_integer()));
-	}
-
-	case Machine::STATE_CTL_EQ:
-		if (chr == '.') {
-			machine.state = Machine::STATE_CTL_EQ_LOCAL;
-		} else {
-			QRegister *reg;
-
-			machine.state = Machine::STATE_START;
-			reg = QRegisters::globals[g_ascii_toupper(chr)];
-			if (!reg)
-				throw InvalidQRegError(chr);
-			return reg->get_string();
-		}
-		break;
-
-	case Machine::STATE_CTL_EQ_LOCAL: {
-		QRegister *reg;
-
-		machine.state = Machine::STATE_START;
-		reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
-		if (!reg)
-			throw InvalidQRegError(chr, true);
-		return reg->get_string();
-	}
-
+	/* NULL state */
+	switch (chr) {
+	case CTL_KEY('Q'):
+	case CTL_KEY('R'): set(&&StateEscaped); break;
+	case CTL_KEY('V'): set(&&StateLower); break;
+	case CTL_KEY('W'): set(&&StateUpper); break;
+	case CTL_KEY('E'): set(&&StateCtlE); break;
 	default:
-		g_assert(TRUE);
+		goto StateEscaped;
 	}
 
 	return NULL;
 
-original:
-	return g_strdup((gchar []){chr, '\0'});
+StateLower:
+	set(NULL);
+
+	if (chr != CTL_KEY('V'))
+		return g_strdup(CHR2STR(g_ascii_tolower(chr)));
+
+	undo.push_var(mode) = MODE_LOWER;
+	return NULL;
+
+StateUpper:
+	set(NULL);
+
+	if (chr != CTL_KEY('W'))
+		return g_strdup(CHR2STR(g_ascii_toupper(chr)));
+
+	undo.push_var(mode) = MODE_UPPER;
+	return NULL;
+
+StateCtlE:
+	switch (g_ascii_toupper(chr)) {
+	case 'Q': set(&&StateCtlEQ); break;
+	case 'U': set(&&StateCtlEU); break;
+	default:
+		set(NULL);
+		return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
+	}
+
+	return NULL;
+
+StateCtlEU:
+	if (chr == '.') {
+		set(&&StateCtlEULocal);
+		return NULL;
+	} else {
+		QRegister *reg;
+
+		reg = QRegisters::globals[g_ascii_toupper(chr)];
+		if (!reg)
+			throw State::InvalidQRegError(chr);
+		set(NULL);
+		return g_strdup(CHR2STR(reg->get_integer()));
+	}
+
+StateCtlEULocal: {
+	QRegister *reg;
+
+	reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
+	if (!reg)
+		throw State::InvalidQRegError(chr, true);
+	set(NULL);
+	return g_strdup(CHR2STR(reg->get_integer()));
+}
+
+StateCtlEQ:
+	if (chr == '.') {
+		set(&&StateCtlEQLocal);
+		return NULL;
+	} else {
+		QRegister *reg;
+
+		reg = QRegisters::globals[g_ascii_toupper(chr)];
+		if (!reg)
+			throw State::InvalidQRegError(chr);
+		set(NULL);
+		return reg->get_string();
+	}
+
+StateCtlEQLocal: {
+	QRegister *reg;
+
+	reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
+	if (!reg)
+		throw State::InvalidQRegError(chr, true);
+	set(NULL);
+	return reg->get_string();
+}
+
+StateEscaped:
+	set(NULL);
+	return g_strdup(CHR2STR(chr));
 }
 
 State *
@@ -393,17 +390,14 @@ StateExpectString::custom(gchar chr) throw (Error)
 	if (escape_char == '{') {
 		switch (chr) {
 		case '{':
-			undo.push_var(nesting);
-			nesting++;
+			undo.push_var(nesting)++;
 			break;
 		case '}':
-			undo.push_var(nesting);
-			nesting--;
+			undo.push_var(nesting)--;
 			break;
 		}
 	} else if (g_ascii_toupper(chr) == escape_char) {
-		undo.push_var(nesting);
-		nesting--;
+		undo.push_var(nesting)--;
 	}
 
 	if (!nesting) {
@@ -415,12 +409,8 @@ StateExpectString::custom(gchar chr) throw (Error)
 			undo.push_var(escape_char) = '\x1B';
 		nesting = 1;
 
-		if (string_building) {
-			undo.push_var(machine);
-			machine.state = Machine::STATE_START;
-			machine.mode = Machine::MODE_NORMAL;
-			machine.toctl = false;
-		}
+		if (string_building)
+			machine.reset();
 
 		next = done(string ? : "");
 		g_free(string);
@@ -433,12 +423,11 @@ StateExpectString::custom(gchar chr) throw (Error)
 	 * String building characters
 	 */
 	if (string_building) {
-		undo.push_var(machine);
-		insert = machine_input(chr);
+		insert = machine.input(chr);
 		if (!insert)
 			return this;
 	} else {
-		insert = g_strdup((gchar []){chr, '\0'});
+		insert = g_strdup(CHR2STR(chr));
 	}
 
 	/*
