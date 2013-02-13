@@ -357,11 +357,85 @@ QRegisters::hook(Hook type)
 	globals["0"]->execute();
 }
 
+void
+QRegSpecMachine::reset(void)
+{
+	MicroStateMachine::reset();
+	string_machine.reset();
+	undo.push_var(is_local) = false;
+	undo.push_var(nesting) = 0;
+	undo.push_str(name);
+	g_free(name);
+	name = NULL;
+}
+
+QRegister *
+QRegSpecMachine::input(gchar chr) throw (State::Error)
+{
+	QRegister *reg;
+	gchar *insert;
+
+	if (state)
+		goto *state;
+
+	/* NULL state */
+	switch (chr) {
+	case '.': undo.push_var(is_local) = true; break;
+	case '#': set(&&StateFirstChar); break;
+	case '{': set(&&StateString); break;
+	default:
+		undo.push_str(name) = g_strdup(CHR2STR(g_ascii_toupper(chr)));
+		goto done;
+	}
+
+	return NULL;
+
+StateFirstChar:
+	undo.push_str(name) = (gchar *)g_malloc(3);
+	name[0] = g_ascii_toupper(chr);
+	set(&&StateSecondChar);
+	return NULL;
+
+StateSecondChar:
+	name[1] = g_ascii_toupper(chr);
+	name[2] = '\0';
+	goto done;
+
+StateString:
+	switch (chr) {
+	case '{':
+		undo.push_var(nesting)++;
+		break;
+	case '}':
+		if (!nesting)
+			goto done;
+		undo.push_var(nesting)--;
+		break;
+	}
+
+	insert = string_machine.input(chr);
+	if (!insert)
+		return NULL;
+
+	undo.push_str(name);
+	String::append(name, insert);
+	g_free(insert);
+	return NULL;
+
+done:
+	reg = is_local ? (*QRegisters::locals)[name]
+		       : QRegisters::globals[name];
+	if (!reg)
+		throw State::InvalidQRegError(name, is_local);
+
+	return reg;
+}
+
 /*
  * Command states
  */
 
-StateExpectQReg::StateExpectQReg() : State(), got_local(false)
+StateExpectQReg::StateExpectQReg() : State()
 {
 	transitions['\0'] = this;
 }
@@ -369,22 +443,11 @@ StateExpectQReg::StateExpectQReg() : State(), got_local(false)
 State *
 StateExpectQReg::custom(gchar chr) throw (Error, ReplaceCmdline)
 {
-	QRegister *reg;
+	QRegister *reg = machine.input(chr);
 
-	if (chr == '.') {
-		undo.push_var(got_local) = true;
-		return this;
-	}
-	chr = g_ascii_toupper(chr);
-
-	if (got_local) {
-		undo.push_var(got_local) = false;
-		reg = (*QRegisters::locals)[chr];
-	} else {
-		reg = QRegisters::globals[chr];
-	}
 	if (!reg)
-		throw InvalidQRegError(chr, got_local);
+		return this;
+	machine.reset();
 
 	return got_register(*reg);
 }

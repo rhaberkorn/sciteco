@@ -254,6 +254,27 @@ public:
 	bool pop(QRegister &reg);
 };
 
+class QRegSpecMachine : public MicroStateMachine<QRegister *> {
+	StringBuildingMachine string_machine;
+
+	bool is_local;
+	gint nesting;
+	gchar *name;
+
+public:
+	QRegSpecMachine() : MicroStateMachine(),
+			    is_local(false), nesting(0), name(NULL) {}
+
+	~QRegSpecMachine()
+	{
+		g_free(name);
+	}
+
+	void reset(void);
+
+	QRegister *input(gchar chr) throw (State::Error);
+};
+
 /*
  * Command states
  */
@@ -262,7 +283,7 @@ public:
  * Super class for states accepting Q-Register specifications
  */
 class StateExpectQReg : public State {
-	bool got_local;
+	QRegSpecMachine machine;
 
 public:
 	StateExpectQReg();
