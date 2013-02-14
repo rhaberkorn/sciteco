@@ -18,8 +18,10 @@ Features:
    * function-key to ASCII/UTF mapping (as command executes macro of the same name)
  * Command to free Q-Register (remove from table)
  * refactor match-char state machine using MicroStateMachine class
+ * autocompletion of long Q-Reg names
  * Q-Register aliasing/linking
  * EC command
+   * perhaps support Bash completions
  * TECO syntax highlighting
  * multiline commandline
    * perhaps use Scintilla view as mini buffer
