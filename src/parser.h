@@ -135,7 +135,12 @@ public:
 	virtual Type input(gchar chr) throw (State::Error) = 0;
 };
 
+/* avoid circular dependency on qregisters.h */
+class QRegSpecMachine;
+
 class StringBuildingMachine : public MicroStateMachine<gchar *> {
+	QRegSpecMachine *qregspec_machine;
+
 	enum Mode {
 		MODE_NORMAL,
 		MODE_UPPER,
@@ -146,15 +151,11 @@ class StringBuildingMachine : public MicroStateMachine<gchar *> {
 
 public:
 	StringBuildingMachine() : MicroStateMachine(),
+				  qregspec_machine(NULL),
 				  mode(MODE_NORMAL), toctl(false) {}
+	~StringBuildingMachine();
 
-	void
-	reset(void)
-	{
-		MicroStateMachine::reset();
-		undo.push_var(mode) = MODE_NORMAL;
-		undo.push_var(toctl) = false;
-	}
+	void reset(void);
 
 	gchar *input(gchar chr) throw (State::Error);
 };

@@ -240,9 +240,20 @@ State::get_next_state(gchar chr) throw (Error, ReplaceCmdline)
 	return next;
 }
 
+void
+StringBuildingMachine::reset(void)
+{
+	MicroStateMachine::reset();
+	undo.push_obj(qregspec_machine) = NULL;
+	undo.push_var(mode) = MODE_NORMAL;
+	undo.push_var(toctl) = false;
+}
+
 gchar *
 StringBuildingMachine::input(gchar chr) throw (State::Error)
 {
+	QRegister *reg;
+
 	switch (mode) {
 	case MODE_UPPER:
 		chr = g_ascii_toupper(chr);
@@ -299,8 +310,14 @@ StateUpper:
 
 StateCtlE:
 	switch (g_ascii_toupper(chr)) {
-	case 'Q': set(&&StateCtlEQ); break;
-	case 'U': set(&&StateCtlEU); break;
+	case 'Q':
+		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
+		set(&&StateCtlEQ);
+		break;
+	case 'U':
+		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
+		set(&&StateCtlEU);
+		break;
 	default:
 		set(NULL);
 		return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
@@ -309,56 +326,32 @@ StateCtlE:
 	return NULL;
 
 StateCtlEU:
-	if (chr == '.') {
-		set(&&StateCtlEULocal);
-		return NULL;
-	} else {
-		QRegister *reg;
-
-		reg = QRegisters::globals[g_ascii_toupper(chr)];
-		if (!reg)
-			throw State::InvalidQRegError(chr);
-		set(NULL);
-		return g_strdup(CHR2STR(reg->get_integer()));
-	}
-
-StateCtlEULocal: {
-	QRegister *reg;
-
-	reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
+	reg = qregspec_machine->input(chr);
 	if (!reg)
-		throw State::InvalidQRegError(chr, true);
+		return NULL;
+
+	undo.push_obj(qregspec_machine) = NULL;
 	set(NULL);
 	return g_strdup(CHR2STR(reg->get_integer()));
-}
 
 StateCtlEQ:
-	if (chr == '.') {
-		set(&&StateCtlEQLocal);
-		return NULL;
-	} else {
-		QRegister *reg;
-
-		reg = QRegisters::globals[g_ascii_toupper(chr)];
-		if (!reg)
-			throw State::InvalidQRegError(chr);
-		set(NULL);
-		return reg->get_string();
-	}
-
-StateCtlEQLocal: {
-	QRegister *reg;
-
-	reg = (*QRegisters::locals)[g_ascii_toupper(chr)];
+	reg = qregspec_machine->input(chr);
 	if (!reg)
-		throw State::InvalidQRegError(chr, true);
+		return NULL;
+
+	undo.push_obj(qregspec_machine) = NULL;
 	set(NULL);
 	return reg->get_string();
-}
 
 StateEscaped:
 	set(NULL);
 	return g_strdup(CHR2STR(chr));
+}
+
+StringBuildingMachine::~StringBuildingMachine()
+{
+	if (qregspec_machine)
+		delete qregspec_machine;
 }
 
 State *
