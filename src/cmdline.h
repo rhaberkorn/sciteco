@@ -35,6 +35,9 @@ void cmdline_keypress(gchar key);
  */
 
 class StateSaveCmdline : public StateExpectQReg {
+public:
+	StateSaveCmdline() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };

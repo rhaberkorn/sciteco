@@ -372,7 +372,6 @@ QRegSpecMachine::reset(void)
 QRegister *
 QRegSpecMachine::input(gchar chr) throw (State::Error)
 {
-	QRegister *reg;
 	gchar *insert;
 
 	if (state)
@@ -423,10 +422,15 @@ StateString:
 	return NULL;
 
 done:
-	reg = is_local ? (*QRegisters::locals)[name]
-		       : QRegisters::globals[name];
-	if (!reg)
-		throw State::InvalidQRegError(name, is_local);
+	QRegisterTable &table = is_local ? *QRegisters::locals
+					 : QRegisters::globals;
+	QRegister *reg = table[name];
+
+	if (!reg) {
+		if (!initialize)
+			throw State::InvalidQRegError(name, is_local);
+		reg = table.insert(new QRegister(name));
+	}
 
 	return reg;
 }
@@ -435,7 +439,7 @@ done:
  * Command states
  */
 
-StateExpectQReg::StateExpectQReg() : State()
+StateExpectQReg::StateExpectQReg(bool initialize) : State(), machine(initialize)
 {
 	transitions['\0'] = this;
 }

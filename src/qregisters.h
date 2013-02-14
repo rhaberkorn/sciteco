@@ -256,14 +256,17 @@ public:
 
 class QRegSpecMachine : public MicroStateMachine<QRegister *> {
 	StringBuildingMachine string_machine;
+	bool initialize;
 
 	bool is_local;
 	gint nesting;
 	gchar *name;
 
 public:
-	QRegSpecMachine() : MicroStateMachine(),
-			    is_local(false), nesting(0), name(NULL) {}
+	QRegSpecMachine(bool _init = false)
+		       : MicroStateMachine(),
+			 initialize(_init),
+			 is_local(false), nesting(0), name(NULL) {}
 
 	~QRegSpecMachine()
 	{
@@ -286,7 +289,7 @@ class StateExpectQReg : public State {
 	QRegSpecMachine machine;
 
 public:
-	StateExpectQReg();
+	StateExpectQReg(bool initialize = false);
 
 private:
 	State *custom(gchar chr) throw (Error, ReplaceCmdline);
@@ -302,11 +305,17 @@ private:
 };
 
 class StatePopQReg : public StateExpectQReg {
+public:
+	StatePopQReg() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateEQCommand : public StateExpectQReg {
+public:
+	StateEQCommand() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
@@ -317,6 +326,9 @@ private:
 };
 
 class StateCtlUCommand : public StateExpectQReg {
+public:
+	StateCtlUCommand() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
@@ -324,6 +336,7 @@ private:
 class StateSetQRegString : public StateExpectString {
 public:
 	StateSetQRegString() : StateExpectString(false) {}
+
 private:
 	State *done(const gchar *str) throw (Error);
 };
@@ -339,11 +352,17 @@ private:
 };
 
 class StateSetQRegInteger : public StateExpectQReg {
+public:
+	StateSetQRegInteger() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
 
 class StateIncreaseQReg : public StateExpectQReg {
+public:
+	StateIncreaseQReg() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
@@ -354,6 +373,9 @@ private:
 };
 
 class StateCopyToQReg : public StateExpectQReg {
+public:
+	StateCopyToQReg() : StateExpectQReg(true) {}
+
 private:
 	State *got_register(QRegister &reg) throw (Error);
 };
