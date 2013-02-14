@@ -274,10 +274,7 @@ StringBuildingMachine::input(gchar chr) throw (State::Error)
 		return NULL;
 	}
 
-	if (state)
-		goto *state;
-
-	/* NULL state */
+MICROSTATE_START;
 	switch (chr) {
 	case CTL_KEY('Q'):
 	case CTL_KEY('R'): set(&&StateEscaped); break;
@@ -291,7 +288,7 @@ StringBuildingMachine::input(gchar chr) throw (State::Error)
 	return NULL;
 
 StateLower:
-	set(NULL);
+	set(StateStart);
 
 	if (chr != CTL_KEY('V'))
 		return g_strdup(CHR2STR(g_ascii_tolower(chr)));
@@ -300,7 +297,7 @@ StateLower:
 	return NULL;
 
 StateUpper:
-	set(NULL);
+	set(StateStart);
 
 	if (chr != CTL_KEY('W'))
 		return g_strdup(CHR2STR(g_ascii_toupper(chr)));
@@ -319,7 +316,7 @@ StateCtlE:
 		set(&&StateCtlEU);
 		break;
 	default:
-		set(NULL);
+		set(StateStart);
 		return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
 	}
 
@@ -331,7 +328,7 @@ StateCtlEU:
 		return NULL;
 
 	undo.push_obj(qregspec_machine) = NULL;
-	set(NULL);
+	set(StateStart);
 	return g_strdup(CHR2STR(reg->get_integer()));
 
 StateCtlEQ:
@@ -340,11 +337,11 @@ StateCtlEQ:
 		return NULL;
 
 	undo.push_obj(qregspec_machine) = NULL;
-	set(NULL);
+	set(StateStart);
 	return reg->get_string();
 
 StateEscaped:
-	set(NULL);
+	set(StateStart);
 	return g_strdup(CHR2STR(chr));
 }
 

@@ -113,11 +113,15 @@ protected:
 template <typename Type>
 class MicroStateMachine {
 protected:
-	typedef void *MicroState;
-	MicroState state;
+	/* label pointers */
+	typedef const void *MicroState;
+	const MicroState StateStart;
+#define MICROSTATE_START G_STMT_START {		\
+	if (MicroStateMachine::state != StateStart)	\
+		goto *MicroStateMachine::state;	\
+} G_STMT_END
 
-public:
-	MicroStateMachine() : state(NULL) {}
+	MicroState state;
 
 	inline void
 	set(MicroState next)
@@ -126,10 +130,13 @@ public:
 			undo.push_var(state) = next;
 	}
 
+public:
+	MicroStateMachine() : StateStart(NULL), state(StateStart) {}
+
 	virtual inline void
 	reset(void)
 	{
-		set(NULL);
+		set(StateStart);
 	}
 
 	virtual Type input(gchar chr) throw (State::Error) = 0;

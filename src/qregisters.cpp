@@ -374,10 +374,7 @@ QRegSpecMachine::input(gchar chr) throw (State::Error)
 {
 	gchar *insert;
 
-	if (state)
-		goto *state;
-
-	/* NULL state */
+MICROSTATE_START;
 	switch (chr) {
 	case '.': undo.push_var(is_local) = true; break;
 	case '#': set(&&StateFirstChar); break;
