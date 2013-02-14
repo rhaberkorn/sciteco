@@ -99,6 +99,31 @@ public:
 	}
 };
 
+template <class Type>
+class UndoTokenObject : public UndoToken {
+	Type **ptr;
+	Type *obj;
+
+public:
+	UndoTokenObject(Type *&variable, Type *_obj)
+		       : UndoToken(), ptr(&variable), obj(_obj) {}
+
+	~UndoTokenObject()
+	{
+		if (obj)
+			delete obj;
+	}
+
+	void
+	run(void)
+	{
+		if (*ptr)
+			delete *ptr;
+		*ptr = obj;
+		obj = NULL;
+	}
+};
+
 extern class UndoStack {
 	SLIST_HEAD(Head, UndoToken) head;
 
@@ -141,6 +166,21 @@ public:
 	push_str(gchar *&variable)
 	{
 		return push_str(variable, variable);
+	}
+
+	template <class Type>
+	inline Type *&
+	push_obj(Type *&variable, Type *obj)
+	{
+		push(new UndoTokenObject<Type>(variable, obj));
+		return variable;
+	}
+
+	template <class Type>
+	inline Type *&
+	push_obj(Type *&variable)
+	{
+		return push_obj<Type>(variable, variable);
 	}
 
 	void pop(gint pos);
