@@ -16,10 +16,8 @@ Features:
    * generic function-key substitution, or
    * function-key encoding (e.g. Page-down -> ^FPD), or
    * function-key to ASCII/UTF mapping (as command executes macro of the same name)
- * extended Q-Register namespace
-   * 2 char q-registers like in Troff (e.g. "Q(xy")
-   * arbitrary length names (e.g. "Q$xyz$", see ITS TECO)
-   -> Macro libraries
+ * Command to free Q-Register (remove from table)
+ * refactor match-char state machine using MicroStateMachine class
  * Q-Register aliasing/linking
  * EC command
  * TECO syntax highlighting
