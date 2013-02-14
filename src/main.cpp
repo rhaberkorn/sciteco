@@ -165,6 +165,27 @@ process_options(int &argc, char **&argv)
 	/* remaining arguments, are arguments to the munged file */
 }
 
+static inline void
+initialize_environment(void)
+{
+	gchar **environ = g_get_environ();
+
+	for (gchar **p = environ; *p; p++) {
+		gchar *value = strchr(*p, '=') + 1;
+		gchar name[value - *p + 1];
+		QRegister *reg;
+
+		name[0] = '$';
+		g_strlcpy(name + 1, *p, sizeof(name) - 1);
+
+		reg = new QRegister(name);
+		QRegisters::globals.insert(reg);
+		reg->set_string(value);
+	}
+
+	g_strfreev(environ);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -193,6 +214,8 @@ main(int argc, char **argv)
 	QRegisters::globals.initialize("-");
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
+	/* environment registers */
+	initialize_environment();
 
 	QRegisters::locals = &local_qregs;
 
