@@ -153,10 +153,32 @@ public:
 };
 
 class QRegisterTable : public RBTree {
+	class UndoTokenRemove : public UndoToken {
+		QRegisterTable *table;
+		QRegister *reg;
+
+	public:
+		UndoTokenRemove(QRegisterTable *_table, QRegister *_reg)
+			       : table(_table), reg(_reg) {}
+
+		void
+		run(void)
+		{
+			delete table->remove(reg);
+		}
+	};
+
 	bool must_undo;
 
 public:
 	QRegisterTable(bool _undo = true);
+
+	inline void
+	undo_remove(QRegister *reg)
+	{
+		if (must_undo)
+			undo.push(new UndoTokenRemove(this, reg));
+	}
 
 	inline QRegister *
 	insert(QRegister *reg)
@@ -189,7 +211,7 @@ public:
 	inline QRegister *
 	operator [](gchar chr)
 	{
-		return operator []((gchar []){chr, '\0'});
+		return operator [](CHR2STR(chr));
 	}
 
 	void edit(QRegister *reg);

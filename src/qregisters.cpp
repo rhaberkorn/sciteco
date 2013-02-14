@@ -430,6 +430,7 @@ done:
 		if (!initialize)
 			throw State::InvalidQRegError(name, is_local);
 		reg = table.insert(new QRegister(name));
+		table.undo_remove(reg);
 	}
 
 	return reg;
