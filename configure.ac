@@ -15,6 +15,10 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
+# Standard macro path ($SCITECOPATH)
+scitecopathdir=$datadir/$PACKAGE/lib
+AC_SUBST(scitecopathdir)
+
 # Checks for programs.
 LT_INIT
 AC_PROG_CXX
@@ -154,5 +158,6 @@ AC_ARG_ENABLE(bootstrap,
 	[bootstrap=$enableval])
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([src/Makefile lib/Makefile doc/Makefile])
 AC_OUTPUT

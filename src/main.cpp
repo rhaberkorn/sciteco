@@ -168,7 +168,11 @@ process_options(int &argc, char **&argv)
 static inline void
 initialize_environment(void)
 {
-	gchar **environ = g_get_environ();
+	gchar **environ;
+
+	g_setenv("SCITECOPATH", DEFAULT_SCITECOPATH, FALSE);
+
+	environ = g_get_environ();
 
 	for (gchar **p = environ; *p; p++) {
 		gchar *value = strchr(*p, '=') + 1;

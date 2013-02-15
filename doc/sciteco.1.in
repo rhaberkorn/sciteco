@@ -128,6 +128,27 @@ Default is
 batch mode processing.
 .
 .
+.SH ENVIRONMENT
+.
+Before \*(ST executes any macro, all of the variables in the process
+environment are inserted into the global
+.I Q-Register
+table.
+A dollar sign is prepended before each variable name, so that for
+instance the variable \(lqHOME\(rq can be examined by macros by
+reading the string-content of Q-Register \(lq$HOME\(rq.
+The following environment variables have a special meaning for
+\*(ST:
+.TP
+.B SCITECOPATH
+Standard library macro path.
+Macros can expect to find standard library macros in this
+directory.
+Therefore if undefined it defaults to the standard library
+installation directory
+.BR "@scitecopathdir@" .
+.
+.
 .SH FILES
 .
 .TP
