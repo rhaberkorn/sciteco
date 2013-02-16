@@ -218,6 +218,14 @@ private:
 	State *custom(gchar chr) throw (Error);
 };
 
+class StateASCII : public State {
+public:
+	StateASCII();
+
+private:
+	State *custom(gchar chr) throw (Error);
+};
+
 class StateFCommand : public State {
 public:
 	StateFCommand();
@@ -268,6 +276,7 @@ protected:
 namespace States {
 	extern StateStart 		start;
 	extern StateControl		control;
+	extern StateASCII		ascii;
 	extern StateFCommand		fcommand;
 	extern StateCondCommand		condcommand;
 	extern StateECommand		ecommand;

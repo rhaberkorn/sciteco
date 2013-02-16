@@ -45,6 +45,7 @@ gint macro_pc = 0;
 namespace States {
 	StateStart 		start;
 	StateControl		control;
+	StateASCII		ascii;
 	StateFCommand		fcommand;
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
@@ -1208,6 +1209,7 @@ StateControl::StateControl() : State()
 {
 	transitions['\0'] = this;
 	transitions['U'] = &States::ctlucommand;
+	transitions['^'] = &States::ascii;
 }
 
 State *
@@ -1271,6 +1273,21 @@ StateControl::custom(gchar chr) throw (Error)
 	default:
 		throw Error("Unsupported command <^%c>", chr);
 	}
+
+	return &States::start;
+}
+
+StateASCII::StateASCII() : State()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateASCII::custom(gchar chr) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	expressions.push(chr);
 
 	return &States::start;
 }
