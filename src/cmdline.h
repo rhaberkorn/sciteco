@@ -29,6 +29,14 @@ extern gint cmdline_pos;
 extern bool quit_requested;
 
 void cmdline_keypress(gchar key);
+static inline void
+cmdline_keypress(const gchar *keys)
+{
+	while (*keys)
+		cmdline_keypress(*keys++);
+}
+
+void cmdline_fnmacro(const gchar *name);
 
 /*
  * Command states

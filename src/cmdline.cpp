@@ -268,6 +268,23 @@ process_edit_cmd(gchar key)
 	return insert;
 }
 
+void
+cmdline_fnmacro(const gchar *name)
+{
+	gchar macro_name[1 + strlen(name) + 1];
+	QRegister *reg;
+
+	macro_name[0] = CTL_KEY('F');
+	g_strlcpy(macro_name + 1, name, sizeof(macro_name) - 1);
+
+	reg = QRegisters::globals[macro_name];
+	if (reg) {
+		gchar *macro = reg->get_string();
+		cmdline_keypress(macro);
+		g_free(macro);
+	}
+}
+
 static gchar *
 macro_echo(const gchar *macro)
 {

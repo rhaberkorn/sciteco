@@ -26,7 +26,8 @@
 
 namespace Flags {
 	enum {
-		ED_HOOKS = (1 << 5)
+		ED_HOOKS	= (1 << 5),
+		ED_FNKEYS	= (1 << 6)
 	};
 
 	extern gint64 ed;

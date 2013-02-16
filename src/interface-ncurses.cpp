@@ -49,9 +49,6 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 
 #define UNNAMED_FILE "(Unnamed)"
 
-/* FIXME: should be configurable in TECO (Function key substitutes) */
-#define ESCAPE_SURROGATE KEY_DC
-
 #define SCI_COLOR_ATTR(f, b) \
 	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
@@ -76,7 +73,6 @@ InterfaceNCurses::InterfaceNCurses()
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
-	keypad(cmdline_window, TRUE);
 	cmdline_current = NULL;
 
 	ssm(SCI_SETFOCUS, TRUE);
@@ -362,6 +358,8 @@ InterfaceNCurses::event_loop(void)
 		if (popup.window)
 			wrefresh(popup.window);
 
+		keypad(cmdline_window, Flags::ed & Flags::ED_FNKEYS);
+
 		/* no special <CTRL/C> handling */
 		raw();
 		key = wgetch(cmdline_window);
@@ -378,9 +376,7 @@ InterfaceNCurses::event_loop(void)
 			resize_all_windows();
 			break;
 #endif
-		case ESCAPE_SURROGATE:
-			cmdline_keypress('\x1B');
-			break;
+		case 0x7F: /* DEL */
 		case KEY_BACKSPACE:
 			cmdline_keypress('\b');
 			break;
@@ -398,6 +394,35 @@ InterfaceNCurses::event_loop(void)
 				cmdline_keypress('\n');
 			}
 			break;
+
+		/*
+		 * Function key macros
+		 */
+#define FN(KEY) case KEY_##KEY: cmdline_fnmacro(#KEY); break
+		FN(DOWN); FN(UP); FN(LEFT); FN(RIGHT);
+		FN(SLEFT); FN(SRIGHT);
+		FN(HOME); FN(SHOME);
+		case KEY_F(0)...KEY_F(63): {
+			gchar macro_name[3+1];
+
+			g_snprintf(macro_name, sizeof(macro_name),
+				   "F%d", key - KEY_F0);
+			cmdline_fnmacro(macro_name);
+			break;
+		}
+		FN(DC); FN(SDC);
+		FN(IC); FN(SIC);
+		FN(NPAGE); FN(PPAGE);
+		FN(PRINT); FN(SPRINT);
+		FN(A1); FN(A3); FN(B2); FN(C1); FN(C3);
+		FN(COMMAND); FN(SCOMMAND);
+		FN(END); FN(SEND);
+		FN(HELP); FN(SHELP);
+#undef FN
+
+		/*
+		 * Control keys and keys with printable representation
+		 */
 		default:
 			if (key <= 0xFF)
 				cmdline_keypress((gchar)key);
