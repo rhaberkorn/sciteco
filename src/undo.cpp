@@ -57,12 +57,6 @@ UndoStack::push(UndoToken *token)
 }
 
 void
-UndoStack::push_msg(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
-{
-	push(new UndoTokenMessage(iMessage, wParam, lParam));
-}
-
-void
 UndoStack::pop(gint pos)
 {
 	while (!SLIST_EMPTY(&head) && SLIST_FIRST(&head)->pos >= pos) {

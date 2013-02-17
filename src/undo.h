@@ -138,8 +138,12 @@ public:
 
 	void push(UndoToken *token);
 
-	void push_msg(unsigned int iMessage,
-		      uptr_t wParam = 0, sptr_t lParam = 0);
+	inline void
+	push_msg(unsigned int iMessage,
+		 uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		push(new UndoTokenMessage(iMessage, wParam, lParam));
+	}
 
 	template <typename Type>
 	inline Type &
