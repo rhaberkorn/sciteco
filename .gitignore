@@ -12,6 +12,7 @@
 .libs/
 *.la
 *.lo
+*.a
 *.o
 *.exe
 Makefile
@@ -22,7 +23,6 @@ stamp-*
 
 # Generated code
 /doc/sciteco.1
-/teco.ini
 /src/gtk-info-popup*.[ch]
 /src/symbols-*.cpp
 

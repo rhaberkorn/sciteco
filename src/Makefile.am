@@ -12,42 +12,48 @@ BUILT_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
 EXTRA_DIST = gtk-info-popup.gob \
 	     symbols-extract.tes
 
-if BOOTSTRAP
-noinst_PROGRAMS = sciteco-minimal
-symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal$(EXEEXT)
-endif
-sciteco_minimal_SOURCES = main.cpp sciteco.h \
-			  cmdline.cpp cmdline.h \
-			  undo.cpp undo.h \
-			  expressions.cpp expressions.h \
-			  qregisters.cpp qregisters.h \
-			  ring.cpp ring.h \
-			  parser.cpp parser.h \
-			  search.cpp search.h \
-			  goto.cpp goto.h \
-			  rbtree.cpp rbtree.h \
-			  symbols.cpp symbols.h \
-			  interface.h
-nodist_sciteco_minimal_SOURCES =
+noinst_LIBRARIES = libsciteco-base.a
+libsciteco_base_a_SOURCES = sciteco.h \
+			    cmdline.cpp cmdline.h \
+			    undo.cpp undo.h \
+			    expressions.cpp expressions.h \
+			    qregisters.cpp qregisters.h \
+			    ring.cpp ring.h \
+			    parser.cpp parser.h \
+			    search.cpp search.h \
+			    goto.cpp goto.h \
+			    rbtree.cpp rbtree.h \
+			    symbols.cpp symbols.h \
+			    interface.h
+nodist_libsciteco_base_a_SOURCES =
 
 if INTERFACE_GTK
 
 BUILT_SOURCES += gtk-info-popup.c \
 		 gtk-info-popup.h gtk-info-popup-private.h
 
-sciteco_minimal_SOURCES += interface-gtk.cpp interface-gtk.h
-nodist_sciteco_minimal_SOURCES += gtk-info-popup.c
+libsciteco_base_a_SOURCES += interface-gtk.cpp interface-gtk.h
+nodist_libsciteco_base_a_SOURCES += gtk-info-popup.c
 
 else
+# else must be NCurses interface
 
-sciteco_minimal_SOURCES += interface-ncurses.cpp interface-ncurses.h
+libsciteco_base_a_SOURCES += interface-ncurses.cpp interface-ncurses.h
 
 endif
 
+if BOOTSTRAP
+noinst_PROGRAMS = sciteco-minimal
+sciteco_minimal_SOURCES = main.cpp
+sciteco_minimal_LDADD = libsciteco-base.a
+
+symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal$(EXEEXT)
+endif
+
 bin_PROGRAMS = sciteco
-sciteco_SOURCES = $(sciteco_minimal_SOURCES)
-nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
-			 symbols-scintilla.cpp symbols-scilexer.cpp
+sciteco_SOURCES = main.cpp
+nodist_sciteco_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
+sciteco_LDADD = libsciteco-base.a
 
 CLEANFILES = $(BUILT_SOURCES)
 
