@@ -33,6 +33,7 @@
 #include "undo.h"
 #include "parser.h"
 #include "expressions.h"
+#include "document.h"
 #include "ring.h"
 #include "qregisters.h"
 
@@ -59,7 +60,7 @@ namespace QRegisters {
 	void
 	undo_edit(void)
 	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+		current->update_string();
 		undo.push_var(ring.current);
 		undo.push_var(current)->undo_edit();
 	}
@@ -82,7 +83,7 @@ void
 QRegisterData::set_string(const gchar *str)
 {
 	edit();
-	dot = 0;
+	string.reset();
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_SETTEXT, 0, (sptr_t)(str ? : ""));
@@ -94,8 +95,8 @@ QRegisterData::set_string(const gchar *str)
 void
 QRegisterData::undo_set_string(void)
 {
-	/* set_string() assumes that dot has been saved */
-	current_save_dot();
+	/* set_string() assumes that parameters have been saved */
+	current_doc_update();
 
 	if (!must_undo)
 		return;
@@ -105,7 +106,7 @@ QRegisterData::undo_set_string(void)
 	else if (QRegisters::current)
 		QRegisters::current->undo_edit();
 
-	undo.push_var<gint>(dot);
+	string.undo_reset();
 	undo.push_msg(SCI_UNDO);
 
 	undo_edit();
@@ -132,7 +133,10 @@ QRegisterData::get_string(void)
 	gint size;
 	gchar *str;
 
-	current_save_dot();
+	if (!string.is_initialized())
+		return g_strdup("");
+
+	current_doc_update();
 	edit();
 
 	size = interface.ssm(SCI_GETLENGTH) + 1;
@@ -147,24 +151,20 @@ QRegisterData::get_string(void)
 void
 QRegisterData::edit(void)
 {
-	interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
-	interface.ssm(SCI_GOTOPOS, dot);
+	string.edit();
 }
 
 void
 QRegisterData::undo_edit(void)
 {
-	if (!must_undo)
-		return;
-
-	undo.push_msg(SCI_GOTOPOS, dot);
-	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)get_document());
+	if (must_undo)
+		string.undo_edit();
 }
 
 void
 QRegister::edit(void)
 {
-	QRegisterData::edit();
+	string.edit();
 	interface.info_update(this);
 }
 
@@ -175,7 +175,7 @@ QRegister::undo_edit(void)
 		return;
 
 	interface.undo_info_update(this);
-	QRegisterData::undo_edit();
+	string.undo_edit();
 }
 
 void
@@ -204,7 +204,7 @@ QRegister::load(const gchar *filename)
 		return false;
 
 	edit();
-	dot = 0;
+	string.reset();
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_CLEARALL);
@@ -268,7 +268,7 @@ QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
 void
 QRegisterTable::edit(QRegister *reg)
 {
-	current_save_dot();
+	current_doc_update();
 	reg->edit();
 
 	ring.current = NULL;
@@ -296,13 +296,12 @@ QRegisterStack::push(QRegister &reg)
 {
 	Entry *entry = new Entry();
 
-	entry->set_integer(reg.get_integer());
-	if (reg.string) {
-		gchar *str = reg.get_string();
+	gchar *str = reg.get_string();
+	if (*str)
 		entry->set_string(str);
-		g_free(str);
-	}
-	entry->dot = reg.dot;
+	g_free(str);
+	entry->string.update(reg.string);
+	entry->set_integer(reg.get_integer());
 
 	SLIST_INSERT_HEAD(&head, entry, entries);
 	undo.push(new UndoTokenPop(this));
@@ -312,7 +311,6 @@ bool
 QRegisterStack::pop(QRegister &reg)
 {
 	Entry *entry = SLIST_FIRST(&head);
-	QRegisterData::document *string;
 
 	if (!entry)
 		return false;
@@ -321,16 +319,10 @@ QRegisterStack::pop(QRegister &reg)
 	reg.set_integer(entry->get_integer());
 
 	/* exchange document ownership between Stack entry and Q-Register */
-	string = reg.string;
 	if (reg.must_undo)
-		undo.push_var(reg.string);
-	reg.string = entry->string;
-	undo.push_var(entry->string);
-	entry->string = string;
-
-	if (reg.must_undo)
-		undo.push_var(reg.dot);
-	reg.dot = entry->dot;
+		reg.string.undo_exchange();
+	entry->string.undo_exchange();
+	entry->string.exchange(reg.string);
 
 	SLIST_REMOVE_HEAD(&head, entries);
 	/* pass entry ownership to undo stack */

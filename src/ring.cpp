@@ -233,7 +233,7 @@ Ring::edit(gint64 id)
 	if (!buffer)
 		return false;
 
-	current_save_dot();
+	current_doc_update();
 
 	QRegisters::current = NULL;
 	current = buffer;
@@ -249,7 +249,7 @@ Ring::edit(const gchar *filename)
 {
 	Buffer *buffer = find(filename);
 
-	current_save_dot();
+	current_doc_update();
 
 	QRegisters::current = NULL;
 	if (buffer) {
@@ -488,7 +488,7 @@ Ring::close(void)
 {
 	Buffer *buffer = current;
 
-	buffer->dot = interface.ssm(SCI_GETCURRENTPOS);
+	buffer->update();
 	close(buffer);
 	current = buffer->next() ? : buffer->prev();
 	/* transfer responsibility to UndoToken object */

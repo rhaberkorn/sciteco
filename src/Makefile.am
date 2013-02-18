@@ -17,6 +17,7 @@ libsciteco_base_a_SOURCES = sciteco.h \
 			    cmdline.cpp cmdline.h \
 			    undo.cpp undo.h \
 			    expressions.cpp expressions.h \
+			    document.cpp document.h \
 			    qregisters.cpp qregisters.h \
 			    ring.cpp ring.h \
 			    parser.cpp parser.h \

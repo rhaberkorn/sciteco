@@ -30,6 +30,7 @@
 #include "sciteco.h"
 #include "interface.h"
 #include "undo.h"
+#include "document.h"
 #include "qregisters.h"
 #include "parser.h"
 
@@ -53,7 +54,7 @@ gchar *get_absolute_path(const gchar *path);
  * Classes
  */
 
-class Buffer {
+class Buffer : public TECODocument {
 	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
@@ -68,24 +69,13 @@ public:
 	TAILQ_ENTRY(Buffer) buffers;
 
 	gchar *filename;
-	gint dot;
-
 	gint savepoint_id;
-
 	bool dirty;
 
-private:
-	typedef void document;
-	document *doc;
-
-public:
-	Buffer() : filename(NULL), dot(0), savepoint_id(0), dirty(false)
-	{
-		doc = (document *)interface.ssm(SCI_CREATEDOCUMENT);
-	}
+	Buffer() : TECODocument(),
+		   filename(NULL), savepoint_id(0), dirty(false) {}
 	~Buffer()
 	{
-		interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
 		g_free(filename);
 	}
 
@@ -114,16 +104,14 @@ public:
 	inline void
 	edit(void)
 	{
-		interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
-		interface.ssm(SCI_GOTOPOS, dot);
+		TECODocument::edit();
 		interface.info_update(this);
 	}
 	inline void
 	undo_edit(void)
 	{
 		interface.undo_info_update(this);
-		undo.push_msg(SCI_GOTOPOS, dot);
-		undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+		TECODocument::undo_edit();
 	}
 
 	bool load(const gchar *filename);
@@ -207,7 +195,7 @@ public:
 	inline void
 	undo_edit(void)
 	{
-		current->dot = interface.ssm(SCI_GETCURRENTPOS);
+		current->update();
 		undo.push_var(QRegisters::current);
 		undo.push_var(current)->undo_edit();
 	}
@@ -248,16 +236,14 @@ namespace States {
 	extern StateSaveFile	savefile;
 }
 
-/* FIXME: clean up current_save_dot() usage */
+/* FIXME: clean up current_doc_update() usage */
 static inline void
-current_save_dot(void)
+current_doc_update(void)
 {
-	gint dot = interface.ssm(SCI_GETCURRENTPOS);
-
 	if (ring.current)
-		ring.current->dot = dot;
+		ring.current->update();
 	else if (QRegisters::current)
-		QRegisters::current->dot = dot;
+		QRegisters::current->update_string();
 }
 
 #endif

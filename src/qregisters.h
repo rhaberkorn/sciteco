@@ -30,39 +30,24 @@
 #include "undo.h"
 #include "rbtree.h"
 #include "parser.h"
+#include "document.h"
 
 /*
  * Classes
  */
 
 class QRegisterData {
+protected:
 	gint64 integer;
+	TECODocument string;
 
 public:
-	typedef void document;
-	document *string;
-	gint dot;
-
 	/*
 	 * whether to generate UndoTokens (unnecessary in macro invocations)
 	 */
 	bool must_undo;
 
-	QRegisterData() : integer(0), string(NULL), dot(0), must_undo(true) {}
-	virtual
-	~QRegisterData()
-	{
-		if (string)
-			interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)string);
-	}
-
-	inline document *
-	get_document(void)
-	{
-		if (!string)
-			string = (document *)interface.ssm(SCI_CREATEDOCUMENT);
-		return string;
-	}
+	QRegisterData() : integer(0), must_undo(true) {}
 
 	virtual gint64
 	set_integer(gint64 i)
@@ -81,6 +66,12 @@ public:
 		return integer;
 	}
 
+	inline void
+	update_string(void)
+	{
+		string.update();
+	}
+
 	virtual void set_string(const gchar *str);
 	virtual void undo_set_string(void);
 	virtual void append_string(const gchar *str);
@@ -93,6 +84,8 @@ public:
 
 	virtual void edit(void);
 	virtual void undo_edit(void);
+
+	friend class QRegisterStack;
 };
 
 class QRegister : public RBTree::RBEntry, public QRegisterData {
@@ -128,10 +121,7 @@ public:
 
 class QRegisterBufferInfo : public QRegister {
 public:
-	QRegisterBufferInfo() : QRegister("*")
-	{
-		get_document();
-	}
+	QRegisterBufferInfo() : QRegister("*") {}
 
 	gint64
 	set_integer(gint64 v)
@@ -191,10 +181,7 @@ public:
 	inline void
 	initialize(const gchar *name)
 	{
-		QRegister *reg = new QRegister(name);
-		insert(reg);
-		/* make sure document is initialized */
-		reg->get_document();
+		insert(new QRegister(name));
 	}
 	inline void
 	initialize(gchar name)
