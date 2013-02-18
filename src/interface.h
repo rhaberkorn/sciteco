@@ -132,6 +132,8 @@ public:
 #include "interface-gtk.h"
 #elif defined(INTERFACE_NCURSES)
 #include "interface-ncurses.h"
+#else
+#error No interface selected!
 #endif
 
 #endif
