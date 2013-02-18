@@ -182,8 +182,7 @@ initialize_environment(void)
 		name[0] = '$';
 		g_strlcpy(name + 1, *p, sizeof(name) - 1);
 
-		reg = new QRegister(name);
-		QRegisters::globals.insert(reg);
+		reg = QRegisters::globals.insert(name);
 		reg->set_string(value);
 	}
 
@@ -213,9 +212,9 @@ main(int argc, char **argv)
 	interface.ssm(SCI_STYLECLEARALL);
 
 	/* search string and status register */
-	QRegisters::globals.initialize("_");
+	QRegisters::globals.insert("_");
 	/* replacement string register */
-	QRegisters::globals.initialize("-");
+	QRegisters::globals.insert("-");
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
 	/* environment registers */
@@ -259,7 +258,7 @@ main(int argc, char **argv)
 	 * If munged file didn't quit, switch into interactive mode
 	 */
 	/* commandline replacement string register */
-	QRegisters::globals.initialize("\x1B");
+	QRegisters::globals.insert("\x1B");
 
 	Goto::table = &cmdline_goto_table;
 	interface.ssm(SCI_EMPTYUNDOBUFFER);

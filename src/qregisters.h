@@ -177,16 +177,15 @@ public:
 		RBTree::insert(reg);
 		return reg;
 	}
-
-	inline void
-	initialize(const gchar *name)
+	inline QRegister *
+	insert(const gchar *name)
 	{
-		insert(new QRegister(name));
+		return insert(new QRegister(name));
 	}
-	inline void
-	initialize(gchar name)
+	inline QRegister *
+	insert(gchar name)
 	{
-		initialize(CHR2STR(name));
+		return insert(CHR2STR(name));
 	}
 
 	inline QRegister *

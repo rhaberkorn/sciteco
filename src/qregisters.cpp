@@ -260,9 +260,9 @@ QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
 {
 	/* general purpose registers */
 	for (gchar q = 'A'; q <= 'Z'; q++)
-		initialize(q);
+		insert(q);
 	for (gchar q = '0'; q <= '9'; q++)
-		initialize(q);
+		insert(q);
 }
 
 void
@@ -418,7 +418,7 @@ done:
 	if (!reg) {
 		if (!initialize)
 			throw State::InvalidQRegError(name, is_local);
-		reg = table.insert(new QRegister(name));
+		reg = table.insert(name);
 		table.undo_remove(reg);
 	}
 
