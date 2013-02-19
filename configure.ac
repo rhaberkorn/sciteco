@@ -56,7 +56,7 @@ AC_CHECK_HEADERS([bsd/sys/queue.h])
 AM_CONDITIONAL(NEED_COMPAT, [test $ac_cv_header_bsd_sys_queue_h = no])
 
 case $host in
-*-*-mingw*)
+*-mingw*)
 	AC_CHECK_HEADERS([windows.h], , [
 		AC_MSG_ERROR([Missing Windows headers!])
 	])
@@ -90,7 +90,6 @@ SCINTILLA_PATH=`eval $READLINK -e $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
 CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include -DSCI_LEXER"
-LIBS="$LIBS $SCINTILLA_PATH/bin/scintilla.a"
 
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],

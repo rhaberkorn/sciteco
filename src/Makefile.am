@@ -45,16 +45,17 @@ endif
 
 if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
-sciteco_minimal_SOURCES = main.cpp
-sciteco_minimal_LDADD = libsciteco-base.a
-
 symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal$(EXEEXT)
 endif
+sciteco_minimal_SOURCES = main.cpp
+sciteco_minimal_LDADD = libsciteco-base.a \
+			@SCINTILLA_PATH@/bin/scintilla.a
 
 bin_PROGRAMS = sciteco
-sciteco_SOURCES = main.cpp
-nodist_sciteco_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
-sciteco_LDADD = libsciteco-base.a
+sciteco_SOURCES = $(sciteco_minimal_SOURCES)
+nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
+			 symbols-scintilla.cpp symbols-scilexer.cpp
+sciteco_LDADD = $(sciteco_minimal_LDADD)
 
 CLEANFILES = $(BUILT_SOURCES)
 
@@ -63,8 +64,10 @@ CLEANFILES = $(BUILT_SOURCES)
 
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
 			symbols-extract.tes
-	$(BOOTSTRAP_SCITECO) -m symbols-extract.tes $< $@ "SCI_" scintilla
+	$(BOOTSTRAP_SCITECO) -m @srcdir@/symbols-extract.tes \
+			     $< $@ "SCI_" scintilla
 
 symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
 		       symbols-extract.tes
-	$(BOOTSTRAP_SCITECO) -m symbols-extract.tes $< $@ "SCLEX_,SCE_" scilexer
+	$(BOOTSTRAP_SCITECO) -m @srcdir@/symbols-extract.tes \
+			     $< $@ "SCLEX_,SCE_" scilexer

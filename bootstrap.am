@@ -1,5 +1,5 @@
 if BOOTSTRAP
-BOOTSTRAP_SCITECO = $(top_srcdir)/src/sciteco-minimal$(EXEEXT)
+BOOTSTRAP_SCITECO = @top_builddir@/src/sciteco-minimal$(EXEEXT)
 else
 BOOTSTRAP_SCITECO = @SCITECO@
 endif
