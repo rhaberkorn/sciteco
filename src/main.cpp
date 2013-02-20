@@ -168,25 +168,24 @@ process_options(int &argc, char **&argv)
 static inline void
 initialize_environment(void)
 {
-	gchar **environ;
+	gchar **env;
 
 	g_setenv("SCITECOPATH", DEFAULT_SCITECOPATH, FALSE);
 
-	environ = g_get_environ();
+	env = g_listenv();
 
-	for (gchar **p = environ; *p; p++) {
-		gchar *value = strchr(*p, '=') + 1;
-		gchar name[value - *p + 1];
+	for (gchar **key = env; *key; key++) {
+		gchar name[1 + strlen(*key) + 1];
 		QRegister *reg;
 
 		name[0] = '$';
-		g_strlcpy(name + 1, *p, sizeof(name) - 1);
+		strcpy(name + 1, *key);
 
 		reg = QRegisters::globals.insert(name);
-		reg->set_string(value);
+		reg->set_string(g_getenv(*key));
 	}
 
-	g_strfreev(environ);
+	g_strfreev(env);
 }
 
 int

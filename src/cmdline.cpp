@@ -63,7 +63,7 @@ void
 cmdline_keypress(gchar key)
 {
 	gchar *old_cmdline = NULL;
-	gint repl_pos;
+	gint repl_pos = 0;
 
 	const gchar *insert;
 	gchar *echo;
@@ -254,6 +254,7 @@ process_edit_cmd(gchar key)
 		}
 		break;
 
+#ifdef SIGTSTP
 	case CTL_KEY('Z'):
 		/*
 		 * <CTL/Z> does not raise signal if handling of
@@ -264,6 +265,7 @@ process_edit_cmd(gchar key)
 		raise(SIGTSTP);
 		*insert = '\0';
 		break;
+#endif
 	}
 
 	return insert;
