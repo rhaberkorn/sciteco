@@ -288,6 +288,20 @@ cmdline_fnmacro(const gchar *name)
 	}
 }
 
+const gchar *
+get_eol(void)
+{
+	switch (interface.ssm(SCI_GETEOLMODE)) {
+	case SC_EOL_CR:
+		return "\r";
+	case SC_EOL_CRLF:
+		return "\r\n";
+	case SC_EOL_LF:
+	default:
+		return "\n";
+	}
+}
+
 static gchar *
 macro_echo(const gchar *macro)
 {

@@ -38,6 +38,8 @@ cmdline_keypress(const gchar *keys)
 
 void cmdline_fnmacro(const gchar *name);
 
+const gchar *get_eol(void);
+
 /*
  * Command states
  */

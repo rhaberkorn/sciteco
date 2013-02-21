@@ -246,17 +246,7 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		cmdline_keypress('\t');
 		break;
 	case GDK_Return:
-		switch (interface.ssm(SCI_GETEOLMODE)) {
-		case SC_EOL_CR:
-			cmdline_keypress('\r');
-			break;
-		case SC_EOL_CRLF:
-			cmdline_keypress('\r');
-			/* fall through */
-		case SC_EOL_LF:
-		default:
-			cmdline_keypress('\n');
-		}
+		cmdline_keypress(get_eol());
 		break;
 
 	/*
