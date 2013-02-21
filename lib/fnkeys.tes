@@ -1,0 +1,28 @@
+! Define some default function key macros !
+
+! edit command line to move <n> chars, updating existing move ops !
+@#c{{U.c
+  <-A-("=%.n|-A-)"=-%.n|0''">-D1;'-D>
+  .">
+    -A-)"= -S(\U.v .,Z-2D 0A-C"=2DQ.v|2D-Q.v'%.c | I(Q.c '
+  | I(Q.c '
+  "> Q.c\IC) | -Q.c\IR) '
+}}
+
+! go <n> pages of lines down !
+@#p{
+  U.c (ESLINESONSCREEN)*Q.cL
+}
+
+! Function key macros !
+@{DC}{}
+@{HOME}{(-(.-(0L.))M#c}
+@{END}{(-(.-(:L"S.-1|Z'))M#c}
+@{NPAGE}{(-(.-(M#p.))M#c}
+@{PPAGE}{(-(.-(-M#p.))M#c}
+@{LEFT}{(-M#c}
+@{SLEFT}{(-(.--W.)M#c}
+@{RIGHT}{(M#c}
+@{SRIGHT}{(-(.-W.)M#c}
+@{UP}{(-(.-B.)M#c}
+@{DOWN}{(-(.-L.)M#c}
