@@ -52,13 +52,19 @@ extern class InterfaceNCurses : public Interface {
 		~Popup();
 	} popup;
 
-	void init_screen(void);
-	void resize_all_windows(void);
-	void draw_info(void);
-
 public:
-	InterfaceNCurses();
+	InterfaceNCurses() : screen(NULL),
+			     screen_tty(NULL),
+			     sci(NULL),
+			     info_window(NULL),
+			     info_current(NULL),
+			     sci_window(NULL),
+			     msg_window(NULL),
+			     cmdline_window(NULL),
+			     cmdline_current(NULL) {}
 	~InterfaceNCurses();
+
+	void main(int &argc, char **&argv);
 
 	void vmsg(MessageType type, const gchar *fmt, va_list ap);
 	void msg_clear(void);
@@ -81,6 +87,11 @@ public:
 
 	/* main entry point */
 	void event_loop(void);
+
+private:
+	void init_screen(void);
+	void resize_all_windows(void);
+	void draw_info(void);
 } interface;
 
 #endif

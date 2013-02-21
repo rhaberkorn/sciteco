@@ -52,7 +52,9 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 #define SCI_COLOR_ATTR(f, b) \
 	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
-InterfaceNCurses::InterfaceNCurses()
+void
+InterfaceNCurses::main(int &argc __attribute__((unused)),
+		       char **&argv __attribute__((unused)))
 {
 	init_screen();
 	cbreak();
@@ -442,18 +444,23 @@ InterfaceNCurses::Popup::~Popup()
 
 InterfaceNCurses::~InterfaceNCurses()
 {
-	delwin(info_window);
+	if (info_window)
+		delwin(info_window);
 	g_free(info_current);
 	/* also deletes curses window */
-	scintilla_delete(sci);
-	delwin(cmdline_window);
+	if (sci)
+		scintilla_delete(sci);
+	if (cmdline_window)
+		delwin(cmdline_window);
 	g_free(cmdline_current);
-	delwin(msg_window);
+	if (msg_window)
+		delwin(msg_window);
 
 	if (!isendwin())
 		endwin();
 
-	delscreen(screen);
+	if (screen)
+		delscreen(screen);
 	if (screen_tty)
 		fclose(screen_tty);
 }

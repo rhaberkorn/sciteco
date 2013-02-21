@@ -53,6 +53,12 @@ namespace States {
 }
 
 namespace QRegisters {
+	/*
+	 * NOTE: the ctor will still be called before
+	 * Scintilla is initialized.
+	 * But the dtor is called before Scintilla
+	 * destruction.
+	 */
 	QRegisterTable		globals INIT_PRIO(PRIO_INTERFACE+1);
 	QRegisterTable		*locals = NULL;
 	QRegister		*current = NULL;

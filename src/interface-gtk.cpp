@@ -53,12 +53,13 @@ static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 
 #define UNNAMED_FILE "(Unnamed)"
 
-InterfaceGtk::InterfaceGtk()
+void
+InterfaceGtk::main(int &argc, char **&argv)
 {
 	GtkWidget *vbox;
 	GtkWidget *info_content;
 
-	gtk_init(NULL, NULL);
+	gtk_init(&argc, &argv);
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), PACKAGE_NAME);
@@ -203,8 +204,10 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 
 InterfaceGtk::~InterfaceGtk()
 {
-	gtk_widget_destroy(popup_widget);
-	gtk_widget_destroy(window);
+	if (popup_widget)
+		gtk_widget_destroy(popup_widget);
+	if (window)
+		gtk_widget_destroy(window);
 
 	scintilla_release_resources();
 }

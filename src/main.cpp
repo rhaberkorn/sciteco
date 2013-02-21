@@ -160,9 +160,7 @@ process_options(int &argc, char **&argv)
 		mung_file = get_teco_ini(argv[0]);
 	}
 
-	interface.parse_args(argc, argv);
-
-	/* remaining arguments, are arguments to the munged file */
+	/* remaining arguments, are arguments to the interface */
 }
 
 static inline void
@@ -197,6 +195,8 @@ main(int argc, char **argv)
 	signal(SIGINT, sigint_handler);
 
 	process_options(argc, argv);
+	interface.main(argc, argv);
+	/* remaining arguments are arguments to the munged file */
 
 	interface.ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
 	interface.ssm(SCI_SETCARETFORE, 0xFFFFFF);

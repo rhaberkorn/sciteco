@@ -63,7 +63,8 @@ public:
 	{
 		return NULL;
 	}
-	virtual void parse_args(int &argc, char **&argv) {}
+	/* expected to initialize Scintilla */
+	virtual void main(int &argc, char **&argv) = 0;
 
 	enum MessageType {
 		MSG_USER,

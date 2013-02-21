@@ -37,7 +37,11 @@ extern class InterfaceGtk : public Interface {
 	GtkWidget *popup_widget;
 
 public:
-	InterfaceGtk();
+	InterfaceGtk() : window(NULL),
+			 editor_widget(NULL),
+			 cmdline_widget(NULL),
+			 info_widget(NULL), message_widget(NULL),
+			 popup_widget(NULL) {}
 	~InterfaceGtk();
 
 	inline GOptionGroup *
@@ -45,11 +49,7 @@ public:
 	{
 		return gtk_get_option_group(TRUE);
 	}
-	inline void
-	parse_args(int &argc, char **&argv)
-	{
-		gtk_parse_args(&argc, &argv);
-	}
+	void main(int &argc, char **&argv);
 
 	void vmsg(MessageType type, const gchar *fmt, va_list ap);
 	void msg_clear(void);
