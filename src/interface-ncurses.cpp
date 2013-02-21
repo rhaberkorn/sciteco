@@ -401,9 +401,9 @@ InterfaceNCurses::event_loop(void)
 		 * Function key macros
 		 */
 #define FN(KEY) case KEY_##KEY: cmdline_fnmacro(#KEY); break
-		FN(DOWN); FN(UP); FN(LEFT); FN(RIGHT);
-		FN(SLEFT); FN(SRIGHT);
-		FN(HOME); FN(SHOME);
+#define FNS(KEY) FN(KEY); FN(S##KEY)
+		FN(DOWN); FN(UP); FNS(LEFT); FNS(RIGHT);
+		FNS(HOME);
 		case KEY_F(0)...KEY_F(63): {
 			gchar macro_name[3+1];
 
@@ -412,14 +412,14 @@ InterfaceNCurses::event_loop(void)
 			cmdline_fnmacro(macro_name);
 			break;
 		}
-		FN(DC); FN(SDC);
-		FN(IC); FN(SIC);
+		FNS(DC);
+		FNS(IC);
 		FN(NPAGE); FN(PPAGE);
-		FN(PRINT); FN(SPRINT);
+		FNS(PRINT);
 		FN(A1); FN(A3); FN(B2); FN(C1); FN(C3);
-		FN(COMMAND); FN(SCOMMAND);
-		FN(END); FN(SEND);
-		FN(HELP); FN(SHELP);
+		FNS(END);
+		FNS(HELP);
+#undef FNS
 #undef FN
 
 		/*

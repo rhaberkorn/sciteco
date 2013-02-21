@@ -229,6 +229,9 @@ static gboolean
 cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		    gpointer user_data __attribute__((unused)))
 {
+	bool is_shift	= event->state & GDK_SHIFT_MASK;
+	bool is_ctl	= event->state & GDK_CONTROL_MASK;
+
 #ifdef DEBUG
 	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
 		 event->string, *event->string,
@@ -255,9 +258,56 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 			cmdline_keypress('\n');
 		}
 		break;
+
+	/*
+	 * Function key macros
+	 */
+#define FN(KEY, MACRO) \
+	case GDK_##KEY: cmdline_fnmacro(#MACRO); break
+#define FNS(KEY, MACRO) \
+	case GDK_##KEY: cmdline_fnmacro(is_shift ? "S" #MACRO : #MACRO); break
+	FN(Down, DOWN); FN(Up, UP);
+	FNS(Left, LEFT); FNS(Right, RIGHT);
+	FN(KP_Down, DOWN); FN(KP_Up, UP);
+	FNS(KP_Left, LEFT); FNS(KP_Right, RIGHT);
+	FNS(Home, HOME);
+	case GDK_F1...GDK_F35: {
+		gchar macro_name[3+1];
+
+		g_snprintf(macro_name, sizeof(macro_name),
+			   "F%d", event->keyval - GDK_F1 + 1);
+		cmdline_fnmacro(macro_name);
+		break;
+	}
+	FNS(Delete, DC);
+	FNS(Insert, IC);
+	FN(Page_Down, NPAGE); FN(Page_Up, PPAGE);
+	FNS(Print, PRINT);
+	FN(KP_Home, A1); FN(KP_Prior, A3);
+	FN(KP_Begin, B2);
+	FN(KP_End, C1); FN(KP_Next, C3);
+	FNS(End, END);
+	FNS(Help, HELP);
+#undef FNS
+#undef FN
+
+	/*
+	 * Control keys and keys with printable representation
+	 */
 	default:
-		if (*event->string)
-			cmdline_keypress(*event->string);
+		gunichar u = gdk_keyval_to_unicode(event->keyval);
+
+		if (u && g_unichar_to_utf8(u, NULL) == 1) {
+			gchar key;
+
+			g_unichar_to_utf8(u, &key);
+			if (key > 0x7F)
+				break;
+			if (is_ctl)
+				key = CTL_KEY(g_ascii_toupper(key));
+
+			cmdline_keypress(key);
+		}
 	}
 
 	return TRUE;
