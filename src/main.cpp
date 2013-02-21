@@ -203,12 +203,14 @@ main(int argc, char **argv)
 
 	/*
 	 * FIXME: Default styles should probably be set interface-based
-	 * (system defaults) and be changeable by TECO macros
+	 * (system defaults)
 	 */
 	interface.ssm(SCI_STYLESETFORE, STYLE_DEFAULT, 0xFFFFFF);
 	interface.ssm(SCI_STYLESETBACK, STYLE_DEFAULT, 0x000000);
 	interface.ssm(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");
 	interface.ssm(SCI_STYLECLEARALL);
+
+	interface.ssm(SCI_STYLESETBACK, STYLE_LINENUMBER, 0x000000);
 
 	/* search string and status register */
 	QRegisters::globals.insert("_");
