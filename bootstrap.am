@@ -11,7 +11,8 @@ SUBST_MACRO = eb$<\e \
 	      <fs@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>j \
 	      <fs@bindir^Q@\e$(bindir)\e;>j \
 	      <fs@pkgdatadir^Q@\e$(pkgdatadir)\e;>j \
-	      <fs@scitecopathdir^Q@\e$(scitecopathdir)\e;>j \
+	      <fs@scitecolibdir^Q@\e$(scitecolibdir)\e;>j \
+	      <fs@DEFAULT_SCITECOPATH^Q@\e@DEFAULT_SCITECOPATH@\e;>j \
 	      <fs@DATE^Q@\e$(shell @DATE@ "+%d %b %Y")\e;>j \
 	      ew$@\e
 

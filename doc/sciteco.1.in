@@ -144,9 +144,9 @@ The following environment variables have a special meaning for
 Standard library macro path.
 Macros can expect to find standard library macros in this
 directory.
-Therefore if undefined it defaults to the standard library
-installation directory
-.BR "@scitecopathdir@" .
+It defaults to
+.B "@DEFAULT_SCITECOPATH@"
+(often the standard library path).
 .
 .
 .SH FILES
@@ -158,6 +158,9 @@ Default profile macro.
 .B @pkgdatadir@/teco.ini
 Sample profile macro configuring commonly used run-time options
 and opening files specified as arguments.
+.TP
+.B @scitecolibdir@/...
+Standard library macros.
 .
 .
 .SH BUGS

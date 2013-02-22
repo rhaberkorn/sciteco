@@ -15,9 +15,9 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
-# Standard macro path ($SCITECOPATH)
-scitecopathdir=$datadir/$PACKAGE/lib
-AC_SUBST(scitecopathdir)
+# SciTECO library macro directory
+scitecolibdir=$datadir/$PACKAGE/lib
+AC_SUBST(scitecolibdir)
 
 # Checks for programs.
 LT_INIT
@@ -151,6 +151,13 @@ gtk)
 esac
 
 AM_CONDITIONAL(INTERFACE_GTK, [test x$INTERFACE = xgtk])
+
+AC_ARG_WITH(default-scitecopath,
+	AS_HELP_STRING([--with-default-scitecopath=PATH],
+		       [Specify the default value of the $SCITECOPATH variable
+		        [default=DATADIR/sciteco/lib]]),
+	[DEFAULT_SCITECOPATH=$withval], [DEFAULT_SCITECOPATH=$scitecolibdir])
+AC_SUBST(DEFAULT_SCITECOPATH)
 
 AC_ARG_ENABLE(bootstrap,
 	AS_HELP_STRING([--enable-bootstrap],
