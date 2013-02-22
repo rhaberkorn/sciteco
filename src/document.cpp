@@ -37,13 +37,13 @@ TECODocument::edit(void)
 	interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 	interface.ssm(SCI_SETFIRSTVISIBLELINE, first_line);
 	interface.ssm(SCI_SETXOFFSET, xoffset);
-	interface.ssm(SCI_GOTOPOS, dot);
+	interface.ssm(SCI_SETSEL, anchor, (sptr_t)dot);
 }
 
 void
 TECODocument::undo_edit(void)
 {
-	undo.push_msg(SCI_GOTOPOS, dot);
+	undo.push_msg(SCI_SETSEL, anchor, (sptr_t)dot);
 	undo.push_msg(SCI_SETXOFFSET, xoffset);
 	undo.push_msg(SCI_SETFIRSTVISIBLELINE, first_line);
 	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
@@ -52,6 +52,7 @@ TECODocument::undo_edit(void)
 void
 TECODocument::update(void)
 {
+	anchor = interface.ssm(SCI_GETANCHOR);
 	dot = interface.ssm(SCI_GETCURRENTPOS);
 	first_line = interface.ssm(SCI_GETFIRSTVISIBLELINE);
 	xoffset = interface.ssm(SCI_GETXOFFSET);
@@ -65,16 +66,19 @@ void
 TECODocument::exchange(TECODocument &other)
 {
 	SciDoc temp_doc = doc;
+	gint temp_anchor = anchor;
 	gint temp_dot = dot;
 	gint temp_first_line = first_line;
 	gint temp_xoffset = xoffset;
 
 	doc = other.doc;
+	anchor = other.anchor;
 	dot = other.dot;
 	first_line = other.first_line;
 	xoffset = other.xoffset;
 
 	other.doc = temp_doc;
+	other.anchor = temp_anchor;
 	other.dot = temp_dot;
 	other.first_line = temp_first_line;
 	other.xoffset = temp_xoffset;

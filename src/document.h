@@ -41,9 +41,8 @@ class TECODocument {
 	SciDoc doc;
 
 	/* updated/restored only when required */
-	gint dot;
-	gint first_line;
-	gint xoffset;
+	gint anchor, dot;
+	gint first_line, xoffset;
 
 public:
 	TECODocument() : doc(NULL)
@@ -69,6 +68,7 @@ public:
 	inline void
 	update(const TECODocument &from)
 	{
+		anchor = from.anchor;
 		dot = from.dot;
 		first_line = from.first_line;
 		xoffset = from.xoffset;
@@ -77,11 +77,13 @@ public:
 	inline void
 	reset(void)
 	{
-		dot = first_line = xoffset = 0;
+		anchor = dot = 0;
+		first_line = xoffset = 0;
 	}
 	inline void
 	undo_reset(void)
 	{
+		undo.push_var(anchor);
 		undo.push_var(dot);
 		undo.push_var(first_line);
 		undo.push_var(xoffset);
