@@ -458,9 +458,9 @@ StateStart::StateStart() : State()
 }
 
 void
-StateStart::insert_integer(gint64 v)
+StateStart::insert_integer(tecoInt v)
 {
-	gchar buf[64+1]; /* maximum length if radix = 2 */
+	gchar buf[sizeof(tecoInt)*8+1]; /* maximum length if radix = 2 */
 	gchar *p = buf + sizeof(buf);
 
 	*--p = '\0';
@@ -483,12 +483,12 @@ StateStart::insert_integer(gint64 v)
 	undo.push_msg(SCI_UNDO);
 }
 
-gint64
+tecoInt
 StateStart::read_integer(void)
 {
 	uptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
 	gchar c = (gchar)interface.ssm(SCI_GETCHARAT, pos);
-	gint64 v = 0;
+	tecoInt v = 0;
 	gint sign = 1;
 
 	if (c == '-') {
@@ -513,7 +513,7 @@ StateStart::read_integer(void)
 }
 
 tecoBool
-StateStart::move_chars(gint64 n)
+StateStart::move_chars(tecoInt n)
 {
 	sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
 
@@ -526,7 +526,7 @@ StateStart::move_chars(gint64 n)
 }
 
 tecoBool
-StateStart::move_lines(gint64 n)
+StateStart::move_lines(tecoInt n)
 {
 	sptr_t pos = interface.ssm(SCI_GETCURRENTPOS);
 	sptr_t line = interface.ssm(SCI_LINEFROMPOSITION, pos) + n;
@@ -540,7 +540,7 @@ StateStart::move_lines(gint64 n)
 }
 
 tecoBool
-StateStart::delete_words(gint64 n)
+StateStart::delete_words(tecoInt n)
 {
 	sptr_t pos, size;
 
@@ -593,7 +593,7 @@ StateStart::delete_words(gint64 n)
 State *
 StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 {
-	gint64 v;
+	tecoInt v;
 	tecoBool rc;
 
 	/*
@@ -739,7 +739,7 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			}
 		} else {
 			BEGIN_EXEC(this);
-			gint64 loop_pc, loop_cnt;
+			tecoInt loop_pc, loop_cnt;
 
 			expressions.discard_args();
 			g_assert(expressions.pop_op() == Expressions::OP_LOOP);
@@ -973,13 +973,13 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 
 	case '=':
 		BEGIN_EXEC(this);
-		interface.msg(Interface::MSG_USER, "%" G_GINT64_FORMAT,
+		interface.msg(Interface::MSG_USER, "%" TECO_INTEGER_FORMAT,
 			      expressions.pop_num_calc());
 		break;
 
 	case 'K':
 	case 'D': {
-		gint64 from, len;
+		tecoInt from, len;
 
 		BEGIN_EXEC(this);
 		expressions.eval();
@@ -1002,7 +1002,7 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 				from -= len;
 			}
 		} else {
-			gint64 to = expressions.pop_num();
+			tecoInt to = expressions.pop_num();
 			from = expressions.pop_num();
 			len = to - from;
 			rc = TECO_BOOL(len >= 0 && Validate::pos(from) &&
@@ -1071,7 +1071,7 @@ StateFCommand::custom(gchar chr) throw (Error)
 		break;
 
 	case '>': {
-		gint64 loop_pc, loop_cnt;
+		tecoInt loop_pc, loop_cnt;
 
 		BEGIN_EXEC(&States::start);
 		/* FIXME: what if in brackets? */
@@ -1128,7 +1128,7 @@ StateCondCommand::StateCondCommand() : State()
 State *
 StateCondCommand::custom(gchar chr) throw (Error)
 {
-	gint64 value = 0;
+	tecoInt value = 0;
 	bool result;
 
 	switch (mode) {
@@ -1324,8 +1324,8 @@ StateECommand::custom(gchar chr) throw (Error)
 		if (!expressions.args()) {
 			expressions.push(Flags::ed);
 		} else {
-			gint64 on = expressions.pop_num_calc();
-			gint64 off = expressions.pop_num_calc(1, ~(gint64)0);
+			tecoInt on = expressions.pop_num_calc();
+			tecoInt off = expressions.pop_num_calc(1, ~(tecoInt)0);
 
 			undo.push_var(Flags::ed);
 			Flags::ed = (Flags::ed & ~off) | on;
@@ -1364,7 +1364,7 @@ StateScintilla_symbols::done(const gchar *str) throw (Error)
 	undo.push_var(scintilla_message);
 	if (*str) {
 		gchar **symbols = g_strsplit(str, ",", -1);
-		gint64 v;
+		tecoInt v;
 
 		if (!symbols[0])
 			goto cleanup;

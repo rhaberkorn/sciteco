@@ -185,12 +185,12 @@ public:
 	}
 
 	Buffer *find(const gchar *filename);
-	Buffer *find(gint64 id);
+	Buffer *find(tecoInt id);
 
 	void dirtify(void);
 	bool is_any_dirty(void);
 
-	bool edit(gint64 id);
+	bool edit(tecoInt id);
 	void edit(const gchar *filename);
 	inline void
 	undo_edit(void)
@@ -220,7 +220,7 @@ private:
 	bool allowFilename;
 
 	void do_edit(const gchar *filename) throw (Error);
-	void do_edit(gint64 id) throw (Error);
+	void do_edit(tecoInt id) throw (Error);
 
 	void initial(void) throw (Error);
 	State *done(const gchar *str) throw (Error);

@@ -54,7 +54,7 @@ namespace States {
 void
 StateSearch::initial(void) throw (Error)
 {
-	gint64 v1, v2;
+	tecoInt v1, v2;
 
 	undo.push_var(parameters);
 
@@ -473,7 +473,7 @@ StateSearch::done(const gchar *str) throw (Error)
 void
 StateSearchAll::initial(void) throw (Error)
 {
-	gint64 v1, v2;
+	tecoInt v1, v2;
 
 	undo.push_var(parameters);
 

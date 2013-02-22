@@ -199,13 +199,13 @@ public:
 	StateStart();
 
 private:
-	void insert_integer(gint64 v);
-	gint64 read_integer(void);
+	void insert_integer(tecoInt v);
+	tecoInt read_integer(void);
 
-	tecoBool move_chars(gint64 n);
-	tecoBool move_lines(gint64 n);
+	tecoBool move_chars(tecoInt n);
+	tecoBool move_lines(tecoInt n);
 
-	tecoBool delete_words(gint64 n);
+	tecoBool delete_words(tecoInt n);
 
 	State *custom(gchar chr) throw (Error, ReplaceCmdline);
 };

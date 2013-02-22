@@ -142,7 +142,7 @@ StateLabel::custom(gchar chr) throw (Error)
 State *
 StateGotoCmd::done(const gchar *str) throw (Error)
 {
-	gint64 value;
+	tecoInt value;
 	gchar **labels;
 
 	BEGIN_EXEC(&States::start);
@@ -150,7 +150,8 @@ StateGotoCmd::done(const gchar *str) throw (Error)
 	value = expressions.pop_num_calc();
 	labels = g_strsplit(str, ",", -1);
 
-	if (value > 0 && value <= g_strv_length(labels) && *labels[value-1]) {
+	if (value > 0 && value <= (tecoInt)g_strv_length(labels) &&
+	    *labels[value-1]) {
 		gint pc = Goto::table->find(labels[value-1]);
 
 		if (pc >= 0) {

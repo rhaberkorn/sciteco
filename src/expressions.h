@@ -149,7 +149,7 @@ public:
 	};
 
 private:
-	ValueStack<gint64>	numbers;
+	ValueStack<tecoInt>	numbers;
 	ValueStack<Operator>	operators;
 
 public:
@@ -161,22 +161,22 @@ public:
 	gint radix;
 	void set_radix(gint r);
 
-	gint64 push(gint64 number);
+	tecoInt push(tecoInt number);
 
-	inline gint64
+	inline tecoInt
 	peek_num(int index = 1)
 	{
 		return numbers.peek(index);
 	}
-	gint64 pop_num(int index = 1);
-	gint64 pop_num_calc(int index, gint64 imply);
-	inline gint64
+	tecoInt pop_num(int index = 1);
+	tecoInt pop_num_calc(int index, tecoInt imply);
+	inline tecoInt
 	pop_num_calc(int index = 1)
 	{
 		return pop_num_calc(index, num_sign);
 	}
 
-	gint64 add_digit(gchar digit);
+	tecoInt add_digit(gchar digit);
 
 	Operator push(Operator op);
 	Operator push_calc(Operator op);

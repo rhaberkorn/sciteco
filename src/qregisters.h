@@ -38,7 +38,7 @@
 
 class QRegisterData {
 protected:
-	gint64 integer;
+	tecoInt integer;
 	TECODocument string;
 
 public:
@@ -49,8 +49,8 @@ public:
 
 	QRegisterData() : integer(0), must_undo(true) {}
 
-	virtual gint64
-	set_integer(gint64 i)
+	virtual tecoInt
+	set_integer(tecoInt i)
 	{
 		return integer = i;
 	}
@@ -60,7 +60,7 @@ public:
 		if (must_undo)
 			undo.push_var(integer);
 	}
-	virtual gint64
+	virtual tecoInt
 	get_integer(void)
 	{
 		return integer;
@@ -123,14 +123,14 @@ class QRegisterBufferInfo : public QRegister {
 public:
 	QRegisterBufferInfo() : QRegister("*") {}
 
-	gint64
-	set_integer(gint64 v)
+	tecoInt
+	set_integer(tecoInt v)
 	{
 		return v;
 	}
 	void undo_set_integer(void) {}
 
-	gint64 get_integer(void);
+	tecoInt get_integer(void);
 
 	void set_string(const gchar *str) {}
 	void undo_set_string(void) {}

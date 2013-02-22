@@ -24,13 +24,24 @@
 
 #include "interface.h"
 
+#if TECO_INTEGER == 32
+typedef gint32 tecoInt;
+#define TECO_INTEGER_FORMAT G_GINT32_FORMAT
+#elif TECO_INTEGER == 64
+typedef gint64 tecoInt;
+#define TECO_INTEGER_FORMAT G_GINT64_FORMAT
+#else
+#error Invalid TECO integer storage size
+#endif
+typedef tecoInt tecoBool;
+
 namespace Flags {
 	enum {
 		ED_HOOKS	= (1 << 5),
 		ED_FNKEYS	= (1 << 6)
 	};
 
-	extern gint64 ed;
+	extern tecoInt ed;
 }
 
 extern sig_atomic_t sigint_occurred;
@@ -42,8 +53,6 @@ extern sig_atomic_t sigint_occurred;
 #define IS_CTL(C)	((C) < ' ')
 #define CTL_ECHO(C)	((C) | 0x40)
 #define CTL_KEY(C)	((C) & ~0x40)
-
-typedef gint64 tecoBool;
 
 #define SUCCESS		(-1)
 #define FAILURE		(0)

@@ -159,6 +159,12 @@ AC_ARG_WITH(default-scitecopath,
 	[DEFAULT_SCITECOPATH=$withval], [DEFAULT_SCITECOPATH=$scitecolibdir])
 AC_SUBST(DEFAULT_SCITECOPATH)
 
+AC_ARG_WITH(teco-integer,
+	AS_HELP_STRING([--with-teco-integer=SIZE],
+		       [Storage size of TECO integers in bits [default=64]]),
+	[TECO_INTEGER=$withval], [TECO_INTEGER=64])
+AC_DEFINE_UNQUOTED(TECO_INTEGER, $TECO_INTEGER, [Storage size of TECO integers])
+
 AC_ARG_ENABLE(bootstrap,
 	AS_HELP_STRING([--enable-bootstrap],
 		       [Bootstrap using sciteco-minimal,

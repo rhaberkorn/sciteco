@@ -190,7 +190,7 @@ Ring::find(const gchar *filename)
 }
 
 Buffer *
-Ring::find(gint64 id)
+Ring::find(tecoInt id)
 {
 	Buffer *cur;
 
@@ -226,7 +226,7 @@ Ring::is_any_dirty(void)
 }
 
 bool
-Ring::edit(gint64 id)
+Ring::edit(tecoInt id)
 {
 	Buffer *buffer = find(id);
 
@@ -581,20 +581,20 @@ StateEditFile::do_edit(const gchar *filename) throw (Error)
 }
 
 void
-StateEditFile::do_edit(gint64 id) throw (Error)
+StateEditFile::do_edit(tecoInt id) throw (Error)
 {
 	if (ring.current)
 		ring.undo_edit();
 	else /* QRegisters::current != NULL */
 		QRegisters::undo_edit();
 	if (!ring.edit(id))
-		throw Error("Invalid buffer id %" G_GINT64_FORMAT, id);
+		throw Error("Invalid buffer id %" TECO_INTEGER_FORMAT, id);
 }
 
 void
 StateEditFile::initial(void) throw (Error)
 {
-	gint64 id = expressions.pop_num_calc(1, -1);
+	tecoInt id = expressions.pop_num_calc(1, -1);
 
 	allowFilename = true;
 

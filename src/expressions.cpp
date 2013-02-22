@@ -41,8 +41,8 @@ Expressions::set_radix(gint r)
 	radix = r;
 }
 
-gint64
-Expressions::push(gint64 number)
+tecoInt
+Expressions::push(tecoInt number)
 {
 	while (operators.items() && operators.peek() == OP_NEW)
 		pop_op();
@@ -58,10 +58,10 @@ Expressions::push(gint64 number)
 	return numbers.push(number);
 }
 
-gint64
+tecoInt
 Expressions::pop_num(int index)
 {
-	gint64 n = 0;
+	tecoInt n = 0;
 
 	pop_op();
 	if (numbers.items() > 0) {
@@ -72,8 +72,8 @@ Expressions::pop_num(int index)
 	return n;
 }
 
-gint64
-Expressions::pop_num_calc(int index, gint64 imply)
+tecoInt
+Expressions::pop_num_calc(int index, tecoInt imply)
 {
 	eval();
 	if (num_sign < 0)
@@ -82,10 +82,10 @@ Expressions::pop_num_calc(int index, gint64 imply)
 	return args() > 0 ? pop_num(index) : imply;
 }
 
-gint64
+tecoInt
 Expressions::add_digit(gchar digit)
 {
-	gint64 n = args() > 0 ? pop_num() : 0;
+	tecoInt n = args() > 0 ? pop_num() : 0;
 
 	return push(n*radix + (n < 0 ? -1 : 1)*(digit - '0'));
 }
@@ -125,11 +125,11 @@ Expressions::pop_op(int index)
 void
 Expressions::calc(void)
 {
-	gint64 result;
+	tecoInt result;
 
-	gint64 vright = pop_num();
+	tecoInt vright = pop_num();
 	Operator op = pop_op();
-	gint64 vleft = pop_num();
+	tecoInt vleft = pop_num();
 
 	switch (op) {
 	case OP_POW: for (result = 1; vright--; result *= vleft); break;

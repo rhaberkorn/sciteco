@@ -48,7 +48,7 @@
 #endif
 
 namespace Flags {
-	gint64 ed = 0;
+	tecoInt ed = 0;
 }
 
 static gchar *eval_macro = NULL;

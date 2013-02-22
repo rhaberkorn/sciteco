@@ -224,10 +224,10 @@ QRegister::load(const gchar *filename)
 	return true;
 }
 
-gint64
+tecoInt
 QRegisterBufferInfo::get_integer(void)
 {
-	gint64 id = 1;
+	tecoInt id = 1;
 
 	if (!ring.current)
 		return 0;
@@ -568,7 +568,7 @@ StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
 State *
 StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
 {
-	gint64 res;
+	tecoInt res;
 
 	BEGIN_EXEC(&States::start);
 
@@ -593,7 +593,7 @@ StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
 State *
 StateCopyToQReg::got_register(QRegister &reg) throw (Error)
 {
-	gint64 from, len;
+	tecoInt from, len;
 	Sci_TextRange tr;
 
 	BEGIN_EXEC(&States::start);
@@ -614,7 +614,7 @@ StateCopyToQReg::got_register(QRegister &reg) throw (Error)
 			len *= -1;
 		}
 	} else {
-		gint64 to = expressions.pop_num();
+		tecoInt to = expressions.pop_num();
 		from = expressions.pop_num();
 
 		if (!Validate::pos(from) || !Validate::pos(to))
