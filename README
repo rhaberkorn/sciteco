@@ -17,7 +17,7 @@ SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and sup
 GTK+ as well as NCurses frontends (using [Scinterm](http://foicica.com/scinterm/)).
 The NCurses frontend also works with [PDCurses/XCurses](http://pdcurses.sourceforge.net/)
 and its [win32a port](http://www.projectpluto.com/win32a.htm).
-Both Linux and Windows are supported.
+Both Linux and Windows (MinGW 32/64) are supported.
 
 Features
 ========
@@ -54,11 +54,12 @@ SciTECO has the following build and runtime dependencies:
 * Other curses implementations might work as well but are untested.
 
 1. Build Scintilla as described in its README. If you want to build the ncurses version,
-   install Scinterm from a subdirectory of Scintilla called "scinterm".
+   install Scinterm from a subdirectory of Scintilla called `scinterm`
+   (also have a look at SciTECO's `--with-scinterm` configure option).
    * For TECO-style control code echoing, apply `patches/scintilla-teco-control-codes.patch`
      from the SciTECO archive/repository. This will hopefully be simplified in the future.
 2. Untar/unzip/check-out SciTECO into a subdirectory of Scintilla.
-   Alternatively, have a look at `--with-scintilla`.
+   Alternatively, have a look at SciTECO's `--with-scintilla` configure option.
 3. Build like any other Autoconf-based project. `autoreconf` (only necessary if building from
    a working copy), followed by `./configure`, followed by `make`.
    The interface may be chosen with `--with-interface` (ncurses is the default).

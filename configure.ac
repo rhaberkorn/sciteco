@@ -91,40 +91,42 @@ AC_SUBST(SCINTILLA_PATH)
 
 CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include -DSCI_LEXER"
 
+AC_ARG_WITH(scinterm,
+	AS_HELP_STRING([--with-scinterm=PATH],
+		       [Specify Scinterm's path [default=SCINTILLA_PATH/scinterm]]),
+	[SCINTERM_PATH=$withval], [SCINTERM_PATH=$SCINTILLA_PATH/scinterm])
+SCINTERM_PATH=`eval $READLINK -e $SCINTERM_PATH`
+
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
 case $INTERFACE in
-ncurses)
-	AC_CHECK_LIB(ncurses, initscr, , [
-		AC_MSG_ERROR([libncurses missing!])
-	])
+*curses)
+	case $INTERFACE in
+	ncurses)
+		AC_CHECK_LIB(ncurses, initscr, , [
+			AC_MSG_ERROR([libncurses missing!])
+		])
+		;;
+	pdcurses)
+		AC_CHECK_LIB(pdcurses, initscr, , [
+			AC_MSG_ERROR([libpdcurses missing!])
+		])
+		AC_CHECK_FUNC([PDC_set_resize_limits], [
+			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
+		])
+		;;
+	esac
+
 	AC_CHECK_HEADERS([curses.h], , [
 		AC_MSG_ERROR([Curses header missing!])
 	])
 	AC_DEFINE(INTERFACE_NCURSES, , [Build with curses support])
 
 	# For Scintilla:
-	CPPFLAGS="$CPPFLAGS -DNCURSES -I$SCINTILLA_PATH/scinterm"
-	;;
-
-pdcurses)
-	AC_CHECK_LIB(pdcurses, initscr, , [
-		AC_MSG_ERROR([libpdcurses missing!])
-	])
-	AC_CHECK_HEADERS([curses.h], , [
-		AC_MSG_ERROR([Curses header missing!])
-	])
-	AC_DEFINE(INTERFACE_NCURSES, , [Build with curses support])
-
-	AC_CHECK_FUNC([PDC_set_resize_limits], [
-		AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
-	])
-
-	# For Scintilla:
-	CPPFLAGS="$CPPFLAGS -DNCURSES -I$SCINTILLA_PATH/scinterm"
+	CPPFLAGS="$CPPFLAGS -DNCURSES -I$SCINTERM_PATH"
 	;;
 
 gtk)
