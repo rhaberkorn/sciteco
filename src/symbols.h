@@ -18,6 +18,7 @@
 #ifndef __SYMBOLS_H
 #define __SYMBOLS_H
 
+#include <string.h>
 #include <glib.h>
 
 class SymbolList {
@@ -31,19 +32,26 @@ public:
 	gint		size;
 
 private:
+	int		(*cmp_fnc)(const char *, const char *, size_t);
+
 	/* for auto-completions */
 	GList		*list;
 
 public:
-	SymbolList(const Entry *_entries = NULL, gint _size = 0)
-		  : entries(_entries), size(_size), list(NULL) {}
+	SymbolList(const Entry *_entries = NULL, gint _size = 0,
+		   bool case_sensitive = false)
+		  : entries(_entries), size(_size), list(NULL)
+	{
+		cmp_fnc = case_sensitive ? strncmp
+					 : g_ascii_strncasecmp;
+	}
+
 	~SymbolList()
 	{
 		g_list_free(list);
 	}
 
-	gint lookup(const gchar *name, const gchar *prefix = "",
-		    bool case_sensitive = false);
+	gint lookup(const gchar *name, const gchar *prefix = "");
 	GList *get_glist(void);
 };
 

@@ -39,16 +39,13 @@ namespace Symbols {
  * binary search.
  */
 gint
-SymbolList::lookup(const gchar *name, const gchar *prefix, bool case_sensitive)
+SymbolList::lookup(const gchar *name, const gchar *prefix)
 {
-	int (*cmp_fnc)(const char *, const char *, size_t);
 	gint prefix_skip = strlen(prefix);
 	gint name_len = strlen(name);
 
 	gint left = 0;
 	gint right = size - 1;
-
-	cmp_fnc = case_sensitive ? strncmp : g_ascii_strncasecmp;
 
 	if (!cmp_fnc(name, prefix, prefix_skip))
 		prefix_skip = 0;
