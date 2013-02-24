@@ -69,7 +69,14 @@ I/*
 #include "sciteco.h"
 #include "symbols.h"
 
-static const SymbolList::Entry entries[] = {
+static class SymbolListInitializer_Q#na {
+	static const SymbolList::Entry entries[];
+
+public:
+	SymbolListInitializer_Q#na();
+} initializer INIT_PRIO(PRIO_SYMBOLS);
+
+const SymbolList::Entry SymbolListInitializer_Q#na::entries[] = {
 
 <
   .,W.Xa 0KK
@@ -80,9 +87,7 @@ static const SymbolList::Entry entries[] = {
 .-Z;>
 I};
 
-__attribute__((constructor(PRIO_SYMBOLS)))
-static void
-initialize(void)
+SymbolListInitializer_Q#na::SymbolListInitializer_Q#na()
 {
 	Symbols::Q#na.entries = entries;
 	Symbols::Q#na.size = G_N_ELEMENTS(entries);
