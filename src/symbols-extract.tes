@@ -1,7 +1,7 @@
 #!./sciteco-minimal -m
 ! ./symbols-extract.tes <input file> <output file> <prefix pattern list> <array name> !
 
-[.m EQ.mQ{$SCITECOPATH}/string.tes M.m ].m
+EMQ{$SCITECOPATH}/string.tes
 
 ! read commandline arguments !
 LR 0X#in 2LR 0X#ou 2LR 0X#pa 2LR 0X#na HK

@@ -49,6 +49,7 @@ namespace States {
 	StateSetQRegInteger	setqreginteger;
 	StateIncreaseQReg	increaseqreg;
 	StateMacro		macro;
+	StateMacroFile		macro_file;
 	StateCopyToQReg		copytoqreg;
 }
 
@@ -586,6 +587,18 @@ StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
 
 	/* don't create new local Q-Registers if colon modifier is given */
 	reg.execute(!eval_colon());
+
+	return &States::start;
+}
+
+State *
+StateMacroFile::done(const gchar *str) throw (Error)
+{
+	BEGIN_EXEC(&States::start);
+
+	/* don't create new local Q-Registers if colon modifier is given */
+	if (!Execute::file(str, !eval_colon()))
+		throw Error("Cannot execute macro from file \"%s\"", str);
 
 	return &States::start;
 }

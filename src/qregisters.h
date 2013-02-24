@@ -380,6 +380,11 @@ private:
 	State *got_register(QRegister &reg) throw (Error, ReplaceCmdline);
 };
 
+class StateMacroFile : public StateExpectString {
+private:
+	State *done(const gchar *str) throw (Error);
+};
+
 class StateCopyToQReg : public StateExpectQReg {
 public:
 	StateCopyToQReg() : StateExpectQReg(true) {}
@@ -400,6 +405,7 @@ namespace States {
 	extern StateSetQRegInteger	setqreginteger;
 	extern StateIncreaseQReg	increaseqreg;
 	extern StateMacro		macro;
+	extern StateMacroFile		macro_file;
 	extern StateCopyToQReg		copytoqreg;
 }
 

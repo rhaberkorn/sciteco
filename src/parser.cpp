@@ -1296,6 +1296,7 @@ StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['B'] = &States::editfile;
+	transitions['M'] = &States::macro_file;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;
 	transitions['W'] = &States::savefile;
