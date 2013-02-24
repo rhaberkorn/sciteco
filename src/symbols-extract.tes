@@ -1,49 +1,7 @@
 #!./sciteco-minimal -m
 ! ./symbols-extract.tes <input file> <output file> <prefix pattern list> <array name> !
 
-! <pos1,pos2>M{symcasecmp} - Compare symbol at pos1 with symbol at pos2 (caseless) !
-@{symcasecmp}{
-  U.2U.1 -.%.1 -.%.2
-  @.#lo{
-    U.v Q.v"W a-A%.v | Q.v"CQ.v|0' '
-  }
-  <Q.1A:M.#loU.a Q.2A:M.#loU.b
-    Q.a-Q.bU.c Q.c"N;' -Q.a;
-  %.1%.2>
-  Q.c
-}
-
-! <i,j>M{exchange} - Exchange line at I with line at J (I < J), returning new J !
-@{exchange}{
-  U.jU.i
-  Q.jJ X.xK
-  Q.iJ G.x .-Q.i%.j .-(X.xL.)%.j -K
-  Q.jJ G.x
-  Q.j
-}
-
-! <i,j>M{qsort} - Sort lines beginning at I until J using Quicksort algorithm !
-@{qsort}{
-  U.rU.l
-
-  Q.l-Q.r"<
-    Q.lU.i Q.rJB .U.j
-
-    <
-      Q.iJ <.,Q.rM{symcasecmp}-1; .-Q.r;    L> .U.i
-      Q.jJ <.,Q.rM{symcasecmp}:;  .-Q.l-1:; B> .U.j
-
-      Q.i-Q.j;
-
-      Q.i,Q.jM{exchange}U.j
-    >
-
-    Q.i,Q.rM{symcasecmp}"> Q.i,Q.rM{exchange}U.r '
-
-    Q.l-Q.i"< Q.iJB Q.l,.M{qsort} '
-    Q.i-Q.r"< Q.iJL .,Q.rM{qsort} '
-  '
-}
+[.m EQ.mQ{$SCITECOPATH}/string.tes M.m ].m
 
 ! read commandline arguments !
 LR 0X#in 2LR 0X#ou 2LR 0X#pa 2LR 0X#na HK

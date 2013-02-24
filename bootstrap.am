@@ -1,7 +1,8 @@
+BOOTSTRAP_SCITECO = SCITECOPATH=@top_srcdir@/lib
 if BOOTSTRAP
-BOOTSTRAP_SCITECO = @top_builddir@/src/sciteco-minimal$(EXEEXT)
+BOOTSTRAP_SCITECO += @top_builddir@/src/sciteco-minimal$(EXEEXT)
 else
-BOOTSTRAP_SCITECO = @SCITECO@
+BOOTSTRAP_SCITECO += @SCITECO@
 endif
 
 SUBST_MACRO = eb$<\e \
