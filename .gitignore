@@ -23,6 +23,9 @@ stamp-*
 
 # Generated code
 /doc/sciteco.1
+/doc/Doxyfile
+/doc/doxygen
+
 /src/gtk-info-popup*.[ch]
 /src/symbols-*.cpp
 

@@ -36,6 +36,13 @@ if [[ x$READLINK = x ]]; then
 	AC_MSG_ERROR([Required tool readlink not found!])
 fi
 
+# not necessarily required (depends on --enable-developer-doc)
+AC_CHECK_PROG(DOXYGEN, doxygen, doxygen)
+AC_CHECK_PROG(DOT, dot, dot)
+DOXYGEN_HAVE_DOT=YES
+if [[ x$DOT = x ]]; then DOXYGEN_HAVE_DOT=NO; fi
+AC_SUBST(DOXYGEN_HAVE_DOT)
+
 # For bootstrapping via installed sciteco
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
 if [[ x$SCITECO = x ]]; then
@@ -165,6 +172,17 @@ AC_ARG_WITH(teco-integer,
 	[TECO_INTEGER=$withval], [TECO_INTEGER=64])
 AC_DEFINE_UNQUOTED(TECO_INTEGER, $TECO_INTEGER, [Storage size of TECO integers])
 
+AC_ARG_ENABLE(developer-doc,
+	AS_HELP_STRING([--enable-developer-doc],
+		       [Generate developer documentation using Doxygen [default=no]]),
+	[dev_doc=$enableval], [dev_doc=no])
+if [[ $dev_doc = yes -a x$DOXYGEN = x ]]; then
+        AC_MSG_ERROR([Enabled generating developer documentation,
+		      but Doxygen cannot be found!
+		      Try --disable-developer-doc.])
+fi
+AM_CONDITIONAL(BUILD_DEVDOC, [test $dev_doc = yes])
+
 AC_ARG_ENABLE(bootstrap,
 	AS_HELP_STRING([--enable-bootstrap],
 		       [Bootstrap using sciteco-minimal,
@@ -172,6 +190,6 @@ AC_ARG_ENABLE(bootstrap,
 	[bootstrap=$enableval])
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
-AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([src/Makefile lib/Makefile doc/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile lib/Makefile])
+AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
 AC_OUTPUT
