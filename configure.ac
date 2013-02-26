@@ -36,6 +36,9 @@ if [[ x$READLINK = x ]]; then
 	AC_MSG_ERROR([Required tool readlink not found!])
 fi
 
+# not necessarily required (depends on --enable-html-manual)
+AC_CHECK_PROG(GROFF, groff, groff)
+
 # not necessarily required (depends on --enable-developer-doc)
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen)
 AC_CHECK_PROG(DOT, dot, dot)
@@ -171,6 +174,16 @@ AC_ARG_WITH(teco-integer,
 		       [Storage size of TECO integers in bits [default=64]]),
 	[TECO_INTEGER=$withval], [TECO_INTEGER=64])
 AC_DEFINE_UNQUOTED(TECO_INTEGER, $TECO_INTEGER, [Storage size of TECO integers])
+
+AC_ARG_ENABLE(html-manual,
+	AS_HELP_STRING([--enable-html-manual],
+		       [Generate and install HTML manuals using Groff [default=no]]),
+	[html_man=$enableval], [html_man=no])
+if [[ $html_man = yes -a x$GROFF = x ]]; then
+        AC_MSG_ERROR([Enabled generating HTML manuals, but Groff cannot be found!
+		      Try --disable-html-manual.])
+fi
+AM_CONDITIONAL(BUILD_HTMLMAN, [test $html_man = yes])
 
 AC_ARG_ENABLE(developer-doc,
 	AS_HELP_STRING([--enable-developer-doc],

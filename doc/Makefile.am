@@ -15,6 +15,14 @@ EXTRA_DIST += generate-docs.tes
 	$(BOOTSTRAP_SCITECO) -m @srcdir@/generate-docs.tes \
 			     $@ $< $(SOURCES)
 
+if BUILD_HTMLMAN
+html_DATA = sciteco.1.html sciteco.7.html
+CLEANFILES += $(html_DATA)
+endif
+
+%.html : %
+	@GROFF@ -Thtml -man $< >$@
+
 #
 # Doxygen processing (do not install or distribute)
 #

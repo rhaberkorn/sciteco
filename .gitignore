@@ -23,6 +23,7 @@ stamp-*
 
 # Generated code
 /doc/sciteco.[17]
+/doc/sciteco.[17].html
 /doc/sciteco.7.in
 /doc/Doxyfile
 /doc/doxygen
