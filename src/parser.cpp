@@ -605,6 +605,22 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	/*
 	 * arithmetics
 	 */
+	/*$
+	 * [n]0|1|2|3|4|5|6|7|8|9 -> n*Radix+X -- Append digit
+	 *
+	 * Integer constants in \*(ST may be thought of and are
+	 * technically sequences of single-digit commands.
+	 * These commands take one argument from the stack
+	 * (0 is implied), multiply it with the current radix
+	 * (2, 8, 10, 16, ...), add the digit's value and
+	 * return the resultant integer.
+	 *
+	 * The command-like semantics of digits may be abused
+	 * in macros, for instance to append digits to computed
+	 * integers.
+	 * It is not an error to append a digit greater than the
+	 * current radix - this may be changed in the future.
+	 */
 	if (g_ascii_isdigit(chr)) {
 		BEGIN_EXEC(this);
 		expressions.add_digit(chr);
@@ -672,18 +688,41 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		expressions.push(Expressions::OP_NEW);
 		break;
 
+	/*$
+	 * \&. -> dot -- Return buffer position
+	 *
+	 * \(lq.\(rq pushes onto the stack, the current
+	 * position (also called <dot>) of the currently
+	 * selected buffer or Q-Register.
+	 */
 	case '.':
 		BEGIN_EXEC(this);
 		expressions.eval();
 		expressions.push(interface.ssm(SCI_GETCURRENTPOS));
 		break;
 
+	/*$
+	 * Z -> size -- Return buffer size
+	 *
+	 * Pushes onto the stack, the size of the currently selected
+	 * buffer or Q-Register.
+	 * This is value is also the buffer position of the document's
+	 * end.
+	 */
 	case 'Z':
 		BEGIN_EXEC(this);
 		expressions.eval();
 		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
+	/*$
+	 * H -> 0,Z -- Return range for entire buffer
+	 *
+	 * Pushes onto the stack the integer 0 (position of buffer
+	 * beginning) and the current buffer's size.
+	 * It is thus often equivalent to the expression
+	 * \(lq0,Z\(rq, or more generally \(lq(0,Z)\(rq.
+	 */
 	case 'H':
 		BEGIN_EXEC(this);
 		expressions.eval();
@@ -691,6 +730,21 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
+	/*$
+	 * n\\ -- Insert or read ASCII numbers
+	 * \\ -> n
+	 *
+	 * Backslash pops a value from the stack, formats it
+	 * according to the current radix and inserts it in the
+	 * current buffer or Q-Register at dot.
+	 * If <n> is omitted (empty stack), it does the reverse -
+	 * it reads from the current buffer position an integer
+	 * in the current radix and pushes it onto the stack.
+	 * Dot is not changed when reading integers.
+	 *
+	 * In other words, the command serializes or deserializes
+	 * integers as ASCII characters.
+	 */
 	case '\\':
 		BEGIN_EXEC(this);
 		expressions.eval();
@@ -756,6 +810,22 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		}
 		break;
 
+	/*$
+	 * [bool]; -- Conditionally break from loop
+	 * [bool]:;
+	 *
+	 * Breaks from the current inner-most loop if <bool>
+	 * signifies failure (non-negative value).
+	 * If colon-modified, breaks from the loop if <bool>
+	 * signifies success (negative value).
+	 *
+	 * If the condition code cannot be popped from the stack,
+	 * the global search register's condition integer
+	 * is implied instead.
+	 * This way, you may break on search success/failures
+	 * without colon-modifying the search command (or at a
+	 * later point).
+	 */
 	case ';':
 		BEGIN_EXEC(this);
 
@@ -812,6 +882,61 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	/*
 	 * Command-line editing
 	 */
+	/*$
+	 * { -- Edit command line
+	 * }
+	 *
+	 * The opening curly bracket is a powerful command
+	 * to edit command lines but has very simple semantics.
+	 * It copies the current commandline into the global
+	 * command line editing register (called Escape, i.e.
+	 * ASCII 27) and edits this register.
+	 * The curly bracket itself is not copied.
+	 *
+	 * The command line may then be edited using any
+	 * \*(ST command or construct.
+	 * You may switch between the command line editing
+	 * register and other registers or buffers.
+	 * The user will then usually reapply (called update)
+	 * the current command-line.
+	 *
+	 * The closing curly bracket will update the current
+	 * command-line with the contents of the global command
+	 * line editing register.
+	 * To do so it merely rubs-out the current command-line
+	 * up to the first changed character and inserts
+	 * all characters following from the updated command
+	 * line into the command stream.
+	 *
+	 * .B Note:
+	 *   - Command line editing only works on command lines,
+	 *     but not arbitrary macros.
+	 *     It is therefore not available in batch mode and
+	 *     will yield an error if used.
+	 *   - Command line editing commands may be safely used
+	 *     from macro invocations.
+	 *     Such macros are called command line editing macros.
+	 *   - A command line update from a macro invocation will
+	 *     always yield to the outer-most macro level (i.e.
+	 *     the command line macro).
+	 *     Code following the update command in the macro
+	 *     will thus never be executed.
+	 *   - As a safe-guard against command line trashing due
+	 *     to erroneous changes at the beginning of command
+	 *     lines, a backup mechanism is implemented:
+	 *     If the updated command line yields an error at
+	 *     any command during the update, the original
+	 *     command line will be restored with an algorithm
+	 *     similar to command line updating and the update
+	 *     command will fail instead.
+	 *     That way it behaves like any other command that
+	 *     yields an error:
+	 *     The character resulting in the update is rejected
+	 *     by the command line input subsystem.
+	 *   - In the rare case that an aforementioned command line
+	 *     backup fails, the commands following the erroneous
+	 *     character will not be inserted again (will be lost).
+	 */
 	case '{':
 		BEGIN_EXEC(this);
 		if (!undo.enabled)
@@ -863,6 +988,20 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	/*
 	 * commands
 	 */
+	/*$
+	 * [position]J -- Go to position in buffer
+	 * [position]:J -> Success|Failure
+	 *
+	 * Sets dot to <position>.
+	 * If <position> is omitted, 0 is implied and \(lqJ\(rq will
+	 * go to the beginning of the buffer.
+	 *
+	 * If <position> is outside the range of the buffer, the
+	 * command yields an error.
+	 * If colon-modified, the command will instead return a
+	 * condition boolean signalling whether the position could
+	 * be changed or not.
+	 */
 	case 'J':
 		BEGIN_EXEC(this);
 		v = expressions.pop_num_calc(1, 0);
@@ -880,6 +1019,16 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		}
 		break;
 
+	/*$
+	 * [n]C -- Move dot <n> characters
+	 * -C
+	 * [n]:C -> Success|Failure
+	 *
+	 * Adds <n> to dot. 1 or -1 is implied if <n> is omitted.
+	 * Fails if <n> would move dot off-page.
+	 * The colon modifier results in a success-boolean being
+	 * returned instead.
+	 */
 	case 'C':
 		BEGIN_EXEC(this);
 		rc = move_chars(expressions.pop_num_calc());
@@ -889,6 +1038,14 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw MoveError("C");
 		break;
 
+	/*$
+	 * [n]R -- Move dot <n> characters backwards
+	 * -R
+	 * [n]:R -> Success|Failure
+	 *
+	 * Subtracts <n> from dot.
+	 * It is equivalent to \(lq-nC\(rq.
+	 */
 	case 'R':
 		BEGIN_EXEC(this);
 		rc = move_chars(-expressions.pop_num_calc());
@@ -898,6 +1055,24 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw MoveError("R");
 		break;
 
+	/*$
+	 * [n]L -- Move dot <n> lines forwards
+	 * -L
+	 * [n]:L -> Success|Failure
+	 *
+	 * Move dot to the beginning of the line specified
+	 * relatively to the current line.
+	 * Therefore a value of 0 for <n> goes to the
+	 * beginning of the current line, 1 will go to the
+	 * next line, -1 to the previous line etc.
+	 * If <n> is omitted, 1 or -1 is implied depending on
+	 * the sign prefix.
+	 *
+	 * If <n> would move dot off-page, the command yields
+	 * an error.
+	 * The colon-modifer results in a condition boolean
+	 * being returned instead.
+	 */
 	case 'L':
 		BEGIN_EXEC(this);
 		rc = move_lines(expressions.pop_num_calc());
@@ -907,6 +1082,15 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw MoveError("L");
 		break;
 
+	/*$
+	 * [n]B -- Move dot <n> lines backwards
+	 * -B
+	 * [n]:B -> Success|Failure
+	 *
+	 * Move dot to the beginning of the line <n>
+	 * lines before the current one.
+	 * It is equivalent to \(lq-nL\(rq.
+	 */
 	case 'B':
 		BEGIN_EXEC(this);
 		rc = move_lines(-expressions.pop_num_calc());
@@ -916,6 +1100,26 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw MoveError("B");
 		break;
 
+	/*$
+	 * [n]W -- Move dot by words
+	 * -W
+	 * [n]:W -> Success|Failure
+	 *
+	 * Move dot <n> words forward.
+	 *   - If <n> is positive, dot is positioned at the beginning
+	 *     of the word <n> words after the current one.
+	 *   - If <n> is negative, dot is positioned at the end
+	 *     of the word <n> words before the current one.
+	 *   - If <n> is zero, dot is not moved.
+	 *
+	 * \(lqW\(rq uses Scintilla's definition of a word as
+	 * configurable using the
+	 * .B SCI_SETWORDCHARS
+	 * message.
+	 *
+	 * Otherwise, the command's behaviour is analogous to
+	 * the \(lqC\(rq command.
+	 */
 	case 'W': {
 		sptr_t pos;
 		unsigned int msg = SCI_WORDRIGHTEND;
@@ -953,6 +1157,27 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		break;
 	}
 
+	/*$
+	 * [n]V -- Delete words forward
+	 * -V
+	 * [n]:V -> Success|Failure
+	 *
+	 * Deletes the next <n> words until the end of the
+	 * n'th word after the current one.
+	 * If <n> is negative, deletes up to end of the
+	 * n'th word before the current one.
+	 * If <n> is omitted, 1 or -1 is implied depending on the
+	 * sign prefix.
+	 *
+	 * It uses Scintilla's definition of a word as configurable
+	 * using the
+	 * .B SCI_SETWORDCHARS
+	 * message.
+	 *
+	 * If the words to delete extend beyond the range of the
+	 * buffer, the command yields an error.
+	 * If colon-modified it instead returns a condition code.
+	 */
 	case 'V':
 		BEGIN_EXEC(this);
 		rc = delete_words(expressions.pop_num_calc());
@@ -962,6 +1187,14 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw Error("Not enough words to delete with <V>");
 		break;
 
+	/*$
+	 * [n]Y -- Delete word backwards
+	 * -Y
+	 * [n]:Y -> Success|Failure
+	 *
+	 * Delete <n> words backward.
+	 * <n>Y is equivalent to \(lq-nV\(rq.
+	 */
 	case 'Y':
 		BEGIN_EXEC(this);
 		rc = delete_words(-expressions.pop_num_calc());
@@ -971,13 +1204,70 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 			throw Error("Not enough words to delete with <Y>");
 		break;
 
+	/*$
+	 * <n>= -- Show value as message
+	 *
+	 * Shows integer <n> as a message in the message line and/or
+	 * on the console.
+	 * It is currently always formatted as a decimal integer and
+	 * shown with the user-message severity.
+	 */
+	/**
+	 * @bug makes no sense to imply the sign-prefix!
+	 * @todo perhaps care about current radix
+	 * @todo colon-modifier to suppress line-break on console?
+	 */
 	case '=':
 		BEGIN_EXEC(this);
 		interface.msg(Interface::MSG_USER, "%" TECO_INTEGER_FORMAT,
 			      expressions.pop_num_calc());
 		break;
 
+	/*$
+	 * [n]K -- Kill lines
+	 * -K
+	 * from,to K
+	 * [n]:K -> Success|Failure
+	 * from,to:K -> Success|Failure
+	 *
+	 * Deletes characters up to the beginning of the
+	 * line <n> lines after or before the current one.
+	 * If <n> is 0, \(lqK\(rq will delete up to the beginning
+	 * of the current line.
+	 * If <n> is omitted, the sign prefix will be implied.
+	 * So to delete the entire line regardless of the position
+	 * in it, one can use \(lq0KK\(rq.
+	 *
+	 * If the deletion is beyond the buffer's range, the command
+	 * will yield an error unless it has been colon-modified
+	 * so it returns a condition code.
+	 *
+	 * If two arguments <from> and <to> are available, the
+	 * command is synonymous to <from>,<to>D.
+	 */
 	case 'K':
+	/*$
+	 * [n]D -- Delete characters
+	 * -D
+	 * from,to D
+	 * [n]:D -> Success|Failure
+	 * from,to:D -> Success|Failure
+	 *
+	 * If <n> is positive, the next <n> characters (up to and
+	 * character .+<n>) are deleted.
+	 * If <n> is negative, the previous <n> characters are
+	 * deleted.
+	 * If <n> is omitted, the sign prefix will be implied.
+	 *
+	 * If two arguments can be popped from the stack, the
+	 * command will delete the characters with absolute
+	 * position <from> up to <to> from the current buffer.
+	 *
+	 * If the character range to delete is beyond the buffer's
+	 * range, the command will yield an error unless it has
+	 * been colon-modified so it returns a condition code
+	 * instead.
+	 */
 	case 'D': {
 		tecoInt from, len;
 
@@ -1027,6 +1317,27 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		break;
 	}
 
+	/*$
+	 * [n]A -> code -- Get character code from buffer
+	 * -A -> code
+	 *
+	 * Returns the character <code> of the character
+	 * <n> relative to dot from the buffer.
+	 * This can be an ASCII <code> or Unicode codepoint
+	 * depending on Scintilla's encoding of the current
+	 * buffer.
+	 *   - If <n> is 0, return the <code> of the character
+	 *     pointed to by dot.
+	 *   - If <n> is 1, return the <code> of the character
+	 *     immediately after dot.
+	 *   - If <n> is -1, return the <code> the character
+	 *     immediately preceding dot, ecetera.
+	 *   - If <n> is omitted, the sign prefix is implied.
+	 *
+	 * If the position of the queried character is off-page,
+	 * the command will yield an error.
+	 */
+	/** @todo does Scintilla really return code points??? */
 	case 'A':
 		BEGIN_EXEC(this);
 		v = interface.ssm(SCI_GETCURRENTPOS) +
