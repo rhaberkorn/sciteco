@@ -1,0 +1,12 @@
+.ds ST \\fB@PACKAGE_NAME@\\fP
+.
+.
+.TH "@PACKAGE@" 7 \
+    "@DATE@" \
+    "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
+..
+.
+.SH COMMAND REFERENCE
+\#$COMMANDS
+..
+\# EOF

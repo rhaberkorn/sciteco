@@ -22,7 +22,8 @@ stamp-*
 /src/sciteco-minimal
 
 # Generated code
-/doc/sciteco.1
+/doc/sciteco.[17]
+/doc/sciteco.7.in
 /doc/Doxyfile
 /doc/doxygen
 
