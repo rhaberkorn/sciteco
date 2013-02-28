@@ -172,6 +172,9 @@ Any conceived misbehaviour must be totally your fault.
 .SH SEE ALSO
 .
 .TP
+Language reference:
+.BR sciteco (7)
+.TP
 Repository:
 .UR @PACKAGE_URL@
 \*(ST
