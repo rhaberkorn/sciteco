@@ -1330,7 +1330,7 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	 *     pointed to by dot.
 	 *   - If <n> is 1, return the <code> of the character
 	 *     immediately after dot.
-	 *   - If <n> is -1, return the <code> the character
+	 *   - If <n> is -1, return the <code> of the character
 	 *     immediately preceding dot, ecetera.
 	 *   - If <n> is omitted, the sign prefix is implied.
 	 *
@@ -1370,6 +1370,12 @@ StateFCommand::custom(gchar chr) throw (Error)
 	/*
 	 * loop flow control
 	 */
+	/*$
+	 * F< -- Go to loop start
+	 *
+	 * Immediately jumps to the current loop's start.
+	 * Also works from inside conditionals.
+	 */
 	case '<':
 		BEGIN_EXEC(&States::start);
 		/* FIXME: what if in brackets? */
@@ -1381,6 +1387,19 @@ StateFCommand::custom(gchar chr) throw (Error)
 			macro_pc = -1;
 		break;
 
+	/*$
+	 * F> -- Go to loop end
+	 *
+	 * Jumps to the current loop's end.
+	 * If the loop has a counter or runs idefinitely, the jump
+	 * is performed immediately.
+	 * If the loop has reached its last iteration, parsing
+	 * until the loop end command has been found is performed.
+	 *
+	 * In interactive mode, if the loop is incomplete and must
+	 * be exited, you can type in the loop's remaining commands
+	 * without them being executed (but they are parsed).
+	 */
 	case '>': {
 		tecoInt loop_pc, loop_cnt;
 
@@ -1408,6 +1427,9 @@ StateFCommand::custom(gchar chr) throw (Error)
 	/*
 	 * conditional flow control
 	 */
+	/*$
+	 * F\' -- Jump to end of conditional
+	 */
 	case '\'':
 		BEGIN_EXEC(&States::start);
 		/* skip to end of conditional */
@@ -1417,6 +1439,13 @@ StateFCommand::custom(gchar chr) throw (Error)
 		skip_else = true;
 		break;
 
+	/*$
+	 * F| -- Jump to else-part of conditional
+	 *
+	 * Jump to else-part of conditional or end of
+	 * conditional (only if invoked from inside the
+	 * condition's else-part).
+	 */
 	case '|':
 		BEGIN_EXEC(&States::start);
 		/* skip to ELSE-part or end of conditional */
@@ -1527,16 +1556,30 @@ State *
 StateControl::custom(gchar chr) throw (Error)
 {
 	switch (g_ascii_toupper(chr)) {
+	/*$
+	 * ^O -- Set radix to 8 (octal)
+	 */
 	case 'O':
 		BEGIN_EXEC(&States::start);
 		expressions.set_radix(8);
 		break;
 
+	/*$
+	 * ^D -- Set radix to 10 (decimal)
+	 */
 	case 'D':
 		BEGIN_EXEC(&States::start);
 		expressions.set_radix(10);
 		break;
 
+	/*$
+	 * radix^R -- Set and get radix
+	 * ^R -> radix
+	 *
+	 * Set current radix to arbitrary value <radix>.
+	 * If <radix> is omitted, the command instead
+	 * returns the current radix.
+	 */
 	case 'R':
 		BEGIN_EXEC(&States::start);
 		expressions.eval();
@@ -1549,6 +1592,15 @@ StateControl::custom(gchar chr) throw (Error)
 	/*
 	 * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
 	 */
+	/*$
+	 * [char,...]^I[text]$ -- Insert with leading TAB
+	 *
+	 * ^I (usually typed using the Tab key), is equivalent
+	 * to \(lq[char,...],9I[text]$\(rq.
+	 * In other words after all the chars on the stack have
+	 * been inserted into the buffer, a Tab-character is inserted
+	 * and then the optional <text> is inserted interactively.
+	 */
 	case 'I':
 		BEGIN_EXEC(&States::insert);
 		expressions.eval();
@@ -1558,6 +1610,23 @@ StateControl::custom(gchar chr) throw (Error)
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
 	 */
+	/*$
+	 * ^[ -- Discard all arguments
+	 * $
+	 *
+	 * Pops and discards all values from the stack that
+	 * might otherwise be used as arguments to following
+	 * commands.
+	 * Therefore it stops popping on stack boundaries like
+	 * they are introduced by arithmetic brackets or loops.
+	 *
+	 * Note that ^[ is usually typed using the Escape key.
+	 * CTRL+[ however is possible as well and equivalent to
+	 * Escape in every manner.
+	 * The Caret-[ notation however is processed like any
+	 * ordinary command and only works as the discard-arguments
+	 * command.
+	 */
 	case '[':
 		BEGIN_EXEC(&States::start);
 		expressions.discard_args();
@@ -1565,6 +1634,14 @@ StateControl::custom(gchar chr) throw (Error)
 
 	/*
 	 * Additional numeric operations
+	 */
+	/*$
+	 * n^_ -> ~n -- Binary negation
+	 *
+	 * Binary negates (complements) <n> and returns
+	 * the result.
+	 * Binary complements are often used to negate
+	 * \*(ST booleans.
 	 */
 	case '_':
 		BEGIN_EXEC(&States::start);
@@ -1588,6 +1665,18 @@ StateControl::custom(gchar chr) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * ^^c -> n -- Get ASCII code of character
+ *
+ * Returns the ASCII code of the character <c>
+ * that is part of the command.
+ * Can be used in place of integer constants for improved
+ * readability.
+ * For instance ^^A will return 65.
+ *
+ * Note that this command can be typed CTRL+Caret or
+ * Caret-Caret.
+ */
 StateASCII::StateASCII() : State()
 {
 	transitions['\0'] = this;
@@ -1617,6 +1706,27 @@ State *
 StateECommand::custom(gchar chr) throw (Error)
 {
 	switch (g_ascii_toupper(chr)) {
+	/*$
+	 * [bool]EF -- Remove buffer from ring
+	 * -EF
+	 *
+	 * Removes buffer from buffer ring, effectively
+	 * closing it.
+	 * If the buffer is dirty (modified), EF will yield
+	 * an error.
+	 * <bool> may be a specified to enforce closing dirty
+	 * buffers.
+	 * If it is a Failure condition boolean (negative),
+	 * the buffer will be closed unconditionally.
+	 * If <bool> is absent, the sign prefix (1 or -1) will
+	 * be implied, so \(lq-EF\(rq will always close the buffer.
+	 *
+	 * It is noteworthy that EF will be executed immediately in
+	 * interactive mode but can be rubbed out at a later time
+	 * to reopen the file.
+	 * Closed files are kept in memory until the command line
+	 * is terminated.
+	 */
 	case 'F':
 		BEGIN_EXEC(&States::start);
 		if (!ring.current)
@@ -1630,6 +1740,31 @@ StateECommand::custom(gchar chr) throw (Error)
 		ring.close();
 		break;
 
+	/*$
+	 * flags ED -- Set and get ED-flags
+	 * [off,]on ED
+	 * ED -> flags
+	 *
+	 * With arguments, the command will set the ED flags.
+	 * <flags> is a bitmap of flags to set.
+	 * Specifying one argument to set the flags is a special
+	 * case of specifying two arguments that allow to control
+	 * which flags to enable/disable.
+	 * <off> is a bitmap of flags to disable (set to 0 in ED
+	 * flags) and <on> is a bitmap of flags that is ORed into
+	 * the flags variable.
+	 * If <off> is omitted, the value 0^_ is implied.
+	 * In otherwords, all flags are turned off before turning
+	 * on the <on> flags.
+	 * Without any argument ED returns the current flags.
+	 *
+	 * Currently, the following flags are used by \*(ST:
+	 *   - 32: Enable/Disable executing register \(lq0\(rq hooks
+	 *   - 64: Enable/Disable function key macros
+	 *
+	 * The features controlled thus are discribed in other sections
+	 * of this manual.
+	 */
 	case 'D':
 		BEGIN_EXEC(&States::start);
 		expressions.eval();
@@ -1644,6 +1779,29 @@ StateECommand::custom(gchar chr) throw (Error)
 		}
 		break;
 
+	/*$
+	 * [bool]EX -- Exit program
+	 * -EX
+	 *
+	 * Exits \*(ST.
+	 * It is one of the few commands that is not executed
+	 * immediately both in batch and interactive mode.
+	 * In batch mode EX will exit the program if control
+	 * reaches the end of the munged file, preventing
+	 * interactive mode editing.
+	 * In interactive mode, EX will request an exit that
+	 * is performed on command line termination
+	 * (i.e. after \fB$$\fP).
+	 *
+	 * If any buffer is dirty (modified), EX will yield
+	 * an error.
+	 * When specifying <bool> as a Failure condition
+	 * boolean, EX will exit unconditionally.
+	 * If <bool> is omitted, the sign prefix is implied
+	 * (1 or -1).
+	 * In other words \(lq-EX\(rq will always succeed.
+	 */
+	/** @bug what if changing file after EX? will currently still exit */
 	case 'X':
 		BEGIN_EXEC(&States::start);
 
@@ -1668,6 +1826,54 @@ static struct ScintillaMessage {
 	sptr_t		lParam;
 } scintilla_message = {0, 0, 0};
 
+/*$
+ * -- Send Scintilla message
+ * [lParam[,wParam]]ESmessage[,wParam]$[lParam]$ -> result
+ *
+ * Send Scintilla message with code specified by symbolic
+ * name <message>, <wParam> and <lParam>.
+ * <wParam> may be symbolic when specified as part of the
+ * first string argument.
+ * If not it is popped from the stack.
+ * <lParam> may be specified as a constant string whose
+ * pointer is passed to Scintilla if specified as the second
+ * string argument.
+ * If the second string argument is empty, <lParam> is popped
+ * from the stack instead.
+ * Parameters popped from the stack may be omitted, in which
+ * case 0 is implied.
+ * The message's return value is pushed onto the stack.
+ *
+ * All messages defined by Scintilla (as C macros) can be
+ * used by passing their name as a string to ES
+ * (e.g. ESSCI_LINESONSCREEN...).
+ * The \(lqSCI_\(rq prefix may be omitted and message symbols
+ * are case-insensitive.
+ * Only the Scintilla lexer symbols (SCLEX_..., SCE_...)
+ * may be used symbolically with the ES command as <wParam>,
+ * other values must be passed as integers on the stack.
+ * In interactive mode, symbols may be auto-completed by
+ * pressing Tab.
+ * String-building characters are by default interpreted
+ * in the string arguments.
+ *
+ * .BR Warning :
+ * Almost all Scintilla messages may be dispatched using
+ * this command.
+ * \*(ST does not keep track of the editor state changes
+ * performed by these commands and cannot undo them.
+ * You should never use it to change the editor state
+ * (position changes, deletions, etc.) or otherwise
+ * rub out will result in an inconsistent editor state.
+ * There are however exceptions:
+ *   - In the editor profile and batch mode in general,
+ *     the ES command may be used freely.
+ *   - In the ED hook macro (register \(lq0\(rq),
+ *     when a file is added to the ring, most destructive
+ *     operations can be performed since rubbing out the
+ *     EB command resulting the hook execution also removes
+ *     the buffer from the ring again.
+ */
 State *
 StateScintilla_symbols::done(const gchar *str) throw (Error)
 {
@@ -1748,6 +1954,19 @@ StateScintilla_lParam::done(const gchar *str) throw (Error)
  * NOTE: cannot support VideoTECO's <n>I because
  * beginning and end of strings must be determined
  * syntactically
+ */
+/*$
+ * [c1,c2,...]I[text]$ -- Insert text
+ *
+ * First inserts characters for all the values
+ * on the argument stack (interpreted as codepoints).
+ * It does so in the order of the arguments, i.e.
+ * <c1> is inserted before <c2>, ecetera.
+ * Secondly, the command inserts <text>.
+ * In interactive mode, <text> is inserted interactively.
+ *
+ * String building characters are by default enabled for the
+ * I command.
  */
 void
 StateInsert::initial(void) throw (Error)

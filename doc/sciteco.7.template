@@ -7,6 +7,26 @@
 ..
 .
 .SH COMMAND REFERENCE
+.
 \#$COMMANDS
-..
+.
+.
+.SH SEE ALSO
+.
+.TP
+Program invocation and options:
+.BR sciteco (1)
+.TP
+Scintilla messages and other documentation:
+.UR http://scintilla.org/ScintillaDoc.html
+Scintilla
+.UE
+.
+.
+.SH AUTHOR
+.
+This manpage and the \*(ST program was written by
+.MT robin.haberkorn@googlemail.com
+Robin Haberkorn
+.ME .
 \# EOF
