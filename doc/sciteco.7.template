@@ -6,9 +6,52 @@
     "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
 ..
 .
+.SH NAME
+@PACKAGE@ \-\-
+Language reference for the \*(ST text editor and language
+.
+.
+.SH INTRODUCTION
+.
+.
+.SH KEY TRANSLATION
+.SS Function Key Macros
+.
+.
+.SH COMMANDLINE EDITING
+.SS Immediate Editing Commands
+.
+.
+.SH ARITHMETICS AND EXPRESSIONS
+.
+.
+.SH Q-REGISTERS
+.
+.
+.SH STRING-BUILDING CHARACTERS
+.
+.
+.SH PATTERN MATCH CHARACTERS
+.
+.
+.SH FLOW CONTROL
+.SS GOTOS AND LABELS
+.SS LOOPS
+.SS CONDITIONALS
+.
+.
 .SH COMMAND REFERENCE
 .
 \#$COMMANDS
+.
+.
+.SH COMPATIBILITY
+.
+\*(ST is not compatible to any particular TECO dialect
+but is quite similar to
+.BR VideoTECO .
+Most VideoTECO and many Standard TECO programs should
+be portable with little to no changes.
 .
 .
 .SH SEE ALSO
