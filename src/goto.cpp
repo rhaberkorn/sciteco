@@ -139,6 +139,32 @@ StateLabel::custom(gchar chr) throw (Error)
 	return this;
 }
 
+/*$
+ * Olabel$ -- Go to label
+ * [n]Olabel1[,label2,...]$
+ *
+ * Go to <label>.
+ * The simple go-to command is a special case of the
+ * computed go-to command.
+ * A comma-separated list of labels may be specified
+ * in the string argument.
+ * The label to jump to is selected by <n> (1 is <label1>,
+ * 2 is <label2>, etc.).
+ * If <n> is omitted, the sign prefix is implied.
+ *
+ * If the label selected by <n> is does not exist in the
+ * list of labels, the command does nothing.
+ * Label definitions are cached in a table, so that
+ * if the label to go to has already been defined, the
+ * go-to command will jump immediately.
+ * Otherwise, parsing continues until the <label>
+ * is defined.
+ * The command will yield an error if a label has
+ * not been defined when the macro or command-line
+ * is terminated.
+ * In the latter case, the user will not be able to
+ * terminate the command-line.
+ */
 State *
 StateGotoCmd::done(const gchar *str) throw (Error)
 {

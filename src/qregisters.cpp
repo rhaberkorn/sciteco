@@ -453,6 +453,12 @@ StateExpectQReg::custom(gchar chr) throw (Error, ReplaceCmdline)
 	return got_register(*reg);
 }
 
+/*$
+ * [q -- Save Q-Register
+ *
+ * Save Q-Register <q> contents on the global Q-Register push-down
+ * stack.
+ */
 State *
 StatePushQReg::got_register(QRegister &reg) throw (Error)
 {
@@ -463,6 +469,19 @@ StatePushQReg::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * ]q -- Restore Q-Register
+ *
+ * Restore Q-Register <q> by replacing its contents
+ * with the contents of the register saved on top of
+ * the Q-Register push-down stack.
+ * The stack entry is popped.
+ *
+ * In interactive mode, the original contents of <q>
+ * are not immediately reclaimed but are kept in memory
+ * to support rubbing out the command.
+ * Memory is reclaimed on command-line termination.
+ */
 State *
 StatePopQReg::got_register(QRegister &reg) throw (Error)
 {
@@ -474,6 +493,21 @@ StatePopQReg::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * EQq$ -- Edit or load Q-Register
+ * EQq[file]$
+ *
+ * When specified with an empty <file> string argument,
+ * EQ makes <q> the currently edited Q-Register.
+ * Otherwise, when <file> is specified, it is the
+ * name of a file to read into Q-Register <q>.
+ * When loading a file, the currently edited
+ * buffer/register is not changed and the edit position
+ * of register <q> is reset to 0.
+ *
+ * Undefined Q-Registers will be defined.
+ * The command fails if <file> could not be read.
+ */
 State *
 StateEQCommand::got_register(QRegister &reg) throw (Error)
 {
@@ -503,6 +537,14 @@ StateLoadQReg::done(const gchar *str) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * ^Uq[string]$ -- Set Q-Register string
+ *
+ * Sets string-part of Q-Register <q> to <string>.
+ * If <q> is undefined, it will be defined.
+ *
+ * String-building is by default disabled for ^U commands.
+ */
 State *
 StateCtlUCommand::got_register(QRegister &reg) throw (Error)
 {
@@ -522,6 +564,13 @@ StateSetQRegString::done(const gchar *str) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * Gq -- Insert Q-Register string
+ *
+ * Inserts the string of Q-Register <q> into the buffer
+ * at its current position.
+ * Specifying an undefined <q> yields an error.
+ */
 State *
 StateGetQRegString::got_register(QRegister &reg) throw (Error)
 {
@@ -544,6 +593,12 @@ StateGetQRegString::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * Qq -> n -- Query Q-Register integer
+ *
+ * Gets and returns the integer-part of Q-Register <q>.
+ * The command fails for undefined registers.
+ */
 State *
 StateGetQRegInteger::got_register(QRegister &reg) throw (Error)
 {
@@ -555,6 +610,15 @@ StateGetQRegInteger::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * [n]Uq -- Set Q-Register integer
+ *
+ * Sets the integer-part of Q-Register <q> to <n>.
+ * If <n> is omitted, the sign prefix is implied.
+ *
+ * The register is defined if it does not exist.
+ */
+/** @bug perhaps it's better to imply 0! */
 State *
 StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
 {
@@ -566,6 +630,13 @@ StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * [n]%q -> q+n -- Increase Q-Register integer
+ *
+ * Add <n> to the integer part of register <q>, returning
+ * its new value.
+ * <q> will be defined if it does not exist.
+ */
 State *
 StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
 {
@@ -580,6 +651,28 @@ StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * Mq -- Execute macro
+ * :Mq
+ *
+ * Execute macro stored in string of Q-Register <q>.
+ * The command itself does not push or pop and arguments from the stack
+ * but the macro executed might well do so.
+ * The new macro invocation level will contain its own go-to label table
+ * and local Q-Register table.
+ * Except when the command is colon-modified - in this case, local
+ * Q-Registers referenced in the macro refer to the parent macro-level's
+ * local Q-Register table (or whatever level defined one last).
+ *
+ * Errors during the macro execution will propagate to the M command.
+ * In other words if a command in the macro fails, the M command will fail
+ * and this failure propagates until the top-level macro (e.g.
+ * the command-line macro).
+ *
+ * Note that the string of <q> will be copied upon macro execution,
+ * so subsequent changes to Q-Register <q> from inside the macro do
+ * not modify the executed code.
+ */
 State *
 StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
 {
@@ -591,6 +684,16 @@ StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
 	return &States::start;
 }
 
+/*$
+ * EMfile$ -- Execute macro from file
+ * :EMfile$
+ *
+ * Read the file with name <file> into memory and execute its contents
+ * as a macro.
+ * It is otherwise similar to the \(lqM\(rq command.
+ *
+ * If <file> could not be read, the command yields an error.
+ */
 State *
 StateMacroFile::done(const gchar *str) throw (Error)
 {
@@ -603,6 +706,27 @@ StateMacroFile::done(const gchar *str) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * [lines]Xq -- Copy into or append to Q-Register
+ * -Xq
+ * from,toXq
+ * [lines]:Xq
+ * -:Xq
+ * from,to:Xq
+ *
+ * Copy the next or previous number of <lines> from the buffer
+ * into the Q-Register <q> string.
+ * If <lines> is omitted, the sign prefix is implied.
+ * If two arguments are specified, the characters beginning
+ * at position <from> up to the character at position <to>
+ * are copied.
+ * The semantics of the arguments is analogous to the K
+ * command's arguments.
+ * If the command is colon-modified, the characters will be
+ * appended to the end of register <q> instead.
+ *
+ * Register <q> will be created if it is undefined.
+ */
 State *
 StateCopyToQReg::got_register(QRegister &reg) throw (Error)
 {

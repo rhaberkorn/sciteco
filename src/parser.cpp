@@ -1871,8 +1871,8 @@ static struct ScintillaMessage {
  *   - In the ED hook macro (register \(lq0\(rq),
  *     when a file is added to the ring, most destructive
  *     operations can be performed since rubbing out the
- *     EB command resulting the hook execution also removes
- *     the buffer from the ring again.
+ *     EB command responsible for the hook execution also
+ *     removes the buffer from the ring again.
  */
 State *
 StateScintilla_symbols::done(const gchar *str) throw (Error)

@@ -591,6 +591,51 @@ StateEditFile::do_edit(tecoInt id) throw (Error)
 		throw Error("Invalid buffer id %" TECO_INTEGER_FORMAT, id);
 }
 
+/*$
+ * [n]EB[file]$ -- Open or edit file
+ * nEB$
+ *
+ * Opens or edits the file with name <file>.
+ * If <file> is not in the buffer ring it is opened,
+ * added to the ring and set as the currently edited
+ * buffer.
+ * If it already exists in the ring, it is merely
+ * made the current file.
+ * <file> may be omitted in which case the default
+ * unnamed buffer is created/edited.
+ * If an argument is specified as 0, EB will additionally
+ * display the buffer ring contents in the window's popup
+ * area.
+ * Naturally this only has any effect in interactive
+ * mode.
+ *
+ * <file> may also be a glob-pattern, in which case
+ * all files matching the pattern are opened/edited.
+ *
+ * File names of buffers in the ring are normalized
+ * by making them absolute.
+ * Any comparison on file names is performed using
+ * guessed or actual absolute file paths, so that
+ * one file may be referred to in many different ways
+ * (paths).
+ *
+ * <file> does not have to exist on disk.
+ * In this case, an empty buffer is created and its
+ * name is guessed from <file>.
+ * When the newly created buffer is first saved,
+ * the file is created on disk and the buffer's name
+ * will be updated to the absolute path of the file
+ * on disk.
+ *
+ * File names may also be tab-completed and string building
+ * characters are enabled by default.
+ *
+ * If <n> is greater than zero, the string argument
+ * must be empty.
+ * Instead <n> selects a buffer from the ring to edit.
+ * A value of 1 denotes the first buffer, 2 the second,
+ * ecetera.
+ */
 void
 StateEditFile::initial(void) throw (Error)
 {
@@ -663,6 +708,40 @@ StateEditFile::done(const gchar *str) throw (Error)
 	return &States::start;
 }
 
+/*$
+ * EW$ -- Save or rename current buffer
+ * EWfile$
+ *
+ * Saves the current buffer to disk.
+ * If the buffer was dirty, it will be clean afterwards.
+ * If the string argument <file> is not empty,
+ * the buffer is saved with the specified file name
+ * and is renamed in the ring.
+ *
+ * In interactive mode, EW is executed immediately and
+ * may be rubbed out.
+ * In order to support that, \*(ST creates so called
+ * save point files.
+ * It does not merely overwrite existing files when saving
+ * but moves them to save point files instead.
+ * Save point files are called \(lq.teco-<filename>-<n>\(rq
+ * where <filename> is the name of the saved file and <n> is
+ * a number that is increased with every save operation.
+ * Save point files are always created in the same directory
+ * as the original file to ensure that no copying of the file
+ * on disk is necessary but only a rename of the file.
+ * When rubbing out the EW command, \*(ST restores the latest
+ * save point file by moving (renaming) it back to its
+ * original path - also not requiring any on-disk copying.
+ * \*(ST is impossible to crash, but just in case it still
+ * does it may leave behind these save point files which
+ * must be manually deleted by the user.
+ * Otherwise save point files are deleted on command line
+ * termination.
+ *
+ * File names may also be tab-completed and string building
+ * characters are enabled by default.
+ */
 State *
 StateSaveFile::done(const gchar *str) throw (Error)
 {

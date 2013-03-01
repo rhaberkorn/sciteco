@@ -472,6 +472,13 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
  * Command states
  */
 
+/*$
+ * *q -- Save last command line
+ *
+ * Only at the very beginning of a command-line, this command
+ * may be used to save the last command line as a string in
+ * Q-Register <q>.
+ */
 State *
 StateSaveCmdline::got_register(QRegister &reg) throw (Error)
 {
