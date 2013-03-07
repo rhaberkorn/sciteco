@@ -21,7 +21,7 @@ CLEANFILES += $(html_DATA)
 endif
 
 %.html : %
-	@GROFF@ -Thtml -man $< >$@
+	@GROFF@ -Thtml -P -I$<. -man -t $< >$@
 
 #
 # Doxygen processing (do not install or distribute)
@@ -34,5 +34,9 @@ endif
 doxygen/ : Doxyfile
 	@DOXYGEN@ $<
 
+install-data-local:
+	@INSTALL@ sciteco.*.png $(DESTDIR)$(htmldir)
+
 clean-local:
+	-rm -f sciteco.*.png
 	-rm -rf doxygen/

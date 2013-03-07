@@ -1,3 +1,4 @@
+.\" t
 .ds ST \\fB@PACKAGE_NAME@\\fP
 .
 .
@@ -13,13 +14,346 @@ Language reference for the \*(ST text editor and language
 .
 .SH INTRODUCTION
 .
+\*(ST is a powerful editor and interactive programming language
+following an unique paradigm of text editing.
+It is both different from popular screen editors like \fIex\fP and
+traditional command-based editors like \fIed\fP.
+Both of these paradigms can be understood as language-based.
+Screen editors use simple languages based on commands that closely
+correspond with key presses (keyboard commands) while command-based
+editors use more complex, often turing-complete languages.
+Screen editors interpret their language immediately while command-based
+editors do so only after complete input of an expression.
+Some editors like \fIVi\fP or \fIemacs\fP support both screen-editing
+and command-lines in different modes of operation.
+While such editors represent a compromise between both paradigms
+(they support both paradigms to some extent), \*(ST represents a
+.BR synthesis .
+In \*(ST the screen-editing and command languages are the same!
+The \*(ST language can be interpreted interactively and commands
+can be as simple as single key presses or as complex as nested
+high-level structured programming constructs.
+While screen-editors often support an undo-stack to undo simple
+operations, \*(ST supports undoing on a per-character, per-command
+or user-configurable level undoing most of the side-effects
+on the overall editor state.
+.LP
+\*(ST is a member of the TECO family of text editor languages,
+invented by Dan Murphy in the 1960s.
+TECO was initially a purely command-driven editor that evolved
+screen editing features later on, culminating in the invention of
+Emacs as a TECO customization (macro package) in the 1970s.
+Emacs later became an independent program that eventually
+dropped TECO as its scripting language in favour of Lisp.
+\*(ST is not the first attempt to devise a TECO-based interactive
+screen editor.
+It is very similar to \fIVideoTECO\fP, a little known editor
+that pioneered the concept.
+When \fIVideoTECO\fP wanted to \(lqoutdo classic TECOs in every way\(rq,
+\*(ST wants to outdo \fIVideoTECO\fP in every way.
+.LP
+When using \*(ST in interactive mode, it is important to know exactly
+how \*(ST translates and processes user input.
+Generally speaking, the user inputs TECO code that is parsed and executed
+on the fly by a stream parser/executor with the possibility to rub out
+code from the end of the input stream, reversing its side-effects.
+The input stream is called command line macro.
+The language of the command-line macro is basically the same
+as the language used in batch processing, with the exception
+of some commands that depend on the command line macro or
+undo-capabilities that are disabled in batch mode.
+To add to or remove from the command line macro, \*(ST supports
+a number of special keys called immediate editing commands.
+The key-processing for immediate editing commands is described in the
+next two sections.
+While immediate editing commands can be understood as yet another -
+albeit limited - language for screen editing, \*(ST also supports
+regular commands for command-line editing.
+.
 .
 .SH KEY TRANSLATION
+.
+When the user presses a key or key-combination it is first translated
+to an ASCII character.
+All immediate editing commands and regular \*(ST commands operate on
+a language based solely on
+.B ASCII
+characters.
+The rules for translating keys are as follows:
+.RS
+.IP 1. 4
+Keys with a printable representation (letters, digits and special
+characters) are translated to their printable representation.
+Shift-combinations automatically result in upper-case letters.
+.IP 2.
+Control-combinations (e.g. CTRL+A) are translated to control
+codes, that is a code smaller than 32.
+The control code can be calculated by stripping the seventh bit
+from the upper-case letter's ASCII code.
+So for instance, the upper or lower case A (65) will be translated
+to code 1, B to code 2, ecetera.
+\*(ST echos control codes as Caret followed by the corresponding
+upper case letter, so you seldomly need to know a control codes
+actual numeric code.
+For instance, control code 2 - typed CTRL+B - will be echoed
+\(lq^B\(rq.
+\*(ST also treats Caret-letter combinations equivalent to
+control codes under most circumstances.
+.IP 3.
+A few keys with non-printable representation are translated to
+control codes as well.
+The most prominent is the Escape key - it is translated to
+code 27.
+The Backspace key will be translated to code 8, and the Tab key
+to code 9.
+Last but not least, the Return key is translated to the current
+buffer's end of line sequence (linefeed, carriage return followed
+by linefeed or just carriage return).
+.IP 4.
+A selection of other keys without printable representation (called
+function keys) are translated to user-definable character sequences.
+This feature is called function key macros and explained in the
+next subsection.
+.RE
+.
 .SS Function Key Macros
+.
+By default function keys except Escape, Backspace and Return are
+ignored by \*(ST.
+By setting bit 6 of the \fBED\fP flag variable, function key handling
+is enabled:
+.EX
+0,64ED
+.EE
+This is usually performed in the editor profile.
+With certain interfaces (curses) after enabling function keys,
+the Escape key might only be handled after a short delay.
+This is because it might be used by the terminal to transmit
+Escape Sequences.
+.LP
+Enabling function keys also enables Function Key Macros.
+These are Q-Register strings inserted into the command stream
+(before immediate editing command handling) when certain function
+keys (or combinations) are pressed.
+The following list of Function Key Macro registers are supported:
+.TP 9
+.B ^FDOWN
+.TQ
+.B ^FUP
+Inserted when the down/up cursor keys are pressed.
+.TP
+.B ^FLEFT
+.TQ
+.B ^FSLEFT
+Inserted when the left or shift-left cursor keys are
+pressed.
+.TP
+.B ^FRIGHT
+.TQ
+.B ^FSRIGHT
+Inserted when the right or shift-right cursor keys are
+pressed.
+.TP
+.B ^FHOME
+.TQ
+.B ^FSHOME
+Inserted when the Home or shift-Home keys are pressed.
+.TP
+.BI ^FF x
+Inserted when the Fx-key is pressed
+.RI ( x
+is a number between 0 and 63).
+.TP
+.B ^FDC
+.TQ
+.B ^FSDC
+Inserted when the Delete or shift-Delete key is pressed.
+.TP
+.B ^FIC
+.TQ
+.B ^FSIC
+Inserted when the Insert or shift-Insert key is pressed.
+.TP
+.B ^FPPAGE
+.TQ
+.B ^FNPAGE
+Inserted when the Page-Up or Page-Down key is pressed.
+.TP
+.B ^FPRINT
+.TQ
+.B ^FSPRINT
+Inserted when the Print or shift-Print key is pressed.
+.TP
+.B ^FA1
+.TQ
+.B ^FA3
+.TQ
+.B ^FB2
+.TQ
+.B ^FC1
+.TQ
+.B ^FC3
+Inserted when the numeric key pad's upper left key (7),
+upper right key (9), central key (5), lower left key (1),
+or lower right key (3) is pressed and num-lock is disabled.
+The key-pad's cursor keys are handled like the regular
+cursor keys.
+.TP
+.B ^FEND
+.TQ
+.B ^FSEND
+Inserted when the End or shift-End key is pressed.
+.TP
+.B ^FHELP
+.TQ
+.B ^FSHELP
+Inserted when the Help or shift-Help key is pressed.
+.
+.LP
+\(lq^F\(rq corresponds to CTRL+F in the above list but
+might be typed with a caret due to string building characters
+in long Q-Register names.
+The names are all derived from key definitions of the curses
+library - not all of them may be supported on any particular
+user interface.
+A set of useful Function Key Macros are provided in the
+standard library
+.BR fnkeys.tes .
+It demonstrates how Function Key Macros may be used to define
+alternate Escape keys (so the delay issue is not experienced),
+or do insertion and command-line editing using function keys.
 .
 .
 .SH COMMANDLINE EDITING
+.
+After all key presses have been translated to characters \*(ST
+interpretes some of them in a special way to perform command line
+editing and a few other actions that cannot depend on regular
+command execution.
+These special characters are called Immediate Editing Commands
+and are outlined in the following subsection.
+All characters not handled as immediate editing commands
+are self-inserting, i.e. they insert themself into the command
+stream and may be processed as regular commands or part of them.
+.
 .SS Immediate Editing Commands
+.
+In the following table, the Immediate Editing Commands are outlined.
+Some of them are ubiquitous and are not used used as regular
+commands (because it would be hard to type them).
+Some however are context-sensitive and are only available in or depend
+on the current language context (at the end of the command line) that
+is always known to \*(ST.
+Because of this superior parsing and command line editing, editing
+is much less dangerous and much more interactive than in classic
+TECO implementations.
+Most of these commands are control codes, so their control code
+mnemonics are given as well.
+.
+.TS
+expand,allbox,tab(;);
+LB LB LB LB LBW70
+L L L L L.
+Name;Code;Mnemonics;Context;Description
+T{
+Rub out
+T};8;^H, Backspace;T{
+Everywhere
+T};T{
+Rubs out the command line's last character.
+T}
+T{
+Rub out word
+T};23;^W;T{
+String arguments
+T};T{
+Rub out last word according to Scintilla's definition of a word
+as set by
+.BR SCI_SETWORDCHARS .
+T}
+\^;\^;\^;T{
+Miscelleaneous
+T};T{
+Rub out last command, i.e. rub out at least one character until
+a new command could begin.
+T}
+T{
+Rub out string
+T};21;^U;T{
+String arguments
+T};T{
+Rub out the entire current string argument.
+T}
+T{
+Auto complete filename
+T};20;^T;T{
+String arguments
+T};T{
+Auto complete filename beginning after the last space (or beginning
+of the string argument).
+Fully completed filenames are terminated with a space.
+T}
+\^;9;^I, Tab;T{
+File name arguments
+T};T{
+Auto complete filename beginning at the start of the argument.
+Fully completed filenames terminate the string argument,
+except if the \(lq{\(rq terminator is used.
+T}
+T{
+Auto complete symbol
+T};9;^I, Tab;T{
+Scintilla symbol arguments
+T};T{
+In Scintilla Symbol arguments
+.RB ( ES
+commands), complete beginning with the symbol, terminating fully
+completed symbols with a comma.
+T}
+T{
+Terminate command line
+T};27;^[, Escape;T{
+Immediately after regular command ^[
+T};T{
+Two escape characters (string terminators do
+.B not
+count) terminate the command line, freeing all undo-stack related
+resources and beginning a new command line.
+T}
+T{
+Suspend process
+T};26;^Z;T{
+Everywhere
+T};T{
+Suspends process using
+.BR SIGTSTP .
+This is only an immediate editing command on platforms supporting
+this signal (usually Unices).
+The process can be suspended from another process as well, for
+instance by pressing CTRL+Z in the console - this will also work
+if \*(ST is busy.
+Therefore with GUI user interfaces (GTK+), this command will only
+work as an immediate editing command in the GUI or as a signal
+dispatched from an associated console or from another process.
+T}
+T{
+Interrupt
+T};3;^C;T{
+\*(ST is busy
+T};T{
+.B "Not a real immediate editing command."
+Will interrupt the current operation (character processing),
+yielding a \*(ST error.
+It depends on asynchronous delivery of the
+.B SIGINT
+signal and is useful to interrupt infinite loops.
+Therefore with GUI user interfaces, the signal might has to be
+delivered via the attached console or from another process.
+If \*(ST is not busy,
+.B ^C
+is self-inserting and might be used as a regular command.
+T}
+.TE
 .
 .
 .SH ARITHMETICS AND EXPRESSIONS
