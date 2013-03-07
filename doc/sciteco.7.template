@@ -354,6 +354,20 @@ If \*(ST is not busy,
 is self-inserting and might be used as a regular command.
 T}
 .TE
+.LP
+The immediate editing commands that perform auto-completions, do
+so in a manner similar to Posix shells.
+Upon first invocation they try to fully or partially complete the file
+name (or token).
+If no completion can be performed, the invocation will display a
+list of file names (or tokens) beginning with the token to complete
+in \*(ST's popup area.
+Note that no additional expansions are performed before attempting
+a completion, so for instance \(lq~/foo\(rq will not complete a file
+in the user's home directory (tilde is not part of the file name but
+tilde-expansions are performed by the shell).
+\*(ST does however perform completions after string building so that
+\(lq^EQ{$HOME}/foo\(rq could be completed.
 .
 .
 .SH ARITHMETICS AND EXPRESSIONS
