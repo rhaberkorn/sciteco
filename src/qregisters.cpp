@@ -408,6 +408,9 @@ StateString:
 		break;
 	}
 
+	if (mode > MODE_NORMAL)
+		return NULL;
+
 	insert = string_machine.input(chr);
 	if (!insert)
 		return NULL;
@@ -418,6 +421,13 @@ StateString:
 	return NULL;
 
 done:
+	if (mode > MODE_NORMAL)
+		/*
+		 * FIXME: currently we must return *some* register
+		 * since got_register() expects one
+		 */
+		return QRegisters::globals["0"];
+
 	QRegisterTable &table = is_local ? *QRegisters::locals
 					 : QRegisters::globals;
 	QRegister *reg = table[name];
