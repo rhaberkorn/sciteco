@@ -390,7 +390,7 @@ tilde-expansions are performed by the shell).
 .
 .SH COMMAND REFERENCE
 .
-\#$COMMANDS
+.COMMANDS
 .
 .
 .SH COMPATIBILITY
