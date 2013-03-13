@@ -6,10 +6,10 @@ CLEANFILES = sciteco.1
 
 man_MANS += sciteco.7
 EXTRA_DIST += sciteco.7.template
-CLEANFILES += sciteco.7 sciteco.7.in
+CLEANFILES += sciteco.7 sciteco.7.in sciteco.7.htbl
 SOURCES = $(wildcard @top_srcdir@/src/*.cpp)
 
-EXTRA_DIST += generate-docs.tes
+EXTRA_DIST += generate-docs.tes htbl.tes
 
 %.in : %.template generate-docs.tes $(SOURCES)
 	$(BOOTSTRAP_SCITECO) -m @srcdir@/generate-docs.tes \
@@ -20,8 +20,11 @@ html_DATA = sciteco.1.html sciteco.7.html
 CLEANFILES += $(html_DATA)
 endif
 
-%.html : %
-	@GROFF@ -Thtml -P -I$<. -man -t $< >$@
+%.htbl : % htbl.tes
+	$(BOOTSTRAP_SCITECO) -m @srcdir@/htbl.tes $< $@
+
+%.html : %.htbl
+	@GROFF@ -Thtml -man $< >$@
 
 #
 # Doxygen processing (do not install or distribute)
@@ -34,9 +37,5 @@ endif
 doxygen/ : Doxyfile
 	@DOXYGEN@ $<
 
-install-data-local:
-	@INSTALL@ sciteco.*.png $(DESTDIR)$(htmldir)
-
 clean-local:
-	-rm -f sciteco.*.png
 	-rm -rf doxygen/

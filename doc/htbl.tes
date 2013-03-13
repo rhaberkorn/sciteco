@@ -1,0 +1,80 @@
+#!/usr/bin/sciteco -m
+! ./htbl.tes <input> <output> !
+! Troff tbl "drop-in" replacement !
+
+LR 0X#in 2LR 0X#ou EBQ#in EB -EF
+
+<
+! <table> will implicitly close <p>'s so we must recalculate the margin.
+  we do this using the same formula as <p> indentions are calculated by post-grohtml
+  except for the line-length which is apparently always 6.5i (the default)
+!
+fs.TS.nr tbl-margin ((\n[.in]+\n[.o])*100+(6.5i/2))/6.5i-((6.5i/2)/6.5i)
+.nr tbl-width 100-\n[tbl-margin]
+.HTML <table class="tbl" style="margin-left:\n[tbl-margin]%";
+9u.{tab}
+l.u.fl.-1u.t i
+
+q.f,q.t:sbox"Sli border="1"' q.f,q.t:sallbox"Sli rules="all"' q.f,q.t:sexpand"Sli width="\n[tbl-width]%"' q.f,q.t:stab("s0au.{tab}' q.fjk-dlri> l
+
+1u.{row} 1u.{col} @.r{
+  .{format.U.{row}.U.{col}.align} 0U.{format.U.{row}.U.{col}.bold} 0U.{format.U.{row}.U.{col}.italic}
+  1U.{format.U.{row}.U.{col}.rowspan} 1U.{format.U.{row}.U.{col}.colspan}
+} :M.r
+<
+0a-L"=.{format.U.{row}.U.{col}.align}left'
+0a-C"=.{format.U.{row}.U.{col}.align}center'
+0a-R"=.{format.U.{row}.U.{col}.align}right'
+0a-B"=1U.{format.U.{row}.U.{col}.bold}'
+0a-I"=1U.{format.U.{row}.U.{col}.italic}'
+0a- "=%.{col} :M.r'
+0a-,"=%.{row} 1u.{col} :M.r' 0a-10"=%.{row} 1u.{col} :M.r'
+0a-."=1;'
+D>
+
+k q.{row}u.{frows} q.{col}u.{fcols} 1u.{row} 1u.{col} .u.#bd
+<Q.{row}-Q.{frows}">
+EQ.{format.U.{row}.U.{col}.align} G.{format.U.{frows}.U.{col}.align} 1EB
+Q.{format.U.{frows}.U.{col}.bold}U.{format.U.{row}.U.{col}.bold}
+Q.{format.U.{frows}.U.{col}.italic}U.{format.U.{row}.U.{col}.italic}
+Q.{format.U.{frows}.U.{col}.rowspan}U.{format.U.{row}.U.{col}.rowspan}
+Q.{format.U.{frows}.U.{col}.colspan}U.{format.U.{row}.U.{col}.colspan} '
+.,.+3:sT{
+"S .,s
+T}.-3X.{data.U.{row}.U.{col}} C 1| .,.+2:s\^^"S
+0U.{format.U.{row}.U.{col}.rowspan}
+Q.{row}-1U.#cr <Q.{format.U.#cr.U.{col}.rowspan}">1;' -%.#cr>
+%.{format.U.#cr.U.{col}.rowspan} '
+.u.f s[U.{tab},
+ q.f,.-1X.{data.U.{row}.U.{col}} 0'u.{data.U.{row}.U.{col}.block}
+-a-q.{tab}"= %.{col} | %.{row} 1u.{col} .,.+4:s.TE
+"S1;' '>
+q.#bd,.D
+
+q.{row}-1u.{drows} 1u.{row}
+q.{drows}<I.HTML <tr>
+
+1u.{col}
+q.{fcols}<Q.{format.U.{row}.U.{col}.rowspan}">
+I.HTML <td rowspan="Q.{format.U.{row}.U.{col}.rowspan}\I colspan="Q.{format.U.{row}.U.{col}.colspan}\I"
+q.{data.U.{row}.U.{col}.block}"= I align="Q.{format.U.{row}.U.{col}.align}">
+Q.{format.U.{row}.U.{col}.bold}"N I<b> '
+Q.{format.U.{row}.U.{col}.italic}"N I<i> '
+G.{data.U.{row}.U.{col}}
+Q.{format.U.{row}.U.{col}.bold}"N I</b> '
+Q.{format.U.{row}.U.{col}.italic}"N I</i> '
+I</td>
+ | I>
+Q.{data.U.{row}.U.{col}}
+.HTML </td>
+ ' '
+%.{col}>
+I.HTML </tr>
+
+%.{row}>
+I.HTML </table>
+
+>
+
+EWQ#ou
+EX
