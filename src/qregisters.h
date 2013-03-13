@@ -328,7 +328,7 @@ private:
 	State *got_register(QRegister &reg) throw (Error);
 };
 
-class StateLoadQReg : public StateExpectString {
+class StateLoadQReg : public StateExpectFile {
 private:
 	State *done(const gchar *str) throw (Error);
 };
@@ -380,7 +380,7 @@ private:
 	State *got_register(QRegister &reg) throw (Error, ReplaceCmdline);
 };
 
-class StateMacroFile : public StateExpectString {
+class StateMacroFile : public StateExpectFile {
 private:
 	State *done(const gchar *str) throw (Error);
 };

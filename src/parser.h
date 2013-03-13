@@ -194,6 +194,12 @@ protected:
 	virtual State *done(const gchar *str) throw (Error) = 0;
 };
 
+class StateExpectFile : public StateExpectString {
+public:
+	StateExpectFile(bool _building = true, bool _last = true)
+		       : StateExpectString(_building, _last) {}
+};
+
 class StateStart : public State {
 public:
 	StateStart();
@@ -290,6 +296,12 @@ namespace States {
 	is_string()
 	{
 		return dynamic_cast<StateExpectString *>(current);
+	}
+
+	static inline bool
+	is_file()
+	{
+		return dynamic_cast<StateExpectFile *>(current);
 	}
 }
 

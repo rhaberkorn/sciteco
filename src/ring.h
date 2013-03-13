@@ -215,7 +215,7 @@ public:
  * Command states
  */
 
-class StateEditFile : public StateExpectString {
+class StateEditFile : public StateExpectFile {
 private:
 	bool allowFilename;
 
@@ -226,7 +226,7 @@ private:
 	State *done(const gchar *str) throw (Error);
 };
 
-class StateSaveFile : public StateExpectString {
+class StateSaveFile : public StateExpectFile {
 private:
 	State *done(const gchar *str) throw (Error);
 };

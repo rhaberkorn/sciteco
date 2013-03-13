@@ -200,9 +200,7 @@ process_edit_cmd(gchar key)
 		break;
 
 	case '\t':
-		if (States::current == &States::editfile ||
-		    States::current == &States::savefile ||
-		    States::current == &States::loadqreg) {
+		if (States::is_file()) {
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0],
 							     complete);
