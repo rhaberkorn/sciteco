@@ -591,7 +591,7 @@ overhead of empty Scintilla documents.
 .
 Q-Registers may be referred to by commands using Q-Register
 specifications:
-.TP
+.TP 10
 .I c
 .TQ
 .BI . c
@@ -616,6 +616,10 @@ String building characters may be used so that Q-Register names
 may be calculated.
 Curly braces can be used in \fIname\fP as long as they are
 balanced.
+The short single or double character specifications refer
+to registers in the same namespace as long specifications.
+For instance the specifications \(lqa\(rq and \(lqA\(rq
+are equivalent to \(lq{A}\(rq.
 .
 .SS Push-Down List
 .
@@ -638,8 +642,162 @@ contents of the search register you could write:
 .
 .SH STRING-BUILDING CHARACTERS
 .
+As alluded to earlier \*(ST supports special characters in
+command string arguments and long Q-Register names.
+These are called string-building characters.
+String-building character processing may be enabled or
+disabled for specific commands by default but is
+always enabled in long Q-Register specifications.
+String building and processing is performed in the following
+stages:
+.RS
+.IP 1. 4
+Carets followed by characters are translated to control codes,
+so \(lq^a\(rq and \(lq^A\(rq are equivalent to CTRL+A (code 1).
+A double caret \(lq^^\(rq is translated to a single caret.
+This caret-handling is independent of the caret-handling in
+command names.
+.IP 2.
+String building characters are processed, resulting in expansions
+or translations of subsequent characters.
+.IP 3
+Command-specific character processing.
+Some commands, most notably the search and replace commands,
+might interprete special characters and domain specific languages
+after string building.
+Care has been taken so that the string building and
+command-specific languages do not clash (i.e. to minimize necessary
+escaping).
+.RE
+.LP
+String building characters/expressions are always lead by a control
+character and their case is insignificant.
+In the following list of supported expressions, the caret-notation
+thus refers to the corresponding control code:
+.TP
+.BI ^Q c
+.TQ
+.BI ^R c
+Escape character \fIc\fP.
+The character is not handled as a string building character,
+so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
+.TP
+.B ^V^V
+.TQ
+.BI ^V c
+Translates all following characters into lower case.
+When \fB^V\fP is not followed by \fB^V\fP, a single character
+\fIc\fP is lower-cased.
+.TP
+.B ^W^W
+.TQ
+.BI ^W c
+Analogous to \fB^V\fP, but upper-cases characters.
+.TP
+.BI ^EQ q
+Expands to the string contents of the Q-Register specified by
+\fIq\fP.
+Currently, long Q-Register names have a separate independant
+level of string building character processing, allowing you
+to build Q-Register names whose content is then expanded.
+.TP
+.BI ^EU q
+Expands to the character whose code is stored in the numeric
+part of Q-Register \fIq\fP.
+For instance if register \(lqA\(rq contains the code 66,
+\(lq^EUa\(rq expands to the character \(lqB\(rq.
+.TP
+.BI ^E c
+All remaining \fB^E\fP combinations are passed down
+unmodified.
+Therefore \fB^E\fP pattern match characters do not have to
+be escaped.
+.
 .
 .SH PATTERN MATCH CHARACTERS
+.
+\*(ST's search and replace commands allow the use of wildcards
+for pattern matching.
+These pattern match characters are all led by control characters
+and their case is insignificant,
+so they usually require much less escaping and thus less typing
+than regular expressions.
+Nevertheless they describe a similar class of languages.
+Pattern match character processing is performed after string building
+by search and replace commands.
+.LP
+The following pattern match constructs are supported for matching
+one character in different character classes
+(caret-notations refer to the corresponding control characters):
+.TP
+.B ^S
+.TQ
+.B ^EB
+Matches all non-alpha-numeric characters.
+.TP
+.B ^EA
+Matches all alphabetic characters.
+.TP
+.B ^EC
+Matches all symbol constituents.
+These are currently defined as alpha-numeric characters,
+dot (.) and dollar ($) signs.
+.TP
+.B ^ED
+Matches all digits.
+.TP
+.BI ^EG q
+Matches all characters in the string of the Q-Register
+specified by \fIq\fP, i.e. one of the characters in
+the register.
+.TP
+.B ^EL
+Matches all line break characters.
+These are defined as carriage return, line-feed, vertial tab and
+form feed.
+.TP
+.B ^ER
+Matches all alpha-numeric characters.
+.TP
+.B ^EV
+Matches all lower-case alphabetic characters.
+.TP
+.B ^EW
+Matches all upper-case alphabetic characters.
+.TP
+.I c
+All other (non-magic) characters represent a class that
+contains only the character itself.
+.LP
+The following additional pattern match constructs are supported
+(caret-notations refer to the corresponding control characters):
+.TP
+.B ^X
+.TQ
+.B ^EX
+Matches any character.
+.TP
+.BI ^N class
+Matches any character \fBnot\fP in \fIclass\fP.
+All constructs listed above for matching classes may be used.
+.TP
+.BI ^EM pattern
+Matches many occurrences (at least one) of \fIpattern\fP.
+Any pattern match construct and non-magic character may be used.
+.TP
+.B ^ES
+Matches any sequence of whitespace characters (at least one).
+Whitespace characters are defined as line-break characters,
+the space and horizontal tab characters.
+.TP
+.BI ^E[ pattern1 , pattern2 , ... ]
+Matches one of a list of patterns.
+Any pattern match construct may be used.
+The pattern alternatives must be separated by commas.
+.LP
+All non-pattern-match-characters match themselves.
+Note however that currently, all pattern matching is performed
+.BR case-insensitive .
 .
 .
 .SH FLOW CONTROL
