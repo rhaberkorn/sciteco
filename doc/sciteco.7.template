@@ -372,8 +372,268 @@ tilde-expansions are performed by the shell).
 .
 .SH ARITHMETICS AND EXPRESSIONS
 .
+\*(ST abstracts classic TECO's scheme of commands accepting at most
+two prefix arguments and returning at most one value for the next command
+into a much more elaborate scheme where commands accept
+.I n
+arguments and return
+.I n
+arguments.
+This is done using an integer value stack.
+The stack is used for passing arguments and for arithmetics.
+\*(ST is thus a stack-based language.
+Nevertheless unary prefix and binary infix operators including operator
+preference are supported.
+Since the same stack is used for arithmetics and command arguments,
+arithmetics and arbitrary code may be freely mixed like in
+expression-centered languages and some classic TECOs.
+In fact, in \*(ST digits are basically stack-operating commands.
+For the sake of macro portability all integers are 64-bit signed
+integers regardless of the host's architecture.
+The integer storage size may be changed at \*(ST build time
+however.
+In this specific build, integers are @TECO_INTEGER@-bit.
+.LP
+Some commands expect or return booleans, most often signifying
+success or failure.
+Booleans are also integers but unlike in ordinary (sane) languages
+where 0 represent false and other values represent true,
+in \*(ST negative values (smaller than zero) represent success
+and non-negative values (smaller than or equal zero) represent
+failure.
+Therefore \*(ST booleans may be negated by performing a
+binary (bit by bit) negation for instance using the
+.B ^_
+command.
+.
+.SS Operators
+.
+The following binary operators are supported with descending
+precedence:
+.TP 2
+.IB base " ^* " power
+Raise \fIbase\fP to \fIpower\fP.
+.TP
+.IB a " * " b
+Multiply \fIa\fP by \fIb\fP.
+.TP
+.IB a " / " b
+Divide \fIa\fP by \fIb\fP.
+Naturally it is a division without remainder.
+.TP
+.IB a " ^/ " b
+Remainder of \fIa\fP divided by \fIb\fP.
+It is actually a modulo operation conforming to the
+host C compiler's modulo semantics.
+.TP
+.IB a " - " b
+Subtract \fIb\fP from \fIa\fP.
+.TP
+.IB a " + " b
+Add \fIb\fP to \fIa\fP.
+.TP
+.IB a " & " b
+Binary AND.
+.TP
+.IB a " # " b
+Binary OR.
+.LP
+Round brackets may be used for grouping expressions to override
+operator precedence.
+The opening bracket also represents an argument barrier, ie. the first
+command after the opening bracket does not see and cannot pop any
+arguments from the stack.
+This may be useful for mixing commands with arithmetic expressions.
+An expression enclosed in brackets returns all of the values that have
+been pushed onto the stack.
+Another construct that may be used as an argument barrier to explicitly
+separate arguments is the comma (\(lq,\(rq).
+It is obligatory when trying to push a sequence of number constants
+like in \(lq1,2\(rq but is optional in many contexts where it is
+mandatory in classic TECO, like in \(lqQaQbD\(rq.
+I recommend to use it as much as possible in code where clarity
+matters.
+.LP
+The only unary operator currently supported is
+.RB \(lq - \(rq.
+The minus-operator is special and has unique semantics.
+It sets the so called \fBprefix sign\fP which is 1 by default
+to -1.
+This prefix sign may be evaluated by commands - most often it is the
+default value if the argument stack is empty so that expressions like
+\(lq-C\(rq are rougly equivalent to \(lq-1C\(rq.
+However in front of opening brackets, like in \(lq-(1+2)\(rq, it is
+roughly equivalent to \(lq-1*(1+2)\(rq so that values calculated in
+brackets can be easily negated.
+In front of digits the prefix sign specifies whether the digit is
+added or subtracted from the value on the stack so that in front of
+numbers the result is a negative number.
+.
+.
+.SH COMMAND SYNTAX
+.
+\*(ST's command syntax is quite flexible and diverse but may be
+categorized into some base command types.
+.TP
+.B C
+.TQ
+.B EF
+A simple command consists of one or more printable or control
+characters whose case is insignificant.
+It is executed as soon as it has been completely specified.
+.TP
+.BI Q q
+A command identifier may be followed by a Q-Register specification
+.IR q .
+It specifies a Q-Register to be accessed by the command
+(e.g. to query, set, increase).
+.TP
+.BI I string $
+.TQ
+.BI FS string1 $ string2 $
+A command identifier (and Q-Register specification) may be followed
+by one or more string arguments.
+String arguments are terminated by Escape characters (27) by default,
+but this may be changed using modifiers.
+All string arguments may contain special string building characters
+for instance to embed other strings.
+String building may be enabled or disabled by default for a command.
+In interactive mode the command is often executed as soon as it
+has been completely specified and updates to the string arguments
+are handled interactively.
+.
+.SS Modifiers
+.
+A command's behaviour or syntax may be influenced by so called
+modifiers written in front of commands.
+.LP
+The colon (\fB:\fP) modifier usually prevents a command from
+failing and instructs it to return a condition (success/failure)
+boolean instead.
+.EX
+1000:C=
+.EE
+For instance if \(lq1000C\(rq would fail, \(lq1000:C\(rq will
+return 0 instead.
+.LP
+The at (\fB@\fP) modifier allows the string termination character
+to be changed for individual commands.
+The alternative termination character must be specified just before
+the first string argument.
+For instance:
+.EX
+@FS/foo/bar/
+.EE
+Any character may be used as an alternative termination character.
+There is one special case, though.
+If specified as the opening curly brace (\fB{\fP), a string argument
+will continue until the closing curly brace (\fB}\fP).
+Curly braces must be balanced and after the closing curly brace
+the termination character is reset to Escape and another one may
+be chosen.
+This feature is especially useful for embedding TECO code in
+string arguments, as in:
+.EX
+@^Um{
+  @FS{foo}/bar/
+}
+.EE
 .
 .SH Q-REGISTERS
+.
+\*(ST may store data in so called Q-Registers.
+Each Q-Register cell has an integer and string part (can store
+both at the same time).
+Strings are actually Scintilla documents.
+Therefore Q-Register strings may be edited just like buffers
+(see \fBEQ\fP command).
+.LP
+Q-Register cells have case-sensitive names and are stored
+in Q-Register tables.
+These tables are Red-Black trees internally.
+Therefore the Q-Register namespace may be (ab)used as a
+complex data structure e.g. for records, arrays and maps.
+\*(ST provides a global Q-Register table (for global registers)
+and arbitrarily many local Q-Register tables (for local registers).
+Only one global and local Q-Register table may be accessed at a
+time.
+Macro invocations might create new local Q-Register tables for
+the executed code.
+\*(ST initializes the Q-Registers \(lqA\(rq to \(lqZ\(rq and
+\(lq0\(rq to \(lq9\(rq in every Q-Register table.
+Furthermore \*(ST defines and initializes the following special
+global registers:
+.TP 2
+.BR _ " (underscore)"
+Search string and search condition register.
+.TP
+.BR - " (minus)"
+Replacement string register.
+Its integer part is unused.
+.TP
+.BR * " (asterisk)"
+Name and id of current buffer in ring.
+.TP
+.BR $ " (Escape)"
+Command-line replacement register.
+Its integer part is unused.
+.LP
+Some commands may create and initialize new registers if
+necessary, while it is an error to access undefined registers
+for some other commands.
+The string part of a register is only ever initialized
+when accessed.
+This is done opaquely, but allows you to use register
+tables as purely numeric data structures without the
+overhead of empty Scintilla documents.
+.
+.SS Q-Register Specifications
+.
+Q-Registers may be referred to by commands using Q-Register
+specifications:
+.TP
+.I c
+.TQ
+.BI . c
+Refers to a one character Q-Register.
+The one character name is upper-cased.
+If lead by a dot, the name refers to a local Q-Register,
+otherwise to a global one.
+.TP
+.BI # cc
+.TQ
+.BI .# cc
+Refers to a two character global or local Q-Register whose
+name is upper-cased.
+.TP
+.BI { name }
+.TQ
+.BI .{ name }
+Refers to a Q-Register with an arbitrary
+.IR name .
+The name is \fBnot\fP upper-cased.
+String building characters may be used so that Q-Register names
+may be calculated.
+Curly braces can be used in \fIname\fP as long as they are
+balanced.
+.
+.SS Push-Down List
+.
+Another data structure supported by \*(ST is the Q-Register
+push-down list.
+Register contents may be pushed onto and popped from this list,
+for instance to save and restore global registers modified
+by a macro.
+The global Q-Register push-down list is handled using the
+.BI [ q
+and
+.BI ] q
+commands.
+For instance to search in a macro without overwriting the
+contents of the search register you could write:
+.EX
+[_ Sfoo$ ]_
+.EE
 .
 .
 .SH STRING-BUILDING CHARACTERS

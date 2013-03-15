@@ -173,6 +173,7 @@ AC_ARG_WITH(teco-integer,
 	AS_HELP_STRING([--with-teco-integer=SIZE],
 		       [Storage size of TECO integers in bits [default=64]]),
 	[TECO_INTEGER=$withval], [TECO_INTEGER=64])
+AC_SUBST(TECO_INTEGER)
 AC_DEFINE_UNQUOTED(TECO_INTEGER, $TECO_INTEGER, [Storage size of TECO integers])
 
 AC_ARG_ENABLE(html-manual,
