@@ -992,6 +992,37 @@ loops in conditional blocks.
 .
 .SH COMMAND REFERENCE
 .
+This section documents all of the commands supported by
+\*(ST.
+The command reference adheres to a few typographic conventions:
+.RS
+.IP \(bu 3
+The first lines in each command subsection descibes the
+command's syntax.
+Each line corresponds to one alternative.
+.IP \(bu
+.RI [ ... ]
+denotes an optional value or construct.
+.IP \(bu
+Alternatives are separated by \(lq|\(rq.
+.IP \(bu
+.I Italic
+(or underlined) words refer to variable values or characters.
+.IP \(bu
+.B Bold
+characters are of syntactic significance.
+.IP \(bu
+A right arrow (\(->) is followed by the command's return
+values (i.e. values pushed onto the expression stack).
+.IP \(bu
+.B $
+separates string arguments since the default string
+terminator Escape (code 27) is echoed as a dollar sign
+by \*(ST.
+.RE
+.LP
+The same conventions are used elsewhere in this manual.
+.
 .COMMANDS
 .
 .
