@@ -1,7 +1,7 @@
 Overview
 ========
 
-SciTECO is an interactive TECO dialect, similar to [VideoTECO](http://www.copters.com/teco.html).
+SciTECO is an interactive TECO dialect, similar to [Video TECO](http://www.copters.com/teco.html).
 It also adds features from classic TECO-11, as well as unique new ideas.
 
 The basic approach to text editing is both radically different and surprisingly similar to popular
@@ -24,7 +24,7 @@ Features
 
 Some of these features are not yet present but expected to be supported in the near future.
 
-* All of the basic VideoTECO commands supported
+* All of the basic Video TECO commands supported
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
   by the user (commands may have more than two arguments)
 * Extended Q-Register namespace (arbitrary strings): can be used to build libraries and
@@ -34,7 +34,8 @@ Some of these features are not yet present but expected to be supported in the n
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters
 * Interactivity: supports filename completion via immediate editing commands (e.g. `<TAB>` in
-  commands accepting filenames); immediate searching (similar to search-as-you-type)
+  commands accepting filenames); immediate searching (similar to search-as-you-type);
+  context-sensitive immediate editing commands
 * Command rubout: SciTECO can even undo file writes (`EW` command)
 * Munging: Macros may be munged, that is executed in batch mode. By default, a profile
   is munged.
@@ -45,6 +46,7 @@ Installation
 
 SciTECO has the following build and runtime dependencies:
 * Autotools, GNU C, C++ and [Gob2](http://www.jirka.org/gob.html)
+* Groff (only when formatting HTML manuals)
 * [Glib](http://developer.gnome.org/glib/), as a cross-platform runtime library
 * [Scintilla](http://www.scintilla.org/), and possibly [Scinterm](http://foicica.com/scinterm/)
   (v1.1 or later)
@@ -72,7 +74,6 @@ SciTECO has the following build and runtime dependencies:
 Additional Documentation
 ========================
 
-* There is a manpage sciteco(1) describing program invocation and SciTECO's
+* There is a manpage __sciteco__(1) describing program invocation and SciTECO's
   batch mode processing.
-
-More documentation is coming soon.
+* There is a manpage __sciteco__(7) describing SciTECO as a language.
