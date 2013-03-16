@@ -470,6 +470,43 @@ added or subtracted from the value on the stack so that in front of
 numbers the result is a negative number.
 .
 .
+.SH BUFFER RING
+.
+\*(ST organizes files to edit in the so called buffer ring.
+The ring is a circular list of buffers.
+A buffer is a named or unnamed Scintilla document, and may
+be thought of as \*(ST's second important primary data type.
+There is at most one unnamed buffer in the ring, identified
+by the empty name.
+Named buffers are buffers with an associated file name.
+The file might or might not already exist in the file system.
+The file name uses the host system's path seperator.
+File names are always tried to be normalized to absolute
+paths to make them independant of \*(ST's current working
+directory.
+New buffers are always added at the end of the buffer ring.
+The Id of a buffer corresponds to its position in the ring
+(the first one has Id 1, the second one Id 2, etc.).
+Buffers may be marked dirty by destructive operations.
+.LP
+\*(ST is a character-oriented editor, so every character
+in a buffer/document may be addressed by a position
+integer.
+The first character is addressed by position 0.
+Every document has a current position called dot
+(after the \(lq.\(rq command that returns it).
+A document may contain any sequence of bytes but positions
+refer to characters that might not correspond to individual
+bytes depending on the document's encoding.
+Consequently when querying the code at a character position
+or inserting characters by code, the code may be an Unicode
+codepoint instead of byte-sized integer.
+\# ^^ this is currently broken/untested
+.LP
+For more details, please refer to this manual's command
+reference.
+.
+.
 .SH COMMAND SYNTAX
 .
 \*(ST's command syntax is quite flexible and diverse but may be
