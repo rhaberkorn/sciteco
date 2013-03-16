@@ -72,6 +72,7 @@ SciTECO has the following build and runtime dependencies:
 Additional Documentation
 ========================
 
-* There is a manpage __sciteco__(1) describing program invocation and SciTECO's
-  batch mode processing.
-* There is a manpage __sciteco__(7) describing SciTECO as a language.
+* There is a manpage [__sciteco__(1)](http://rhaberkorn.github.com/sciteco/manuals/sciteco.1.html)
+  describing program invocation and SciTECO's batch mode processing.
+* There is a manpage [__sciteco__(7)](http://rhaberkorn.github.com/sciteco/manuals/sciteco.7.html)
+  describing SciTECO as a language.
