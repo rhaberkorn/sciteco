@@ -54,5 +54,4 @@ Optimizations:
 
 Documentation:
  * Code docs (Doxygen)
- * Language reference?
- * Command reference
+ * clean up/fix generate-docs.tes
