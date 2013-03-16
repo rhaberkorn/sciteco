@@ -1,4 +1,31 @@
 #!/usr/bin/sciteco -m
+! ./generate-docs.tes <output> <input> <sources> !
+
+!
+  Preprocess a manpage template, inserting a SciTECO command reference.
+
+  The .COMMANDS request is replaced with Troff markup generated from code
+  comments in <sources>.
+
+  The comments support a small but powerful markup for documenting
+  TECO commands:
+   * comments start with /*$
+   * all lines until first empty line are command syntax descriptions
+     * text followed by "--" is a short description
+     * variable values and characters of syntactic significance should be
+       detected automatically
+     * alternatives are denoted by "|"
+     * every line is an alternative
+     * return values may be specified after "->"
+   * the remaining text is the verbose command description
+     * <name> denotes a variable from the syntax description
+     * empty lines introduce paragraphs
+     * lines beginning with "-" are unordered lists
+     * lines beginning with numbers and dot ("1.", "2.", etc.) are
+       ordered lists
+     * the above transformations are only preprocessing, so that
+       Troff requests, escapes and tman macros may also be used.
+!
 
 @{format_header}{
   fd--S .U.f :L"S.|Z'U.t Q.f,Q.tXa Q.f,Q.tD I
