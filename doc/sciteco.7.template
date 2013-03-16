@@ -480,7 +480,15 @@ categorized into some base command types.
 .B EF
 A simple command consists of one or more printable or control
 characters whose case is insignificant.
-It is executed as soon as it has been completely specified.
+Only \fBat the beginning\fP of a command, carets followed by
+one character are equivalent to the corresponding control
+character.
+Since it does not make any sense whatsoever to support a
+caret-form of non-operational (ignored) control character commands
+(i.e. form feed, carriage return, line feed, vertical tab),
+their caret forms (e.g. \(lq^J\(rq) are reserved for future
+use as operational commands.
+The command is executed as soon as it has been completely specified.
 .TP
 .BI Q q
 A command identifier may be followed by a Q-Register specification
@@ -506,6 +514,7 @@ are handled interactively.
 .
 A command's behaviour or syntax may be influenced by so called
 modifiers written in front of commands.
+When specifying more than one modifier their order is insignificant.
 .LP
 The colon (\fB:\fP) modifier usually prevents a command from
 failing and instructs it to return a condition (success/failure)
@@ -804,6 +813,9 @@ Note however that currently, all pattern matching is performed
 .
 \*(ST is a structured imperative language.
 Commands are executed from left to right.
+The white space characters space, form feed, carriage return,
+line feed and vertical tab are non-operational (ignored)
+commands.
 All of the standard structured (and unstructured) flow control
 constructs are supported:
 gotos, loops and conditionals.
