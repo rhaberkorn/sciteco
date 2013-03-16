@@ -1497,9 +1497,17 @@ StateCondCommand::custom(gchar chr) throw (Error)
 		BEGIN_EXEC(&States::start);
 		result = g_ascii_isdigit((gchar)value);
 		break;
-	case 'E':
+	case 'S':
+	case 'T':
+		BEGIN_EXEC(&States::start);
+		result = IS_SUCCESS(value);
+		break;
 	case 'F':
 	case 'U':
+		BEGIN_EXEC(&States::start);
+		result = IS_FAILURE(value);
+		break;
+	case 'E':
 	case '=':
 		BEGIN_EXEC(&States::start);
 		result = value == 0;
@@ -1510,8 +1518,6 @@ StateCondCommand::custom(gchar chr) throw (Error)
 		result = value > 0;
 		break;
 	case 'L':
-	case 'S':
-	case 'T':
 	case '<':
 		BEGIN_EXEC(&States::start);
 		result = value < 0;
