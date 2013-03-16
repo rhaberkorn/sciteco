@@ -791,7 +791,7 @@ Whitespace characters are defined as line-break characters,
 the space and horizontal tab characters.
 .TP
 .BI ^E[ pattern1 , pattern2 , ... ]
-Matches one of a list of patterns.
+Matches one in a list of patterns.
 Any pattern match construct may be used.
 The pattern alternatives must be separated by commas.
 .LP
@@ -801,9 +801,193 @@ Note however that currently, all pattern matching is performed
 .
 .
 .SH FLOW CONTROL
+.
+\*(ST is a structured imperative language.
+Commands are executed from left to right.
+All of the standard structured (and unstructured) flow control
+constructs are supported:
+gotos, loops and conditionals.
+Flow control commands have a syntax similar to commands but allowing
+code blocks.
+They are documented in the following subsections.
+.LP
+It is important to note that in contrast to classic TECOs and Video
+TECO, \*(ST handles flow control constructs much more elaborately.
+While classic TECOs control flow by linearilly searching the
+program code, paying no attention to string boundaries and comments,
+\*(ST always parses code even when not executing so you do not have
+to care about characters relevant for flow control in string arguments
+and the like.
+\*(ST will never ever jump into string arguments!
+Also \*(ST caches program counters in tables and on the expression
+stack so that flow-control statements are generally faster than
+in classic TECOs.
+.
 .SS GOTOS AND LABELS
+.
+The most basic flow control command in \*(ST is the Go-to command.
+Since it is really an ordinary command, exceptional only in setting
+the program counter and influencing parsing, it is described in this
+document's command reference.
+\*(ST may do simple unconditional and computed gotos.
+.LP
+Labels are symbolic and are defined with the following syntax:
+.br
+.BI ! label !
+.br
+Whereas \fIlabel\fP is an arbitrary string.
+String building is not performed on \fIlabel\fP, i.e. it is used
+verbatim.
+When a label is encountered, it is cached in a macro-invocation level
+specific goto table if it is not in there already.
+Therefore every macro invocation has its own label namespace and gotos
+to a label have constant complexity once a label has been parsed.
+Terminating a macro execution (or command line) fails if a label that
+is jumped to has not been defined.
+Labels also have another important role in \*(ST - they are used
+as comments.
+.
 .SS LOOPS
+.
+Gotos may be used for looping, but \*(ST also supports a dedicated
+structured looping construct.
+Its syntax is as follows:
+.br
+\# [n]< code >
+\fR[\fIn\fR]\fB< \fIcode\fB >\fR
+.br
+In other words, sharp brackets (less-than and greater-than signs)
+correspond to the loop start and end.
+The opening bracket acts as an argument barrier (i.e. the command
+immediately following does not see any argument) and the closing
+bracket discards all values accumulated on the expression stack
+since the loop's beginning (similar to a \fB^[\fP command).
+The opening bracket takes an optional argument \fIn\fP.
+If \fIn\fP is omitted, -1 is implied.
+The loops behaviour depends on the value of \fIn\fP:
+.TP
+.IR n " > 0"
+Execute \fIcode\fP exactly \fIn\fP times.
+You may break from the loop earlier though, using the semicolon
+(\fB;\fP) command.
+.TP
+.IR n " = 0"
+Skip loop.
+\fIcode\fP is not executed but \*(ST parses until the loop's
+end before continuing execution.
+.TP
+.IR n " < 0"
+Infinite loop.
+The loop does not terminate automatically but you must break
+from it manually.
+Consequently, if \fIn\fP is omitted the loop will be an
+infinite one.
+.LP
+Furthermore there are a number of flow control commands that
+may be used in loops like \fBF<\fP and \fBF>\fP.
+They are described in the reference section of this manual.
+.
 .SS CONDITIONALS
+.
+Last but not least, \*(ST supports so called conditionals.
+They correspond to structured IF-THEN-ELSE statements
+in other imperative languages.
+The general syntax of conditionals is as follows:
+.br
+\# n"c if [| else ]'
+\fIn\fB"\fIc if \fR[\fB|\fI else \fR] \fB'\fR
+.br
+Whereas \fIn\fP is a value on the stack to test,
+\fIc\fP is a case-insignificant character identifying a
+condition to check for,
+\fIif\fP is a code block to execute if the condition applies and
+\fIelse\fP is an optional code block to execute if the condition
+does not apply.
+The first command in the \fIif\fP block will not see
+any arguments on the expression stack but values accumulated
+on the expression stack by the \fIif\fP or \fIelse\fP blocks
+are not discarded by the terminating single-quote.
+In other words, conditionals may return values.
+The possible conditions are defined in the following list:
+.TP
+.IB n \(dqA
+Applies if \fIn\fP is the code of an alphabetic character.
+.TP
+.IB n \(dqC
+Applies if \fIn\fP is the code of a symbol constituent.
+Like in pattern matching, a symbol constituent is defined
+as an alpha-numeric character, dot, dollar or underscore.
+.TP
+.IB n \(dqD
+Applies if \fIn\fP is the code a digit character (0 to 9).
+The current radix is insignificant.
+.TP
+.IB n \(dqS
+.TQ
+.IB n \(dqT
+Applies if \fIn\fP is a condition boolean signifying
+success (or truth).
+Therefore it is equivalent to a check for less than
+zero (negative).
+.TP
+.IB n \(dqF
+.TQ
+.IB n \(dqU
+Applies if \fIn\fP is a condition boolean signifying
+failure (or falsehood).
+Therefore it is equivalent to a check for greater than
+or equal to zero (non-negative).
+.TP
+.IB n \(dqE
+.TQ
+.IB n \(dq=
+Applies if \fIn\fP equals zero.
+.br
+To check two values \fIa\fP and \fIb\fP for equality you
+will commonly write:
+.IB a - b \(dq=
+.TP
+.IB n \(dqG
+.TQ
+.IB n \(dq>
+Applies if \fIn\fP is greater than zero (positive).
+.br
+To check if a value \fIa\fP is greater than a value \fIb\fP you
+will commonly write:
+.IB a - b \(dq>
+.TP
+.IB n \(dqL
+.TQ
+.IB n \(dq<
+Applies if \fIn\fP is less than zero (negative).
+.br
+To check if a value \fIa\fP is less than a value \fIb\fP you
+will commonly write:
+.IB a - b \(dq<
+.TP
+.IB n \(dqN
+Applies if \fIn\fP is not zero.
+.br
+To check two values \fIa\fP and \fIb\fP for inequality you
+will commonly write:
+.IB a - b \(dqN
+.TP
+.IB n \(dqR
+Applies if \fIn\fP is the code of an alpha-numeric character.
+.TP
+.IB n \(dqV
+Applies if \fIn\fP is the code of a lower-case alphabetic
+character.
+.TP
+.IB n \(dqW
+Applies if \fIn\fP is the code of a upper-case alphabetic
+character.
+.LP
+There are also a number of flow-control commands like
+\fBF'\fP and \fBF|\fP that may be used in conditionals.
+They are described in the reference section of this manual.
+Note also that it is safe to invoke gotos and breaks from
+loops in conditional blocks.
 .
 .
 .SH COMMAND REFERENCE
