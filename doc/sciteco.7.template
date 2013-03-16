@@ -47,10 +47,10 @@ Emacs later became an independent program that eventually
 dropped TECO as its scripting language in favour of Lisp.
 \*(ST is not the first attempt to devise a TECO-based interactive
 screen editor.
-It is very similar to \fIVideoTECO\fP, a little known editor
+It is very similar to \fIVideo TECO\fP, a little known editor
 that pioneered the concept.
-When \fIVideoTECO\fP wanted to \(lqoutdo classic TECOs in every way\(rq,
-\*(ST wants to outdo \fIVideoTECO\fP in every way.
+When \fIVideo TECO\fP wanted to \(lqoutdo classic TECOs in every way\(rq,
+\*(ST wants to outdo \fIVideo TECO\fP in every way.
 .LP
 When using \*(ST in interactive mode, it is important to know exactly
 how \*(ST translates and processes user input.
@@ -999,9 +999,10 @@ loops in conditional blocks.
 .
 \*(ST is not compatible to any particular TECO dialect
 but is quite similar to
-.BR VideoTECO .
-Most VideoTECO and many Standard TECO programs should
+.BR "Video TECO" .
+Most Video TECO and many Standard TECO programs should
 be portable with little to no changes.
+This manual mentions differences on several occasions.
 .
 .
 .SH SEE ALSO

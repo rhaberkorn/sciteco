@@ -28,7 +28,7 @@ Scintilla-based \fBTE\fPxt \fBE\fPditor and \fBCO\fPrrector
 \*(ST is an interactive
 .B TECO
 dialect, similar to
-.BR VideoTECO .
+.BR "Video TECO" .
 It also adds features from classic
 .BR "Standard TECO-11" ,
 and incorporates many unique new ideas.
@@ -182,7 +182,7 @@ Repository:
 .TP
 Related dialects:
 .UR http://sourceforge.net/projects/videoteco/
-VideoTECO
+Video TECO
 .UE
 (\c
 .UR http://www.copters.com/teco.html
