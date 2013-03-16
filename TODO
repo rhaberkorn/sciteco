@@ -7,14 +7,16 @@ Known Bugs:
  * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
 
 Features:
- * protect ED hook executions (process like "(<x>M0$)")
+ * properly support Unicode encodings and the character-based model
+   * link against libncursesw if possible
+   * translate documents to Unicode strings
+   * a position refers to a character/codepoint
+ * refactor lexer macro library using new possibilities
+ * protect ED hook executions (process like "(<x>M0$)").
+   Perhaps use a long name for ED registers now. How about "ED"?
  * Progress indication in commandline cursor
  * catch OOM errors (can happen easily due to infinite loops)
  * undo-tokens per char limit (additional infinite loop safety)
- * Function-key support, configurable
-   * generic function-key substitution, or
-   * function-key encoding (e.g. Page-down -> ^FPD), or
-   * function-key to ASCII/UTF mapping (as command executes macro of the same name)
  * Command to free Q-Register (remove from table)
  * autocompletion of long Q-Reg names
  * Q-Register aliasing/linking
@@ -33,6 +35,8 @@ Features:
    journal file can be replayed.
 
 Optimizations:
+ * prevent command-line flickering when using function key macros.
+ * check if Scinterm refreshing is optimal
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
  * simplify parser (static jump tables are unnecessary!)
