@@ -506,6 +506,57 @@ codepoint instead of byte-sized integer.
 For more details, please refer to this manual's command
 reference.
 .
+.SS Buffer Editing Hooks
+.
+When opening or editing a file with the \fBEB\fP command
+or when closing a file with the \fBEF\fP command, you
+often want to configure the editor for a particular language.
+For instance, when opening C++ files you might want to
+enable C++ lexing and syntax highlighting automatically.
+\*(ST thus provides user-configurable hooks into buffer
+editing operations.
+Hooks are by default disabled.
+To enable them, set bit 5 in the \fBED\fP flags:
+.EX
+0,32ED
+.EE
+\*(ST will now execute the macro in Q-Register \(lq0\(rq
+(zero) whenever a relevant operation is performed.
+The macro will be passed an argument that specifies the
+type of operation that has just been performed or is
+just about to be performed.
+Possible values are defined consecutively so the macro
+can branch to the operation using a computed goto.
+The different values are defined as follows:
+.TP
+.B 1
+A file has been \fBadded\fP to the buffer ring.
+It may or may not already exist in the file system.
+Scintilla lexing should be configured in this hook - it
+only has to be done once.
+.TP
+.B 2
+A buffer has been \fBedited\fP (made the current file).
+This hook is also executed after a file has been added to
+the buffer ring.
+In this hook you may define language-specific auxiliary
+macros, for instance.
+.TP
+.B 3
+A buffer is about to be \fBclosed\fP (removed from the
+buffer ring).
+.TP
+.B 4
+\*(ST is about to \fBexit\fP.
+.LP
+The side-effects of the hook executions are reversed
+when rubbing out the command that resulted in its
+execution.
+The \*(ST standard library contains a framework
+for configuring Scintilla lexing and other useful
+hooks (see
+.BR lexer.tes ).
+.
 .
 .SH COMMAND SYNTAX
 .
