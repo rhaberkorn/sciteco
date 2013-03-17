@@ -217,10 +217,10 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 			break;
 
 		case STATE_ANYQ:
-			/* FIXME: Q-Register spec might get more complicated */
-			reg = QRegisters::globals[g_ascii_toupper(*pattern)];
+			reg = qreg_machine.input(*pattern);
 			if (!reg)
-				return NULL;
+				break;
+			qreg_machine.reset();
 
 			temp = reg->get_string();
 			temp2 = g_regex_escape_string(temp, -1);
@@ -427,6 +427,7 @@ StateSearch::process(const gchar *str,
 
 	/* NOTE: pattern2regexp() modifies str pointer */
 	re_pattern = pattern2regexp(str);
+	qreg_machine.reset();
 #ifdef DEBUG
 	g_printf("REGEXP: %s\n", re_pattern);
 #endif

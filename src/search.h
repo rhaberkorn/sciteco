@@ -23,6 +23,7 @@
 #include "sciteco.h"
 #include "parser.h"
 #include "ring.h"
+#include "qregisters.h"
 
 /*
  * "S" command state and base class for all other search/replace commands
@@ -39,6 +40,8 @@ protected:
 
 		Buffer *from_buffer, *to_buffer;
 	} parameters;
+
+	QRegSpecMachine qreg_machine;
 
 	enum MatchState {
 		STATE_START,
