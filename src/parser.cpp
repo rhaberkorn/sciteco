@@ -308,6 +308,10 @@ StateUpper:
 
 StateCtlE:
 	switch (g_ascii_toupper(chr)) {
+	case '\\':
+		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
+		set(&&StateCtlENum);
+		break;
 	case 'Q':
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlEQ);
@@ -322,6 +326,15 @@ StateCtlE:
 	}
 
 	return NULL;
+
+StateCtlENum:
+	reg = qregspec_machine->input(chr);
+	if (!reg)
+		return NULL;
+
+	undo.push_obj(qregspec_machine) = NULL;
+	set(StateStart);
+	return g_strdup(expressions.format(reg->get_integer()));
 
 StateCtlEU:
 	reg = qregspec_machine->input(chr);
@@ -460,22 +473,10 @@ StateStart::StateStart() : State()
 void
 StateStart::insert_integer(tecoInt v)
 {
-	gchar buf[sizeof(tecoInt)*8+1]; /* maximum length if radix = 2 */
-	gchar *p = buf + sizeof(buf);
+	const gchar *str = expressions.format(v);
 
-	*--p = '\0';
 	interface.ssm(SCI_BEGINUNDOACTION);
-	if (v < 0) {
-		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)"-");
-		v *= -1;
-	}
-	do {
-		*--p = '0' + (v % expressions.radix);
-		if (*p > '9')
-			*p += 'A' - '9';
-	} while ((v /= expressions.radix));
-	interface.ssm(SCI_ADDTEXT, buf + sizeof(buf) - p - 1,
-		      (sptr_t)p);
+	interface.ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
 	interface.ssm(SCI_SCROLLCARET);
 	interface.ssm(SCI_ENDUNDOACTION);
 	ring.dirtify();

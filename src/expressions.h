@@ -202,6 +202,8 @@ public:
 		operators.clear();
 	}
 
+	const gchar *format(tecoInt number);
+
 private:
 	void calc(void);
 

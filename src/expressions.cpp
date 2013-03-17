@@ -220,3 +220,24 @@ Expressions::discard_args(void)
 	for (int i = args(); i; i--)
 		pop_num_calc();
 }
+
+const gchar *
+Expressions::format(tecoInt number)
+{
+	/* maximum length if radix = 2 */
+	static gchar buf[1+sizeof(number)*8+1];
+	gchar *p = buf + sizeof(buf);
+
+	tecoInt v = ABS(number);
+
+	*--p = '\0';
+	do {
+		*--p = '0' + (v % radix);
+		if (*p > '9')
+			*p += 'A' - '9';
+	} while ((v /= radix));
+	if (number < 0)
+		*--p = '-';
+
+	return p;
+}

@@ -804,6 +804,13 @@ part of Q-Register \fIq\fP.
 For instance if register \(lqA\(rq contains the code 66,
 \(lq^EUa\(rq expands to the character \(lqB\(rq.
 .TP
+.BI ^E\(rs q
+Expands to the formatted number stored in the
+numeric part of Q-Register \fIq\fP.
+The number is formatted according to the current
+radix and exactly the same as the backslash (\fB\(rs\fP)
+command would format it.
+.TP
 .BI ^E c
 All remaining \fB^E\fP combinations are passed down
 unmodified.
