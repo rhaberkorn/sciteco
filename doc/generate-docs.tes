@@ -30,7 +30,7 @@
 @{format_header}{
   fd--S .U.f :L"S.|Z'U.t Q.f,Q.tXa Q.f,Q.tD I
 
-  ebQ#tm I\# GENERATED FROM Q.#sc ( Q.#sc\ I):
+  ebQ#tm I\# GENERATED FROM Q.#sc (\.#sc):
 .SS Qa -a-10"N I
  ' eq.{header}
 j<fr
