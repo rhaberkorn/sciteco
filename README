@@ -22,8 +22,6 @@ Both Linux and Windows (MinGW 32/64) are supported.
 Features
 ========
 
-Some of these features are not yet present but expected to be supported in the near future.
-
 * All of the basic Video TECO commands supported
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
   by the user (commands may have more than two arguments)
