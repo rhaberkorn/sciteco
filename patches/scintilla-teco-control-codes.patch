@@ -1,3 +1,7 @@
+Hacks Scintilla to display control characters like TECO does:
+Caret followed by code+64 with a few exceptions.
+Also improves Scinterm's heuristics for printing control
+characters.
 --- scintilla/src/Editor.cxx	2013-01-19 21:51:58.002270685 +0100
 +++ scintilla/src/Editor.cxx	2013-01-20 02:07:27.212272030 +0100
 @@ -351,10 +351,10 @@
