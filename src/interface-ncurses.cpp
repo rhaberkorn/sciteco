@@ -40,8 +40,6 @@
 #include "interface.h"
 #include "interface-ncurses.h"
 
-InterfaceNCurses interface INIT_PRIO(PRIO_INTERFACE);
-
 extern "C" {
 static void scintilla_notify(Scintilla *sci, int idFrom,
 			    void *notify, void *user_data);

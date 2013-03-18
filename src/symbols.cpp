@@ -27,14 +27,6 @@
 #include "symbols.h"
 
 /*
- * Constructors executed before the ones defined in generated code.
- */
-namespace Symbols {
-	SymbolList scintilla INIT_PRIO(PRIO_SYMBOLS-1);
-	SymbolList scilexer INIT_PRIO(PRIO_SYMBOLS-1);
-}
-
-/*
  * Since symbol lists are presorted constant arrays we can do a simple
  * binary search.
  */

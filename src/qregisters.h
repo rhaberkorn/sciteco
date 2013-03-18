@@ -410,6 +410,7 @@ namespace States {
 }
 
 namespace QRegisters {
+	/* object declared in main.cpp */
 	extern QRegisterTable	globals;
 	extern QRegisterTable	*locals;
 	extern QRegister	*current;

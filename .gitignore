@@ -30,7 +30,8 @@ stamp-*
 /doc/doxygen
 
 /src/gtk-info-popup*.[ch]
-/src/symbols-*.cpp
+/src/symbols-scintilla.cpp
+/src/symbols-scilexer.cpp
 
 # Backups
 *~

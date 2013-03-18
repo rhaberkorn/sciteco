@@ -123,6 +123,7 @@ public:
 	}
 };
 
+/* object declared in main.cpp */
 extern class Ring {
 	/*
 	 * Emitted after a buffer close

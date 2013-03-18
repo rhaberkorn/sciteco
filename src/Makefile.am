@@ -13,7 +13,7 @@ EXTRA_DIST = gtk-info-popup.gob \
 	     symbols-extract.tes
 
 noinst_LIBRARIES = libsciteco-base.a
-libsciteco_base_a_SOURCES = sciteco.h \
+libsciteco_base_a_SOURCES = main.cpp sciteco.h \
 			    cmdline.cpp cmdline.h \
 			    undo.cpp undo.h \
 			    expressions.cpp expressions.h \
@@ -47,12 +47,11 @@ if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
 symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal$(EXEEXT)
 endif
-sciteco_minimal_SOURCES = main.cpp
+sciteco_minimal_SOURCES = symbols-minimal.cpp
 sciteco_minimal_LDADD = libsciteco-base.a \
 			@SCINTILLA_PATH@/bin/scintilla.a
 
 bin_PROGRAMS = sciteco
-sciteco_SOURCES = $(sciteco_minimal_SOURCES)
 nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
 			 symbols-scintilla.cpp symbols-scilexer.cpp
 sciteco_LDADD = $(sciteco_minimal_LDADD)

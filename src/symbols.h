@@ -22,11 +22,13 @@
 #include <glib.h>
 
 class SymbolList {
+public:
 	struct Entry {
 		const gchar	*name;
 		gint		value;
 	};
 
+private:
 	const Entry	*entries;
 	gint		size;
 	int		(*cmp_fnc)(const char *, const char *, size_t);
@@ -50,12 +52,9 @@ public:
 
 	gint lookup(const gchar *name, const gchar *prefix = "");
 	GList *get_glist(void);
-
-	/* generated per Scintilla SymbolList */
-	friend class SymbolListInitializer_scintilla;
-	friend class SymbolListInitializer_scilexer;
 };
 
+/* objects declared in symbols-minimal.cpp or auto-generated code */
 namespace Symbols {
 	extern SymbolList scintilla;
 	extern SymbolList scilexer;

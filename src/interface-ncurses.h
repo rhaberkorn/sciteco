@@ -29,6 +29,7 @@
 
 #include "interface.h"
 
+/* object declared in main.cpp */
 extern class InterfaceNCurses : public Interface {
 	SCREEN *screen;
 	FILE *screen_tty;

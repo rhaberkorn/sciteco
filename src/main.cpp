@@ -47,6 +47,26 @@
 #define INI_FILE "teco.ini"
 #endif
 
+/*
+ * defining the global objects here ensures
+ * a ctor/dtor order without depending on the
+ * GCC init_priority() attribute
+ */
+#ifdef INTERFACE_GTK
+InterfaceGtk interface;
+#elif defined(INTERFACE_NCURSES)
+InterfaceNCurses interface;
+#endif
+
+/*
+ * Scintilla will be initialized after these
+ * ctors (in main()), but dtors are guaranteed
+ * to be executed before Scintilla's
+ * destruction
+ */
+QRegisterTable QRegisters::globals;
+Ring ring;
+
 namespace Flags {
 	tecoInt ed = 0;
 }

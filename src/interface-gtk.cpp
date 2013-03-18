@@ -41,8 +41,6 @@
 #include "interface.h"
 #include "interface-gtk.h"
 
-InterfaceGtk interface INIT_PRIO(PRIO_INTERFACE);
-
 extern "C" {
 static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
 			     SCNotification *notify, gpointer user_data);

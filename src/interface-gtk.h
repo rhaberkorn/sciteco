@@ -28,6 +28,7 @@
 
 #include "interface.h"
 
+/* object declared in main.cpp */
 extern class InterfaceGtk : public Interface {
 	GtkWidget *window;
 	GtkWidget *editor_widget;
