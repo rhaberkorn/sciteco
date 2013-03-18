@@ -1,7 +1,7 @@
 include $(top_srcdir)/bootstrap.am
 
 AM_CFLAGS = -Wall -std=c99
-AM_CXXFLAGS = -Wall
+AM_CXXFLAGS = -Wall -Wno-mismatched-tags -Wno-char-subscripts
 AM_CPPFLAGS = -D'DEFAULT_SCITECOPATH="@DEFAULT_SCITECOPATH@"'
 if NEED_COMPAT
 AM_CPPFLAGS += -I@top_srcdir@/compat
