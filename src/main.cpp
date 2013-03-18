@@ -114,7 +114,7 @@ get_teco_ini(const gchar *program __attribute__((unused)))
 	const gchar *home;
 
 #ifdef G_OS_UNIX
-	home = g_get_home_dir();
+	home = g_getenv("HOME") ? : g_get_home_dir();
 #else
 	home = g_get_user_config_dir();
 #endif
