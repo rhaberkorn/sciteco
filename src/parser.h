@@ -40,7 +40,7 @@ class State {
 public:
 	class Error {
 	public:
-		Error(const gchar *fmt, ...);
+		Error(const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 	};
 
 	class SyntaxError : public Error {
