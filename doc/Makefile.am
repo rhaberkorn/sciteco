@@ -35,6 +35,7 @@ endif
 
 .PHONY: doxygen/
 doxygen/ : Doxyfile
+	-rm -rf doxygen/
 	@DOXYGEN@ $<
 
 clean-local:
