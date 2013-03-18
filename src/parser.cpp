@@ -2013,7 +2013,7 @@ StateInsert::process(const gchar *str, gint new_chars) throw (Error)
 }
 
 State *
-StateInsert::done(const gchar *str __attribute__((unused))) throw (Error)
+StateInsert::done(const gchar *str) throw (Error)
 {
 	/* nothing to be done when done */
 	return &States::start;

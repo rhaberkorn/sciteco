@@ -51,8 +51,7 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
 
 void
-InterfaceNCurses::main(int &argc __attribute__((unused)),
-		       char **&argv __attribute__((unused)))
+InterfaceNCurses::main(int &argc, char **&argv)
 {
 	init_screen();
 	cbreak();
@@ -247,7 +246,7 @@ InterfaceNCurses::cmdline_update(const gchar *cmdline)
 }
 
 void
-InterfaceNCurses::popup_add(PopupEntryType type __attribute__((unused)),
+InterfaceNCurses::popup_add(PopupEntryType type,
 			    const gchar *name, bool highlight)
 {
 	gchar *entry;

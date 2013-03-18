@@ -129,7 +129,7 @@ get_teco_ini(const gchar *program)
 #else
 
 static inline gchar *
-get_teco_ini(const gchar *program __attribute__((unused)))
+get_teco_ini(const gchar *program)
 {
 	const gchar *home;
 
@@ -295,7 +295,7 @@ main(int argc, char **argv)
  */
 
 static void
-sigint_handler(int signal __attribute__((unused)))
+sigint_handler(int signal)
 {
 	sigint_occurred = TRUE;
 }

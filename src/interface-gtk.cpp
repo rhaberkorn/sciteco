@@ -215,17 +215,15 @@ InterfaceGtk::~InterfaceGtk()
  */
 
 static void
-scintilla_notify(ScintillaObject *sci __attribute__((unused)),
-		 uptr_t idFrom __attribute__((unused)),
-		 SCNotification *notify,
-		 gpointer user_data __attribute__((unused)))
+scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
+		 SCNotification *notify, gpointer user_data)
 {
 	interface.process_notify(notify);
 }
 
 static gboolean
 cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
-		    gpointer user_data __attribute__((unused)))
+		    gpointer user_data)
 {
 	bool is_shift	= event->state & GDK_SHIFT_MASK;
 	bool is_ctl	= event->state & GDK_CONTROL_MASK;
@@ -302,9 +300,7 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 }
 
 static gboolean
-exit_app(GtkWidget *w __attribute__((unused)),
-	 GdkEventAny *e __attribute__((unused)),
-	 gpointer p __attribute__((unused)))
+exit_app(GtkWidget *w, GdkEventAny *e, gpointer p)
 {
 	gtk_main_quit();
 	return TRUE;

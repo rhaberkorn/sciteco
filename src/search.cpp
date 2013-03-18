@@ -405,8 +405,7 @@ StateSearch::do_search(GRegex *re, gint from, gint to, gint &count)
 }
 
 void
-StateSearch::process(const gchar *str,
-		     gint new_chars __attribute__((unused))) throw (Error)
+StateSearch::process(const gchar *str, gint new_chars) throw (Error)
 {
 	static const gint flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
 				  G_REGEX_DOTALL | G_REGEX_RAW;
@@ -743,7 +742,7 @@ StateReplace::done(const gchar *str) throw (Error)
 }
 
 State *
-StateReplace_ignore::done(const gchar *str __attribute__((unused))) throw (Error)
+StateReplace_ignore::done(const gchar *str) throw (Error)
 {
 	return &States::start;
 }
