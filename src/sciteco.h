@@ -46,6 +46,12 @@ namespace Flags {
 
 extern sig_atomic_t sigint_occurred;
 
+/*
+ * for sentinels: NULL might not be defined as a
+ * pointer type (LLVM/CLang)
+ */
+#define NIL		((void *)0)
+
 #define INIT_PRIO(X)	__attribute__((init_priority(X)))
 #define PRIO_INTERFACE	1000
 #define PRIO_SYMBOLS	1000
@@ -69,7 +75,7 @@ static inline void
 append(gchar *&str1, const gchar *str2)
 {
 	/* FIXME: optimize */
-	gchar *new_str = g_strconcat(str1 ? : "", str2, NULL);
+	gchar *new_str = g_strconcat(str1 ? : "", str2, NIL);
 	g_free(str1);
 	str1 = new_str;
 }

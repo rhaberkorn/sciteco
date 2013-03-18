@@ -101,7 +101,7 @@ static inline gchar *
 get_teco_ini(const gchar *program)
 {
 	gchar *bin_dir = g_path_get_dirname(program);
-	gchar *ini = g_build_filename(bin_dir, INI_FILE, NULL);
+	gchar *ini = g_build_filename(bin_dir, INI_FILE, NIL);
 	g_free(bin_dir);
 	return ini;
 }
@@ -118,7 +118,7 @@ get_teco_ini(const gchar *program __attribute__((unused)))
 #else
 	home = g_get_user_config_dir();
 #endif
-	return g_build_filename(home, INI_FILE, NULL);
+	return g_build_filename(home, INI_FILE, NIL);
 }
 
 #endif /* !G_OS_WIN32 */

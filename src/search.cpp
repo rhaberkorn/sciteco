@@ -250,7 +250,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 
 		temp = class2regexp(state, pattern);
 		if (temp) {
-			new_re = g_strconcat(re ? : "", "[", temp, "]", NULL);
+			new_re = g_strconcat(re ? : "", "[", temp, "]", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;
@@ -275,7 +275,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 			temp = class2regexp(state, pattern, true);
 			if (!temp)
 				goto error;
-			new_re = g_strconcat(re ? : "", "[^", temp, "]", NULL);
+			new_re = g_strconcat(re ? : "", "[^", temp, "]", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;
@@ -303,7 +303,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 			temp = pattern2regexp(pattern, true);
 			if (!temp)
 				goto error;
-			new_re = g_strconcat(re ? : "", "(", temp, ")+", NULL);
+			new_re = g_strconcat(re ? : "", "(", temp, ")+", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;

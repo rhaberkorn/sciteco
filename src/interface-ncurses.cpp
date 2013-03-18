@@ -257,7 +257,7 @@ InterfaceNCurses::popup_add(PopupEntryType type __attribute__((unused)),
 	if (isendwin()) /* batch mode */
 		return;
 
-	entry = g_strconcat(highlight ? "*" : " ", name, NULL);
+	entry = g_strconcat(highlight ? "*" : " ", name, NIL);
 
 	popup.longest = MAX(popup.longest, (gint)strlen(name));
 	popup.length++;

@@ -349,7 +349,7 @@ make_savepoint(Buffer *buffer)
 		   ".teco-%s-%d", basename, buffer->savepoint_id);
 	g_free(basename);
 	dirname = g_path_get_dirname(buffer->filename);
-	savepoint = g_build_filename(dirname, savepoint_basename, NULL);
+	savepoint = g_build_filename(dirname, savepoint_basename, NIL);
 	g_free(dirname);
 
 	if (!g_rename(buffer->filename, savepoint)) {
@@ -529,7 +529,7 @@ get_absolute_path(const gchar *path)
 			resolved = g_strdup(path);
 		} else {
 			gchar *cwd = g_get_current_dir();
-			resolved = g_build_filename(cwd, path, NULL);
+			resolved = g_build_filename(cwd, path, NIL);
 			g_free(cwd);
 		}
 	} else {
@@ -690,7 +690,7 @@ StateEditFile::done(const gchar *str) throw (Error)
 
 					filename = g_build_filename(dirname,
 								    basename,
-								    NULL);
+								    NIL);
 					do_edit(filename);
 					g_free(filename);
 				}

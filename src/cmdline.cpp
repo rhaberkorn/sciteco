@@ -364,12 +364,12 @@ filename_complete(const gchar *filename, gchar completed)
 		*dirname = '\0';
 
 	while ((basename = (gchar *)g_dir_read_name(dir))) {
-		gchar *filename = g_build_filename(dirname, basename, NULL);
+		gchar *filename = g_build_filename(dirname, basename, NIL);
 
 		if (g_file_test(filename, G_FILE_TEST_IS_DIR)) {
 			gchar *new_filename;
 			new_filename = g_strconcat(filename,
-						   G_DIR_SEPARATOR_S, NULL);
+						   G_DIR_SEPARATOR_S, NIL);
 			g_free(filename);
 			filename = new_filename;
 		}
