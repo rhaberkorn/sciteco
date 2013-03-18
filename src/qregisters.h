@@ -272,7 +272,7 @@ class QRegSpecMachine : public MicroStateMachine<QRegister *> {
 
 public:
 	QRegSpecMachine(bool _init = false)
-		       : MicroStateMachine(),
+		       : MicroStateMachine<QRegister *>(),
 			 initialize(_init),
 			 is_local(false), nesting(0), name(NULL) {}
 

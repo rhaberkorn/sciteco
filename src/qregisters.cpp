@@ -352,7 +352,7 @@ QRegisters::hook(Hook type)
 void
 QRegSpecMachine::reset(void)
 {
-	MicroStateMachine::reset();
+	MicroStateMachine<QRegister *>::reset();
 	string_machine.reset();
 	undo.push_var(is_local) = false;
 	undo.push_var(nesting) = 0;

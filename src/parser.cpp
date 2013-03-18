@@ -244,7 +244,7 @@ State::get_next_state(gchar chr) throw (Error, ReplaceCmdline)
 void
 StringBuildingMachine::reset(void)
 {
-	MicroStateMachine::reset();
+	MicroStateMachine<gchar *>::reset();
 	undo.push_obj(qregspec_machine) = NULL;
 	undo.push_var(mode) = MODE_NORMAL;
 	undo.push_var(toctl) = false;

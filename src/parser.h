@@ -116,9 +116,9 @@ protected:
 	/* label pointers */
 	typedef const void *MicroState;
 	const MicroState StateStart;
-#define MICROSTATE_START G_STMT_START {		\
-	if (MicroStateMachine::state != StateStart)	\
-		goto *MicroStateMachine::state;	\
+#define MICROSTATE_START G_STMT_START {	\
+	if (this->state != StateStart)		\
+		goto *this->state;		\
 } G_STMT_END
 
 	MicroState state;
@@ -157,7 +157,7 @@ class StringBuildingMachine : public MicroStateMachine<gchar *> {
 	bool toctl;
 
 public:
-	StringBuildingMachine() : MicroStateMachine(),
+	StringBuildingMachine() : MicroStateMachine<gchar *>(),
 				  qregspec_machine(NULL),
 				  mode(MODE_NORMAL), toctl(false) {}
 	~StringBuildingMachine();
