@@ -2,8 +2,8 @@ Hacks Scintilla to display control characters like TECO does:
 Caret followed by code+64 with a few exceptions.
 Also improves Scinterm's heuristics for printing control
 characters.
---- scintilla/src/Editor.cxx	2013-01-19 21:51:58.002270685 +0100
-+++ scintilla/src/Editor.cxx	2013-01-20 02:07:27.212272030 +0100
+--- a/scintilla/src/Editor.cxx	2013-01-19 21:51:58.002270685 +0100
++++ b/scintilla/src/Editor.cxx	2013-01-20 02:07:27.212272030 +0100
 @@ -351,10 +351,10 @@
  
  const char *ControlCharacterString(unsigned char ch) {
@@ -19,8 +19,8 @@ characters.
  	};
  	if (ch < (sizeof(reps) / sizeof(reps[0]))) {
  		return reps[ch];
---- scintilla/scinterm/ScintillaTerm.cxx	2013-01-19 23:49:46.092268831 +0100
-+++ scintilla/scinterm/ScintillaTerm.cxx	2013-01-20 01:55:36.213521263 +0100
+--- a/scintilla/scinterm/ScintillaTerm.cxx	2013-01-19 23:49:46.092268831 +0100
++++ b/scintilla/scinterm/ScintillaTerm.cxx	2013-01-20 01:55:36.213521263 +0100
 @@ -290,8 +290,7 @@
    void DrawTextClipped(PRectangle rc, Font &font_, XYPOSITION ybase,
                         const char *s, int len, ColourDesired fore,

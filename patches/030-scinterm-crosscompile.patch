@@ -1,0 +1,19 @@
+--- a/scintilla/scinterm/Makefile	2013-02-18 20:41:07.357813654 +0100
++++ b/scintilla/scinterm/Makefile	2013-02-18 20:42:31.535828138 +0100
+@@ -2,6 +2,7 @@
+ 
+ .SUFFIXES: .cxx .c .o .h .a
+ 
++AR = ar
+ CXX = g++
+ INCLUDEDIRS = -I ../include -I ../src -I ../lexlib
+ CXXFLAGS = -Wall -Wno-missing-braces -Wno-char-subscripts -Wno-long-long \
+@@ -30,7 +31,7 @@
+               CharacterSet.o LexerBase.o LexerModule.o LexerNoExceptions.o \
+               LexerSimple.o PropSetSimple.o StyleContext.o WordList.o \
+               $(lexers) ScintillaTerm.o
+-	ar rc $@ $^
++	$(AR) rc $@ $^
+ 	touch $@
+ clean:
+ 	rm -f *.o $(scintilla)

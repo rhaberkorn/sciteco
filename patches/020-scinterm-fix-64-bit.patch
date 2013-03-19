@@ -1,7 +1,7 @@
 Fixes (void *) to (attr_t) casting on certain target configurations
 where sizeof(attr_t) < sizeof(void *)
---- scintilla/scinterm/ScintillaTerm.cxx	2013-03-17 19:22:04.864167902 +0100
-+++ scintilla/scinterm/ScintillaTerm.cxx	2013-03-17 19:44:48.832401507 +0100
+--- a/scintilla/scinterm/ScintillaTerm.cxx	2013-03-17 19:22:04.864167902 +0100
++++ b/scintilla/scinterm/ScintillaTerm.cxx	2013-03-17 19:44:48.832401507 +0100
 @@ -9,6 +9,7 @@
  #include <stdio.h>
  #include <stdlib.h>

@@ -1,0 +1,11 @@
+--- a/scintilla/scinterm/ScintillaTerm.cxx	2013-03-19 18:32:55.511861027 +0100
++++ b/scintilla/scinterm/ScintillaTerm.cxx	2013-03-19 18:33:05.747736822 +0100
+@@ -15,7 +15,7 @@
+ #include <vector>
+ #include <map>
+ 
+-#include <ncurses.h>
++#include <curses.h>
+ 
+ #include "Platform.h"
+ 

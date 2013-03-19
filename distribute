@@ -31,7 +31,7 @@ sciteco-$(SCITECO_VERSION)-bundle.tar.gz : $(SCITECO_SRC) $(SCINTILLA_SRC) $(SCI
 	 unzip -d scintilla/ ../$(SCINTERM_SRC); \
 	 mv scintilla/scinterm_$(SCINTERM_VERSION) scintilla/scinterm; \
 	 for patch in sciteco/patches/*.patch; do \
-		patch --merge -p0 <$$patch; \
+		patch --merge -p1 <$$patch; \
 	 done; \
 	)
 	tar czf $@ sciteco-$(SCITECO_VERSION)/
