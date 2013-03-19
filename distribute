@@ -82,9 +82,12 @@ sciteco-$(SCITECO_VERSION)-win32.zip : bundle
 	mkdir temp-bin/
 	cp -r temp-install/bin/* temp-install/share/sciteco/* temp-install/share/doc/sciteco/* \
 	   temp-bin/
-	cp /usr/i686-w64-mingw32/bin/{intl,libglib-2.0-0,pdcurses}.dll \
+	rm -rf temp-install/
+	cp /usr/i686-w64-mingw32/bin/intl.dll \
+	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
+	   /usr/i686-w64-mingw32/bin/pdcurses.dll \
 	   temp-bin/
-	zip $@ temp-bin/*
+	cd temp-bin/; zip ../$@ *
 	rm -rf temp-bin/
 
 clean:
