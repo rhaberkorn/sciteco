@@ -48,6 +48,7 @@ public:
 	bool must_undo;
 
 	QRegisterData() : integer(0), must_undo(true) {}
+	virtual ~QRegisterData() {}
 
 	virtual tecoInt
 	set_integer(tecoInt i)

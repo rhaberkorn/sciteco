@@ -132,6 +132,7 @@ protected:
 
 public:
 	MicroStateMachine() : StateStart(NULL), state(StateStart) {}
+	virtual ~MicroStateMachine() {}
 
 	virtual inline void
 	reset(void)
