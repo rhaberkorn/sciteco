@@ -1,0 +1,89 @@
+#!/usr/bin/make -f
+
+SCITECO_VERSION = 0.1
+SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
+
+SCINTILLA_VERSION = 325
+SCINTILLA_SRC = scintilla$(SCINTILLA_VERSION).tgz
+
+SCINTERM_VERSION = 1.1
+SCINTERM_SRC = scinterm_$(SCINTERM_VERSION).zip
+
+$(SCITECO_SRC):
+	$(MAKE) dist
+
+$(SCINTILLA_SRC):
+	wget -O $@ http://prdownloads.sourceforge.net/scintilla/$(SCINTILLA_SRC)?download
+
+$(SCINTERM_SRC):
+	wget -O $@ http://foicica.com/scinterm/download/$(SCINTERM_SRC)
+
+all : $(SCITECO_SRC) bundle debian mingw-binary
+
+# Create source bundle
+bundle : sciteco-$(SCITECO_VERSION)-bundle.tar.gz
+sciteco-$(SCITECO_VERSION)-bundle.tar.gz : $(SCITECO_SRC) $(SCINTILLA_SRC) $(SCINTERM_SRC)
+	mkdir sciteco-$(SCITECO_VERSION)/
+	(cd sciteco-$(SCITECO_VERSION)/; \
+	 tar xzf ../$(SCITECO_SRC); \
+	 mv sciteco-$(SCITECO_VERSION) sciteco; \
+	 tar xzf ../$(SCINTILLA_SRC); \
+	 unzip -d scintilla/ ../$(SCINTERM_SRC); \
+	 mv scintilla/scinterm_$(SCINTERM_VERSION) scintilla/scinterm; \
+	 for patch in sciteco/patches/*.patch; do \
+		patch --merge -p0 <$$patch; \
+	 done; \
+	)
+	tar czf $@ sciteco-$(SCITECO_VERSION)/
+	rm -rf sciteco-$(SCITECO_VERSION)/
+
+debian-prepare: debian-temp/
+debian-temp/ : bundle
+	mkdir debian-temp/
+	(cd debian-temp/; \
+	 cp ../sciteco-$(SCITECO_VERSION)-bundle.tar.gz \
+	    sciteco_$(SCITECO_VERSION).orig.tar.gz; \
+	 tar xzf sciteco_$(SCITECO_VERSION).orig.tar.gz; \
+	 cp -r ../debian sciteco-$(SCITECO_VERSION)/; \
+	)
+
+debian-source : debian-temp/source-stamp
+debian-temp/source-stamp : debian-prepare
+	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
+	 debuild -us -uc -S; \
+	)
+	touch $@
+
+debian-binary : debian-temp/binary-stamp
+debian-temp/binary-stamp : debian-prepare
+	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
+	 debuild -us -uc -b; \
+	)
+	touch $@
+
+debian : debian-source debian-binary
+
+mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip
+sciteco-$(SCITECO_VERSION)-win32.zip : bundle
+	tar xzf sciteco-$(SCITECO_VERSION)-bundle.tar.gz
+	$(MAKE) -C sciteco-$(SCITECO_VERSION)/scintilla/scinterm \
+		CXX=i686-w64-mingw32-g++ AR=i686-w64-mingw32-ar
+	(cd sciteco-$(SCITECO_VERSION)/sciteco; \
+	 ./configure --host=i686-w64-mingw32 --prefix=/ \
+		     --with-scintilla=../scintilla --with-interface=pdcurses \
+		     --with-default-scitecopath=lib --disable-bootstrap \
+		     --enable-html-manual \
+		     CFLAGS="-g -O3" CXXFLAGS="-g -O3"; \
+	)
+	$(MAKE) -C sciteco-$(SCITECO_VERSION)/sciteco \
+		install DESTDIR=`pwd`/temp-install
+	rm -rf sciteco-$(SCITECO_VERSION)/
+	i686-w64-mingw32-strip -s temp-install/bin/*
+	mkdir temp-bin/
+	cp -r temp-install/bin/* temp-install/share/sciteco/* temp-install/share/doc/sciteco/* \
+	   temp-bin/
+	cp /usr/i686-w64-mingw32/bin/{intl,libglib-2.0-0,pdcurses}.dll \
+	   temp-bin/
+	zip $@ temp-bin/*
+	rm -rf temp-bin/
+
