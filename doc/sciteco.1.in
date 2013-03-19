@@ -4,7 +4,7 @@
 .TH "@PACKAGE@" 1 \
     "@DATE@" \
     "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
-..
+.
 .
 .SH NAME
 @PACKAGE@ \-\-
