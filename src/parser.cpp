@@ -322,7 +322,7 @@ StateCtlE:
 		break;
 	default:
 		set(StateStart);
-		return g_strdup((gchar []){CTL_KEY('E'), chr, '\0'});
+		return g_strdup(CHR2STR(CTL_KEY('E'), chr));
 	}
 
 	return NULL;
@@ -343,7 +343,7 @@ StateCtlEU:
 
 	undo.push_obj(qregspec_machine) = NULL;
 	set(StateStart);
-	return g_strdup(CHR2STR(reg->get_integer()));
+	return g_strdup(CHR2STR((gchar)reg->get_integer()));
 
 StateCtlEQ:
 	reg = qregspec_machine->input(chr);

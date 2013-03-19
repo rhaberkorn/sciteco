@@ -63,7 +63,12 @@ extern sig_atomic_t sigint_occurred;
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
 
-#define CHR2STR(X)	((gchar []){X, '\0'})
+/*
+ * NOTE: compound literals are temporaries beginning with
+ * g++ 4.7
+ */
+#define CHR2STR(X, ...) \
+	({gchar str[] = {(X), ##__VA_ARGS__, '\0'}; str;})
 
 namespace String {
 
