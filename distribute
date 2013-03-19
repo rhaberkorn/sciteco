@@ -87,3 +87,8 @@ sciteco-$(SCITECO_VERSION)-win32.zip : bundle
 	zip $@ temp-bin/*
 	rm -rf temp-bin/
 
+clean:
+	rm -rf $(SCITECO_SRC) $(SCINTILLA_SRC) $(SCINTERM_SRC)
+	rm -rf sciteco-$(SCITECO_VERSION)-bundle.tar.gz
+	rm -rf debian-temp/
+	rm -rf sciteco-$(SCITECO_VERSION)/
