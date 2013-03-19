@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@ -Dsciteco
+
+build:
+	dh_testdir
+	dh_auto_build -Dscintilla/scinterm
+	dh_auto_configure -Dsciteco -- \
+			  --enable-bootstrap \
+			  --with-scintilla=../scintilla \
+			  --with-interface=ncurses
+	dh_auto_build -Dsciteco
+	touch $@
+
+clean:
+	dh_testdir
+	dh_auto_clean -Dscintilla/scinterm
+	dh_auto_clean -Dsciteco
+	dh_clean

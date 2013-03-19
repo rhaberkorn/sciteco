@@ -1,0 +1,21 @@
+Source: sciteco
+Section: editors
+Priority: optional
+Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
+Build-Depends: debhelper (>= 8), g++ (>= 4:4.4), libglib2.0-dev, libncurses5-dev
+Standards-Version: 3.9.2
+Homepage: http://rhaberkorn.github.com/sciteco/
+Vcs-Browser: https://github.com/rhaberkorn/sciteco
+Vcs-Git: git://github.com/rhaberkorn/sciteco.git
+
+Package: sciteco-curses
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Scintilla-based TExt Editor and COrrector
+ SciTECO is an interactive TECO dialect, similar to Video TECO.
+ It also adds features from classic Standard TECO-11,
+ and incorporates many unique new ideas.
+ It is geared towards UNIX-like operating systems but also
+ natively supports Microsoft Windows NT.
+ .
+ This package contains the ncurses version of SciTECO.
