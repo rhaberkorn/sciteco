@@ -37,6 +37,8 @@ sciteco-$(SCITECO_VERSION)-bundle.tar.gz : $(SCITECO_SRC) $(SCINTILLA_SRC) $(SCI
 	tar czf $@ sciteco-$(SCITECO_VERSION)/
 	rm -rf sciteco-$(SCITECO_VERSION)/
 
+# $(UBUNTU) sets the Ubuntu distribution and fixes the package's
+# version
 debian-prepare: debian-temp/
 debian-temp/ : bundle
 	mkdir debian-temp/
@@ -46,6 +48,11 @@ debian-temp/ : bundle
 	 tar xzf sciteco_$(SCITECO_VERSION).orig.tar.gz; \
 	 cp -r ../debian sciteco-$(SCITECO_VERSION)/; \
 	)
+ifneq ($(UBUNTU),)
+	sciteco -e "@EB|debian-temp/sciteco-$(SCITECO_VERSION)/debian/changelog| \
+                    <@FS/ unstable;/ $(UBUNTU);/; -@S/)/R @I/ppa1~$(UBUNTU)1/ L> \
+                    @EW||"
+endif
 
 debian-source : debian-temp/source-stamp
 debian-temp/source-stamp : debian-prepare

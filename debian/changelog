@@ -1,4 +1,4 @@
-sciteco (0.1-1ppa1~oneiric1) oneiric; urgency=low
+sciteco (0.1-1) unstable; urgency=low
 
   * initial debianization
   * single package with architecture independent files
