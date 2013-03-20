@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([SciTECO], [0.1],
+AC_INIT([SciTECO], [0.5],
 	[robin.haberkorn@googlemail.com],
 	[sciteco],
 	[http://rhaberkorn.github.com/sciteco/])

@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-SCITECO_VERSION = 0.1
+SCITECO_VERSION = 0.5
 SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
 
 SCINTILLA_VERSION = 325
