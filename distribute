@@ -70,8 +70,9 @@ sciteco-$(SCITECO_VERSION)-win32.zip : bundle
 		CXX=i686-w64-mingw32-g++ AR=i686-w64-mingw32-ar
 	(cd sciteco-$(SCITECO_VERSION)/sciteco; \
 	 ./configure --host=i686-w64-mingw32 --prefix=/ \
-		     --with-scintilla=../scintilla --with-interface=pdcurses \
-		     --with-default-scitecopath=lib --disable-bootstrap \
+		     --with-interface=pdcurses \
+		     --with-default-scitecopath=lib \
+		     --disable-bootstrap \
 		     --enable-html-manual \
 		     CFLAGS="-g -O3" CXXFLAGS="-g -O3"; \
 	)

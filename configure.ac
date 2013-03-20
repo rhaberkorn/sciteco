@@ -95,8 +95,8 @@ esac
 #
 AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
-		       [Specify Scintilla's path [default=..]]),
-	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=..])
+		       [Specify Scintilla's path [default=../scintilla]]),
+	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=../scintilla])
 # eval necessary to perform necessary expansions that may not
 # have been done by the calling shell
 SCINTILLA_PATH=`eval $READLINK -e $SCINTILLA_PATH`
