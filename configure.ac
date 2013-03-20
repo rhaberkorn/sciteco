@@ -19,6 +19,14 @@ AC_CANONICAL_HOST
 scitecolibdir=$datadir/$PACKAGE/lib
 AC_SUBST(scitecolibdir)
 
+# Auxiliary functions
+
+# expand $1 and print its absolute path
+# similar to GNU readlink -e but portable
+canonicalize() {
+	(eval cd $1 2>/dev/null && pwd -P)
+}
+
 # Checks for programs.
 LT_INIT
 AC_PROG_CXX
@@ -32,11 +40,6 @@ AM_CONDITIONAL(CLANG, [$CXX --version | $GREP clang >/dev/null])
 AC_CHECK_PROG(DATE, date, date)
 if [[ x$DATE = x ]]; then
 	AC_MSG_ERROR([Required tool date not found!])
-fi
-
-AC_CHECK_PROG(READLINK, readlink, readlink)
-if [[ x$READLINK = x ]]; then
-	AC_MSG_ERROR([Required tool readlink not found!])
 fi
 
 # not necessarily required (depends on --enable-html-manual)
@@ -97,9 +100,7 @@ AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
 		       [Specify Scintilla's path [default=../scintilla]]),
 	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=../scintilla])
-# eval necessary to perform necessary expansions that may not
-# have been done by the calling shell
-SCINTILLA_PATH=`eval $READLINK -e $SCINTILLA_PATH`
+SCINTILLA_PATH=`canonicalize $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
 CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include -DSCI_LEXER"
@@ -108,7 +109,7 @@ AC_ARG_WITH(scinterm,
 	AS_HELP_STRING([--with-scinterm=PATH],
 		       [Specify Scinterm's path [default=SCINTILLA_PATH/scinterm]]),
 	[SCINTERM_PATH=$withval], [SCINTERM_PATH=$SCINTILLA_PATH/scinterm])
-SCINTERM_PATH=`eval $READLINK -e $SCINTERM_PATH`
+SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],
