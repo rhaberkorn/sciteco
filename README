@@ -39,37 +39,14 @@ Features
   is munged.
 * Syntax highlighting, styles, line numbers, etc. thanks to Scintilla
 
-Installation
-============
+Download
+========
 
-SciTECO has the following build and runtime dependencies:
-* Autotools, GNU C/C++ (v4.4 or later) or LLVM/gcc or LLVM/Clang
-* [Glib](http://developer.gnome.org/glib/), as a cross-platform runtime library
-* [Scintilla](http://www.scintilla.org/) (v3.2.3 or later)
-* Curses interface:
-  * [Scinterm](http://foicica.com/scinterm/) (v1.1 or later)
-  * [NCurses](http://www.gnu.org/software/ncurses/),
-    [PDCurses/XCurses](http://pdcurses.sourceforge.net/) or
-    [PDCurses/Win32a](http://www.projectpluto.com/win32a.htm)
-  * other curses implementations might work as well but are untested
-* GTK interface:
-  * [GTK+ 2](http://www.gtk.org/)
-* Groff (only when formatting HTML manuals)
-* Doxygen (only when generating developer documentation)
+There are prebuilt binary packages and source bundles for your convenience:
+* [Download Archive](http://rhaberkorn.heliohost.org/sciteco/)
+* [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 
-1. Build Scintilla as described in its README. If you want to build the ncurses version,
-   install Scinterm from a subdirectory of Scintilla called `scinterm`
-   (also have a look at SciTECO's `--with-scinterm` configure option).
-   * For TECO-style control code echoing, apply `patches/scintilla-teco-control-codes.patch`
-     from the SciTECO archive/repository. This will hopefully be simplified in the future.
-2. Untar/unzip/check-out SciTECO into a subdirectory of Scintilla.
-   Alternatively, have a look at SciTECO's `--with-scintilla` configure option.
-3. Build like any other Autoconf-based project. `autoreconf` (only necessary if building from
-   a working copy), followed by `./configure`, followed by `make`.
-   The interface may be chosen with `--with-interface` (ncurses is the default).
-3. Install with `make install`.
-4. You are recommended to use the included `teco.ini` as a starting point for your profile,
-   so copy it to `~/.teco_ini`.
+For more details on building from source, please refer to `INSTALL`.
 
 Additional Documentation
 ========================
