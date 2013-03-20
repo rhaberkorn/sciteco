@@ -76,6 +76,11 @@ debian-temp/binary-stamp : debian-prepare
 
 debian : debian-source debian-binary
 
+ppa : debian-source
+	(cd debian-temp/; \
+	 dput ppa:robin-haberkorn/sciteco *.changes; \
+	)
+
 mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip
 sciteco-$(SCITECO_VERSION)-win32.zip : bundle
 	tar xzf sciteco-$(SCITECO_VERSION)-bundle.tar.gz
