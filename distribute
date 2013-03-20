@@ -54,23 +54,31 @@ ifneq ($(UBUNTU),)
                     @EW||"
 endif
 
-ifeq ($(SIGN),)
-DEBUILD_FLAGS := -us -uc
-else
+SIGN ?= no
+ifeq ($(SIGN),yes)
 DEBUILD_FLAGS :=
+else
+DEBUILD_FLAGS := -us -uc
+endif
+
+UPLOAD_SRC ?= yes
+ifeq ($(UPLOAD_SRC),yes)
+DEBUILD_FLAGS += -sa
+else
+DEBUILD_FLAGS += -sd
 endif
 
 debian-source : debian-temp/source-stamp
 debian-temp/source-stamp : debian-prepare
 	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
-	 debuild -S -sa $(DEBUILD_FLAGS); \
+	 debuild -S $(DEBUILD_FLAGS); \
 	)
 	touch $@
 
 debian-binary : debian-temp/binary-stamp
 debian-temp/binary-stamp : debian-prepare
 	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
-	 debuild -b -sa $(DEBUILD_FLAGS); \
+	 debuild -b $(DEBUILD_FLAGS); \
 	)
 	touch $@
 
