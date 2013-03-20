@@ -106,7 +106,7 @@ sciteco-$(SCITECO_VERSION)-win32.zip : bundle
 	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
 	   /usr/i686-w64-mingw32/bin/pdcurses.dll \
 	   temp-bin/
-	cd temp-bin/; zip ../$@ *
+	cd temp-bin/; zip -r ../$@ *
 	rm -rf temp-bin/
 
 clean:
