@@ -13,6 +13,11 @@ Copyright: Copyright 2012-2013 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
+Files: sciteco/compat/bsd/*
+Copyright: Copyright 1991, 1993 The Regents of the University of California
+License: BSD
+ /usr/share/common-licenses/BSD
+
 Files: scintilla/*
 Copyright: Copyright 1998-2003 Neil Hodgson <neilh@scintilla.org>
 License:
