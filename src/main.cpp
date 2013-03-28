@@ -111,6 +111,29 @@ Interface::process_notify(SCNotification *notify)
 #endif
 }
 
+void
+String::get_coord(const gchar *str, gint pos,
+		  gint &line, gint &column)
+{
+	line = column = 1;
+
+	for (gint i = 0; i < pos; i++) {
+		switch (str[i]) {
+		case '\r':
+			if (str[i+1] == '\n')
+				i++;
+			/* fall through */
+		case '\n':
+			line++;
+			column = 1;
+			break;
+		default:
+			column++;
+			break;
+		}
+	}
+}
+
 #ifdef G_OS_WIN32
 
 /*

@@ -87,6 +87,10 @@ append(gchar *&str, gchar chr)
 	append(str, CHR2STR(chr));
 }
 
+/* in main.cpp */
+void get_coord(const gchar *str, gint pos,
+	       gint &line, gint &column);
+
 } /* namespace String */
 
 namespace Validate {

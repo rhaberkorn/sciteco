@@ -44,10 +44,13 @@ public:
 
 	public:
 		gint pos;
+		gint line, column;
 
 		class Frame {
 		public:
 			gint pos;
+			gint line, column;
+
 			virtual ~Frame() {}
 
 			virtual void display(gint nr) = 0;
@@ -69,8 +72,8 @@ public:
 			display(gint nr)
 			{
 				interface.msg(Interface::MSG_INFO,
-					      "#%d in Q-Register \"%s\" at %d",
-					      nr, name, pos);
+					      "#%d in Q-Register \"%s\" at %d (%d:%d)",
+					      nr, name, pos, line, column);
 			}
 		};
 
@@ -90,8 +93,8 @@ public:
 			display(gint nr)
 			{
 				interface.msg(Interface::MSG_INFO,
-					      "#%d in file \"%s\" at %d",
-					      nr, name, pos);
+					      "#%d in file \"%s\" at %d (%d:%d)",
+					      nr, name, pos, line, column);
 			}
 		};
 
@@ -101,19 +104,15 @@ public:
 			display(gint nr)
 			{
 				interface.msg(Interface::MSG_INFO,
-					      "#%d in toplevel macro at %d", nr, pos);
+					      "#%d in toplevel macro at %d (%d:%d)",
+					      nr, pos, line, column);
 			}
 		};
 
 		Error(const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 		~Error();
 
-		inline void
-		add_frame(Frame *frame)
-		{
-			frame->pos = pos;
-			frames = g_slist_prepend(frames, frame);
-		}
+		void add_frame(Frame *frame);
 
 		void display_short(void);
 		void display_full(void);

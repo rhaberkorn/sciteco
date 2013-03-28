@@ -89,6 +89,8 @@ Execute::step(const gchar *macro, gint stop_pos)
 			State::input(macro[macro_pc]);
 		} catch (State::Error &error) {
 			error.pos = macro_pc;
+			String::get_coord(macro, error.pos,
+					  error.line, error.column);
 			throw; /* forward */
 		}
 		macro_pc++;
@@ -170,6 +172,8 @@ Execute::file(const gchar *filename, bool locals)
 		macro(p, locals);
 	} catch (State::Error &error) {
 		error.pos += p - macro_str;
+		if (*macro_str == '#')
+			error.line++;
 		error.add_frame(new State::Error::FileFrame(filename));
 
 		g_free(macro_str);
@@ -191,13 +195,24 @@ ReplaceCmdline::ReplaceCmdline()
 	pos++;
 }
 
-State::Error::Error(const gchar *fmt, ...) : frames(NULL), pos(0)
+State::Error::Error(const gchar *fmt, ...)
+		   : frames(NULL), pos(0), line(0), column(0)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
 	description = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
+}
+
+void
+State::Error::add_frame(Frame *frame)
+{
+	frame->pos = pos;
+	frame->line = line;
+	frame->column = column;
+
+	frames = g_slist_prepend(frames, frame);
 }
 
 void
