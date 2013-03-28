@@ -39,8 +39,84 @@ public:
 class State {
 public:
 	class Error {
+		gchar *description;
+		GSList *frames;
+
 	public:
+		gint pos;
+
+		class Frame {
+		public:
+			gint pos;
+			virtual ~Frame() {}
+
+			virtual void display(gint nr) = 0;
+		};
+
+		class QRegFrame : public Frame {
+			gchar *name;
+
+		public:
+			QRegFrame(const gchar *_name)
+				 : name(g_strdup(_name)) {}
+
+			~QRegFrame()
+			{
+				g_free(name);
+			}
+
+			void
+			display(gint nr)
+			{
+				interface.msg(Interface::MSG_INFO,
+					      "#%d in Q-Register \"%s\" at %d",
+					      nr, name, pos);
+			}
+		};
+
+		class FileFrame : public Frame {
+			gchar *name;
+
+		public:
+			FileFrame(const gchar *_name)
+				 : name(g_strdup(_name)) {}
+
+			~FileFrame()
+			{
+				g_free(name);
+			}
+
+			void
+			display(gint nr)
+			{
+				interface.msg(Interface::MSG_INFO,
+					      "#%d in file \"%s\" at %d",
+					      nr, name, pos);
+			}
+		};
+
+		class ToplevelFrame : public Frame {
+		public:
+			void
+			display(gint nr)
+			{
+				interface.msg(Interface::MSG_INFO,
+					      "#%d in toplevel macro at %d", nr, pos);
+			}
+		};
+
 		Error(const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
+		~Error();
+
+		inline void
+		add_frame(Frame *frame)
+		{
+			frame->pos = pos;
+			frames = g_slist_prepend(frames, frame);
+		}
+
+		void display_short(void);
+		void display_full(void);
 	};
 
 	class SyntaxError : public Error {
@@ -193,12 +269,12 @@ public:
 			   string_building(_building), last(_last) {}
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr) throw (Error, ReplaceCmdline);
 
 protected:
 	virtual void initial(void) throw (Error) {}
 	virtual void process(const gchar *str, gint new_chars) throw (Error) {}
-	virtual State *done(const gchar *str) throw (Error) = 0;
+	virtual State *done(const gchar *str) throw (Error, ReplaceCmdline) = 0;
 };
 
 class StateExpectFile : public StateExpectString {
@@ -334,7 +410,8 @@ namespace Execute {
 		 throw (State::Error, ReplaceCmdline);
 	void macro(const gchar *macro, bool locals = true)
 		  throw (State::Error, ReplaceCmdline);
-	bool file(const gchar *filename, bool locals = true);
+	void file(const gchar *filename, bool locals = true)
+		 throw (State::Error, ReplaceCmdline);
 }
 
 #endif

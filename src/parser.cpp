@@ -82,10 +82,15 @@ Execute::step(const gchar *macro, gint stop_pos)
 			 States::current, mode);
 #endif
 
-		if (interface.is_interrupted())
-			throw State::Error("Interrupted");
+		try {
+			if (interface.is_interrupted())
+				throw State::Error("Interrupted");
 
-		State::input(macro[macro_pc]);
+			State::input(macro[macro_pc]);
+		} catch (State::Error &error) {
+			error.pos = macro_pc;
+			throw; /* forward */
+		}
 		macro_pc++;
 	}
 }
@@ -147,26 +152,34 @@ Execute::macro(const gchar *macro, bool locals)
 	States::current = parent_state;
 }
 
-bool
+void
 Execute::file(const gchar *filename, bool locals)
+	     throw (State::Error, ReplaceCmdline)
 {
-	gchar *macro_str, *p = NULL;
+	gchar *macro_str, *p;
 
 	if (!g_file_get_contents(filename, &macro_str, NULL, NULL))
-		return false;
+		throw State::Error("Error reading file \"%s\"", filename);
 	/* only when executing files, ignore Hash-Bang line */
 	if (*macro_str == '#')
-		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'));
+		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'))+1;
+	else
+		p = macro_str;
 
 	try {
-		macro(p ? p+1 : macro_str, locals);
+		macro(p, locals);
+	} catch (State::Error &error) {
+		error.pos += p - macro_str;
+		error.add_frame(new State::Error::FileFrame(filename));
+
+		g_free(macro_str);
+		throw; /* forward */
 	} catch (...) {
 		g_free(macro_str);
-		return false;
+		throw; /* forward */
 	}
 
 	g_free(macro_str);
-	return true;
 }
 
 ReplaceCmdline::ReplaceCmdline()
@@ -178,13 +191,43 @@ ReplaceCmdline::ReplaceCmdline()
 	pos++;
 }
 
-State::Error::Error(const gchar *fmt, ...)
+State::Error::Error(const gchar *fmt, ...) : frames(NULL), pos(0)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	interface.vmsg(Interface::MSG_ERROR, fmt, ap);
+	description = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
+}
+
+void
+State::Error::display_short(void)
+{
+	interface.msg(Interface::MSG_ERROR,
+		      "%s (at %d)", description, pos);
+}
+
+void
+State::Error::display_full(void)
+{
+	gint nr = 0;
+
+	interface.msg(Interface::MSG_ERROR, "%s", description);
+
+	frames = g_slist_reverse(frames);
+	for (GSList *cur = frames; cur; cur = g_slist_next(cur)) {
+		Frame *frame = (Frame *)cur->data;
+
+		frame->display(nr++);
+	}
+}
+
+State::Error::~Error()
+{
+	g_free(description);
+	for (GSList *cur = frames; cur; cur = g_slist_next(cur))
+		delete (Frame *)cur->data;
+	g_slist_free(frames);
 }
 
 State::State()
@@ -366,7 +409,7 @@ StringBuildingMachine::~StringBuildingMachine()
 }
 
 State *
-StateExpectString::custom(gchar chr) throw (Error)
+StateExpectString::custom(gchar chr) throw (Error, ReplaceCmdline)
 {
 	gchar *insert;
 

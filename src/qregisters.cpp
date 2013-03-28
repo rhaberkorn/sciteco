@@ -185,6 +185,11 @@ QRegister::execute(bool locals) throw (State::Error, ReplaceCmdline)
 
 	try {
 		Execute::macro(str, locals);
+	} catch (State::Error &error) {
+		error.add_frame(new State::Error::QRegFrame(name));
+
+		g_free(str);
+		throw; /* forward */
 	} catch (...) {
 		g_free(str);
 		throw; /* forward */
@@ -698,13 +703,12 @@ StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
  * If <file> could not be read, the command yields an error.
  */
 State *
-StateMacroFile::done(const gchar *str) throw (Error)
+StateMacroFile::done(const gchar *str) throw (Error, ReplaceCmdline)
 {
 	BEGIN_EXEC(&States::start);
 
 	/* don't create new local Q-Registers if colon modifier is given */
-	if (!Execute::file(str, !eval_colon()))
-		throw Error("Cannot execute macro from file \"%s\"", str);
+	Execute::file(str, !eval_colon());
 
 	return &States::start;
 }

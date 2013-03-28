@@ -383,7 +383,7 @@ private:
 
 class StateMacroFile : public StateExpectFile {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str) throw (Error, ReplaceCmdline);
 };
 
 class StateCopyToQReg : public StateExpectQReg {

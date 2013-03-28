@@ -97,7 +97,10 @@ cmdline_keypress(gchar key)
 			cmdline_pos = repl_pos = r.pos;
 			macro_pc = r.pos-1;
 			continue;
-		} catch (...) {
+		} catch (State::Error &error) {
+			error.add_frame(new State::Error::ToplevelFrame());
+			error.display_short();
+
 			if (old_cmdline) {
 				undo.pop(repl_pos);
 

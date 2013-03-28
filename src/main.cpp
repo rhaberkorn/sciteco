@@ -254,26 +254,33 @@ main(int argc, char **argv)
 	/*
 	 * Execute macro or mung file
 	 */
-	if (eval_macro) {
-		try {
-			Execute::macro(eval_macro, false);
-		} catch (...) {
-			exit(EXIT_FAILURE);
-		}
-		exit(EXIT_SUCCESS);
-	}
-
-	if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-		if (!Execute::file(mung_file, false))
-			exit(EXIT_FAILURE);
-
-		/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */
-		if (quit_requested) {
-			/* FIXME */
+	try {
+		if (eval_macro) {
+			try {
+				Execute::macro(eval_macro, false);
+			} catch (State::Error &error) {
+				error.add_frame(new State::Error::ToplevelFrame());
+				throw; /* forward */
+			}
 			exit(EXIT_SUCCESS);
 		}
+
+		if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
+			Execute::file(mung_file, false);
+
+			/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */
+			if (quit_requested) {
+				/* FIXME */
+				exit(EXIT_SUCCESS);
+			}
+		}
+		g_free(mung_file);
+	} catch (State::Error &error) {
+		error.display_full();
+		exit(EXIT_FAILURE);
+	} catch (...) {
+		exit(EXIT_FAILURE);
 	}
-	g_free(mung_file);
 
 	/*
 	 * If munged file didn't quit, switch into interactive mode
