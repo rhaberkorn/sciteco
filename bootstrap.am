@@ -15,7 +15,7 @@ SUBST_MACRO = eb$<\e \
 	      <fs@scitecolibdir^Q@\e$(scitecolibdir)\e;>j \
 	      <fs@DEFAULT_SCITECOPATH^Q@\e@DEFAULT_SCITECOPATH@\e;>j \
 	      <fs@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>j \
-	      <fs@DATE^Q@\e$(shell @DATE@ "+%d %b %Y")\e;>j \
+	      <fs@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>j \
 	      ew$@\e
 
 % : %.in
