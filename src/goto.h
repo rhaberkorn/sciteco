@@ -108,12 +108,12 @@ public:
 	StateLabel();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateGotoCmd : public StateExpectString {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 namespace States {

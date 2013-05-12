@@ -171,14 +171,14 @@ protected:
 public:
 	State();
 
-	static void input(gchar chr) throw (Error, ReplaceCmdline);
-	State *get_next_state(gchar chr) throw (Error, ReplaceCmdline);
+	static void input(gchar chr);
+	State *get_next_state(gchar chr);
 
 protected:
 	static bool eval_colon(void);
 
 	virtual State *
-	custom(gchar chr) throw (Error, ReplaceCmdline)
+	custom(gchar chr)
 	{
 		throw SyntaxError(chr);
 		return NULL;
@@ -221,7 +221,7 @@ public:
 		set(StateStart);
 	}
 
-	virtual Type input(gchar chr) throw (State::Error) = 0;
+	virtual Type input(gchar chr) = 0;
 };
 
 /* avoid circular dependency on qregisters.h */
@@ -246,7 +246,7 @@ public:
 
 	void reset(void);
 
-	gchar *input(gchar chr) throw (State::Error);
+	gchar *input(gchar chr);
 };
 
 /*
@@ -268,12 +268,12 @@ public:
 			   string_building(_building), last(_last) {}
 
 private:
-	State *custom(gchar chr) throw (Error, ReplaceCmdline);
+	State *custom(gchar chr);
 
 protected:
-	virtual void initial(void) throw (Error) {}
-	virtual void process(const gchar *str, gint new_chars) throw (Error) {}
-	virtual State *done(const gchar *str) throw (Error, ReplaceCmdline) = 0;
+	virtual void initial(void) {}
+	virtual void process(const gchar *str, gint new_chars) {}
+	virtual State *done(const gchar *str) = 0;
 };
 
 class StateExpectFile : public StateExpectString {
@@ -295,7 +295,7 @@ private:
 
 	tecoBool delete_words(tecoInt n);
 
-	State *custom(gchar chr) throw (Error, ReplaceCmdline);
+	State *custom(gchar chr);
 };
 
 class StateControl : public State {
@@ -303,7 +303,7 @@ public:
 	StateControl();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateASCII : public State {
@@ -311,7 +311,7 @@ public:
 	StateASCII();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateFCommand : public State {
@@ -319,7 +319,7 @@ public:
 	StateFCommand();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateCondCommand : public State {
@@ -327,7 +327,7 @@ public:
 	StateCondCommand();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateECommand : public State {
@@ -335,7 +335,7 @@ public:
 	StateECommand();
 
 private:
-	State *custom(gchar chr) throw (Error);
+	State *custom(gchar chr);
 };
 
 class StateScintilla_symbols : public StateExpectString {
@@ -343,12 +343,12 @@ public:
 	StateScintilla_symbols() : StateExpectString(true, false) {}
 
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateScintilla_lParam : public StateExpectString {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 /*
@@ -356,9 +356,9 @@ private:
  */
 class StateInsert : public StateExpectString {
 protected:
-	void initial(void) throw (Error);
-	void process(const gchar *str, gint new_chars) throw (Error);
-	State *done(const gchar *str) throw (Error);
+	void initial(void);
+	void process(const gchar *str, gint new_chars);
+	State *done(const gchar *str);
 };
 
 namespace States {

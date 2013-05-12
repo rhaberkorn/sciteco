@@ -481,7 +481,7 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
  * Q-Register <q>.
  */
 State *
-StateSaveCmdline::got_register(QRegister &reg) throw (Error)
+StateSaveCmdline::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 

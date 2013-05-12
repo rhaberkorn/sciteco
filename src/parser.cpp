@@ -270,7 +270,7 @@ State::eval_colon(void)
 }
 
 void
-State::input(gchar chr) throw (Error, ReplaceCmdline)
+State::input(gchar chr)
 {
 	State *state = States::current;
 
@@ -291,7 +291,7 @@ State::input(gchar chr) throw (Error, ReplaceCmdline)
 }
 
 State *
-State::get_next_state(gchar chr) throw (Error, ReplaceCmdline)
+State::get_next_state(gchar chr)
 {
 	State *next = NULL;
 	guint upper = g_ascii_toupper(chr);
@@ -316,7 +316,7 @@ StringBuildingMachine::reset(void)
 }
 
 gchar *
-StringBuildingMachine::input(gchar chr) throw (State::Error)
+StringBuildingMachine::input(gchar chr)
 {
 	QRegister *reg;
 
@@ -431,7 +431,7 @@ StringBuildingMachine::~StringBuildingMachine()
 }
 
 State *
-StateExpectString::custom(gchar chr) throw (Error, ReplaceCmdline)
+StateExpectString::custom(gchar chr)
 {
 	gchar *insert;
 
@@ -657,7 +657,7 @@ StateStart::delete_words(tecoInt n)
 }
 
 State *
-StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
+StateStart::custom(gchar chr)
 {
 	tecoInt v;
 	tecoBool rc;
@@ -1437,7 +1437,7 @@ StateFCommand::StateFCommand() : State()
 }
 
 State *
-StateFCommand::custom(gchar chr) throw (Error)
+StateFCommand::custom(gchar chr)
 {
 	switch (chr) {
 	/*
@@ -1539,7 +1539,7 @@ StateCondCommand::StateCondCommand() : State()
 }
 
 State *
-StateCondCommand::custom(gchar chr) throw (Error)
+StateCondCommand::custom(gchar chr)
 {
 	tecoInt value = 0;
 	bool result;
@@ -1632,7 +1632,7 @@ StateControl::StateControl() : State()
 }
 
 State *
-StateControl::custom(gchar chr) throw (Error)
+StateControl::custom(gchar chr)
 {
 	switch (g_ascii_toupper(chr)) {
 	/*$
@@ -1762,7 +1762,7 @@ StateASCII::StateASCII() : State()
 }
 
 State *
-StateASCII::custom(gchar chr) throw (Error)
+StateASCII::custom(gchar chr)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -1782,7 +1782,7 @@ StateECommand::StateECommand() : State()
 }
 
 State *
-StateECommand::custom(gchar chr) throw (Error)
+StateECommand::custom(gchar chr)
 {
 	switch (g_ascii_toupper(chr)) {
 	/*$
@@ -1954,7 +1954,7 @@ static struct ScintillaMessage {
  *     removes the buffer from the ring again.
  */
 State *
-StateScintilla_symbols::done(const gchar *str) throw (Error)
+StateScintilla_symbols::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::scintilla_lparam);
 
@@ -2011,7 +2011,7 @@ cleanup:
 }
 
 State *
-StateScintilla_lParam::done(const gchar *str) throw (Error)
+StateScintilla_lParam::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -2048,7 +2048,7 @@ StateScintilla_lParam::done(const gchar *str) throw (Error)
  * I command.
  */
 void
-StateInsert::initial(void) throw (Error)
+StateInsert::initial(void)
 {
 	int args;
 
@@ -2072,7 +2072,7 @@ StateInsert::initial(void) throw (Error)
 }
 
 void
-StateInsert::process(const gchar *str, gint new_chars) throw (Error)
+StateInsert::process(const gchar *str, gint new_chars)
 {
 	interface.ssm(SCI_BEGINUNDOACTION);
 	interface.ssm(SCI_ADDTEXT, new_chars,
@@ -2085,7 +2085,7 @@ StateInsert::process(const gchar *str, gint new_chars) throw (Error)
 }
 
 State *
-StateInsert::done(const gchar *str) throw (Error)
+StateInsert::done(const gchar *str)
 {
 	/* nothing to be done when done */
 	return &States::start;

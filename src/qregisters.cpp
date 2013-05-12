@@ -179,7 +179,7 @@ QRegister::undo_edit(void)
 }
 
 void
-QRegister::execute(bool locals) throw (State::Error, ReplaceCmdline)
+QRegister::execute(bool locals)
 {
 	gchar *str = get_string();
 
@@ -367,7 +367,7 @@ QRegSpecMachine::reset(void)
 }
 
 QRegister *
-QRegSpecMachine::input(gchar chr) throw (State::Error)
+QRegSpecMachine::input(gchar chr)
 {
 	gchar *insert;
 
@@ -450,7 +450,7 @@ StateExpectQReg::StateExpectQReg(bool initialize) : State(), machine(initialize)
 }
 
 State *
-StateExpectQReg::custom(gchar chr) throw (Error, ReplaceCmdline)
+StateExpectQReg::custom(gchar chr)
 {
 	QRegister *reg = machine.input(chr);
 
@@ -468,7 +468,7 @@ StateExpectQReg::custom(gchar chr) throw (Error, ReplaceCmdline)
  * stack.
  */
 State *
-StatePushQReg::got_register(QRegister &reg) throw (Error)
+StatePushQReg::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -491,7 +491,7 @@ StatePushQReg::got_register(QRegister &reg) throw (Error)
  * Memory is reclaimed on command-line termination.
  */
 State *
-StatePopQReg::got_register(QRegister &reg) throw (Error)
+StatePopQReg::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -517,7 +517,7 @@ StatePopQReg::got_register(QRegister &reg) throw (Error)
  * The command fails if <file> could not be read.
  */
 State *
-StateEQCommand::got_register(QRegister &reg) throw (Error)
+StateEQCommand::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::loadqreg);
 	register_argument = &reg;
@@ -525,7 +525,7 @@ StateEQCommand::got_register(QRegister &reg) throw (Error)
 }
 
 State *
-StateLoadQReg::done(const gchar *str) throw (Error)
+StateLoadQReg::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -554,7 +554,7 @@ StateLoadQReg::done(const gchar *str) throw (Error)
  * String-building is by default disabled for ^U commands.
  */
 State *
-StateCtlUCommand::got_register(QRegister &reg) throw (Error)
+StateCtlUCommand::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::setqregstring);
 	register_argument = &reg;
@@ -562,7 +562,7 @@ StateCtlUCommand::got_register(QRegister &reg) throw (Error)
 }
 
 State *
-StateSetQRegString::done(const gchar *str) throw (Error)
+StateSetQRegString::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -580,7 +580,7 @@ StateSetQRegString::done(const gchar *str) throw (Error)
  * Specifying an undefined <q> yields an error.
  */
 State *
-StateGetQRegString::got_register(QRegister &reg) throw (Error)
+StateGetQRegString::got_register(QRegister &reg)
 {
 	gchar *str;
 
@@ -608,7 +608,7 @@ StateGetQRegString::got_register(QRegister &reg) throw (Error)
  * The command fails for undefined registers.
  */
 State *
-StateGetQRegInteger::got_register(QRegister &reg) throw (Error)
+StateGetQRegInteger::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -628,7 +628,7 @@ StateGetQRegInteger::got_register(QRegister &reg) throw (Error)
  */
 /** @bug perhaps it's better to imply 0! */
 State *
-StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
+StateSetQRegInteger::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -646,7 +646,7 @@ StateSetQRegInteger::got_register(QRegister &reg) throw (Error)
  * <q> will be defined if it does not exist.
  */
 State *
-StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
+StateIncreaseQReg::got_register(QRegister &reg)
 {
 	tecoInt res;
 
@@ -682,7 +682,7 @@ StateIncreaseQReg::got_register(QRegister &reg) throw (Error)
  * not modify the executed code.
  */
 State *
-StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
+StateMacro::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -703,7 +703,7 @@ StateMacro::got_register(QRegister &reg) throw (Error, ReplaceCmdline)
  * If <file> could not be read, the command yields an error.
  */
 State *
-StateMacroFile::done(const gchar *str) throw (Error, ReplaceCmdline)
+StateMacroFile::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -735,7 +735,7 @@ StateMacroFile::done(const gchar *str) throw (Error, ReplaceCmdline)
  * Register <q> will be created if it is undefined.
  */
 State *
-StateCopyToQReg::got_register(QRegister &reg) throw (Error)
+StateCopyToQReg::got_register(QRegister &reg)
 {
 	tecoInt from, len;
 	Sci_TextRange tr;

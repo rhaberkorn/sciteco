@@ -110,7 +110,7 @@ public:
 	virtual void edit(void);
 	virtual void undo_edit(void);
 
-	void execute(bool locals = true) throw (State::Error, ReplaceCmdline);
+	void execute(bool locals = true);
 
 	bool load(const gchar *filename);
 	inline void
@@ -284,7 +284,7 @@ public:
 
 	void reset(void);
 
-	QRegister *input(gchar chr) throw (State::Error);
+	QRegister *input(gchar chr);
 };
 
 /*
@@ -301,16 +301,15 @@ public:
 	StateExpectQReg(bool initialize = false);
 
 private:
-	State *custom(gchar chr) throw (Error, ReplaceCmdline);
+	State *custom(gchar chr);
 
 protected:
-	virtual State *got_register(QRegister &reg)
-				   throw (Error, ReplaceCmdline) = 0;
+	virtual State *got_register(QRegister &reg) = 0;
 };
 
 class StatePushQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StatePopQReg : public StateExpectQReg {
@@ -318,7 +317,7 @@ public:
 	StatePopQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateEQCommand : public StateExpectQReg {
@@ -326,12 +325,12 @@ public:
 	StateEQCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateLoadQReg : public StateExpectFile {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateCtlUCommand : public StateExpectQReg {
@@ -339,7 +338,7 @@ public:
 	StateCtlUCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateSetQRegString : public StateExpectString {
@@ -347,17 +346,17 @@ public:
 	StateSetQRegString() : StateExpectString(false) {}
 
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateGetQRegString : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateGetQRegInteger : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateSetQRegInteger : public StateExpectQReg {
@@ -365,7 +364,7 @@ public:
 	StateSetQRegInteger() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateIncreaseQReg : public StateExpectQReg {
@@ -373,17 +372,17 @@ public:
 	StateIncreaseQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 class StateMacro : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg) throw (Error, ReplaceCmdline);
+	State *got_register(QRegister &reg);
 };
 
 class StateMacroFile : public StateExpectFile {
 private:
-	State *done(const gchar *str) throw (Error, ReplaceCmdline);
+	State *done(const gchar *str);
 };
 
 class StateCopyToQReg : public StateExpectQReg {
@@ -391,7 +390,7 @@ public:
 	StateCopyToQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg) throw (Error);
+	State *got_register(QRegister &reg);
 };
 
 namespace States {

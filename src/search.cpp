@@ -108,7 +108,7 @@ namespace States {
  * from the beginning.
  */
 void
-StateSearch::initial(void) throw (Error)
+StateSearch::initial(void)
 {
 	tecoInt v1, v2;
 
@@ -405,7 +405,7 @@ StateSearch::do_search(GRegex *re, gint from, gint to, gint &count)
 }
 
 void
-StateSearch::process(const gchar *str, gint new_chars) throw (Error)
+StateSearch::process(const gchar *str, gint new_chars)
 {
 	static const gint flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
 				  G_REGEX_DOTALL | G_REGEX_RAW;
@@ -496,7 +496,7 @@ failure:
 }
 
 State *
-StateSearch::done(const gchar *str) throw (Error)
+StateSearch::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -565,7 +565,7 @@ StateSearch::done(const gchar *str) throw (Error)
  * ring.
  */
 void
-StateSearchAll::initial(void) throw (Error)
+StateSearchAll::initial(void)
 {
 	tecoInt v1, v2;
 
@@ -605,7 +605,7 @@ StateSearchAll::initial(void) throw (Error)
 }
 
 State *
-StateSearchAll::done(const gchar *str) throw (Error)
+StateSearchAll::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -635,7 +635,7 @@ StateSearchAll::done(const gchar *str) throw (Error)
  * as-you-type but only on command termination.
  */
 State *
-StateSearchKill::done(const gchar *str) throw (Error)
+StateSearchKill::done(const gchar *str)
 {
 	gint dot;
 
@@ -686,7 +686,7 @@ StateSearchKill::done(const gchar *str) throw (Error)
  * (S) but when found deletes the entire occurrence.
  */
 State *
-StateSearchDelete::done(const gchar *str) throw (Error)
+StateSearchDelete::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -728,7 +728,7 @@ StateSearchDelete::done(const gchar *str) throw (Error)
  * immediately and interactively.
  */
 State *
-StateReplace::done(const gchar *str) throw (Error)
+StateReplace::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::replace_ignore);
 
@@ -742,7 +742,7 @@ StateReplace::done(const gchar *str) throw (Error)
 }
 
 State *
-StateReplace_ignore::done(const gchar *str) throw (Error)
+StateReplace_ignore::done(const gchar *str)
 {
 	return &States::start;
 }
@@ -768,7 +768,7 @@ StateReplace_ignore::done(const gchar *str) throw (Error)
  * register is implied instead.
  */
 State *
-StateReplaceDefault::done(const gchar *str) throw (Error)
+StateReplaceDefault::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::replacedefault_ignore);
 
@@ -782,7 +782,7 @@ StateReplaceDefault::done(const gchar *str) throw (Error)
 }
 
 State *
-StateReplaceDefault_insert::done(const gchar *str) throw (Error)
+StateReplaceDefault_insert::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -801,7 +801,7 @@ StateReplaceDefault_insert::done(const gchar *str) throw (Error)
 }
 
 State *
-StateReplaceDefault_ignore::done(const gchar *str) throw (Error)
+StateReplaceDefault_ignore::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 

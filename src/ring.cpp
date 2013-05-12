@@ -568,7 +568,7 @@ get_absolute_path(const gchar *path)
  */
 
 void
-StateEditFile::do_edit(const gchar *filename) throw (Error)
+StateEditFile::do_edit(const gchar *filename)
 {
 	if (ring.current)
 		ring.undo_edit();
@@ -578,7 +578,7 @@ StateEditFile::do_edit(const gchar *filename) throw (Error)
 }
 
 void
-StateEditFile::do_edit(tecoInt id) throw (Error)
+StateEditFile::do_edit(tecoInt id)
 {
 	if (ring.current)
 		ring.undo_edit();
@@ -634,7 +634,7 @@ StateEditFile::do_edit(tecoInt id) throw (Error)
  * ecetera.
  */
 void
-StateEditFile::initial(void) throw (Error)
+StateEditFile::initial(void)
 {
 	tecoInt id = expressions.pop_num_calc(1, -1);
 
@@ -654,7 +654,7 @@ StateEditFile::initial(void) throw (Error)
 }
 
 State *
-StateEditFile::done(const gchar *str) throw (Error)
+StateEditFile::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -740,7 +740,7 @@ StateEditFile::done(const gchar *str) throw (Error)
  * characters are enabled by default.
  */
 State *
-StateSaveFile::done(const gchar *str) throw (Error)
+StateSaveFile::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 

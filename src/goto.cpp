@@ -116,7 +116,7 @@ StateLabel::StateLabel() : State()
 }
 
 State *
-StateLabel::custom(gchar chr) throw (Error)
+StateLabel::custom(gchar chr)
 {
 	if (chr == '!') {
 		Goto::table->undo_set(strings[0],
@@ -166,7 +166,7 @@ StateLabel::custom(gchar chr) throw (Error)
  * terminate the command-line.
  */
 State *
-StateGotoCmd::done(const gchar *str) throw (Error)
+StateGotoCmd::done(const gchar *str)
 {
 	tecoInt value;
 	gchar **labels;

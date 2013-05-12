@@ -57,20 +57,20 @@ protected:
 	gchar *pattern2regexp(const gchar *&pattern, bool single_expr = false);
 	void do_search(GRegex *re, gint from, gint to, gint &count);
 
-	virtual void initial(void) throw (Error);
-	virtual void process(const gchar *str, gint new_chars) throw (Error);
-	virtual State *done(const gchar *str) throw (Error);
+	virtual void initial(void);
+	virtual void process(const gchar *str, gint new_chars);
+	virtual State *done(const gchar *str);
 };
 
 class StateSearchAll : public StateSearch {
 private:
-	void initial(void) throw (Error);
-	State *done(const gchar *str) throw (Error);
+	void initial(void);
+	State *done(const gchar *str);
 };
 
 class StateSearchKill : public StateSearch {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateSearchDelete : public StateSearch {
@@ -78,7 +78,7 @@ public:
 	StateSearchDelete(bool last = true) : StateSearch(last) {}
 
 protected:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateReplace : public StateSearchDelete {
@@ -86,17 +86,17 @@ public:
 	StateReplace() : StateSearchDelete(false) {}
 
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateReplace_insert : public StateInsert {
 private:
-	void initial(void) throw (Error) {}
+	void initial(void) {}
 };
 
 class StateReplace_ignore : public StateExpectString {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateReplaceDefault : public StateSearchDelete {
@@ -104,18 +104,18 @@ public:
 	StateReplaceDefault() : StateSearchDelete(false) {}
 
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 class StateReplaceDefault_insert : public StateInsert {
 private:
-	void initial(void) throw (Error) {}
-	State *done(const gchar *str) throw (Error);
+	void initial(void) {}
+	State *done(const gchar *str);
 };
 
 class StateReplaceDefault_ignore : public StateExpectString {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 namespace States {

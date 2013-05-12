@@ -220,16 +220,16 @@ class StateEditFile : public StateExpectFile {
 private:
 	bool allowFilename;
 
-	void do_edit(const gchar *filename) throw (Error);
-	void do_edit(tecoInt id) throw (Error);
+	void do_edit(const gchar *filename);
+	void do_edit(tecoInt id);
 
-	void initial(void) throw (Error);
-	State *done(const gchar *str) throw (Error);
+	void initial(void);
+	State *done(const gchar *str);
 };
 
 class StateSaveFile : public StateExpectFile {
 private:
-	State *done(const gchar *str) throw (Error);
+	State *done(const gchar *str);
 };
 
 namespace States {
