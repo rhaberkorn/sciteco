@@ -72,6 +72,10 @@ static gint nest_level = 0;
 gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
+/*
+ * handles all expected exceptions, converting them to
+ * State::Error and preparing them for stack frame insertion
+ */
 void
 Execute::step(const gchar *macro, gint stop_pos)
 	     throw (State::Error, ReplaceCmdline)
@@ -104,9 +108,12 @@ Execute::step(const gchar *macro, gint stop_pos)
 	}
 }
 
+/*
+ * may throw non State::Error exceptions which are not to be
+ * associated with the macro invocation stack frame
+ */
 void
 Execute::macro(const gchar *macro, bool locals)
-	      throw (State::Error, ReplaceCmdline)
 {
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
@@ -125,6 +132,7 @@ Execute::macro(const gchar *macro, bool locals)
 	macro_pc = 0;
 
 	Goto::table = &macro_goto_table;
+	/* locals are allocated so that we do not waste call stack space */
 	if (locals) {
 		parent_locals = QRegisters::locals;
 		QRegisters::locals = new QRegisterTable(false);
@@ -132,9 +140,14 @@ Execute::macro(const gchar *macro, bool locals)
 
 	try {
 		step(macro, strlen(macro));
-		if (Goto::skip_label)
-			throw State::Error("Label \"%s\" not found",
+		if (Goto::skip_label) {
+			State::Error error("Label \"%s\" not found",
 					   Goto::skip_label);
+			error.pos = strlen(macro);
+			String::get_coord(macro, error.pos,
+					  error.line, error.column);
+			throw error;
+		}
 	} catch (...) {
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
@@ -163,7 +176,6 @@ Execute::macro(const gchar *macro, bool locals)
 
 void
 Execute::file(const gchar *filename, bool locals)
-	     throw (State::Error, ReplaceCmdline)
 {
 	gchar *macro_str, *p;
 
@@ -210,6 +222,19 @@ State::Error::Error(const gchar *fmt, ...)
 	va_start(ap, fmt);
 	description = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
+}
+
+State::Error::Error(const Error &inst)
+		   : description(g_strdup(inst.description)),
+		     pos(inst.pos), line(inst.line), column(inst.column)
+{
+	/* shallow copy of the frames */
+	frames = g_slist_copy(inst.frames);
+
+	for (GSList *cur = frames; cur; cur = g_slist_next(cur)) {
+		Frame *frame = (Frame *)cur->data;
+		cur->data = frame->copy();
+	}
 }
 
 void

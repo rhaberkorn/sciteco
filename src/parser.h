@@ -51,6 +51,7 @@ public:
 			gint pos;
 			gint line, column;
 
+			virtual Frame *copy() const = 0;
 			virtual ~Frame() {}
 
 			virtual void display(gint nr) = 0;
@@ -62,6 +63,18 @@ public:
 		public:
 			QRegFrame(const gchar *_name)
 				 : name(g_strdup(_name)) {}
+
+			Frame *
+			copy() const
+			{
+				Frame *frame = new QRegFrame(name);
+
+				frame->pos = pos;
+				frame->line = line;
+				frame->column = column;
+
+				return frame;
+			}
 
 			~QRegFrame()
 			{
@@ -84,6 +97,18 @@ public:
 			FileFrame(const gchar *_name)
 				 : name(g_strdup(_name)) {}
 
+			Frame *
+			copy() const
+			{
+				Frame *frame = new FileFrame(name);
+
+				frame->pos = pos;
+				frame->line = line;
+				frame->column = column;
+
+				return frame;
+			}
+
 			~FileFrame()
 			{
 				g_free(name);
@@ -100,6 +125,18 @@ public:
 
 		class ToplevelFrame : public Frame {
 		public:
+			Frame *
+			copy() const
+			{
+				Frame *frame = new ToplevelFrame;
+
+				frame->pos = pos;
+				frame->line = line;
+				frame->column = column;
+
+				return frame;
+			}
+
 			void
 			display(gint nr)
 			{
@@ -110,6 +147,7 @@ public:
 		};
 
 		Error(const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
+		Error(const Error &inst);
 		~Error();
 
 		void add_frame(Frame *frame);
@@ -407,10 +445,8 @@ extern gchar escape_char;
 namespace Execute {
 	void step(const gchar *macro, gint stop_pos)
 		 throw (State::Error, ReplaceCmdline);
-	void macro(const gchar *macro, bool locals = true)
-		  throw (State::Error, ReplaceCmdline);
-	void file(const gchar *filename, bool locals = true)
-		 throw (State::Error, ReplaceCmdline);
+	void macro(const gchar *macro, bool locals = true);
+	void file(const gchar *filename, bool locals = true);
 }
 
 #endif
