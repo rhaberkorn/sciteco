@@ -156,6 +156,12 @@ public:
 		void display_full(void);
 	};
 
+	class GError : public Error {
+	public:
+		GError(const ::GError *gerror)
+		      : Error("%s", gerror->message) {}
+	};
+
 	class SyntaxError : public Error {
 	public:
 		SyntaxError(gchar chr)

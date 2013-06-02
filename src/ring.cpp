@@ -125,14 +125,16 @@ Buffer::UndoTokenClose::run(void)
  * 2.) On other platforms read into and copy from a statically sized buffer
  *     (perhaps page-sized)
  */
-bool
+void
 Buffer::load(const gchar *filename)
 {
 	gchar *contents;
 	gsize size;
 
-	if (!g_file_get_contents(filename, &contents, &size, NULL))
-		return false;
+	GError *gerror = NULL;
+
+	if (!g_file_get_contents(filename, &contents, &size, &gerror))
+		throw State::GError(gerror);
 
 	edit();
 
@@ -151,8 +153,6 @@ Buffer::load(const gchar *filename)
 #endif
 
 	set_filename(filename);
-
-	return true;
 }
 
 void

@@ -114,7 +114,7 @@ public:
 		TECODocument::undo_edit();
 	}
 
-	bool load(const gchar *filename);
+	void load(const gchar *filename);
 
 	inline void
 	undo_close(void)

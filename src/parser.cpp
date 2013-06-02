@@ -177,10 +177,11 @@ Execute::macro(const gchar *macro, bool locals)
 void
 Execute::file(const gchar *filename, bool locals)
 {
+	GError *gerror = NULL;
 	gchar *macro_str, *p;
 
-	if (!g_file_get_contents(filename, &macro_str, NULL, NULL))
-		throw State::Error("Error reading file \"%s\"", filename);
+	if (!g_file_get_contents(filename, &macro_str, NULL, &gerror))
+		throw State::GError(gerror);
 	/* only when executing files, ignore Hash-Bang line */
 	if (*macro_str == '#')
 		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'))+1;

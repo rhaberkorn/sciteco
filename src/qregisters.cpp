@@ -198,15 +198,17 @@ QRegister::execute(bool locals)
 	g_free(str);
 }
 
-bool
+void
 QRegister::load(const gchar *filename)
 {
 	gchar *contents;
 	gsize size;
 
+	GError *gerror = NULL;
+
 	/* FIXME: prevent excessive allocations by reading file into buffer */
-	if (!g_file_get_contents(filename, &contents, &size, NULL))
-		return false;
+	if (!g_file_get_contents(filename, &contents, &size, &gerror))
+		throw State::GError(gerror);
 
 	edit();
 	string.reset();
@@ -219,8 +221,6 @@ QRegister::load(const gchar *filename)
 	g_free(contents);
 
 	current_edit();
-
-	return true;
 }
 
 tecoInt
@@ -531,9 +531,7 @@ StateLoadQReg::done(const gchar *str)
 
 	if (*str) {
 		register_argument->undo_load();
-		if (!register_argument->load(str))
-			throw Error("Cannot load \"%s\" into Q-Register \"%s\"",
-				    str, register_argument->name);
+		register_argument->load(str);
 	} else {
 		if (ring.current)
 			ring.undo_edit();

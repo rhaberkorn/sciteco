@@ -112,7 +112,7 @@ public:
 
 	void execute(bool locals = true);
 
-	bool load(const gchar *filename);
+	void load(const gchar *filename);
 	inline void
 	undo_load(void)
 	{

@@ -185,6 +185,8 @@ process_options(int &argc, char **&argv)
 		{NULL}
 	};
 
+	GError *gerror = NULL;
+
 	GOptionContext	*options;
 	GOptionGroup	*interface_group = interface.get_options();
 
@@ -194,8 +196,9 @@ process_options(int &argc, char **&argv)
 	if (interface_group)
 		g_option_context_add_group(options, interface_group);
 
-	if (!g_option_context_parse(options, &argc, &argv, NULL)) {
-		g_printf("Option parsing failed!\n");
+	if (!g_option_context_parse(options, &argc, &argv, &gerror)) {
+		g_fprintf(stderr, "Option parsing failed: %s\n",
+			  gerror->message);
 		exit(EXIT_FAILURE);
 	}
 
