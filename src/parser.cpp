@@ -21,7 +21,7 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <stdexcept>
+#include <exception>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -88,15 +88,17 @@ Execute::step(const gchar *macro, gint stop_pos)
 #endif
 
 		try {
-			/* convert bad_alloc exceptions */
+			/*
+			 * convert bad_alloc and other C++ standard
+			 * library exceptions
+			 */
 			try {
 				if (interface.is_interrupted())
 					throw State::Error("Interrupted");
 
 				State::input(macro[macro_pc]);
-			} catch (std::bad_alloc &alloc) {
-				throw State::Error("bad_alloc: %s",
-						   alloc.what());
+			} catch (std::exception &error) {
+				throw State::StdError(error);
 			}
 		} catch (State::Error &error) {
 			error.pos = macro_pc;

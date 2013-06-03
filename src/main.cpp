@@ -24,7 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <stdexcept>
+#include <new>
 
 #include <glib.h>
 #include <glib/gprintf.h>

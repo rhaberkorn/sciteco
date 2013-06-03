@@ -18,6 +18,9 @@
 #ifndef __PARSER_H
 #define __PARSER_H
 
+#include <exception>
+#include <typeinfo>
+
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -154,6 +157,14 @@ public:
 
 		void display_short(void);
 		void display_full(void);
+	};
+
+	class StdError : public Error {
+	public:
+		StdError(const gchar *type, const std::exception &error)
+			: Error("%s: %s", type, error.what()) {}
+		StdError(const std::exception &error)
+			: Error("%s: %s", typeid(error).name(), error.what()) {}
 	};
 
 	class GError : public Error {
