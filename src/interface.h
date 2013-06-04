@@ -137,4 +137,7 @@ public:
 #error No interface selected!
 #endif
 
+/* object defined in main.cpp */
+extern InterfaceCurrent interface;
+
 #endif

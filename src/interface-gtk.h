@@ -28,8 +28,7 @@
 
 #include "interface.h"
 
-/* object declared in main.cpp */
-extern class InterfaceGtk : public Interface {
+typedef class InterfaceGtk : public Interface {
 	GtkWidget *window;
 	GtkWidget *editor_widget;
 	GtkWidget *cmdline_widget;
@@ -86,6 +85,6 @@ public:
 
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
-} interface;
+} InterfaceCurrent;
 
 #endif

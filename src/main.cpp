@@ -53,11 +53,7 @@
  * a ctor/dtor order without depending on the
  * GCC init_priority() attribute
  */
-#ifdef INTERFACE_GTK
-InterfaceGtk interface;
-#elif defined(INTERFACE_NCURSES)
-InterfaceNCurses interface;
-#endif
+InterfaceCurrent interface;
 
 /*
  * Scintilla will be initialized after these

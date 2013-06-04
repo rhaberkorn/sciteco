@@ -29,8 +29,7 @@
 
 #include "interface.h"
 
-/* object declared in main.cpp */
-extern class InterfaceNCurses : public Interface {
+typedef class InterfaceNCurses : public Interface {
 	SCREEN *screen;
 	FILE *screen_tty;
 
@@ -95,6 +94,6 @@ private:
 	void draw_info(void);
 
 	friend void event_loop_iter();
-} interface;
+} InterfaceCurrent;
 
 #endif
