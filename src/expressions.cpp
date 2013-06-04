@@ -23,6 +23,7 @@
 
 #include "sciteco.h"
 #include "undo.h"
+#include "parser.h" // State::Error
 #include "expressions.h"
 
 Expressions expressions;
@@ -132,14 +133,34 @@ Expressions::calc(void)
 	tecoInt vleft = pop_num();
 
 	switch (op) {
-	case OP_POW: for (result = 1; vright--; result *= vleft); break;
-	case OP_MUL: result = vleft * vright; break;
-	case OP_DIV: result = vleft / vright; break;
-	case OP_MOD: result = vleft % vright; break;
-	case OP_ADD: result = vleft + vright; break;
-	case OP_SUB: result = vleft - vright; break;
-	case OP_AND: result = vleft & vright; break;
-	case OP_OR:  result = vleft | vright; break;
+	case OP_POW:
+		for (result = 1; vright--; result *= vleft);
+		break;
+	case OP_MUL:
+		result = vleft * vright;
+		break;
+	case OP_DIV:
+		if (!vright)
+			throw State::Error("Division by zero");
+		result = vleft / vright;
+		break;
+	case OP_MOD:
+		if (!vright)
+			throw State::Error("Remainder of division by zero");
+		result = vleft % vright;
+		break;
+	case OP_ADD:
+		result = vleft + vright;
+		break;
+	case OP_SUB:
+		result = vleft - vright;
+		break;
+	case OP_AND:
+		result = vleft & vright;
+		break;
+	case OP_OR:
+		result = vleft | vright;
+		break;
 	default:
 		/* shouldn't happen */
 		g_assert(false);
