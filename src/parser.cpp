@@ -908,6 +908,10 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 	 * up to the first changed character and inserts
 	 * all characters following from the updated command
 	 * line into the command stream.
+	 * To prevent the undesired rubout of the entire
+	 * command-line, the replacement command ("}") is only
+	 * allowed when the replacement register currently edited
+	 * since it will otherwise be usually empty.
 	 *
 	 * .B Note:
 	 *   - Command line editing only works on command lines,
@@ -964,6 +968,9 @@ StateStart::custom(gchar chr) throw (Error, ReplaceCmdline)
 		if (!undo.enabled)
 			throw Error("Command-line editing only possible in "
 				    "interactive mode");
+		if (QRegisters::current != QRegisters::globals["\x1B"])
+			throw Error("Command-line replacement only allowed when "
+				    "editing the replacement register");
 
 		/* replace cmdline in the outer macro environment */
 		throw ReplaceCmdline();
