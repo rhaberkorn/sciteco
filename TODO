@@ -2,16 +2,21 @@ Known Bugs:
  * ??? Dot is not always restored properly (e.g. after closing file)
    need test case!!!
  * Null-byte in strings not always handled transparently
+ * strange crashes during automated builds:
+   I will investigate after finishing the error tracing feature
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
  * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
+ * adding a new buffer with syntax highlighting screws up styles:
+   obviously they are attached to the view instead of the document
 
 Features:
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
    * a position refers to a character/codepoint
- * refactor lexer macro library using new possibilities
+ * refactor lexer macro library using new possibilities:
+   fix the styling bug in the process
  * protect ED hook executions (process like "(<x>M0$)").
    Perhaps use a long name for ED registers now. How about "ED"?
  * Progress indication in commandline cursor
@@ -33,6 +38,9 @@ Features:
    only basic commands (no loops etc.). it is removed when the file is
    saved. in case of an abnormal program termination the
    journal file can be replayed.
+ * Add special Q-Register for dot:
+   Would simplify inserting dot with string building and saving/restoring
+   dot on the QReg stack
 
 Optimizations:
  * prevent command-line flickering when using function key macros.
