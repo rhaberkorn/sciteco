@@ -16,7 +16,7 @@ SciTECO Build and Runtime Dependencies
  * Autotools, GNU C/C++ (v4.4 or later) or LLVM/gcc or LLVM/Clang
  * Glib 2 as a cross-platform runtime library:
    https://launchpad.net/~robin-haberkorn/+archive/sciteco
- * Scintilla (v3.2.3 or later):
+ * Scintilla (v3.2.3 up to v3.3.1):
    http://www.scintilla.org/
  * Curses interface:
    * Scinterm (v1.1 or later):
@@ -83,11 +83,12 @@ from a source bundle:
  * Install Scintilla/Scinterm according to their READMEs.
    Usually you unpack Scinterm into a subdirectory of Scintilla
    and run make...
- * Apply the patches contained in the SciTECO sources: patches/*.patch
+ * But before that, apply the patches contained in the SciTECO
+   sources: patches/*.patch
    For instance:
    # cd ~/scintilla
    # for patch in SCITECO_PATH/patches/*.patch; do
-   > patch --merge -p1 <$patch
+   > patch --merge -p2 <$patch
    > done
  * Build SciTECO just like described above.
    If you did not use the same directory layout as the source bundles

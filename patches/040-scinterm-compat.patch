@@ -1,0 +1,13 @@
+Necessary for Scintilla 3.3.1 compatibility
+(already fixed in Scinterm repository)
+--- a/scintilla/scinterm/Makefile	2013-07-05 19:59:35.094018253 +0200
++++ b/scintilla/scinterm/Makefile	2013-07-05 19:59:45.102018598 +0200
+@@ -5,7 +5,7 @@
+ CXX = g++
+ INCLUDEDIRS = -I ../include -I ../src -I ../lexlib
+ CXXFLAGS = -Wall -Wno-missing-braces -Wno-char-subscripts -Wno-long-long \
+-           -pedantic -DNCURSES -DSCI_LEXER $(INCLUDEDIRS)
++           -pedantic -DNCURSES -DCURSES -DSCI_LEXER $(INCLUDEDIRS)
+ ifdef DEBUG
+   CXXFLAGS += -DDEBUG -g
+ else
