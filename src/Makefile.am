@@ -11,7 +11,7 @@ if NEED_COMPAT
 AM_CPPFLAGS += -I@top_srcdir@/compat
 endif
 
-BUILT_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
+BUILT_SOURCES =
 
 EXTRA_DIST = gtk-info-popup.gob \
 	     symbols-extract.tes
