@@ -10,6 +10,7 @@ Known Bugs:
  * adding a new buffer with syntax highlighting screws up styles:
    obviously they are attached to the view instead of the document
  * crashes: 1<(C)>
+ * reversing EWfilename$ (save as) does not work!
 
 Features:
  * properly support Unicode encodings and the character-based model
