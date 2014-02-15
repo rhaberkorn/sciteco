@@ -21,6 +21,7 @@
 #include <glib.h>
 
 #include "undo.h"
+#include "parser.h" // State::Error
 
 template <typename Type>
 class ValueStack {
@@ -71,7 +72,7 @@ public:
 
 	~ValueStack()
 	{
-		delete stack;
+		delete[] stack;
 	}
 
 	inline int
@@ -83,6 +84,9 @@ public:
 	inline Type &
 	push(Type value, int index = 1)
 	{
+		if (items() == size)
+			throw State::Error("Stack overflow");
+
 		for (int i = -index + 1; i; i++)
 			top[i+1] = top[i];
 
