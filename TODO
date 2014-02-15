@@ -11,6 +11,7 @@ Known Bugs:
    obviously they are attached to the view instead of the document
  * crashes: 1<(C)>
  * reversing EWfilename$ (save as) does not work!
+ * crashes on large files: S^EM^X$ (regexp: .*)
 
 Features:
  * properly support Unicode encodings and the character-based model
@@ -22,7 +23,6 @@ Features:
  * protect ED hook executions (process like "(<x>M0$)").
    Perhaps use a long name for ED registers now. How about "ED"?
  * Progress indication in commandline cursor
- * catch OOM errors (can happen easily due to infinite loops)
  * undo-tokens per char limit (additional infinite loop safety)
  * Command to free Q-Register (remove from table)
  * autocompletion of long Q-Reg names
@@ -43,6 +43,10 @@ Features:
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
    dot on the QReg stack
+ * Windows: look for stdlib macros relative to the binary path (just
+   like teco.ini is found): perhaps by introducing special characters
+   in the default SCITECOPATH or hardcoding the defaults
+ * automatic EOL detection of buffers; easy EOL setting
 
 Optimizations:
  * prevent command-line flickering when using function key macros.
