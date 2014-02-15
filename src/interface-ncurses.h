@@ -93,6 +93,8 @@ private:
 	void init_screen(void);
 	void resize_all_windows(void);
 	void draw_info(void);
+
+	friend void event_loop_iter();
 } interface;
 
 #endif

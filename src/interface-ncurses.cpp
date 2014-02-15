@@ -33,6 +33,10 @@
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #include "sciteco.h"
 #include "cmdline.h"
 #include "qregisters.h"
@@ -81,9 +85,13 @@ InterfaceNCurses::main(int &argc, char **&argv)
 	msg_clear();
 	cmdline_update("");
 
+#ifdef EMSCRIPTEN
+        nodelay(cmdline_window, TRUE);
+#else
 #ifndef PDCURSES_WIN32A
 	/* workaround: endwin() is somewhat broken in the win32a port */
 	endwin();
+#endif
 #endif
 }
 
@@ -342,84 +350,103 @@ InterfaceNCurses::popup_clear(void)
 	popup.window = NULL;
 }
 
+/**
+ * One iteration of the event loop.
+ *
+ * This is a global function, so it may
+ * be used as an Emscripten callback.
+ *
+ * @bug
+ * Can probably be defined as a static method,
+ * so we can avoid declaring it a fried function of
+ * InterfaceNCurses.
+ */
 void
-InterfaceNCurses::event_loop(void)
+event_loop_iter()
 {
-	/* in commandline (visual) mode, enforce redraw */
-	wrefresh(curscr);
-	draw_info();
+	int key;
 
-	for (;;) {
-		int key;
+	keypad(interface.cmdline_window, Flags::ed & Flags::ED_FNKEYS);
 
-		/* also handles initial refresh (styles are configured...) */
-		scintilla_refresh(sci);
-		if (popup.window)
-			wrefresh(popup.window);
+	/* no special <CTRL/C> handling */
+	raw();
+	key = wgetch(interface.cmdline_window);
+	/* allow asynchronous interruptions on <CTRL/C> */
+	cbreak();
+	if (key == ERR)
+		return;
 
-		keypad(cmdline_window, Flags::ed & Flags::ED_FNKEYS);
-
-		/* no special <CTRL/C> handling */
-		raw();
-		key = wgetch(cmdline_window);
-		/* allow asynchronous interruptions on <CTRL/C> */
-		cbreak();
-
-		switch (key) {
+	switch (key) {
 #ifdef KEY_RESIZE
-		case ERR:
-		case KEY_RESIZE:
+	case KEY_RESIZE:
 #ifdef PDCURSES
-			resize_term(0, 0);
+		resize_term(0, 0);
 #endif
-			resize_all_windows();
-			break;
+		interface.resize_all_windows();
+		break;
 #endif
-		case 0x7F: /* DEL */
-		case KEY_BACKSPACE:
-			cmdline_keypress('\b');
-			break;
-		case KEY_ENTER:
-		case '\r':
-		case '\n':
-			cmdline_keypress(get_eol());
-			break;
+	case 0x7F: /* DEL */
+	case KEY_BACKSPACE:
+		cmdline_keypress('\b');
+		break;
+	case KEY_ENTER:
+	case '\r':
+	case '\n':
+		cmdline_keypress(get_eol());
+		break;
 
-		/*
-		 * Function key macros
-		 */
+	/*
+	 * Function key macros
+	 */
 #define FN(KEY) case KEY_##KEY: cmdline_fnmacro(#KEY); break
 #define FNS(KEY) FN(KEY); FN(S##KEY)
-		FN(DOWN); FN(UP); FNS(LEFT); FNS(RIGHT);
-		FNS(HOME);
-		case KEY_F(0)...KEY_F(63): {
-			gchar macro_name[3+1];
+	FN(DOWN); FN(UP); FNS(LEFT); FNS(RIGHT);
+	FNS(HOME);
+	case KEY_F(0)...KEY_F(63): {
+		gchar macro_name[3+1];
 
-			g_snprintf(macro_name, sizeof(macro_name),
-				   "F%d", key - KEY_F0);
-			cmdline_fnmacro(macro_name);
-			break;
-		}
-		FNS(DC);
-		FNS(IC);
-		FN(NPAGE); FN(PPAGE);
-		FNS(PRINT);
-		FN(A1); FN(A3); FN(B2); FN(C1); FN(C3);
-		FNS(END);
-		FNS(HELP);
+		g_snprintf(macro_name, sizeof(macro_name),
+			   "F%d", key - KEY_F0);
+		cmdline_fnmacro(macro_name);
+		break;
+	}
+	FNS(DC);
+	FNS(IC);
+	FN(NPAGE); FN(PPAGE);
+	FNS(PRINT);
+	FN(A1); FN(A3); FN(B2); FN(C1); FN(C3);
+	FNS(END);
+	FNS(HELP);
 #undef FNS
 #undef FN
 
-		/*
-		 * Control keys and keys with printable representation
-		 */
-		default:
-			if (key <= 0xFF)
-				cmdline_keypress((gchar)key);
-		}
-
-		sigint_occurred = FALSE;
+	/*
+	 * Control keys and keys with printable representation
+	 */
+	default:
+		if (key <= 0xFF)
+			cmdline_keypress((gchar)key);
 	}
+
+	sigint_occurred = FALSE;
+
+	scintilla_refresh(interface.sci);
+	if (interface.popup.window)
+		wrefresh(interface.popup.window);
+}
+
+void
+InterfaceNCurses::event_loop(void)
+{
+	/* initial refresh: window might have been changed in batch mode */
+	scintilla_refresh(sci);
+
+#ifdef EMSCRIPTEN
+	emscripten_set_main_loop(event_loop_iter, 1000/100, TRUE);
+#else
+	for (;;)
+		event_loop_iter();
+#endif
 }
 
 InterfaceNCurses::Popup::~Popup()

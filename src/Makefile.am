@@ -14,7 +14,8 @@ endif
 BUILT_SOURCES =
 
 EXTRA_DIST = gtk-info-popup.gob \
-	     symbols-extract.tes
+	     symbols-extract.tes \
+	     sciteco.html
 
 noinst_LIBRARIES = libsciteco-base.a
 libsciteco_base_a_SOURCES = main.cpp sciteco.h \

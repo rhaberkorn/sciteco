@@ -1,0 +1,70 @@
+<html>
+	<head>
+		<title>Text Editor and Corrector</title>
+		<style type="text/css">
+			body,p,a,td,li {
+				font-family: courier,fixed,swiss,sans-serif;
+				font-size: 12px;
+				color: #cccccc;
+			}
+			.lh15 {
+				line-height: 15px;
+			}
+
+			.term {
+				font-family: "Courier New",courier,fixed,monospace;
+				font-size: 12px;
+				color: #94aad6;
+				background: none;
+				letter-spacing: 1px;
+			}
+			.term .termReverse {
+				color: #232e45;
+				background: #95a9d5;
+			}
+
+			#termDiv {
+				visibility: hidden;
+				width: 100%;
+			}
+			#termDiv table {
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			/* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+			canvas.emscripten {
+				border: 0px none;
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body bgcolor="#222222" link="#77dd11" text="#cccccc">
+		<!-- FIXME: We don't need a Canvas, but must nevertheless define it,
+		     as Emscripten plugins for loading files depend on it.
+		-->
+		<!-- <canvas class="emscripten" id="canvas"></canvas> -->
+		<!-- For termlib... -->
+		<div id="termDiv"></div>
+		<center>
+			<a href="#" onClicK="term.resizeTo(80, 24)">80x24</a> &bull;
+			<a href="#" onClicK="term.resizeTo(80, 43)">80x43</a> &bull;
+			<a href="#" onClicK="term.resizeTo(132, 24)">132x24</a> &bull;
+			<a href="#" onClicK="term.resizeTo(132, 43)">132x43</a>
+		</center>
+
+		<script language="JavaScript" type="text/javascript">
+			function sciteco_init() {
+				ENV.HOME = "/pages";
+
+//				FS.createPreloadedFile("/pages", "Welcome", "pages/Welcome", true, true);
+			}
+
+			var Module = {
+				preRun: [sciteco_init],
+//				canvas: document.getElementById('canvas')
+			};
+		</script>
+		<script async language="JavaScript" type="text/javascript" src="sciteco.js"></script>
+	</body>
+</html>

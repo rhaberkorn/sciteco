@@ -112,7 +112,7 @@ AC_ARG_WITH(scinterm,
 SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 
 AC_ARG_WITH(interface,
-	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],
+	AS_HELP_STRING([--with-interface=ncurses|pdcurses|emcurses|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
@@ -131,6 +131,12 @@ case $INTERFACE in
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
 			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
 		])
+		;;
+	emcurses)
+		# EMCurses is the PDCurses/Emscripten port
+		# However, ordinary library checks do not work
+		# under Emscripten
+		LIBS="$LIBS -lpdcurses"
 		;;
 	esac
 

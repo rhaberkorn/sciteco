@@ -123,7 +123,13 @@ protected:
 
 	MicroState state;
 
-	inline void
+#ifdef EMSCRIPTEN
+	/* FIXME: Shouldn't be required! */
+	__attribute__((noinline))
+#else
+	inline
+#endif
+	void
 	set(MicroState next)
 	{
 		if (next != state)
