@@ -440,6 +440,7 @@ InterfaceNCurses::event_loop(void)
 {
 	/* initial refresh: window might have been changed in batch mode */
 	scintilla_refresh(sci);
+	draw_info();
 
 #ifdef EMSCRIPTEN
 	emscripten_set_main_loop(event_loop_iter, 1000/100, TRUE);
