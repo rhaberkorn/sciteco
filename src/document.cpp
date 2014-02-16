@@ -28,6 +28,32 @@
 #include "undo.h"
 #include "document.h"
 
+static inline void
+set_representations(void)
+{
+	static const char *reps[] = {
+		"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
+		"^H", "TAB" /* ^I */, "LF" /* ^J */, "^K", "^L", "CR" /* ^M */, "^N", "^O",
+		"^P", "^Q", "^R", "^S", "^T", "^U", "^V", "^W",
+		"^X", "^Y", "^Z", "$" /* ^[ */, "^\\", "^]", "^^", "^_"
+	};
+
+	for (guint cc = 0; cc < G_N_ELEMENTS(reps); cc++) {
+		gchar buf[] = {(gchar)cc, '\0'};
+		interface.ssm(SCI_SETREPRESENTATION,
+			      (uptr_t)buf, (sptr_t)reps[cc]);
+	}
+}
+
+class UndoSetRepresentations : public UndoToken {
+public:
+	void
+	run(void)
+	{
+		set_representations();
+	}
+};
+
 void
 TECODocument::edit(void)
 {
@@ -38,11 +64,24 @@ TECODocument::edit(void)
 	interface.ssm(SCI_SETFIRSTVISIBLELINE, first_line);
 	interface.ssm(SCI_SETXOFFSET, xoffset);
 	interface.ssm(SCI_SETSEL, anchor, (sptr_t)dot);
+
+	/*
+	 * Default TECO-style character representations.
+	 * They are reset on EVERY SETDOCPOINTER call by Scintilla.
+	 */
+	set_representations();
 }
 
 void
 TECODocument::undo_edit(void)
 {
+	/*
+	 * see above: set TECO-style character representations
+	 * NOTE: could be done with push_msg() but that requires
+	 * making the entire mapping static constant
+	 */
+	undo.push(new UndoSetRepresentations());
+
 	undo.push_msg(SCI_SETSEL, anchor, (sptr_t)dot);
 	undo.push_msg(SCI_SETXOFFSET, xoffset);
 	undo.push_msg(SCI_SETFIRSTVISIBLELINE, first_line);

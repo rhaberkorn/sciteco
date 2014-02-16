@@ -1,0 +1,17 @@
+Link the entire lexlib into Scinterm's scintilla.a.
+The author forgot to add CharacterCategory.o.
+--- a/scintilla/scinterm/Makefile	2014-02-16 06:44:03.572368461 +0100
++++ b/scintilla/scinterm/Makefile	2014-02-16 06:47:07.495772994 +0100
+@@ -28,9 +28,9 @@
+               Document.o Editor.o ExternalLexer.o Indicator.o KeyMap.o \
+               LineMarker.o PerLine.o PositionCache.o RESearch.o RunStyles.o \
+               ScintillaBase.o Selection.o Style.o UniConversion.o ViewStyle.o \
+-              XPM.o Accessor.o CharacterSet.o LexerBase.o LexerModule.o \
+-              LexerNoExceptions.o LexerSimple.o PropSetSimple.o StyleContext.o \
+-              WordList.o $(lexers) ScintillaTerm.o
++              XPM.o Accessor.o CharacterCategory.o CharacterSet.o LexerBase.o \
++              LexerModule.o LexerNoExceptions.o LexerSimple.o PropSetSimple.o \
++              StyleContext.o WordList.o $(lexers) ScintillaTerm.o
+ 	$(AR) rc $@ $^
+ 	touch $@
+ clean:
