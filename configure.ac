@@ -35,7 +35,8 @@ AC_PROG_CC_C99
 AC_PROG_GREP
 AC_PROG_INSTALL
 
-AM_CONDITIONAL(CLANG, [$CXX --version | $GREP clang >/dev/null])
+# Emscripten uses Clang as well
+AM_CONDITIONAL(CLANG, [$CXX --version | $GREP -E "clang|Emscripten" >/dev/null])
 
 AC_CHECK_PROG(DATE, date, date)
 if [[ x$DATE = x ]]; then
