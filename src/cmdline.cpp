@@ -346,13 +346,15 @@ filename_complete(const gchar *filename, gchar completed)
 {
 	gchar *dirname, *basename;
 	GDir *dir;
-	GList *files = NULL, *matching;
-	GCompletion *completion;
-	gchar *new_prefix;
+	GList *files = NULL;
+	guint files_len = 0;
 	gchar *insert = NULL;
+	gsize filename_len;
+	gsize prefix_len = 0;
 
 	if (!filename)
 		filename = "";
+	filename_len = strlen(filename);
 
 	if (is_glob_pattern(filename))
 		return NULL;
@@ -367,34 +369,40 @@ filename_complete(const gchar *filename, gchar completed)
 		*dirname = '\0';
 
 	while ((basename = (gchar *)g_dir_read_name(dir))) {
-		gchar *filename = g_build_filename(dirname, basename, NIL);
+		gchar *cur_file = g_build_filename(dirname, basename, NIL);
 
-		if (g_file_test(filename, G_FILE_TEST_IS_DIR)) {
-			gchar *new_filename;
-			new_filename = g_strconcat(filename,
-						   G_DIR_SEPARATOR_S, NIL);
-			g_free(filename);
-			filename = new_filename;
+		if (g_file_test(cur_file, G_FILE_TEST_IS_DIR))
+			String::append(cur_file, G_DIR_SEPARATOR_S);
+
+		if (!g_str_has_prefix(cur_file, filename)) {
+			g_free(cur_file);
+			continue;
 		}
 
-		files = g_list_prepend(files, filename);
+		files = g_list_prepend(files, cur_file);
+
+		if (g_list_next(files)) {
+			const gchar *other_file = (gchar *)g_list_next(files)->data;
+			gsize len = String::diff(other_file + filename_len,
+						 cur_file + filename_len);
+			if (len < prefix_len)
+				prefix_len = len;
+		} else {
+			prefix_len = strlen(cur_file + filename_len);
+		}
+
+		files_len++;
 	}
+	if (prefix_len > 0)
+		insert = g_strndup((gchar *)files->data + filename_len, prefix_len);
 
 	g_free(dirname);
 	g_dir_close(dir);
 
-	completion = g_completion_new(NULL);
-	g_completion_add_items(completion, files);
+	if (!insert && files_len > 1) {
+		files = g_list_sort(files, (GCompareFunc)g_strcmp0);
 
-	matching = g_completion_complete(completion, filename, &new_prefix);
-	if (new_prefix && strlen(new_prefix) > strlen(filename))
-		insert = g_strdup(new_prefix + strlen(filename));
-	g_free(new_prefix);
-
-	if (!insert && g_list_length(matching) > 1) {
-		matching = g_list_sort(matching, (GCompareFunc)g_strcmp0);
-
-		for (GList *file = g_list_first(matching);
+		for (GList *file = g_list_first(files);
 		     file != NULL;
 		     file = g_list_next(file)) {
 			Interface::PopupEntryType type;
@@ -413,12 +421,9 @@ filename_complete(const gchar *filename, gchar completed)
 		}
 
 		interface.popup_show();
-	} else if (g_list_length(matching) == 1 &&
-		   !filename_is_dir((gchar *)g_list_first(matching)->data)) {
+	} else if (files_len == 1 && !filename_is_dir((gchar *)files->data)) {
 		String::append(insert, completed);
 	}
-
-	g_completion_free(completion);
 
 	for (GList *file = g_list_first(files); file; file = g_list_next(file))
 		g_free(file->data);
@@ -431,28 +436,43 @@ static gchar *
 symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
 {
 	GList *glist;
-	GList *matching;
-	GCompletion *completion;
-	gchar *new_prefix;
+	guint glist_len = 0;
 	gchar *insert = NULL;
+	gsize symbol_len;
+	gsize prefix_len = 0;
 
 	if (!symbol)
 		symbol = "";
+	symbol_len = strlen(symbol);
 
 	glist = list.get_glist();
 	if (!glist)
 		return NULL;
+	glist = g_list_copy(glist);
+	if (!glist)
+		return NULL;
+	/* NOTE: element data must not be freed */
 
-	completion = g_completion_new(NULL);
-	g_completion_add_items(completion, glist);
+	for (GList *entry = g_list_first(glist), *next = g_list_next(entry);
+	     entry != NULL;
+	     entry = next, next = entry ? g_list_next(entry) : NULL) {
+		if (!g_str_has_prefix((gchar *)entry->data, symbol)) {
+			glist = g_list_delete_link(glist, entry);
+			continue;
+		}
 
-	matching = g_completion_complete(completion, symbol, &new_prefix);
-	if (new_prefix && strlen(new_prefix) > strlen(symbol))
-		insert = g_strdup(new_prefix + strlen(symbol));
-	g_free(new_prefix);
+		gsize len = String::diff((gchar *)glist->data + symbol_len,
+					 (gchar *)entry->data + symbol_len);
+		if (!prefix_len || len < prefix_len)
+			prefix_len = len;
 
-	if (!insert && g_list_length(matching) > 1) {
-		for (GList *entry = g_list_first(matching);
+		glist_len++;
+	}
+	if (prefix_len > 0)
+		insert = g_strndup((gchar *)glist->data + symbol_len, prefix_len);
+
+	if (!insert && glist_len > 1) {
+		for (GList *entry = g_list_first(glist);
 		     entry != NULL;
 		     entry = g_list_next(entry)) {
 			interface.popup_add(Interface::POPUP_PLAIN,
@@ -460,11 +480,11 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
 		}
 
 		interface.popup_show();
-	} else if (g_list_length(matching) == 1) {
+	} else if (glist_len == 1) {
 		String::append(insert, completed);
 	}
 
-	g_completion_free(completion);
+	g_list_free(glist);
 
 	return insert;
 }

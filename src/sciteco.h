@@ -91,6 +91,17 @@ append(gchar *&str, gchar chr)
 void get_coord(const gchar *str, gint pos,
 	       gint &line, gint &column);
 
+static inline gsize
+diff(const gchar *a, const gchar *b)
+{
+	gsize len = 0;
+
+	while (*a != '\0' && *a++ == *b++)
+		len++;
+
+	return len;
+}
+
 } /* namespace String */
 
 namespace Validate {
