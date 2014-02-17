@@ -5,7 +5,7 @@ AC_PREREQ([2.65])
 AC_INIT([SciTECO], [0.6],
 	[robin.haberkorn@googlemail.com],
 	[sciteco],
-	[http://rhaberkorn.github.com/sciteco/])
+	[http://sciteco.sf.net/])
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE
 

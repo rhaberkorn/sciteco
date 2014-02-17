@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: SciTECO
 Upstream-Contact: robin.haberkorn@googlemail.com
-Source: https://github.com/rhaberkorn/sciteco
+Source: https://sourceforge.net/projects/sciteco
 
 Files: debian/*
 Copyright: Copyright 2013-2014 Robin Haberkorn <robin.haberkorn@googlemail.com>

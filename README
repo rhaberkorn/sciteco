@@ -45,13 +45,14 @@ Download
 There are prebuilt binary packages and source bundles for your convenience:
 * [Download Archive](https://sourceforge.net/projects/sciteco/files/)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
+* The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
 For more details on building from source, please refer to `INSTALL`.
 
 Additional Documentation
 ========================
 
-* There is a manpage [__sciteco__(1)](http://sciteco.sourceforge.net/manuals/sciteco.1.html)
+* There is a manpage [__sciteco__(1)](http://sciteco.sf.net/manuals/sciteco.1.html)
   describing program invocation and SciTECO's batch mode processing.
-* There is a manpage [__sciteco__(7)](http://sciteco.sourceforge.net/manuals/sciteco.7.html)
+* There is a manpage [__sciteco__(7)](http://sciteco.sf.net/manuals/sciteco.7.html)
   describing SciTECO as a language.

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
 Build-Depends: debhelper (>= 8), g++ (>= 4:4.4), libglib2.0-dev, libncurses5-dev
 Standards-Version: 3.9.2
-Homepage: http://rhaberkorn.github.com/sciteco/
+Homepage: http://sciteco.sf.net/
 Vcs-Browser: https://github.com/rhaberkorn/sciteco
 Vcs-Git: git://github.com/rhaberkorn/sciteco.git
 
