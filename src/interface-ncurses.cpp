@@ -443,7 +443,7 @@ InterfaceNCurses::event_loop(void)
 	draw_info();
 
 #ifdef EMSCRIPTEN
-	emscripten_set_main_loop(event_loop_iter, 1000/100, TRUE);
+	PDC_emscripten_set_handler(event_loop_iter, TRUE);
 #else
 	for (;;)
 		event_loop_iter();
