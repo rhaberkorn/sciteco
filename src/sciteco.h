@@ -63,14 +63,21 @@ extern sig_atomic_t sigint_occurred;
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
 
-/*
- * NOTE: compound literals are temporaries beginning with
- * g++ 4.7
- */
-#define CHR2STR(X, ...) \
-	({gchar str[] = {(X), ##__VA_ARGS__, '\0'}; str;})
-
 namespace String {
+
+static inline gchar *
+chrdup(gchar chr)
+{
+	gchar *ret = (gchar *)g_malloc(2);
+
+	/*
+	 * NOTE: even the glib allocs are configured to throw exceptions,
+	 * so there is no error handling necessary
+	 */
+	ret[0] = chr;
+	ret[1] = '\0';
+	return ret;
+}
 
 static inline void
 append(gchar *&str1, const gchar *str2)
@@ -84,7 +91,8 @@ append(gchar *&str1, const gchar *str2)
 static inline void
 append(gchar *&str, gchar chr)
 {
-	append(str, CHR2STR(chr));
+	gchar buf[] = {chr, '\0'};
+	append(str, buf);
 }
 
 /* in main.cpp */

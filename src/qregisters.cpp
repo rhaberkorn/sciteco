@@ -377,7 +377,7 @@ MICROSTATE_START;
 	case '#': set(&&StateFirstChar); break;
 	case '{': set(&&StateString); break;
 	default:
-		undo.push_str(name) = g_strdup(CHR2STR(g_ascii_toupper(chr)));
+		undo.push_str(name) = String::chrdup(g_ascii_toupper(chr));
 		goto done;
 	}
 

@@ -186,7 +186,8 @@ public:
 	inline QRegister *
 	insert(gchar name)
 	{
-		return insert(CHR2STR(name));
+		gchar buf[] = {name, '\0'};
+		return insert(buf);
 	}
 
 	inline QRegister *
@@ -198,7 +199,8 @@ public:
 	inline QRegister *
 	operator [](gchar chr)
 	{
-		return operator [](CHR2STR(chr));
+		gchar buf[] = {chr, '\0'};
+		return operator [](buf);
 	}
 
 	void edit(QRegister *reg);

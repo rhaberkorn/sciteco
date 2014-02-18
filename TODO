@@ -2,8 +2,6 @@ Known Bugs:
  * ??? Dot is not always restored properly (e.g. after closing file)
    need test case!!!
  * Null-byte in strings not always handled transparently
- * strange crashes during automated builds:
-   I will investigate after finishing the error tracing feature
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
  * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
