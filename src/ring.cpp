@@ -441,7 +441,11 @@ Ring::save(const gchar *filename)
 #ifdef G_OS_UNIX
 	/*
 	 * only a good try to inherit owner since process user must have
-	 * CHOWN capability traditionally reserved to root only
+	 * CHOWN capability traditionally reserved to root only.
+	 * That's why we don't handle the return value and are spammed
+	 * with unused-result warnings by GCC. There is NO sane way to avoid
+	 * this warning except, adding -Wno-unused-result which disabled all
+	 * such warnings.
 	 */
 	fchown(fileno(file), file_stat.st_uid, file_stat.st_gid);
 #endif
