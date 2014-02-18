@@ -394,7 +394,7 @@ StateSearch::do_search(GRegex *re, gint from, gint to, gint &count)
 			matched_to = matched[i].to;
 		}
 
-		delete matched;
+		delete[] matched;
 	}
 
 	g_match_info_free(info);
