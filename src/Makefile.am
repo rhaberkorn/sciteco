@@ -61,7 +61,8 @@ nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
 			 symbols-scintilla.cpp symbols-scilexer.cpp
 sciteco_LDADD = $(sciteco_minimal_LDADD)
 
-CLEANFILES = $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES) \
+	     symbols-scintilla.cpp symbols-scilexer.cpp
 
 %.c %.h %-private.h : %.gob
 	@GOB2@ $<
