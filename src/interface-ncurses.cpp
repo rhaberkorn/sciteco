@@ -52,7 +52,7 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 #define UNNAMED_FILE "(Unnamed)"
 
 #define SCI_COLOR_ATTR(f, b) \
-	COLOR_PAIR(SCI_COLOR_PAIR(f, b))
+	((chtype)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
 void
 InterfaceNCurses::main(int &argc, char **&argv)
