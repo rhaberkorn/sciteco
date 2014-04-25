@@ -936,7 +936,9 @@ StateStart::custom(gchar chr)
 
 		if (IS_FAILURE(rc)) {
 			expressions.discard_args();
-			g_assert(expressions.pop_op() == Expressions::OP_LOOP);
+			if (expressions.pop_op() != Expressions::OP_LOOP)
+				/* FIXME: what does standard teco say to this */
+				throw Error("Cannot break from loop without loop");
 			expressions.pop_num(); /* pc */
 			expressions.pop_num(); /* counter */
 
