@@ -176,9 +176,6 @@ Expressions::eval(bool pop_brace)
 		gint n = first_op();
 		Operator op;
 
-		if (n < 2)
-			break;
-
 		op = operators.peek(n);
 		if (op == OP_LOOP)
 			break;
@@ -187,6 +184,8 @@ Expressions::eval(bool pop_brace)
 				pop_op(n);
 			break;
 		}
+		if (n < 2)
+			break;
 
 		calc();
 	}
