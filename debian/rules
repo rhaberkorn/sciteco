@@ -4,19 +4,17 @@
 #export DH_VERBOSE=1
 
 %:
-	dh $@ -Dsciteco
+	dh $@
 
 build:
 	dh_testdir
-	dh_auto_build -Dscintilla/scinterm
-	dh_auto_configure -Dsciteco -- \
+	dh_auto_configure -- \
 			  --enable-bootstrap \
 			  --with-interface=ncurses
-	dh_auto_build -Dsciteco
+	dh_auto_build
 	touch $@
 
 clean:
 	dh_testdir
-	dh_auto_clean -Dscintilla/scinterm
-	dh_auto_clean -Dsciteco
+	dh_auto_clean
 	dh_clean

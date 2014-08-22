@@ -15,92 +15,87 @@ SciTECO Build and Runtime Dependencies
 
  * Autotools, GNU C/C++ (v4.4 or later) or LLVM/gcc or LLVM/Clang
  * Glib 2 as a cross-platform runtime library:
-   https://launchpad.net/~robin-haberkorn/+archive/sciteco
- * Scintilla (v3.4.2 to v3.4.4):
-   http://www.scintilla.org/
- * Curses interface:
-   * Scinterm (v1.3 or later):
-     http://foicica.com/scinterm/
+   https://developer.gnome.org/glib/
+ * When choosing the Curses interface:
    * NCurses (http://www.gnu.org/software/ncurses/),
-     PDCurses/XCurses (http://pdcurses.sourceforge.net/) or
-     PDCurses/Win32a (http://www.projectpluto.com/win32a.htm)
+     PDCurses/XCurses (http://pdcurses.sourceforge.net/),
+     PDCurses/Win32a (http://www.projectpluto.com/win32a.htm) or
+     PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses)
    * other curses implementations might work as well but are untested
- * GTK interface:
+ * When choosing the GTK interface:
    * GTK+ 2: http://www.gtk.org/
+   * GObject Builder: http://www.jirka.org/gob.html
  * Groff (only when formatting HTML manuals)
  * Doxygen (only when generating developer documentation)
 
-When you are building from a source bundle (sciteco-*-bundle.tar.gz),
-you will not need to download Scintilla or Scinterm.
+These dependencies are bundles with the SciTECO Git repository
+and with source tar balls, so they usually do not have to be
+installed by the user manually:
 
-Building from Source Bundle
-===========================
-
-The easiest way to build SciTECO is by using a source bundle:
-1. Make sure you can satisfy all the build dependencies (except
-   Scintilla/Scinterm which is included in the bundle).
-2. Unpack the source bundle. A directory "sciteco-VERSION" will
-   be created (VERSION is of course the release version you downloaded).
-3. Build Scintilla.
-   For building Scintilla/GTK+ something like this should be sufficient:
-   # cd sciteco-VERSION/scintilla/gtk
-   # make
-   For building Scintilla/Curses something like this should be sufficient:
-   # cd sciteco-VERSION/scintilla/scinterm
-   # make
-   This will create sciteco-VERSION/scintilla/bin/scintilla.a
-4. Build SciTECO.
-   An ordinary Autoconf build system is used, so something like this
-   should be sufficient:
-   # cd sciteco-VERSION/sciteco
-   # ./configure --with-interface=<INTERFACE>
-   # make
-   Where <INTERFACE> is the SciTECO interface to use.
-   It must match the Scintilla interface you have compiled.
-   For instance if you built Scintilla with Scinterm, you may use the
-   "ncurses" and "pdcurses" SciTECO interfaces.
-5. To install use something like:
-   # sudo make install
-6. You are recommended to use the included "teco.ini" as a starting point for your profile,
-   so copy it to "~/.teco_ini".
-
-For more details on building Autoconf-based projects refer to the
-remainder of this document.
+ * Scintilla (v3.4.2 to v3.4.4):
+   http://www.scintilla.org/
+ * When choosing the Curses interface:
+   * Scinterm (v1.3 or later):
+     http://foicica.com/scinterm/
 
 Building from Source Tar Ball or Repository
 ===========================================
 
-You may also download a source tarball (sciteco-VERSION.tar.gz)
+This is now the only way to build SciTECO from source.
+You may either download a source tarball (sciteco-VERSION.tar.gz)
 or build from a cloned Git repository.
-When building from Git, you must first create the ./configure script:
-# autoreconf -i
+Cloning the Git repository is recommended because SciTECO is not
+released often -- the source tarballs you find will probably be
+quite outdated.
+
+When cloning the repository, you should make sure you have initialized
+the submodules, so that SciTECO can build a verified and prepared
+version of Scintilla/Scinterm autmatically.
+Just make sure you have cloned your repository as follows:
+
+  $ git clone https://github.com/rhaberkorn/sciteco.git
+  $ cd sciteco/
+  $ git submodule update --init --recursive
+
+When building from Git, you must first generate the ./configure
+script using Autoconf/Automake:
+
+  $ autoreconf -i
+
 If you are using a source tarball ./configure is already included.
+When using a source tarball you do not need to have Autoconf or
+Automake installed.
 
-The remainder of the build process is similar to building
-from a source bundle:
- * Get Scintilla and Scinterm. The latter is only required if you
-   would like to build a Curses version of SciTECO.
- * Install Scintilla/Scinterm according to their READMEs.
-   Usually you unpack Scinterm into a subdirectory of Scintilla
-   and run make...
- * But before that, apply the patches contained in the SciTECO
-   sources if there are any: patches/*.patch
-   For instance:
-   # cd ~/scintilla
-   # for patch in SCITECO_PATH/patches/*.patch; do
-   > patch --merge -p2 <$patch
-   > done
- * Build SciTECO just like described above.
-   If you did not use the same directory layout as the source bundles
-   do, you may have to specify the
-   --with-scintilla
-   and
-   --with-scinterm
-   site-configuration (./configure) options to tell SciTECO where
-   to find Scintilla/Scinterm.
+Now you are ready to configure the build system.
+Make sure you have all the build and run-time dependencies
+installed mentioned above (except Scintilla/Scinterm which
+is bundled with SciTECO by default).
+Usually as with other Autoconf projects something like this
+is sufficient:
 
-The remainder of this document are the standard GNU installation
-instructions.
+  $ ./configure
+
+This will configure SciTECO for the ncurses user interface.
+The user interface may be changed with the "--with-interface=<INTERFACE>"
+option to the ./configure command.
+You may use `./configure --help` to get an overview of all available
+Autoconf and SciTECO build time options.
+
+If ./configure runs successfully you may build SciTECO with a simple
+
+  $ make
+
+This will also automatically build Scintilla (and Scinterm if necessary).
+To install SciTECO, type something like:
+
+  $ sudo make install
+
+You are recommended to use the included "teco.ini" as a starting point
+for your profile, so copy it to your $HOME directory at "~/.teco_ini".
+
+For more details on building Autoconf-based projects refer to the
+remainder of this document which covers installing Autoconf-based
+projects in general.
 
 Basic Installation
 ==================

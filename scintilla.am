@@ -1,0 +1,22 @@
+# Scintilla/Scinterm are cloned as submodules
+# of this repository, so we may give a rule
+# for building scintilla.a here
+
+if INTERFACE_GTK
+SCINTILLA_MAKE_DIR = @SCINTILLA_PATH@/gtk
+else
+SCINTILLA_MAKE_DIR = @SCINTERM_PATH@
+endif
+
+@SCINTILLA_PATH@/bin/scintilla.a :
+	$(MAKE) -C $(SCINTILLA_MAKE_DIR) \
+	        CXX=@CXX@ AR=@AR@
+
+clean-local-scintilla:
+	$(MAKE) -C $(SCINTILLA_MAKE_DIR) clean
+
+# NOTE: using a separate `clean-local-scintilla`
+# target allows us to add more custom rules to the
+# including Automake file
+clean-local: clean-local-scintilla
+.PHONY: clean-local-scintilla

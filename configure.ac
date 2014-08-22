@@ -35,6 +35,9 @@ AC_PROG_CC_C99
 AC_PROG_GREP
 AC_PROG_INSTALL
 
+# Required by the Scintilla build process:
+AC_CHECK_TOOL(AR, ar)
+
 # Emscripten uses Clang as well
 AM_CONDITIONAL(CLANG, [$CXX --version | $GREP -E "clang|Emscripten" >/dev/null])
 
@@ -99,8 +102,8 @@ esac
 #
 AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
-		       [Specify Scintilla's path [default=../scintilla]]),
-	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=../scintilla])
+		       [Specify Scintilla's path [default=./scintilla]]),
+	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=./scintilla])
 SCINTILLA_PATH=`canonicalize $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
@@ -111,6 +114,7 @@ AC_ARG_WITH(scinterm,
 		       [Specify Scinterm's path [default=SCINTILLA_PATH/scinterm]]),
 	[SCINTERM_PATH=$withval], [SCINTERM_PATH=$SCINTILLA_PATH/scinterm])
 SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
+AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|pdcurses|emcurses|gtk],
