@@ -1,0 +1,4 @@
+[submodule "scintilla"]
+	path = scintilla
+	url = git@github.com:rhaberkorn/scintilla-mirror.git
+	branch = sciteco-dev
