@@ -28,7 +28,7 @@ SciTECO Build and Runtime Dependencies
  * Groff (only when formatting HTML manuals)
  * Doxygen (only when generating developer documentation)
 
-These dependencies are bundles with the SciTECO Git repository
+These dependencies are bundled with the SciTECO Git repository
 and with source tar balls, so they usually do not have to be
 installed by the user manually:
 
@@ -68,8 +68,8 @@ Automake installed.
 
 Now you are ready to configure the build system.
 Make sure you have all the build and run-time dependencies
-installed mentioned above (except Scintilla/Scinterm which
-is bundled with SciTECO by default).
+installed that have been mentioned above (except
+Scintilla/Scinterm which is bundled with SciTECO by default).
 Usually as with other Autoconf projects something like this
 is sufficient:
 
