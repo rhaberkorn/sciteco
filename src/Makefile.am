@@ -1,4 +1,5 @@
 include $(top_srcdir)/bootstrap.am
+include $(top_srcdir)/scintilla.am
 
 AM_CFLAGS = -Wall -std=c99
 AM_CXXFLAGS = -Wall -Wno-char-subscripts
