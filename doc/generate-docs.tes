@@ -27,12 +27,12 @@
        Troff requests, escapes and tman macros may also be used.
 !
 
-@{format_header}{
+@[format_header]{
   fd--S .U.f :L"S.|Z'U.t Q.f,Q.tXa Q.f,Q.tD I
 
   ebQ#tm I\# GENERATED FROM Q.#sc (\.#sc):
 .SS Qa -a-10"N I
- ' eq.{header}
+ ' eq.[header]
 j<fr
 
 .br
@@ -44,7 +44,7 @@ j<s[MC];.u.t-s[.,q.t-1xa .-1,q.td i
 .RI [ Qa ]
 >
 j<fr->\(->;>
-j<sMCM[|MC];.u.t <-a"C|-a-|"N1;''r> .,q.txa .,q.td eqa<fr| | ;> eq.{header}i
+j<sMCM[|MC];.u.t <-a"C|-a-|"N1;''r> .,q.txa .,q.td eqa<fr| | ;> eq.[header]i
 .IR Qa
 >
 j<frS
@@ -57,12 +57,12 @@ j<frS
 ;>
 j 0a-10"=d'
 zj-a-10"=-d'
-  ebQ#tm g.{header}i
+  ebQ#tm g.[header]i
 .
 
 }
 
-@{format_body}{
+@[format_body]{
   i.LP
 <fr
 
@@ -137,12 +137,12 @@ FS
   ! extract header !
   h:fd
 
-"Fzj'0,.x.{header}0,.d
+"Fzj'0,.x.[header]0,.d
 
-  eq.{header}
-  :M{format_header}
+  eq.[header]
+  :M[format_header]
   eq.c
-  :M{format_body}
+  :M[format_body]
 >
 EF
 Q*-1"=1;'

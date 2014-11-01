@@ -375,7 +375,7 @@ MICROSTATE_START;
 	switch (chr) {
 	case '.': undo.push_var(is_local) = true; break;
 	case '#': set(&&StateFirstChar); break;
-	case '{': set(&&StateString); break;
+	case '[': set(&&StateString); break;
 	default:
 		undo.push_str(name) = String::chrdup(g_ascii_toupper(chr));
 		goto done;
@@ -396,10 +396,10 @@ StateSecondChar:
 
 StateString:
 	switch (chr) {
-	case '{':
+	case '[':
 		undo.push_var(nesting)++;
 		break;
-	case '}':
+	case ']':
 		if (!nesting)
 			goto done;
 		undo.push_var(nesting)--;

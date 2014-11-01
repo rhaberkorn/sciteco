@@ -367,7 +367,7 @@ a completion, so for instance \(lq~/foo\(rq will not complete a file
 in the user's home directory (tilde is not part of the file name but
 tilde-expansions are performed by the shell).
 \*(ST does however perform completions after string building so that
-\(lq^EQ{$HOME}/foo\(rq could be completed.
+\(lq^EQ[$HOME]/foo\(rq could be completed.
 .
 .
 .SH ARITHMETICS AND EXPRESSIONS
@@ -703,9 +703,9 @@ otherwise to a global one.
 Refers to a two character global or local Q-Register whose
 name is upper-cased.
 .TP
-.BI { name }
+.BI [ name ]
 .TQ
-.BI .{ name }
+.BI .[ name ]
 Refers to a Q-Register with an arbitrary
 .IR name .
 The name is \fBnot\fP upper-cased.
@@ -716,7 +716,7 @@ balanced.
 The short single or double character specifications refer
 to registers in the same namespace as long specifications.
 For instance the specifications \(lqa\(rq and \(lqA\(rq
-are equivalent to \(lq{A}\(rq.
+are equivalent to \(lq[A]\(rq.
 .
 .SS Push-Down List
 .

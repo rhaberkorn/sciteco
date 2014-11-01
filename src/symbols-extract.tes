@@ -1,7 +1,7 @@
 #!./sciteco-minimal -m
 ! ./symbols-extract.tes <input file> <output file> <prefix pattern list> <array name> !
 
-EMQ{$SCITECOPATH}/string.tes
+EMQ[$SCITECOPATH]/string.tes
 
 ! read commandline arguments !
 LR 0X#in 2LR 0X#ou 2LR 0X#pa 2LR 0X#na HK
@@ -10,7 +10,7 @@ LR 0X#in 2LR 0X#ou 2LR 0X#pa 2LR 0X#na HK
 EBQ#in <S#defineS[Q#pa]; -SS :Xa> EF
 
 ! sort all defines !
-Ga ZJB 0,.M{qsort} J
+Ga ZJB 0,.M[qsort] J
 
 ! format as C/C++ array !
 I/*

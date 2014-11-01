@@ -12,66 +12,66 @@ LR 0X#in 2LR 0X#ou EBQ#in EB -EF
 fs.TS.nr tbl-margin ((\n[.in]+\n[.o])*100+(6.5i/2))/6.5i-((6.5i/2)/6.5i)
 .nr tbl-width 100-\n[tbl-margin]
 .HTML <table class="tbl" style="margin-left:\n[tbl-margin]%";
-9u.{tab}
+9u.[tab]
 l.u.fl.-1u.t i
 
-q.f,q.t:sbox"Sli border="1"' q.f,q.t:sallbox"Sli rules="all"' q.f,q.t:sexpand"Sli width="\n[tbl-width]%"' q.f,q.t:stab("s0au.{tab}' q.fjk-dlri> l
+q.f,q.t:sbox"Sli border="1"' q.f,q.t:sallbox"Sli rules="all"' q.f,q.t:sexpand"Sli width="\n[tbl-width]%"' q.f,q.t:stab("s0au.[tab]' q.fjk-dlri> l
 
-1u.{row} 1u.{col} @.r{
-  .{format.\.{row}.\.{col}.align} 0U.{format.\.{row}.\.{col}.bold} 0U.{format.\.{row}.\.{col}.italic}
-  1U.{format.\.{row}.\.{col}.rowspan} 1U.{format.\.{row}.\.{col}.colspan}
+1u.[row] 1u.[col] @.r{
+  .[format.\.[row].\.[col].align] 0U.[format.\.[row].\.[col].bold] 0U.[format.\.[row].\.[col].italic]
+  1U.[format.\.[row].\.[col].rowspan] 1U.[format.\.[row].\.[col].colspan]
 } :M.r
 <
-0a-L"=.{format.\.{row}.\.{col}.align}left'
-0a-C"=.{format.\.{row}.\.{col}.align}center'
-0a-R"=.{format.\.{row}.\.{col}.align}right'
-0a-B"=1U.{format.\.{row}.\.{col}.bold}'
-0a-I"=1U.{format.\.{row}.\.{col}.italic}'
-0a- "=%.{col} :M.r'
-0a-,"=%.{row} 1u.{col} :M.r' 0a-10"=%.{row} 1u.{col} :M.r'
+0a-L"=.[format.\.[row].\.[col].align]left'
+0a-C"=.[format.\.[row].\.[col].align]center'
+0a-R"=.[format.\.[row].\.[col].align]right'
+0a-B"=1U.[format.\.[row].\.[col].bold]'
+0a-I"=1U.[format.\.[row].\.[col].italic]'
+0a- "=%.[col] :M.r'
+0a-,"=%.[row] 1u.[col] :M.r' 0a-10"=%.[row] 1u.[col] :M.r'
 0a-."=1;'
 D>
 
-k q.{row}u.{frows} q.{col}u.{fcols} 1u.{row} 1u.{col} .u.#bd
-<Q.{row}-Q.{frows}">
-EQ.{format.\.{row}.\.{col}.align} G.{format.\.{frows}.\.{col}.align} 1EB
-Q.{format.\.{frows}.\.{col}.bold}U.{format.\.{row}.\.{col}.bold}
-Q.{format.\.{frows}.\.{col}.italic}U.{format.\.{row}.\.{col}.italic}
-Q.{format.\.{frows}.\.{col}.rowspan}U.{format.\.{row}.\.{col}.rowspan}
-Q.{format.\.{frows}.\.{col}.colspan}U.{format.\.{row}.\.{col}.colspan} '
+k q.[row]u.[frows] q.[col]u.[fcols] 1u.[row] 1u.[col] .u.#bd
+<Q.[row]-Q.[frows]">
+EQ.[format.\.[row].\.[col].align] G.[format.\.[frows].\.[col].align] 1EB
+Q.[format.\.[frows].\.[col].bold]U.[format.\.[row].\.[col].bold]
+Q.[format.\.[frows].\.[col].italic]U.[format.\.[row].\.[col].italic]
+Q.[format.\.[frows].\.[col].rowspan]U.[format.\.[row].\.[col].rowspan]
+Q.[format.\.[frows].\.[col].colspan]U.[format.\.[row].\.[col].colspan] '
 .,.+3:sT{
 "S .,s
-T}.-3X.{data.\.{row}.\.{col}} C 1| .,.+2:s\^^"S
-0U.{format.\.{row}.\.{col}.rowspan}
-Q.{row}-1U.#cr <Q.{format.\.#cr.\.{col}.rowspan}">1;' -%.#cr>
-%.{format.\.#cr.\.{col}.rowspan} '
-.u.f s[U.{tab},
- q.f,.-1X.{data.\.{row}.\.{col}} 0'u.{data.\.{row}.\.{col}.block}
--a-q.{tab}"= %.{col} | %.{row} 1u.{col} .,.+4:s.TE
+T}.-3X.[data.\.[row].\.[col]] C 1| .,.+2:s\^^"S
+0U.[format.\.[row].\.[col].rowspan]
+Q.[row]-1U.#cr <Q.[format.\.#cr.\.[col].rowspan]">1;' -%.#cr>
+%.[format.\.#cr.\.[col].rowspan] '
+.u.f s[U.[tab],
+ q.f,.-1X.[data.\.[row].\.[col]] 0'u.[data.\.[row].\.[col].block]
+-a-q.[tab]"= %.[col] | %.[row] 1u.[col] .,.+4:s.TE
 "S1;' '>
 q.#bd,.D
 
-q.{row}-1u.{drows} 1u.{row}
-q.{drows}<I.HTML <tr>
+q.[row]-1u.[drows] 1u.[row]
+q.[drows]<I.HTML <tr>
 
-1u.{col}
-q.{fcols}<Q.{format.\.{row}.\.{col}.rowspan}">
-I.HTML <td rowspan="\.{format.\.{row}.\.{col}.rowspan}" colspan="\.{format.\.{row}.\.{col}.colspan}"
-q.{data.\.{row}.\.{col}.block}"= I align="Q.{format.\.{row}.\.{col}.align}">
-Q.{format.\.{row}.\.{col}.bold}"N I<b> '
-Q.{format.\.{row}.\.{col}.italic}"N I<i> '
-G.{data.\.{row}.\.{col}}
-Q.{format.\.{row}.\.{col}.bold}"N I</b> '
-Q.{format.\.{row}.\.{col}.italic}"N I</i> '
+1u.[col]
+q.[fcols]<Q.[format.\.[row].\.[col].rowspan]">
+I.HTML <td rowspan="\.[format.\.[row].\.[col].rowspan]" colspan="\.[format.\.[row].\.[col].colspan]"
+q.[data.\.[row].\.[col].block]"= I align="Q.[format.\.[row].\.[col].align]">
+Q.[format.\.[row].\.[col].bold]"N I<b> '
+Q.[format.\.[row].\.[col].italic]"N I<i> '
+G.[data.\.[row].\.[col]]
+Q.[format.\.[row].\.[col].bold]"N I</b> '
+Q.[format.\.[row].\.[col].italic]"N I</i> '
 I</td>
  | I>
-Q.{data.\.{row}.\.{col}}
+Q.[data.\.[row].\.[col]]
 .HTML </td>
  ' '
-%.{col}>
+%.[col]>
 I.HTML </tr>
 
-%.{row}>
+%.[row]>
 I.HTML </table>
 
 >
