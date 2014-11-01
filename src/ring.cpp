@@ -391,25 +391,39 @@ Ring::save(const gchar *filename)
 	if (!current)
 		return false;
 
-	if (!filename)
-		filename = current->filename;
-	if (!filename)
+	if (!filename && !current->filename)
 		return false;
 
+	/*
+	 * Undirtify
+	 * NOTE: info update is performed by current->set_filename()
+	 */
+	interface.undo_info_update(current);
+	undo.push_var(current->dirty) = false;
+
+	/*
+	 * FIXME: necessary also if the filename was not specified but the file
+	 * is (was) new, in order to canonicalize the filename.
+	 * May be circumvented by cananonicalizing without requiring the file
+	 * name to exist (like readlink -f)
+	 * NOTE: undo_info_update is already called above
+	 */
+	undo.push_str(current->filename);
+	current->set_filename(filename ? : current->filename);
+
 	if (undo.enabled) {
-		if (current->filename &&
-		    g_file_test(current->filename, G_FILE_TEST_IS_REGULAR)) {
+		if (g_file_test(current->filename, G_FILE_TEST_IS_REGULAR)) {
 #ifdef G_OS_UNIX
 			g_stat(current->filename, &file_stat);
 #endif
 			attributes = make_savepoint(current);
 		} else {
-			undo.push(new UndoTokenRemoveFile(filename));
+			undo.push(new UndoTokenRemoveFile(current->filename));
 		}
 	}
 
 	/* leaves mode intact if file exists */
-	file = g_fopen(filename, "w");
+	file = g_fopen(current->filename, "w");
 	if (!file)
 		return false;
 
@@ -437,7 +451,7 @@ Ring::save(const gchar *filename)
 
 	/* if file existed but has been renamed, restore attributes */
 	if (attributes != INVALID_FILE_ATTRIBUTES)
-		set_file_attributes(filename, attributes);
+		set_file_attributes(current->filename, attributes);
 #ifdef G_OS_UNIX
 	/*
 	 * only a good try to inherit owner since process user must have
@@ -451,21 +465,6 @@ Ring::save(const gchar *filename)
 #endif
 
 	fclose(file);
-
-	interface.undo_info_update(current);
-	undo.push_var(current->dirty);
-	current->dirty = false;
-
-	/*
-	 * FIXME: necessary also if the filename was not specified but the file
-	 * is (was) new, in order to canonicalize the filename.
-	 * May be circumvented by cananonicalizing without requiring the file
-	 * name to exist (like readlink -f)
-	 */
-	//if (filename) {
-	undo.push_str(current->filename);
-	current->set_filename(filename);
-	//}
 
 	return true;
 }

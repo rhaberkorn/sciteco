@@ -7,10 +7,10 @@ Known Bugs:
  * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
  * adding a new buffer with syntax highlighting screws up styles:
    obviously they are attached to the view instead of the document
- * reversing EWfilename$ (save as) does not work!
  * crashes on large files: S^EM^X$ (regexp: .*)
 
 Features:
+ * Use [] for long Q-Register names instead of {}
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
