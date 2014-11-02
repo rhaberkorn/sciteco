@@ -36,6 +36,7 @@
 #include "goto.h"
 #include "undo.h"
 #include "symbols.h"
+#include "spawn.h"
 #include "cmdline.h"
 
 static inline const gchar *process_edit_cmd(gchar key);

@@ -37,6 +37,7 @@
 #include "parser.h"
 #include "symbols.h"
 #include "search.h"
+#include "spawn.h"
 #include "cmdline.h"
 
 //#define DEBUG
@@ -1811,6 +1812,7 @@ StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
 	transitions['B'] = &States::editfile;
+	transitions['C'] = &States::executecommand;
 	transitions['M'] = &States::macro_file;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;

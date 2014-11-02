@@ -28,6 +28,7 @@ libsciteco_base_a_SOURCES = main.cpp sciteco.h \
 			    ring.cpp ring.h \
 			    parser.cpp parser.h \
 			    search.cpp search.h \
+			    spawn.cpp spawn.h \
 			    goto.cpp goto.h \
 			    rbtree.cpp rbtree.h \
 			    symbols.cpp symbols.h \
