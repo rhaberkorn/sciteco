@@ -206,8 +206,18 @@ process_edit_cmd(gchar key)
 	case '\t':
 		if (States::is_file()) {
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
-			gchar *new_chars = filename_complete(strings[0],
-							     complete);
+			gchar *new_chars = filename_complete(strings[0], complete);
+
+			*insert = '\0';
+			if (new_chars)
+				g_stpcpy(insert, new_chars);
+			g_free(new_chars);
+		} else if (States::current == &States::executecommand) {
+			/*
+			 * In the EC command, <TAB> completes files just like ^T
+			 */
+			const gchar *filename = last_occurrence(strings[0]);
+			gchar *new_chars = filename_complete(filename);
 
 			*insert = '\0';
 			if (new_chars)
@@ -225,6 +235,7 @@ process_edit_cmd(gchar key)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
 		}
+
 		break;
 
 	case '\x1B':
