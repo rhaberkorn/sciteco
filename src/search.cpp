@@ -417,9 +417,10 @@ StateSearch::process(const gchar *str, gint new_chars)
 
 	gint count = parameters.count;
 
-	undo.push_msg(SCI_SETSEL,
-		      interface.ssm(SCI_GETANCHOR),
-		      interface.ssm(SCI_GETCURRENTPOS));
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_SETSEL,
+		              interface.ssm(SCI_GETANCHOR),
+		              interface.ssm(SCI_GETCURRENTPOS));
 
 	search_reg->undo_set_integer();
 	search_reg->set_integer(FAILURE);
@@ -505,7 +506,8 @@ StateSearch::done(const gchar *str)
 	if (*str) {
 		/* workaround: preserve selection (also on rubout) */
 		gint anchor = interface.ssm(SCI_GETANCHOR);
-		undo.push_msg(SCI_SETANCHOR, anchor);
+		if (current_doc_must_undo())
+			undo.push_msg(SCI_SETANCHOR, anchor);
 
 		search_reg->undo_set_string();
 		search_reg->set_string(str);
@@ -655,7 +657,8 @@ StateSearchKill::done(const gchar *str)
 		/* kill forwards */
 		gint anchor = interface.ssm(SCI_GETANCHOR);
 
-		undo.push_msg(SCI_GOTOPOS, dot);
+		if (current_doc_must_undo())
+			undo.push_msg(SCI_GOTOPOS, dot);
 		interface.ssm(SCI_GOTOPOS, anchor);
 
 		interface.ssm(SCI_DELETERANGE,
@@ -667,7 +670,8 @@ StateSearchKill::done(const gchar *str)
 	interface.ssm(SCI_ENDUNDOACTION);
 	ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_UNDO);
 
 	return &States::start;
 }
@@ -700,7 +704,8 @@ StateSearchDelete::done(const gchar *str)
 		interface.ssm(SCI_ENDUNDOACTION);
 		ring.dirtify();
 
-		undo.push_msg(SCI_UNDO);
+		if (current_doc_must_undo())
+			undo.push_msg(SCI_UNDO);
 	}
 
 	return &States::start;

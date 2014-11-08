@@ -581,7 +581,8 @@ StateStart::insert_integer(tecoInt v)
 	interface.ssm(SCI_ENDUNDOACTION);
 	ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_UNDO);
 }
 
 tecoInt
@@ -622,7 +623,9 @@ StateStart::move_chars(tecoInt n)
 		return FAILURE;
 
 	interface.ssm(SCI_GOTOPOS, pos + n);
-	undo.push_msg(SCI_GOTOPOS, pos);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_GOTOPOS, pos);
+
 	return SUCCESS;
 }
 
@@ -636,7 +639,9 @@ StateStart::move_lines(tecoInt n)
 		return FAILURE;
 
 	interface.ssm(SCI_GOTOLINE, line);
-	undo.push_msg(SCI_GOTOPOS, pos);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_GOTOPOS, pos);
+
 	return SUCCESS;
 }
 
@@ -685,7 +690,8 @@ StateStart::delete_words(tecoInt n)
 	}
 
 	undo.push_msg(SCI_GOTOPOS, pos);
-	undo.push_msg(SCI_UNDO);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_UNDO);
 	ring.dirtify();
 
 	return SUCCESS;
@@ -1059,9 +1065,10 @@ StateStart::custom(gchar chr)
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_CLEARALL);
 		interface.ssm(SCI_ADDTEXT, cmdline_pos-1, (sptr_t)cmdline);
-		/* FIXME: scroll into view */
+		interface.ssm(SCI_SCROLLCARET);
 		interface.ssm(SCI_ENDUNDOACTION);
 
+		/* must always support undo on global register */
 		undo.push_msg(SCI_UNDO);
 		break;
 
@@ -1116,8 +1123,9 @@ StateStart::custom(gchar chr)
 		BEGIN_EXEC(this);
 		v = expressions.pop_num_calc(1, 0);
 		if (Validate::pos(v)) {
-			undo.push_msg(SCI_GOTOPOS,
-				      interface.ssm(SCI_GETCURRENTPOS));
+			if (current_doc_must_undo())
+				undo.push_msg(SCI_GOTOPOS,
+				              interface.ssm(SCI_GETCURRENTPOS));
 			interface.ssm(SCI_GOTOPOS, v);
 
 			if (eval_colon())
@@ -1254,7 +1262,8 @@ StateStart::custom(gchar chr)
 				break;
 		}
 		if (v < 0) {
-			undo.push_msg(SCI_GOTOPOS, pos);
+			if (current_doc_must_undo())
+				undo.push_msg(SCI_GOTOPOS, pos);
 			if (eval_colon())
 				expressions.push(SUCCESS);
 		} else {
@@ -1417,8 +1426,10 @@ StateStart::custom(gchar chr)
 		if (len == 0 || IS_FAILURE(rc))
 			break;
 
-		undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
-		undo.push_msg(SCI_UNDO);
+		if (current_doc_must_undo()) {
+			undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+			undo.push_msg(SCI_UNDO);
+		}
 
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_DELETERANGE, from, len);
@@ -2110,7 +2121,8 @@ StateInsert::initial(void)
 	interface.ssm(SCI_ENDUNDOACTION);
 	ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_UNDO);
 }
 
 void
@@ -2123,7 +2135,8 @@ StateInsert::process(const gchar *str, gint new_chars)
 	interface.ssm(SCI_ENDUNDOACTION);
 	ring.dirtify();
 
-	undo.push_msg(SCI_UNDO);
+	if (current_doc_must_undo())
+		undo.push_msg(SCI_UNDO);
 }
 
 State *

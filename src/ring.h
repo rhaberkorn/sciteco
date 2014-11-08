@@ -247,4 +247,11 @@ current_doc_update(void)
 		QRegisters::current->update_string();
 }
 
+static inline bool
+current_doc_must_undo(void)
+{
+	return ring.current ||
+	       QRegisters::current->must_undo;
+}
+
 #endif
