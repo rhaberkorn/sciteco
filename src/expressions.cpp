@@ -63,8 +63,10 @@ tecoInt
 Expressions::pop_num(int index)
 {
 	tecoInt n = 0;
+	Operator op = pop_op();
 
-	pop_op();
+	g_assert(op == OP_NUMBER);
+
 	if (numbers.items() > 0) {
 		n = numbers.pop(index);
 		numbers.undo_push(n, index);
@@ -128,9 +130,17 @@ Expressions::calc(void)
 {
 	tecoInt result;
 
-	tecoInt vright = pop_num();
-	Operator op = pop_op();
-	tecoInt vleft = pop_num();
+	tecoInt vright;
+	Operator op;
+	tecoInt vleft;
+
+	if (operators.peek() != OP_NUMBER)
+		throw State::Error("Missing right operand");
+	vright = pop_num();
+	op = pop_op();
+	if (operators.peek() != OP_NUMBER)
+		throw State::Error("Missing left operand");
+	vleft = pop_num();
 
 	switch (op) {
 	case OP_POW:
