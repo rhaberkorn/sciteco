@@ -207,6 +207,12 @@ StateExecuteCommand::initial(void)
 		ctx.to = interface.ssm(SCI_POSITIONFROMLINE, line);
 		rc = TECO_BOOL(Validate::line(line));
 
+		if (ctx.to < ctx.from) {
+			tecoInt temp = ctx.from;
+			ctx.from = ctx.to;
+			ctx.to = temp;
+		}
+
 		break;
 	}
 
