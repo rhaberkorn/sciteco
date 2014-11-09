@@ -1879,6 +1879,9 @@ StateECommand::custom(gchar chr)
 	 * Currently, the following flags are used by \*(ST:
 	 *   - 32: Enable/Disable executing register \(lq0\(rq hooks
 	 *   - 64: Enable/Disable function key macros
+	 *   - 128: Enable/Disable enforcement of UNIX98
+	 *     \(lq/bin/sh\(rq emulation for operating system command
+	 *     executions
 	 *
 	 * The features controlled thus are discribed in other sections
 	 * of this manual.

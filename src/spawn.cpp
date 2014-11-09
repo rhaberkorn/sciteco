@@ -72,6 +72,91 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
 	return argv;
 }
 
+/*$
+ * EC[command]$ -- Execute operating system command and filter buffer contents
+ * linesEC[command]$
+ * from,toEC[command]$
+ * :EC[command]$ -> Success|Failure
+ * lines:EC[command]$ -> Success|Failure
+ * from,to:EC[command]$ -> Success|Failure
+ *
+ * The EC command allows you to interface with the operating
+ * system shell and external programs.
+ * The external program is spawned as a background process
+ * and its standard input stream is fed with data from the
+ * current document, i.e. text is piped into the external
+ * program.
+ * The process' standard output stream is also redirected
+ * and inserted into the current document.
+ * The process' standard error stream is discarded.
+ * If data is piped into the external program, its output
+ * replaces that data in the buffer.
+ * Dot is always left at the end of the insertion.
+ *
+ * If invoked without parameters, no data is piped into
+ * the process (and no characters are removed) and its
+ * output is inserted at the current buffer position.
+ * This is equivalent to invoking \(lq.,.EC\(rq.
+ * If invoked with one parameter, the next or previous number
+ * of <lines> are piped from the buffer into the program and
+ * its output replaces these <lines>.
+ * This effectively runs <command> as a filter over <lines>.
+ * When invoked with two parameters, the characters beginning
+ * at position <from> up to the character at position <to>
+ * are piped into the program and replaced with its output.
+ * This effectively runs <command> as a filter over a buffer
+ * range.
+ *
+ * Errors are thrown not only for invalid buffer ranges
+ * but also for errors during process execution.
+ * If the external <command> has an unsuccessful exit code,
+ * the EC command will also fail.
+ * If the EC command is colon-modified, it will instead return
+ * a TECO boolean signifying success or failure.
+ * In case of an unsuccessful exit code, a colon-modified EC
+ * will return the absolute value of the process exit
+ * code (which is also a TECO failure boolean) and 0 for all
+ * other failures.
+ * This feature may be used to take action depending on a
+ * specific process exit code.
+ *
+ * <command> execution is by default platform-dependant.
+ * On Windows, <command> is passed to the default command
+ * interpreter \(lqcmd.exe\(rq with the \(lq/c\(rq
+ * command-line argument.
+ * On Unix/Linux, <command> is passed to the \(lq/bin/sh\(rq
+ * shell with the \(lq-c\(rq command-line argument.
+ * Therefore operating system restrictions on the maximum
+ * length of command-line arguments apply to <command> and
+ * quoting of parameters within <command> is somewhat platform
+ * dependant.
+ * On all other platforms, \*(ST will uniformly parse
+ * <command> just as an UNIX98 \(lq/bin/sh\(rq would, but without
+ * performing any expansions.
+ * The program specified in <command> is searched for in
+ * standard locations (accoring to the \(lqPATH\(rq environment
+ * variable).
+ * This mode of operation can also be forced on Windows and
+ * Unix by enabling bit 7 in the ED flag, e.g. by executing
+ * \(lq0,128ED\(rq, and is recommended when writing cross-platform
+ * macros using the EC command.
+ *
+ * Note that when run interactively and subsequently rubbed
+ * out, \*(ST can easily undo all changes to the editor
+ * state.
+ * It \fBcannot\fP however undo any other side-effects that the
+ * execution of <command> might have had on your system.
+ *
+ * Note also that the EC command blocks indefinitely until
+ * the <command> completes, which may result in editor hangs.
+ * You may however interrupt the spawned process by sending
+ * the \fBSIGINT\fP signal to \*(ST, e.g. by pressing CTRL+C.
+ *
+ * In interactive mode, \*(ST performs TAB-completion
+ * of filenames in the <command> string parameter but
+ * by doing so does not attempt any escaping of shell-relevant
+ * characters like whitespaces.
+ */
 StateExecuteCommand::StateExecuteCommand() : StateExpectString()
 {
 	/*
@@ -274,6 +359,26 @@ gerror:
 	return &States::start;
 }
 
+/*$
+ * EGq[command]$ -- Set Q-Register to output of operating system command
+ * linesEGq[command]$
+ * from,toEGq[command]$
+ * :EGq[command]$ -> Success|Failure
+ * lines:EGq[command]$ -> Success|Failure
+ * from,to:EGq[command]$ -> Success|Failure
+ *
+ * Runs an operating system <command> and set Q-Register
+ * <q> to the data read from its standard output stream.
+ * Data may be fed to <command> from the current buffer/document.
+ * The interpretation of the parameters and <command> as well
+ * as the colon-modification is analoguous to the EC command.
+ *
+ * The EG command only differs from EC in not deleting any
+ * characters from the current buffer, not changing
+ * the current buffer position and writing process output
+ * to the Q-Register <q>.
+ * In other words, the current buffer is not modified by EG.
+ */
 State *
 StateEGCommand::got_register(QRegister &reg)
 {

@@ -294,6 +294,9 @@ of the string argument).
 Fully completed filenames are terminated with a space.
 T}
 \^;9;^I, Tab;T{
+Operating system command arguments
+T};\^
+\^;\^;\^;T{
 File name arguments
 T};T{
 Auto complete filename beginning at the start of the argument.
