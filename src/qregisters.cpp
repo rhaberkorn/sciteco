@@ -617,21 +617,38 @@ StateGetQRegInteger::got_register(QRegister &reg)
 }
 
 /*$
- * [n]Uq -- Set Q-Register integer
+ * nUq -- Set Q-Register integer
+ * -Uq
+ * [n]:Uq -> Success|Failure
  *
  * Sets the integer-part of Q-Register <q> to <n>.
- * If <n> is omitted, the sign prefix is implied.
+ * \(lq-U\(rq is equivalent to \(lq-1U\(rq, otherwise
+ * the command fails if <n> is missing.
+ *
+ * If the command is colon-modified, it returns a success
+ * boolean if <n> or \(lq-\(rq is given.
+ * Otherwise it returns a failure boolean and does not
+ * modify <q>.
  *
  * The register is defined if it does not exist.
  */
-/** @bug perhaps it's better to imply 0! */
 State *
 StateSetQRegInteger::got_register(QRegister &reg)
 {
 	BEGIN_EXEC(&States::start);
 
-	reg.undo_set_integer();
-	reg.set_integer(expressions.pop_num_calc());
+	expressions.eval();
+	if (expressions.args() || expressions.num_sign < 0) {
+		reg.undo_set_integer();
+		reg.set_integer(expressions.pop_num_calc());
+
+		if (eval_colon())
+			expressions.push(SUCCESS);
+	} else if (eval_colon()) {
+		expressions.push(FAILURE);
+	} else {
+		throw ArgExpectedError('U');
+	}
 
 	return &States::start;
 }

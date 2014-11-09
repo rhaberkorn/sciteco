@@ -179,6 +179,14 @@ public:
 			   : Error("Syntax error \"%c\" (%d)", chr, chr) {}
 	};
 
+	class ArgExpectedError : public Error {
+	public:
+		ArgExpectedError(const gchar *cmd)
+			        : Error("Argument expected for <%s>", cmd) {}
+		ArgExpectedError(gchar cmd)
+			        : Error("Argument expected for <%c>", cmd) {}
+	};
+
 	class MoveError : public Error {
 	public:
 		MoveError(const gchar *cmd)
