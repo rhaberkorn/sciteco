@@ -75,9 +75,11 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
 /*$
  * EC[command]$ -- Execute operating system command and filter buffer contents
  * linesEC[command]$
+ * -EC[command]$
  * from,toEC[command]$
  * :EC[command]$ -> Success|Failure
  * lines:EC[command]$ -> Success|Failure
+ * -:EC[command]$ -> Success|Failure
  * from,to:EC[command]$ -> Success|Failure
  *
  * The EC command allows you to interface with the operating
@@ -101,6 +103,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * of <lines> are piped from the buffer into the program and
  * its output replaces these <lines>.
  * This effectively runs <command> as a filter over <lines>.
+ * \(lq-EC\(rq may be written as a short-cut for \(lq-1EC\(rq.
  * When invoked with two parameters, the characters beginning
  * at position <from> up to the character at position <to>
  * are piped into the program and replaced with its output.
@@ -187,9 +190,12 @@ StateExecuteCommand::initial(void)
 	 */
 	switch (expressions.args()) {
 	case 0:
-		/* pipe nothing, insert at dot */
-		ctx.from = ctx.to = interface.ssm(SCI_GETCURRENTPOS);
-		break;
+		if (expressions.num_sign > 0) {
+			/* pipe nothing, insert at dot */
+			ctx.from = ctx.to = interface.ssm(SCI_GETCURRENTPOS);
+			break;
+		}
+		/* fall through if prefix sign is "-" */
 
 	case 1: {
 		/* pipe and replace line range */
@@ -362,9 +368,11 @@ gerror:
 /*$
  * EGq[command]$ -- Set Q-Register to output of operating system command
  * linesEGq[command]$
+ * -EGq[command]$
  * from,toEGq[command]$
  * :EGq[command]$ -> Success|Failure
  * lines:EGq[command]$ -> Success|Failure
+ * -:EGq[command]$ -> Success|Failure
  * from,to:EGq[command]$ -> Success|Failure
  *
  * Runs an operating system <command> and set Q-Register
@@ -378,6 +386,8 @@ gerror:
  * the current buffer position and writing process output
  * to the Q-Register <q>.
  * In other words, the current buffer is not modified by EG.
+ *
+ * The register <q> is defined if it does not already exist.
  */
 State *
 StateEGCommand::got_register(QRegister &reg)
