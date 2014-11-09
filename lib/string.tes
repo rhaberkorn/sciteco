@@ -1,6 +1,7 @@
 ! String utility macros !
 
-! <pos1,pos2>M[symcasecmp] - Compare symbol at pos1 with symbol at pos2 (caseless) !
+! <pos1,pos2>M[symcasecmp] - Compare symbol at pos1 with symbol at pos2 (caseless)
+  this case-folds to lower case so "_"<"A" which is compatible with g_ascii_strcasecmp() !
 @[symcasecmp]{
   U.2U.1 -.%.1 -.%.2
   @.#lo{
