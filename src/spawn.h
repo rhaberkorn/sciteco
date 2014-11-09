@@ -22,6 +22,7 @@
 
 #include "sciteco.h"
 #include "parser.h"
+#include "qregisters.h"
 
 gchar **parse_shell_command_line(const gchar *cmdline, GError **error);
 
@@ -49,8 +50,17 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateEGCommand : public StateExpectQReg {
+public:
+	StateEGCommand() : StateExpectQReg(true) {}
+
+private:
+	State *got_register(QRegister &reg);
+};
+
 namespace States {
 	extern StateExecuteCommand	executecommand;
+	extern StateEGCommand		egcommand;
 }
 
 #endif

@@ -1813,6 +1813,7 @@ StateECommand::StateECommand() : State()
 	transitions['\0'] = this;
 	transitions['B'] = &States::editfile;
 	transitions['C'] = &States::executecommand;
+	transitions['G'] = &States::egcommand;
 	transitions['M'] = &States::macro_file;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;

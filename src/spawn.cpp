@@ -32,6 +32,7 @@
 
 namespace States {
 	StateExecuteCommand	executecommand;
+	StateEGCommand	egcommand;
 }
 
 extern "C" {
@@ -41,6 +42,8 @@ static gboolean stdin_watch_cb(GIOChannel *chan,
 static gboolean stdout_watch_cb(GIOChannel *chan,
                                 GIOCondition condition, gpointer data);
 }
+
+static QRegister *register_argument = NULL;
 
 gchar **
 parse_shell_command_line(const gchar *cmdline, GError **error)
@@ -211,17 +214,21 @@ StateExecuteCommand::done(const gchar *str)
 	                      &ctx, NULL);
 	g_source_attach(ctx.stdout_src, ctx.mainctx);
 
-	if (current_doc_must_undo())
-		undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
-	interface.ssm(SCI_GOTOPOS, ctx.to);
+	if (!register_argument) {
+		if (current_doc_must_undo())
+			undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+		interface.ssm(SCI_GOTOPOS, ctx.to);
+	}
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	ctx.start = ctx.from;
 	g_main_loop_run(ctx.mainloop);
-	interface.ssm(SCI_DELETERANGE, ctx.from, ctx.to - ctx.from);
+	if (!register_argument)
+		interface.ssm(SCI_DELETERANGE, ctx.from, ctx.to - ctx.from);
 	interface.ssm(SCI_ENDUNDOACTION);
 
-	if (ctx.start != ctx.from || ctx.text_added) {
+	if (!register_argument &&
+	    (ctx.from != ctx.to || ctx.text_added)) {
 		/* undo action is only effective if it changed anything */
 		if (current_doc_must_undo())
 			undo.push_msg(SCI_UNDO);
@@ -265,6 +272,14 @@ gerror:
 	else
 		expressions.push(FAILURE);
 	return &States::start;
+}
+
+State *
+StateEGCommand::got_register(QRegister &reg)
+{
+	BEGIN_EXEC(&States::executecommand);
+	undo.push_var(register_argument) = &reg;
+	return &States::executecommand;
 }
 
 /*
@@ -345,7 +360,7 @@ stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	gchar buffer[1024];
 	gsize bytes_read;
 
-	switch (g_io_channel_read_chars(chan, buffer, sizeof(buffer),
+	switch (g_io_channel_read_chars(chan, buffer, sizeof(buffer)-1,
 	                                &bytes_read,
 	                                ctx.error ? NULL : &ctx.error)) {
 	case G_IO_STATUS_NORMAL:
@@ -359,7 +374,19 @@ stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 		return G_SOURCE_CONTINUE;
 	}
 
-	interface.ssm(SCI_ADDTEXT, bytes_read, (sptr_t)buffer);
+	if (register_argument) {
+		buffer[bytes_read] = '\0';
+
+		if (ctx.text_added) {
+			register_argument->undo_append_string();
+			register_argument->append_string(buffer);
+		} else {
+			register_argument->undo_set_string();
+			register_argument->set_string(buffer);
+		}
+	} else {
+		interface.ssm(SCI_ADDTEXT, bytes_read, (sptr_t)buffer);
+	}
 	ctx.text_added = true;
 
 	return G_SOURCE_CONTINUE;
