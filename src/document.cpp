@@ -75,6 +75,9 @@ TECODocument::edit(void)
 void
 TECODocument::undo_edit(void)
 {
+	if (!is_initialized())
+		doc = (SciDoc)interface.ssm(SCI_CREATEDOCUMENT);
+
 	/*
 	 * see above: set TECO-style character representations
 	 * NOTE: could be done with push_msg() but that requires
