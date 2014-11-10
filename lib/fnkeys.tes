@@ -1,28 +1,73 @@
-! Define some default function key macros !
+! Here we define some reasonable default function key macros.
+  Their corresponding command-line editing macros begin with  !
 
 ! edit command line to move <n> chars, updating existing move ops !
-@#c{{U.c
-  <-A-("=%.n|-A-)"=-%.n|0''">-D1;'-D>
+@#c{{U.c
+  <-A-("=-D1;' -D>
   .">
     -A-)"= -S(\U.v .,Z-2D 0A-C"=2DQ.v|2D-Q.v'%.c | I(Q.c '
   | I(Q.c '
   "> Q.c\IC) | -Q.c\IR) '
 }}
 
-! go <n> pages of lines down !
-@#p{
-  U.c (ESLINESONSCREEN)*Q.cL
-}
-
-! Function key macros !
+! Make DELETE an alternative to ESCAPE !
 @[DC]{}
-@[HOME]{(-(.-(0L.))M#c}
-@[END]{(-(.-(:L"S.-1|Z'))M#c}
-@[NPAGE]{(-(.-(1M#p.))M#c}
-@[PPAGE]{(-(.-(-M#p.))M#c}
-@[LEFT]{(-M#c}
-@[SLEFT]{(-(.--W.)M#c}
-@[RIGHT]{(1M#c}
-@[SRIGHT]{(-(.-W.)M#c}
-@[UP]{(-(.-B.)M#c}
-@[DOWN]{(-(.-L.)M#c}
+
+@[HOME]{
+  .ESLINEFROMPOSITIONESPOSITIONFROMLINEU.p
+  Q.pU.l <Q.l-."U 1; ' Q.l-.AU.c Q.c- "N Q.c-9"N Q.lU.p 1; '' %.l>
+  Q.p-.M#c
+}
+@[HOME]{(M[HOME]}
+
+@[END]{
+  .ESLINEFROMPOSITIONESGETLINEENDPOSITION-.M#c
+}
+@[END]{(M[END]}
+
+@[NPAGE]{
+  .ESLINEFROMPOSITION+(ESLINESONSCREEN)
+  ESPOSITIONFROMLINEU.p
+  Q.p"< Z | Q.p '-.M#c
+}
+@[NPAGE]{(M[NPAGE]}
+
+@[PPAGE]{
+  .ESLINEFROMPOSITION-(ESLINESONSCREEN)U.l
+  Q.l"< 0 | Q.lESPOSITIONFROMLINE '-.M#c
+}
+@[PPAGE]{(M[PPAGE]}
+
+@[LEFT]{
+  ."=0|-1'M#c
+}
+@[LEFT]{(M[LEFT]}
+
+@[SLEFT]{
+  0,0,.ESWORDSTARTPOSITIONESWORDSTARTPOSITION-.M#c
+}
+@[SLEFT]{(M[SLEFT]}
+
+@[RIGHT]{
+  .-Z"=0|1'M#c
+}
+@[RIGHT]{(M[RIGHT]}
+
+@[SRIGHT]{
+  0,0,.ESWORDENDPOSITIONESWORDENDPOSITION-.M#c
+}
+@[SRIGHT]{(M[SRIGHT]}
+
+@[UP]{
+  .ESGETCOLUMN
+  (.ESLINEFROMPOSITION-1)
+  ESFINDCOLUMN-.M#c
+}
+@[UP]{(M[UP]}
+
+@[DOWN]{
+  .ESGETCOLUMN
+  (.ESLINEFROMPOSITION+1)
+  ESFINDCOLUMN-.M#c
+}
+@[DOWN]{(M[DOWN]}
