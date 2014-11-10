@@ -544,12 +544,24 @@ StateLoadQReg::done(const gchar *str)
 }
 
 /*$
- * ^Uq[string]$ -- Set Q-Register string
+ * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string
+ * [c1,c2,...]:^Uq[string]$
  *
- * Sets string-part of Q-Register <q> to <string>.
+ * If not colon-modified, it first fills the Q-Register <q>
+ * with all the values on the expression stack (interpreted as
+ * codepoints).
+ * It does so in the order of the arguments, i.e.
+ * <c1> will be the first character in <q>, <c2> the second, etc.
+ * Eventually the <string> argument is appended to the
+ * register.
+ * Any existing string value in <q> is overwritten by this operation.
+ *
+ * In the colon-modified form ^U does not overwrite existing
+ * contents of <q> but only appends to it.
+ *
  * If <q> is undefined, it will be defined.
  *
- * String-building is by default disabled for ^U commands.
+ * String-building is by default \fBdisabled\fP for ^U commands.
  */
 State *
 StateCtlUCommand::got_register(QRegister &reg)
@@ -559,13 +571,54 @@ StateCtlUCommand::got_register(QRegister &reg)
 	return &States::setqregstring;
 }
 
+void
+StateSetQRegString::initial(void)
+{
+	int args;
+
+	expressions.eval();
+	args = expressions.args();
+	text_added = args > 0;
+	if (!args)
+		return;
+
+	gchar buffer[args+1];
+
+	buffer[args] = '\0';
+	while (args--)
+		buffer[args] = (gchar)expressions.pop_num_calc();
+
+	if (eval_colon()) {
+		/* append to register */
+		register_argument->undo_append_string();
+		register_argument->append_string(buffer);
+	} else {
+		/* set register */
+		register_argument->undo_set_string();
+		register_argument->set_string(buffer);
+	}
+}
+
 State *
 StateSetQRegString::done(const gchar *str)
 {
 	BEGIN_EXEC(&States::start);
 
-	register_argument->undo_set_string();
-	register_argument->set_string(str);
+	if (text_added || eval_colon()) {
+		/*
+		 * Append to register:
+		 * Note that append_string() does not create an UNDOACTION
+		 * if str == NULL
+		 */
+		if (str) {
+			register_argument->undo_append_string();
+			register_argument->append_string(str);
+		}
+	} else {
+		/* set register */
+		register_argument->undo_set_string();
+		register_argument->set_string(str);
+	}
 
 	return &States::start;
 }

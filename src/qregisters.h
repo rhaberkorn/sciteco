@@ -344,10 +344,13 @@ private:
 };
 
 class StateSetQRegString : public StateExpectString {
+	bool text_added;
+
 public:
 	StateSetQRegString() : StateExpectString(false) {}
 
 private:
+	void initial(void);
 	State *done(const gchar *str);
 };
 
