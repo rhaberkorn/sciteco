@@ -932,6 +932,9 @@ StateStart::custom(gchar chr)
 	 * This way, you may break on search success/failures
 	 * without colon-modifying the search command (or at a
 	 * later point).
+	 *
+	 * Executing \(lq;\(rq outside of iterations yields an
+	 * error.
 	 */
 	case ';':
 		BEGIN_EXEC(this);
@@ -943,9 +946,15 @@ StateStart::custom(gchar chr)
 
 		if (IS_FAILURE(rc)) {
 			expressions.discard_args();
+			/*
+			 * FIXME: it would be better accroding to the
+			 * TECO standard to throw an error
+			 * always when we're not in a loop.
+			 * But this is not easy to find out without
+			 * modifying the expression stack.
+			 */
 			if (expressions.pop_op() != Expressions::OP_LOOP)
-				/* FIXME: what does standard teco say to this */
-				throw Error("Cannot break from loop without loop");
+				throw Error("<;> only allowed in iterations");
 			expressions.pop_num(); /* pc */
 			expressions.pop_num(); /* counter */
 
