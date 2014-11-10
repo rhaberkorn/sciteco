@@ -1004,8 +1004,8 @@ They correspond to structured IF-THEN-ELSE statements
 in other imperative languages.
 The general syntax of conditionals is as follows:
 .br
-\# n"c if [| else ]'
-\fIn\fB"\fIc if \fR[\fB|\fI else \fR] \fB'\fR
+\# [n]"c if [| else ]'
+[\fIn\fP]\fB"\fIc if \fR[\fB|\fI else \fR] \fB'\fR
 .br
 Whereas \fIn\fP is a value on the stack to test,
 \fIc\fP is a case-insignificant character identifying a
@@ -1013,12 +1013,31 @@ condition to check for,
 \fIif\fP is a code block to execute if the condition applies and
 \fIelse\fP is an optional code block to execute if the condition
 does not apply.
-The first command in the \fIif\fP block will not see
-any arguments on the expression stack but values accumulated
-on the expression stack by the \fIif\fP or \fIelse\fP blocks
-are not discarded by the terminating single-quote.
-In other words, conditionals may return values.
-The possible conditions are defined in the following list:
+The conditional pops at most one argument from the expression
+stack \(em the remaining arguments may be evaluated by the
+\fIif\fP or \fIelse\fP blocks.
+Values accumulated on the expression stack by the \fIif\fP or \fIelse\fP
+blocks are not discarded by the terminating single-quote.
+In other words, conditionals may also return values.
+The possible conditions are defined in the following list.
+Unless \fIn\fP is defined optional, the conditionals described
+below yield an error if \fIn\fP is omitted:
+.TP
+\# [n]"~
+[\fIn\fP]\fB\(dq~\fP
+Applies if \fIn\fP is \fBnot\fP given (i.e. the argument
+stack is empty).
+If \fIn\fP is given (i.e. the stack is not empty), it is \fBnot\fP
+removed from the expression stack.
+This construct is especially useful in macros to imply default
+parameter values.
+For instance the following macro inserts \fIn\fP tab characters
+(one by default):
+.EX
+@^Ut{
+  "~1'<@^I//>
+}
+.EE
 .TP
 .IB n \(dqA
 Applies if \fIn\fP is the code of an alphabetic character.

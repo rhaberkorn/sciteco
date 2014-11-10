@@ -1594,17 +1594,30 @@ StateCondCommand::custom(gchar chr)
 
 	switch (mode) {
 	case MODE_PARSE_ONLY_COND:
-		undo.push_var<gint>(nest_level);
-		nest_level++;
+		undo.push_var(nest_level)++;
 		break;
+
 	case MODE_NORMAL:
+		expressions.eval();
+
+		if (chr == '~')
+			/* don't pop value for ~ conditionals */
+			break;
+
+		if (!expressions.args())
+			throw ArgExpectedError('"');
 		value = expressions.pop_num_calc();
 		break;
+
 	default:
 		break;
 	}
 
 	switch (g_ascii_toupper(chr)) {
+	case '~':
+		BEGIN_EXEC(&States::start);
+		result = !expressions.args();
+		break;
 	case 'A':
 		BEGIN_EXEC(&States::start);
 		result = g_ascii_isalpha((gchar)value);
@@ -1663,11 +1676,9 @@ StateCondCommand::custom(gchar chr)
 		throw Error("Invalid conditional type \"%c\"", chr);
 	}
 
-	if (!result) {
+	if (!result)
 		/* skip to ELSE-part or end of conditional */
-		undo.push_var<Mode>(mode);
-		mode = MODE_PARSE_ONLY_COND;
-	}
+		undo.push_var(mode) = MODE_PARSE_ONLY_COND;
 
 	return &States::start;
 }
