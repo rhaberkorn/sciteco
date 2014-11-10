@@ -58,7 +58,9 @@ Optimizations:
    undo.push_msg|var() where the undo token destruction does not have any
    significant side effects.
  * use "friend" functions for C-linkage callbacks that must access a class'
-   member instead of making that member public
+   member instead of making that member public.
+   Alternatively, I can use public context structures that are private
+   attributes.
  * when setting/getting Q-Reg string, use special dummy Scintilla view
 
 Documentation:
