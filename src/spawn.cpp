@@ -353,6 +353,7 @@ StateExecuteCommand::done(const gchar *str)
 	if (eval_colon())
 		expressions.push(SUCCESS);
 
+	undo.push_var(register_argument) = NULL;
 	return &States::start;
 
 gerror:
@@ -368,6 +369,7 @@ gerror:
 		expressions.push(ABS(ctx.error->code));
 	else
 		expressions.push(FAILURE);
+	undo.push_var(register_argument) = NULL;
 	return &States::start;
 }
 
