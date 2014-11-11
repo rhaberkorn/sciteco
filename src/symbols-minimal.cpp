@@ -22,7 +22,11 @@
 #include "sciteco.h"
 #include "symbols.h"
 
+namespace SciTECO {
+
 namespace Symbols {
 	SymbolList scintilla;
 	SymbolList scilexer;
 }
+
+} /* namespace SciTECO */

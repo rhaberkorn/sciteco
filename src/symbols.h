@@ -21,6 +21,8 @@
 #include <string.h>
 #include <glib.h>
 
+namespace SciTECO {
+
 class SymbolList {
 public:
 	struct Entry {
@@ -59,5 +61,7 @@ namespace Symbols {
 	extern SymbolList scintilla;
 	extern SymbolList scilexer;
 }
+
+} /* namespace SciTECO */
 
 #endif

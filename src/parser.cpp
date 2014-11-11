@@ -40,6 +40,8 @@
 #include "spawn.h"
 #include "cmdline.h"
 
+namespace SciTECO {
+
 //#define DEBUG
 
 gint macro_pc = 0;
@@ -2165,3 +2167,5 @@ StateInsert::done(const gchar *str)
 	/* nothing to be done when done */
 	return &States::start;
 }
+
+} /* namespace SciTECO */

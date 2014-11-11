@@ -41,6 +41,8 @@
 #include "interface.h"
 #include "interface-gtk.h"
 
+namespace SciTECO {
+
 extern "C" {
 static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
 			     SCNotification *notify, gpointer user_data);
@@ -305,3 +307,5 @@ exit_app(GtkWidget *w, GdkEventAny *e, gpointer p)
 	gtk_main_quit();
 	return TRUE;
 }
+
+} /* namespace SciTECO */

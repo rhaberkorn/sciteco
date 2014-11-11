@@ -32,6 +32,8 @@
 #include "parser.h"
 #include "document.h"
 
+namespace SciTECO {
+
 /*
  * Classes
  */
@@ -39,7 +41,7 @@
 class QRegisterData {
 protected:
 	tecoInt integer;
-	TECODocument string;
+	Document string;
 
 public:
 	/*
@@ -430,5 +432,7 @@ namespace QRegisters {
 	};
 	void hook(Hook type);
 }
+
+} /* namespace SciTECO */
 
 #endif

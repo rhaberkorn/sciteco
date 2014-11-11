@@ -24,6 +24,8 @@
 #include "parser.h"
 #include "qregisters.h"
 
+namespace SciTECO {
+
 gchar **parse_shell_command_line(const gchar *cmdline, GError **error);
 
 class StateExecuteCommand : public StateExpectString {
@@ -62,5 +64,7 @@ namespace States {
 	extern StateExecuteCommand	executecommand;
 	extern StateEGCommand		egcommand;
 }
+
+} /* namespace SciTECO */
 
 #endif

@@ -26,6 +26,8 @@
 #include "undo.h"
 #include "rbtree.h"
 
+namespace SciTECO {
+
 class GotoTable : public RBTree {
 	class UndoTokenSet : public UndoToken {
 		GotoTable *table;
@@ -120,5 +122,7 @@ namespace States {
 	extern StateLabel 	label;
 	extern StateGotoCmd	gotocmd;
 }
+
+} /* namespace SciTECO */
 
 #endif

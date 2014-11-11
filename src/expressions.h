@@ -23,6 +23,8 @@
 #include "undo.h"
 #include "parser.h" // State::Error
 
+namespace SciTECO {
+
 template <typename Type>
 class ValueStack {
 	class UndoTokenPush : public UndoToken {
@@ -213,5 +215,7 @@ private:
 
 	int first_op(void);
 } expressions;
+
+} /* namespace SciTECO */
 
 #endif

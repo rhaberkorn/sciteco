@@ -26,6 +26,8 @@
 #include "parser.h" // State::Error
 #include "expressions.h"
 
+namespace SciTECO {
+
 Expressions expressions;
 
 void
@@ -271,3 +273,5 @@ Expressions::format(tecoInt number)
 
 	return p;
 }
+
+} /* namespace SciTECO */

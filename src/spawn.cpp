@@ -30,6 +30,8 @@
 #include "parser.h"
 #include "spawn.h"
 
+namespace SciTECO {
+
 namespace States {
 	StateExecuteCommand	executecommand;
 	StateEGCommand	egcommand;
@@ -514,3 +516,5 @@ stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 
 	return G_SOURCE_CONTINUE;
 }
+
+} /* namespace SciTECO */

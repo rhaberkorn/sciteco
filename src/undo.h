@@ -29,6 +29,8 @@
 #include "parser.h"
 #endif
 
+namespace SciTECO {
+
 class UndoToken {
 public:
 	SLIST_ENTRY(UndoToken) tokens;
@@ -191,5 +193,7 @@ public:
 
 	void clear(void);
 } undo;
+
+} /* namespace SciTECO */
 
 #endif

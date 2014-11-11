@@ -27,6 +27,8 @@
 #include "undo.h"
 #include "sciteco.h"
 
+namespace SciTECO {
+
 /* TECO uses only lower 7 bits for commands */
 #define MAX_TRANSITIONS	127
 
@@ -473,5 +475,7 @@ namespace Execute {
 	void macro(const gchar *macro, bool locals = true);
 	void file(const gchar *filename, bool locals = true);
 }
+
+} /* namespace SciTECO */
 
 #endif

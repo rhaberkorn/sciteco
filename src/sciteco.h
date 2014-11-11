@@ -24,6 +24,8 @@
 
 #include "interface.h"
 
+namespace SciTECO {
+
 #if TECO_INTEGER == 32
 typedef gint32 tecoInt;
 #define TECO_INTEGER_FORMAT G_GINT32_FORMAT
@@ -128,5 +130,7 @@ line(gint n)
 }
 
 } /* namespace Validate */
+
+} /* namespace SciTECO */
 
 #endif

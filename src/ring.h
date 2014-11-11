@@ -34,6 +34,8 @@
 #include "qregisters.h"
 #include "parser.h"
 
+namespace SciTECO {
+
 /*
  * Auxiliary functions
  */
@@ -54,7 +56,7 @@ gchar *get_absolute_path(const gchar *path);
  * Classes
  */
 
-class Buffer : public TECODocument {
+class Buffer : public Document {
 	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
@@ -72,7 +74,7 @@ public:
 	gint savepoint_id;
 	bool dirty;
 
-	Buffer() : TECODocument(),
+	Buffer() : Document(),
 		   filename(NULL), savepoint_id(0), dirty(false) {}
 	~Buffer()
 	{
@@ -104,14 +106,14 @@ public:
 	inline void
 	edit(void)
 	{
-		TECODocument::edit();
+		Document::edit();
 		interface.info_update(this);
 	}
 	inline void
 	undo_edit(void)
 	{
 		interface.undo_info_update(this);
-		TECODocument::undo_edit();
+		Document::undo_edit();
 	}
 
 	void load(const gchar *filename);
@@ -253,5 +255,7 @@ current_doc_must_undo(void)
 	return ring.current ||
 	       QRegisters::current->must_undo;
 }
+
+} /* namespace SciTECO */
 
 #endif

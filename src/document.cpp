@@ -28,6 +28,8 @@
 #include "undo.h"
 #include "document.h"
 
+namespace SciTECO {
+
 static inline void
 set_representations(void)
 {
@@ -55,7 +57,7 @@ public:
 };
 
 void
-TECODocument::edit(void)
+Document::edit(void)
 {
 	if (!is_initialized())
 		doc = (SciDoc)interface.ssm(SCI_CREATEDOCUMENT);
@@ -73,7 +75,7 @@ TECODocument::edit(void)
 }
 
 void
-TECODocument::undo_edit(void)
+Document::undo_edit(void)
 {
 	if (!is_initialized())
 		doc = (SciDoc)interface.ssm(SCI_CREATEDOCUMENT);
@@ -92,7 +94,7 @@ TECODocument::undo_edit(void)
 }
 
 void
-TECODocument::update(void)
+Document::update(void)
 {
 	anchor = interface.ssm(SCI_GETANCHOR);
 	dot = interface.ssm(SCI_GETCURRENTPOS);
@@ -105,7 +107,7 @@ TECODocument::update(void)
  * exchanging of document data (without any deep copying)
  */
 void
-TECODocument::exchange(TECODocument &other)
+Document::exchange(Document &other)
 {
 	SciDoc temp_doc = doc;
 	gint temp_anchor = anchor;
@@ -125,3 +127,5 @@ TECODocument::exchange(TECODocument &other)
 	other.first_line = temp_first_line;
 	other.xoffset = temp_xoffset;
 }
+
+} /* namespace SciTECO */

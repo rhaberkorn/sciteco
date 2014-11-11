@@ -24,6 +24,8 @@
 #include "parser.h"
 #include "qregisters.h"
 
+namespace SciTECO {
+
 extern gchar *cmdline;
 extern gint cmdline_pos;
 extern bool quit_requested;
@@ -55,5 +57,7 @@ private:
 namespace States {
 	extern StateSaveCmdline save_cmdline;
 }
+
+} /* namespace SciTECO */
 
 #endif

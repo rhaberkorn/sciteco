@@ -42,6 +42,8 @@
 #include "ring.h"
 #include "undo.h"
 
+namespace SciTECO {
+
 #ifdef G_OS_UNIX
 #define INI_FILE ".teco_ini"
 #else
@@ -236,6 +238,65 @@ initialize_environment(void)
 	g_strfreev(env);
 }
 
+/*
+ * Callbacks
+ */
+
+class g_bad_alloc : public std::bad_alloc {
+public:
+	const char *
+	what() const throw()
+	{
+		return "glib allocation";
+	}
+};
+
+static gpointer
+g_malloc_exception(gsize n_bytes) throw (std::bad_alloc)
+{
+	gpointer p = malloc(n_bytes);
+
+	if (!p)
+		throw g_bad_alloc();
+	return p;
+}
+
+static gpointer
+g_calloc_exception(gsize n_blocks, gsize n_block_bytes) throw (std::bad_alloc)
+{
+	gpointer p = calloc(n_blocks, n_block_bytes);
+
+	if (!p)
+		throw g_bad_alloc();
+	return p;
+}
+
+static gpointer
+g_realloc_exception(gpointer mem, gsize n_bytes) throw (std::bad_alloc)
+{
+	gpointer p = realloc(mem, n_bytes);
+
+	if (!p)
+		throw g_bad_alloc();
+	return p;
+}
+
+static void
+sigint_handler(int signal)
+{
+	sigint_occurred = TRUE;
+}
+
+} /* namespace SciTECO */
+
+/*
+ * main() must be defined in the root
+ * namespace, so we import the "SciTECO"
+ * namespace. We have no more declarations
+ * to make in the "SciTECO" namespace.
+ */
+using namespace SciTECO;
+
 int
 main(int argc, char **argv)
 {
@@ -336,53 +397,4 @@ main(int argc, char **argv)
 	interface.event_loop();
 
 	return 0;
-}
-
-/*
- * Callbacks
- */
-
-class g_bad_alloc : public std::bad_alloc {
-public:
-	const char *
-	what() const throw()
-	{
-		return "glib allocation";
-	}
-};
-
-static gpointer
-g_malloc_exception(gsize n_bytes) throw (std::bad_alloc)
-{
-	gpointer p = malloc(n_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
-static gpointer
-g_calloc_exception(gsize n_blocks, gsize n_block_bytes) throw (std::bad_alloc)
-{
-	gpointer p = calloc(n_blocks, n_block_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
-static gpointer
-g_realloc_exception(gpointer mem, gsize n_bytes) throw (std::bad_alloc)
-{
-	gpointer p = realloc(mem, n_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
-static void
-sigint_handler(int signal)
-{
-	sigint_occurred = TRUE;
 }

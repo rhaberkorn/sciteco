@@ -28,6 +28,8 @@
 #include "undo.h"
 #include "goto.h"
 
+namespace SciTECO {
+
 namespace States {
 	StateLabel	label;
 	StateGotoCmd	gotocmd;
@@ -193,3 +195,5 @@ StateGotoCmd::done(const gchar *str)
 	g_strfreev(labels);
 	return &States::start;
 }
+
+} /* namespace SciTECO */

@@ -28,6 +28,8 @@
 
 #include "interface.h"
 
+namespace SciTECO {
+
 typedef class InterfaceGtk : public Interface {
 	GtkWidget *window;
 	GtkWidget *editor_widget;
@@ -86,5 +88,7 @@ public:
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
 } InterfaceCurrent;
+
+} /* namespace SciTECO */
 
 #endif

@@ -44,6 +44,8 @@
 #include "interface.h"
 #include "interface-ncurses.h"
 
+namespace SciTECO {
+
 extern "C" {
 static void scintilla_notify(Scintilla *sci, int idFrom,
 			    void *notify, void *user_data);
@@ -490,3 +492,5 @@ scintilla_notify(Scintilla *sci, int idFrom, void *notify, void *user_data)
 {
 	interface.process_notify((SCNotification *)notify);
 }
+
+} /* namespace SciTECO */

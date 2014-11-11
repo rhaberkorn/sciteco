@@ -39,6 +39,8 @@
 #include "spawn.h"
 #include "cmdline.h"
 
+namespace SciTECO {
+
 static inline const gchar *process_edit_cmd(gchar key);
 static gchar *macro_echo(const gchar *macro);
 
@@ -547,3 +549,5 @@ filename_is_dir(const gchar *filename)
 {
 	return g_str_has_suffix(filename, G_DIR_SEPARATOR_S);
 }
+
+} /* namespace SciTECO */

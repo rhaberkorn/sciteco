@@ -27,6 +27,8 @@
 
 #include "undo.h"
 
+namespace SciTECO {
+
 /* avoid include dependency conflict */
 class QRegister;
 class Buffer;
@@ -129,6 +131,8 @@ public:
 	void process_notify(SCNotification *notify);
 };
 
+} /* namespace SciTECO */
+
 #ifdef INTERFACE_GTK
 #include "interface-gtk.h"
 #elif defined(INTERFACE_NCURSES)
@@ -137,7 +141,9 @@ public:
 #error No interface selected!
 #endif
 
-/* object defined in main.cpp */
-extern InterfaceCurrent interface;
+namespace SciTECO {
+	/* object defined in main.cpp */
+	extern InterfaceCurrent interface;
+}
 
 #endif

@@ -23,4 +23,8 @@
 
 #include "rbtree.h"
 
+namespace SciTECO {
+
 RB_GENERATE(RBTree::Tree, RBTree::RBEntry, nodes, RBTree::compare_entries);
+
+} /* namespace SciTECO */

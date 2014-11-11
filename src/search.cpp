@@ -32,6 +32,8 @@
 #include "parser.h"
 #include "search.h"
 
+namespace SciTECO {
+
 namespace States {
 	StateSearch			search;
 	StateSearchAll			searchall;
@@ -819,3 +821,5 @@ StateReplaceDefault_ignore::done(const gchar *str)
 
 	return &States::start;
 }
+
+} /* namespace SciTECO */

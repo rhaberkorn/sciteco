@@ -26,6 +26,8 @@
 #include "sciteco.h"
 #include "symbols.h"
 
+namespace SciTECO {
+
 /*
  * Since symbol lists are presorted constant arrays we can do a simple
  * binary search.
@@ -69,3 +71,5 @@ SymbolList::get_glist(void)
 
 	return list;
 }
+
+} /* namespace SciTECO */

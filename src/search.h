@@ -25,6 +25,8 @@
 #include "ring.h"
 #include "qregisters.h"
 
+namespace SciTECO {
+
 /*
  * "S" command state and base class for all other search/replace commands
  */
@@ -132,5 +134,7 @@ namespace States {
 	extern StateReplaceDefault_insert		replacedefault_insert;
 	extern StateReplaceDefault_ignore		replacedefault_ignore;
 }
+
+} /* namespace SciTECO */
 
 #endif

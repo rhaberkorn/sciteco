@@ -37,6 +37,8 @@
 #include "ring.h"
 #include "qregisters.h"
 
+namespace SciTECO {
+
 namespace States {
 	StatePushQReg		pushqreg;
 	StatePopQReg		popqreg;
@@ -851,3 +853,5 @@ StateCopyToQReg::got_register(QRegister &reg)
 
 	return &States::start;
 }
+
+} /* namespace SciTECO */

@@ -44,10 +44,10 @@
 #include <windows.h>
 
 /* still need to clean up */
-#ifdef interface
 #undef interface
 #endif
-#endif
+
+namespace SciTECO {
 
 namespace States {
 	StateEditFile	editfile;
@@ -752,3 +752,5 @@ StateSaveFile::done(const gchar *str)
 
 	return &States::start;
 }
+
+} /* namespace SciTECO */

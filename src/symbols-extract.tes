@@ -27,6 +27,8 @@ I/*
 #include "sciteco.h"
 #include "symbols.h"
 
+namespace SciTECO {
+
 static const SymbolList::Entry entries[] = {
 
 <
@@ -36,6 +38,8 @@ static const SymbolList::Entry entries[] = {
 I};
 
 SymbolList Symbols::Q#na(entries, G_N_ELEMENTS(entries));
+
+} /* namespace SciTECO */
 
 
 ! write output file !

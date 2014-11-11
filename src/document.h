@@ -26,17 +26,13 @@
 #include "interface.h"
 #include "undo.h"
 
+namespace SciTECO {
+
 /*
  * Classes
  */
 
-/*
- * NOTE: The only reason this is called TECODocument
- * is to prevent a nameclash with Scintilla which
- * does not use a proper namespace for its public
- * symbols...
- */
-class TECODocument {
+class Document {
 	typedef const void *SciDoc;
 	SciDoc doc;
 
@@ -45,11 +41,11 @@ class TECODocument {
 	gint first_line, xoffset;
 
 public:
-	TECODocument() : doc(NULL)
+	Document() : doc(NULL)
 	{
 		reset();
 	}
-	virtual ~TECODocument()
+	virtual ~Document()
 	{
 		if (is_initialized())
 			interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
@@ -66,7 +62,7 @@ public:
 
 	void update(void);
 	inline void
-	update(const TECODocument &from)
+	update(const Document &from)
 	{
 		anchor = from.anchor;
 		dot = from.dot;
@@ -89,7 +85,7 @@ public:
 		undo.push_var(xoffset);
 	}
 
-	void exchange(TECODocument &other);
+	void exchange(Document &other);
 	inline void
 	undo_exchange(void)
 	{
@@ -97,5 +93,7 @@ public:
 		undo_reset();
 	}
 };
+
+} /* namespace SciTECO */
 
 #endif

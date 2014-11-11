@@ -32,6 +32,8 @@
 #include "interface.h"
 #include "undo.h"
 
+namespace SciTECO {
+
 //#define DEBUG
 
 UndoStack undo;
@@ -91,3 +93,5 @@ UndoStack::~UndoStack()
 	SLIST_FOREACH_SAFE(token, &head, tokens, next)
 		delete token;
 }
+
+} /* namespace SciTECO */

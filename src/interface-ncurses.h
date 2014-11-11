@@ -29,6 +29,8 @@
 
 #include "interface.h"
 
+namespace SciTECO {
+
 typedef class InterfaceNCurses : public Interface {
 	SCREEN *screen;
 	FILE *screen_tty;
@@ -95,5 +97,7 @@ private:
 
 	friend void event_loop_iter();
 } InterfaceCurrent;
+
+} /* namespace SciTECO */
 
 #endif

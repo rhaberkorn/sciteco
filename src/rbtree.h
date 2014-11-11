@@ -24,6 +24,8 @@
 
 #include "undo.h"
 
+namespace SciTECO {
+
 class RBTree {
 public:
 	class RBEntry;
@@ -115,5 +117,7 @@ public:
 		}
 	}
 };
+
+} /* namespace SciTECO */
 
 #endif
