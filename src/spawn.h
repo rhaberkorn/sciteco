@@ -42,7 +42,7 @@ public:
 		tecoInt from, to;
 		tecoInt start;
 		bool text_added;
-		::GError *error;
+		GError *error;
 	};
 
 private:

@@ -23,7 +23,7 @@
 
 #include "sciteco.h"
 #include "undo.h"
-#include "parser.h" // State::Error
+#include "error.h"
 #include "expressions.h"
 
 namespace SciTECO {
@@ -137,11 +137,11 @@ Expressions::calc(void)
 	tecoInt vleft;
 
 	if (operators.peek() != OP_NUMBER)
-		throw State::Error("Missing right operand");
+		throw Error("Missing right operand");
 	vright = pop_num();
 	op = pop_op();
 	if (operators.peek() != OP_NUMBER)
-		throw State::Error("Missing left operand");
+		throw Error("Missing left operand");
 	vleft = pop_num();
 
 	switch (op) {
@@ -153,12 +153,12 @@ Expressions::calc(void)
 		break;
 	case OP_DIV:
 		if (!vright)
-			throw State::Error("Division by zero");
+			throw Error("Division by zero");
 		result = vleft / vright;
 		break;
 	case OP_MOD:
 		if (!vright)
-			throw State::Error("Remainder of division by zero");
+			throw Error("Remainder of division by zero");
 		result = vleft % vright;
 		break;
 	case OP_ADD:

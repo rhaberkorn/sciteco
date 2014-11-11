@@ -41,7 +41,6 @@ Features:
    like teco.ini is found): perhaps by introducing special characters
    in the default SCITECOPATH or hardcoding the defaults
  * automatic EOL detection of buffers; easy EOL setting
- * refactor State::Error into separate C file and namespace
 
 Optimizations:
  * prevent command-line flickering when using function key macros.

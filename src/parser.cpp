@@ -19,7 +19,6 @@
 #include "config.h"
 #endif
 
-#include <stdarg.h>
 #include <string.h>
 #include <exception>
 
@@ -39,6 +38,7 @@
 #include "search.h"
 #include "spawn.h"
 #include "cmdline.h"
+#include "error.h"
 
 namespace SciTECO {
 
@@ -77,11 +77,11 @@ gchar escape_char = '\x1B';
 
 /*
  * handles all expected exceptions, converting them to
- * State::Error and preparing them for stack frame insertion
+ * SciTECO::Error and preparing them for stack frame insertion
  */
 void
 Execute::step(const gchar *macro, gint stop_pos)
-	     throw (State::Error, ReplaceCmdline)
+	     throw (Error, ReplaceCmdline)
 {
 	while (macro_pc < stop_pos) {
 #ifdef DEBUG
@@ -97,13 +97,13 @@ Execute::step(const gchar *macro, gint stop_pos)
 			 */
 			try {
 				if (interface.is_interrupted())
-					throw State::Error("Interrupted");
+					throw Error("Interrupted");
 
 				State::input(macro[macro_pc]);
 			} catch (std::exception &error) {
-				throw State::StdError(error);
+				throw StdError(error);
 			}
-		} catch (State::Error &error) {
+		} catch (Error &error) {
 			error.pos = macro_pc;
 			String::get_coord(macro, error.pos,
 					  error.line, error.column);
@@ -114,7 +114,7 @@ Execute::step(const gchar *macro, gint stop_pos)
 }
 
 /*
- * may throw non State::Error exceptions which are not to be
+ * may throw non SciTECO::Error exceptions which are not to be
  * associated with the macro invocation stack frame
  */
 void
@@ -146,8 +146,8 @@ Execute::macro(const gchar *macro, bool locals)
 	try {
 		step(macro, strlen(macro));
 		if (Goto::skip_label) {
-			State::Error error("Label \"%s\" not found",
-					   Goto::skip_label);
+			Error error("Label \"%s\" not found",
+			            Goto::skip_label);
 			error.pos = strlen(macro);
 			String::get_coord(macro, error.pos,
 					  error.line, error.column);
@@ -186,7 +186,7 @@ Execute::file(const gchar *filename, bool locals)
 	gchar *macro_str, *p;
 
 	if (!g_file_get_contents(filename, &macro_str, NULL, &gerror))
-		throw State::GError(gerror);
+		throw GlibError(gerror);
 	/* only when executing files, ignore Hash-Bang line */
 	if (*macro_str == '#')
 		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'))+1;
@@ -195,11 +195,11 @@ Execute::file(const gchar *filename, bool locals)
 
 	try {
 		macro(p, locals);
-	} catch (State::Error &error) {
+	} catch (Error &error) {
 		error.pos += p - macro_str;
 		if (*macro_str == '#')
 			error.line++;
-		error.add_frame(new State::Error::FileFrame(filename));
+		error.add_frame(new Error::FileFrame(filename));
 
 		g_free(macro_str);
 		throw; /* forward */
@@ -209,78 +209,6 @@ Execute::file(const gchar *filename, bool locals)
 	}
 
 	g_free(macro_str);
-}
-
-ReplaceCmdline::ReplaceCmdline()
-{
-	QRegister *cmdline_reg = QRegisters::globals["\x1B"];
-
-	new_cmdline = cmdline_reg->get_string();
-	for (pos = 0; cmdline[pos] && cmdline[pos] == new_cmdline[pos]; pos++);
-	pos++;
-}
-
-State::Error::Error(const gchar *fmt, ...)
-		   : frames(NULL), pos(0), line(0), column(0)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	description = g_strdup_vprintf(fmt, ap);
-	va_end(ap);
-}
-
-State::Error::Error(const Error &inst)
-		   : description(g_strdup(inst.description)),
-		     pos(inst.pos), line(inst.line), column(inst.column)
-{
-	/* shallow copy of the frames */
-	frames = g_slist_copy(inst.frames);
-
-	for (GSList *cur = frames; cur; cur = g_slist_next(cur)) {
-		Frame *frame = (Frame *)cur->data;
-		cur->data = frame->copy();
-	}
-}
-
-void
-State::Error::add_frame(Frame *frame)
-{
-	frame->pos = pos;
-	frame->line = line;
-	frame->column = column;
-
-	frames = g_slist_prepend(frames, frame);
-}
-
-void
-State::Error::display_short(void)
-{
-	interface.msg(Interface::MSG_ERROR,
-		      "%s (at %d)", description, pos);
-}
-
-void
-State::Error::display_full(void)
-{
-	gint nr = 0;
-
-	interface.msg(Interface::MSG_ERROR, "%s", description);
-
-	frames = g_slist_reverse(frames);
-	for (GSList *cur = frames; cur; cur = g_slist_next(cur)) {
-		Frame *frame = (Frame *)cur->data;
-
-		frame->display(nr++);
-	}
-}
-
-State::Error::~Error()
-{
-	g_free(description);
-	for (GSList *cur = frames; cur; cur = g_slist_next(cur))
-		delete (Frame *)cur->data;
-	g_slist_free(frames);
 }
 
 State::State()

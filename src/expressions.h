@@ -21,7 +21,7 @@
 #include <glib.h>
 
 #include "undo.h"
-#include "parser.h" // State::Error
+#include "error.h"
 
 namespace SciTECO {
 
@@ -87,7 +87,7 @@ public:
 	push(Type value, int index = 1)
 	{
 		if (items() == size)
-			throw State::Error("Stack overflow");
+			throw Error("Stack overflow");
 
 		for (int i = -index + 1; i; i++)
 			top[i+1] = top[i];

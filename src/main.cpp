@@ -41,6 +41,7 @@
 #include "qregisters.h"
 #include "ring.h"
 #include "undo.h"
+#include "error.h"
 
 namespace SciTECO {
 
@@ -360,8 +361,8 @@ main(int argc, char **argv)
 		if (eval_macro) {
 			try {
 				Execute::macro(eval_macro, false);
-			} catch (State::Error &error) {
-				error.add_frame(new State::Error::ToplevelFrame());
+			} catch (Error &error) {
+				error.add_frame(new Error::ToplevelFrame());
 				throw; /* forward */
 			}
 			exit(EXIT_SUCCESS);
@@ -377,7 +378,7 @@ main(int argc, char **argv)
 			}
 		}
 		g_free(mung_file);
-	} catch (State::Error &error) {
+	} catch (Error &error) {
 		error.display_full();
 		exit(EXIT_FAILURE);
 	} catch (...) {

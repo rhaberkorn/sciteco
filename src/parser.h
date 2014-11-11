@@ -18,13 +18,10 @@
 #ifndef __PARSER_H
 #define __PARSER_H
 
-#include <exception>
-#include <typeinfo>
-
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "undo.h"
+#include "error.h"
 #include "sciteco.h"
 
 namespace SciTECO {
@@ -32,191 +29,7 @@ namespace SciTECO {
 /* TECO uses only lower 7 bits for commands */
 #define MAX_TRANSITIONS	127
 
-/* thrown as exception, executed at cmdline macro level */
-class ReplaceCmdline {
-public:
-	gchar *new_cmdline;
-	gint pos;
-
-	ReplaceCmdline();
-};
-
 class State {
-public:
-	class Error {
-		gchar *description;
-		GSList *frames;
-
-	public:
-		gint pos;
-		gint line, column;
-
-		class Frame {
-		public:
-			gint pos;
-			gint line, column;
-
-			virtual Frame *copy() const = 0;
-			virtual ~Frame() {}
-
-			virtual void display(gint nr) = 0;
-		};
-
-		class QRegFrame : public Frame {
-			gchar *name;
-
-		public:
-			QRegFrame(const gchar *_name)
-				 : name(g_strdup(_name)) {}
-
-			Frame *
-			copy() const
-			{
-				Frame *frame = new QRegFrame(name);
-
-				frame->pos = pos;
-				frame->line = line;
-				frame->column = column;
-
-				return frame;
-			}
-
-			~QRegFrame()
-			{
-				g_free(name);
-			}
-
-			void
-			display(gint nr)
-			{
-				interface.msg(Interface::MSG_INFO,
-					      "#%d in Q-Register \"%s\" at %d (%d:%d)",
-					      nr, name, pos, line, column);
-			}
-		};
-
-		class FileFrame : public Frame {
-			gchar *name;
-
-		public:
-			FileFrame(const gchar *_name)
-				 : name(g_strdup(_name)) {}
-
-			Frame *
-			copy() const
-			{
-				Frame *frame = new FileFrame(name);
-
-				frame->pos = pos;
-				frame->line = line;
-				frame->column = column;
-
-				return frame;
-			}
-
-			~FileFrame()
-			{
-				g_free(name);
-			}
-
-			void
-			display(gint nr)
-			{
-				interface.msg(Interface::MSG_INFO,
-					      "#%d in file \"%s\" at %d (%d:%d)",
-					      nr, name, pos, line, column);
-			}
-		};
-
-		class ToplevelFrame : public Frame {
-		public:
-			Frame *
-			copy() const
-			{
-				Frame *frame = new ToplevelFrame;
-
-				frame->pos = pos;
-				frame->line = line;
-				frame->column = column;
-
-				return frame;
-			}
-
-			void
-			display(gint nr)
-			{
-				interface.msg(Interface::MSG_INFO,
-					      "#%d in toplevel macro at %d (%d:%d)",
-					      nr, pos, line, column);
-			}
-		};
-
-		Error(const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
-		Error(const Error &inst);
-		~Error();
-
-		void add_frame(Frame *frame);
-
-		void display_short(void);
-		void display_full(void);
-	};
-
-	class StdError : public Error {
-	public:
-		StdError(const gchar *type, const std::exception &error)
-			: Error("%s: %s", type, error.what()) {}
-		StdError(const std::exception &error)
-			: Error("%s: %s", typeid(error).name(), error.what()) {}
-	};
-
-	class GError : public Error {
-	public:
-		GError(const ::GError *gerror)
-		      : Error("%s", gerror->message) {}
-	};
-
-	class SyntaxError : public Error {
-	public:
-		SyntaxError(gchar chr)
-			   : Error("Syntax error \"%c\" (%d)", chr, chr) {}
-	};
-
-	class ArgExpectedError : public Error {
-	public:
-		ArgExpectedError(const gchar *cmd)
-			        : Error("Argument expected for <%s>", cmd) {}
-		ArgExpectedError(gchar cmd)
-			        : Error("Argument expected for <%c>", cmd) {}
-	};
-
-	class MoveError : public Error {
-	public:
-		MoveError(const gchar *cmd)
-			 : Error("Attempt to move pointer off page with <%s>",
-				 cmd) {}
-		MoveError(gchar cmd)
-			 : Error("Attempt to move pointer off page with <%c>",
-				 cmd) {}
-	};
-
-	class RangeError : public Error {
-	public:
-		RangeError(const gchar *cmd)
-			  : Error("Invalid range specified for <%s>", cmd) {}
-		RangeError(gchar cmd)
-			  : Error("Invalid range specified for <%c>", cmd) {}
-	};
-
-	class InvalidQRegError : public Error {
-	public:
-		InvalidQRegError(const gchar *name, bool local = false)
-				: Error("Invalid Q-Register \"%s%s\"",
-					local ? "." : "", name) {}
-		InvalidQRegError(gchar name, bool local = false)
-				: Error("Invalid Q-Register \"%s%c\"",
-					local ? "." : "", name) {}
-	};
-
 protected:
 	/* static transitions */
 	State *transitions[MAX_TRANSITIONS];
@@ -471,7 +284,7 @@ extern gchar escape_char;
 
 namespace Execute {
 	void step(const gchar *macro, gint stop_pos)
-		 throw (State::Error, ReplaceCmdline);
+		 throw (Error, ReplaceCmdline);
 	void macro(const gchar *macro, bool locals = true);
 	void file(const gchar *filename, bool locals = true);
 }

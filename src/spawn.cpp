@@ -28,6 +28,7 @@
 #include "qregisters.h"
 #include "ring.h"
 #include "parser.h"
+#include "error.h"
 #include "spawn.h"
 
 namespace SciTECO {
@@ -350,7 +351,7 @@ StateExecuteCommand::done(const gchar *str)
 		goto gerror;
 
 	if (interface.is_interrupted())
-		throw State::Error("Interrupted");
+		throw Error("Interrupted");
 
 	if (eval_colon())
 		expressions.push(SUCCESS);
@@ -360,7 +361,7 @@ StateExecuteCommand::done(const gchar *str)
 
 gerror:
 	if (!eval_colon())
-		throw GError(ctx.error);
+		throw GlibError(ctx.error);
 
 	/*
 	 * If possible, encode process exit code

@@ -31,6 +31,7 @@
 #include "ring.h"
 #include "parser.h"
 #include "search.h"
+#include "error.h"
 
 namespace SciTECO {
 

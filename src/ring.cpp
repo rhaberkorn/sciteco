@@ -38,6 +38,7 @@
 #include "parser.h"
 #include "expressions.h"
 #include "ring.h"
+#include "error.h"
 
 #ifdef HAVE_WINDOWS_H
 /* here it shouldn't cause conflicts with other headers */
@@ -134,7 +135,7 @@ Buffer::load(const gchar *filename)
 	GError *gerror = NULL;
 
 	if (!g_file_get_contents(filename, &contents, &size, &gerror))
-		throw State::GError(gerror);
+		throw GlibError(gerror);
 
 	edit();
 

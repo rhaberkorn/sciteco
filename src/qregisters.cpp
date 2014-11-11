@@ -35,6 +35,7 @@
 #include "expressions.h"
 #include "document.h"
 #include "ring.h"
+#include "error.h"
 #include "qregisters.h"
 
 namespace SciTECO {
@@ -187,8 +188,8 @@ QRegister::execute(bool locals)
 
 	try {
 		Execute::macro(str, locals);
-	} catch (State::Error &error) {
-		error.add_frame(new State::Error::QRegFrame(name));
+	} catch (Error &error) {
+		error.add_frame(new Error::QRegFrame(name));
 
 		g_free(str);
 		throw; /* forward */
@@ -210,7 +211,7 @@ QRegister::load(const gchar *filename)
 
 	/* FIXME: prevent excessive allocations by reading file into buffer */
 	if (!g_file_get_contents(filename, &contents, &size, &gerror))
-		throw State::GError(gerror);
+		throw GlibError(gerror);
 
 	edit();
 	string.reset();
@@ -434,7 +435,7 @@ done:
 
 	if (!reg) {
 		if (!initialize)
-			throw State::InvalidQRegError(name, is_local);
+			throw InvalidQRegError(name, is_local);
 		reg = table.insert(name);
 		table.undo_remove(reg);
 	}

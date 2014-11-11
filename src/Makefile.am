@@ -20,6 +20,7 @@ EXTRA_DIST = gtk-info-popup.gob \
 
 noinst_LIBRARIES = libsciteco-base.a
 libsciteco_base_a_SOURCES = main.cpp sciteco.h \
+			    error.cpp error.h \
 			    cmdline.cpp cmdline.h \
 			    undo.cpp undo.h \
 			    expressions.cpp expressions.h \
