@@ -266,7 +266,7 @@ Expressions::format(tecoInt number)
 	do {
 		*--p = '0' + (v % radix);
 		if (*p > '9')
-			*p += 'A' - '9';
+			*p += 'A' - '9' - 1;
 	} while ((v /= radix));
 	if (number < 0)
 		*--p = '-';
