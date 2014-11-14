@@ -97,8 +97,6 @@ InterfaceGtk::main(int &argc, char **&argv)
 
 	gtk_widget_grab_focus(cmdline_widget);
 
-	ssm(SCI_SETFOCUS, TRUE);
-
 	cmdline_update("");
 }
 

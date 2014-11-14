@@ -30,7 +30,6 @@
 #include "sciteco.h"
 #include "interface.h"
 #include "undo.h"
-#include "document.h"
 #include "qregisters.h"
 #include "parser.h"
 
@@ -56,7 +55,7 @@ gchar *get_absolute_path(const gchar *path);
  * Classes
  */
 
-class Buffer : public Document {
+class Buffer : private ViewCurrent {
 	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
@@ -74,8 +73,12 @@ public:
 	gint savepoint_id;
 	bool dirty;
 
-	Buffer() : Document(),
-		   filename(NULL), savepoint_id(0), dirty(false) {}
+	Buffer() : ViewCurrent(),
+		   filename(NULL), savepoint_id(0), dirty(false)
+	{
+		set_representations();
+	}
+
 	~Buffer()
 	{
 		g_free(filename);
@@ -106,14 +109,14 @@ public:
 	inline void
 	edit(void)
 	{
-		Document::edit();
+		interface.show_view(this);
 		interface.info_update(this);
 	}
 	inline void
 	undo_edit(void)
 	{
 		interface.undo_info_update(this);
-		Document::undo_edit();
+		interface.undo_show_view(this);
 	}
 
 	void load(const gchar *filename);
@@ -198,7 +201,6 @@ public:
 	inline void
 	undo_edit(void)
 	{
-		current->update();
 		undo.push_var(QRegisters::current);
 		undo.push_var(current)->undo_edit();
 	}
@@ -243,9 +245,7 @@ namespace States {
 static inline void
 current_doc_update(void)
 {
-	if (ring.current)
-		ring.current->update();
-	else if (QRegisters::current)
+	if (QRegisters::current)
 		QRegisters::current->update_string();
 }
 

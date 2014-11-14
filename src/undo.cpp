@@ -39,12 +39,6 @@ namespace SciTECO {
 UndoStack undo;
 
 void
-UndoTokenMessage::run(void)
-{
-	interface.ssm(iMessage, wParam, lParam);
-}
-
-void
 UndoStack::push(UndoToken *token)
 {
 	if (enabled) {

@@ -316,7 +316,7 @@ StateExecuteCommand::done(const gchar *str)
 
 	if (!register_argument) {
 		if (current_doc_must_undo())
-			undo.push_msg(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
+			interface.undo_ssm(SCI_GOTOPOS, interface.ssm(SCI_GETCURRENTPOS));
 		interface.ssm(SCI_GOTOPOS, ctx.to);
 	}
 
@@ -331,7 +331,7 @@ StateExecuteCommand::done(const gchar *str)
 	    (ctx.from != ctx.to || ctx.text_added)) {
 		/* undo action is only effective if it changed anything */
 		if (current_doc_must_undo())
-			undo.push_msg(SCI_UNDO);
+			interface.undo_ssm(SCI_UNDO);
 		interface.ssm(SCI_SCROLLCARET);
 		ring.dirtify();
 	}

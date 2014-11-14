@@ -34,6 +34,11 @@
 
 namespace SciTECO {
 
+namespace QRegisters {
+	/* constructed after Interface.main() in main() */
+	extern ViewCurrent *view;
+}
+
 /*
  * Classes
  */
@@ -41,7 +46,21 @@ namespace SciTECO {
 class QRegisterData {
 protected:
 	tecoInt integer;
-	Document string;
+
+	class QRegisterString : public Document {
+	public:
+		~QRegisterString()
+		{
+			release_document();
+		}
+
+	private:
+		ViewCurrent *
+		get_create_document_view(void)
+		{
+			return QRegisters::view;
+		}
+	} string;
 
 public:
 	/*
@@ -70,9 +89,9 @@ public:
 	}
 
 	inline void
-	update_string(void)
+	update_string()
 	{
-		string.update();
+		string.update(QRegisters::view);
 	}
 
 	virtual void set_string(const gchar *str);

@@ -59,6 +59,7 @@ namespace States {
 namespace QRegisters {
 	QRegisterTable		*locals = NULL;
 	QRegister		*current = NULL;
+	ViewCurrent		*view = NULL;
 
 	void
 	undo_edit(void)
@@ -73,26 +74,19 @@ namespace QRegisters {
 
 static QRegister *register_argument = NULL;
 
-static inline void
-current_edit(void)
-{
-	if (ring.current)
-		ring.current->edit();
-	else if (QRegisters::current)
-		QRegisters::current->edit();
-}
-
 void
 QRegisterData::set_string(const gchar *str)
 {
-	edit();
+	string.edit(QRegisters::view);
 	string.reset();
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_SETTEXT, 0, (sptr_t)(str ? : ""));
-	interface.ssm(SCI_ENDUNDOACTION);
+	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
+	QRegisters::view->ssm(SCI_SETTEXT, 0,
+	                      (sptr_t)(str ? : ""));
+	QRegisters::view->ssm(SCI_ENDUNDOACTION);
 
-	current_edit();
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
 }
 
 void
@@ -104,30 +98,34 @@ QRegisterData::undo_set_string(void)
 	if (!must_undo)
 		return;
 
-	if (ring.current)
-		ring.current->undo_edit();
-	else if (QRegisters::current)
-		QRegisters::current->undo_edit();
+	if (QRegisters::current)
+		QRegisters::current->string.undo_edit(QRegisters::view);
 
 	string.undo_reset();
-	undo.push_msg(SCI_UNDO);
+	QRegisters::view->undo_ssm(SCI_UNDO);
 
-	undo_edit();
+	string.undo_edit(QRegisters::view);
 }
 
 void
 QRegisterData::append_string(const gchar *str)
 {
-	if (!str)
+	/*
+	 * NOTE: Will not create undo action
+	 * if string is empty
+	 */
+	if (!str || !*str)
 		return;
 
-	edit();
+	string.edit(QRegisters::view);
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_APPENDTEXT, strlen(str), (sptr_t)str);
-	interface.ssm(SCI_ENDUNDOACTION);
+	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
+	QRegisters::view->ssm(SCI_APPENDTEXT,
+	                     strlen(str), (sptr_t)str);
+	QRegisters::view->ssm(SCI_ENDUNDOACTION);
 
-	current_edit();
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
 }
 
 gchar *
@@ -140,13 +138,14 @@ QRegisterData::get_string(void)
 		return g_strdup("");
 
 	current_doc_update();
-	edit();
+	string.edit(QRegisters::view);
 
-	size = interface.ssm(SCI_GETLENGTH) + 1;
+	size = QRegisters::view->ssm(SCI_GETLENGTH) + 1;
 	str = (gchar *)g_malloc(size);
-	interface.ssm(SCI_GETTEXT, size, (sptr_t)str);
+	QRegisters::view->ssm(SCI_GETTEXT, size, (sptr_t)str);
 
-	current_edit();
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
 
 	return str;
 }
@@ -154,20 +153,26 @@ QRegisterData::get_string(void)
 void
 QRegisterData::edit(void)
 {
-	string.edit();
+	string.edit(QRegisters::view);
+	interface.show_view(QRegisters::view);
 }
 
 void
 QRegisterData::undo_edit(void)
 {
-	if (must_undo)
-		string.undo_edit();
+	if (!must_undo)
+		return;
+
+	string.undo_edit(QRegisters::view);
+	interface.undo_show_view(QRegisters::view);
 }
 
 void
 QRegister::edit(void)
 {
-	string.edit();
+	/* NOTE: could call QRegisterData::edit() */
+	string.edit(QRegisters::view);
+	interface.show_view(QRegisters::view);
 	interface.info_update(this);
 }
 
@@ -178,7 +183,9 @@ QRegister::undo_edit(void)
 		return;
 
 	interface.undo_info_update(this);
-	string.undo_edit();
+	/* NOTE: could call QRegisterData::undo_edit() */
+	string.undo_edit(QRegisters::view);
+	interface.undo_show_view(QRegisters::view);
 }
 
 void
@@ -213,17 +220,18 @@ QRegister::load(const gchar *filename)
 	if (!g_file_get_contents(filename, &contents, &size, &gerror))
 		throw GlibError(gerror);
 
-	edit();
+	string.edit(QRegisters::view);
 	string.reset();
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_CLEARALL);
-	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
-	interface.ssm(SCI_ENDUNDOACTION);
+	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
+	QRegisters::view->ssm(SCI_CLEARALL);
+	QRegisters::view->ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
+	QRegisters::view->ssm(SCI_ENDUNDOACTION);
 
 	g_free(contents);
 
-	current_edit();
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
 }
 
 tecoInt
@@ -245,23 +253,20 @@ QRegisterBufferInfo::get_integer(void)
 gchar *
 QRegisterBufferInfo::get_string(void)
 {
-	gchar *filename = ring.current ? ring.current->filename : NULL;
-
-	return g_strdup(filename ? : "");
+	return g_strdup(ring.current ? ring.current->filename : "");
 }
 
 void
 QRegisterBufferInfo::edit(void)
 {
-	gchar *filename = ring.current ? ring.current->filename : NULL;
-
 	QRegister::edit();
 
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_SETTEXT, 0, (sptr_t)(filename ? : ""));
-	interface.ssm(SCI_ENDUNDOACTION);
+	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
+	QRegisters::view->ssm(SCI_SETTEXT, 0,
+	                      (sptr_t)(ring.current ? ring.current->filename : ""));
+	QRegisters::view->ssm(SCI_ENDUNDOACTION);
 
-	undo.push_msg(SCI_UNDO);
+	QRegisters::view->undo_ssm(SCI_UNDO);
 }
 
 QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
@@ -648,7 +653,7 @@ StateGetQRegString::got_register(QRegister &reg)
 		interface.ssm(SCI_ENDUNDOACTION);
 		ring.dirtify();
 
-		undo.push_msg(SCI_UNDO);
+		interface.undo_ssm(SCI_UNDO);
 	}
 	g_free(str);
 

@@ -33,7 +33,7 @@ libsciteco_base_a_SOURCES = main.cpp sciteco.h \
 			    goto.cpp goto.h \
 			    rbtree.cpp rbtree.h \
 			    symbols.cpp symbols.h \
-			    interface.h
+			    interface.cpp interface.h
 nodist_libsciteco_base_a_SOURCES =
 
 if INTERFACE_GTK

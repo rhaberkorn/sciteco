@@ -23,8 +23,6 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
-#include <Scintilla.h>
-
 #ifdef DEBUG
 #include "parser.h"
 #endif
@@ -40,20 +38,6 @@ public:
 	virtual ~UndoToken() {}
 
 	virtual void run() = 0;
-};
-
-class UndoTokenMessage : public UndoToken {
-	unsigned int iMessage;
-	uptr_t wParam;
-	sptr_t lParam;
-
-public:
-	UndoTokenMessage(unsigned int _iMessage,
-			 uptr_t _wParam = 0, sptr_t _lParam = 0)
-			: UndoToken(), iMessage(_iMessage),
-			  wParam(_wParam), lParam(_lParam) {}
-
-	void run(void);
 };
 
 template <typename Type>
@@ -139,13 +123,6 @@ public:
 	~UndoStack();
 
 	void push(UndoToken *token);
-
-	inline void
-	push_msg(unsigned int iMessage,
-		 uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		push(new UndoTokenMessage(iMessage, wParam, lParam));
-	}
 
 	template <typename Type>
 	inline Type &

@@ -30,76 +30,43 @@
 
 namespace SciTECO {
 
-static inline void
-set_representations(void)
-{
-	static const char *reps[] = {
-		"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
-		"^H", "TAB" /* ^I */, "LF" /* ^J */, "^K", "^L", "CR" /* ^M */, "^N", "^O",
-		"^P", "^Q", "^R", "^S", "^T", "^U", "^V", "^W",
-		"^X", "^Y", "^Z", "$" /* ^[ */, "^\\", "^]", "^^", "^_"
-	};
-
-	for (guint cc = 0; cc < G_N_ELEMENTS(reps); cc++) {
-		gchar buf[] = {(gchar)cc, '\0'};
-		interface.ssm(SCI_SETREPRESENTATION,
-			      (uptr_t)buf, (sptr_t)reps[cc]);
-	}
-}
-
-class UndoSetRepresentations : public UndoToken {
-public:
-	void
-	run(void)
-	{
-		set_representations();
-	}
-};
-
 void
-Document::edit(void)
+Document::edit(ViewCurrent *view)
 {
-	if (!is_initialized())
-		doc = (SciDoc)interface.ssm(SCI_CREATEDOCUMENT);
+	maybe_create_document();
 
-	interface.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
-	interface.ssm(SCI_SETFIRSTVISIBLELINE, first_line);
-	interface.ssm(SCI_SETXOFFSET, xoffset);
-	interface.ssm(SCI_SETSEL, anchor, (sptr_t)dot);
+	view->ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+	view->ssm(SCI_SETFIRSTVISIBLELINE, first_line);
+	view->ssm(SCI_SETXOFFSET, xoffset);
+	view->ssm(SCI_SETSEL, anchor, (sptr_t)dot);
 
 	/*
 	 * Default TECO-style character representations.
 	 * They are reset on EVERY SETDOCPOINTER call by Scintilla.
 	 */
-	set_representations();
+	view->set_representations();
 }
 
 void
-Document::undo_edit(void)
+Document::undo_edit(ViewCurrent *view)
 {
-	if (!is_initialized())
-		doc = (SciDoc)interface.ssm(SCI_CREATEDOCUMENT);
+	maybe_create_document();
 
-	/*
-	 * see above: set TECO-style character representations
-	 * NOTE: could be done with push_msg() but that requires
-	 * making the entire mapping static constant
-	 */
-	undo.push(new UndoSetRepresentations());
+	view->undo_set_representations();
 
-	undo.push_msg(SCI_SETSEL, anchor, (sptr_t)dot);
-	undo.push_msg(SCI_SETXOFFSET, xoffset);
-	undo.push_msg(SCI_SETFIRSTVISIBLELINE, first_line);
-	undo.push_msg(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+	view->undo_ssm(SCI_SETSEL, anchor, (sptr_t)dot);
+	view->undo_ssm(SCI_SETXOFFSET, xoffset);
+	view->undo_ssm(SCI_SETFIRSTVISIBLELINE, first_line);
+	view->undo_ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 }
 
 void
-Document::update(void)
+Document::update(ViewCurrent *view)
 {
-	anchor = interface.ssm(SCI_GETANCHOR);
-	dot = interface.ssm(SCI_GETCURRENTPOS);
-	first_line = interface.ssm(SCI_GETFIRSTVISIBLELINE);
-	xoffset = interface.ssm(SCI_GETXOFFSET);
+	anchor = view->ssm(SCI_GETANCHOR);
+	dot = view->ssm(SCI_GETCURRENTPOS);
+	first_line = view->ssm(SCI_GETFIRSTVISIBLELINE);
+	xoffset = view->ssm(SCI_GETXOFFSET);
 }
 
 /*

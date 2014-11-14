@@ -19,7 +19,6 @@
 #include "config.h"
 #endif
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -29,9 +28,6 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
-
-#include <Scintilla.h>
-#include <SciLexer.h>
 
 #include "sciteco.h"
 #include "cmdline.h"
@@ -85,37 +81,6 @@ static gpointer g_realloc_exception(gpointer mem, gsize n_bytes)
 		throw (std::bad_alloc);
 
 static void sigint_handler(int signal);
-}
-
-void
-Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
-{
-	gchar buf[255];
-
-	g_vsnprintf(buf, sizeof(buf), fmt, ap);
-
-	switch (type) {
-	case MSG_USER:
-		g_printf("%s\n", buf);
-		break;
-	case MSG_INFO:
-		g_printf("Info: %s\n", buf);
-		break;
-	case MSG_WARNING:
-		g_fprintf(stderr, "Warning: %s\n", buf);
-		break;
-	case MSG_ERROR:
-		g_fprintf(stderr, "Error: %s\n", buf);
-		break;
-	}
-}
-
-void
-Interface::process_notify(SCNotification *notify)
-{
-#ifdef DEBUG
-	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
-#endif
 }
 
 void
@@ -321,19 +286,12 @@ main(int argc, char **argv)
 	interface.main(argc, argv);
 	/* remaining arguments are arguments to the munged file */
 
-	interface.ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
-	interface.ssm(SCI_SETCARETFORE, 0xFFFFFF);
-
 	/*
-	 * FIXME: Default styles should probably be set interface-based
-	 * (system defaults)
+	 * QRegister view must be initialized only now
+	 * (after Curses initialization)
 	 */
-	interface.ssm(SCI_STYLESETFORE, STYLE_DEFAULT, 0xFFFFFF);
-	interface.ssm(SCI_STYLESETBACK, STYLE_DEFAULT, 0x000000);
-	interface.ssm(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");
-	interface.ssm(SCI_STYLECLEARALL);
-
-	interface.ssm(SCI_STYLESETBACK, STYLE_LINENUMBER, 0x000000);
+	QRegisters::view = new ViewCurrent();
+	// FIXME: view should be deallocated */
 
 	/* search string and status register */
 	QRegisters::globals.insert("_");

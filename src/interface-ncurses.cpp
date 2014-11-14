@@ -56,6 +56,34 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 #define SCI_COLOR_ATTR(f, b) \
 	((chtype)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
+ViewNCurses::ViewNCurses()
+{
+	WINDOW *window;
+
+	/* NOTE: Scintilla initializes color pairs */
+	sci = scintilla_new(scintilla_notify);
+	window = get_window();
+
+	/*
+	 * Window must have dimension before it can be
+	 * positioned.
+	 * Perhaps it's better to leave the window
+	 * unitialized and set the position in
+	 * InterfaceNCurses::show_view().
+	 */
+	wresize(window, 1, 1);
+	/* Set up window position: never changes */
+	mvwin(window, 1, 0);
+
+	initialize();
+}
+
+ViewNCurses::~ViewNCurses()
+{
+	delwin(get_window());
+	scintilla_delete(sci);
+}
+
 void
 InterfaceNCurses::main(int &argc, char **&argv)
 {
@@ -69,18 +97,10 @@ InterfaceNCurses::main(int &argc, char **&argv)
 	info_window = newwin(1, 0, 0, 0);
 	info_current = g_strdup(PACKAGE_NAME);
 
-	/* NOTE: Scintilla initializes color pairs */
-	sci = scintilla_new(scintilla_notify);
-	sci_window = scintilla_get_window(sci);
-	wresize(sci_window, LINES - 3, COLS);
-	mvwin(sci_window, 1, 0);
-
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
 	cmdline_current = NULL;
-
-	ssm(SCI_SETFOCUS, TRUE);
 
 	draw_info();
 	/* scintilla will be refreshed in event loop */
@@ -140,7 +160,8 @@ InterfaceNCurses::resize_all_windows(void)
 	getmaxyx(stdscr, lines, cols);
 
 	wresize(info_window, 1, cols);
-	wresize(sci_window, lines - 3, cols);
+	wresize(current_view->get_window(),
+	        lines - 3, cols);
 	wresize(msg_window, 1, cols);
 	mvwin(msg_window, lines - 2, 0);
 	wresize(cmdline_window, 1, cols);
@@ -192,6 +213,23 @@ InterfaceNCurses::msg_clear(void)
 	wclrtoeol(msg_window);
 
 	wrefresh(msg_window);
+}
+
+void
+InterfaceNCurses::show_view(View *view)
+{
+	int lines, cols; /* screen dimensions */
+
+	/* We know that `view` is a ViewNCurses */
+	current_view = (ViewNCurses *)view;
+
+	/*
+	 * screen size might have changed since
+	 * this view's WINDOW was last active
+	 */
+	getmaxyx(stdscr, lines, cols);
+	wresize(current_view->get_window(),
+	        lines - 3, cols);
 }
 
 void
@@ -343,8 +381,8 @@ InterfaceNCurses::popup_clear(void)
 
 	redrawwin(info_window);
 	wrefresh(info_window);
-	redrawwin(sci_window);
-	scintilla_refresh(sci);
+	redrawwin(current_view->get_window());
+	current_view->refresh();
 	redrawwin(msg_window);
 	wrefresh(msg_window);
 
@@ -432,7 +470,7 @@ event_loop_iter()
 
 	sigint_occurred = FALSE;
 
-	scintilla_refresh(interface.sci);
+	interface.current_view->refresh();
 	if (interface.popup.window)
 		wrefresh(interface.popup.window);
 }
@@ -441,7 +479,7 @@ void
 InterfaceNCurses::event_loop(void)
 {
 	/* initial refresh: window might have been changed in batch mode */
-	scintilla_refresh(sci);
+	current_view->refresh();
 	draw_info();
 
 #ifdef EMSCRIPTEN
@@ -465,9 +503,6 @@ InterfaceNCurses::~InterfaceNCurses()
 	if (info_window)
 		delwin(info_window);
 	g_free(info_current);
-	/* also deletes curses window */
-	if (sci)
-		scintilla_delete(sci);
 	if (cmdline_window)
 		delwin(cmdline_window);
 	g_free(cmdline_current);

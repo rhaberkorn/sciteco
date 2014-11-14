@@ -36,7 +36,10 @@ class Document {
 	typedef const void *SciDoc;
 	SciDoc doc;
 
-	/* updated/restored only when required */
+	/*
+	 * The so called "parameters".
+	 * Updated/restored only when required
+	 */
 	gint anchor, dot;
 	gint first_line, xoffset;
 
@@ -47,8 +50,15 @@ public:
 	}
 	virtual ~Document()
 	{
-		if (is_initialized())
-			interface.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
+		/*
+		 * Cannot release document here, since we must
+		 * do it on the same view that created it.
+		 * We also cannot call get_create_document_view()
+		 * since it is virtual.
+		 * So we must demand that deriving classes call
+		 * release_document() from their destructors.
+		 */
+		g_assert(doc == NULL);
 	}
 
 	inline bool
@@ -57,10 +67,10 @@ public:
 		return doc != NULL;
 	}
 
-	void edit(void);
-	void undo_edit(void);
+	void edit(ViewCurrent *view);
+	void undo_edit(ViewCurrent *view);
 
-	void update(void);
+	void update(ViewCurrent *view);
 	inline void
 	update(const Document &from)
 	{
@@ -91,6 +101,37 @@ public:
 	{
 		undo.push_var(doc);
 		undo_reset();
+	}
+
+protected:
+	inline void
+	release_document(void)
+	{
+		if (is_initialized()) {
+			ViewCurrent *view = get_create_document_view();
+			view->ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
+			doc = NULL;
+		}
+	}
+
+private:
+	/*
+	 * Must be implemented by derived class.
+	 * Documents must be released on the same view
+	 * as they were created.
+	 * Since we do not want to save this view
+	 * per document, it must instead be returned by
+	 * this method.
+	 */
+	virtual ViewCurrent *get_create_document_view(void) = 0;
+
+	inline void
+	maybe_create_document(void)
+	{
+		if (!is_initialized()) {
+			ViewCurrent *view = get_create_document_view();
+			doc = (SciDoc)view->ssm(SCI_CREATEDOCUMENT);
+		}
 	}
 };
 

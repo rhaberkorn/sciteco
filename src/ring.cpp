@@ -137,12 +137,10 @@ Buffer::load(const gchar *filename)
 	if (!g_file_get_contents(filename, &contents, &size, &gerror))
 		throw GlibError(gerror);
 
-	edit();
-
-	interface.ssm(SCI_BEGINUNDOACTION);
-	interface.ssm(SCI_CLEARALL);
-	interface.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
-	interface.ssm(SCI_ENDUNDOACTION);
+	ssm(SCI_BEGINUNDOACTION);
+	ssm(SCI_CLEARALL);
+	ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
+	ssm(SCI_ENDUNDOACTION);
 
 	g_free(contents);
 
@@ -263,6 +261,7 @@ Ring::edit(const gchar *filename)
 		undo_close();
 
 		if (filename && g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
+			buffer->edit();
 			buffer->load(filename);
 
 			interface.msg(Interface::MSG_INFO,
@@ -489,7 +488,6 @@ Ring::close(void)
 {
 	Buffer *buffer = current;
 
-	buffer->update();
 	close(buffer);
 	current = buffer->next() ? : buffer->prev();
 	/* transfer responsibility to UndoToken object */

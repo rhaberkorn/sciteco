@@ -34,6 +34,65 @@ class QRegister;
 class Buffer;
 extern sig_atomic_t sigint_occurred;
 
+class View {
+	class UndoTokenMessage : public UndoToken {
+		View *view;
+
+		unsigned int iMessage;
+		uptr_t wParam;
+		sptr_t lParam;
+
+	public:
+		UndoTokenMessage(View *_view, unsigned int _iMessage,
+				 uptr_t _wParam = 0, sptr_t _lParam = 0)
+				: UndoToken(), view(_view),
+		                  iMessage(_iMessage),
+				  wParam(_wParam), lParam(_lParam) {}
+
+		void
+		run(void)
+		{
+			view->ssm(iMessage, wParam, lParam);
+		}
+	};
+
+	class UndoTokenSetRepresentations : public UndoToken {
+		View *view;
+
+	public:
+		UndoTokenSetRepresentations(View *_view)
+		                           : view(_view) {}
+
+		void
+		run(void)
+		{
+			view->set_representations();
+		}
+	};
+
+public:
+	virtual ~View() {}
+
+	virtual sptr_t ssm(unsigned int iMessage,
+			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
+	inline void
+	undo_ssm(unsigned int iMessage,
+		 uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		undo.push(new UndoTokenMessage(this, iMessage, wParam, lParam));
+	}
+
+	void set_representations(void);
+	inline void
+	undo_set_representations(void)
+	{
+		undo.push(new UndoTokenSetRepresentations(this));
+	}
+
+protected:
+	void initialize(void);
+};
+
 /*
  * Base class for all user interfaces - used mereley as a class interface.
  * The actual instance of the interface has the platform-specific type
@@ -43,8 +102,19 @@ extern sig_atomic_t sigint_occurred;
  * There's only one Interface* instance in the system.
  */
 class Interface {
+	class UndoTokenShowView : public UndoToken {
+		View *view;
+
+	public:
+		UndoTokenShowView(View *_view)
+		                 : view(_view) {}
+
+		void run(void);
+	};
+
 	template <class Type>
 	class UndoTokenInfoUpdate : public UndoToken {
+		/* FIXME: can be implement this in interface.cpp - avoid saving iface */
 		Interface *iface;
 		Type *obj;
 
@@ -86,8 +156,18 @@ public:
 	}
 	virtual void msg_clear(void) {}
 
+	virtual void show_view(View *view) = 0;
+	inline void
+	undo_show_view(View *view)
+	{
+		undo.push(new UndoTokenShowView(view));
+	}
+	virtual View *get_current_view(void) = 0;
+
 	virtual sptr_t ssm(unsigned int iMessage,
 			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
+	virtual void undo_ssm(unsigned int iMessage,
+	                      uptr_t wParam = 0, sptr_t lParam = 0) = 0;
 
 	virtual void info_update(QRegister *reg) = 0;
 	virtual void info_update(Buffer *buffer) = 0;

@@ -31,18 +31,43 @@
 
 namespace SciTECO {
 
+typedef class ViewNCurses : public View {
+	Scintilla *sci;
+
+public:
+	ViewNCurses();
+	~ViewNCurses();
+
+	inline void
+	refresh(void)
+	{
+		scintilla_refresh(sci);
+	}
+
+	inline WINDOW *
+	get_window(void)
+	{
+		return scintilla_get_window(sci);
+	}
+
+	inline sptr_t
+	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		return scintilla_send_message(sci, iMessage, wParam, lParam);
+	}
+} ViewCurrent;
+
 typedef class InterfaceNCurses : public Interface {
 	SCREEN *screen;
 	FILE *screen_tty;
 
-	Scintilla *sci;
-
 	WINDOW *info_window;
 	gchar *info_current;
-	WINDOW *sci_window;
 	WINDOW *msg_window;
 	WINDOW *cmdline_window;
 	gchar *cmdline_current;
+
+	ViewNCurses *current_view;
 
 	struct Popup {
 		WINDOW *window;
@@ -57,13 +82,12 @@ typedef class InterfaceNCurses : public Interface {
 public:
 	InterfaceNCurses() : screen(NULL),
 			     screen_tty(NULL),
-			     sci(NULL),
 			     info_window(NULL),
 			     info_current(NULL),
-			     sci_window(NULL),
 			     msg_window(NULL),
 			     cmdline_window(NULL),
-			     cmdline_current(NULL) {}
+			     cmdline_current(NULL),
+	                     current_view(NULL) {}
 	~InterfaceNCurses();
 
 	void main(int &argc, char **&argv);
@@ -71,10 +95,23 @@ public:
 	void vmsg(MessageType type, const gchar *fmt, va_list ap);
 	void msg_clear(void);
 
+	void show_view(View *view);
+	inline View *
+	get_current_view(void)
+	{
+		return current_view;
+	}
+
 	inline sptr_t
 	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		return scintilla_send_message(sci, iMessage, wParam, lParam);
+		return current_view->ssm(iMessage, wParam, lParam);
+	}
+	inline void
+	undo_ssm(unsigned int iMessage,
+		 uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		current_view->undo_ssm(iMessage, wParam, lParam);
 	}
 
 	void info_update(QRegister *reg);
