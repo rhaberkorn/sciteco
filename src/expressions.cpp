@@ -170,6 +170,9 @@ Expressions::calc(void)
 	case OP_AND:
 		result = vleft & vright;
 		break;
+	case OP_XOR:
+		result = vleft ^ vright;
+		break;
 	case OP_OR:
 		result = vleft | vright;
 		break;

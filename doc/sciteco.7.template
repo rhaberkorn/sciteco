@@ -429,14 +429,17 @@ Remainder of \fIa\fP divided by \fIb\fP.
 It is actually a modulo operation conforming to the
 host C compiler's modulo semantics.
 .TP
-.IB a " - " b
-Subtract \fIb\fP from \fIa\fP.
-.TP
 .IB a " + " b
 Add \fIb\fP to \fIa\fP.
 .TP
+.IB a " - " b
+Subtract \fIb\fP from \fIa\fP.
+.TP
 .IB a " & " b
 Binary AND.
+.TP
+.IB a " ^# " b
+Binary exclusive OR (XOR).
 .TP
 .IB a " # " b
 Binary OR.

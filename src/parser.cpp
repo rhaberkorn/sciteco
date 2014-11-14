@@ -1735,6 +1735,11 @@ StateControl::custom(gchar chr)
 		expressions.push_calc(Expressions::OP_MOD);
 		break;
 
+	case '#':
+		BEGIN_EXEC(&States::start);
+		expressions.push_calc(Expressions::OP_XOR);
+		break;
+
 	default:
 		throw Error("Unsupported command <^%c>", chr);
 	}

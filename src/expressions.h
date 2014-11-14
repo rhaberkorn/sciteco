@@ -143,9 +143,10 @@ public:
 		OP_MUL,		// *
 		OP_DIV,		// /
 		OP_MOD,		// ^/
-		OP_SUB,		// -
 		OP_ADD,		// +
+		OP_SUB,		// -
 		OP_AND,		// &
+		OP_XOR,		// ^#
 		OP_OR,		// #
 				// pseudo operators:
 		OP_NEW,
