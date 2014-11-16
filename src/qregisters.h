@@ -64,7 +64,12 @@ protected:
 
 public:
 	/*
-	 * whether to generate UndoTokens (unnecessary in macro invocations)
+	 * Whether to generate UndoTokens (unnecessary in macro invocations).
+	 *
+	 * FIXME: Every QRegister has this field, but it only differs
+	 * between local and global QRegisters. This wastes space.
+	 * There must be a more clever way to inherit this property, e.g.
+	 * by setting QRegisters::current_must_undo.
 	 */
 	bool must_undo;
 
@@ -88,12 +93,6 @@ public:
 		return integer;
 	}
 
-	inline void
-	update_string()
-	{
-		string.update(QRegisters::view);
-	}
-
 	virtual void set_string(const gchar *str);
 	virtual void undo_set_string(void);
 	virtual void append_string(const gchar *str);
@@ -104,9 +103,11 @@ public:
 	}
 	virtual gchar *get_string(void);
 
-	virtual void edit(void);
-	virtual void undo_edit(void);
-
+	/*
+	 * The QRegisterStack must currently access the
+	 * integer and string fields directly to exchange
+	 * data efficiently.
+	 */
 	friend class QRegisterStack;
 };
 
@@ -440,8 +441,6 @@ namespace QRegisters {
 	extern QRegisterTable	globals;
 	extern QRegisterTable	*locals;
 	extern QRegister	*current;
-
-	void undo_edit(void);
 
 	enum Hook {
 		HOOK_ADD = 1,

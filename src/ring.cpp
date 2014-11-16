@@ -37,6 +37,7 @@
 #include "undo.h"
 #include "parser.h"
 #include "expressions.h"
+#include "qregisters.h"
 #include "ring.h"
 #include "error.h"
 
@@ -229,8 +230,6 @@ Ring::edit(tecoInt id)
 	if (!buffer)
 		return false;
 
-	current_doc_update();
-
 	QRegisters::current = NULL;
 	current = buffer;
 	buffer->edit();
@@ -244,8 +243,6 @@ void
 Ring::edit(const gchar *filename)
 {
 	Buffer *buffer = find(filename);
-
-	current_doc_update();
 
 	QRegisters::current = NULL;
 	if (buffer) {
@@ -572,20 +569,14 @@ get_absolute_path(const gchar *path)
 void
 StateEditFile::do_edit(const gchar *filename)
 {
-	if (ring.current)
-		ring.undo_edit();
-	else /* QRegisters::current != NULL */
-		QRegisters::undo_edit();
+	current_doc_undo_edit();
 	ring.edit(filename);
 }
 
 void
 StateEditFile::do_edit(tecoInt id)
 {
-	if (ring.current)
-		ring.undo_edit();
-	else /* QRegisters::current != NULL */
-		QRegisters::undo_edit();
+	current_doc_undo_edit();
 	if (!ring.edit(id))
 		throw Error("Invalid buffer id %" TECO_INTEGER_FORMAT, id);
 }
@@ -750,6 +741,15 @@ StateSaveFile::done(const gchar *str)
 		throw Error("Unable to save file");
 
 	return &States::start;
+}
+
+void
+current_doc_undo_edit(void)
+{
+	if (ring.current)
+		ring.undo_edit();
+	else if (QRegisters::current)
+		undo.push_var(QRegisters::current)->undo_edit();
 }
 
 } /* namespace SciTECO */

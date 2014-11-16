@@ -61,14 +61,6 @@ namespace QRegisters {
 	QRegister		*current = NULL;
 	ViewCurrent		*view = NULL;
 
-	void
-	undo_edit(void)
-	{
-		current->update_string();
-		undo.push_var(ring.current);
-		undo.push_var(current)->undo_edit();
-	}
-
 	static QRegisterStack	stack;
 }
 
@@ -77,8 +69,11 @@ static QRegister *register_argument = NULL;
 void
 QRegisterData::set_string(const gchar *str)
 {
-	string.edit(QRegisters::view);
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
 	string.reset();
+	string.edit(QRegisters::view);
 
 	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
 	QRegisters::view->ssm(SCI_SETTEXT, 0,
@@ -92,13 +87,16 @@ QRegisterData::set_string(const gchar *str)
 void
 QRegisterData::undo_set_string(void)
 {
-	/* set_string() assumes that parameters have been saved */
-	current_doc_update();
-
 	if (!must_undo)
 		return;
 
-	if (QRegisters::current)
+	/*
+	 * Necessary, so that upon rubout the
+	 * string's parameters are restored.
+	 */
+	string.update(QRegisters::view);
+
+	if (QRegisters::current && QRegisters::current->must_undo)
 		QRegisters::current->string.undo_edit(QRegisters::view);
 
 	string.undo_reset();
@@ -112,16 +110,21 @@ QRegisterData::append_string(const gchar *str)
 {
 	/*
 	 * NOTE: Will not create undo action
-	 * if string is empty
+	 * if string is empty.
+	 * Also, appending preserves the string's
+	 * parameters.
 	 */
 	if (!str || !*str)
 		return;
+
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
 
 	string.edit(QRegisters::view);
 
 	QRegisters::view->ssm(SCI_BEGINUNDOACTION);
 	QRegisters::view->ssm(SCI_APPENDTEXT,
-	                     strlen(str), (sptr_t)str);
+	                      strlen(str), (sptr_t)str);
 	QRegisters::view->ssm(SCI_ENDUNDOACTION);
 
 	if (QRegisters::current)
@@ -137,7 +140,9 @@ QRegisterData::get_string(void)
 	if (!string.is_initialized())
 		return g_strdup("");
 
-	current_doc_update();
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
 	string.edit(QRegisters::view);
 
 	size = QRegisters::view->ssm(SCI_GETLENGTH) + 1;
@@ -151,26 +156,11 @@ QRegisterData::get_string(void)
 }
 
 void
-QRegisterData::edit(void)
-{
-	string.edit(QRegisters::view);
-	interface.show_view(QRegisters::view);
-}
-
-void
-QRegisterData::undo_edit(void)
-{
-	if (!must_undo)
-		return;
-
-	string.undo_edit(QRegisters::view);
-	interface.undo_show_view(QRegisters::view);
-}
-
-void
 QRegister::edit(void)
 {
-	/* NOTE: could call QRegisterData::edit() */
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
 	string.edit(QRegisters::view);
 	interface.show_view(QRegisters::view);
 	interface.info_update(this);
@@ -183,7 +173,7 @@ QRegister::undo_edit(void)
 		return;
 
 	interface.undo_info_update(this);
-	/* NOTE: could call QRegisterData::undo_edit() */
+	string.update(QRegisters::view);
 	string.undo_edit(QRegisters::view);
 	interface.undo_show_view(QRegisters::view);
 }
@@ -281,7 +271,6 @@ QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
 void
 QRegisterTable::edit(QRegister *reg)
 {
-	current_doc_update();
 	reg->edit();
 
 	ring.current = NULL;
@@ -538,13 +527,12 @@ StateLoadQReg::done(const gchar *str)
 	BEGIN_EXEC(&States::start);
 
 	if (*str) {
+		/* Load file into Q-Register */
 		register_argument->undo_load();
 		register_argument->load(str);
 	} else {
-		if (ring.current)
-			ring.undo_edit();
-		else /* QRegisters::current != NULL */
-			QRegisters::undo_edit();
+		/* Edit Q-Register */
+		current_doc_undo_edit();
 		QRegisters::globals.edit(register_argument);
 	}
 

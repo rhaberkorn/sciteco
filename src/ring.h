@@ -241,13 +241,12 @@ namespace States {
 	extern StateSaveFile	savefile;
 }
 
-/* FIXME: clean up current_doc_update() usage */
-static inline void
-current_doc_update(void)
-{
-	if (QRegisters::current)
-		QRegisters::current->update_string();
-}
+/*
+ * Helper functions applying to any current
+ * document (whether a buffer or QRegister).
+ * There's currently no better place to put them.
+ */
+void current_doc_undo_edit(void);
 
 static inline bool
 current_doc_must_undo(void)

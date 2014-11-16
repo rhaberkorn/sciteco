@@ -995,10 +995,7 @@ StateStart::custom(gchar chr)
 			throw Error("Command-line editing only possible in "
 				    "interactive mode");
 
-		if (ring.current)
-			ring.undo_edit();
-		else /* QRegisters::current != NULL */
-			QRegisters::undo_edit();
+		current_doc_undo_edit();
 		QRegisters::globals.edit("\x1B");
 
 		interface.ssm(SCI_BEGINUNDOACTION);
