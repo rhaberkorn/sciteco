@@ -114,19 +114,19 @@ class Interface {
 
 	template <class Type>
 	class UndoTokenInfoUpdate : public UndoToken {
-		/* FIXME: can be implement this in interface.cpp - avoid saving iface */
-		Interface *iface;
 		Type *obj;
 
 	public:
-		UndoTokenInfoUpdate(Interface *_iface, Type *_obj)
-				   : iface(_iface), obj(_obj) {}
+		UndoTokenInfoUpdate(Type *_obj)
+				   : obj(_obj) {}
 
-		void
-		run(void)
-		{
-			iface->info_update(obj);
-		}
+		/*
+		 * Implemented at bottom, so we can reference
+		 * the singleton interface object.
+		 * Alternative would be to do an extern explicit
+		 * template instantiation.
+		 */
+		void run(void);
 	};
 
 public:
@@ -176,7 +176,7 @@ public:
 	inline void
 	undo_info_update(Type *obj)
 	{
-		undo.push(new UndoTokenInfoUpdate<Type>(this, obj));
+		undo.push(new UndoTokenInfoUpdate<Type>(obj));
 	}
 
 	/* NULL means to redraw the current cmdline if necessary */
@@ -222,8 +222,17 @@ public:
 #endif
 
 namespace SciTECO {
-	/* object defined in main.cpp */
-	extern InterfaceCurrent interface;
+
+/* object defined in main.cpp */
+extern InterfaceCurrent interface;
+
+template <class Type>
+void
+Interface::UndoTokenInfoUpdate<Type>::run(void)
+{
+	interface.info_update(obj);
 }
+
+} /* namespace SciTECO */
 
 #endif
