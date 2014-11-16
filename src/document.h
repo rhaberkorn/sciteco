@@ -67,10 +67,10 @@ public:
 		return doc != NULL;
 	}
 
-	void edit(ViewCurrent *view);
-	void undo_edit(ViewCurrent *view);
+	void edit(ViewCurrent &view);
+	void undo_edit(ViewCurrent &view);
 
-	void update(ViewCurrent *view);
+	void update(ViewCurrent &view);
 	inline void
 	update(const Document &from)
 	{
@@ -108,8 +108,8 @@ protected:
 	release_document(void)
 	{
 		if (is_initialized()) {
-			ViewCurrent *view = get_create_document_view();
-			view->ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
+			ViewCurrent &view = get_create_document_view();
+			view.ssm(SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
 			doc = NULL;
 		}
 	}
@@ -123,14 +123,14 @@ private:
 	 * per document, it must instead be returned by
 	 * this method.
 	 */
-	virtual ViewCurrent *get_create_document_view(void) = 0;
+	virtual ViewCurrent &get_create_document_view(void) = 0;
 
 	inline void
 	maybe_create_document(void)
 	{
 		if (!is_initialized()) {
-			ViewCurrent *view = get_create_document_view();
-			doc = (SciDoc)view->ssm(SCI_CREATEDOCUMENT);
+			ViewCurrent &view = get_create_document_view();
+			doc = (SciDoc)view.ssm(SCI_CREATEDOCUMENT);
 		}
 	}
 };

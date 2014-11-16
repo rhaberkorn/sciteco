@@ -53,7 +53,8 @@ static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 
 #define UNNAMED_FILE "(Unnamed)"
 
-ViewGtk::ViewGtk()
+void
+ViewGtk::initialize_impl(void)
 {
 	sci = SCINTILLA(scintilla_new());
 	/*
@@ -70,17 +71,7 @@ ViewGtk::ViewGtk()
 	g_signal_connect(G_OBJECT(sci), SCINTILLA_NOTIFY,
 			 G_CALLBACK(scintilla_notify), NULL);
 
-	initialize();
-}
-
-ViewGtk::~ViewGtk()
-{
-	/*
-	 * This does NOT destroy the Scintilla object
-	 * and GTK widget, if it is the current view
-	 * (and therefore added to the vbox).
-	 */
-	g_object_unref(G_OBJECT(sci));
+	setup();
 }
 
 void

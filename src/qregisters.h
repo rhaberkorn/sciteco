@@ -35,8 +35,8 @@
 namespace SciTECO {
 
 namespace QRegisters {
-	/* constructed after Interface.main() in main() */
-	extern ViewCurrent *view;
+	/* initialized after Interface.main() in main() */
+	extern ViewCurrent view;
 }
 
 /*
@@ -55,7 +55,7 @@ protected:
 		}
 
 	private:
-		ViewCurrent *
+		ViewCurrent &
 		get_create_document_view(void)
 		{
 			return QRegisters::view;

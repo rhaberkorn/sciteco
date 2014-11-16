@@ -34,8 +34,21 @@ typedef class ViewGtk : public View<ViewGtk> {
 	ScintillaObject *sci;
 
 public:
-	ViewGtk();
-	~ViewGtk();
+	ViewGtk() : sci(NULL) {}
+
+	/* implementation of View::initialize() */
+	void initialize_impl(void);
+
+	inline ~ViewGtk()
+	{
+		/*
+		 * This does NOT destroy the Scintilla object
+		 * and GTK widget, if it is the current view
+		 * (and therefore added to the vbox).
+		 */
+		if (sci)
+			g_object_unref(G_OBJECT(sci));
+	}
 
 	inline GtkWidget *
 	get_widget(void)

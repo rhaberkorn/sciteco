@@ -35,8 +35,18 @@ typedef class ViewNCurses : public View<ViewNCurses> {
 	Scintilla *sci;
 
 public:
-	ViewNCurses();
-	~ViewNCurses();
+	ViewNCurses() : sci(NULL) {}
+
+	/* implementation of View::initialize() */
+	void initialize_impl(void);
+
+	inline ~ViewNCurses()
+	{
+		if (sci) {
+			delwin(get_window());
+			scintilla_delete(sci);
+		}
+	}
 
 	inline void
 	refresh(void)

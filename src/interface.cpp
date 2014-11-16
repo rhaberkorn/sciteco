@@ -53,7 +53,7 @@ View<ViewImpl>::set_representations(void)
 
 template <class ViewImpl>
 void
-View<ViewImpl>::initialize(void)
+View<ViewImpl>::setup(void)
 {
 	ssm(SCI_SETFOCUS, TRUE);
 

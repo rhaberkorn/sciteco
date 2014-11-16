@@ -56,7 +56,8 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 #define SCI_COLOR_ATTR(f, b) \
 	((chtype)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
-ViewNCurses::ViewNCurses()
+void
+ViewNCurses::initialize_impl(void)
 {
 	WINDOW *window;
 
@@ -75,13 +76,7 @@ ViewNCurses::ViewNCurses()
 	/* Set up window position: never changes */
 	mvwin(window, 1, 0);
 
-	initialize();
-}
-
-ViewNCurses::~ViewNCurses()
-{
-	delwin(get_window());
-	scintilla_delete(sci);
+	setup();
 }
 
 void

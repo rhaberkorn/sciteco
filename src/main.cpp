@@ -53,6 +53,7 @@ namespace SciTECO {
  * GCC init_priority() attribute
  */
 InterfaceCurrent interface;
+ViewCurrent QRegisters::view;
 
 /*
  * Scintilla will be initialized after these
@@ -288,10 +289,9 @@ main(int argc, char **argv)
 
 	/*
 	 * QRegister view must be initialized only now
-	 * (after Curses initialization)
+	 * (e.g. after Curses/GTK initialization).
 	 */
-	QRegisters::view = new ViewCurrent();
-	// FIXME: view should be deallocated */
+	QRegisters::view.initialize();
 
 	/* search string and status register */
 	QRegisters::globals.insert("_");

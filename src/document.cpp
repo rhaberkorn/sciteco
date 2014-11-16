@@ -31,42 +31,42 @@
 namespace SciTECO {
 
 void
-Document::edit(ViewCurrent *view)
+Document::edit(ViewCurrent &view)
 {
 	maybe_create_document();
 
-	view->ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
-	view->ssm(SCI_SETFIRSTVISIBLELINE, first_line);
-	view->ssm(SCI_SETXOFFSET, xoffset);
-	view->ssm(SCI_SETSEL, anchor, (sptr_t)dot);
+	view.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+	view.ssm(SCI_SETFIRSTVISIBLELINE, first_line);
+	view.ssm(SCI_SETXOFFSET, xoffset);
+	view.ssm(SCI_SETSEL, anchor, (sptr_t)dot);
 
 	/*
 	 * Default TECO-style character representations.
 	 * They are reset on EVERY SETDOCPOINTER call by Scintilla.
 	 */
-	view->set_representations();
+	view.set_representations();
 }
 
 void
-Document::undo_edit(ViewCurrent *view)
+Document::undo_edit(ViewCurrent &view)
 {
 	maybe_create_document();
 
-	view->undo_set_representations();
+	view.undo_set_representations();
 
-	view->undo_ssm(SCI_SETSEL, anchor, (sptr_t)dot);
-	view->undo_ssm(SCI_SETXOFFSET, xoffset);
-	view->undo_ssm(SCI_SETFIRSTVISIBLELINE, first_line);
-	view->undo_ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+	view.undo_ssm(SCI_SETSEL, anchor, (sptr_t)dot);
+	view.undo_ssm(SCI_SETXOFFSET, xoffset);
+	view.undo_ssm(SCI_SETFIRSTVISIBLELINE, first_line);
+	view.undo_ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 }
 
 void
-Document::update(ViewCurrent *view)
+Document::update(ViewCurrent &view)
 {
-	anchor = view->ssm(SCI_GETANCHOR);
-	dot = view->ssm(SCI_GETCURRENTPOS);
-	first_line = view->ssm(SCI_GETFIRSTVISIBLELINE);
-	xoffset = view->ssm(SCI_GETXOFFSET);
+	anchor = view.ssm(SCI_GETANCHOR);
+	dot = view.ssm(SCI_GETCURRENTPOS);
+	first_line = view.ssm(SCI_GETFIRSTVISIBLELINE);
+	xoffset = view.ssm(SCI_GETXOFFSET);
 }
 
 /*

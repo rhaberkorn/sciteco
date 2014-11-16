@@ -100,6 +100,16 @@ class View {
 	};
 
 public:
+	/*
+	 * called after Interface initialization.
+	 * Should call setup()
+	 */
+	inline void
+	initialize(void)
+	{
+		impl().initialize_impl();
+	}
+
 	inline sptr_t
 	ssm(unsigned int iMessage,
 	    uptr_t wParam = 0, sptr_t lParam = 0)
@@ -122,7 +132,7 @@ public:
 	}
 
 protected:
-	void initialize(void);
+	void setup(void);
 };
 
 /**

@@ -76,6 +76,8 @@ public:
 	Buffer() : ViewCurrent(),
 		   filename(NULL), savepoint_id(0), dirty(false)
 	{
+		initialize();
+		/* only have to do this once: */
 		set_representations();
 	}
 
