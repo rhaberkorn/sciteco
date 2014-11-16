@@ -58,9 +58,6 @@ AC_SUBST(DOXYGEN_HAVE_DOT)
 
 # For bootstrapping via installed sciteco
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
-if [[ x$SCITECO = x ]]; then
-	bootstrap=yes
-fi
 
 # Checks for libraries.
 PKG_CHECK_MODULES(LIBGLIB, [glib-2.0], [
@@ -213,10 +210,14 @@ fi
 AM_CONDITIONAL(BUILD_DEVDOC, [test $dev_doc = yes])
 
 AC_ARG_ENABLE(bootstrap,
-	AS_HELP_STRING([--enable-bootstrap],
+	AS_HELP_STRING([--disable-bootstrap],
 		       [Bootstrap using sciteco-minimal,
-		        otherwise use preinstalled sciteco [default=check]]),
-	[bootstrap=$enableval])
+		        otherwise use preinstalled sciteco [default=yes]]),
+	[bootstrap=$enableval], [bootstrap=yes])
+if [[ $bootstrap = no -a x$SCITECO = x ]]; then
+	AC_MSG_ERROR([Disabled bootstrapping, but preinstalled SciTECO cannot be found!
+	              Try --enable-bootstrap.])
+fi
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
 AC_CONFIG_FILES([Makefile src/Makefile lib/Makefile])
