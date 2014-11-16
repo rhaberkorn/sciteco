@@ -31,7 +31,7 @@
 
 namespace SciTECO {
 
-typedef class ViewNCurses : public View {
+typedef class ViewNCurses : public View<ViewNCurses> {
 	Scintilla *sci;
 
 public:
@@ -50,14 +50,15 @@ public:
 		return scintilla_get_window(sci);
 	}
 
+	/* implementation of View::ssm() */
 	inline sptr_t
-	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
 	{
 		return scintilla_send_message(sci, iMessage, wParam, lParam);
 	}
 } ViewCurrent;
 
-typedef class InterfaceNCurses : public Interface {
+typedef class InterfaceNCurses : public Interface<InterfaceNCurses, ViewNCurses> {
 	SCREEN *screen;
 	FILE *screen_tty;
 
@@ -90,42 +91,54 @@ public:
 	                     current_view(NULL) {}
 	~InterfaceNCurses();
 
-	void main(int &argc, char **&argv);
+	/* implementation of Interface::main() */
+	void main_impl(int &argc, char **&argv);
 
-	void vmsg(MessageType type, const gchar *fmt, va_list ap);
+	/* implementation of Interface::vmsg() */
+	void vmsg_impl(MessageType type, const gchar *fmt, va_list ap);
+	/* override of Interface::msg_clear() */
 	void msg_clear(void);
 
-	void show_view(View *view);
-	inline View *
-	get_current_view(void)
+	/* implementation of Interface::show_view() */
+	void show_view_impl(ViewNCurses *view);
+	/* implementation of Interface::get_current_view() */
+	inline ViewNCurses *
+	get_current_view_impl(void)
 	{
 		return current_view;
 	}
 
+	/* implementation of Interface::ssm() */
 	inline sptr_t
-	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
 	{
 		return current_view->ssm(iMessage, wParam, lParam);
 	}
+	/* implementation of Interface::undo_ssm() */
 	inline void
-	undo_ssm(unsigned int iMessage,
-		 uptr_t wParam = 0, sptr_t lParam = 0)
+	undo_ssm_impl(unsigned int iMessage,
+	              uptr_t wParam = 0, sptr_t lParam = 0)
 	{
 		current_view->undo_ssm(iMessage, wParam, lParam);
 	}
 
-	void info_update(QRegister *reg);
-	void info_update(Buffer *buffer);
+	/* implementation of Interface::info_update() */
+	void info_update_impl(QRegister *reg);
+	void info_update_impl(Buffer *buffer);
 
-	void cmdline_update(const gchar *cmdline = NULL);
+	/* implementation of Interface::cmdline_update() */
+	void cmdline_update_impl(const gchar *cmdline = NULL);
 
-	void popup_add(PopupEntryType type,
-		       const gchar *name, bool highlight = false);
-	void popup_show(void);
-	void popup_clear(void);
+	/* implementation of Interface::popup_add() */
+	void popup_add_impl(PopupEntryType type,
+		            const gchar *name, bool highlight = false);
+	/* implementation of Interface::popup_show() */
+	void popup_show_impl(void);
+	/* implementation of Interface::popup_clear() */
+	void popup_clear_impl(void);
 
-	/* main entry point */
-	void event_loop(void);
+	/* main entry point (implementation) */
+	void event_loop_impl(void);
 
 private:
 	void init_screen(void);

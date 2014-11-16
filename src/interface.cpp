@@ -34,8 +34,9 @@
 
 namespace SciTECO {
 
+template <class ViewImpl>
 void
-View::set_representations(void)
+View<ViewImpl>::set_representations(void)
 {
 	static const char *reps[] = {
 		"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
@@ -50,8 +51,9 @@ View::set_representations(void)
 	}
 }
 
+template <class ViewImpl>
 void
-View::initialize(void)
+View<ViewImpl>::initialize(void)
 {
 	ssm(SCI_SETFOCUS, TRUE);
 
@@ -70,8 +72,11 @@ View::initialize(void)
 	ssm(SCI_STYLESETBACK, STYLE_LINENUMBER, 0x000000);
 }
 
+template class View<ViewCurrent>;
+
+template <class InterfaceImpl, class ViewImpl>
 void
-Interface::UndoTokenShowView::run(void)
+Interface<InterfaceImpl, ViewImpl>::UndoTokenShowView::run(void)
 {
 	/*
 	 * Implementing this here allows us to reference
@@ -80,8 +85,17 @@ Interface::UndoTokenShowView::run(void)
 	interface.show_view(view);
 }
 
+template <class InterfaceImpl, class ViewImpl>
+template <class Type>
 void
-Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
+Interface<InterfaceImpl, ViewImpl>::UndoTokenInfoUpdate<Type>::run(void)
+{
+	interface.info_update(obj);
+}
+
+template <class InterfaceImpl, class ViewImpl>
+void
+Interface<InterfaceImpl, ViewImpl>::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
 	gchar buf[255];
 
@@ -103,12 +117,15 @@ Interface::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
 	}
 }
 
+template <class InterfaceImpl, class ViewImpl>
 void
-Interface::process_notify(SCNotification *notify)
+Interface<InterfaceImpl, ViewImpl>::process_notify(SCNotification *notify)
 {
 #ifdef DEBUG
 	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
 #endif
 }
+
+template class Interface<InterfaceCurrent, ViewCurrent>;
 
 } /* namespace SciTECO */

@@ -247,7 +247,7 @@ process_edit_cmd(gchar key)
 			*insert = '\0';
 
 			if (Goto::skip_label) {
-				interface.msg(Interface::MSG_ERROR,
+				interface.msg(InterfaceCurrent::MSG_ERROR,
 					      "Label \"%s\" not found",
 					      Goto::skip_label);
 				break;
@@ -420,13 +420,13 @@ filename_complete(const gchar *filename, gchar completed)
 		for (GList *file = g_list_first(files);
 		     file != NULL;
 		     file = g_list_next(file)) {
-			Interface::PopupEntryType type;
+			InterfaceCurrent::PopupEntryType type;
 			bool in_buffer = false;
 
 			if (filename_is_dir((gchar *)file->data)) {
-				type = Interface::POPUP_DIRECTORY;
+				type = InterfaceCurrent::POPUP_DIRECTORY;
 			} else {
-				type = Interface::POPUP_FILE;
+				type = InterfaceCurrent::POPUP_FILE;
 				/* FIXME: inefficient */
 				in_buffer = ring.find((gchar *)file->data);
 			}
@@ -490,7 +490,7 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
 		for (GList *entry = g_list_first(glist);
 		     entry != NULL;
 		     entry = g_list_next(entry)) {
-			interface.popup_add(Interface::POPUP_PLAIN,
+			interface.popup_add(InterfaceCurrent::POPUP_PLAIN,
 					    (gchar *)entry->data);
 		}
 

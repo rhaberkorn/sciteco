@@ -55,7 +55,7 @@ Error::QRegFrame::copy() const
 void
 Error::QRegFrame::display(gint nr)
 {
-	interface.msg(Interface::MSG_INFO,
+	interface.msg(InterfaceCurrent::MSG_INFO,
 		      "#%d in Q-Register \"%s\" at %d (%d:%d)",
 		      nr, name, pos, line, column);
 }
@@ -75,7 +75,7 @@ Error::FileFrame::copy() const
 void
 Error::FileFrame::display(gint nr)
 {
-	interface.msg(Interface::MSG_INFO,
+	interface.msg(InterfaceCurrent::MSG_INFO,
 		      "#%d in file \"%s\" at %d (%d:%d)",
 		      nr, name, pos, line, column);
 }
@@ -95,7 +95,7 @@ Error::ToplevelFrame::copy() const
 void
 Error::ToplevelFrame::display(gint nr)
 {
-	interface.msg(Interface::MSG_INFO,
+	interface.msg(InterfaceCurrent::MSG_INFO,
 		      "#%d in toplevel macro at %d (%d:%d)",
 		      nr, pos, line, column);
 }
@@ -136,7 +136,7 @@ Error::add_frame(Frame *frame)
 void
 Error::display_short(void)
 {
-	interface.msg(Interface::MSG_ERROR,
+	interface.msg(InterfaceCurrent::MSG_ERROR,
 		      "%s (at %d)", description, pos);
 }
 
@@ -145,7 +145,7 @@ Error::display_full(void)
 {
 	gint nr = 0;
 
-	interface.msg(Interface::MSG_ERROR, "%s", description);
+	interface.msg(InterfaceCurrent::MSG_ERROR, "%s", description);
 
 	frames = g_slist_reverse(frames);
 	for (GSList *cur = frames; cur; cur = g_slist_next(cur)) {

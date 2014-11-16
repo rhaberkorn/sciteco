@@ -85,7 +85,7 @@ ViewNCurses::~ViewNCurses()
 }
 
 void
-InterfaceNCurses::main(int &argc, char **&argv)
+InterfaceNCurses::main_impl(int &argc, char **&argv)
 {
 	init_screen();
 	cbreak();
@@ -174,7 +174,7 @@ InterfaceNCurses::resize_all_windows(void)
 }
 
 void
-InterfaceNCurses::vmsg(MessageType type, const gchar *fmt, va_list ap)
+InterfaceNCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
 	static const chtype type2attr[] = {
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
@@ -216,12 +216,11 @@ InterfaceNCurses::msg_clear(void)
 }
 
 void
-InterfaceNCurses::show_view(View *view)
+InterfaceNCurses::show_view_impl(ViewNCurses *view)
 {
 	int lines, cols; /* screen dimensions */
 
-	/* We know that `view` is a ViewNCurses */
-	current_view = (ViewNCurses *)view;
+	current_view = view;
 
 	/*
 	 * screen size might have changed since
@@ -247,7 +246,7 @@ InterfaceNCurses::draw_info(void)
 }
 
 void
-InterfaceNCurses::info_update(QRegister *reg)
+InterfaceNCurses::info_update_impl(QRegister *reg)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <QRegister> %s", PACKAGE_NAME,
@@ -257,7 +256,7 @@ InterfaceNCurses::info_update(QRegister *reg)
 }
 
 void
-InterfaceNCurses::info_update(Buffer *buffer)
+InterfaceNCurses::info_update_impl(Buffer *buffer)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <Buffer> %s%s", PACKAGE_NAME,
@@ -268,7 +267,7 @@ InterfaceNCurses::info_update(Buffer *buffer)
 }
 
 void
-InterfaceNCurses::cmdline_update(const gchar *cmdline)
+InterfaceNCurses::cmdline_update_impl(const gchar *cmdline)
 {
 	size_t len;
 	int half_line = (getmaxx(stdscr) - 2) / 2;
@@ -294,8 +293,8 @@ InterfaceNCurses::cmdline_update(const gchar *cmdline)
 }
 
 void
-InterfaceNCurses::popup_add(PopupEntryType type,
-			    const gchar *name, bool highlight)
+InterfaceNCurses::popup_add_impl(PopupEntryType type,
+			         const gchar *name, bool highlight)
 {
 	gchar *entry;
 
@@ -311,7 +310,7 @@ InterfaceNCurses::popup_add(PopupEntryType type,
 }
 
 void
-InterfaceNCurses::popup_show(void)
+InterfaceNCurses::popup_show_impl(void)
 {
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
@@ -374,7 +373,7 @@ cleanup:
 }
 
 void
-InterfaceNCurses::popup_clear(void)
+InterfaceNCurses::popup_clear_impl(void)
 {
 	if (!popup.window)
 		return;
@@ -476,7 +475,7 @@ event_loop_iter()
 }
 
 void
-InterfaceNCurses::event_loop(void)
+InterfaceNCurses::event_loop_impl(void)
 {
 	/* initial refresh: window might have been changed in batch mode */
 	current_view->refresh();

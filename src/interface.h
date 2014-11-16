@@ -34,16 +34,45 @@ class QRegister;
 class Buffer;
 extern sig_atomic_t sigint_occurred;
 
+/**
+ * Base class for all SciTECO views. This is a minimal
+ * abstraction where the implementor only has to provide
+ * a method for dispatching Scintilla messages.
+ * Everything else is handled by other SciTECO classes.
+ *
+ * This interface employs the Curiously Recurring Template
+ * Pattern (CRTP). To implement it, one must derive from
+ * View<DerivedClass>. The methods to implement actually
+ * have an "_impl" suffix so as to avoid infinite recursion
+ * if an implementation is missing.
+ * Externally however, the methods as given in this interface
+ * may be called.
+ *
+ * The CRTP has a runtime overhead at low optimization levels
+ * (additional non-inlined calls), but should provide a
+ * significant performance boost when inlining is enabled.
+ *
+ * Note that not all methods have to be defined in the
+ * class. Explicit template instantiation is used to outsource
+ * base-class implementations to interface.cpp.
+ */
+template <class ViewImpl>
 class View {
+	inline ViewImpl &
+	impl(void)
+	{
+		return *(ViewImpl *)this;
+	}
+
 	class UndoTokenMessage : public UndoToken {
-		View *view;
+		ViewImpl &view;
 
 		unsigned int iMessage;
 		uptr_t wParam;
 		sptr_t lParam;
 
 	public:
-		UndoTokenMessage(View *_view, unsigned int _iMessage,
+		UndoTokenMessage(ViewImpl &_view, unsigned int _iMessage,
 				 uptr_t _wParam = 0, sptr_t _lParam = 0)
 				: UndoToken(), view(_view),
 		                  iMessage(_iMessage),
@@ -52,61 +81,71 @@ class View {
 		void
 		run(void)
 		{
-			view->ssm(iMessage, wParam, lParam);
+			view.ssm(iMessage, wParam, lParam);
 		}
 	};
 
 	class UndoTokenSetRepresentations : public UndoToken {
-		View *view;
+		ViewImpl &view;
 
 	public:
-		UndoTokenSetRepresentations(View *_view)
+		UndoTokenSetRepresentations(ViewImpl &_view)
 		                           : view(_view) {}
 
 		void
 		run(void)
 		{
-			view->set_representations();
+			view.set_representations();
 		}
 	};
 
 public:
-	virtual ~View() {}
+	inline sptr_t
+	ssm(unsigned int iMessage,
+	    uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		return impl().ssm_impl(iMessage, wParam, lParam);
+	}
 
-	virtual sptr_t ssm(unsigned int iMessage,
-			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
 	inline void
 	undo_ssm(unsigned int iMessage,
 		 uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		undo.push(new UndoTokenMessage(this, iMessage, wParam, lParam));
+		undo.push(new UndoTokenMessage(impl(), iMessage, wParam, lParam));
 	}
 
 	void set_representations(void);
 	inline void
 	undo_set_representations(void)
 	{
-		undo.push(new UndoTokenSetRepresentations(this));
+		undo.push(new UndoTokenSetRepresentations(impl()));
 	}
 
 protected:
 	void initialize(void);
 };
 
-/*
- * Base class for all user interfaces - used mereley as a class interface.
- * The actual instance of the interface has the platform-specific type
- * (e.g. InterfaceGtk) since we would like to have the benefits of using
- * classes but avoid the calling overhead when invoking virtual methods
- * on Interface pointers.
- * There's only one Interface* instance in the system.
+/**
+ * Base class and interface of all SciTECO user interfaces
+ * (e.g. Curses or GTK+).
+ *
+ * This uses the same Curiously Recurring Template Pattern (CRTP)
+ * as the View interface above, as there is only one type of
+ * user interface at runtime.
  */
+template <class InterfaceImpl, class ViewImpl>
 class Interface {
+	inline InterfaceImpl &
+	impl(void)
+	{
+		return *(InterfaceImpl *)this;
+	}
+
 	class UndoTokenShowView : public UndoToken {
-		View *view;
+		ViewImpl *view;
 
 	public:
-		UndoTokenShowView(View *_view)
+		UndoTokenShowView(ViewImpl *_view)
 		                 : view(_view) {}
 
 		void run(void);
@@ -120,23 +159,23 @@ class Interface {
 		UndoTokenInfoUpdate(Type *_obj)
 				   : obj(_obj) {}
 
-		/*
-		 * Implemented at bottom, so we can reference
-		 * the singleton interface object.
-		 * Alternative would be to do an extern explicit
-		 * template instantiation.
-		 */
 		void run(void);
 	};
 
 public:
-	virtual GOptionGroup *
+	/* default implementation */
+	inline GOptionGroup *
 	get_options(void)
 	{
 		return NULL;
 	}
+
 	/* expected to initialize Scintilla */
-	virtual void main(int &argc, char **&argv) = 0;
+	inline void
+	main(int &argc, char **&argv)
+	{
+		impl().main_impl(argc, argv);
+	}
 
 	enum MessageType {
 		MSG_USER,
@@ -144,7 +183,11 @@ public:
 		MSG_WARNING,
 		MSG_ERROR
 	};
-	virtual void vmsg(MessageType type, const gchar *fmt, va_list ap) = 0;
+	inline void
+	vmsg(MessageType type, const gchar *fmt, va_list ap)
+	{
+		impl().vmsg_impl(type, fmt, ap);
+	}
 	inline void
 	msg(MessageType type, const gchar *fmt, ...) G_GNUC_PRINTF(3, 4)
 	{
@@ -154,56 +197,110 @@ public:
 		vmsg(type, fmt, ap);
 		va_end(ap);
 	}
-	virtual void msg_clear(void) {}
+	/* default implementation */
+	inline void msg_clear(void) {}
 
-	virtual void show_view(View *view) = 0;
 	inline void
-	undo_show_view(View *view)
+	show_view(ViewImpl *view)
+	{
+		impl().show_view_impl(view);
+	}
+	inline void
+	undo_show_view(ViewImpl *view)
 	{
 		undo.push(new UndoTokenShowView(view));
 	}
-	virtual View *get_current_view(void) = 0;
-
-	virtual sptr_t ssm(unsigned int iMessage,
-			   uptr_t wParam = 0, sptr_t lParam = 0) = 0;
-	virtual void undo_ssm(unsigned int iMessage,
-	                      uptr_t wParam = 0, sptr_t lParam = 0) = 0;
-
-	virtual void info_update(QRegister *reg) = 0;
-	virtual void info_update(Buffer *buffer) = 0;
-
-	template <class Type>
-	inline void
-	undo_info_update(Type *obj)
+	inline ViewImpl *
+	get_current_view(void)
 	{
-		undo.push(new UndoTokenInfoUpdate<Type>(obj));
+		return impl().get_current_view_impl();
+	}
+
+	inline sptr_t
+	ssm(unsigned int iMessage,
+	    uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		return impl().ssm_impl(iMessage, wParam, lParam);
+	}
+	inline void
+	undo_ssm(unsigned int iMessage,
+	         uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		impl().undo_ssm_impl(iMessage, wParam, lParam);
+	}
+
+	/*
+	 * NOTE: could be rolled into a template, but
+	 * this way it is explicit what must be implemented
+	 * by the deriving class.
+	 */
+	inline void
+	info_update(QRegister *reg)
+	{
+		impl().info_update_impl(reg);
+	}
+	inline void
+	info_update(Buffer *buffer)
+	{
+		impl().info_update_impl(buffer);
+	}
+
+	inline void
+	undo_info_update(QRegister *reg)
+	{
+		undo.push(new UndoTokenInfoUpdate<QRegister>(reg));
+	}
+	inline void
+	undo_info_update(Buffer *buffer)
+	{
+		undo.push(new UndoTokenInfoUpdate<Buffer>(buffer));
 	}
 
 	/* NULL means to redraw the current cmdline if necessary */
-	virtual void cmdline_update(const gchar *cmdline = NULL) = 0;
+	inline void
+	cmdline_update(const gchar *cmdline = NULL)
+	{
+		impl().cmdline_update_impl(cmdline);
+	}
 
 	enum PopupEntryType {
 		POPUP_PLAIN,
 		POPUP_FILE,
 		POPUP_DIRECTORY
 	};
-	virtual void popup_add(PopupEntryType type,
-			       const gchar *name, bool highlight = false) = 0;
-	virtual void popup_show(void) = 0;
-	virtual void popup_clear(void) = 0;
+	inline void
+	popup_add(PopupEntryType type,
+	          const gchar *name, bool highlight = false)
+	{
+		impl().popup_add_impl(type, name, highlight);
+	}
+	inline void
+	popup_show(void)
+	{
+		impl().popup_show_impl();
+	}
+	inline void
+	popup_clear(void)
+	{
+		impl().popup_clear_impl();
+	}
 
-	virtual inline bool
+	/* default implementation */
+	inline bool
 	is_interrupted(void)
 	{
 		return sigint_occurred != FALSE;
 	}
 
 	/* main entry point */
-	virtual void event_loop(void) = 0;
+	inline void
+	event_loop(void)
+	{
+		impl().event_loop_impl();
+	}
 
 	/*
 	 * Interfacing to the external SciTECO world
-	 * See main.cpp
 	 */
 protected:
 	void stdio_vmsg(MessageType type, const gchar *fmt, va_list ap);
@@ -226,12 +323,8 @@ namespace SciTECO {
 /* object defined in main.cpp */
 extern InterfaceCurrent interface;
 
-template <class Type>
-void
-Interface::UndoTokenInfoUpdate<Type>::run(void)
-{
-	interface.info_update(obj);
-}
+extern template class View<ViewCurrent>;
+extern template class Interface<InterfaceCurrent, ViewCurrent>;
 
 } /* namespace SciTECO */
 

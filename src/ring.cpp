@@ -264,18 +264,18 @@ Ring::edit(const gchar *filename)
 			buffer->edit();
 			buffer->load(filename);
 
-			interface.msg(Interface::MSG_INFO,
+			interface.msg(InterfaceCurrent::MSG_INFO,
 				      "Added file \"%s\" to ring", filename);
 		} else {
 			buffer->edit();
 			buffer->set_filename(filename);
 
 			if (filename)
-				interface.msg(Interface::MSG_INFO,
+				interface.msg(InterfaceCurrent::MSG_INFO,
 					      "Added new file \"%s\" to ring",
 					      filename);
 			else
-				interface.msg(Interface::MSG_INFO,
+				interface.msg(InterfaceCurrent::MSG_INFO,
 					      "Added new unnamed file to ring.");
 		}
 
@@ -326,7 +326,7 @@ public:
 						    orig_attrs);
 #endif
 		} else {
-			interface.msg(Interface::MSG_WARNING,
+			interface.msg(InterfaceCurrent::MSG_WARNING,
 				      "Unable to restore save point file \"%s\"",
 				      savepoint);
 		}
@@ -362,7 +362,7 @@ make_savepoint(Buffer *buffer)
 #endif
 		undo.push(token);
 	} else {
-		interface.msg(Interface::MSG_WARNING,
+		interface.msg(InterfaceCurrent::MSG_WARNING,
 			      "Unable to create save point file \"%s\"",
 			      savepoint);
 		g_free(savepoint);
@@ -475,11 +475,11 @@ Ring::close(Buffer *buffer)
 	TAILQ_REMOVE(&head, buffer, buffers);
 
 	if (buffer->filename)
-		interface.msg(Interface::MSG_INFO,
+		interface.msg(InterfaceCurrent::MSG_INFO,
 			      "Removed file \"%s\" from the ring",
 			      buffer->filename);
 	else
-		interface.msg(Interface::MSG_INFO,
+		interface.msg(InterfaceCurrent::MSG_INFO,
 			      "Removed unnamed file from the ring.");
 }
 
@@ -644,7 +644,7 @@ StateEditFile::initial(void)
 
 	if (id == 0) {
 		for (Buffer *cur = ring.first(); cur; cur = cur->next())
-			interface.popup_add(Interface::POPUP_FILE,
+			interface.popup_add(InterfaceCurrent::POPUP_FILE,
 					    cur->filename ? : "(Unnamed)",
 					    cur == ring.current);
 

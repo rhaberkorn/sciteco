@@ -526,7 +526,7 @@ StateSearch::done(const gchar *str)
 		expressions.push(search_reg->get_integer());
 	else if (IS_FAILURE(search_reg->get_integer()) &&
 		 !expressions.find_op(Expressions::OP_LOOP) /* not in loop */)
-		interface.msg(Interface::MSG_ERROR, "Search string not found!");
+		interface.msg(InterfaceCurrent::MSG_ERROR, "Search string not found!");
 
 	return &States::start;
 }

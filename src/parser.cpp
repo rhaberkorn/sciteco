@@ -1277,7 +1277,8 @@ StateStart::custom(gchar chr)
 	 */
 	case '=':
 		BEGIN_EXEC(this);
-		interface.msg(Interface::MSG_USER, "%" TECO_INTEGER_FORMAT,
+		interface.msg(InterfaceCurrent::MSG_USER,
+		              "%" TECO_INTEGER_FORMAT,
 			      expressions.pop_num_calc());
 		break;
 
