@@ -495,6 +495,20 @@ The Id of a buffer corresponds to its position in the ring
 (the first one has Id 1, the second one Id 2, etc.).
 Buffers may be marked dirty by destructive operations.
 .LP
+Every buffer has its own Scintilla view, which means
+that it behaves like a standalone Scintilla instance.
+This means that all Scintilla messages you send to the
+current buffer (using the \fBES\fP command) affect
+only this buffer.
+If you change some setting (like syntax highlighting),
+switch the buffer and eventually switch back, all
+settings will still be in effect.
+If a configuration should be applied to all buffers,
+\fBED\fP hooks should be used (see below).
+Note that Q-Registers behave differently \(em they can
+also be edited like regular buffers but share
+one Scintilla instance for performance reasons.
+.LP
 \*(ST is a character-oriented editor, so every character
 in a buffer/document may be addressed by a position
 integer.
@@ -507,7 +521,8 @@ bytes depending on the document's encoding.
 Consequently when querying the code at a character position
 or inserting characters by code, the code may be an Unicode
 codepoint instead of byte-sized integer.
-\# ^^ this is currently broken/untested
+\# FIXME: this is currently broken/untested
+Currently however, \*(ST will only handle ASCII files.
 .LP
 For more details, please refer to this manual's command
 reference.
@@ -543,16 +558,18 @@ only has to be done once.
 .TP
 .B 2
 A buffer has been \fBedited\fP (made the current file).
-This hook is also executed after a file has been added to
-the buffer ring.
+This hook is not executed when a file is freshly added
+to the buffer ring.
 In this hook you may define language-specific auxiliary
 macros, for instance.
 .TP
 .B 3
+\# FIXME: Not implemented
 A buffer is about to be \fBclosed\fP (removed from the
 buffer ring).
 .TP
 .B 4
+\# FIXME: Not implemented
 \*(ST is about to \fBexit\fP.
 .LP
 The side-effects of the hook executions are reversed
@@ -650,6 +667,16 @@ both at the same time).
 Strings are actually Scintilla documents.
 Therefore Q-Register strings may be edited just like buffers
 (see \fBEQ\fP command).
+However, in contrast to buffers which represent standalone
+Scintilla instances (views), all Q-Registers share a single
+Scintilla view.
+This means that some settings, like parts of the lexer
+configuration is the same for every Q-Register you edit.
+It is not straight-forward to see which settings are saved
+by Scintilla per-document.
+Fortunately, \*(ST cares about saving the most important properties
+(like the cursor position, selections and scroll state)
+per document, even though Scintilla does not do so by default.
 .LP
 Q-Register cells have case-sensitive names and are stored
 in Q-Register tables.
