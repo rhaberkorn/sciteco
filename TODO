@@ -5,8 +5,6 @@ Known Bugs:
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
  * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
- * adding a new buffer with syntax highlighting screws up styles:
-   obviously they are attached to the view instead of the document
  * crashes on large files: S^EM^X$ (regexp: .*)
 
 Features:
@@ -14,8 +12,7 @@ Features:
    * link against libncursesw if possible
    * translate documents to Unicode strings
    * a position refers to a character/codepoint
- * refactor lexer macro library using new possibilities:
-   fix the styling bug in the process
+ * refactor lexer macro library using new possibilities
  * protect ED hook executions (process like "(<x>M0$)").
    Perhaps use a long name for ED registers now. How about "ED"?
  * Progress indication in commandline cursor
