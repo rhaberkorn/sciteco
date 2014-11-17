@@ -30,56 +30,108 @@
 
 namespace SciTECO {
 
-typedef class InterfaceGtk : public Interface {
+typedef class ViewGtk : public View<ViewGtk> {
+	ScintillaObject *sci;
+
+public:
+	ViewGtk();
+	~ViewGtk();
+
+	inline GtkWidget *
+	get_widget(void)
+	{
+		return GTK_WIDGET(sci);
+	}
+
+	/* implementation of View::ssm() */
+	inline sptr_t
+	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		return scintilla_send_message(sci, iMessage, wParam, lParam);
+	}
+} ViewCurrent;
+
+typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GtkWidget *window;
-	GtkWidget *editor_widget;
+	GtkWidget *vbox;
 	GtkWidget *cmdline_widget;
 	GtkWidget *info_widget, *message_widget;
 
 	GtkWidget *popup_widget;
 
+	ViewGtk *current_view;
+	GtkWidget *current_view_widget;
+
 public:
 	InterfaceGtk() : window(NULL),
-			 editor_widget(NULL),
+	                 vbox(NULL),
 			 cmdline_widget(NULL),
 			 info_widget(NULL), message_widget(NULL),
-			 popup_widget(NULL) {}
+			 popup_widget(NULL),
+	                 current_view(NULL),
+	                 current_view_widget(NULL) {}
 	~InterfaceGtk();
 
+	/* overrides Interface::get_options() */
 	inline GOptionGroup *
 	get_options(void)
 	{
 		return gtk_get_option_group(TRUE);
 	}
-	void main(int &argc, char **&argv);
 
-	void vmsg(MessageType type, const gchar *fmt, va_list ap);
+	/* implementation of Interface::main() */
+	void main_impl(int &argc, char **&argv);
+
+	/* implementation of Interface::vmsg() */
+	void vmsg_impl(MessageType type, const gchar *fmt, va_list ap);
+	/* overrides Interface::msg_clear() */
 	void msg_clear(void);
 
-	inline sptr_t
-	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	/* implementation of Interface::show_view() */
+	void show_view_impl(ViewGtk *view);
+	/* implementation of Interface::get_current_view() */
+	inline ViewGtk *
+	get_current_view_impl(void)
 	{
-		return scintilla_send_message(SCINTILLA(editor_widget),
-					      iMessage, wParam, lParam);
+		return current_view;
 	}
 
-	void info_update(QRegister *reg);
-	void info_update(Buffer *buffer);
-
-	void cmdline_update(const gchar *cmdline = NULL);
-
-	void popup_add(PopupEntryType type,
-		       const gchar *name, bool highlight = false);
+	/* implementation of Interface::ssm() */
+	inline sptr_t
+	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		return current_view->ssm(iMessage, wParam, lParam);
+	}
+	/* implementation of Interface::undo_ssm() */
 	inline void
-	popup_show(void)
+	undo_ssm_impl(unsigned int iMessage,
+	              uptr_t wParam = 0, sptr_t lParam = 0)
+	{
+		current_view->undo_ssm(iMessage, wParam, lParam);
+	}
+
+	/* implementation of Interface::info_update() */
+	void info_update_impl(QRegister *reg);
+	void info_update_impl(Buffer *buffer);
+
+	/* implementation of Interface::cmdline_update() */
+	void cmdline_update_impl(const gchar *cmdline = NULL);
+
+	/* implementation of Interface::popup_add() */
+	void popup_add_impl(PopupEntryType type,
+		            const gchar *name, bool highlight = false);
+	/* implementation of Interface::popup_show() */
+	inline void
+	popup_show_impl(void)
 	{
 		gtk_widget_show(popup_widget);
 	}
-	void popup_clear(void);
+	/* implementation of Interface::popup_clear() */
+	void popup_clear_impl(void);
 
-	/* main entry point */
+	/* main entry point (implementation) */
 	inline void
-	event_loop(void)
+	event_loop_impl(void)
 	{
 		gtk_widget_show_all(window);
 		gtk_main();

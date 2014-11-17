@@ -53,10 +53,39 @@ static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 
 #define UNNAMED_FILE "(Unnamed)"
 
-void
-InterfaceGtk::main(int &argc, char **&argv)
+ViewGtk::ViewGtk()
 {
-	GtkWidget *vbox;
+	sci = SCINTILLA(scintilla_new());
+	/*
+	 * We don't want the object to be destroyed
+	 * when it is removed from the vbox.
+	 */
+	g_object_ref_sink(G_OBJECT(sci));
+
+	scintilla_set_id(sci, 0);
+
+	gtk_widget_set_usize(get_widget(), 500, 300);
+	gtk_widget_set_can_focus(get_widget(), FALSE);
+
+	g_signal_connect(G_OBJECT(sci), SCINTILLA_NOTIFY,
+			 G_CALLBACK(scintilla_notify), NULL);
+
+	initialize();
+}
+
+ViewGtk::~ViewGtk()
+{
+	/*
+	 * This does NOT destroy the Scintilla object
+	 * and GTK widget, if it is the current view
+	 * (and therefore added to the vbox).
+	 */
+	g_object_unref(G_OBJECT(sci));
+}
+
+void
+InterfaceGtk::main_impl(int &argc, char **&argv)
+{
 	GtkWidget *info_content;
 
 	gtk_init(&argc, &argv);
@@ -68,28 +97,20 @@ InterfaceGtk::main(int &argc, char **&argv)
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
-	editor_widget = scintilla_new();
-	scintilla_set_id(SCINTILLA(editor_widget), 0);
-	gtk_widget_set_usize(editor_widget, 500, 300);
-	gtk_widget_set_can_focus(editor_widget, FALSE);
-	g_signal_connect(G_OBJECT(editor_widget), SCINTILLA_NOTIFY,
-			 G_CALLBACK(scintilla_notify), NULL);
-	gtk_box_pack_start(GTK_BOX(vbox), editor_widget, TRUE, TRUE, 0);
-
-	info_widget = gtk_info_bar_new();
-	info_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_widget));
-	message_widget = gtk_label_new("");
-	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
-	gtk_container_add(GTK_CONTAINER(info_content), message_widget);
-	gtk_box_pack_start(GTK_BOX(vbox), info_widget, FALSE, FALSE, 0);
-
 	cmdline_widget = gtk_entry_new();
 	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
 	widget_set_font(cmdline_widget, "Courier");
 	g_signal_connect(G_OBJECT(cmdline_widget), "key-press-event",
 			 G_CALLBACK(cmdline_key_pressed), NULL);
-	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
+	gtk_box_pack_end(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
+
+	info_widget = gtk_info_bar_new();
+	info_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_widget));
+	message_widget = gtk_label_new("");
+	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
+	gtk_container_add(GTK_CONTAINER(info_content), message_widget);
+	gtk_box_pack_end(GTK_BOX(vbox), info_widget, FALSE, FALSE, 0);
 
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -101,7 +122,7 @@ InterfaceGtk::main(int &argc, char **&argv)
 }
 
 void
-InterfaceGtk::vmsg(MessageType type, const gchar *fmt, va_list ap)
+InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
 	static const GtkMessageType type2gtk[] = {
 		/* [MSG_USER]		= */ GTK_MESSAGE_OTHER,
@@ -132,7 +153,27 @@ InterfaceGtk::msg_clear(void)
 }
 
 void
-InterfaceGtk::info_update(QRegister *reg)
+InterfaceGtk::show_view_impl(ViewGtk *view)
+{
+	/*
+	 * The last view's object is not guaranteed to
+	 * still exist.
+	 * However its widget is, due to reference counting.
+	 */
+	if (current_view_widget)
+		gtk_container_remove(GTK_CONTAINER(vbox),
+		                     current_view_widget);
+
+	current_view = view;
+	current_view_widget = view->get_widget();
+
+	gtk_box_pack_start(GTK_BOX(vbox), current_view_widget,
+	                   TRUE, TRUE, 0);
+	gtk_widget_show(current_view_widget);
+}
+
+void
+InterfaceGtk::info_update_impl(QRegister *reg)
 {
 	gchar buf[255];
 
@@ -142,7 +183,7 @@ InterfaceGtk::info_update(QRegister *reg)
 }
 
 void
-InterfaceGtk::info_update(Buffer *buffer)
+InterfaceGtk::info_update_impl(Buffer *buffer)
 {
 	gchar buf[255];
 
@@ -153,7 +194,7 @@ InterfaceGtk::info_update(Buffer *buffer)
 }
 
 void
-InterfaceGtk::cmdline_update(const gchar *cmdline)
+InterfaceGtk::cmdline_update_impl(const gchar *cmdline)
 {
 	gint pos = 1;
 
@@ -168,8 +209,8 @@ InterfaceGtk::cmdline_update(const gchar *cmdline)
 }
 
 void
-InterfaceGtk::popup_add(PopupEntryType type,
-			const gchar *name, bool highlight)
+InterfaceGtk::popup_add_impl(PopupEntryType type,
+                             const gchar *name, bool highlight)
 {
 	static const GtkInfoPopupEntryType type2gtk[] = {
 		/* [POPUP_PLAIN]	= */ GTK_INFO_POPUP_PLAIN,
@@ -182,7 +223,7 @@ InterfaceGtk::popup_add(PopupEntryType type,
 }
 
 void
-InterfaceGtk::popup_clear(void)
+InterfaceGtk::popup_clear_impl(void)
 {
 	if (gtk_widget_get_visible(popup_widget)) {
 		gtk_widget_hide(popup_widget);
@@ -235,6 +276,9 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 #endif
 
 	switch (event->keyval) {
+	case GDK_Escape:
+		cmdline_keypress('\x1B');
+		break;
 	case GDK_BackSpace:
 		cmdline_keypress('\b');
 		break;
@@ -302,6 +346,10 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 static gboolean
 exit_app(GtkWidget *w, GdkEventAny *e, gpointer p)
 {
+	/*
+	 * FIXME: should instead insert "(EX)" or similar
+	 * Perhaps something like a "QUIT" function key macro
+	 */
 	gtk_main_quit();
 	return TRUE;
 }
