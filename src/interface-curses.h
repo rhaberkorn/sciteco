@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __INTERFACE_NCURSES_H
-#define __INTERFACE_NCURSES_H
+#ifndef __INTERFACE_CURSES_H
+#define __INTERFACE_CURSES_H
 
 #include <stdarg.h>
 
@@ -31,16 +31,16 @@
 
 namespace SciTECO {
 
-typedef class ViewNCurses : public View<ViewNCurses> {
+typedef class ViewCurses : public View<ViewCurses> {
 	Scintilla *sci;
 
 public:
-	ViewNCurses() : sci(NULL) {}
+	ViewCurses() : sci(NULL) {}
 
 	/* implementation of View::initialize() */
 	void initialize_impl(void);
 
-	inline ~ViewNCurses()
+	inline ~ViewCurses()
 	{
 		if (sci) {
 			delwin(get_window());
@@ -68,7 +68,7 @@ public:
 	}
 } ViewCurrent;
 
-typedef class InterfaceNCurses : public Interface<InterfaceNCurses, ViewNCurses> {
+typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	SCREEN *screen;
 	FILE *screen_tty;
 
@@ -89,15 +89,15 @@ typedef class InterfaceNCurses : public Interface<InterfaceNCurses, ViewNCurses>
 	} popup;
 
 public:
-	InterfaceNCurses() : Interface(),
-	                     screen(NULL),
-			     screen_tty(NULL),
-			     info_window(NULL),
-			     info_current(NULL),
-			     msg_window(NULL),
-			     cmdline_window(NULL),
-			     cmdline_current(NULL) {}
-	~InterfaceNCurses();
+	InterfaceCurses() : Interface(),
+	                    screen(NULL),
+			    screen_tty(NULL),
+			    info_window(NULL),
+			    info_current(NULL),
+			    msg_window(NULL),
+			    cmdline_window(NULL),
+			    cmdline_current(NULL) {}
+	~InterfaceCurses();
 
 	/* implementation of Interface::main() */
 	void main_impl(int &argc, char **&argv);
@@ -108,7 +108,7 @@ public:
 	void msg_clear(void);
 
 	/* implementation of Interface::show_view() */
-	void show_view_impl(ViewNCurses *view);
+	void show_view_impl(ViewCurses *view);
 
 	/* implementation of Interface::info_update() */
 	void info_update_impl(QRegister *reg);

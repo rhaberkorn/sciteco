@@ -42,7 +42,7 @@
 #include "qregisters.h"
 #include "ring.h"
 #include "interface.h"
-#include "interface-ncurses.h"
+#include "interface-curses.h"
 
 namespace SciTECO {
 
@@ -57,7 +57,7 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 	((chtype)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
 void
-ViewNCurses::initialize_impl(void)
+ViewCurses::initialize_impl(void)
 {
 	WINDOW *window;
 
@@ -70,7 +70,7 @@ ViewNCurses::initialize_impl(void)
 	 * positioned.
 	 * Perhaps it's better to leave the window
 	 * unitialized and set the position in
-	 * InterfaceNCurses::show_view().
+	 * InterfaceCurses::show_view().
 	 */
 	wresize(window, 1, 1);
 	/* Set up window position: never changes */
@@ -80,7 +80,7 @@ ViewNCurses::initialize_impl(void)
 }
 
 void
-InterfaceNCurses::main_impl(int &argc, char **&argv)
+InterfaceCurses::main_impl(int &argc, char **&argv)
 {
 	init_screen();
 	cbreak();
@@ -115,7 +115,7 @@ InterfaceNCurses::main_impl(int &argc, char **&argv)
 #ifdef __PDCURSES__
 
 void
-InterfaceNCurses::init_screen(void)
+InterfaceCurses::init_screen(void)
 {
 #ifdef PDCURSES_WIN32A
 	/* enables window resizing on Win32a port */
@@ -131,7 +131,7 @@ InterfaceNCurses::init_screen(void)
 #else
 
 void
-InterfaceNCurses::init_screen(void)
+InterfaceCurses::init_screen(void)
 {
 	/*
 	 * Prevent the initial redraw and any escape sequences that may
@@ -148,7 +148,7 @@ InterfaceNCurses::init_screen(void)
 #endif /* !__PDCURSES__ */
 
 void
-InterfaceNCurses::resize_all_windows(void)
+InterfaceCurses::resize_all_windows(void)
 {
 	int lines, cols; /* screen dimensions */
 
@@ -169,7 +169,7 @@ InterfaceNCurses::resize_all_windows(void)
 }
 
 void
-InterfaceNCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
+InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
 	static const chtype type2attr[] = {
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
@@ -198,7 +198,7 @@ InterfaceNCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 }
 
 void
-InterfaceNCurses::msg_clear(void)
+InterfaceCurses::msg_clear(void)
 {
 	if (isendwin()) /* batch mode */
 		return;
@@ -211,7 +211,7 @@ InterfaceNCurses::msg_clear(void)
 }
 
 void
-InterfaceNCurses::show_view_impl(ViewNCurses *view)
+InterfaceCurses::show_view_impl(ViewCurses *view)
 {
 	int lines, cols; /* screen dimensions */
 
@@ -227,7 +227,7 @@ InterfaceNCurses::show_view_impl(ViewNCurses *view)
 }
 
 void
-InterfaceNCurses::draw_info(void)
+InterfaceCurses::draw_info(void)
 {
 	if (isendwin()) /* batch mode */
 		return;
@@ -241,7 +241,7 @@ InterfaceNCurses::draw_info(void)
 }
 
 void
-InterfaceNCurses::info_update_impl(QRegister *reg)
+InterfaceCurses::info_update_impl(QRegister *reg)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <QRegister> %s", PACKAGE_NAME,
@@ -251,7 +251,7 @@ InterfaceNCurses::info_update_impl(QRegister *reg)
 }
 
 void
-InterfaceNCurses::info_update_impl(Buffer *buffer)
+InterfaceCurses::info_update_impl(Buffer *buffer)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <Buffer> %s%s", PACKAGE_NAME,
@@ -262,7 +262,7 @@ InterfaceNCurses::info_update_impl(Buffer *buffer)
 }
 
 void
-InterfaceNCurses::cmdline_update_impl(const gchar *cmdline)
+InterfaceCurses::cmdline_update_impl(const gchar *cmdline)
 {
 	size_t len;
 	int half_line = (getmaxx(stdscr) - 2) / 2;
@@ -288,7 +288,7 @@ InterfaceNCurses::cmdline_update_impl(const gchar *cmdline)
 }
 
 void
-InterfaceNCurses::popup_add_impl(PopupEntryType type,
+InterfaceCurses::popup_add_impl(PopupEntryType type,
 			         const gchar *name, bool highlight)
 {
 	gchar *entry;
@@ -305,7 +305,7 @@ InterfaceNCurses::popup_add_impl(PopupEntryType type,
 }
 
 void
-InterfaceNCurses::popup_show_impl(void)
+InterfaceCurses::popup_show_impl(void)
 {
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
@@ -368,7 +368,7 @@ cleanup:
 }
 
 void
-InterfaceNCurses::popup_clear_impl(void)
+InterfaceCurses::popup_clear_impl(void)
 {
 	if (!popup.window)
 		return;
@@ -393,7 +393,7 @@ InterfaceNCurses::popup_clear_impl(void)
  * @bug
  * Can probably be defined as a static method,
  * so we can avoid declaring it a fried function of
- * InterfaceNCurses.
+ * InterfaceCurses.
  */
 void
 event_loop_iter()
@@ -470,7 +470,7 @@ event_loop_iter()
 }
 
 void
-InterfaceNCurses::event_loop_impl(void)
+InterfaceCurses::event_loop_impl(void)
 {
 	/* initial refresh: window might have been changed in batch mode */
 	current_view->refresh();
@@ -484,7 +484,7 @@ InterfaceNCurses::event_loop_impl(void)
 #endif
 }
 
-InterfaceNCurses::Popup::~Popup()
+InterfaceCurses::Popup::~Popup()
 {
 	if (window)
 		delwin(window);
@@ -492,7 +492,7 @@ InterfaceNCurses::Popup::~Popup()
 		g_slist_free(list);
 }
 
-InterfaceNCurses::~InterfaceNCurses()
+InterfaceCurses::~InterfaceCurses()
 {
 	if (info_window)
 		delwin(info_window);

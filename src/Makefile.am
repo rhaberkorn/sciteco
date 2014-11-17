@@ -45,9 +45,9 @@ libsciteco_base_a_SOURCES += interface-gtk.cpp interface-gtk.h
 nodist_libsciteco_base_a_SOURCES += gtk-info-popup.c
 
 else
-# else must be NCurses interface
+# else must be Curses interface
 
-libsciteco_base_a_SOURCES += interface-ncurses.cpp interface-ncurses.h
+libsciteco_base_a_SOURCES += interface-curses.cpp interface-curses.h
 
 endif
 

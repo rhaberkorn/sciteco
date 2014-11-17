@@ -145,7 +145,7 @@ case $INTERFACE in
 	AC_CHECK_HEADERS([curses.h], , [
 		AC_MSG_ERROR([Curses header missing!])
 	])
-	AC_DEFINE(INTERFACE_NCURSES, , [Build with curses support])
+	AC_DEFINE(INTERFACE_CURSES, , [Build with curses support])
 
 	# For Scintilla:
 	CPPFLAGS="$CPPFLAGS -DNCURSES -I$SCINTERM_PATH"

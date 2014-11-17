@@ -327,8 +327,8 @@ public:
 
 #ifdef INTERFACE_GTK
 #include "interface-gtk.h"
-#elif defined(INTERFACE_NCURSES)
-#include "interface-ncurses.h"
+#elif defined(INTERFACE_CURSES)
+#include "interface-curses.h"
 #else
 #error No interface selected!
 #endif
