@@ -162,7 +162,12 @@ class Interface {
 		void run(void);
 	};
 
+protected:
+	ViewImpl *current_view;
+
 public:
+	Interface() : current_view(NULL) {}
+
 	/* default implementation */
 	inline GOptionGroup *
 	get_options(void)
@@ -210,23 +215,23 @@ public:
 	{
 		undo.push(new UndoTokenShowView(view));
 	}
+
 	inline ViewImpl *
 	get_current_view(void)
 	{
-		return impl().get_current_view_impl();
+		return current_view;
 	}
 
 	inline sptr_t
-	ssm(unsigned int iMessage,
-	    uptr_t wParam = 0, sptr_t lParam = 0)
+	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		return impl().ssm_impl(iMessage, wParam, lParam);
+		return current_view->ssm(iMessage, wParam, lParam);
 	}
 	inline void
 	undo_ssm(unsigned int iMessage,
 	         uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		impl().undo_ssm_impl(iMessage, wParam, lParam);
+		current_view->undo_ssm(iMessage, wParam, lParam);
 	}
 
 	/*

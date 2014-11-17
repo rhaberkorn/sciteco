@@ -68,8 +68,6 @@ typedef class InterfaceNCurses : public Interface<InterfaceNCurses, ViewNCurses>
 	WINDOW *cmdline_window;
 	gchar *cmdline_current;
 
-	ViewNCurses *current_view;
-
 	struct Popup {
 		WINDOW *window;
 		GSList *list;
@@ -81,14 +79,14 @@ typedef class InterfaceNCurses : public Interface<InterfaceNCurses, ViewNCurses>
 	} popup;
 
 public:
-	InterfaceNCurses() : screen(NULL),
+	InterfaceNCurses() : Interface(),
+	                     screen(NULL),
 			     screen_tty(NULL),
 			     info_window(NULL),
 			     info_current(NULL),
 			     msg_window(NULL),
 			     cmdline_window(NULL),
-			     cmdline_current(NULL),
-	                     current_view(NULL) {}
+			     cmdline_current(NULL) {}
 	~InterfaceNCurses();
 
 	/* implementation of Interface::main() */
@@ -101,26 +99,6 @@ public:
 
 	/* implementation of Interface::show_view() */
 	void show_view_impl(ViewNCurses *view);
-	/* implementation of Interface::get_current_view() */
-	inline ViewNCurses *
-	get_current_view_impl(void)
-	{
-		return current_view;
-	}
-
-	/* implementation of Interface::ssm() */
-	inline sptr_t
-	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		return current_view->ssm(iMessage, wParam, lParam);
-	}
-	/* implementation of Interface::undo_ssm() */
-	inline void
-	undo_ssm_impl(unsigned int iMessage,
-	              uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		current_view->undo_ssm(iMessage, wParam, lParam);
-	}
 
 	/* implementation of Interface::info_update() */
 	void info_update_impl(QRegister *reg);

@@ -59,16 +59,15 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 
 	GtkWidget *popup_widget;
 
-	ViewGtk *current_view;
 	GtkWidget *current_view_widget;
 
 public:
-	InterfaceGtk() : window(NULL),
+	InterfaceGtk() : Interface(),
+	                 window(NULL),
 	                 vbox(NULL),
 			 cmdline_widget(NULL),
 			 info_widget(NULL), message_widget(NULL),
 			 popup_widget(NULL),
-	                 current_view(NULL),
 	                 current_view_widget(NULL) {}
 	~InterfaceGtk();
 
@@ -89,26 +88,6 @@ public:
 
 	/* implementation of Interface::show_view() */
 	void show_view_impl(ViewGtk *view);
-	/* implementation of Interface::get_current_view() */
-	inline ViewGtk *
-	get_current_view_impl(void)
-	{
-		return current_view;
-	}
-
-	/* implementation of Interface::ssm() */
-	inline sptr_t
-	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		return current_view->ssm(iMessage, wParam, lParam);
-	}
-	/* implementation of Interface::undo_ssm() */
-	inline void
-	undo_ssm_impl(unsigned int iMessage,
-	              uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		current_view->undo_ssm(iMessage, wParam, lParam);
-	}
 
 	/* implementation of Interface::info_update() */
 	void info_update_impl(QRegister *reg);
