@@ -1,5 +1,4 @@
 [submodule "scintilla"]
 	path = scintilla
 	url = https://github.com/rhaberkorn/scintilla-mirror.git
-	branch = sciteco-dev
-	ignore = all
+	ignore = untracked
