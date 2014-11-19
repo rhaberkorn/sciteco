@@ -1,0 +1,22 @@
+! n:M.c -- Get one of the 8 basic colors !
+@.c{
+  U.c ((Q.c&1)*255) # ((Q.c/2 & 1)*255*256) # ((Q.c/4 & 1)*255*256*256)
+}
+
+! Save the 8 basic colors, may be referenced by the color schemes !
+0:M.cU[color.black]
+1:M.cU[color.red]
+2:M.cU[color.green]
+3:M.cU[color.yellow]
+4:M.cU[color.blue]
+5:M.cU[color.magenta]
+6:M.cU[color.cyan]
+7:M.cU[color.white]
+
+! <[[bold,]bg,]fg,style>M[color.set] !
+@[color.set]{
+  U.s U.f "~0'U.b "~0'U.h
+  Q.f,Q.sESSTYLESETFORE
+  Q.b,Q.sESSTYLESETBACK
+  Q.h,Q.sESSTYLESETBOLD
+}

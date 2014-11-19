@@ -1,0 +1,20 @@
+! Patch/Diff Files !
+
+@[lexer.test.patch]{
+  [_ :S.[diff,patch] ]_
+}
+
+@[lexer.set.patch]{
+  ESSETLEXER,SCLEX_DIFF
+  :M[color.comment],1M[color.set]
+  :M[color.keyword],2M[color.set] ! Command !
+  :M[color.preproc],3M[color.set] ! Source/Dest !
+  :M[color.operator],4M[color.set] ! Position @@ !
+  :M[color.deletion],5M[color.set]
+  :M[color.addition],6M[color.set]
+  :M[color.change],7M[color.set]
+}
+
+@:[lexer.auto]{
+  :M[lexer.test.patch]"S Q.fEB :M[lexer.set.patch] Oend '
+}

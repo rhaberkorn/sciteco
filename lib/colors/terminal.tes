@@ -1,0 +1,22 @@
+! Default terminal color scheme !
+[color.comment]  1,Q[color.black],Q[color.black]   
+[color.number]   0,Q[color.black],Q[color.cyan]    
+[color.keyword]  1,Q[color.black],Q[color.white]   
+[color.string]   0,Q[color.black],Q[color.green]   
+[color.string2]  1,Q[color.black],Q[color.green]   
+[color.preproc]  0,Q[color.black],Q[color.magenta] 
+[color.preproc2] 1,Q[color.black],Q[color.magenta] 
+[color.operator] 0,Q[color.black],Q[color.yellow]  
+[color.variable] 1,Q[color.black],Q[color.blue]    
+[color.error]    1,Q[color.black],Q[color.red]     
+
+! Makes only sense for Makefiles !
+[color.target]   1,Q[color.black],Q[color.yellow]  
+
+! Makes only sense for Patch/Diff files !
+[color.deletion] 0,Q[color.black],Q[color.red]     
+[color.addition] 0,Q[color.black],Q[color.green]   
+[color.change]   0,Q[color.black],Q[color.yellow]  
+
+! For highlighting braces !
+[color.bracelight] 1,Q[color.white],Q[color.black] 

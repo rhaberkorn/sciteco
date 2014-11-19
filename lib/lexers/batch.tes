@@ -1,0 +1,27 @@
+! DOS, Windows, OS/2 Batch Files !
+
+@[lexer.test.batch]{
+  [_ :S.[bat,cmd,nt] ]_
+}
+
+@[lexer.set.batch]{
+  ESSETLEXER,SCLEX_BATCH
+  0ESSETKEYWORDS
+    rem set if exist errorlevel for in do
+    break call chcp cd chdir choice cls country ctty date del erase dir echo
+    exit goto loadfix loadhigh mkdir md move path pause prompt rename ren
+    rmdir rd shift time type ver verify vol
+    com con lpt nul
+    color copy defined else not start
+  :M[color.comment],1M[color.set]
+  :M[color.keyword],2M[color.set]
+  :M[color.target],3M[color.set] ! Labels !
+  :M[color.preproc],4M[color.set] ! Hide Cmd @ !
+  :M[color.preproc2],5M[color.set] ! External Cmd !
+  :M[color.variable],6M[color.set]
+  :M[color.operator],7M[color.set]
+}
+
+@:[lexer.auto]{
+  :M[lexer.test.batch]"S Q.fEB :M[lexer.set.batch] Oend '
+}

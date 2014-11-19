@@ -1,0 +1,19 @@
+! Makefile Lexing !
+
+@[lexer.test.make]{
+  [_ :S[makefile,.mak] ]_
+}
+
+@[lexer.set.make]{
+  ESSETLEXER,SCLEX_MAKEFILE
+  :M[color.comment],1M[color.set]
+  :M[color.preproc],2M[color.set]
+  :M[color.variable],3M[color.set]
+  :M[color.operator],4M[color.set]
+  :M[color.target],5M[color.set]
+  :M[color.error],6M[color.set]
+}
+
+@:[lexer.auto]{
+  :M[lexer.test.make]"S Q.fEB :M[lexer.set.make] Oend '
+}
