@@ -228,9 +228,6 @@ QRegisterBufferInfo::get_integer(void)
 {
 	tecoInt id = 1;
 
-	if (!ring.current)
-		return 0;
-
 	for (Buffer *buffer = ring.first();
 	     buffer != ring.current;
 	     buffer = buffer->next())
@@ -242,7 +239,7 @@ QRegisterBufferInfo::get_integer(void)
 gchar *
 QRegisterBufferInfo::get_string(void)
 {
-	return g_strdup(ring.current ? ring.current->filename : "");
+	return g_strdup(ring.current->filename ? : "");
 }
 
 void
@@ -252,7 +249,7 @@ QRegisterBufferInfo::edit(void)
 
 	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
 	QRegisters::view.ssm(SCI_SETTEXT, 0,
-	                     (sptr_t)(ring.current ? ring.current->filename : ""));
+	                     (sptr_t)(ring.current->filename ? : ""));
 	QRegisters::view.ssm(SCI_ENDUNDOACTION);
 
 	QRegisters::view.undo_ssm(SCI_UNDO);
@@ -267,12 +264,14 @@ QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
 		insert(q);
 }
 
+/*
+ * NOTE: by not making this inline,
+ * we can access QRegisters::current
+ */
 void
 QRegisterTable::edit(QRegister *reg)
 {
 	reg->edit();
-
-	ring.current = NULL;
 	QRegisters::current = reg;
 }
 

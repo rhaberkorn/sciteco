@@ -201,7 +201,7 @@ Ring::find(tecoInt id)
 void
 Ring::dirtify(void)
 {
-	if (!current || current->dirty)
+	if (QRegisters::current || current->dirty)
 		return;
 
 	interface.undo_info_update(current);
@@ -746,9 +746,9 @@ StateSaveFile::done(const gchar *str)
 void
 current_doc_undo_edit(void)
 {
-	if (ring.current)
+	if (!QRegisters::current)
 		ring.undo_edit();
-	else if (QRegisters::current)
+	else
 		undo.push_var(QRegisters::current)->undo_edit();
 }
 

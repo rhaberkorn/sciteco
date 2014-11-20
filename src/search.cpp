@@ -147,7 +147,7 @@ StateSearch::initial(void)
 		}
 	}
 
-	parameters.from_buffer = ring.current;
+	parameters.from_buffer = QRegisters::current ? NULL : ring.current;
 	parameters.to_buffer = NULL;
 }
 
@@ -442,7 +442,8 @@ StateSearch::process(const gchar *str, gint new_chars)
 	if (!re)
 		goto failure;
 
-	if (ring.current != parameters.from_buffer) {
+	if (!QRegisters::current &&
+	    ring.current != parameters.from_buffer) {
 		ring.undo_edit();
 		parameters.from_buffer->edit();
 	}
@@ -597,7 +598,10 @@ StateSearchAll::initial(void)
 	} else {
 		parameters.count = (gint)v2;
 		/* NOTE: on Q-Registers, behave like "S" */
-		parameters.from_buffer = parameters.to_buffer = ring.current;
+		if (QRegisters::current)
+			parameters.from_buffer = parameters.to_buffer = NULL;
+		else
+			parameters.from_buffer = parameters.to_buffer = ring.current;
 	}
 
 	if (parameters.count >= 0) {

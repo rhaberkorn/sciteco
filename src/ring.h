@@ -253,7 +253,11 @@ void current_doc_undo_edit(void);
 static inline bool
 current_doc_must_undo(void)
 {
-	return ring.current ||
+	/*
+	 * If there's no currently edited Q-Register
+	 * we must be editing the current buffer
+	 */
+	return !QRegisters::current ||
 	       QRegisters::current->must_undo;
 }
 

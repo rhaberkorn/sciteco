@@ -1811,8 +1811,8 @@ StateECommand::custom(gchar chr)
 	 */
 	case 'F':
 		BEGIN_EXEC(&States::start);
-		if (!ring.current)
-			throw Error("No buffer selected");
+		if (QRegisters::current)
+			throw Error("Q-Register currently edited");
 
 		if (IS_FAILURE(expressions.pop_num_calc()) &&
 		    ring.current->dirty)
