@@ -145,12 +145,25 @@ Execute::macro(const gchar *macro, bool locals)
 
 	try {
 		step(macro, strlen(macro));
+
 		if (Goto::skip_label) {
 			Error error("Label \"%s\" not found",
 			            Goto::skip_label);
 			error.pos = strlen(macro);
 			String::get_coord(macro, error.pos,
 					  error.line, error.column);
+			throw error;
+		}
+
+		if (States::current != &States::start) {
+			Error error("Unterminated command");
+			/*
+			 * can only happen if we returned because
+			 * of macro end
+			 */
+			error.pos = strlen(macro);
+			String::get_coord(macro, error.pos,
+			                  error.line, error.column);
 			throw error;
 		}
 	} catch (...) {
