@@ -1,7 +1,7 @@
 ! C/C++ Lexing !
 
 @[lexer.test.cpp]{
-  [_ :S.[c,cc,cpp,cxx,h,hh,hpp,hxx,ipp,m,mm,sma] ]_
+  [_ _.[c,cc,cpp,cxx,h,hh,hpp,hxx,ipp,m,mm,sma]M[lexer.checkname] ]_
 }
 
 @[lexer.set.cpp]{
@@ -39,5 +39,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.cpp]"S Q.fEB :M[lexer.set.cpp] Oend '
+  :M[lexer.test.cpp]"S :M[lexer.set.cpp] Oend '
 }

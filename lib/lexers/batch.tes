@@ -1,7 +1,7 @@
 ! DOS, Windows, OS/2 Batch Files !
 
 @[lexer.test.batch]{
-  [_ :S.[bat,cmd,nt] ]_
+  [_ _.[bat,cmd,nt]M[lexer.checkname] ]_
 }
 
 @[lexer.set.batch]{
@@ -23,5 +23,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.batch]"S Q.fEB :M[lexer.set.batch] Oend '
+  :M[lexer.test.batch]"S :M[lexer.set.batch] Oend '
 }

@@ -1,7 +1,7 @@
 ! Lexing for XML and its applications !
 
 @[lexer.test.xml]{
-  [_ :S.[xml,xsl,svg,xul,xsd,dtd,xslt,axl,xrc,rdf] ]_
+  [_ _.[xml,xsl,svg,xul,xsd,dtd,xslt,axl,xrc,rdf]M[lexer.checkname] ]_
 }
 
 @[lexer.set.xml]{
@@ -25,5 +25,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.xml]"S Q.fEB :M[lexer.set.xml] Oend '
+  :M[lexer.test.xml]"S :M[lexer.set.xml] Oend '
 }

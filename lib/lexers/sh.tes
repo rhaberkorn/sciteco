@@ -1,8 +1,11 @@
 ! Unix Shell !
 
 @[lexer.test.sh]{ [_
-  :S[.sh,.bsh,configure,.ksh]
-  ! TODO: test hash-bang line !
+  _#!M[sh,bash,ksh]M[lexer.checkheader]"S
+    -1
+  |
+    _[.sh,.bsh,configure,.ksh]M[lexer.checkname]
+  '
 ]_ }
 
 @[lexer.set.sh]{
@@ -47,5 +50,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.sh]"S Q.fEB :M[lexer.set.sh] Oend '
+  :M[lexer.test.sh]"S :M[lexer.set.sh] Oend '
 }

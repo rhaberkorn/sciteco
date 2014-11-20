@@ -1,7 +1,7 @@
 ! Patch/Diff Files !
 
 @[lexer.test.patch]{
-  [_ :S.[diff,patch] ]_
+  [_ _.[diff,patch]M[lexer.checkname] ]_
 }
 
 @[lexer.set.patch]{
@@ -16,5 +16,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.patch]"S Q.fEB :M[lexer.set.patch] Oend '
+  :M[lexer.test.patch]"S :M[lexer.set.patch] Oend '
 }

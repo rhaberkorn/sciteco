@@ -1,11 +1,22 @@
 ! Lexer configuration and styles (ED hook) !
 
+! Match Q-Reg "_" against beginning of current doc's first line !
+@[lexer.checkheader]{
+  .h
+  0,0,1ESPOSITIONFROMLINE:X.h
+  EQ.h :SQ_ Q*EB
+}
+
+! Match Q-Reg "_" against end of current doc's file name !
+@[lexer.checkname]{
+  EQ* ZJ I H:SQ_
+  Q*EB
+}
+
 @[lexer.auto]{
   ! Set up brace lightning !
   :M[color.bracelight],34M[color.set]
   :M[color.error],35M[color.set]
-
-  Q*U.f EQ* HX.f :.f EQ.f
 }
 
 ! individual tests are appended by the lexers/*.tes files !
@@ -18,6 +29,4 @@ EMQ[$SCITECOPATH]/lexers/sh.tes
 EMQ[$SCITECOPATH]/lexers/xml.tes
 
 ! append an "end" label !
-@:[lexer.auto]{
-  Q.fEB
-!end!}
+:[lexer.auto]!end!

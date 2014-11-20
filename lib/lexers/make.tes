@@ -1,7 +1,7 @@
 ! Makefile Lexing !
 
 @[lexer.test.make]{
-  [_ :S[makefile,.mak] ]_
+  [_ _[makefile,.mak]M[lexer.checkname] ]_
 }
 
 @[lexer.set.make]{
@@ -15,5 +15,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.make]"S Q.fEB :M[lexer.set.make] Oend '
+  :M[lexer.test.make]"S :M[lexer.set.make] Oend '
 }

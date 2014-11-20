@@ -1,7 +1,7 @@
 ! CMake Lexing !
 
 @[lexer.test.cmake]{
-  [_ :S[CMakeLists.txt,.cmake,.ctest] ]_
+  [_ _[CMakeLists.txt,.cmake,.ctest]M[lexer.checkname] ]_
 }
 
 @[lexer.set.cmake]{
@@ -77,5 +77,5 @@
 }
 
 @:[lexer.auto]{
-  :M[lexer.test.cmake]"S Q.fEB :M[lexer.set.cmake] Oend '
+  :M[lexer.test.cmake]"S :M[lexer.set.cmake] Oend '
 }
