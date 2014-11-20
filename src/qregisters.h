@@ -165,7 +165,7 @@ public:
 	void edit(void);
 };
 
-class QRegisterTable : public RBTree {
+class QRegisterTable : private RBTree {
 	class UndoTokenRemove : public UndoToken {
 		QRegisterTable *table;
 		QRegister *reg;
@@ -236,6 +236,8 @@ public:
 		edit(reg);
 		return reg;
 	}
+
+	void clear(void);
 };
 
 class QRegisterStack {

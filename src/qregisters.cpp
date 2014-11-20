@@ -275,6 +275,30 @@ QRegisterTable::edit(QRegister *reg)
 	QRegisters::current = reg;
 }
 
+/*
+ * This is similar to RBTree::clear() but
+ * has the advantage that we can check whether some
+ * register is currently edited.
+ * Since this is not a destructor, we can throw
+ * errors.
+ * Therefore this method should be called before
+ * a (local) QRegisterTable is deleted.
+ */
+void
+QRegisterTable::clear(void)
+{
+	QRegister *cur;
+
+	while ((cur = (QRegister *)min())) {
+		if (cur == QRegisters::current)
+			throw Error("Currently edited Q-Register \"%s\" "
+			            "cannot be discarded", cur->name);
+
+		remove(cur);
+		delete cur;
+	}
+}
+
 void
 QRegisterStack::UndoTokenPush::run(void)
 {

@@ -146,25 +146,37 @@ Execute::macro(const gchar *macro, bool locals)
 	try {
 		step(macro, strlen(macro));
 
-		if (Goto::skip_label) {
-			Error error("Label \"%s\" not found",
-			            Goto::skip_label);
+		/*
+		 * Subsequent errors must still be
+		 * attached to this macro invocation.
+		 */
+		try {
+			if (Goto::skip_label)
+				throw Error("Label \"%s\" not found",
+				            Goto::skip_label);
+
+			if (States::current != &States::start)
+				/*
+				 * can only happen if we returned because
+				 * of macro end
+				 */
+				throw Error("Unterminated command");
+
+			/*
+			 * This handles the problem of Q-Registers
+			 * local to the macro invocation being edited
+			 * when the macro terminates.
+			 * QRegisterTable::clear() throws an error
+			 * if this happens and the Q-Reg editing
+			 * is undone.
+			 */
+			if (locals)
+				QRegisters::locals->clear();
+		} catch (Error &error) {
 			error.pos = strlen(macro);
 			String::get_coord(macro, error.pos,
 					  error.line, error.column);
-			throw error;
-		}
-
-		if (States::current != &States::start) {
-			Error error("Unterminated command");
-			/*
-			 * can only happen if we returned because
-			 * of macro end
-			 */
-			error.pos = strlen(macro);
-			String::get_coord(macro, error.pos,
-			                  error.line, error.column);
-			throw error;
+			throw; /* forward */
 		}
 	} catch (...) {
 		g_free(Goto::skip_label);
