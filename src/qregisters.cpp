@@ -366,11 +366,32 @@ QRegisterStack::~QRegisterStack()
 void
 QRegisters::hook(Hook type)
 {
+	QRegister *reg;
+
 	if (!(Flags::ed & Flags::ED_HOOKS))
 		return;
 
+	reg = globals["ED"];
+	if (!reg)
+		throw Error("Undefined ED-hook register (\"ED\")");
+
+	/*
+	 * ED-hook execution should not see any
+	 * integer parameters but the hook type.
+	 * Such parameters could confuse the ED macro
+	 * and macro authors do not expect side effects
+	 * of ED macros on the expression stack.
+	 * Also make sure it does not leave behind
+	 * additional arguments on the stack.
+	 *
+	 * So this effectively executes:
+	 * (typeM[ED]^[)
+	 */
+	expressions.push(Expressions::OP_BRACE);
 	expressions.push(type);
-	globals["0"]->execute();
+	reg->execute();
+	expressions.discard_args();
+	expressions.eval(true);
 }
 
 void
