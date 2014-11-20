@@ -104,9 +104,7 @@ Execute::step(const gchar *macro, gint stop_pos)
 				throw StdError(error);
 			}
 		} catch (Error &error) {
-			error.pos = macro_pc;
-			String::get_coord(macro, error.pos,
-					  error.line, error.column);
+			error.set_coord(macro, macro_pc);
 			throw; /* forward */
 		}
 		macro_pc++;
@@ -148,7 +146,8 @@ Execute::macro(const gchar *macro, bool locals)
 
 		/*
 		 * Subsequent errors must still be
-		 * attached to this macro invocation.
+		 * attached to this macro invocation
+		 * via Error::set_coord()
 		 */
 		try {
 			if (Goto::skip_label)
@@ -173,9 +172,7 @@ Execute::macro(const gchar *macro, bool locals)
 			if (locals)
 				QRegisters::locals->clear();
 		} catch (Error &error) {
-			error.pos = strlen(macro);
-			String::get_coord(macro, error.pos,
-					  error.line, error.column);
+			error.set_coord(macro, strlen(macro));
 			throw; /* forward */
 		}
 	} catch (...) {

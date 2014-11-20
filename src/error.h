@@ -101,6 +101,13 @@ public:
 	Error(const Error &inst);
 	~Error();
 
+	inline void
+	set_coord(const gchar *str, gint _pos)
+	{
+		pos = _pos;
+		String::get_coord(str, pos, line, column);
+	}
+
 	void add_frame(Frame *frame);
 
 	void display_short(void);
