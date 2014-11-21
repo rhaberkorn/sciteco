@@ -81,9 +81,24 @@ Error::FileFrame::display(gint nr)
 }
 
 Error::Frame *
+Error::EDHookFrame::copy() const
+{
+	/* coordinates do not matter */
+	return new EDHookFrame(type);
+}
+
+void
+Error::EDHookFrame::display(gint nr)
+{
+	interface.msg(InterfaceCurrent::MSG_INFO,
+	              "#%d in \"%s\" hook execution",
+	              nr, type);
+}
+
+Error::Frame *
 Error::ToplevelFrame::copy() const
 {
-	Frame *frame = new ToplevelFrame;
+	Frame *frame = new ToplevelFrame();
 
 	frame->pos = pos;
 	frame->line = line;

@@ -20,7 +20,6 @@
 #endif
 
 #include <string.h>
-#include <stdlib.h>
 #include <signal.h>
 
 #include <glib.h>
@@ -253,10 +252,9 @@ process_edit_cmd(gchar key)
 				break;
 			}
 
-			if (quit_requested) {
-				/* FIXME */
-				exit(EXIT_SUCCESS);
-			}
+			if (quit_requested)
+				/* cought by user interface */
+				throw Quit();
 
 			undo.clear();
 			interface.ssm(SCI_EMPTYUNDOBUFFER);

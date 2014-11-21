@@ -253,20 +253,10 @@ scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
 	interface.process_notify(notify);
 }
 
-static gboolean
-cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
-		    gpointer user_data)
+static inline void
+handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 {
-	bool is_shift	= event->state & GDK_SHIFT_MASK;
-	bool is_ctl	= event->state & GDK_CONTROL_MASK;
-
-#ifdef DEBUG
-	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
-		 event->string, *event->string,
-		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
-#endif
-
-	switch (event->keyval) {
+	switch (keyval) {
 	case GDK_Escape:
 		cmdline_keypress('\x1B');
 		break;
@@ -296,7 +286,7 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		gchar macro_name[3+1];
 
 		g_snprintf(macro_name, sizeof(macro_name),
-			   "F%d", event->keyval - GDK_F1 + 1);
+			   "F%d", keyval - GDK_F1 + 1);
 		cmdline_fnmacro(macro_name);
 		break;
 	}
@@ -316,7 +306,7 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 	 * Control keys and keys with printable representation
 	 */
 	default:
-		gunichar u = gdk_keyval_to_unicode(event->keyval);
+		gunichar u = gdk_keyval_to_unicode(keyval);
 
 		if (u && g_unichar_to_utf8(u, NULL) == 1) {
 			gchar key;
@@ -329,6 +319,30 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 
 			cmdline_keypress(key);
 		}
+	}
+}
+
+static gboolean
+cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
+		    gpointer user_data)
+{
+	bool is_shift	= event->state & GDK_SHIFT_MASK;
+	bool is_ctl	= event->state & GDK_CONTROL_MASK;
+
+#ifdef DEBUG
+	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
+		 event->string, *event->string,
+		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
+#endif
+
+	try {
+		handle_key_press(is_shift, is_ctl, event->keyval);
+	} catch (Quit) {
+		/*
+		 * SciTECO should terminate, so we exit
+		 * the main loop. event_loop() will return.
+		 */
+		gtk_main_quit();
 	}
 
 	return TRUE;

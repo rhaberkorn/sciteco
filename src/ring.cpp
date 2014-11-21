@@ -485,6 +485,7 @@ Ring::close(void)
 {
 	Buffer *buffer = current;
 
+	QRegisters::hook(QRegisters::HOOK_CLOSE);
 	close(buffer);
 	current = buffer->next() ? : buffer->prev();
 	/* transfer responsibility to UndoToken object */

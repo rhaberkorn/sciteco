@@ -366,32 +366,46 @@ QRegisterStack::~QRegisterStack()
 void
 QRegisters::hook(Hook type)
 {
+	static const gchar *type2name[] = {
+		/* [HOOK_ADD-1] = */	"ADD",
+		/* [HOOK_EDIT-1] = */	"EDIT",
+		/* [HOOK_CLOSE-1] = */	"CLOSE",
+		/* [HOOK_QUIT-1] = */	"QUIT",
+	};
+
 	QRegister *reg;
 
 	if (!(Flags::ed & Flags::ED_HOOKS))
 		return;
 
-	reg = globals["ED"];
-	if (!reg)
-		throw Error("Undefined ED-hook register (\"ED\")");
+	try {
+		reg = globals["ED"];
+		if (!reg)
+			throw Error("Undefined ED-hook register (\"ED\")");
 
-	/*
-	 * ED-hook execution should not see any
-	 * integer parameters but the hook type.
-	 * Such parameters could confuse the ED macro
-	 * and macro authors do not expect side effects
-	 * of ED macros on the expression stack.
-	 * Also make sure it does not leave behind
-	 * additional arguments on the stack.
-	 *
-	 * So this effectively executes:
-	 * (typeM[ED]^[)
-	 */
-	expressions.push(Expressions::OP_BRACE);
-	expressions.push(type);
-	reg->execute();
-	expressions.discard_args();
-	expressions.eval(true);
+		/*
+		 * ED-hook execution should not see any
+		 * integer parameters but the hook type.
+		 * Such parameters could confuse the ED macro
+		 * and macro authors do not expect side effects
+		 * of ED macros on the expression stack.
+		 * Also make sure it does not leave behind
+		 * additional arguments on the stack.
+		 *
+		 * So this effectively executes:
+		 * (typeM[ED]^[)
+		 */
+		expressions.push(Expressions::OP_BRACE);
+		expressions.push(type);
+		reg->execute();
+		expressions.discard_args();
+		expressions.eval(true);
+	} catch (Error &error) {
+		const gchar *type_str = type2name[type-1];
+
+		error.add_frame(new Error::EDHookFrame(type_str));
+		throw; /* forward */
+	}
 }
 
 void

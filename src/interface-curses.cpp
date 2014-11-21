@@ -478,9 +478,29 @@ InterfaceCurses::event_loop_impl(void)
 
 #ifdef EMSCRIPTEN
 	PDC_emscripten_set_handler(event_loop_iter, TRUE);
+	/*
+	 * We must not block emscripten's main loop,
+	 * instead event_loop_iter() is called asynchronously.
+	 * We also must not exit the event_loop() method, since
+	 * SciTECO would assume ordinary program termination.
+	 * We also must not call exit() since that would run
+	 * the global destructors.
+	 * The following exits the main() function immediately
+	 * while keeping the "runtime" alive.
+	 */
+	emscripten_exit_with_live_runtime();
 #else
-	for (;;)
-		event_loop_iter();
+	try {
+		for (;;)
+			event_loop_iter();
+	} catch (Quit) {
+		/* SciTECO termination (e.g. EX$$) */
+	}
+
+	/*
+	 * Restore ordinary terminal behaviour
+	 */
+	endwin();
 #endif
 }
 

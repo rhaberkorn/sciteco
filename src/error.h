@@ -37,6 +37,12 @@ public:
 	ReplaceCmdline();
 };
 
+/*
+ * Thrown as exception to signify that program
+ * should be terminated.
+ */
+class Quit {};
+
 class Error {
 	gchar *description;
 	GSList *frames;
@@ -85,6 +91,23 @@ public:
 		~FileFrame()
 		{
 			g_free(name);
+		}
+
+		void display(gint nr);
+	};
+
+	class EDHookFrame : public Frame {
+		gchar *type;
+
+	public:
+		EDHookFrame(const gchar *_type)
+		           : type(g_strdup(_type)) {}
+
+		Frame *copy() const;
+
+		~EDHookFrame()
+		{
+			g_free(type);
 		}
 
 		void display(gint nr);

@@ -308,6 +308,11 @@ main(int argc, char **argv)
 
 	/* add remaining arguments to unnamed buffer */
 	for (int i = 1; i < argc; i++) {
+		/*
+		 * FIXME: arguments may contain line-feeds.
+		 * Once SciTECO is 8-byte clear, we can add the
+		 * command-line params null-terminated.
+		 */
 		interface.ssm(SCI_APPENDTEXT, strlen(argv[i]), (sptr_t)argv[i]);
 		interface.ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
 	}
@@ -323,6 +328,7 @@ main(int argc, char **argv)
 				error.add_frame(new Error::ToplevelFrame());
 				throw; /* forward */
 			}
+			QRegisters::hook(QRegisters::HOOK_QUIT);
 			exit(EXIT_SUCCESS);
 		}
 
@@ -331,7 +337,7 @@ main(int argc, char **argv)
 
 			/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */
 			if (quit_requested) {
-				/* FIXME */
+				QRegisters::hook(QRegisters::HOOK_QUIT);
 				exit(EXIT_SUCCESS);
 			}
 		}
@@ -354,6 +360,22 @@ main(int argc, char **argv)
 	undo.enabled = true;
 
 	interface.event_loop();
+
+	/*
+	 * Ordinary application termination:
+	 * Interface is shut down, so we are
+	 * in non-interactive mode again.
+	 */
+	undo.enabled = false;
+	interface.ssm(SCI_EMPTYUNDOBUFFER);
+	undo.clear();
+
+	try {
+		QRegisters::hook(QRegisters::HOOK_QUIT);
+	} catch (Error &error) {
+		error.display_full();
+		exit(EXIT_FAILURE);
+	}
 
 	return 0;
 }
