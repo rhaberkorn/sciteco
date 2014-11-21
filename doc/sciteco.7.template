@@ -541,40 +541,80 @@ To enable them, set bit 5 in the \fBED\fP flags:
 .EX
 0,32ED
 .EE
-\*(ST will now execute the macro in Q-Register \(lq0\(rq
-(zero) whenever a relevant operation is performed.
-The macro will be passed an argument that specifies the
+\*(ST will now execute the macro in global Q-Register \(lqED\(rq
+whenever a relevant operation is performed.
+This macro \fBmust\fP be provided if \fBED\fP hooks are
+enabled.
+.LP
+The \(lqED\(rq macro will receive an argument that specifies the
 type of operation that has just been performed or is
 just about to be performed.
-Possible values are defined consecutively so the macro
-can branch to the operation using a computed goto.
+The \(lqED\(rq macro is executed in a more or less
+isolated way by \*(ST, i.e. it will not see any other
+argument that is on the expression stack when the hook
+is executed and all values it may leave on the expression
+stack are discarded.
+This way, \fPED\fP hooks should not interfere with
+the stack-semantics of commands triggering them.
+.LP
+Possible arguments to the \(lqED\(rq macro begin with 1 and
+are defined consecutively so the macro can branch to the
+operation using a computed goto.
 The different values are defined as follows:
 .TP
 .B 1
 A file has been \fBadded\fP to the buffer ring.
 It may or may not already exist in the file system.
-Scintilla lexing should be configured in this hook - it
-only has to be done once.
+This file is \*(ST's current document when this hook
+executes.
+Scintilla lexing may be configured in this hook \(em it
+usually only has to be done once.
 .TP
 .B 2
 A buffer has been \fBedited\fP (made the current file).
 This hook is not executed when a file is freshly added
-to the buffer ring.
-In this hook you may define language-specific auxiliary
-macros, for instance.
+to the buffer ring, since this can be simulated easily
+by branching within the \(lqED\(rq macro.
+In this hook you may want to define language-specific
+auxiliary macros, for instance.
 .TP
 .B 3
-\# FIXME: Not implemented
 A buffer is about to be \fBclosed\fP (removed from the
 buffer ring).
+The buffer that is about to be closed, is still the
+current document when this hook runs.
 .TP
 .B 4
-\# FIXME: Not implemented
-\*(ST is about to \fBexit\fP.
+\*(ST is about to \fBquit\fP, i.e. exit normally.
+This is \*(ST's equivalent of
+.BR atexit (3)
+handlers.
+The hook is not run when some command fails,
+but only when \*(ST exits normally.
+This is the case when a macro specified via
+\fB--eval\fP reaches the end, when a munged
+file calls \fBEX\fP or when \fBEX\fP has been
+called in interactive mode.
+Note however that \fBEX\fP is never executed
+immediately, but only requests program termination
+(so it can still be rubbed out).
+The \fBquit\fP hook will always run in \fIbatch\fP
+mode (after any user interface has shut down).
+Errors in the hook's execution will not prevent
+\*(ST from exiting, but an error trace will
+be printed and \*(ST exit code will be a failure code.
+It is not possible to cancel program termination
+via \fBquit\fP hooks.
+The \fBquit\fP hook may be used to transparently
+save a buffer session, for instance.
 .LP
 The side-effects of the hook executions are reversed
 when rubbing out the command that resulted in its
 execution.
+Unless otherwise noted, errors during hook
+execution will propagate and let the command
+triggering the hook execution fail.
+.LP
 The \*(ST standard library contains a framework
 for configuring Scintilla lexing and other useful
 hooks (see
@@ -708,6 +748,9 @@ Name and id of current buffer in ring.
 Command-line replacement register.
 Its integer part is unused.
 .LP
+The \*(ST runtime may access other special Q-Registers
+(e.g. function key macros), but they are not initialized by
+default.
 Some commands may create and initialize new registers if
 necessary, while it is an error to access undefined registers
 for some other commands.

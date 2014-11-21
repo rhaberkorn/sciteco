@@ -1863,7 +1863,8 @@ StateECommand::custom(gchar chr)
 	 * Without any argument ED returns the current flags.
 	 *
 	 * Currently, the following flags are used by \*(ST:
-	 *   - 32: Enable/Disable executing register \(lq0\(rq hooks
+	 *   - 32: Enable/Disable buffer editing hooks
+	 *     (via execution of macro in global Q-Register \(lqED\(rq)
 	 *   - 64: Enable/Disable function key macros
 	 *   - 128: Enable/Disable enforcement of UNIX98
 	 *     \(lq/bin/sh\(rq emulation for operating system command
