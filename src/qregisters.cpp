@@ -168,11 +168,16 @@ QRegister::edit(void)
 void
 QRegister::undo_edit(void)
 {
+	/*
+	 * We might be switching the current document
+	 * to a buffer.
+	 */
+	string.update(QRegisters::view);
+
 	if (!must_undo)
 		return;
 
 	interface.undo_info_update(this);
-	string.update(QRegisters::view);
 	string.undo_edit(QRegisters::view);
 	interface.undo_show_view(&QRegisters::view);
 }
