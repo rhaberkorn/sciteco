@@ -364,11 +364,20 @@ private:
 	State *got_register(QRegister &reg);
 };
 
+class StateEUCommand : public StateExpectQReg {
+public:
+	StateEUCommand() : StateExpectQReg(true) {}
+
+private:
+	State *got_register(QRegister &reg);
+};
+
 class StateSetQRegString : public StateExpectString {
 	bool text_added;
 
 public:
-	StateSetQRegString() : StateExpectString(false) {}
+	StateSetQRegString(bool building)
+	                  : StateExpectString(building) {}
 
 private:
 	void initial(void);
@@ -425,7 +434,9 @@ namespace States {
 	extern StateEQCommand		eqcommand;
 	extern StateLoadQReg		loadqreg;
 	extern StateCtlUCommand		ctlucommand;
-	extern StateSetQRegString	setqregstring;
+	extern StateEUCommand		eucommand;
+	extern StateSetQRegString	setqregstring_nobuilding;
+	extern StateSetQRegString	setqregstring_building;
 	extern StateGetQRegString	getqregstring;
 	extern StateGetQRegInteger	getqreginteger;
 	extern StateSetQRegInteger	setqreginteger;

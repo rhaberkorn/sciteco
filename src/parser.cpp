@@ -1805,6 +1805,7 @@ StateECommand::StateECommand() : State()
 	transitions['N'] = &States::glob;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;
+	transitions['U'] = &States::eucommand;
 	transitions['W'] = &States::savefile;
 }
 

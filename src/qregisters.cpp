@@ -46,7 +46,9 @@ namespace States {
 	StateEQCommand		eqcommand;
 	StateLoadQReg		loadqreg;
 	StateCtlUCommand	ctlucommand;
-	StateSetQRegString	setqregstring;
+	StateEUCommand		eucommand;
+	StateSetQRegString	setqregstring_nobuilding(false);
+	StateSetQRegString	setqregstring_building(true);
 	StateGetQRegString	getqregstring;
 	StateGetQRegInteger	getqreginteger;
 	StateSetQRegInteger	setqreginteger;
@@ -610,7 +612,7 @@ StateLoadQReg::done(const gchar *str)
 }
 
 /*$
- * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string
+ * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string without string building
  * [c1,c2,...]:^Uq[string]$
  *
  * If not colon-modified, it first fills the Q-Register <q>
@@ -627,14 +629,38 @@ StateLoadQReg::done(const gchar *str)
  *
  * If <q> is undefined, it will be defined.
  *
- * String-building is by default \fBdisabled\fP for ^U commands.
+ * String-building characters are \fBdisabled\fP for ^U
+ * commands.
+ * Therefore they are especially well-suited for defining
+ * \*(ST macros, since string building characters in the
+ * desired Q-Register contents do not have to be escaped.
+ * The \fBEU\fP command may be used where string building
+ * is desired.
  */
 State *
 StateCtlUCommand::got_register(QRegister &reg)
 {
-	BEGIN_EXEC(&States::setqregstring);
+	BEGIN_EXEC(&States::setqregstring_nobuilding);
 	register_argument = &reg;
-	return &States::setqregstring;
+	return &States::setqregstring_nobuilding;
+}
+
+/*$
+ * [c1,c2,...]EUq[string]$ -- Set or append to Q-Register string with string building characters
+ * [c1,c2,...]:EUq[string]$
+ *
+ * This command sets or appends to the contents of
+ * Q-Register \fIq\fP.
+ * It is identical to the \fB^U\fP command, except
+ * that this form of the command has string building
+ * characters \fBenabled\fP.
+ */
+State *
+StateEUCommand::got_register(QRegister &reg)
+{
+	BEGIN_EXEC(&States::setqregstring_building);
+	register_argument = &reg;
+	return &States::setqregstring_building;
 }
 
 void
