@@ -56,7 +56,8 @@ namespace States {
 	StateECommand		ecommand;
 	StateScintilla_symbols	scintilla_symbols;
 	StateScintilla_lParam	scintilla_lparam;
-	StateInsert		insert;
+	StateInsert		insert_building(true);
+	StateInsert		insert_nobuilding(false);
 
 	State *current = &start;
 }
@@ -509,7 +510,7 @@ StateStart::StateStart() : State()
 	transitions['F'] = &States::fcommand;
 	transitions['"'] = &States::condcommand;
 	transitions['E'] = &States::ecommand;
-	transitions['I'] = &States::insert;
+	transitions['I'] = &States::insert_building;
 	transitions['S'] = &States::search;
 	transitions['N'] = &States::searchall;
 
@@ -1698,12 +1699,15 @@ StateControl::custom(gchar chr)
 	 * In other words after all the chars on the stack have
 	 * been inserted into the buffer, a Tab-character is inserted
 	 * and then the optional <text> is inserted interactively.
+	 *
+	 * Like the I command, ^I has string building characters
+	 * \fBenabled\fP.
 	 */
 	case 'I':
-		BEGIN_EXEC(&States::insert);
+		BEGIN_EXEC(&States::insert_building);
 		expressions.eval();
 		expressions.push('\t');
-		return &States::insert;
+		return &States::insert_building;
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
@@ -1801,6 +1805,7 @@ StateECommand::StateECommand() : State()
 	transitions['B'] = &States::editfile;
 	transitions['C'] = &States::executecommand;
 	transitions['G'] = &States::egcommand;
+	transitions['I'] = &States::insert_nobuilding;
 	transitions['M'] = &States::macro_file;
 	transitions['N'] = &States::glob;
 	transitions['S'] = &States::scintilla_symbols;
@@ -2124,7 +2129,7 @@ StateScintilla_lParam::done(const gchar *str)
  * syntactically
  */
 /*$
- * [c1,c2,...]I[text]$ -- Insert text
+ * [c1,c2,...]I[text]$ -- Insert text with string building characters
  *
  * First inserts characters for all the values
  * on the argument stack (interpreted as codepoints).
@@ -2133,8 +2138,21 @@ StateScintilla_lParam::done(const gchar *str)
  * Secondly, the command inserts <text>.
  * In interactive mode, <text> is inserted interactively.
  *
- * String building characters are by default enabled for the
+ * String building characters are \fBenabled\fP for the
  * I command.
+ * When editing \*(ST macros, using the \fBEI\fP command
+ * may be better, since it has string building characters
+ * disabled.
+ */
+/*$
+ * [c1,c2,...]EI[text]$ -- Insert text without string building characters
+ *
+ * Inserts text at the current position in the current
+ * document.
+ * This command is identical to the \fBI\fP command,
+ * except that string building characters are \fBdisabled\fP.
+ * Therefore it may be beneficial when editing \*(ST
+ * macros.
  */
 void
 StateInsert::initial(void)

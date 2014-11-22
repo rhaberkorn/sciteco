@@ -233,6 +233,10 @@ private:
  * also serves as base class for replace-insertion states
  */
 class StateInsert : public StateExpectString {
+public:
+	StateInsert(bool building = true)
+	           : StateExpectString(building) {}
+
 protected:
 	void initial(void);
 	void process(const gchar *str, gint new_chars);
@@ -248,7 +252,8 @@ namespace States {
 	extern StateECommand		ecommand;
 	extern StateScintilla_symbols	scintilla_symbols;
 	extern StateScintilla_lParam	scintilla_lparam;
-	extern StateInsert		insert;
+	extern StateInsert		insert_building;
+	extern StateInsert		insert_nobuilding;
 
 	extern State *current;
 
