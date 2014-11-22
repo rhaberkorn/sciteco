@@ -187,6 +187,11 @@ public:
 	}
 
 	tecoInt get_id(Buffer *buffer);
+	inline tecoInt
+	get_id(void)
+	{
+		return get_id(current);
+	}
 
 	Buffer *find(const gchar *filename);
 	Buffer *find(tecoInt id);

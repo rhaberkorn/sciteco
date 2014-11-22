@@ -146,12 +146,9 @@ class QRegisterBufferInfo : public QRegister {
 public:
 	QRegisterBufferInfo() : QRegister("*") {}
 
-	tecoInt
-	set_integer(tecoInt v)
-	{
-		return v;
-	}
-	void undo_set_integer(void) {}
+	/* setting "*" is equivalent to nEB */
+	tecoInt set_integer(tecoInt v);
+	void undo_set_integer(void);
 
 	tecoInt get_integer(void);
 

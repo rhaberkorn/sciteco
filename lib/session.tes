@@ -2,7 +2,7 @@
 
 ! Path of the session profile.
   Change this to save/load a custom profile !
-EQ[session.path] IQ[$HOME]/.teco_session 1EB
+[* EQ[session.path] IQ[$HOME]/.teco_session ]*
 
 @[session.save]{
   Q*U.[curbuf]
@@ -18,6 +18,7 @@ EQ[session.path] IQ[$HOME]/.teco_session 1EB
 
   EBQ[session.path]
   HK G.[session] EW EF
+  Q.[curbuf]EB
 }
 
 @[session.load]{
@@ -35,8 +36,6 @@ EQ[session.path] IQ[$HOME]/.teco_session 1EB
 @[session.git]{
   ! if there is no Git repository, session.path is left as it is !
   :EG[session.path]git rev-parse --show-toplevel"S
-    Q*U.#cb
-    EQ[session.path] ZJ -D I/.teco_session
-    Q.#cbEB
+    [* EQ[session.path] ZJ -D I/.teco_session ]*
   '
 }

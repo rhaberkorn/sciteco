@@ -742,7 +742,24 @@ Replacement string register.
 Its integer part is unused.
 .TP
 .BR * " (asterisk)"
-Name and id of current buffer in ring.
+File name (string part) and id (numeric part) of current
+buffer in ring.
+The unnamed buffer has an empty name.
+If the current document is a register, this returns the
+name or id of the buffer last edited.
+The \(lq*\(rq register may also be edited but changing its
+string contents has no effect on the file name of the buffer.
+Setting the numeric part of the \(lq*\(rq register,
+as in \(lq1U*\(rq, is equivalent to editing a buffer by id
+(e.g. \(lq1EB\fB$\fP\(rq) but is shorter since there is no
+string parameter.
+This allows the useful idioms of changing to the previous
+buffer with \(lq-%*\fB$\fP\(rq, changing to the next
+buffer with \(lq%*\fB$\fP\(rq and changing the current buffer
+temporarily:
+.EX
+[* ! ...change current buffer... ! ]*
+.EE
 .TP
 .BR $ " (Escape)"
 Command-line replacement register.

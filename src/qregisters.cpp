@@ -229,16 +229,24 @@ QRegister::load(const gchar *filename)
 }
 
 tecoInt
+QRegisterBufferInfo::set_integer(tecoInt v)
+{
+	if (!ring.edit(v))
+		throw Error("Invalid buffer id %" TECO_INTEGER_FORMAT, v);
+
+	return v;
+}
+
+void
+QRegisterBufferInfo::undo_set_integer(void)
+{
+	current_doc_undo_edit();
+}
+
+tecoInt
 QRegisterBufferInfo::get_integer(void)
 {
-	tecoInt id = 1;
-
-	for (Buffer *buffer = ring.first();
-	     buffer != ring.current;
-	     buffer = buffer->next())
-		id++;
-
-	return id;
+	return ring.get_id();
 }
 
 gchar *
