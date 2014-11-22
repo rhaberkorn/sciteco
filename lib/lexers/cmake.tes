@@ -75,7 +75,3 @@
   :M[color.variable],13M[color.set]
   :M[color.number],14M[color.set]
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.cmake]"S :M[lexer.set.cmake] Oend '
-}

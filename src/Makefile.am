@@ -30,6 +30,7 @@ libsciteco_base_a_SOURCES = main.cpp sciteco.h \
 			    parser.cpp parser.h \
 			    search.cpp search.h \
 			    spawn.cpp spawn.h \
+			    glob.cpp glob.h \
 			    goto.cpp goto.h \
 			    rbtree.cpp rbtree.h \
 			    symbols.cpp symbols.h \

@@ -37,6 +37,7 @@
 #include "symbols.h"
 #include "search.h"
 #include "spawn.h"
+#include "glob.h"
 #include "cmdline.h"
 #include "error.h"
 
@@ -1801,6 +1802,7 @@ StateECommand::StateECommand() : State()
 	transitions['C'] = &States::executecommand;
 	transitions['G'] = &States::egcommand;
 	transitions['M'] = &States::macro_file;
+	transitions['N'] = &States::glob;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;
 	transitions['W'] = &States::savefile;

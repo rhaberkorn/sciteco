@@ -18,7 +18,6 @@
 #ifndef __RING_H
 #define __RING_H
 
-#include <string.h>
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
@@ -38,11 +37,6 @@ namespace SciTECO {
 /*
  * Auxiliary functions
  */
-static inline bool
-is_glob_pattern(const gchar *str)
-{
-	return strchr(str, '*') || strchr(str, '?');
-}
 
 /*
  * Get absolute/full version of a possibly relative path.

@@ -14,7 +14,3 @@
   :M[color.addition],6M[color.set]
   :M[color.change],7M[color.set]
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.patch]"S :M[lexer.set.patch] Oend '
-}

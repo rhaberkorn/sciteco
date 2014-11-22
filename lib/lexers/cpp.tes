@@ -37,7 +37,3 @@
   :M[color.preproc],9M[color.set]
   :M[color.operator],10M[color.set]
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.cpp]"S :M[lexer.set.cpp] Oend '
-}

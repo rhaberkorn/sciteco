@@ -36,6 +36,7 @@
 #include "undo.h"
 #include "symbols.h"
 #include "spawn.h"
+#include "glob.h"
 #include "error.h"
 #include "cmdline.h"
 

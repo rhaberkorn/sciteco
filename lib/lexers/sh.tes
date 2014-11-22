@@ -48,7 +48,3 @@
   :M[color.variable],10M[color.set]
   :M[color.string2],11M[color.set] ! Backticks !
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.sh]"S :M[lexer.set.sh] Oend '
-}

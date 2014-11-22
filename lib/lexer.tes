@@ -19,14 +19,19 @@
   :M[color.error],35M[color.set]
 }
 
-! individual tests are appended by the lexers/*.tes files !
-EMQ[$SCITECOPATH]/lexers/batch.tes
-EMQ[$SCITECOPATH]/lexers/cmake.tes
-EMQ[$SCITECOPATH]/lexers/cpp.tes
-EMQ[$SCITECOPATH]/lexers/make.tes
-EMQ[$SCITECOPATH]/lexers/patch.tes
-EMQ[$SCITECOPATH]/lexers/sh.tes
-EMQ[$SCITECOPATH]/lexers/xml.tes
+! Automatically mung all the lexers and them to "lexer.auto" !
+Q*U.#cd EQ.[lexers]
+ENQ[$SCITECOPATH]/lexers/*.tes J
+<:L;R
+  0X.[filename] .-4U.p -S/ .,Q.pX.[name]
+  EMQ.[filename]
+  EQ[lexer.auto] ZJ
+  @I{
+    :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] Oend '
+  }
+  EQ.[lexers]
+L>
+Q.#cdEB
 
 ! append an "end" label !
 :[lexer.auto]!end!

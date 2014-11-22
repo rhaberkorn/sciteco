@@ -23,7 +23,3 @@
   :M[color.preproc2],13M[color.set] ! PI !
   :M[color.string2],14M[color.set] ! CDATA !
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.xml]"S :M[lexer.set.xml] Oend '
-}

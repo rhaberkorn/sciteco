@@ -13,7 +13,3 @@
   :M[color.target],5M[color.set]
   :M[color.error],6M[color.set]
 }
-
-@:[lexer.auto]{
-  :M[lexer.test.make]"S :M[lexer.set.make] Oend '
-}

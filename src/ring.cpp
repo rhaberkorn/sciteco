@@ -38,8 +38,9 @@
 #include "parser.h"
 #include "expressions.h"
 #include "qregisters.h"
-#include "ring.h"
+#include "glob.h"
 #include "error.h"
+#include "ring.h"
 
 #ifdef HAVE_WINDOWS_H
 /* here it shouldn't cause conflicts with other headers */
@@ -600,8 +601,10 @@ StateEditFile::do_edit(tecoInt id)
  * Naturally this only has any effect in interactive
  * mode.
  *
- * <file> may also be a glob-pattern, in which case
+ * <file> may also be a glob pattern, in which case
  * all files matching the pattern are opened/edited.
+ * Globbing is performed exactly the same as the
+ * EN command does.
  *
  * File names of buffers in the ring are normalized
  * by making them absolute.
@@ -661,37 +664,11 @@ StateEditFile::done(const gchar *str)
 	}
 
 	if (is_glob_pattern(str)) {
-		gchar *dirname;
-		GDir *dir;
+		Globber globber(str);
+		gchar *filename;
 
-		dirname = g_path_get_dirname(str);
-		dir = g_dir_open(dirname, 0, NULL);
-
-		if (dir) {
-			const gchar *basename;
-			GPatternSpec *pattern;
-
-			basename = g_path_get_basename(str);
-			pattern = g_pattern_spec_new(basename);
-			g_free((gchar *)basename);
-
-			while ((basename = g_dir_read_name(dir))) {
-				if (g_pattern_match_string(pattern, basename)) {
-					gchar *filename;
-
-					filename = g_build_filename(dirname,
-								    basename,
-								    NIL);
-					do_edit(filename);
-					g_free(filename);
-				}
-			}
-
-			g_pattern_spec_free(pattern);
-			g_dir_close(dir);
-		}
-
-		g_free(dirname);
+		while ((filename = globber.next()))
+			do_edit(filename);
 	} else {
 		do_edit(*str ? str : NULL);
 	}
