@@ -173,6 +173,21 @@ Ring::UndoTokenEdit::run(void)
 	buffer = NULL;
 }
 
+tecoInt
+Ring::get_id(Buffer *buffer)
+{
+	tecoInt ret = 0;
+	Buffer *cur;
+
+	TAILQ_FOREACH(cur, &head, buffers) {
+		ret++;
+		if (cur == buffer)
+			break;
+	}
+
+	return ret;
+}
+
 Buffer *
 Ring::find(const gchar *filename)
 {

@@ -1890,6 +1890,63 @@ StateECommand::custom(gchar chr)
 		break;
 
 	/*$
+	 * [key]EJ -> value -- Get and set system properties
+	 * -EJ -> value
+	 * value,keyEJ
+	 *
+	 * This command may be used to get and set system
+	 * properties.
+	 * With one argument, it retrieves a numeric property
+	 * identified by \fIkey\fP.
+	 * If \fIkey\fP is omitted, the prefix sign is implied
+	 * (1 or -1).
+	 * With two arguments, it sets property \fIkey\fP to
+	 * \fIvalue\fP and returns nothing. Currently, there
+	 * are no properties that can be set.
+	 *
+	 * The following property keys are defined:
+	 * .IP 0 4
+	 * The current user interface: 1 for Curses, 2 for GTK
+	 * .IP 1
+	 * The current numbfer of buffers: Also the numeric id
+	 * of the last buffer in the ring. This is implied if
+	 * no argument is given, so \(lqEJ\(rq returns the number
+	 * of buffers in the ring.
+	 */
+	case 'J': {
+		BEGIN_EXEC(&States::start);
+
+		tecoInt property;
+
+		expressions.eval();
+		property = expressions.pop_num_calc();
+		if (expressions.args() > 0)
+			throw Error("Cannot set property %" TECO_INTEGER_FORMAT
+			            " for <EJ>", property);
+
+		switch (property) {
+		case 0: /* user interface */
+#ifdef INTERFACE_CURSES
+			expressions.push(1);
+#elif defined(INTERFACE_GTK)
+			expressions.push(2);
+#else
+#error Missing value for current interface!
+#endif
+			break;
+
+		case 1: /* number of buffers */
+			expressions.push(ring.get_id(ring.last()));
+			break;
+
+		default:
+			throw Error("Invalid property %" TECO_INTEGER_FORMAT
+			            " for <EJ>", property);
+		}
+		break;
+	}
+
+	/*$
 	 * [bool]EX -- Exit program
 	 * -EX
 	 *

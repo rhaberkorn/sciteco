@@ -186,6 +186,8 @@ public:
 		return TAILQ_LAST(&head, Head);
 	}
 
+	tecoInt get_id(Buffer *buffer);
+
 	Buffer *find(const gchar *filename);
 	Buffer *find(tecoInt id);
 
