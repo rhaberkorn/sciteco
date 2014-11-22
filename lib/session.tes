@@ -1,0 +1,42 @@
+! Macros for saving and loading buffer sessions !
+
+! Path of the session profile.
+  Change this to save/load a custom profile !
+EQ[session.path] IQ[$HOME]/.teco_session 1EB
+
+@[session.save]{
+  Q*U.[curbuf]
+  EJ<
+    %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
+    EQ.[session]
+    @I{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^M}
+    EQ* Z"= -1U.u '
+  >
+  EQ.[session]
+  Q.u"F @I{EB -EF^M} '
+  @I{\.[curbuf]EB^M}
+
+  EBQ[session.path]
+  HK G.[session] EW EF
+}
+
+@[session.load]{
+  EJ<-EF>
+  EQ.x ENQ[session.path]
+  Z"=
+    1EB
+  |
+    :EMQ[session.path]
+  '
+}
+
+! Call this to set up the session path unique to
+  the current Git repository (if there is one) !
+@[session.git]{
+  ! if there is no Git repository, session.path is left as it is !
+  :EG[session.path]git rev-parse --show-toplevel"S
+    Q*U.#cb
+    EQ[session.path] ZJ -D I/.teco_session
+    Q.#cbEB
+  '
+}
