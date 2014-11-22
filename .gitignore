@@ -32,8 +32,3 @@ stamp-*
 /src/gtk-info-popup*.[ch]
 /src/symbols-scintilla.cpp
 /src/symbols-scilexer.cpp
-
-# Backups
-*~
-# SciTECO save points
-.teco-*-*
