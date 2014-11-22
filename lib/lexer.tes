@@ -4,13 +4,12 @@
 @[lexer.checkheader]{
   .h
   0,0,1ESPOSITIONFROMLINE:X.h
-  EQ.h :SQ_ Q*EB
+  [* EQ.h :SQ_ ]*
 }
 
 ! Match Q-Reg "_" against end of current doc's file name !
 @[lexer.checkname]{
-  EQ* ZJ I H:SQ_
-  Q*EB
+  [* EQ* ZJ I H:SQ_ ]*
 }
 
 @[lexer.auto]{
@@ -19,19 +18,17 @@
   :M[color.error],35M[color.set]
 }
 
-! Automatically mung all the lexers and them to "lexer.auto" !
-Q*U.#cd EQ.[lexers]
-ENQ[$SCITECOPATH]/lexers/*.tes J
-<:L;R
-  0X.[filename] .-4U.p -S/ .,Q.pX.[name]
-  EMQ.[filename]
-  EQ[lexer.auto] ZJ
-  @I{
-    :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] Oend '
-  }
-  EQ.[lexers]
-L>
-Q.#cdEB
+! Automatically mung all the lexers and add them to "lexer.auto" !
+[*
+  EQ.[lexers] ENQ[$SCITECOPATH]/lexers/*.tes J
+  <:L;R
+    0X.[filename] 4R .U.p <-A-^^/"= 1; ':R;> .,Q.pX.[name]
+    EMQ.[filename]
+    :@EU[lexer.auto]{
+      :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] Oend '
+    }
+  L>
+]*
 
-! append an "end" label !
+! append "end" label to "lexer.auto" !
 :[lexer.auto]!end!

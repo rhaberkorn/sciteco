@@ -2,25 +2,26 @@
 
 ! Path of the session profile.
   Change this to save/load a custom profile !
-[* EQ[session.path] IQ[$HOME]/.teco_session ]*
+EU[session.path]Q[$HOME]/.teco_session
 
+! Save current session to the file specified by "session.path" !
 @[session.save]{
   Q*U.[curbuf]
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
-    EQ.[session]
-    @I{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^M}
+    :@EU.[session]{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^M}
     EQ* Z"= -1U.u '
   >
-  EQ.[session]
-  Q.u"F @I{EB -EF^M} '
-  @I{\.[curbuf]EB^M}
+  ! We always start with an unnamed file in the ring, so we may have to remove it: !
+  Q.u"F :@EU.[session]{EB -EF^M} '
+  :@EU.[session]{\.[curbuf]EB^M}
 
   EBQ[session.path]
   HK G.[session] EW EF
   Q.[curbuf]EB
 }
 
+! Load session specified by "session.path" !
 @[session.load]{
   EJ<-EF>
   EQ.x ENQ[session.path]
