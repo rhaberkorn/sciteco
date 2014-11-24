@@ -167,6 +167,13 @@ Standard library macros.
 Save point files created by \*(ST when saving files
 during interactive execution have this format.
 These files can be ignored by version control systems, etc.
+.TP
+.B ~/.teco_session
+Macro storing the default buffer session.
+This is not written by \*(ST itself, but by the
+standard library \fBsession.tes\fP macros.
+When the \(lqsession.git\(rq macro is used, these files
+will also be created in Git repositories.
 .
 .
 .SH BUGS
@@ -174,7 +181,7 @@ These files can be ignored by version control systems, etc.
 \*(ST does not have any such thing called \(lqbug\(rq.
 Any conceived misbehaviour must be totally your fault.
 .
-.
+
 .SH SEE ALSO
 .
 .TP
