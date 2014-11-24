@@ -8,9 +8,6 @@ EMQ[$SCITECOPATH]/color.tes
 EMQ[$SCITECOPATH]/lexer.tes
 EMQ[$SCITECOPATH]/session.tes
 
-! Uncomment to use a separate session per Git repository !
-! M[session.git] !
-
 ! Automatic lexing and session management using ED hooks !
 @#ED{
   Oadd,edit,close,quit
@@ -43,11 +40,15 @@ EMQ[$SCITECOPATH]/fnkeys.tes
 ! Uncomment to enable default keyboard macros !
 ! 0,64ED !
 
-! open all files specified on the commandline
-  If no file is specified, load the last buffer session !
+! If files are given on the command-line, open them
+  and disable session saving.
+  Otherwise open a buffer session. !
 Z"=
+  ! Uncomment to use a separate session per Git repository: !
+  ! M[session.git] !
   M[session.load]
 |
+  [session.path] ! disables session saving !
   [.f
     <:L;R 0X.f [* EBQ.f ]* L>
   ].f

@@ -1,16 +1,18 @@
 ! Macros for saving and loading buffer sessions !
 
 ! Path of the session profile.
-  Change this to save/load a custom profile !
+  Change this to save/load a custom profile.
+  If empty, no session will be saved. !
 EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
 ! Save current session to the file specified by "session.path" !
 @[session.save]{
+  :Q[session.path]"= Oend '
   Q*U.[curbuf]
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
     :@EU.[session]{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^M}
-    EQ* Z"= -1U.u '
+    :Q*"= -1U.u '
   >
   ! We always start with an unnamed file in the ring, so we may have to remove it: !
   Q.u"F :@EU.[session]{EB -EF^M} '
@@ -18,11 +20,12 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
   E%.[session]Q[session.path]
   Q.[curbuf]EB
-}
+!end!}
 
 ! Load session specified by "session.path" !
 @[session.load]{
   EJ<-EF>
+  ! now we have only one unnamed buffer !
   EQ.x ENQ[session.path]
   Z"=
     1EB
