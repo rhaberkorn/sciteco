@@ -47,12 +47,12 @@ namespace States {
 	StateLoadQReg		loadqreg;
 	StateEPctCommand	epctcommand;
 	StateSaveQReg		saveqreg;
+	StateQueryQReg	queryqreg;
 	StateCtlUCommand	ctlucommand;
 	StateEUCommand		eucommand;
 	StateSetQRegString	setqregstring_nobuilding(false);
 	StateSetQRegString	setqregstring_building(true);
 	StateGetQRegString	getqregstring;
-	StateGetQRegInteger	getqreginteger;
 	StateSetQRegInteger	setqreginteger;
 	StateIncreaseQReg	increaseqreg;
 	StateMacro		macro;
@@ -156,6 +156,49 @@ QRegisterData::get_string(void)
 		QRegisters::current->string.edit(QRegisters::view);
 
 	return str;
+}
+
+gsize
+QRegisterData::get_string_size(void)
+{
+	gsize size;
+
+	if (!string.is_initialized())
+		return 0;
+
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
+	string.edit(QRegisters::view);
+
+	size = QRegisters::view.ssm(SCI_GETLENGTH);
+
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
+
+	return size;
+}
+
+gint
+QRegisterData::get_character(gint position)
+{
+	gint ret = -1;
+
+	if (position < 0)
+		return -1;
+
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
+	string.edit(QRegisters::view);
+
+	if (position < QRegisters::view.ssm(SCI_GETLENGTH))
+		ret = QRegisters::view.ssm(SCI_GETCHARAT, position);
+
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
+
+	return ret;
 }
 
 void
@@ -274,6 +317,21 @@ gchar *
 QRegisterBufferInfo::get_string(void)
 {
 	return g_strdup(ring.current->filename ? : "");
+}
+
+gsize
+QRegisterBufferInfo::get_string_size(void)
+{
+	return ring.current->filename ? strlen(ring.current->filename) : 0;
+}
+
+gint
+QRegisterBufferInfo::get_character(gint position)
+{
+	if (position < 0 || position >= (gint)get_string_size())
+		return -1;
+
+	return ring.current->filename[position];
 }
 
 void
@@ -661,6 +719,51 @@ StateSaveQReg::done(const gchar *str)
 }
 
 /*$
+ * Qq -> n -- Query Q-Register integer or string
+ * <position>Qq -> character
+ * :Qq -> size
+ *
+ * Without any arguments, get and return the integer-part of
+ * Q-Register <q>.
+ *
+ * With one argument, return the <character> code at <position>
+ * from the string-part of Q-Register <q>.
+ * Positions are handled like buffer positions \(em they
+ * begin at 0 up to the length of the string minus 1.
+ * An error is thrown for invalid positions.
+ *
+ * When colon-modified, Q does not pop any arguments from
+ * the expression stack and returns the <size> of the string
+ * in Q-Register <q>.
+ * Naturally, for empty strings, 0 is returned.
+ *
+ * The command fails for undefined registers.
+ */
+State *
+StateQueryQReg::got_register(QRegister &reg)
+{
+	BEGIN_EXEC(&States::start);
+
+	expressions.eval();
+
+	if (eval_colon()) {
+		/* Query Q-Register string size */
+		expressions.push(reg.get_string_size());
+	} else if (expressions.args() > 0) {
+		/* Query character from Q-Register string */
+		gint c = reg.get_character(expressions.pop_num_calc());
+		if (c < 0)
+			throw RangeError('Q');
+		expressions.push(c);
+	} else {
+		/* Query integer */
+		expressions.push(reg.get_integer());
+	}
+
+	return &States::start;
+}
+
+/*$
  * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string without string building
  * [c1,c2,...]:^Uq[string]$
  *
@@ -789,23 +892,6 @@ StateGetQRegString::got_register(QRegister &reg)
 		interface.undo_ssm(SCI_UNDO);
 	}
 	g_free(str);
-
-	return &States::start;
-}
-
-/*$
- * Qq -> n -- Query Q-Register integer
- *
- * Gets and returns the integer-part of Q-Register <q>.
- * The command fails for undefined registers.
- */
-State *
-StateGetQRegInteger::got_register(QRegister &reg)
-{
-	BEGIN_EXEC(&States::start);
-
-	expressions.eval();
-	expressions.push(reg.get_integer());
 
 	return &States::start;
 }

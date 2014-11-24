@@ -517,7 +517,7 @@ StateStart::StateStart() : State()
 	transitions['['] = &States::pushqreg;
 	transitions[']'] = &States::popqreg;
 	transitions['G'] = &States::getqregstring;
-	transitions['Q'] = &States::getqreginteger;
+	transitions['Q'] = &States::queryqreg;
 	transitions['U'] = &States::setqreginteger;
 	transitions['%'] = &States::increaseqreg;
 	transitions['M'] = &States::macro;

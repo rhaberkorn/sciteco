@@ -456,7 +456,7 @@ Another construct that may be used as an argument barrier to explicitly
 separate arguments is the comma (\(lq,\(rq).
 It is obligatory when trying to push a sequence of number constants
 like in \(lq1,2\(rq but is optional in many contexts where it is
-mandatory in classic TECO, like in \(lqQaQbD\(rq.
+mandatory in classic TECO, like in \(lq.ZD\(rq.
 I recommend to use it as much as possible in code where clarity
 matters.
 .LP

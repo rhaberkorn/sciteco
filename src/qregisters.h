@@ -103,6 +103,8 @@ public:
 		undo_set_string();
 	}
 	virtual gchar *get_string(void);
+	virtual gsize get_string_size(void);
+	virtual gint get_character(gint position);
 
 	/*
 	 * The QRegisterStack must currently access the
@@ -159,6 +161,8 @@ public:
 	void undo_append_string(void) {}
 
 	gchar *get_string(void);
+	gsize get_string_size(void);
+	gint get_character(gint pos);
 
 	void edit(void);
 };
@@ -367,6 +371,11 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateQueryQReg : public StateExpectQReg {
+private:
+	State *got_register(QRegister &reg);
+};
+
 class StateCtlUCommand : public StateExpectQReg {
 public:
 	StateCtlUCommand() : StateExpectQReg(true) {}
@@ -396,11 +405,6 @@ private:
 };
 
 class StateGetQRegString : public StateExpectQReg {
-private:
-	State *got_register(QRegister &reg);
-};
-
-class StateGetQRegInteger : public StateExpectQReg {
 private:
 	State *got_register(QRegister &reg);
 };
@@ -446,12 +450,12 @@ namespace States {
 	extern StateLoadQReg		loadqreg;
 	extern StateEPctCommand	epctcommand;
 	extern StateSaveQReg		saveqreg;
+	extern StateQueryQReg		queryqreg;
 	extern StateCtlUCommand		ctlucommand;
 	extern StateEUCommand		eucommand;
 	extern StateSetQRegString	setqregstring_nobuilding;
 	extern StateSetQRegString	setqregstring_building;
 	extern StateGetQRegString	getqregstring;
-	extern StateGetQRegInteger	getqreginteger;
 	extern StateSetQRegInteger	setqreginteger;
 	extern StateIncreaseQReg	increaseqreg;
 	extern StateMacro		macro;
