@@ -55,6 +55,12 @@ template <class ViewImpl>
 void
 View<ViewImpl>::setup(void)
 {
+	/*
+	 * Start with or without undo collection,
+	 * depending on undo.enabled.
+	 */
+	ssm(SCI_SETUNDOCOLLECTION, undo.enabled);
+
 	ssm(SCI_SETFOCUS, TRUE);
 
 	ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);

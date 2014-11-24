@@ -38,6 +38,8 @@ namespace SciTECO {
  */
 
 class Buffer : private IOView {
+	TAILQ_ENTRY(Buffer) buffers;
+
 	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
@@ -48,9 +50,13 @@ class Buffer : private IOView {
 		void run(void);
 	};
 
-public:
-	TAILQ_ENTRY(Buffer) buffers;
+	inline void
+	undo_close(void)
+	{
+		undo.push(new UndoTokenClose(this));
+	}
 
+public:
 	gchar *filename;
 	bool dirty;
 
@@ -115,11 +121,11 @@ public:
 	}
 	void save(const gchar *filename = NULL);
 
-	inline void
-	undo_close(void)
-	{
-		undo.push(new UndoTokenClose(this));
-	}
+	/*
+	 * Ring manages the buffer list and has privileged
+	 * access.
+	 */
+	friend class Ring;
 };
 
 /* object declared in main.cpp */
@@ -195,6 +201,8 @@ public:
 	{
 		current->undo_close();
 	}
+
+	void set_scintilla_undo(bool state);
 } ring;
 
 /*

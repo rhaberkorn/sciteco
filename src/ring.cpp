@@ -251,6 +251,15 @@ Ring::close(void)
 	}
 }
 
+void
+Ring::set_scintilla_undo(bool state)
+{
+	Buffer *cur;
+
+	TAILQ_FOREACH(cur, &head, buffers)
+		cur->set_scintilla_undo(state);
+}
+
 Ring::~Ring()
 {
 	Buffer *buffer, *next;

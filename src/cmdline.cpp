@@ -258,7 +258,9 @@ process_edit_cmd(gchar key)
 				throw Quit();
 
 			undo.clear();
-			interface.ssm(SCI_EMPTYUNDOBUFFER);
+			/* also empties all Scintilla undo buffers */
+			ring.set_scintilla_undo(true);
+			QRegisters::view.set_scintilla_undo(true);
 			Goto::table->clear();
 			expressions.clear();
 

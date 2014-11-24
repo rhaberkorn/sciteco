@@ -131,6 +131,13 @@ public:
 		undo.push(new UndoTokenSetRepresentations(impl()));
 	}
 
+	inline void
+	set_scintilla_undo(bool state)
+	{
+		ssm(SCI_EMPTYUNDOBUFFER);
+		ssm(SCI_SETUNDOCOLLECTION, state);
+	}
+
 protected:
 	void setup(void);
 };

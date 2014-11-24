@@ -357,8 +357,9 @@ main(int argc, char **argv)
 	QRegisters::globals.insert("\x1B");
 
 	Goto::table = &cmdline_goto_table;
-	interface.ssm(SCI_EMPTYUNDOBUFFER);
 	undo.enabled = true;
+	ring.set_scintilla_undo(true);
+	QRegisters::view.set_scintilla_undo(true);
 
 	interface.event_loop();
 
@@ -368,8 +369,10 @@ main(int argc, char **argv)
 	 * in non-interactive mode again.
 	 */
 	undo.enabled = false;
-	interface.ssm(SCI_EMPTYUNDOBUFFER);
 	undo.clear();
+	/* also empties all Scintilla undo buffers */
+	ring.set_scintilla_undo(false);
+	QRegisters::view.set_scintilla_undo(false);
 
 	try {
 		QRegisters::hook(QRegisters::HOOK_QUIT);
