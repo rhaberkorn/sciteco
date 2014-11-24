@@ -27,6 +27,7 @@
 
 #include "sciteco.h"
 #include "interface.h"
+#include "ioview.h"
 #include "undo.h"
 #include "rbtree.h"
 #include "parser.h"
@@ -35,8 +36,8 @@
 namespace SciTECO {
 
 namespace QRegisters {
-	/* initialized after Interface.main() in main() */
-	extern ViewCurrent view;
+	/* initialized after Interface::main() in main() */
+	extern IOView view;
 }
 
 /*
@@ -134,12 +135,12 @@ public:
 
 	void execute(bool locals = true);
 
+	/*
+	 * Load and save already care about undo token
+	 * creation.
+	 */
 	void load(const gchar *filename);
-	inline void
-	undo_load(void)
-	{
-		undo_set_string();
-	}
+	void save(const gchar *filename);
 };
 
 class QRegisterBufferInfo : public QRegister {
@@ -356,6 +357,16 @@ private:
 	State *done(const gchar *str);
 };
 
+class StateEPctCommand : public StateExpectQReg {
+private:
+	State *got_register(QRegister &reg);
+};
+
+class StateSaveQReg : public StateExpectFile {
+private:
+	State *done(const gchar *str);
+};
+
 class StateCtlUCommand : public StateExpectQReg {
 public:
 	StateCtlUCommand() : StateExpectQReg(true) {}
@@ -433,6 +444,8 @@ namespace States {
 	extern StatePopQReg		popqreg;
 	extern StateEQCommand		eqcommand;
 	extern StateLoadQReg		loadqreg;
+	extern StateEPctCommand	epctcommand;
+	extern StateSaveQReg		saveqreg;
 	extern StateCtlUCommand		ctlucommand;
 	extern StateEUCommand		eucommand;
 	extern StateSetQRegString	setqregstring_nobuilding;

@@ -45,6 +45,8 @@ namespace States {
 	StatePopQReg		popqreg;
 	StateEQCommand		eqcommand;
 	StateLoadQReg		loadqreg;
+	StateEPctCommand	epctcommand;
+	StateSaveQReg		saveqreg;
 	StateCtlUCommand	ctlucommand;
 	StateEUCommand		eucommand;
 	StateSetQRegString	setqregstring_nobuilding(false);
@@ -207,24 +209,41 @@ QRegister::execute(bool locals)
 void
 QRegister::load(const gchar *filename)
 {
-	gchar *contents;
-	gsize size;
+	undo_set_string();
 
-	GError *gerror = NULL;
-
-	/* FIXME: prevent excessive allocations by reading file into buffer */
-	if (!g_file_get_contents(filename, &contents, &size, &gerror))
-		throw GlibError(gerror);
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
 
 	string.edit(QRegisters::view);
 	string.reset();
 
-	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
-	QRegisters::view.ssm(SCI_CLEARALL);
-	QRegisters::view.ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
-	QRegisters::view.ssm(SCI_ENDUNDOACTION);
+	/*
+	 * undo_set_string() pushes undo tokens that restore
+	 * the previous document in the view.
+	 * So if loading fails, QRegisters::current will be
+	 * made the current document again.
+	 */
+	QRegisters::view.load(filename);
 
-	g_free(contents);
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
+}
+
+void
+QRegister::save(const gchar *filename)
+{
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
+	string.edit(QRegisters::view);
+
+	try {
+		QRegisters::view.save(filename);
+	} catch (...) {
+		if (QRegisters::current)
+			QRegisters::current->string.edit(QRegisters::view);
+		throw; /* forward */
+	}
 
 	if (QRegisters::current)
 		QRegisters::current->string.edit(QRegisters::view);
@@ -600,7 +619,6 @@ StateLoadQReg::done(const gchar *str)
 
 	if (*str) {
 		/* Load file into Q-Register */
-		register_argument->undo_load();
 		register_argument->load(str);
 	} else {
 		/* Edit Q-Register */
@@ -608,6 +626,37 @@ StateLoadQReg::done(const gchar *str)
 		QRegisters::globals.edit(register_argument);
 	}
 
+	return &States::start;
+}
+
+/*$
+ * E%q<file>$ -- Save Q-Register string to file
+ *
+ * Saves the string contents of Q-Register <q> to
+ * <file>.
+ * The <file> must always be specified, as Q-Registers
+ * have no notion of associated file names.
+ *
+ * In interactive mode, the E% command may be rubbed out,
+ * restoring the previous state of <file>.
+ * This follows the same rules as with the \fBEW\fP command.
+ *
+ * File names may also be tab-completed and string building
+ * characters are enabled by default.
+ */
+State *
+StateEPctCommand::got_register(QRegister &reg)
+{
+	BEGIN_EXEC(&States::saveqreg);
+	register_argument = &reg;
+	return &States::saveqreg;
+}
+
+State *
+StateSaveQReg::done(const gchar *str)
+{
+	BEGIN_EXEC(&States::start);
+	register_argument->save(str);
 	return &States::start;
 }
 

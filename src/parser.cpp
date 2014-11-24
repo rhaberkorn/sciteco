@@ -1802,6 +1802,7 @@ StateASCII::custom(gchar chr)
 StateECommand::StateECommand() : State()
 {
 	transitions['\0'] = this;
+	transitions['%'] = &States::epctcommand;
 	transitions['B'] = &States::editfile;
 	transitions['C'] = &States::executecommand;
 	transitions['G'] = &States::egcommand;

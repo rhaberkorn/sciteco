@@ -372,7 +372,7 @@ StateEditFile::done(const gchar *str)
 }
 
 /*$
- * EW$ -- Save or rename current buffer
+ * EW$ -- Save current buffer or Q-Register
  * EWfile$
  *
  * Saves the current buffer to disk.
@@ -380,6 +380,13 @@ StateEditFile::done(const gchar *str)
  * If the string argument <file> is not empty,
  * the buffer is saved with the specified file name
  * and is renamed in the ring.
+ *
+ * The EW command also works if the current document
+ * is a Q-Register, i.e. a Q-Register is edited.
+ * In this case, the string contents of the current
+ * Q-Register are saved to <file>.
+ * Q-Registers have no notion of associated file names,
+ * so <file> must be always specified.
  *
  * In interactive mode, EW is executed immediately and
  * may be rubbed out.
@@ -411,8 +418,7 @@ StateSaveFile::done(const gchar *str)
 	BEGIN_EXEC(&States::start);
 
 	if (QRegisters::current)
-		throw Error("Cannot save Q-Register");
-//		QRegisters::current->save(str);
+		QRegisters::current->save(str);
 	else
 		ring.current->save(*str ? str : NULL);
 

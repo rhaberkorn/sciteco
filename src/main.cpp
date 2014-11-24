@@ -32,6 +32,7 @@
 #include "sciteco.h"
 #include "cmdline.h"
 #include "interface.h"
+#include "ioview.h"
 #include "parser.h"
 #include "goto.h"
 #include "qregisters.h"
@@ -53,7 +54,7 @@ namespace SciTECO {
  * GCC init_priority() attribute
  */
 InterfaceCurrent interface;
-ViewCurrent QRegisters::view;
+IOView QRegisters::view;
 
 /*
  * Scintilla will be initialized after these

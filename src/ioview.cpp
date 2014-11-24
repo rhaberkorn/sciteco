@@ -254,7 +254,7 @@ IOView::save(const gchar *filename)
 	file = g_fopen(filename, "w");
 	if (!file)
 		/* hopefully, errno is also always set on Windows */
-		throw Error("Error opening file \"%s\": %s",
+		throw Error("Error opening file \"%s\" for writing: %s",
 		            filename, strerror(errno));
 
 	/* write part of buffer before gap */
