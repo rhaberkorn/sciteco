@@ -21,8 +21,6 @@
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
-#include <glib/gprintf.h>
-#include <glib/gstdio.h>
 
 #include <Scintilla.h>
 
@@ -31,25 +29,15 @@
 #include "undo.h"
 #include "qregisters.h"
 #include "parser.h"
+#include "ioview.h"
 
 namespace SciTECO {
-
-/*
- * Auxiliary functions
- */
-
-/*
- * Get absolute/full version of a possibly relative path.
- * Works with existing and non-existing paths (in the latter case,
- * heuristics may be applied.)
- */
-gchar *get_absolute_path(const gchar *path);
 
 /*
  * Classes
  */
 
-class Buffer : private ViewCurrent {
+class Buffer : private IOView {
 	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
@@ -64,11 +52,9 @@ public:
 	TAILQ_ENTRY(Buffer) buffers;
 
 	gchar *filename;
-	gint savepoint_id;
 	bool dirty;
 
-	Buffer() : ViewCurrent(),
-		   filename(NULL), savepoint_id(0), dirty(false)
+	Buffer() : filename(NULL), dirty(false)
 	{
 		initialize();
 		/* only have to do this once: */
@@ -115,7 +101,19 @@ public:
 		interface.undo_show_view(this);
 	}
 
-	void load(const gchar *filename);
+	inline void
+	load(const gchar *filename)
+	{
+		IOView::load(filename);
+
+#if 0		/* NOTE: currently buffer cannot be dirty */
+		interface.undo_info_update(this);
+		undo.push_var(dirty) = false;
+#endif
+
+		set_filename(filename);
+	}
+	void save(const gchar *filename = NULL);
 
 	inline void
 	undo_close(void)
@@ -144,24 +142,6 @@ extern class Ring {
 		}
 
 		void run(void);
-	};
-
-	class UndoTokenRemoveFile : public UndoToken {
-		gchar *filename;
-
-	public:
-		UndoTokenRemoveFile(const gchar *_filename)
-				   : filename(g_strdup(_filename)) {}
-		~UndoTokenRemoveFile()
-		{
-			g_free(filename);
-		}
-
-		void
-		run(void)
-		{
-			g_unlink(filename);
-		}
 	};
 
 	TAILQ_HEAD(Head, Buffer) head;
@@ -207,8 +187,6 @@ public:
 		undo.push_var(QRegisters::current);
 		undo.push_var(current)->undo_edit();
 	}
-
-	bool save(const gchar *filename);
 
 	void close(Buffer *buffer);
 	void close(void);

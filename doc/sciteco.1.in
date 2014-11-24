@@ -156,11 +156,17 @@ It defaults to
 Default profile macro.
 .TP
 .B @pkgdatadir@/teco.ini
-Sample profile macro configuring commonly used run-time options
-and opening files specified as arguments.
+Sample profile macro configuring commonly used run-time options,
+syntax highlighting, session handling
+and opening files specified on the command line.
 .TP
 .B @scitecolibdir@/...
 Standard library macros.
+.TP
+.BI .teco- x - filename
+Save point files created by \*(ST when saving files
+during interactive execution have this format.
+These files can be ignored by version control systems, etc.
 .
 .
 .SH BUGS
