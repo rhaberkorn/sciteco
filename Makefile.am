@@ -1,6 +1,6 @@
 SUBDIRS = src lib doc
 
-dist_pkgdata_DATA = teco.ini
+dist_pkgdata_DATA = sample.teco_ini
 
 noinst_HEADERS = compat/bsd/sys/cdefs.h \
 		 compat/bsd/sys/queue.h \

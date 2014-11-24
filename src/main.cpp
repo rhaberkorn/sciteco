@@ -42,11 +42,7 @@
 
 namespace SciTECO {
 
-#ifdef G_OS_UNIX
 #define INI_FILE ".teco_ini"
-#else
-#define INI_FILE "teco.ini"
-#endif
 
 /*
  * defining the global objects here ensures
@@ -112,33 +108,33 @@ String::get_coord(const gchar *str, gint pos,
 
 /*
  * Keep program self-contained under Windows
- * (look for profile in program's directory)
+ * Look for config files (profile and session),
+ * as well as standard library macros in the
+ * program's directory.
  */
 static inline gchar *
-get_teco_ini(const gchar *program)
+get_default_config_path(const gchar *program)
 {
-	gchar *bin_dir = g_path_get_dirname(program);
-	gchar *ini = g_build_filename(bin_dir, INI_FILE, NIL);
-	g_free(bin_dir);
-	return ini;
+	return g_path_get_dirname(program);
+}
+
+#elif defined(G_OS_UNIX)
+
+static inline gchar *
+get_default_config_path(const gchar *program)
+{
+	return g_strdup(g_getenv("HOME") ? : g_get_home_dir());
 }
 
 #else
 
 static inline gchar *
-get_teco_ini(const gchar *program)
+get_default_config_path(const gchar *program)
 {
-	const gchar *home;
-
-#ifdef G_OS_UNIX
-	home = g_getenv("HOME") ? : g_get_home_dir();
-#else
-	home = g_get_user_config_dir();
-#endif
-	return g_build_filename(home, INI_FILE, NIL);
+	return g_strdup(g_get_user_config_dir());
 }
 
-#endif /* !G_OS_WIN32 */
+#endif
 
 static inline void
 process_options(int &argc, char **&argv)
@@ -172,23 +168,32 @@ process_options(int &argc, char **&argv)
 
 	if (mung_file) {
 		if (!g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-			g_printf("Cannot mung \"%s\". File does not exist!\n",
-				 mung_file);
+			g_fprintf(stderr, "Cannot mung \"%s\". File does not exist!\n",
+				  mung_file);
 			exit(EXIT_FAILURE);
 		}
-	} else {
-		mung_file = get_teco_ini(argv[0]);
 	}
 
 	/* remaining arguments, are arguments to the interface */
 }
 
 static inline void
-initialize_environment(void)
+initialize_environment(const gchar *program)
 {
+	gchar *default_configpath;
 	gchar **env;
 
-	g_setenv("SCITECOPATH", DEFAULT_SCITECOPATH, FALSE);
+	default_configpath = get_default_config_path(program);
+	g_setenv("SCITECOCONFIG", default_configpath, FALSE);
+#ifdef G_OS_WIN32
+	gchar *default_scitecopath;
+	default_scitecopath = g_build_filename(default_configpath, "lib", NIL);
+	g_setenv("SCITECOPATH", default_scitecopath, FALSE);
+	g_free(default_scitecopath);
+#else
+	g_setenv("SCITECOPATH", SCITECOLIBDIR, FALSE);
+#endif
+	g_free(default_configpath);
 
 	env = g_listenv();
 
@@ -300,8 +305,8 @@ main(int argc, char **argv)
 	QRegisters::globals.insert("-");
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
-	/* environment registers */
-	initialize_environment();
+	/* environment defaults and registers */
+	initialize_environment(argv[0]);
 
 	QRegisters::locals = &local_qregs;
 
@@ -332,6 +337,10 @@ main(int argc, char **argv)
 			QRegisters::hook(QRegisters::HOOK_QUIT);
 			exit(EXIT_SUCCESS);
 		}
+
+		if (!mung_file)
+			mung_file = g_build_filename(g_getenv("SCITECOCONFIG"),
+			                             INI_FILE, NIL);
 
 		if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
 			Execute::file(mung_file, false);

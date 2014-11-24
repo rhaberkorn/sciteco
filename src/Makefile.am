@@ -7,7 +7,7 @@ if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif
 
-AM_CPPFLAGS = -D'DEFAULT_SCITECOPATH="@DEFAULT_SCITECOPATH@"'
+AM_CPPFLAGS = -D'SCITECOLIBDIR="@scitecolibdir@"'
 if NEED_COMPAT
 AM_CPPFLAGS += -I@top_srcdir@/compat
 endif

@@ -174,13 +174,6 @@ esac
 
 AM_CONDITIONAL(INTERFACE_GTK, [test x$INTERFACE = xgtk])
 
-AC_ARG_WITH(default-scitecopath,
-	AS_HELP_STRING([--with-default-scitecopath=PATH],
-		       [Specify the default value of the $SCITECOPATH variable
-		        [default=DATADIR/sciteco/lib]]),
-	[DEFAULT_SCITECOPATH=$withval], [DEFAULT_SCITECOPATH=$scitecolibdir])
-AC_SUBST(DEFAULT_SCITECOPATH)
-
 AC_ARG_WITH(teco-integer,
 	AS_HELP_STRING([--with-teco-integer=SIZE],
 		       [Storage size of TECO integers in bits [default=64]]),

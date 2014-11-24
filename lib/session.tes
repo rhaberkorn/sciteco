@@ -2,7 +2,7 @@
 
 ! Path of the session profile.
   Change this to save/load a custom profile !
-EU[session.path]Q[$HOME]/.teco_session
+EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
 ! Save current session to the file specified by "session.path" !
 @[session.save]{

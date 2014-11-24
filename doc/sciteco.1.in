@@ -95,8 +95,11 @@ undo token accumulation.
 If the
 .B \-\-mung
 option is absent, \*(ST will mung
-.I ~/.teco_ini
+.I $SCITECOCONFIG/.teco_ini
 (if existing) which is called the profile.
+On UNIX/Linux, the default profile is at
+.I ~/.teco_ini
+(see \fBENVIRONMENT\fP).
 The profile will usually set up various Scintilla and \*(ST options,
 configure syntax highlighting,
 define commonly used macros and open files specified as arguments to \*(ST.
@@ -116,10 +119,9 @@ If the option is specified, the
 .B \-\-mung
 option has no effect.
 .IP "\fB-m\fR, \fB--mung\fR \fIfile"
-Mung
-.IR file .
+Mung \fIfile\fP.
 Default is
-.IR ~/.teco_ini .
+.IR $SCITECOCONFIG/.teco_ini .
 .
 .
 .SH EXIT STATUS
@@ -137,30 +139,48 @@ table.
 A dollar sign is prepended before each variable name, so that for
 instance the variable \(lqHOME\(rq can be examined by macros by
 reading the string-content of Q-Register \(lq$HOME\(rq.
-The following environment variables have a special meaning for
-\*(ST:
+The following environment variables are initialized with default
+values by \*(ST if they are unset:
+.TP
+.B SCITECOCONFIG
+Path where \*(ST looks for configuration files.
+For instance, this is the path of the default profile.
+If unset, this variable defaults to the \fBHOME\fP
+environment variable on UNIX/Linux.
+If \fBHOME\fP is unset, it defaults to the current user's
+home directory as set by
+.BR passwd (5).
+On Windows, this variable defaults to the location of the
+\*(ST program executable, so that \*(ST is self-contained
+on Windows.
+On other platforms, this variable defaults to some other
+user-specific configuration directory.
 .TP
 .B SCITECOPATH
 Standard library macro path.
 Macros can expect to find standard library macros in this
 directory.
-It defaults to
-.B "@DEFAULT_SCITECOPATH@"
-(often the standard library path).
+On Windows, this variable defaults to the \(lqlib\(rq
+subdirectory of the directory containing
+the \*(ST program executable, so that \*(ST is self-contained
+on Windows.
+On all other platforms (including UNIX/Linux) this variable
+defaults to the standard library installation path at
+.BR "@scitecolibdir@" .
 .
 .
 .SH FILES
 .
 .TP
-.B ~/.teco_ini
+.B $SCITECOCONFIG/.teco_ini
 Default profile macro.
 .TP
-.B @pkgdatadir@/teco.ini
+.B @pkgdatadir@/sample.teco_ini
 Sample profile macro configuring commonly used run-time options,
 syntax highlighting, session handling
 and opening files specified on the command line.
 .TP
-.B @scitecolibdir@/...
+.B $SCITECOPATH/*.tes
 Standard library macros.
 .TP
 .BI .teco- x - filename
@@ -168,12 +188,12 @@ Save point files created by \*(ST when saving files
 during interactive execution have this format.
 These files can be ignored by version control systems, etc.
 .TP
-.B ~/.teco_session
+.B $SCITECOCONFIG/.teco_session
 Macro storing the default buffer session.
 This is not written by \*(ST itself, but by the
 standard library \fBsession.tes\fP macros.
 When the \(lqsession.git\(rq macro is used, these files
-will also be created in Git repositories.
+will also be created in the roots of Git repositories.
 .
 .
 .SH BUGS
