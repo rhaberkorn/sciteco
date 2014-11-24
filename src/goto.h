@@ -53,7 +53,7 @@ class GotoTable : public RBTree {
 		}
 	};
 
-	class Label : public RBEntry {
+	class Label : public RBTree::RBEntry {
 	public:
 		gchar	*name;
 		gint	pc;
