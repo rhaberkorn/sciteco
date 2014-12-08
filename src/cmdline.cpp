@@ -32,6 +32,7 @@
 #include "parser.h"
 #include "qregisters.h"
 #include "ring.h"
+#include "ioview.h"
 #include "goto.h"
 #include "undo.h"
 #include "symbols.h"
@@ -360,7 +361,8 @@ macro_echo(const gchar *macro)
 static gchar *
 filename_complete(const gchar *filename, gchar completed)
 {
-	gchar *dirname, *basename;
+	gchar *dirname;
+	const gchar *basename, *cur_basename;
 	GDir *dir;
 	GList *files = NULL;
 	guint files_len = 0;
@@ -384,27 +386,34 @@ filename_complete(const gchar *filename, gchar completed)
 	if (*dirname != *filename)
 		*dirname = '\0';
 
-	while ((basename = (gchar *)g_dir_read_name(dir))) {
-		gchar *cur_file = g_build_filename(dirname, basename, NIL);
+	basename = strrchr(filename, G_DIR_SEPARATOR);
+	if (basename)
+		basename++;
+	else
+		basename = filename;
 
-		if (g_file_test(cur_file, G_FILE_TEST_IS_DIR))
-			String::append(cur_file, G_DIR_SEPARATOR_S);
+	while ((cur_basename = g_dir_read_name(dir))) {
+		gchar *cur_filename = g_build_filename(dirname, cur_basename, NIL);
 
-		if (!g_str_has_prefix(cur_file, filename)) {
-			g_free(cur_file);
+		if (!g_str_has_prefix(cur_basename, basename) ||
+		    (!*basename && !file_is_visible(cur_filename))) {
+			g_free(cur_filename);
 			continue;
 		}
 
-		files = g_list_prepend(files, cur_file);
+		if (g_file_test(cur_filename, G_FILE_TEST_IS_DIR))
+			String::append(cur_filename, G_DIR_SEPARATOR_S);
+
+		files = g_list_prepend(files, cur_filename);
 
 		if (g_list_next(files)) {
 			const gchar *other_file = (gchar *)g_list_next(files)->data;
 			gsize len = String::diff(other_file + filename_len,
-						 cur_file + filename_len);
+						 cur_filename + filename_len);
 			if (len < prefix_len)
 				prefix_len = len;
 		} else {
-			prefix_len = strlen(cur_file + filename_len);
+			prefix_len = strlen(cur_filename + filename_len);
 		}
 
 		files_len++;

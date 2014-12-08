@@ -31,12 +31,17 @@ namespace SciTECO {
  * Auxiliary functions
  */
 
-/*
+/**
  * Get absolute/full version of a possibly relative path.
  * Works with existing and non-existing paths (in the latter case,
  * heuristics may be applied.)
+ *
+ * @param path Possibly relative path name.
+ * @return Newly-allocated absolute path name.
  */
 gchar *get_absolute_path(const gchar *path);
+
+bool file_is_visible(const gchar *path);
 
 class IOView : public ViewCurrent {
 	class UndoTokenRemoveFile : public UndoToken {

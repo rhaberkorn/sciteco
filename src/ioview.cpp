@@ -328,6 +328,16 @@ get_absolute_path(const gchar *path)
 	return resolved;
 }
 
+bool
+file_is_visible(const gchar *path)
+{
+	gchar *basename = g_path_get_basename(path);
+	bool ret = *basename != '.';
+
+	g_free(basename);
+	return ret;
+}
+
 #elif defined(G_OS_WIN32)
 
 gchar *
@@ -342,6 +352,12 @@ get_absolute_path(const gchar *path)
 	return resolved;
 }
 
+bool
+file_is_visible(const gchar *path)
+{
+	return !(get_file_attributes(path) & FILE_ATTRIBUTE_HIDDEN);
+}
+
 #else
 
 /*
@@ -351,6 +367,17 @@ gchar *
 get_absolute_path(const gchar *path)
 {
 	return path ? g_file_read_link(path, NULL) : NULL;
+}
+
+/*
+ * There's no platform-independant way to determine if a file
+ * is visible/hidden, so we just assume that all files are
+ * visible.
+ */
+bool
+file_is_visible(const gchar *path)
+{
+	return true;
 }
 
 #endif /* !G_OS_UNIX && !G_OS_WIN32 */

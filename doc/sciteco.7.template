@@ -357,7 +357,9 @@ If \*(ST is not busy,
 is self-inserting and might be used as a regular command.
 T}
 .TE
-.LP
+.
+.SS Auto Completion
+.
 The immediate editing commands that perform auto-completions, do
 so in a manner similar to Posix shells.
 Upon first invocation they try to fully or partially complete the file
@@ -365,6 +367,15 @@ name (or token).
 If no completion can be performed, the invocation will display a
 list of file names (or tokens) beginning with the token to complete
 in \*(ST's popup area.
+.LP
+When completing file names, hidden files are not considered for
+completion unless a prefix of the hidden file's name has already
+been typed.
+On Unix, \*(ST considers files and directories beginning with \(lq.\(rq
+as hidden.
+On Windows, the \fIhidden\fP file attribute is evaluated.
+On other platforms, \*(ST might not identify hidden files correctly.
+.LP
 Note that no additional expansions are performed before attempting
 a completion, so for instance \(lq~/foo\(rq will not complete a file
 in the user's home directory (tilde is not part of the file name but
