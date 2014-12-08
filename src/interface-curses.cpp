@@ -310,43 +310,44 @@ InterfaceCurses::popup_show_impl(void)
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
 	gint popup_cols;
-	gint cur_file, cur_line;
+	gint cur_entry;
 
 	if (isendwin()) /* batch mode */
 		goto cleanup;
 
 	getmaxyx(stdscr, lines, cols);
 
-	popup.longest += 3;
+	/* reserve 2 space characters between columns */
+	popup.longest += 2;
 	popup.list = g_slist_reverse(popup.list);
 
 	/* popup_cols = floor(cols / popup.longest) */
 	popup_cols = MAX(cols / popup.longest, 1);
 	/* popup_lines = ceil(popup.length / popup_cols) */
-	popup_lines = popup.length / popup_cols;
-	if ((popup.length % popup_cols))
-		popup_lines++;
+	popup_lines = (popup.length+popup_cols-1) / popup_cols;
+	/*
+	 * Popup window can cover all but one screen row.
+	 * If it does not fit, the list of tokens is truncated
+	 * and "..." is displayed.
+	 */
 	popup_lines = MIN(popup_lines, lines - 1);
 
 	/* window covers message, scintilla and info windows */
 	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
-	wbkgdset(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
+	wbkgd(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
 
-	cur_file = 0;
-	cur_line = 1;
+	cur_entry = 0;
 	for (GSList *cur = popup.list; cur; cur = g_slist_next(cur)) {
 		gchar *entry = (gchar *)cur->data;
+		gint cur_line = cur_entry/popup_cols + 1;
 
-		if (cur_file && !(cur_file % popup_cols)) {
-			wclrtoeol(popup.window);
-			waddch(popup.window, '\n');
-			cur_line++;
-		}
+		wmove(popup.window,
+		      cur_line-1, (cur_entry % popup_cols)*popup.longest);
+		cur_entry++;
 
-		cur_file++;
-
-		if (cur_line == popup_lines && !(cur_file % popup_cols) &&
-		    cur_file < popup.length) {
+		if (cur_line == popup_lines && !(cur_entry % popup_cols) &&
+		    cur_entry < popup.length) {
+			/* truncate entries in the popup's very last column */
 			(void)wattrset(popup.window, A_BOLD);
 			waddstr(popup.window, "...");
 			break;
@@ -354,15 +355,10 @@ InterfaceCurses::popup_show_impl(void)
 
 		(void)wattrset(popup.window, *entry == '*' ? A_BOLD : A_NORMAL);
 		waddstr(popup.window, entry + 1);
-		for (int i = popup.longest - strlen(entry) + 1; i; i--)
-			waddch(popup.window, ' ');
-
-		g_free(cur->data);
 	}
-	wclrtoeol(popup.window);
 
 cleanup:
-	g_slist_free(popup.list);
+	g_slist_free_full(popup.list, g_free);
 	popup.list = NULL;
 	popup.longest = popup.length = 0;
 }
@@ -509,7 +505,7 @@ InterfaceCurses::Popup::~Popup()
 	if (window)
 		delwin(window);
 	if (list)
-		g_slist_free(list);
+		g_slist_free_full(list, g_free);
 }
 
 InterfaceCurses::~InterfaceCurses()
