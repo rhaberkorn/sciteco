@@ -53,6 +53,7 @@ static gchar *symbol_complete(SymbolList &list, const gchar *symbol,
 static const gchar *last_occurrence(const gchar *str,
 				    const gchar *chars = " \t\v\r\n\f<>,;@");
 static inline gboolean filename_is_dir(const gchar *filename);
+static inline gchar derive_dir_separator(const gchar *filename);
 
 gchar *cmdline = NULL;
 gint cmdline_pos = 0;
@@ -412,12 +413,27 @@ filename_complete(const gchar *filename, gchar completed)
 	gsize filename_len;
 	gsize prefix_len = 0;
 
+	gchar dir_sep[2];
+
 	if (!filename)
 		filename = "";
 	filename_len = strlen(filename);
 
 	if (is_glob_pattern(filename))
 		return NULL;
+
+	/*
+	 * On Windows, both forward and backslash
+	 * directory separators are allowed in directory
+	 * names passed to glib.
+	 * To imitate glib's behaviour, we use
+	 * the last valid directory separator in `filename`
+	 * to generate new separators.
+	 * This also allows forward-slash auto-completion
+	 * on Windows.
+	 */
+	dir_sep[0] = derive_dir_separator(filename);
+	dir_sep[1] = '\0';
 
 	dirname = g_path_get_dirname(filename);
 	dir = g_dir_open(dirname, 0, NULL);
@@ -428,14 +444,14 @@ filename_complete(const gchar *filename, gchar completed)
 	if (*dirname != *filename)
 		*dirname = '\0';
 
-	basename = strrchr(filename, G_DIR_SEPARATOR);
+	basename = strrchr(filename, *dir_sep);
 	if (basename)
 		basename++;
 	else
 		basename = filename;
 
 	while ((cur_basename = g_dir_read_name(dir))) {
-		gchar *cur_filename = g_build_filename(dirname, cur_basename, NIL);
+		gchar *cur_filename = g_build_path(dir_sep, dirname, cur_basename, NIL);
 
 		if (!g_str_has_prefix(cur_basename, basename) ||
 		    (!*basename && !file_is_visible(cur_filename))) {
@@ -444,7 +460,7 @@ filename_complete(const gchar *filename, gchar completed)
 		}
 
 		if (g_file_test(cur_filename, G_FILE_TEST_IS_DIR))
-			String::append(cur_filename, G_DIR_SEPARATOR_S);
+			String::append(cur_filename, dir_sep);
 
 		files = g_slist_prepend(files, cur_filename);
 
@@ -596,7 +612,39 @@ last_occurrence(const gchar *str, const gchar *chars)
 static inline gboolean
 filename_is_dir(const gchar *filename)
 {
-	return g_str_has_suffix(filename, G_DIR_SEPARATOR_S);
+	gchar c;
+
+	if (!*filename)
+		return false;
+
+	c = filename[strlen(filename)-1];
+	return G_IS_DIR_SEPARATOR(c);
 }
+
+#ifdef G_OS_WIN32
+
+static inline gchar
+derive_dir_separator(const gchar *filename)
+{
+	gchar sep = G_DIR_SEPARATOR;
+
+	while (*filename) {
+		if (G_IS_DIR_SEPARATOR(*filename))
+			sep = *filename;
+		filename++;
+	}
+
+	return sep;
+}
+
+#else /* !G_OS_WIN32 */
+
+static inline gchar
+derive_dir_separator(const gchar *filename)
+{
+	return G_DIR_SEPARATOR;
+}
+
+#endif
 
 } /* namespace SciTECO */

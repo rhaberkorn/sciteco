@@ -384,6 +384,18 @@ as hidden.
 On Windows, the \fIhidden\fP file attribute is evaluated.
 On other platforms, \*(ST might not identify hidden files correctly.
 .LP
+Both forward and backslash directory separators are supported
+as arguments to \*(ST commands on Windows:
+The separator style used for auto-completions is determined by
+the last separator in the supplied file name and defaults
+to backslash.
+Therefore forward-slash auto-completion is possible on Windows,
+e.g. by using a forward-slash in the file name or by prefixing
+file names with \(lq./\(rq.
+This is useful for writing cross-platform \*(ST macros since
+on other platforms (notably UNIX), only forward slashes are
+accepted in file names and directories.
+.LP
 Note that no additional expansions are performed before attempting
 a completion, so for instance \(lq~/foo\(rq will not complete a file
 in the user's home directory (tilde is not part of the file name but
