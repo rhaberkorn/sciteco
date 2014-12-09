@@ -14,30 +14,55 @@ When you delete a character from the end of the command line macro (called rubou
 side-effects of that character which may be a command or part of a command, are undone.
 
 SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
-GTK+ as well as NCurses frontends (using [Scinterm](http://foicica.com/scinterm/)).
-The NCurses frontend also works with [PDCurses/XCurses](http://pdcurses.sourceforge.net/)
-and its [win32a port](http://www.projectpluto.com/win32a.htm).
-Both Linux and Windows (MinGW 32/64) are supported.
+GTK+ 2 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
+Currently, the Curses frontend is recommended.
+
+The Curses frontend is verified to work with [ncurses](https://www.gnu.org/software/ncurses/),
+[PDCurses/XCurses](http://pdcurses.sourceforge.net/), the
+[PDCurses win32a port](http://www.projectpluto.com/win32a.htm) and
+[EMCurses](https://github.com/rhaberkorn/emcurses).
+Others might work as well.
+
+Both Linux and Windows (MinGW 32/64) are tested and supported.
+SciTECO compiles with both GCC and Clang.
+SciTECO should compile just fine on other UNIX-compatible platforms,
+like Mac OS X - however I cannot test it regularily and there is currently no
+Mac OS X maintainer.
+Since SciTECO primarily depends on [glib](https://developer.gnome.org/glib/) and
+Curses, it should be easy to port to even more exotic platforms.
 
 Features
 ========
 
 * All of the basic Video TECO commands supported
+* Improved parser compared to classic TECOs, making SciTECO
+  more similar to other imperative languages.
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
   by the user (commands may have more than two arguments)
 * Extended Q-Register namespace (arbitrary strings): can be used to build libraries and
   can be abused as a data structure
 * Make use of your keyboard's function keys by assigning them to strings inserted into
-  the command stream
+  the command stream.
+  This also enables navigating with function keys (e.g. cursor keys) as demonstrated
+  by the standard library `fnkeys.tes`.
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters
 * Interactivity: supports filename completion via immediate editing commands (e.g. `<TAB>` in
   commands accepting filenames); immediate searching (similar to search-as-you-type);
-  context-sensitive immediate editing commands
-* Command rubout: SciTECO can even undo file writes (`EW` command)
+  context-sensitive immediate editing commands.
+  In fact almost everything is done immediately, giving immediate interactive feedback.
+  Context-sensitive immediate editing commands also make it much harder to destroy a day's
+  work by accident than in classic TECOs.
+* Command rubout: SciTECO can even undo file writes (`EW` command).
+  This makes it even harder to destroy work by accident than in most other
+  editors.
 * Munging: Macros may be munged, that is executed in batch mode. By default, a profile
   is munged.
-* Syntax highlighting, styles, line numbers, etc. thanks to Scintilla
+* Syntax highlighting, styles, line numbers, etc. thanks to Scintilla.
+  Low-level Scintilla commands can also be accessed to extend SciTECO.
+* A growing standard library of macros with frameworks for color schemes, syntax highlighting
+  and buffer sessions.
+  Optimized for hack-ability rather than completeness.
 
 Download
 ========
@@ -46,6 +71,10 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Download Archive](https://sourceforge.net/projects/sciteco/files/)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
+
+__The prebuilt binary packages are quite outdated and buggy.
+Therefore you are currently advised to build SciTECO from source
+by cloning the Git repository.__
 
 For more details on building from source, please refer to `INSTALL`.
 
