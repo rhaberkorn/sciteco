@@ -74,13 +74,13 @@ cmdline_keypress(gchar key)
 	gchar *echo;
 
 	/*
-	 * Cleanup messages, popups, etc...
+	 * Cleanup messages,etc...
 	 */
-	interface.popup_clear();
 	interface.msg_clear();
 
 	/*
-	 * Process immediate editing commands
+	 * Process immediate editing commands.
+	 * It may clear/hide the popup.
 	 */
 	insert = process_edit_cmd(key);
 
@@ -149,6 +149,7 @@ process_edit_cmd(gchar key)
 {
 	static gchar insert[255];
 	gint cmdline_len = cmdline ? strlen(cmdline) : 0;
+	bool clear_popup = true;
 
 	insert[0] = key;
 	insert[1] = '\0';
@@ -197,10 +198,19 @@ process_edit_cmd(gchar key)
 
 	case CTL_KEY('T'):
 		if (States::is_string()) {
+			*insert = '\0';
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				clear_popup = false;
+				break;
+			}
+
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
-			*insert = '\0';
+			clear_popup = !interface.popup_is_shown();
+
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
@@ -209,32 +219,61 @@ process_edit_cmd(gchar key)
 
 	case '\t':
 		if (States::is_file()) {
+			*insert = '\0';
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				clear_popup = false;
+				break;
+			}
+
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0], complete);
 
-			*insert = '\0';
+			clear_popup = !interface.popup_is_shown();
+
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
 		} else if (States::current == &States::executecommand) {
 			/*
 			 * In the EC command, <TAB> completes files just like ^T
+			 * TODO: Implement shell-command completion by iterating
+			 * executables in $PATH
 			 */
+			*insert = '\0';
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				clear_popup = false;
+				break;
+			}
+
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
-			*insert = '\0';
+			clear_popup = !interface.popup_is_shown();
+
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
 		} else if (States::current == &States::scintilla_symbols) {
+			*insert = '\0';
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				clear_popup = false;
+				break;
+			}
+
 			const gchar *symbol = last_occurrence(strings[0], ",");
 			SymbolList &list = symbol == strings[0]
 						? Symbols::scintilla
 						: Symbols::scilexer;
 			gchar *new_chars = symbol_complete(list, symbol, ',');
 
-			*insert = '\0';
+			clear_popup = !interface.popup_is_shown();
+
 			if (new_chars)
 				g_stpcpy(insert, new_chars);
 			g_free(new_chars);
@@ -285,6 +324,9 @@ process_edit_cmd(gchar key)
 		break;
 #endif
 	}
+
+	if (clear_popup)
+		interface.popup_clear();
 
 	return insert;
 }
@@ -364,7 +406,7 @@ filename_complete(const gchar *filename, gchar completed)
 	gchar *dirname;
 	const gchar *basename, *cur_basename;
 	GDir *dir;
-	GList *files = NULL;
+	GSList *files = NULL;
 	guint files_len = 0;
 	gchar *insert = NULL;
 	gsize filename_len;
@@ -404,10 +446,10 @@ filename_complete(const gchar *filename, gchar completed)
 		if (g_file_test(cur_filename, G_FILE_TEST_IS_DIR))
 			String::append(cur_filename, G_DIR_SEPARATOR_S);
 
-		files = g_list_prepend(files, cur_filename);
+		files = g_slist_prepend(files, cur_filename);
 
-		if (g_list_next(files)) {
-			const gchar *other_file = (gchar *)g_list_next(files)->data;
+		if (g_slist_next(files)) {
+			const gchar *other_file = (gchar *)g_slist_next(files)->data;
 			gsize len = String::diff(other_file + filename_len,
 						 cur_filename + filename_len);
 			if (len < prefix_len)
@@ -425,24 +467,22 @@ filename_complete(const gchar *filename, gchar completed)
 	g_dir_close(dir);
 
 	if (!insert && files_len > 1) {
-		files = g_list_sort(files, (GCompareFunc)g_strcmp0);
+		files = g_slist_sort(files, (GCompareFunc)g_strcmp0);
 
-		for (GList *file = g_list_first(files);
-		     file != NULL;
-		     file = g_list_next(file)) {
+		for (GSList *file = files; file; file = g_slist_next(file)) {
 			InterfaceCurrent::PopupEntryType type;
-			bool in_buffer = false;
+			bool is_buffer = false;
 
 			if (filename_is_dir((gchar *)file->data)) {
 				type = InterfaceCurrent::POPUP_DIRECTORY;
 			} else {
 				type = InterfaceCurrent::POPUP_FILE;
 				/* FIXME: inefficient */
-				in_buffer = ring.find((gchar *)file->data);
+				is_buffer = ring.find((gchar *)file->data);
 			}
 
 			interface.popup_add(type, (gchar *)file->data,
-					    in_buffer);
+					    is_buffer);
 		}
 
 		interface.popup_show();
@@ -450,9 +490,7 @@ filename_complete(const gchar *filename, gchar completed)
 		String::append(insert, completed);
 	}
 
-	for (GList *file = g_list_first(files); file; file = g_list_next(file))
-		g_free(file->data);
-	g_list_free(files);
+	g_slist_free_full(files, g_free);
 
 	return insert;
 }

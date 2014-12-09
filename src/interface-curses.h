@@ -80,11 +80,16 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 
 	struct Popup {
 		WINDOW *window;
-		GSList *list;
-		gint longest;
-		gint length;
+		GSList *list;		/**! list of popup entries */
+		gint longest;		/**! size of longest entry */
+		gint length;		/**! total number of popup entries */
 
-		Popup() : window(NULL), list(NULL), longest(0), length(0) {}
+		GSList *cur_list;	/**! next entry to display */
+		gint cur_entry;	/**! next entry to display (position) */
+
+		Popup() : window(NULL), list(NULL),
+		          longest(3), length(0),
+		          cur_list(NULL), cur_entry(0) {}
 		~Popup();
 	} popup;
 
@@ -122,6 +127,12 @@ public:
 		            const gchar *name, bool highlight = false);
 	/* implementation of Interface::popup_show() */
 	void popup_show_impl(void);
+	/* implementation of Interface::popup_is_shown() */
+	inline bool
+	popup_is_shown_impl(void)
+	{
+		return popup.window != NULL;
+	}
 	/* implementation of Interface::popup_clear() */
 	void popup_clear_impl(void);
 

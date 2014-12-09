@@ -43,8 +43,6 @@ Features:
    influence tab-completion and relative file names.
 
 Optimizations:
- * prevent command-line flickering when using function key macros.
- * check if Scinterm refreshing is optimal
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
  * simplify parser (static jump tables are unnecessary!)

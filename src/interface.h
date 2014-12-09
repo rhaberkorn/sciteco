@@ -301,6 +301,11 @@ public:
 	{
 		impl().popup_show_impl();
 	}
+	inline bool
+	popup_is_shown(void)
+	{
+		return impl().popup_is_shown_impl();
+	}
 	inline void
 	popup_clear(void)
 	{

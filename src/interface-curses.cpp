@@ -97,11 +97,6 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
 	cmdline_current = NULL;
 
-	draw_info();
-	/* scintilla will be refreshed in event loop */
-	msg_clear();
-	cmdline_update("");
-
 #ifdef EMSCRIPTEN
         nodelay(cmdline_window, TRUE);
 #else
@@ -163,8 +158,8 @@ InterfaceCurses::resize_all_windows(void)
 	mvwin(cmdline_window, lines - 1, 0);
 
 	draw_info();
-	/* scintilla will be refreshed in event loop */
 	msg_clear(); /* FIXME: use saved message */
+	popup_clear();
 	cmdline_update();
 }
 
@@ -193,8 +188,6 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	wbkgdset(msg_window, ' ' | type2attr[type]);
 	vw_printw(msg_window, fmt, ap);
 	wclrtoeol(msg_window);
-
-	wrefresh(msg_window);
 }
 
 void
@@ -206,8 +199,6 @@ InterfaceCurses::msg_clear(void)
 	wmove(msg_window, 0, 0);
 	wbkgdset(msg_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
 	wclrtoeol(msg_window);
-
-	wrefresh(msg_window);
 }
 
 void
@@ -236,8 +227,6 @@ InterfaceCurses::draw_info(void)
 	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
 	waddstr(info_window, info_current);
 	wclrtoeol(info_window);
-
-	wrefresh(info_window);
 }
 
 void
@@ -283,8 +272,6 @@ InterfaceCurses::cmdline_update_impl(const gchar *cmdline)
 	waddstr(cmdline_window, line);
 	waddch(cmdline_window, ' ' | A_REVERSE);
 	wclrtoeol(cmdline_window);
-
-	wrefresh(cmdline_window);
 }
 
 void
@@ -310,21 +297,34 @@ InterfaceCurses::popup_show_impl(void)
 	int lines, cols; /* screen dimensions */
 	int popup_lines;
 	gint popup_cols;
-	gint cur_entry;
+	gint popup_colwidth;
+	gint cur_col;
 
-	if (isendwin()) /* batch mode */
-		goto cleanup;
+	if (isendwin() || !popup.length)
+		/* batch mode or nothing to display */
+		return;
 
 	getmaxyx(stdscr, lines, cols);
 
-	/* reserve 2 space characters between columns */
-	popup.longest += 2;
-	popup.list = g_slist_reverse(popup.list);
+	if (popup.window)
+		delwin(popup.window);
+	else
+		/* reverse list only once */
+		popup.list = g_slist_reverse(popup.list);
 
-	/* popup_cols = floor(cols / popup.longest) */
-	popup_cols = MAX(cols / popup.longest, 1);
-	/* popup_lines = ceil(popup.length / popup_cols) */
-	popup_lines = (popup.length+popup_cols-1) / popup_cols;
+	if (!popup.cur_list) {
+		/* start from beginning of list */
+		popup.cur_list = popup.list;
+		popup.cur_entry = 0;
+	}
+
+	/* reserve 2 spaces between columns */
+	popup_colwidth = popup.longest + 2;
+
+	/* popup_cols = floor(cols / popup_colwidth) */
+	popup_cols = MAX(cols / popup_colwidth, 1);
+	/* popup_lines = ceil((popup.length-popup.cur_entry) / popup_cols) */
+	popup_lines = (popup.length-popup.cur_entry+popup_cols-1) / popup_cols;
 	/*
 	 * Popup window can cover all but one screen row.
 	 * If it does not fit, the list of tokens is truncated
@@ -336,17 +336,22 @@ InterfaceCurses::popup_show_impl(void)
 	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
 	wbkgd(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
 
-	cur_entry = 0;
-	for (GSList *cur = popup.list; cur; cur = g_slist_next(cur)) {
-		gchar *entry = (gchar *)cur->data;
-		gint cur_line = cur_entry/popup_cols + 1;
+	/*
+	 * cur_col is the row currently written.
+	 * It does not wrap but grows indefinitely.
+	 * Therefore the real current row is (cur_col % popup_cols)
+	 */
+	cur_col = 0;
+	while (popup.cur_list) {
+		gchar *entry = (gchar *)popup.cur_list->data;
+		gint cur_line = cur_col/popup_cols + 1;
 
 		wmove(popup.window,
-		      cur_line-1, (cur_entry % popup_cols)*popup.longest);
-		cur_entry++;
+		      cur_line-1, (cur_col % popup_cols)*popup_colwidth);
+		cur_col++;
 
-		if (cur_line == popup_lines && !(cur_entry % popup_cols) &&
-		    cur_entry < popup.length) {
+		if (cur_line == popup_lines && !(cur_col % popup_cols) &&
+		    g_slist_next(popup.cur_list) != NULL) {
 			/* truncate entries in the popup's very last column */
 			(void)wattrset(popup.window, A_BOLD);
 			waddstr(popup.window, "...");
@@ -355,26 +360,34 @@ InterfaceCurses::popup_show_impl(void)
 
 		(void)wattrset(popup.window, *entry == '*' ? A_BOLD : A_NORMAL);
 		waddstr(popup.window, entry + 1);
+
+		popup.cur_list = g_slist_next(popup.cur_list);
+		popup.cur_entry++;
 	}
 
-cleanup:
-	g_slist_free_full(popup.list, g_free);
-	popup.list = NULL;
-	popup.longest = popup.length = 0;
+	redrawwin(info_window);
+	/* scintilla window is redrawn by ViewCurses::refresh() */
+	redrawwin(msg_window);
 }
 
 void
 InterfaceCurses::popup_clear_impl(void)
 {
+	g_slist_free_full(popup.list, g_free);
+	popup.list = NULL;
+	popup.length = 0;
+	/* reserve at least 3 characters for "..." */
+	popup.longest = 3;
+
+	popup.cur_list = NULL;
+	popup.cur_entry = 0;
+
 	if (!popup.window)
 		return;
 
 	redrawwin(info_window);
-	wrefresh(info_window);
-	redrawwin(current_view->get_window());
-	current_view->refresh();
+	/* scintilla window is redrawn by ViewCurses::refresh() */
 	redrawwin(msg_window);
-	wrefresh(msg_window);
 
 	delwin(popup.window);
 	popup.window = NULL;
@@ -460,17 +473,29 @@ event_loop_iter()
 
 	sigint_occurred = FALSE;
 
+	wnoutrefresh(interface.info_window);
+	/* FIXME: this does wrefresh() internally */
 	interface.current_view->refresh();
+	wnoutrefresh(interface.msg_window);
+	wnoutrefresh(interface.cmdline_window);
 	if (interface.popup.window)
-		wrefresh(interface.popup.window);
+		wnoutrefresh(interface.popup.window);
+	doupdate();
 }
 
 void
 InterfaceCurses::event_loop_impl(void)
 {
-	/* initial refresh: window might have been changed in batch mode */
+	/* initial refresh */
+	/* FIXME: this does wrefresh() internally */
 	current_view->refresh();
 	draw_info();
+	wnoutrefresh(info_window);
+	msg_clear();
+	wnoutrefresh(msg_window);
+	cmdline_update("");
+	wnoutrefresh(cmdline_window);
+	doupdate();
 
 #ifdef EMSCRIPTEN
 	PDC_emscripten_set_handler(event_loop_iter, TRUE);

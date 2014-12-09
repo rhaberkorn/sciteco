@@ -116,7 +116,14 @@ public:
 	inline void
 	popup_show_impl(void)
 	{
+		/* FIXME: scroll through popup contents */
 		gtk_widget_show(popup_widget);
+	}
+	/* implementation of Interface::popup_is_shown() */
+	inline bool
+	popup_is_shown_impl(void)
+	{
+		return gtk_widget_get_visible(popup_widget);
 	}
 	/* implementation of Interface::popup_clear() */
 	void popup_clear_impl(void);
