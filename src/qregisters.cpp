@@ -252,6 +252,40 @@ QRegister::execute(bool locals)
 }
 
 void
+QRegister::undo_set_eol_mode(void)
+{
+	if (!must_undo)
+		return;
+
+	/*
+	 * Necessary, so that upon rubout the
+	 * string's parameters are restored.
+	 */
+	string.update(QRegisters::view);
+
+	if (QRegisters::current && QRegisters::current->must_undo)
+		QRegisters::current->string.undo_edit(QRegisters::view);
+
+	QRegisters::view.undo_ssm(SCI_SETEOLMODE,
+	                          QRegisters::view.ssm(SCI_GETEOLMODE));
+
+	string.undo_edit(QRegisters::view);
+}
+
+void
+QRegister::set_eol_mode(gint mode)
+{
+	if (QRegisters::current)
+		QRegisters::current->string.update(QRegisters::view);
+
+	string.edit(QRegisters::view);
+	QRegisters::view.ssm(SCI_SETEOLMODE, mode);
+
+	if (QRegisters::current)
+		QRegisters::current->string.edit(QRegisters::view);
+}
+
+void
 QRegister::load(const gchar *filename)
 {
 	undo_set_string();
@@ -261,6 +295,11 @@ QRegister::load(const gchar *filename)
 
 	string.edit(QRegisters::view);
 	string.reset();
+
+	/*
+	 * IOView::load() might change the EOL style.
+	 */
+	undo_set_eol_mode();
 
 	/*
 	 * undo_set_string() pushes undo tokens that restore

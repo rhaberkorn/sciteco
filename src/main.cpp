@@ -71,7 +71,7 @@ QRegisterTable QRegisters::globals;
 Ring ring;
 
 namespace Flags {
-	tecoInt ed = 0;
+	tecoInt ed = ED_AUTOEOL;
 }
 
 static gchar *eval_macro = NULL;
@@ -86,6 +86,20 @@ static gpointer g_calloc_exception(gsize n_blocks, gsize n_block_bytes);
 static gpointer g_realloc_exception(gpointer mem, gsize n_bytes);
 
 static void sigint_handler(int signal);
+}
+
+const gchar *
+get_eol_seq(gint eol_mode)
+{
+	switch (eol_mode) {
+	case SC_EOL_CRLF:
+		return "\r\n";
+	case SC_EOL_CR:
+		return "\r";
+	case SC_EOL_LF:
+	default:
+		return "\n";
+	}
 }
 
 #ifdef G_OS_WIN32

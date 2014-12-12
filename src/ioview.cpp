@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -42,7 +42,10 @@
 /* here it shouldn't cause conflicts with other headers */
 #include <windows.h>
 
-/* still need to clean up */
+/*
+ * MinGW headers define an `interface` macro to work around
+ * Objective C issues
+ */
 #undef interface
 #endif
 
@@ -86,48 +89,284 @@ set_file_attributes(const gchar *filename, FileAttributes attrs)
 
 #endif /* !G_OS_WIN32 */
 
-/*
- * The following simple implementation of file reading is actually the
- * most efficient and useful in the common case of editing small files,
- * since
- * a) it works with minimal number of syscalls and
- * b) small files cause little temporary memory overhead.
- * Reading large files however could be very inefficient since the file
- * must first be read into memory and then copied in-memory. Also it could
- * result in thrashing.
- * Alternatively we could iteratively read into a smaller buffer trading
- * in speed against (temporary) memory consumption.
- * The best way to do it could be memory mapping the file as we could
- * let Scintilla copy from the file's virtual memory directly.
- * Unfortunately since every page of the mapped file is
- * only touched once by Scintilla TLB caching is useless and the TLB is
- * effectively thrashed with entries of the mapped file.
- * This results in the doubling of page faults and weighs out the other
- * advantages of memory mapping (has been benchmarked).
+/**
+ * A wrapper around g_io_channel_read_chars() that also
+ * performs automatic EOL translation (if enabled) in a
+ * more or less efficient manner.
+ * Unlike g_io_channel_read_chars(), this returns an
+ * offset and length into the buffer with normalized
+ * EOL character.
+ * The function must therefore be called iteratively on
+ * on the same buffer while it returns G_IO_STATUS_NORMAL.
  *
- * So in the future, the following approach could be implemented:
- * 1.) On Unix/Posix, mmap() one page at a time, hopefully preventing
- *     TLB thrashing.
- * 2.) On other platforms read into and copy from a statically sized buffer
- *     (perhaps page-sized)
+ * @param channel The GIOChannel to read from.
+ ' @param buffer Used to store blocks.
+ * @param buffer_len Size of buffer.
+ * @param read_len Total number of bytes read into buffer.
+ *                 Must be provided over the lifetime of buffer
+ *                 and initialized with 0.
+ * @param offset If a block could be read (G_IO_STATUS_NORMAL),
+ *               this will be set to indicate its beginning in
+ *               buffer. Should be initialized to 0.
+ * @param block_len Will be set to the block length.
+ *                  Should be initialized to 0.
+ * @param state Opaque state that must persist for the lifetime
+ *              of the channel. Must be initialized with 0.
+ * @param eol_style Will be set to the EOL style guessed from
+ *                  the data in channel (if the data allows it).
+ *                  Should be initialized with -1 (unknown).
+ * @param eol_style_consistent Will be set to TRUE if
+ *                             inconsistent EOL styles are detected.
+ * @param error If not NULL and an error occurred, it is set to
+ *              the error. It should be initialized to -1.
+ * @return A GIOStatus as returned by g_io_channel_read_chars()
+ */
+GIOStatus
+IOView::channel_read_with_eol(GIOChannel *channel,
+                              gchar *buffer, gsize buffer_len,
+                              gsize &read_len,
+                              guint &offset, gsize &block_len,
+                              gint &state, gint &eol_style,
+                              gboolean &eol_style_inconsistent,
+                              GError **error)
+{
+	GIOStatus status;
+
+	if (state < 0) {
+		/* a CRLF was last translated */
+		block_len++;
+		state = '\n';
+	}
+	offset += block_len;
+
+	if (offset == read_len) {
+		offset = 0;
+
+		status = g_io_channel_read_chars(channel, buffer, buffer_len,
+		                                 &read_len, error);
+		if (status == G_IO_STATUS_EOF && state == '\r') {
+			/*
+			 * Very last character read is CR.
+			 * If this is the only EOL so far, the
+			 * EOL style is MAC.
+			 * This is also executed if auto-eol is disabled
+			 * but it doesn't hurt.
+			 */
+			if (eol_style < 0)
+				eol_style = SC_EOL_CR;
+			else if (eol_style != SC_EOL_CR)
+				eol_style_inconsistent = TRUE;
+		}
+		if (status != G_IO_STATUS_NORMAL)
+			return status;
+
+		if (!(Flags::ed & Flags::ED_AUTOEOL)) {
+			/*
+			 * No EOL translation - always return entire
+			 * buffer
+			 */
+			block_len = read_len;
+			return G_IO_STATUS_NORMAL;
+		}
+	}
+
+	/*
+	 * Return data with automatic EOL translation.
+	 * Every EOL sequence is normalized to LF and
+	 * the first sequence determines the documents
+	 * EOL style.
+	 * This loop is executed for every byte of the
+	 * file/stream, so it was important to optimize
+	 * it. Specifically, the number of returns
+	 * is minimized by keeping a pointer to
+	 * the beginning of a block of data in the buffer
+	 * which already has LFs (offset).
+	 * Mac EOLs can be converted to UNIX EOLs directly
+	 * in the buffer.
+	 * So if their EOLs are consistent, the function
+	 * will return one block for the entire buffer.
+	 * When reading a file with DOS EOLs, there will
+	 * be one call per line which is significantly slower.
+	 */
+	for (guint i = offset; i < read_len; i++) {
+		switch (buffer[i]) {
+		case '\n':
+			if (state == '\r') {
+				if (eol_style < 0)
+					eol_style = SC_EOL_CRLF;
+				else if (eol_style != SC_EOL_CRLF)
+					eol_style_inconsistent = TRUE;
+
+				/*
+				 * Return block. CR has already
+				 * been made LF in `buffer`.
+				 */
+				block_len = i-offset;
+				/* next call will skip the CR */
+				state = -1;
+				return G_IO_STATUS_NORMAL;
+			}
+
+			if (eol_style < 0)
+				eol_style = SC_EOL_LF;
+			else if (eol_style != SC_EOL_LF)
+				eol_style_inconsistent = TRUE;
+			/*
+			 * No conversion necessary and no need to
+			 * return block yet.
+			 */
+			state = '\n';
+			break;
+
+		case '\r':
+			if (state == '\r') {
+				if (eol_style < 0)
+					eol_style = SC_EOL_CR;
+				else if (eol_style != SC_EOL_CR)
+					eol_style_inconsistent = TRUE;
+			}
+
+			/*
+			 * Convert CR to LF in `buffer`.
+			 * This way more than one line using
+			 * Mac EOLs can be returned at once.
+			 */
+			buffer[i] = '\n';
+			state = '\r';
+			break;
+
+		default:
+			if (state == '\r') {
+				if (eol_style < 0)
+					eol_style = SC_EOL_CR;
+				else if (eol_style != SC_EOL_CR)
+					eol_style_inconsistent = TRUE;
+			}
+			state = buffer[i];
+			break;
+		}
+	}
+
+	/*
+	 * Return remaining block.
+	 * With UNIX/MAC EOLs, this will usually be the
+	 * entire `buffer`
+	 */
+	block_len = read_len-offset;
+	return G_IO_STATUS_NORMAL;
+}
+
+/**
+ * Loads the view's document by reading all data from
+ * a GIOChannel.
+ * The EOL style is guessed from the channel's data
+ * (if AUTOEOL is enabled).
+ * This assumes that the channel is blocking.
+ * Also it tries to guess the size of the file behind
+ * channel in order to preallocate memory in Scintilla.
+ *
+ * @param channel Channel to read from.
+ * @param error Glib error or NULL.
+ * @returns A GIOStatus as returned by g_io_channel_read_chars()
+ */
+GIOStatus
+IOView::load(GIOChannel *channel, GError **error)
+{
+	GIOStatus status;
+	GStatBuf stat_buf;
+
+	gchar buffer[1024];
+	gsize read_len = 0;
+	guint offset = 0;
+	gsize block_len = 0;
+	gint state = 0;		/* opaque state */
+	gint eol_style = -1;	/* yet unknown */
+	gboolean eol_style_inconsistent = FALSE;
+
+	ssm(SCI_BEGINUNDOACTION);
+	ssm(SCI_CLEARALL);
+
+	/*
+	 * Preallocate memory based on the file size.
+	 * May waste a few bytes if file contains DOS EOLs
+	 * and EOL translation is enabled, but is faster.
+	 * NOTE: g_io_channel_unix_get_fd() should report the correct fd
+	 * on Windows, too.
+	 */
+	stat_buf.st_size = 0;
+	if (!fstat(g_io_channel_unix_get_fd(channel), &stat_buf) &&
+	    stat_buf.st_size > 0)
+		ssm(SCI_ALLOCATE, stat_buf.st_size);
+
+	for (;;) {
+		status = channel_read_with_eol(
+			channel, buffer, sizeof(buffer),
+		        read_len, offset, block_len, state,
+		        eol_style, eol_style_inconsistent,
+		        error
+		);
+		if (status != G_IO_STATUS_NORMAL)
+			break;
+
+		ssm(SCI_APPENDTEXT, block_len, (sptr_t)(buffer+offset));
+	}
+
+	/*
+	 * EOL-style guessed.
+	 * Save it as the buffer's EOL mode, so save()
+	 * can restore the original EOL-style.
+	 * If auto-EOL-translation is disabled, this cannot
+	 * have been guessed and the buffer's EOL mode should
+	 * have a platform default.
+	 * If it is enabled but the stream does not contain any
+	 * EOL characters, the platform default is still assumed.
+	 */
+	if (eol_style >= 0)
+		ssm(SCI_SETEOLMODE, eol_style);
+
+	if (eol_style_inconsistent)
+		interface.msg(InterfaceCurrent::MSG_WARNING,
+		              "Inconsistent EOL styles normalized");
+
+	ssm(SCI_ENDUNDOACTION);
+	return status;
+}
+
+/**
+ * Load view's document from file.
  */
 void
 IOView::load(const gchar *filename)
 {
-	gchar *contents;
-	gsize size;
+	GError *error = NULL;
+	GIOChannel *channel;
+	GIOStatus status;
 
-	GError *gerror = NULL;
+	channel = g_io_channel_new_file(filename, "r", &error);
+	if (!channel) {
+		Error err("Error opening file \"%s\" for reading: %s",
+		          filename, error->message);
+		g_error_free(error);
+		throw err;
+	}
 
-	if (!g_file_get_contents(filename, &contents, &size, &gerror))
-		throw GlibError(gerror);
+	/*
+	 * The file loading algorithm does not need buffered
+	 * streams, so disabling buffering should increase
+	 * performance (slightly).
+	 */
+	g_io_channel_set_encoding(channel, NULL, NULL);
+	g_io_channel_set_buffered(channel, FALSE);
 
-	ssm(SCI_BEGINUNDOACTION);
-	ssm(SCI_CLEARALL);
-	ssm(SCI_APPENDTEXT, size, (sptr_t)contents);
-	ssm(SCI_ENDUNDOACTION);
-
-	g_free(contents);
+	status = load(channel, &error);
+	/* also closes file: */
+	g_io_channel_unref(channel);
+	if (status == G_IO_STATUS_ERROR) {
+		Error err("Error reading file \"%s\": %s",
+		          filename, error->message);
+		g_error_free(error);
+		throw err;
+	}
 }
 
 #if 0
@@ -234,13 +473,139 @@ make_savepoint(const gchar *filename)
 
 #endif /* !G_OS_UNIX */
 
+GIOStatus
+IOView::save(GIOChannel *channel, guint position, gsize len,
+             gsize *bytes_written, gint &state, GError **error)
+{
+	const gchar *buffer;
+	const gchar *eol_seq;
+	gchar last_c;
+	guint i = 0;
+	guint block_start;
+	gsize block_written;
+
+	GIOStatus status;
+
+	enum {
+		SAVE_STATE_START = 0,
+		SAVE_STATE_WRITE_LF
+	};
+
+	buffer = (const gchar *)ssm(SCI_GETRANGEPOINTER,
+	                            position, (sptr_t)len);
+
+	if (!(Flags::ed & Flags::ED_AUTOEOL))
+		/*
+		 * Write without EOL-translation:
+		 * `state` is not required
+		 */
+		return g_io_channel_write_chars(channel, buffer, len,
+		                                bytes_written, error);
+
+	/*
+	 * Write to stream with EOL-translation.
+	 * The document's EOL mode tells us what was guessed
+	 * when its content was read in (presumably from a file)
+	 * but might have been changed manually by the user.
+	 * NOTE: This code assumes that the output stream is
+	 * buffered, since otherwise it would be slower
+	 * (has been benchmarked).
+	 * NOTE: The loop is executed for every character
+	 * in `buffer` and has been optimized for minimal
+	 * function (i.e. GIOChannel) calls.
+	 */
+	*bytes_written = 0;
+	if (state == SAVE_STATE_WRITE_LF) {
+		/* complete writing a CRLF sequence */
+		status = g_io_channel_write_chars(channel, "\n", 1, NULL, error);
+		if (status != G_IO_STATUS_NORMAL)
+			return status;
+		state = SAVE_STATE_START;
+		(*bytes_written)++;
+		i++;
+	}
+
+	eol_seq = get_eol_seq(ssm(SCI_GETEOLMODE));
+	last_c = ssm(SCI_GETCHARAT, position-1);
+
+	block_start = i;
+	while (i < len) {
+		switch (buffer[i]) {
+		case '\n':
+			if (last_c == '\r') {
+				/* EOL sequence already written */
+				(*bytes_written)++;
+				block_start = i+1;
+				break;
+			}
+			/* fall through */
+		case '\r':
+			status = g_io_channel_write_chars(channel, buffer+block_start,
+			                                  i-block_start, &block_written, error);
+			*bytes_written += block_written;
+			if (status != G_IO_STATUS_NORMAL ||
+			    block_written < i-block_start)
+				return status;
+
+			status = g_io_channel_write_chars(channel, eol_seq,
+			                                  -1, &block_written, error);
+			if (status != G_IO_STATUS_NORMAL)
+				return status;
+			if (eol_seq[block_written]) {
+				/* incomplete EOL seq - we have written CR of CRLF */
+				state = SAVE_STATE_WRITE_LF;
+				return G_IO_STATUS_NORMAL;
+			}
+			(*bytes_written)++;
+
+			block_start = i+1;
+			break;
+		}
+
+		last_c = buffer[i++];
+	}
+
+	/*
+	 * Write out remaining block (i.e. line)
+	 */
+	status = g_io_channel_write_chars(channel, buffer+block_start,
+	                                  len-block_start, &block_written, error);
+	*bytes_written += block_written;
+	return status;
+}
+
+gboolean
+IOView::save(GIOChannel *channel, GError **error)
+{
+	sptr_t gap;
+	gsize size;
+	gsize bytes_written;
+	gint state = 0;
+
+	/* write part of buffer before gap */
+	gap = ssm(SCI_GETGAPPOSITION);
+	if (gap > 0) {
+		if (save(channel, 0, gap, &bytes_written, state, error) == G_IO_STATUS_ERROR)
+			return FALSE;
+		g_assert(bytes_written == (gsize)gap);
+	}
+
+	/* write part of buffer after gap */
+	size = ssm(SCI_GETLENGTH) - gap;
+	if (size > 0) {
+		if (save(channel, gap, size, &bytes_written, state, error) == G_IO_STATUS_ERROR)
+			return FALSE;
+		g_assert(bytes_written == size);
+	}
+
+	return TRUE;
+}
+
 void
 IOView::save(const gchar *filename)
 {
-	const void *buffer;
-	sptr_t gap;
-	size_t size;
-	FILE *file;
+	GError *error = NULL;
+	GIOChannel *channel;
 
 #ifdef G_OS_UNIX
 	GStatBuf file_stat;
@@ -262,34 +627,22 @@ IOView::save(const gchar *filename)
 	}
 
 	/* leaves access mode intact if file still exists */
-	file = g_fopen(filename, "w");
-	if (!file)
-		/* hopefully, errno is also always set on Windows */
-		throw Error("Error opening file \"%s\" for writing: %s",
-		            filename, strerror(errno));
+	channel = g_io_channel_new_file(filename, "w", &error);
+	if (!channel)
+		throw GlibError(error);
 
-	/* write part of buffer before gap */
-	gap = ssm(SCI_GETGAPPOSITION);
-	if (gap > 0) {
-		buffer = (const void *)ssm(SCI_GETRANGEPOINTER,
-		                           0, gap);
-		if (!fwrite(buffer, (size_t)gap, 1, file)) {
-			fclose(file);
-			throw Error("Error writing file \"%s\"",
-			            filename);
-		}
-	}
+	/*
+	 * save(GIOChannel *, const gchar *) expects a buffered
+	 * and blocking channel
+	 */
+	g_io_channel_set_encoding(channel, NULL, NULL);
+	g_io_channel_set_buffered(channel, TRUE);
 
-	/* write part of buffer after gap */
-	size = ssm(SCI_GETLENGTH) - gap;
-	if (size > 0) {
-		buffer = (const void *)ssm(SCI_GETRANGEPOINTER,
-		                           gap, size);
-		if (!fwrite(buffer, size, 1, file)) {
-			fclose(file);
-			throw Error("Error writing file \"%s\"",
-			            filename);
-		}
+	if (!save(channel, &error)) {
+		Error err("Error writing file \"%s\": %s", filename, error->message);
+		g_error_free(error);
+		g_io_channel_unref(channel);
+		throw err;
 	}
 
 	/* if file existed but has been renamed, restore attributes */
@@ -299,15 +652,18 @@ IOView::save(const gchar *filename)
 	/*
 	 * only a good try to inherit owner since process user must have
 	 * CHOWN capability traditionally reserved to root only.
-	 * That's why we don't handle the return value and are spammed
-	 * with unused-result warnings by GCC. There is NO sane way to avoid
-	 * this warning except, adding -Wno-unused-result which disabled all
-	 * such warnings.
+	 * FIXME: We should probably fall back to another save point
+	 * strategy.
 	 */
-	fchown(fileno(file), file_stat.st_uid, file_stat.st_gid);
+	if (fchown(g_io_channel_unix_get_fd(channel),
+	           file_stat.st_uid, file_stat.st_gid))
+		interface.msg(InterfaceCurrent::MSG_WARNING,
+			      "Unable to preserve owner of \"%s\": %s",
+			      filename, g_strerror(errno));
 #endif
 
-	fclose(file);
+	/* also closes file */
+	g_io_channel_unref(channel);
 }
 
 /*

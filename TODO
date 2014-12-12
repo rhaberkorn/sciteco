@@ -10,6 +10,13 @@ Known Bugs:
    throwing exceptions is unsafe from C-linkage callbacks.
 
 Features:
+ * Support loading from stdin (--stdin) and writing to
+   the current buffer to stdout on exit (--stdout).
+   This will make it easy to write command line filters,
+   This also means we need something like --ed to set the
+   ED flags before everything else and --quiet.
+   Command line arguments should then also be handled
+   differently.
  * The C/C++ lexer supports preprocessor evaluation.
    This is currently always enabled but there are no defines.
    Could be added as a global reg to set up defines easily.
@@ -52,8 +59,7 @@ Features:
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
    dot on the QReg stack
- * automatic EOL detection of buffers; easy EOL setting
-   :EL command could also convert all EOLs in the current
+ * :EL command could also be used to convert all EOLs in the current
    buffer.
  * command to change the current working directory. This will
    influence tab-completion and relative file names.

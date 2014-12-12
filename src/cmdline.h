@@ -90,8 +90,6 @@ private:
 
 extern bool quit_requested;
 
-const gchar *get_eol(void);
-
 /*
  * Command states
  */

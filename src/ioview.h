@@ -94,7 +94,20 @@ class IOView : public ViewCurrent {
 	};
 
 public:
+	static GIOStatus channel_read_with_eol(GIOChannel *channel,
+	                                       gchar *buffer, gsize buffer_len,
+	                                       gsize &read_len,
+	                                       guint &offset, gsize &block_len,
+	                                       gint &state, gint &eol_style,
+	                                       gboolean &eol_style_inconsistent,
+	                                       GError **error = NULL);
+
+	GIOStatus load(GIOChannel *channel, GError **error = NULL);
 	void load(const gchar *filename);
+
+	GIOStatus save(GIOChannel *channel, guint position, gsize len,
+	               gsize *bytes_written, gint &state, GError **error = NULL);
+	gboolean save(GIOChannel *channel, GError **error = NULL);
 	void save(const gchar *filename);
 };
 

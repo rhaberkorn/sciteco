@@ -319,7 +319,7 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 		cmdline.keypress('\t');
 		break;
 	case GDK_Return:
-		cmdline.keypress(get_eol());
+		cmdline.keypress('\n');
 		break;
 
 	/*

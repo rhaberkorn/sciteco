@@ -26,6 +26,7 @@
 #include "undo.h"
 #include "expressions.h"
 #include "qregisters.h"
+#include "ioview.h"
 #include "ring.h"
 #include "parser.h"
 #include "error.h"
@@ -308,6 +309,12 @@ StateExecuteCommand::done(const gchar *str)
 	GIOChannel *stdin_chan, *stdout_chan;
 
 	ctx.text_added = false;
+	/* opaque state for IOView::save() */
+	ctx.stdin_state = 0;
+	/* opaque state for IOView::channel_read_with_eol() */
+	ctx.stdout_state = 0;
+	/* eol style guessed from the stdout stream */
+	ctx.eol_style = -1;
 	ctx.error = NULL;
 
 	argv = parse_shell_command_line(str, &ctx.error);
@@ -341,7 +348,11 @@ StateExecuteCommand::done(const gchar *str)
 	g_io_channel_set_buffered(stdin_chan, FALSE);
 	g_io_channel_set_flags(stdout_chan, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_encoding(stdout_chan, NULL, NULL);
-	g_io_channel_set_buffered(stdout_chan, FALSE);
+	/*
+	 * IOView::save() expects the channel to be buffered
+	 * for performance reasons
+	 */
+	g_io_channel_set_buffered(stdout_chan, TRUE);
 
 	ctx.stdin_src = g_io_create_watch(stdin_chan,
 	                                  (GIOCondition)(G_IO_OUT | G_IO_ERR | G_IO_HUP));
@@ -368,8 +379,12 @@ StateExecuteCommand::done(const gchar *str)
 		interface.ssm(SCI_DELETERANGE, ctx.from, ctx.to - ctx.from);
 	interface.ssm(SCI_ENDUNDOACTION);
 
-	if (!register_argument &&
-	    (ctx.from != ctx.to || ctx.text_added)) {
+	if (register_argument) {
+		if (ctx.eol_style >= 0) {
+			register_argument->undo_set_eol_mode();
+			register_argument->set_eol_mode(ctx.eol_style);
+		}
+	} else if (ctx.from != ctx.to || ctx.text_added) {
 		/* undo action is only effective if it changed anything */
 		if (current_doc_must_undo())
 			interface.undo_ssm(SCI_UNDO);
@@ -478,16 +493,17 @@ stdin_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
 
-	const gchar *buffer;
+	/* we always read from the current view */
+	IOView *view = (IOView *)interface.get_current_view();
+
 	gsize bytes_written;
 
-	buffer = (const gchar *)interface.ssm(SCI_GETRANGEPOINTER,
-	                                      ctx.from,
-	                                      ctx.to - ctx.start);
-
-	switch (g_io_channel_write_chars(chan, buffer, ctx.to - ctx.start,
-	                                 &bytes_written,
-	                                 ctx.error ? NULL : &ctx.error)) {
+	/*
+	 * IOView::save() cares about automatic EOL conversion
+	 */
+	switch (view->save(chan, ctx.from, ctx.to - ctx.start,
+	                   &bytes_written, ctx.stdin_state,
+	                   ctx.error ? NULL : &ctx.error)) {
 	case G_IO_STATUS_ERROR:
 		/* do not yet quit -- we still have to reap the child */
 		goto remove;
@@ -526,38 +542,54 @@ stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
 
+	GIOStatus status;
+
 	gchar buffer[1024];
-	gsize bytes_read;
+	gsize read_len = 0;
+	guint offset = 0;
+	gsize block_len = 0;
+	/* we're not really interested in that: */
+	gboolean eol_style_inconsistent = FALSE;
 
-	switch (g_io_channel_read_chars(chan, buffer, sizeof(buffer)-1,
-	                                &bytes_read,
-	                                ctx.error ? NULL : &ctx.error)) {
-	case G_IO_STATUS_NORMAL:
-		break;
-	case G_IO_STATUS_ERROR:
-	case G_IO_STATUS_EOF:
-		if (g_source_is_destroyed(ctx.child_src))
-			g_main_loop_quit(ctx.mainloop);
-		return G_SOURCE_REMOVE;
-	case G_IO_STATUS_AGAIN:
-		return G_SOURCE_CONTINUE;
-	}
+	for (;;) {
+		status = IOView::channel_read_with_eol(
+			chan, buffer, sizeof(buffer),
+			read_len, offset, block_len,
+			ctx.stdout_state, ctx.eol_style,
+			eol_style_inconsistent,
+			ctx.error ? NULL : &ctx.error
+		);
 
-	if (register_argument) {
-		buffer[bytes_read] = '\0';
-
-		if (ctx.text_added) {
-			register_argument->undo_append_string();
-			register_argument->append_string(buffer);
-		} else {
-			register_argument->undo_set_string();
-			register_argument->set_string(buffer);
+		switch (status) {
+		case G_IO_STATUS_NORMAL:
+			break;
+		case G_IO_STATUS_ERROR:
+		case G_IO_STATUS_EOF:
+			if (g_source_is_destroyed(ctx.child_src))
+				g_main_loop_quit(ctx.mainloop);
+			return G_SOURCE_REMOVE;
+		case G_IO_STATUS_AGAIN:
+			return G_SOURCE_CONTINUE;
 		}
-	} else {
-		interface.ssm(SCI_ADDTEXT, bytes_read, (sptr_t)buffer);
-	}
-	ctx.text_added = true;
 
+		if (!block_len)
+			continue;
+
+		if (register_argument) {
+			if (ctx.text_added) {
+				register_argument->undo_append_string();
+				register_argument->append_string(buffer+offset, block_len);
+			} else {
+				register_argument->undo_set_string();
+				register_argument->set_string(buffer+offset, block_len);
+			}
+		} else {
+			interface.ssm(SCI_ADDTEXT, block_len, (sptr_t)(buffer+offset));
+		}
+		ctx.text_added = true;
+	}
+
+	/* not reached */
 	return G_SOURCE_CONTINUE;
 }
 

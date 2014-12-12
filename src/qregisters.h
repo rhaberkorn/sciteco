@@ -150,6 +150,9 @@ public:
 
 	void execute(bool locals = true);
 
+	void undo_set_eol_mode(void);
+	void set_eol_mode(gint mode);
+
 	/*
 	 * Load and save already care about undo token
 	 * creation.

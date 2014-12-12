@@ -102,11 +102,19 @@ AC_C_INLINE
 AC_TYPE_SIZE_T
 
 # Checks for library functions.
-AC_CHECK_FUNCS([memset setlocale strchr strrchr])
+# They must exist on every target system.
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
+	AC_MSG_ERROR([Missing libc function])
+])
 
+# Library functions that should exist on UNIX/Linux
 case $host in
-*-*-linux*)
-	AC_CHECK_FUNC([realpath])
+*-*-darwin* | *-*-linux* | *-*-cygwin*)
+	AC_CHECK_FUNCS([realpath fchown], , [
+		AC_MSG_ERROR([Missing libc function])
+	])
 	;;
 esac
 

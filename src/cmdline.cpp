@@ -258,6 +258,15 @@ void
 Cmdline::process_edit_cmd(gchar key)
 {
 	switch (key) {
+	case '\n': /* insert EOL sequence */
+		interface.popup_clear();
+
+		if (Flags::ed & Flags::ED_AUTOEOL)
+			insert("\n");
+		else
+			insert(get_eol_seq(interface.ssm(SCI_GETEOLMODE)));
+		break;
+
 	case CTL_KEY('G'): /* toggle immediate editing modifier */
 		interface.popup_clear();
 
@@ -504,20 +513,6 @@ Cmdline::fnmacro(const gchar *name)
 		gchar *macro = reg->get_string();
 		keypress(macro);
 		g_free(macro);
-	}
-}
-
-const gchar *
-get_eol(void)
-{
-	switch (interface.ssm(SCI_GETEOLMODE)) {
-	case SC_EOL_CR:
-		return "\r";
-	case SC_EOL_CRLF:
-		return "\r\n";
-	case SC_EOL_LF:
-	default:
-		return "\n";
 	}
 }
 

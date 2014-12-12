@@ -42,6 +42,9 @@ public:
 		tecoInt from, to;
 		tecoInt start;
 		bool text_added;
+		gint stdin_state;
+		gint stdout_state;
+		gint eol_style;
 		GError *error;
 	};
 

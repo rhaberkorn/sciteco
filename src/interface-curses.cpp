@@ -644,7 +644,7 @@ event_loop_iter()
 	case KEY_ENTER:
 	case '\r':
 	case '\n':
-		cmdline.keypress(get_eol());
+		cmdline.keypress('\n');
 		break;
 
 	/*

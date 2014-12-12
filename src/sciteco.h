@@ -39,6 +39,7 @@ typedef tecoInt tecoBool;
 
 namespace Flags {
 	enum {
+		ED_AUTOEOL	= (1 << 4),
 		ED_HOOKS	= (1 << 5),
 		ED_FNKEYS	= (1 << 6),
 		ED_SHELLEMU	= (1 << 7)
@@ -78,6 +79,9 @@ extern sig_atomic_t sigint_occurred;
 
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
+
+/* in main.cpp */
+const gchar *get_eol_seq(gint eol_mode);
 
 namespace Validate {
 
