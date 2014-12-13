@@ -170,6 +170,18 @@ public:
 
 	tecoInt push(tecoInt number);
 
+	/**
+	 * Push characters of a C-string.
+	 * Could be overloaded on push(tecoInt)
+	 * but this confuses GCC.
+	 */
+	inline void
+	push_str(const gchar *str)
+	{
+		while (*str)
+			push(*str++);
+	}
+
 	inline tecoInt
 	peek_num(int index = 1)
 	{

@@ -1990,6 +1990,95 @@ StateECommand::custom(gchar chr)
 	}
 
 	/*$
+	 * 0EL -- Set or get End of Line mode
+	 * 13,10:EL
+	 * 1EL
+	 * 13:EL
+	 * 2EL
+	 * 10:EL
+	 * EL -> 0 | 1 | 2
+	 * :EL -> 13,10 | 13 | 10
+	 *
+	 * Sets or gets the current document's End Of Line (EOL) mode.
+	 * This is a thin wrapper around Scintilla's
+	 * \fBSCI_SETEOLMODE\fP and \fBSCI_GETEOLMODE\fP messages but is
+	 * shorter to type and supports restoring the EOL mode upon rubout.
+	 * Like the Scintilla message, <EL> does \fBnot\fP change the
+	 * characters in the current document.
+	 * If automatic EOL translation is activated (which is the default),
+	 * \*(ST will however use this information when saving and writing
+	 * out files.
+	 *
+	 * With one argument, the EOL mode is set according to these
+	 * constants:
+	 * .IP 0 4
+	 * Carriage return (ASCII 13), followed by line feed (ASCII 10).
+	 * This is the default EOL mode on DOS/Windows.
+	 * .IP 1
+	 * Carriage return (ASCII 13).
+	 * The default EOL mode on old Mac OS systems.
+	 * .IP 2
+	 * Line feed (ASCII 10).
+	 * The default EOL mode on POSIX/UNIX systems.
+	 *
+	 * In its colon-modified form, the EOL mode is set according
+	 * to the EOL characters on the expression stack.
+	 * \*(ST will only pop as many values as are necessary to
+	 * determine the EOL mode.
+	 *
+	 * Without arguments, the current EOL mode is returned.
+	 * When colon-modified, the current EOL mode's character sequence
+	 * is pushed onto the expression stack.
+	 */
+	case 'L':
+		BEGIN_EXEC(&States::start);
+
+		expressions.eval();
+		if (expressions.args() > 0) {
+			gint eol_mode;
+
+			if (eval_colon()) {
+				switch (expressions.pop_num_calc()) {
+				case '\r':
+					eol_mode = SC_EOL_CR;
+					break;
+				case '\n':
+					if (!expressions.args()) {
+						eol_mode = SC_EOL_LF;
+						break;
+					}
+					if (expressions.pop_num_calc() == '\r') {
+						eol_mode = SC_EOL_CRLF;
+						break;
+					}
+					/* fall through */
+				default:
+					throw Error("Invalid EOL sequence for <EL>");
+				}
+			} else {
+				eol_mode = expressions.pop_num_calc();
+				switch (eol_mode) {
+				case SC_EOL_CRLF:
+				case SC_EOL_CR:
+				case SC_EOL_LF:
+					break;
+				default:
+					throw Error("Invalid EOL mode %d for <EL>",
+					            eol_mode);
+				}
+			}
+
+			interface.undo_ssm(SCI_SETEOLMODE,
+			                   interface.ssm(SCI_GETEOLMODE));
+			interface.ssm(SCI_SETEOLMODE, eol_mode);
+		} else if (eval_colon()) {
+			expressions.push_str(get_eol_seq(interface.ssm(SCI_GETEOLMODE)));
+		} else {
+			expressions.push(interface.ssm(SCI_GETEOLMODE));
+		}
+		break;
+
+	/*$
 	 * [bool]EX -- Exit program
 	 * -EX
 	 *
