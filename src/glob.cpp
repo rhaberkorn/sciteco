@@ -41,6 +41,7 @@ Globber::Globber(const gchar *_pattern)
 
 	dirname = g_path_get_dirname(_pattern);
 	dir = g_dir_open(dirname, 0, NULL);
+	/* if dirname does not exist, dir may be NULL */
 
 	basename = g_path_get_basename(_pattern);
 	pattern = g_pattern_spec_new(basename);
@@ -51,6 +52,9 @@ gchar *
 Globber::next(void)
 {
 	const gchar *basename;
+
+	if (!dir)
+		return NULL;
 
 	while ((basename = g_dir_read_name(dir)))
 		if (g_pattern_match_string(pattern, basename))
