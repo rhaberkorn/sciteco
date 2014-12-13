@@ -2042,7 +2042,7 @@ static struct ScintillaMessage {
  * There are however exceptions:
  *   - In the editor profile and batch mode in general,
  *     the ES command may be used freely.
- *   - In the ED hook macro (register \(lq0\(rq),
+ *   - In the ED hook macro (register \(lqED\(rq),
  *     when a file is added to the ring, most destructive
  *     operations can be performed since rubbing out the
  *     EB command responsible for the hook execution also
