@@ -31,6 +31,47 @@
 #include "error.h"
 #include "spawn.h"
 
+/*
+ * Debian 7 is still at libglib v2.33, so
+ * for the time being we support this UNIX-only
+ * implementation of g_spawn_check_exit_status()
+ * partially emulating libglib v2.34
+ */
+#ifndef G_SPAWN_EXIT_ERROR
+#ifdef G_OS_UNIX
+#warning "libglib v2.34 or later recommended."
+#else
+#error "libglib v2.34 or later required."
+#endif
+
+#include <sys/types.h>
+#include <sys/wait.h>
+
+#define G_SPAWN_EXIT_ERROR \
+	g_quark_from_static_string("g-spawn-exit-error-quark")
+
+static gboolean
+g_spawn_check_exit_status(gint exit_status, GError **error)
+{
+	if (!WIFEXITED(exit_status)) {
+		g_set_error(error, G_SPAWN_ERROR, G_SPAWN_ERROR_FAILED,
+		            "Abnormal process termination (%d)",
+		            exit_status);
+		return FALSE;
+	}
+
+	if (WEXITSTATUS(exit_status) != 0) {
+		g_set_error(error, G_SPAWN_EXIT_ERROR, WEXITSTATUS(exit_status),
+		            "Unsuccessful exit status %d",
+		            WEXITSTATUS(exit_status));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+#endif
+
 namespace SciTECO {
 
 namespace States {
