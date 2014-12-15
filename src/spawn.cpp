@@ -219,8 +219,6 @@ StateExecuteCommand::~StateExecuteCommand()
 {
 	g_main_loop_unref(ctx.mainloop);
 	g_main_context_unref(ctx.mainctx);
-	if (ctx.error)
-		g_error_free(ctx.error);
 }
 
 void
@@ -418,8 +416,6 @@ gerror:
 	undo.push_var(register_argument) = NULL;
 
 	g_error_free(ctx.error);
-	ctx.error = NULL;
-
 	return &States::start;
 }
 
