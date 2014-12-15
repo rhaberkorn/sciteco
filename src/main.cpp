@@ -161,6 +161,7 @@ process_options(int &argc, char **&argv)
 	if (!g_option_context_parse(options, &argc, &argv, &gerror)) {
 		g_fprintf(stderr, "Option parsing failed: %s\n",
 			  gerror->message);
+		g_error_free(gerror);
 		exit(EXIT_FAILURE);
 	}
 

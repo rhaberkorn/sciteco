@@ -147,8 +147,16 @@ public:
 
 class GlibError : public Error {
 public:
-	GlibError(const GError *gerror)
-	         : Error("%s", gerror->message) {}
+	/**
+	 * Construct error for glib's GError.
+	 * Ownership of the error's resources is passed
+	 * the GlibError object.
+	 */
+	GlibError(GError *gerror)
+	         : Error("%s", gerror->message)
+	{
+		g_error_free(gerror);
+	}
 };
 
 class SyntaxError : public Error {
