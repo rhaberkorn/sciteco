@@ -16,6 +16,9 @@ Features:
  * nEW to save a buffer by id
  * use CRTP for RBTrees
  * "~" expansion in file names
+ * Buffer ids should be "circular", i.e. interpreted modulo the
+   number of buffers in the ring. This allows "%*" to wrap at the
+   end of the buffer list.
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
@@ -29,18 +32,24 @@ Features:
  * multiline commandline
    * perhaps use Scintilla view as mini buffer
  * improve GTK interface
- * ??? optional modified-detection based on hash sums ???
  * backup files, or even better Journal files:
    could write a Macro file for each modified file containing
    only basic commands (no loops etc.). it is removed when the file is
    saved. in case of an abnormal program termination the
-   journal file can be replayed.
+   journal file can be replayed. This could be done automatically
+   in the profile.
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
    dot on the QReg stack
  * automatic EOL detection of buffers; easy EOL setting
  * command to change the current working directory. This will
    influence tab-completion and relative file names.
+ * exclusive access to all opened files/buffers (locking):
+   SciTECO will never be able to notice when a file has been
+   changed externally. Also reversing a file write will overwrite
+   any changes another process could have done on the file.
+   Therefore open buffers should be locked using the flock(), fcntl()
+   or lockf() interfaces. On Windows we can even enforce mandatory locks.
 
 Optimizations:
  * refactor search commands (create proper base class)
@@ -58,7 +67,6 @@ Optimizations:
    member instead of making that member public.
    Alternatively, I can use public context structures that are private
    attributes.
- * when setting/getting Q-Reg string, use special dummy Scintilla view
 
 Documentation:
  * Code docs (Doxygen)
