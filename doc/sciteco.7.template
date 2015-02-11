@@ -314,6 +314,16 @@ commands), complete beginning with the symbol, terminating fully
 completed symbols with a comma.
 T}
 T{
+Indent to next tab stop
+T};9;^I, Tab;T{
+Text insertion arguments
+T};T{
+Expands to spaces so that following text is inserted
+at the next tab stop into the buffer.
+This takes Scintilla's indention policy into account
+and results in the same indention as the \fB^I\fP command.
+T}
+T{
 Terminate command line
 T};27;^[, Escape;T{
 Immediately after regular command ^[
@@ -1156,7 +1166,7 @@ For instance the following macro inserts \fIn\fP tab characters
 (one by default):
 .EX
 @^Ut{
-  "~1'<@^I//>
+  "~1'<9@I//>
 }
 .EE
 .TP

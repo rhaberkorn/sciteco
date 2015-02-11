@@ -58,6 +58,7 @@ namespace States {
 	StateScintilla_lParam	scintilla_lparam;
 	StateInsert		insert_building(true);
 	StateInsert		insert_nobuilding(false);
+	StateInsertIndent	insert_indent;
 
 	State *current = &start;
 }
@@ -1647,6 +1648,7 @@ StateCondCommand::custom(gchar chr)
 StateControl::StateControl() : State()
 {
 	transitions['\0'] = this;
+	transitions['I'] = &States::insert_indent;
 	transitions['U'] = &States::ctlucommand;
 	transitions['^'] = &States::ascii;
 }
@@ -1687,27 +1689,6 @@ StateControl::custom(gchar chr)
 		else
 			expressions.set_radix(expressions.pop_num_calc());
 		break;
-
-	/*
-	 * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
-	 */
-	/*$
-	 * [char,...]^I[text]$ -- Insert with leading TAB
-	 *
-	 * ^I (usually typed using the Tab key), is equivalent
-	 * to \(lq[char,...],9I[text]$\(rq.
-	 * In other words after all the chars on the stack have
-	 * been inserted into the buffer, a Tab-character is inserted
-	 * and then the optional <text> is inserted interactively.
-	 *
-	 * Like the I command, ^I has string building characters
-	 * \fBenabled\fP.
-	 */
-	case 'I':
-		BEGIN_EXEC(&States::insert_building);
-		expressions.eval();
-		expressions.push('\t');
-		return &States::insert_building;
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
@@ -2199,6 +2180,73 @@ StateInsert::done(const gchar *str)
 {
 	/* nothing to be done when done */
 	return &States::start;
+}
+
+/*
+ * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
+ */
+/*$
+ * [char,...]^I[text]$ -- Insert with leading indention
+ *
+ * ^I (usually typed using the Tab key), first inserts
+ * all the chars on the stack into the buffer, then indention
+ * characters (one tab or multiple spaces) and eventually
+ * the optional <text> is inserted interactively.
+ * It is thus a derivate of the \fBI\fP (insertion) command.
+ *
+ * \*(ST uses Scintilla settings to determine the indention
+ * characters.
+ * If tab use is enabled with the \fBSCI_SETUSETABS\fP message,
+ * a single tab character is inserted.
+ * Tab use is enabled by default.
+ * Otherwise, a number of spaces is inserted up to the
+ * next tab stop so that the command's <text> argument
+ * is inserted at the beginning of the next tab stop.
+ * The size of the tab stops is configured by the
+ * \fBSCI_SETTABWIDTH\fP Scintilla message (8 by default).
+ * In combination with \*(ST's use of the tab key as an
+ * immediate editing command for all insertions, this
+ * implements support for different insertion styles.
+ * The Scintilla settings apply to the current Scintilla
+ * document and are thus local to the currently edited
+ * buffer or Q-Register.
+ *
+ * However for the same reason, the ^I command is not
+ * fully compatible with classic TECO which \fIalways\fP
+ * inserts a single tab character and should not be used
+ * for the purpose of inserting single tabs in generic
+ * macros.
+ * To insert a single tab character reliably, the idioms
+ * \(lq9I$\(rq or \(lqI^I$\(rq may be used.
+ *
+ * Like the I command, ^I has string building characters
+ * \fBenabled\fP.
+ */
+void
+StateInsertIndent::initial(void)
+{
+	StateInsert::initial();
+
+	interface.ssm(SCI_BEGINUNDOACTION);
+	if (interface.ssm(SCI_GETUSETABS)) {
+		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)"\t");
+	} else {
+		gint len = interface.ssm(SCI_GETTABWIDTH);
+
+		len -= interface.ssm(SCI_GETCOLUMN,
+		                     interface.ssm(SCI_GETCURRENTPOS)) % len;
+
+		gchar spaces[len];
+
+		memset(spaces, ' ', sizeof(spaces));
+		interface.ssm(SCI_ADDTEXT, sizeof(spaces), (sptr_t)spaces);
+	}
+	interface.ssm(SCI_SCROLLCARET);
+	interface.ssm(SCI_ENDUNDOACTION);
+	ring.dirtify();
+
+	if (current_doc_must_undo())
+		interface.undo_ssm(SCI_UNDO);
 }
 
 } /* namespace SciTECO */

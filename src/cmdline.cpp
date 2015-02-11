@@ -219,7 +219,17 @@ process_edit_cmd(gchar key)
 		break;
 
 	case '\t':
-		if (States::is_file()) {
+		if (States::is_insertion()) {
+			if (!interface.ssm(SCI_GETUSETABS)) {
+				gint len = interface.ssm(SCI_GETTABWIDTH);
+
+				len -= interface.ssm(SCI_GETCOLUMN,
+				                     interface.ssm(SCI_GETCURRENTPOS)) % len;
+
+				memset(insert, ' ', len);
+				insert[len] = '\0';
+			}
+		} else if (States::is_file()) {
 			*insert = '\0';
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */

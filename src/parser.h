@@ -243,6 +243,11 @@ protected:
 	State *done(const gchar *str);
 };
 
+class StateInsertIndent : public StateInsert {
+protected:
+	void initial(void);
+};
+
 namespace States {
 	extern StateStart 		start;
 	extern StateControl		control;
@@ -254,6 +259,7 @@ namespace States {
 	extern StateScintilla_lParam	scintilla_lparam;
 	extern StateInsert		insert_building;
 	extern StateInsert		insert_nobuilding;
+	extern StateInsertIndent	insert_indent;
 
 	extern State *current;
 
@@ -261,6 +267,12 @@ namespace States {
 	is_string()
 	{
 		return dynamic_cast<StateExpectString *>(current);
+	}
+
+	static inline bool
+	is_insertion()
+	{
+		return dynamic_cast<StateInsert *>(current);
 	}
 
 	static inline bool
