@@ -19,6 +19,13 @@ Features:
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
    end of the buffer list.
+ * Revert rubout: Instead of discarding rubbed out characters,
+   they should be kept in the command line placing the command line
+   cursor before them.
+   The rubbed out characters could then be re-inserted with a special
+   immediate editing command or by retyping them allowing you to move
+   back and forth in the editor state resulting from a command line.
+   This would be SciTECO's version of Redo.
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
