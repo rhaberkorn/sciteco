@@ -32,10 +32,10 @@ These dependencies are bundled with the SciTECO Git repository
 and with source tar balls, so they usually do not have to be
 installed by the user manually:
 
- * Scintilla (v3.5.0 to v3.5.1):
+ * Scintilla (v3.5.2):
    http://www.scintilla.org/
  * When choosing the Curses interface:
-   * Scinterm (v1.4 or later):
+   * Scinterm (v1.5 or later):
      http://foicica.com/scinterm/
 
 Building from Source Tar Ball or Repository
@@ -56,6 +56,12 @@ Just make sure you have cloned your repository as follows:
   $ git clone https://github.com/rhaberkorn/sciteco.git
   $ cd sciteco/
   $ git submodule update --init --recursive
+
+If you already have a Git clone of the SciTECO repository and
+want to update it, you should issue the following commands:
+
+  $ git pull
+  $ git submodule update --recursive
 
 When building from Git, you must first generate the ./configure
 script using Autoconf/Automake:
@@ -90,8 +96,8 @@ To install SciTECO, type something like:
 
   $ sudo make install
 
-You are recommended to use the included "teco.ini" as a starting point
-for your profile, so copy it to your $HOME directory at "~/.teco_ini".
+You are recommended to use the included "sample.teco_ini" as a starting
+point for your profile, so copy it to your $HOME directory at "~/.teco_ini".
 
 For more details on building Autoconf-based projects refer to the
 remainder of this document which covers installing Autoconf-based
