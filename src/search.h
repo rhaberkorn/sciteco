@@ -124,15 +124,15 @@ namespace States {
 	extern StateSearch			search;
 	extern StateSearchAll			searchall;
 	extern StateSearchKill			searchkill;
-	extern StateSearchDelete			searchdelete;
+	extern StateSearchDelete		searchdelete;
 
 	extern StateReplace			replace;
 	extern StateReplace_insert		replace_insert;
 	extern StateReplace_ignore		replace_ignore;
 
 	extern StateReplaceDefault		replacedefault;
-	extern StateReplaceDefault_insert		replacedefault_insert;
-	extern StateReplaceDefault_ignore		replacedefault_ignore;
+	extern StateReplaceDefault_insert	replacedefault_insert;
+	extern StateReplaceDefault_ignore	replacedefault_ignore;
 }
 
 } /* namespace SciTECO */

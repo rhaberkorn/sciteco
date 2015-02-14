@@ -448,7 +448,7 @@ namespace States {
 	extern StatePopQReg		popqreg;
 	extern StateEQCommand		eqcommand;
 	extern StateLoadQReg		loadqreg;
-	extern StateEPctCommand	epctcommand;
+	extern StateEPctCommand		epctcommand;
 	extern StateSaveQReg		saveqreg;
 	extern StateQueryQReg		queryqreg;
 	extern StateCtlUCommand		ctlucommand;

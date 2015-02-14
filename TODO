@@ -4,7 +4,6 @@ Known Bugs:
  * Null-byte in strings not always handled transparently
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
- * Scintilla/Scinterm: sometimes <TAB> indents too much (see e.g. state declarations)
  * crashes on large files: S^EM^X$ (regexp: .*)
  * m,nX crashes if m > n
 

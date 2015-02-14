@@ -83,7 +83,7 @@ static void sigint_handler(int signal);
 
 void
 String::get_coord(const gchar *str, gint pos,
-		  gint &line, gint &column)
+                  gint &line, gint &column)
 {
 	line = column = 1;
 

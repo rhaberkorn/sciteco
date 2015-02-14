@@ -47,7 +47,7 @@ namespace States {
 	StateLoadQReg		loadqreg;
 	StateEPctCommand	epctcommand;
 	StateSaveQReg		saveqreg;
-	StateQueryQReg	queryqreg;
+	StateQueryQReg		queryqreg;
 	StateCtlUCommand	ctlucommand;
 	StateEUCommand		eucommand;
 	StateSetQRegString	setqregstring_nobuilding(false);

@@ -119,7 +119,7 @@ private:
 };
 
 namespace States {
-	extern StateLabel 	label;
+	extern StateLabel	label;
 	extern StateGotoCmd	gotocmd;
 }
 

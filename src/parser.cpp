@@ -48,7 +48,7 @@ namespace SciTECO {
 gint macro_pc = 0;
 
 namespace States {
-	StateStart 		start;
+	StateStart		start;
 	StateControl		control;
 	StateASCII		ascii;
 	StateFCommand		fcommand;

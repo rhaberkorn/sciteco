@@ -249,7 +249,7 @@ protected:
 };
 
 namespace States {
-	extern StateStart 		start;
+	extern StateStart		start;
 	extern StateControl		control;
 	extern StateASCII		ascii;
 	extern StateFCommand		fcommand;

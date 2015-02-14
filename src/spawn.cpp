@@ -76,7 +76,7 @@ namespace SciTECO {
 
 namespace States {
 	StateExecuteCommand	executecommand;
-	StateEGCommand	egcommand;
+	StateEGCommand		egcommand;
 }
 
 extern "C" {
