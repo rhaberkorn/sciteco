@@ -44,8 +44,10 @@ EMQ[$SCITECOPATH]/fnkeys.tes
   and disable session saving.
   Otherwise open a buffer session. !
 Z"=
-  ! Uncomment to use a separate session per Git repository: !
+  ! Uncomment to use a separate session per VCS repository or
+    working copy (see session.tes): !
   ! M[session.git] !
+  ! M[session.svn] !
   M[session.load]
 |
   [session.path] ! disables session saving !

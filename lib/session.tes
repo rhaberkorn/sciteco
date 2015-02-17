@@ -34,11 +34,25 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
   '
 }
 
-! Call this to set up the session path unique to
-  the current Git repository (if there is one) !
+! Call this to set up the session path unique to the
+  Git repository of the current working directory (if there is one).
+  This requires the Git command-line client in $PATH. !
 @[session.git]{
   ! if there is no Git repository, session.path is left as it is !
   :EG[session.path]git rev-parse --show-toplevel"S
     [* EQ[session.path] ZJ -D I/.teco_session ]*
   '
+}
+
+! Call to set up the session path unique to the
+  SVN working copy containing the current working directory.
+  Requires the SVN client v1.7 or later in $PATH. !
+@[session.svn]{
+  ! if there is no SVN working copy, session.path is left as it is !
+  :EG.isvn info --xml"S [*
+    EQ.i
+    :S<wcroot-abspath>"S
+      .(S</.-2)X[session.path] :[session.path]/.teco_session
+    '
+  ]* '
 }
