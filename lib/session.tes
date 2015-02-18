@@ -45,6 +45,16 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 }
 
 ! Call to set up the session path unique to the
+  Mercurial repository of the current working directory.
+  This requires the Mercurial command-line client in $PATH. !
+@[session.hg]{
+  ! if there is no Hg repository, session.path is left as it is !
+  :EG[session.path]hg root"S
+    [* EQ[session.path] ZJ -D I/.teco_session ]*
+  '
+}
+
+! Call to set up the session path unique to the
   SVN working copy containing the current working directory.
   Requires the SVN client v1.7 or later in $PATH. !
 @[session.svn]{
@@ -55,4 +65,13 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
       .(S</.-2)X[session.path] :[session.path]/.teco_session
     '
   ]* '
+}
+
+! Call to set up the session path unique to the
+  repository/working copy containing the current working directory
+  (see above). !
+@[session.vcs]{
+  M[session.git]
+  M[session.hg]
+  M[session.svn]
 }

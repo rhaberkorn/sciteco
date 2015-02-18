@@ -192,8 +192,9 @@ These files can be ignored by version control systems, etc.
 Macro storing the default buffer session.
 This is not written by \*(ST itself, but by the
 standard library \fBsession.tes\fP macros.
-When the \(lqsession.git\(rq macro is used, these files
-will also be created in the roots of Git repositories.
+When the \(lqsession.vcs\(rq macro is used, these files
+will also be created in the roots of Git, Mercurial and
+Subversion repositories or working copies.
 .
 .
 .SH BUGS

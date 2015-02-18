@@ -46,8 +46,7 @@ EMQ[$SCITECOPATH]/fnkeys.tes
 Z"=
   ! Uncomment to use a separate session per VCS repository or
     working copy (see session.tes): !
-  ! M[session.git] !
-  ! M[session.svn] !
+  ! M[session.vcs] !
   M[session.load]
 |
   [session.path] ! disables session saving !
