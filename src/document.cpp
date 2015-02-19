@@ -68,12 +68,20 @@ Document::undo_edit(ViewCurrent &view)
 {
 	maybe_create_document();
 
+	/*
+	 * FIXME: see above in Document::edit()
+	 */
+	view.undo_ssm(SCI_SETLAYOUTCACHE,
+	              view.ssm(SCI_GETLAYOUTCACHE));
+
 	view.undo_set_representations();
 
 	view.undo_ssm(SCI_SETSEL, anchor, (sptr_t)dot);
 	view.undo_ssm(SCI_SETXOFFSET, xoffset);
 	view.undo_ssm(SCI_SETFIRSTVISIBLELINE, first_line);
 	view.undo_ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
+
+	view.undo_ssm(SCI_SETLAYOUTCACHE, SC_CACHE_NONE);
 }
 
 void
