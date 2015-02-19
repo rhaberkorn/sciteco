@@ -33,7 +33,21 @@ namespace SciTECO {
 void
 Document::edit(ViewCurrent &view)
 {
+	/*
+	 * FIXME: SCI_SETREPRESENTATION does not redraw
+	 * the screen - also that would be very slow.
+	 * Since SCI_SETDOCPOINTER resets the representation
+	 * (this should probably be fixed in Scintilla),
+	 * the screen is garbled since the layout cache
+	 * is calculated with the default representations.
+	 * We work around this by temporarily disabling the
+	 * layout cache.
+	 */
+	gint old_mode = view.ssm(SCI_GETLAYOUTCACHE);
+
 	maybe_create_document();
+
+	view.ssm(SCI_SETLAYOUTCACHE, SC_CACHE_NONE);
 
 	view.ssm(SCI_SETDOCPOINTER, 0, (sptr_t)doc);
 	view.ssm(SCI_SETFIRSTVISIBLELINE, first_line);
@@ -45,6 +59,8 @@ Document::edit(ViewCurrent &view)
 	 * They are reset on EVERY SETDOCPOINTER call by Scintilla.
 	 */
 	view.set_representations();
+
+	view.ssm(SCI_SETLAYOUTCACHE, old_mode);
 }
 
 void
