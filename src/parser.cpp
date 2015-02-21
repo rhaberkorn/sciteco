@@ -858,7 +858,9 @@ StateStart::custom(gchar chr)
 			tecoInt loop_pc, loop_cnt;
 
 			expressions.discard_args();
-			g_assert(expressions.pop_op() == Expressions::OP_LOOP);
+			if (expressions.pop_op() != Expressions::OP_LOOP)
+				throw Error("Loop end without corresponding "
+				            "loop start command");
 			loop_pc = expressions.pop_num();
 			loop_cnt = expressions.pop_num();
 
@@ -1482,6 +1484,9 @@ StateFCommand::custom(gchar chr)
 	 * In interactive mode, if the loop is incomplete and must
 	 * be exited, you can type in the loop's remaining commands
 	 * without them being executed (but they are parsed).
+	 *
+	 * Calling \fBF\>\fP outside of a loop will throw an
+	 * error.
 	 */
 	case '>': {
 		tecoInt loop_pc, loop_cnt;
@@ -1489,7 +1494,9 @@ StateFCommand::custom(gchar chr)
 		BEGIN_EXEC(&States::start);
 		/* FIXME: what if in brackets? */
 		expressions.discard_args();
-		g_assert(expressions.pop_op() == Expressions::OP_LOOP);
+		if (expressions.pop_op() != Expressions::OP_LOOP)
+			throw Error("Jump to loop end without corresponding "
+			            "loop start command");
 		loop_pc = expressions.pop_num();
 		loop_cnt = expressions.pop_num();
 
