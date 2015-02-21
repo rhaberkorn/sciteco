@@ -333,7 +333,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 
 		default:
 			/* shouldn't happen */
-			g_assert(true);
+			g_assert(false);
 		}
 
 next:
