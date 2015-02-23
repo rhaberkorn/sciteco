@@ -1896,31 +1896,69 @@ StateECommand::custom(gchar chr)
 	 * If \fIkey\fP is omitted, the prefix sign is implied
 	 * (1 or -1).
 	 * With two arguments, it sets property \fIkey\fP to
-	 * \fIvalue\fP and returns nothing. Currently, there
-	 * are no properties that can be set.
+	 * \fIvalue\fP and returns nothing. Properties may be
+	 * read-only.
 	 *
 	 * The following property keys are defined:
 	 * .IP 0 4
 	 * The current user interface: 1 for Curses, 2 for GTK
+	 * (\fBread-only\fP)
 	 * .IP 1
 	 * The current numbfer of buffers: Also the numeric id
 	 * of the last buffer in the ring. This is implied if
 	 * no argument is given, so \(lqEJ\(rq returns the number
 	 * of buffers in the ring.
+	 * (\fBread-only\fP)
+	 * .IP 2
+	 * The current undo stack memory limit in bytes.
+	 * This limit helps to prevent dangerous out-of-memory
+	 * conditions (e.g. resulting from infinite loops) by
+	 * approximating the memory used by \*(ST's undo stack and is only
+	 * effective in interactive mode.
+	 * Commands which would exceed that limit fail instead.
+	 * When getting, a zero value indicates that memory limiting is
+	 * disabled.
+	 * Setting a value less than or equal to 0 as in
+	 * \(lq0,2EJ\(rq disables the limit.
+	 * \fBWarning:\fP Disabling memory limiting may provoke
+	 * uncontrollable out-of-memory errors in long running
+	 * or infinite loops.
+	 * Setting a new limit may fail if the current undo stack
+	 * is too large for the new limit \(em if this happens
+	 * you may have to clear your command-line first.
+	 * Undo stack memory limiting is enabled by default.
 	 */
 	case 'J': {
 		BEGIN_EXEC(&States::start);
 
+		enum {
+			EJ_USER_INTERFACE = 0,
+			EJ_BUFFERS,
+			EJ_UNDO_MEMORY_LIMIT
+		};
 		tecoInt property;
 
 		expressions.eval();
 		property = expressions.pop_num_calc();
-		if (expressions.args() > 0)
-			throw Error("Cannot set property %" TECO_INTEGER_FORMAT
-			            " for <EJ>", property);
+		if (expressions.args() > 0) {
+			/* set property */
+			tecoInt value = expressions.pop_num_calc();
+
+			switch (property) {
+			case EJ_UNDO_MEMORY_LIMIT:
+				undo.set_memory_limit(MAX(0, value));
+				break;
+
+			default:
+				throw Error("Cannot set property %" TECO_INTEGER_FORMAT
+				            " for <EJ>", property);
+			}
+
+			break;
+		}
 
 		switch (property) {
-		case 0: /* user interface */
+		case EJ_USER_INTERFACE:
 #ifdef INTERFACE_CURSES
 			expressions.push(1);
 #elif defined(INTERFACE_GTK)
@@ -1930,8 +1968,12 @@ StateECommand::custom(gchar chr)
 #endif
 			break;
 
-		case 1: /* number of buffers */
+		case EJ_BUFFERS:
 			expressions.push(ring.get_id(ring.last()));
+			break;
+
+		case EJ_UNDO_MEMORY_LIMIT:
+			expressions.push(undo.memory_limit);
 			break;
 
 		default:

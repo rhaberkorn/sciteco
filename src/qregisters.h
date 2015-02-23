@@ -168,7 +168,7 @@ public:
 };
 
 class QRegisterTable : private RBTree {
-	class UndoTokenRemove : public UndoToken {
+	class UndoTokenRemove : public UndoTokenWithSize<UndoTokenRemove> {
 		QRegisterTable *table;
 		QRegister *reg;
 
@@ -266,14 +266,21 @@ class QRegisterStack {
 		}
 
 		void run(void);
+
+		gsize
+		get_size(void) const
+		{
+			return entry ? sizeof(*this) + sizeof(*entry)
+			             : sizeof(*this);
+		}
 	};
 
-	class UndoTokenPop : public UndoToken {
+	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop> {
 		QRegisterStack *stack;
 
 	public:
 		UndoTokenPop(QRegisterStack *_stack)
-			    : UndoToken(), stack(_stack) {}
+			    : stack(_stack) {}
 
 		void run(void);
 	};

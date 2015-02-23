@@ -30,7 +30,6 @@ Features:
    * translate documents to Unicode strings
    * a position refers to a character/codepoint
  * Progress indication in commandline cursor
- * undo-tokens per char limit (additional infinite loop safety)
  * Command to free Q-Register (remove from table)
  * autocompletion of long Q-Reg names
  * Q-Register aliasing/linking

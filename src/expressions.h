@@ -27,7 +27,7 @@ namespace SciTECO {
 
 template <typename Type>
 class ValueStack {
-	class UndoTokenPush : public UndoToken {
+	class UndoTokenPush : public UndoTokenWithSize<UndoTokenPush> {
 		ValueStack<Type> *stack;
 
 		Type	value;
@@ -45,7 +45,7 @@ class ValueStack {
 		}
 	};
 
-	class UndoTokenPop : public UndoToken {
+	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop> {
 		ValueStack<Type> *stack;
 
 		int index;

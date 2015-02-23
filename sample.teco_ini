@@ -40,6 +40,9 @@ EMQ[$SCITECOPATH]/fnkeys.tes
 ! Uncomment to enable default keyboard macros !
 ! 0,64ED !
 
+! Uncomment to tweak the undo stack memory limit !
+! 500*1024*1024,2EJ !
+
 ! If files are given on the command-line, open them
   and disable session saving.
   Otherwise open a buffer session. !

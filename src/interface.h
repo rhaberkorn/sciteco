@@ -64,7 +64,7 @@ class View {
 		return *(ViewImpl *)this;
 	}
 
-	class UndoTokenMessage : public UndoToken {
+	class UndoTokenMessage : public UndoTokenWithSize<UndoTokenMessage> {
 		ViewImpl &view;
 
 		unsigned int iMessage;
@@ -74,8 +74,7 @@ class View {
 	public:
 		UndoTokenMessage(ViewImpl &_view, unsigned int _iMessage,
 				 uptr_t _wParam = 0, sptr_t _lParam = 0)
-				: UndoToken(), view(_view),
-		                  iMessage(_iMessage),
+				: view(_view), iMessage(_iMessage),
 				  wParam(_wParam), lParam(_lParam) {}
 
 		void
@@ -85,7 +84,8 @@ class View {
 		}
 	};
 
-	class UndoTokenSetRepresentations : public UndoToken {
+	class UndoTokenSetRepresentations : public
+	      UndoTokenWithSize<UndoTokenSetRepresentations> {
 		ViewImpl &view;
 
 	public:
@@ -158,7 +158,7 @@ class Interface {
 		return *(InterfaceImpl *)this;
 	}
 
-	class UndoTokenShowView : public UndoToken {
+	class UndoTokenShowView : public UndoTokenWithSize<UndoTokenShowView> {
 		ViewImpl *view;
 
 	public:
@@ -169,7 +169,7 @@ class Interface {
 	};
 
 	template <class Type>
-	class UndoTokenInfoUpdate : public UndoToken {
+	class UndoTokenInfoUpdate : public UndoTokenWithSize< UndoTokenInfoUpdate<Type> > {
 		Type *obj;
 
 	public:

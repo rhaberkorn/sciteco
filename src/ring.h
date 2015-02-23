@@ -40,12 +40,12 @@ namespace SciTECO {
 class Buffer : private IOView {
 	TAILQ_ENTRY(Buffer) buffers;
 
-	class UndoTokenClose : public UndoToken {
+	class UndoTokenClose : public UndoTokenWithSize<UndoTokenClose> {
 		Buffer *buffer;
 
 	public:
 		UndoTokenClose(Buffer *_buffer)
-			      : UndoToken(), buffer(_buffer) {}
+			      : buffer(_buffer) {}
 
 		void run(void);
 	};
@@ -148,6 +148,13 @@ extern class Ring {
 		}
 
 		void run(void);
+
+		gsize
+		get_size(void) const
+		{
+			return buffer ? sizeof(*this) + sizeof(*buffer)
+			              : sizeof(*this);
+		}
 	};
 
 	TAILQ_HEAD(Head, Buffer) head;

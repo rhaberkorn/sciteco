@@ -18,6 +18,8 @@
 #ifndef __GOTO_H
 #define __GOTO_H
 
+#include <string.h>
+
 #include <glib.h>
 #include <glib/gprintf.h>
 
@@ -50,6 +52,12 @@ class GotoTable : public RBTree {
 #ifdef DEBUG
 			table->dump();
 #endif
+		}
+
+		gsize
+		get_size(void) const
+		{
+			return sizeof(*this) + strlen(name) + 1;
 		}
 	};
 

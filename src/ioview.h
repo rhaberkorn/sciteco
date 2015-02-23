@@ -18,6 +18,8 @@
 #ifndef __IOVIEW_H
 #define __IOVIEW_H
 
+#include <string.h>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -59,6 +61,12 @@ class IOView : public ViewCurrent {
 		run(void)
 		{
 			g_unlink(filename);
+		}
+
+		gsize
+		get_size(void) const
+		{
+			return sizeof(*this) + strlen(filename) + 1;
 		}
 	};
 

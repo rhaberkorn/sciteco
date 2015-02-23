@@ -18,6 +18,8 @@
 #ifndef __UNDO_H
 #define __UNDO_H
 
+#include <string.h>
+
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
@@ -29,25 +31,65 @@
 
 namespace SciTECO {
 
+/**
+ * Default undo stack memory limit (500mb).
+ */
+#define UNDO_MEMORY_LIMIT_DEFAULT (500*1024*1024)
+
 class UndoToken {
 public:
 	SLIST_ENTRY(UndoToken) tokens;
 
+	/**
+	 * Command-line character position corresponding
+	 * to this token.
+	 *
+	 * @todo This wastes memory in macro calls and loops
+	 *       because all undo tokens will have the same
+	 *       value. It may be better to redesign the undo
+	 *       stack data structure - as a list/array pointing
+	 *       to undo stacks per character.
+	 */
 	gint pos;
 
 	virtual ~UndoToken() {}
 
-	virtual void run() = 0;
+	virtual void run(void) = 0;
+
+	/**
+	 * Return approximated size of this object.
+	 * If possible it should take all heap objects
+	 * into account that are memory-managed by the undo
+	 * token.
+	 * For a simple implementation, you may derive
+	 * from UndoTokenWithSize.
+	 */
+	virtual gsize get_size(void) const = 0;
+};
+
+/**
+ * UndoToken base class employing the CRTP idiom.
+ * Deriving this class adds a size approximation based
+ * on the shallow size of the template parameter.
+ */
+template <class UndoTokenImpl>
+class UndoTokenWithSize : public UndoToken {
+public:
+	gsize
+	get_size(void) const
+	{
+		return sizeof(UndoTokenImpl);
+	}
 };
 
 template <typename Type>
-class UndoTokenVariable : public UndoToken {
+class UndoTokenVariable : public UndoTokenWithSize< UndoTokenVariable<Type> > {
 	Type *ptr;
 	Type value;
 
 public:
 	UndoTokenVariable(Type &variable, Type _value)
-			 : UndoToken(), ptr(&variable), value(_value) {}
+			 : ptr(&variable), value(_value) {}
 
 	void
 	run(void)
@@ -66,7 +108,7 @@ class UndoTokenString : public UndoToken {
 
 public:
 	UndoTokenString(gchar *&variable, gchar *_str)
-		       : UndoToken(), ptr(&variable)
+		       : ptr(&variable)
 	{
 		str = _str ? g_strdup(_str) : NULL;
 	}
@@ -83,6 +125,13 @@ public:
 		*ptr = str;
 		str = NULL;
 	}
+
+	gsize
+	get_size(void) const
+	{
+		return str ? sizeof(*this) + strlen(str) + 1
+		           : sizeof(*this);
+	}
 };
 
 template <class Type>
@@ -92,7 +141,7 @@ class UndoTokenObject : public UndoToken {
 
 public:
 	UndoTokenObject(Type *&variable, Type *_obj)
-		       : UndoToken(), ptr(&variable), obj(_obj) {}
+		       : ptr(&variable), obj(_obj) {}
 
 	~UndoTokenObject()
 	{
@@ -108,19 +157,44 @@ public:
 		*ptr = obj;
 		obj = NULL;
 	}
+
+	gsize
+	get_size(void) const
+	{
+		return obj ? sizeof(*this) + sizeof(*obj)
+		           : sizeof(*this);
+	}
 };
 
 extern class UndoStack {
 	SLIST_HEAD(Head, UndoToken) head;
 
+	/**
+	 * Current approx. memory usage of all
+	 * undo tokens in the stack.
+	 * It is only up to date if memory limiting
+	 * is enabled.
+	 */
+	gsize memory_usage;
+
 public:
 	bool enabled;
 
-	UndoStack(bool _enabled = false) : enabled(_enabled)
+	/**
+	 * Undo stack memory limit in bytes.
+	 * 0 means no limiting.
+	 */
+	gsize memory_limit;
+
+	UndoStack(bool _enabled = false)
+	         : memory_usage(0), enabled(_enabled),
+	           memory_limit(UNDO_MEMORY_LIMIT_DEFAULT)
 	{
 		SLIST_INIT(&head);
 	}
 	~UndoStack();
+
+	void set_memory_limit(gsize new_limit = 0);
 
 	void push(UndoToken *token);
 
