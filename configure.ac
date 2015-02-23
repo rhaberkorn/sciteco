@@ -94,6 +94,11 @@ case $host in
 	;;
 esac
 
+# Check for optional GNU libc features.
+# Will probably only be found on Linux.
+AC_CHECK_HEADERS([malloc.h])
+AC_CHECK_FUNCS([malloc_trim])
+
 #
 # Config options
 #

@@ -19,6 +19,10 @@
 #include "config.h"
 #endif
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 #include <string.h>
 #include <signal.h>
 
@@ -446,10 +450,17 @@ Cmdline::process_edit_cmd(gchar key)
 			str = NULL;
 			len = rubout_len = 0;
 
+#ifdef HAVE_MALLOC_TRIM
 			/*
-			 * FIXME: Perhaps to the malloc_trim() here
-			 * instead of in UndoStack::clear()
+			 * Glibc/Linux-only optimization: Undo stacks can grow very
+			 * large - sometimes large enough to make the system
+			 * swap and become unresponsive.
+			 * This will often reduce the amount of memory previously
+			 * freed that's still allocated to the program immediately
+			 * when the command-line is terminated:
 			 */
+			malloc_trim(0);
+#endif
 		} else {
 			insert(key);
 		}
