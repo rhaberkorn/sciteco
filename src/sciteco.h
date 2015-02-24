@@ -66,55 +66,6 @@ extern sig_atomic_t sigint_occurred;
 #define IS_SUCCESS(X)	((X) < 0)
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
 
-namespace String {
-
-static inline gchar *
-chrdup(gchar chr)
-{
-	gchar *ret = (gchar *)g_malloc(2);
-
-	/*
-	 * NOTE: even the glib allocs are configured to throw exceptions,
-	 * so there is no error handling necessary
-	 */
-	ret[0] = chr;
-	ret[1] = '\0';
-	return ret;
-}
-
-static inline void
-append(gchar *&str1, const gchar *str2)
-{
-	/* FIXME: optimize */
-	gchar *new_str = g_strconcat(str1 ? : "", str2, NIL);
-	g_free(str1);
-	str1 = new_str;
-}
-
-static inline void
-append(gchar *&str, gchar chr)
-{
-	gchar buf[] = {chr, '\0'};
-	append(str, buf);
-}
-
-/* in main.cpp */
-void get_coord(const gchar *str, gint pos,
-	       gint &line, gint &column);
-
-static inline gsize
-diff(const gchar *a, const gchar *b)
-{
-	gsize len = 0;
-
-	while (*a != '\0' && *a++ == *b++)
-		len++;
-
-	return len;
-}
-
-} /* namespace String */
-
 namespace Validate {
 
 static inline bool

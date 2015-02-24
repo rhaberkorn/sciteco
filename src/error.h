@@ -25,6 +25,7 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "string-utils.h"
 
 namespace SciTECO {
 

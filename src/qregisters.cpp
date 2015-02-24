@@ -29,6 +29,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "string-utils.h"
 #include "interface.h"
 #include "undo.h"
 #include "parser.h"

@@ -27,6 +27,7 @@
 #include <glib/gstdio.h>
 
 #include "sciteco.h"
+#include "string-utils.h"
 #include "interface.h"
 #include "undo.h"
 #include "expressions.h"
