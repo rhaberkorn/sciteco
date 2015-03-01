@@ -12,7 +12,7 @@
 Language reference for the \*(ST text editor and language
 .
 .
-.SH INTRODUCTION
+.SH INTRODUCTION AND PHILOSOPHY
 .
 \*(ST is a powerful editor and interactive programming language
 following an unique paradigm of text editing.
@@ -34,9 +34,9 @@ The \*(ST language can be interpreted interactively and commands
 can be as simple as single key presses or as complex as nested
 high-level structured programming constructs.
 While screen-editors often support an undo-stack to undo simple
-operations, \*(ST supports undoing on a per-character, per-command
-or user-configurable level undoing most of the side-effects
-on the overall editor state.
+operations, \*(ST supports undoing and redoing on a per-character,
+per-command or even user-configurable level undoing most of the
+side-effects on the overall editor state.
 .LP
 \*(ST is a member of the TECO family of text editor languages,
 invented by Dan Murphy in the 1960s.
@@ -55,8 +55,13 @@ When \fIVideo TECO\fP wanted to \(lqoutdo classic TECOs in every way\(rq,
 When using \*(ST in interactive mode, it is important to know exactly
 how \*(ST translates and processes user input.
 Generally speaking, the user inputs TECO code that is parsed and executed
-on the fly by a stream parser/executor with the possibility to rub out
-code from the end of the input stream, reversing its side-effects.
+on the fly by a stream parser/executor.
+Deleting characters from the end of the input stream is called
+rub out and has the effect of reversing the side-effects of
+the rubbed out characters.
+Rubbed out characters are kept and displayed to the user
+who has the possibility of re-inserting rubbed out characters
+into the input stream.
 The input stream is called command line macro.
 The language of the command-line macro is basically the same
 as the language used in batch processing, with the exception
@@ -66,8 +71,8 @@ To add to or remove from the command line macro, \*(ST supports
 a number of special keys called immediate editing commands.
 The key-processing for immediate editing commands is described in the
 next two sections.
-While immediate editing commands can be understood as yet another -
-albeit limited - language for screen editing, \*(ST also supports
+While immediate editing commands can be understood as yet another \(em
+albeit limited \(em language for screen editing, \*(ST also supports
 regular commands for command-line editing.
 .
 .
@@ -252,20 +257,47 @@ mnemonics are given as well.
 .
 .TS
 expand,allbox,tab(;);
-LB LB LB LB LBW70
+LB LB LB LB LBX
 L L L L L.
 Name;Code;Mnemonics;Context;Description
 T{
-Rub out
+Toggle modifier
+T};7;^G;T{
+Everywhere
+T};T{
+Toggle the immediate editing command modifier and display
+its new state.
+If enabled, the rubout commands will perform analoguous
+re-insertions of previously rubbed out characters.
+Therefore \fB^G\fP (CTRL+G)
+effectively switches between undo and redo modes.
+The modifier also influences the behaviour of the TAB key.
+T}
+T{
+Rub out character
 T};8;^H, Backspace;T{
 Everywhere
+.br
+(modifier \fIdisabled\fP)
 T};T{
 Rubs out the command line's last character.
 T}
 T{
-Rub out word
+Re-insert character
+T};8;^H, Backspace;T{
+Everywhere
+.br
+(modifier \fIenabled\fP)
+T};T{
+Inserts the next character from the rubbed out part
+of the command line.
+T}
+T{
+Rub out word/command
 T};23;^W;T{
 String arguments
+.br
+(modifier \fIdisabled\fP)
 T};T{
 Rub out last word according to Scintilla's definition of a word
 as set by
@@ -273,27 +305,66 @@ as set by
 T}
 \^;\^;\^;T{
 Miscelleaneous
+.br
+(modifier \fIdisabled\fP)
 T};T{
 Rub out last command, i.e. rub out at least one character until
+a new command could begin.
+T}
+T{
+Re-insert word/command
+T};23;^W;T{
+String arguments
+.br
+(modifier \fIenabled\fP)
+T};T{
+Re-insert next word from the rubbed-out command line according to
+Scintilla's definition of a word as set by
+.BR SCI_SETWORDCHARS .
+T}
+\^;\^;\^;T{
+Miscelleaneous
+.br
+(modifier \fIenabled\fP)
+T};T{
+Re-insert next command from the rubbed-out command line,
+i.e. insert at least one character and repeat until
 a new command could begin.
 T}
 T{
 Rub out string
 T};21;^U;T{
 String arguments
+.br
+(modifier \fIdisabled\fP)
 T};T{
 Rub out the entire current string argument.
 T}
 T{
-Auto complete filename
-T};20;^T;T{
+Re-insert string
+T};21;^U;T{
 String arguments
+.br
+(modifier \fIenabled\fP)
+T};T{
+Re-insert the entire current string argument from previously
+rubbed-out part of the command line, stopping at the string's
+terminating character.
+T}
+T{
+Auto complete filename
+T};9;^I, Tab;T{
+String arguments
+.br
+(modifier \fIenabled\fP)
 T};T{
 Auto complete filename beginning after the last space (or beginning
 of the string argument).
 Fully completed filenames are terminated with a space.
+This autocompletion works in every string argument (as long as
+the \fB^G\fP modifier is enabled.
 T}
-\^;9;^I, Tab;T{
+\^;\^;\^;T{
 Operating system command arguments
 T};\^
 \^;\^;\^;T{
@@ -367,6 +438,40 @@ If \*(ST is not busy,
 is self-inserting and might be used as a regular command.
 T}
 .TE
+.
+.SS Undo and Redo
+.
+The immediate editing commands that rub out and re-insert characters
+effectively constitute \*(ST's undo and redo support.
+As all features implemented by the immediate editing commands,
+undo and redo is only possible when using \*(ST interactively.
+.LP
+When a character is rubbed out, \*(ST reverses the side effects it
+had when it was typed.
+The rubbed out characters are not discarded immediately but kept
+in a rubbed out part of the command line.
+The user interface displays this area as characters at or after the
+command line cursor and tries to highlight them (e.g. by underlining
+and greying them out).
+Therefore, since characters that resulted in errors (not accepted
+into the command line macro) are automatically rubbed out,
+they can still be seen in the command line's rubbed out area.
+The rubbed out command line is not a part of the command-line macro,
+though.
+.LP
+Changes can be redone by typing the characters at the command line
+cursor or using one of the re-insertion commands \(em therefore
+undo and redo looks like moving the command line cursor back and forth.
+The re-insertion commands are the same as the rubout commands
+but need the immediate editing modifier to be enabled.
+The \fB^G\fP (CTRL+G) command toggles this modifier and thus has the
+primary effect of switching between undo and redo modes.
+The rubbed out command-line is discarded by \*(ST once you type
+or insert a character that is not a prefix of the rubbed out
+command line.
+This will also automatically disable the \fB^G\fP modifier.
+The \fB^G\fP modifier is \fIdisabled\fP by default, so the
+corresponding commands work similar to their Unix shell counterparts.
 .
 .SS Auto Completion
 .

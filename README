@@ -31,6 +31,10 @@ Mac OS X maintainer.
 Since SciTECO primarily depends on [glib](https://developer.gnome.org/glib/) and
 Curses, it should be easy to port to even more exotic platforms.
 
+__Warning: The SciTECO language is work in progress and has not yet fully stabilized.
+It may change drastically and in backwards-incompatible ways in the repository's
+master branch and between releases until version 1.0 is released.__
+
 Features
 ========
 
@@ -56,6 +60,7 @@ Features
 * Command rubout: SciTECO can even undo file writes (`EW` command).
   This makes it even harder to destroy work by accident than in most other
   editors.
+  Rubbed out commands can be re-inserted.
 * Munging: Macros may be munged, that is executed in batch mode. By default, a profile
   is munged.
 * Syntax highlighting, styles, line numbers, etc. thanks to Scintilla.
