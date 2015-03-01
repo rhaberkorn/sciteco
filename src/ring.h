@@ -143,8 +143,7 @@ extern class Ring {
 			     : UndoToken(), ring(_ring), buffer(_buffer) {}
 		~UndoTokenEdit()
 		{
-			if (buffer)
-				delete buffer;
+			delete buffer;
 		}
 
 		void run(void);

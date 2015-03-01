@@ -274,8 +274,7 @@ class QRegisterStack {
 
 		~UndoTokenPush()
 		{
-			if (entry)
-				delete entry;
+			delete entry;
 		}
 
 		void run(void);

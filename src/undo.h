@@ -145,15 +145,13 @@ public:
 
 	~UndoTokenObject()
 	{
-		if (obj)
-			delete obj;
+		delete obj;
 	}
 
 	void
 	run(void)
 	{
-		if (*ptr)
-			delete *ptr;
+		delete *ptr;
 		*ptr = obj;
 		obj = NULL;
 	}

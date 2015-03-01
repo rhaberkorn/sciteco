@@ -418,8 +418,7 @@ StateEscaped:
 
 StringBuildingMachine::~StringBuildingMachine()
 {
-	if (qregspec_machine)
-		delete qregspec_machine;
+	delete qregspec_machine;
 }
 
 State *
