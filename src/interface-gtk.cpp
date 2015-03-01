@@ -20,6 +20,7 @@
 #endif
 
 #include <stdarg.h>
+#include <string.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -77,6 +78,7 @@ ViewGtk::initialize_impl(void)
 void
 InterfaceGtk::main_impl(int &argc, char **&argv)
 {
+	static const Cmdline empty_cmdline;
 	GtkWidget *info_content;
 
 	gtk_init(&argc, &argv);
@@ -109,7 +111,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 
 	gtk_widget_grab_focus(cmdline_widget);
 
-	cmdline_update("");
+	cmdline_update(&empty_cmdline);
 }
 
 void
@@ -164,7 +166,7 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 }
 
 void
-InterfaceGtk::info_update_impl(QRegister *reg)
+InterfaceGtk::info_update_impl(const QRegister *reg)
 {
 	gchar buf[255];
 
@@ -174,7 +176,7 @@ InterfaceGtk::info_update_impl(QRegister *reg)
 }
 
 void
-InterfaceGtk::info_update_impl(Buffer *buffer)
+InterfaceGtk::info_update_impl(const Buffer *buffer)
 {
 	gchar buf[255];
 
@@ -185,18 +187,66 @@ InterfaceGtk::info_update_impl(Buffer *buffer)
 }
 
 void
-InterfaceGtk::cmdline_update_impl(const gchar *cmdline)
+InterfaceGtk::cmdline_insert_chr(gint &pos, gchar chr)
+{
+	gchar buffer[5+1];
+
+	/*
+	 * NOTE: This mapping is similar to
+	 * View::set_representations()
+	 */
+	switch (chr) {
+	case '\x1B': /* escape */
+		strcpy(buffer, "$");
+		break;
+	case '\r':
+		strcpy(buffer, "<CR>");
+		break;
+	case '\n':
+		strcpy(buffer, "<LF>");
+		break;
+	case '\t':
+		strcpy(buffer, "<TAB>");
+		break;
+	default:
+		if (IS_CTL(chr)) {
+			buffer[0] = '^';
+			buffer[1] = CTL_ECHO(chr);
+			buffer[2] = '\0';
+		} else {
+			buffer[0] = chr;
+			buffer[1] = '\0';
+		}
+	}
+
+	gtk_editable_insert_text(GTK_EDITABLE(cmdline_widget),
+				 buffer, -1, &pos);
+}
+
+void
+InterfaceGtk::cmdline_update_impl(const Cmdline *cmdline)
 {
 	gint pos = 1;
+	gint cmdline_len;
 
-	if (!cmdline)
-		/* widget automatically redrawn */
-		return;
-
+	/*
+	 * We don't know if the new command line is similar to
+	 * the old one, so we can just as well rebuild it.
+	 */
 	gtk_entry_set_text(GTK_ENTRY(cmdline_widget), "*");
-	gtk_editable_insert_text(GTK_EDITABLE(cmdline_widget),
-				 cmdline, -1, &pos);
-	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), pos);
+
+	/* format effective command line */
+	for (guint i = 0; i < cmdline->len; i++)
+		cmdline_insert_chr(pos, (*cmdline)[i]);
+	/* save end of effective command line */
+	cmdline_len = pos;
+
+	/* format rubbed out command line */
+	for (guint i = cmdline->len; i < cmdline->len+cmdline->rubout_len; i++)
+		cmdline_insert_chr(pos, (*cmdline)[i]);
+
+	/* set cursor after effective command line */
+	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), cmdline_len);
 }
 
 void
@@ -258,25 +308,25 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 {
 	switch (keyval) {
 	case GDK_Escape:
-		cmdline_keypress('\x1B');
+		cmdline.keypress('\x1B');
 		break;
 	case GDK_BackSpace:
-		cmdline_keypress('\b');
+		cmdline.keypress('\b');
 		break;
 	case GDK_Tab:
-		cmdline_keypress('\t');
+		cmdline.keypress('\t');
 		break;
 	case GDK_Return:
-		cmdline_keypress(get_eol());
+		cmdline.keypress(get_eol());
 		break;
 
 	/*
 	 * Function key macros
 	 */
 #define FN(KEY, MACRO) \
-	case GDK_##KEY: cmdline_fnmacro(#MACRO); break
+	case GDK_##KEY: cmdline.fnmacro(#MACRO); break
 #define FNS(KEY, MACRO) \
-	case GDK_##KEY: cmdline_fnmacro(is_shift ? "S" #MACRO : #MACRO); break
+	case GDK_##KEY: cmdline.fnmacro(is_shift ? "S" #MACRO : #MACRO); break
 	FN(Down, DOWN); FN(Up, UP);
 	FNS(Left, LEFT); FNS(Right, RIGHT);
 	FN(KP_Down, DOWN); FN(KP_Up, UP);
@@ -287,7 +337,7 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 
 		g_snprintf(macro_name, sizeof(macro_name),
 			   "F%d", keyval - GDK_F1 + 1);
-		cmdline_fnmacro(macro_name);
+		cmdline.fnmacro(macro_name);
 		break;
 	}
 	FNS(Delete, DC);
@@ -317,7 +367,7 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 			if (is_ctl)
 				key = CTL_KEY(g_ascii_toupper(key));
 
-			cmdline_keypress(key);
+			cmdline.keypress(key);
 		}
 	}
 }

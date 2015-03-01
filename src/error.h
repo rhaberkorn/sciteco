@@ -29,15 +29,6 @@
 
 namespace SciTECO {
 
-/* thrown as exception, executed at cmdline macro level */
-class ReplaceCmdline {
-public:
-	gchar *new_cmdline;
-	gint pos;
-
-	ReplaceCmdline();
-};
-
 /*
  * Thrown as exception to signify that program
  * should be terminated.

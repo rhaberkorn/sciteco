@@ -74,9 +74,12 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 
 	WINDOW *info_window;
 	gchar *info_current;
+
 	WINDOW *msg_window;
+
 	WINDOW *cmdline_window;
-	gchar *cmdline_current;
+	chtype *cmdline_current;
+	gsize cmdline_len, cmdline_rubout_len;
 
 	struct Popup {
 		WINDOW *window;
@@ -101,7 +104,8 @@ public:
 			    info_current(NULL),
 			    msg_window(NULL),
 			    cmdline_window(NULL),
-			    cmdline_current(NULL) {}
+			    cmdline_current(NULL),
+	                    cmdline_len(0), cmdline_rubout_len(0) {}
 	~InterfaceCurses();
 
 	/* implementation of Interface::main() */
@@ -116,11 +120,11 @@ public:
 	void show_view_impl(ViewCurses *view);
 
 	/* implementation of Interface::info_update() */
-	void info_update_impl(QRegister *reg);
-	void info_update_impl(Buffer *buffer);
+	void info_update_impl(const QRegister *reg);
+	void info_update_impl(const Buffer *buffer);
 
 	/* implementation of Interface::cmdline_update() */
-	void cmdline_update_impl(const gchar *cmdline = NULL);
+	void cmdline_update_impl(const Cmdline *cmdline);
 
 	/* implementation of Interface::popup_add() */
 	void popup_add_impl(PopupEntryType type,
@@ -143,6 +147,10 @@ private:
 	void init_screen(void);
 	void resize_all_windows(void);
 	void draw_info(void);
+
+	void format_chr(chtype *&target, gchar chr,
+	                attr_t attr = 0);
+	void draw_cmdline(void);
 
 	friend void event_loop_iter();
 } InterfaceCurrent;

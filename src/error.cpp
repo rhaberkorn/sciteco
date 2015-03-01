@@ -25,20 +25,10 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
-#include "qregisters.h"
 #include "interface.h"
-#include "cmdline.h"
+#include "error.h"
 
 namespace SciTECO {
-
-ReplaceCmdline::ReplaceCmdline()
-{
-	QRegister *cmdline_reg = QRegisters::globals["\x1B"];
-
-	new_cmdline = cmdline_reg->get_string();
-	for (pos = 0; cmdline[pos] && cmdline[pos] == new_cmdline[pos]; pos++);
-	pos++;
-}
 
 Error::Frame *
 Error::QRegFrame::copy() const

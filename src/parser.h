@@ -20,9 +20,9 @@
 
 #include <glib.h>
 
+#include "sciteco.h"
 #include "undo.h"
 #include "error.h"
-#include "sciteco.h"
 
 namespace SciTECO {
 
@@ -300,8 +300,7 @@ extern gchar *strings[2];
 extern gchar escape_char;
 
 namespace Execute {
-	void step(const gchar *macro, gint stop_pos)
-		 throw (Error, ReplaceCmdline);
+	void step(const gchar *macro, gint stop_pos);
 	void macro(const gchar *macro, bool locals = true);
 	void file(const gchar *filename, bool locals = true);
 }

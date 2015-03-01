@@ -79,13 +79,14 @@ static gint nest_level = 0;
 gchar *strings[2] = {NULL, NULL};
 gchar escape_char = '\x1B';
 
-/*
- * handles all expected exceptions, converting them to
- * SciTECO::Error and preparing them for stack frame insertion
+/**
+ * Handles all expected exceptions, converting them to
+ * SciTECO::Error and preparing them for stack frame insertion.
+ * This method will only throw SciTECO::Error and
+ * SciTECO::Cmdline *.
  */
 void
 Execute::step(const gchar *macro, gint stop_pos)
-	     throw (Error, ReplaceCmdline)
 {
 	while (macro_pc < stop_pos) {
 #ifdef DEBUG
@@ -698,7 +699,7 @@ StateStart::custom(gchar chr)
 		break;
 
 	case '*':
-		if (!g_strcmp0(cmdline, "*"))
+		if (cmdline.len == 1 && cmdline[0] == '*')
 			/* special save last commandline command */
 			return &States::save_cmdline;
 
@@ -1028,7 +1029,7 @@ StateStart::custom(gchar chr)
 
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_CLEARALL);
-		interface.ssm(SCI_ADDTEXT, cmdline_pos-1, (sptr_t)cmdline);
+		interface.ssm(SCI_ADDTEXT, cmdline.pc, (sptr_t)cmdline.str);
 		interface.ssm(SCI_SCROLLCARET);
 		interface.ssm(SCI_ENDUNDOACTION);
 
@@ -1046,7 +1047,8 @@ StateStart::custom(gchar chr)
 				    "editing the replacement register");
 
 		/* replace cmdline in the outer macro environment */
-		throw ReplaceCmdline();
+		cmdline.replace();
+		/* never reached */
 
 	/*
 	 * modifiers

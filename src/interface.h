@@ -32,6 +32,7 @@ namespace SciTECO {
 /* avoid include dependency conflict */
 class QRegister;
 class Buffer;
+class Cmdline;
 extern sig_atomic_t sigint_occurred;
 
 /**
@@ -170,10 +171,10 @@ class Interface {
 
 	template <class Type>
 	class UndoTokenInfoUpdate : public UndoTokenWithSize< UndoTokenInfoUpdate<Type> > {
-		Type *obj;
+		const Type *obj;
 
 	public:
-		UndoTokenInfoUpdate(Type *_obj)
+		UndoTokenInfoUpdate(const Type *_obj)
 				   : obj(_obj) {}
 
 		void run(void);
@@ -257,30 +258,29 @@ public:
 	 * by the deriving class.
 	 */
 	inline void
-	info_update(QRegister *reg)
+	info_update(const QRegister *reg)
 	{
 		impl().info_update_impl(reg);
 	}
 	inline void
-	info_update(Buffer *buffer)
+	info_update(const Buffer *buffer)
 	{
 		impl().info_update_impl(buffer);
 	}
 
 	inline void
-	undo_info_update(QRegister *reg)
+	undo_info_update(const QRegister *reg)
 	{
 		undo.push(new UndoTokenInfoUpdate<QRegister>(reg));
 	}
 	inline void
-	undo_info_update(Buffer *buffer)
+	undo_info_update(const Buffer *buffer)
 	{
 		undo.push(new UndoTokenInfoUpdate<Buffer>(buffer));
 	}
 
-	/* NULL means to redraw the current cmdline if necessary */
 	inline void
-	cmdline_update(const gchar *cmdline = NULL)
+	cmdline_update(const Cmdline *cmdline)
 	{
 		impl().cmdline_update_impl(cmdline);
 	}

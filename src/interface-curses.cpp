@@ -54,7 +54,7 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 #define UNNAMED_FILE "(Unnamed)"
 
 #define SCI_COLOR_ATTR(f, b) \
-	((chtype)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
+	((attr_t)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
 void
 ViewCurses::initialize_impl(void)
@@ -95,7 +95,6 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
-	cmdline_current = NULL;
 
 #ifdef EMSCRIPTEN
         nodelay(cmdline_window, TRUE);
@@ -160,13 +159,13 @@ InterfaceCurses::resize_all_windows(void)
 	draw_info();
 	msg_clear(); /* FIXME: use saved message */
 	popup_clear();
-	cmdline_update();
+	draw_cmdline();
 }
 
 void
 InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
-	static const chtype type2attr[] = {
+	static const attr_t type2attr[] = {
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN),  /* MSG_INFO */
 		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW), /* MSG_WARNING */
@@ -230,7 +229,7 @@ InterfaceCurses::draw_info(void)
 }
 
 void
-InterfaceCurses::info_update_impl(QRegister *reg)
+InterfaceCurses::info_update_impl(const QRegister *reg)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <QRegister> %s", PACKAGE_NAME,
@@ -240,7 +239,7 @@ InterfaceCurses::info_update_impl(QRegister *reg)
 }
 
 void
-InterfaceCurses::info_update_impl(Buffer *buffer)
+InterfaceCurses::info_update_impl(const Buffer *buffer)
 {
 	g_free(info_current);
 	info_current = g_strdup_printf("%s - <Buffer> %s%s", PACKAGE_NAME,
@@ -251,27 +250,103 @@ InterfaceCurses::info_update_impl(Buffer *buffer)
 }
 
 void
-InterfaceCurses::cmdline_update_impl(const gchar *cmdline)
+InterfaceCurses::format_chr(chtype *&target, gchar chr, attr_t attr)
 {
-	size_t len;
-	int half_line = (getmaxx(stdscr) - 2) / 2;
-	const gchar *line;
-
-	if (cmdline) {
-		g_free(cmdline_current);
-		cmdline_current = g_strdup(cmdline);
-	} else {
-		cmdline = cmdline_current;
+	/*
+	 * NOTE: This mapping is similar to
+	 * View::set_representations()
+	 */
+	switch (chr) {
+	case '\x1B': /* escape */
+		*target++ = '$' | attr | A_REVERSE;
+		break;
+	case '\r':
+		*target++ = 'C' | attr | A_REVERSE;
+		*target++ = 'R' | attr | A_REVERSE;
+		break;
+	case '\n':
+		*target++ = 'L' | attr | A_REVERSE;
+		*target++ = 'F' | attr | A_REVERSE;
+		break;
+	case '\t':
+		*target++ = 'T' | attr | A_REVERSE;
+		*target++ = 'A' | attr | A_REVERSE;
+		*target++ = 'B' | attr | A_REVERSE;
+		break;
+	default:
+		if (IS_CTL(chr)) {
+			*target++ = '^' | attr | A_REVERSE;
+			*target++ = CTL_ECHO(chr) | attr | A_REVERSE;
+		} else {
+			*target++ = chr | attr;
+		}
 	}
-	len = strlen(cmdline);
+}
 
-	/* FIXME: optimize */
-	line = cmdline + len - MIN(len, half_line + len % half_line);
+void
+InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
+{
+	gsize alloc_len = 1;
+	chtype *p;
 
-	mvwaddch(cmdline_window, 0, 0, '*');
-	waddstr(cmdline_window, line);
-	waddch(cmdline_window, ' ' | A_REVERSE);
-	wclrtoeol(cmdline_window);
+	/*
+	 * Replace entire pre-formatted command-line.
+	 * We don't know if it is similar to the last one,
+	 * so realloc makes no sense.
+	 * We approximate the size of the new formatted command-line,
+	 * wasting a few bytes for control characters.
+	 */
+	delete[] cmdline_current;
+	for (guint i = 0; i < cmdline->len+cmdline->rubout_len; i++)
+		alloc_len += IS_CTL((*cmdline)[i]) ? 3 : 1;
+	p = cmdline_current = new chtype[alloc_len];
+
+	/* format effective command line */
+	for (guint i = 0; i < cmdline->len; i++)
+		format_chr(p, (*cmdline)[i]);
+	cmdline_len = p - cmdline_current;
+
+	/*
+	 * Format rubbed-out command line.
+	 * AFAIK bold black should be rendered grey by any
+	 * common terminal.
+	 * If not, this problem will be gone once we support
+	 * a Scintilla view command line.
+	 */
+	for (guint i = cmdline->len; i < cmdline->len+cmdline->rubout_len; i++)
+		format_chr(p, (*cmdline)[i],
+		           A_UNDERLINE | A_BOLD |
+		           SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLACK));
+	cmdline_rubout_len = p - cmdline_current - cmdline_len;
+
+	/* highlight cursor after effective command line */
+	if (cmdline_rubout_len) {
+		cmdline_current[cmdline_len] &= A_CHARTEXT | A_UNDERLINE;
+		cmdline_current[cmdline_len] |= A_REVERSE;
+	} else {
+		cmdline_current[cmdline_len++] = ' ' | A_REVERSE;
+	}
+
+	draw_cmdline();
+}
+
+void
+InterfaceCurses::draw_cmdline(void)
+{
+	/* total width available for command line */
+	guint total_width = getmaxx(stdscr) - 1;
+	/* beginning of command line to show */
+	guint disp_offset;
+	/* length of command line to show */
+	guint disp_len;
+
+	disp_offset = cmdline_len -
+	              MIN(cmdline_len, total_width/2 + cmdline_len % (total_width/2));
+	disp_len = MIN(total_width, cmdline_len+cmdline_rubout_len - disp_offset);
+
+	werase(cmdline_window);
+	mvwaddch(cmdline_window, 0, 0, '*' | A_BOLD);
+	waddchnstr(cmdline_window, cmdline_current+disp_offset, disp_len);
 }
 
 void
@@ -430,18 +505,18 @@ event_loop_iter()
 #endif
 	case 0x7F: /* DEL */
 	case KEY_BACKSPACE:
-		cmdline_keypress('\b');
+		cmdline.keypress('\b');
 		break;
 	case KEY_ENTER:
 	case '\r':
 	case '\n':
-		cmdline_keypress(get_eol());
+		cmdline.keypress(get_eol());
 		break;
 
 	/*
 	 * Function key macros
 	 */
-#define FN(KEY) case KEY_##KEY: cmdline_fnmacro(#KEY); break
+#define FN(KEY) case KEY_##KEY: cmdline.fnmacro(#KEY); break
 #define FNS(KEY) FN(KEY); FN(S##KEY)
 	FN(DOWN); FN(UP); FNS(LEFT); FNS(RIGHT);
 	FNS(HOME);
@@ -450,7 +525,7 @@ event_loop_iter()
 
 		g_snprintf(macro_name, sizeof(macro_name),
 			   "F%d", key - KEY_F0);
-		cmdline_fnmacro(macro_name);
+		cmdline.fnmacro(macro_name);
 		break;
 	}
 	FNS(DC);
@@ -468,7 +543,7 @@ event_loop_iter()
 	 */
 	default:
 		if (key <= 0xFF)
-			cmdline_keypress((gchar)key);
+			cmdline.keypress((gchar)key);
 	}
 
 	sigint_occurred = FALSE;
@@ -486,6 +561,8 @@ event_loop_iter()
 void
 InterfaceCurses::event_loop_impl(void)
 {
+	static const Cmdline empty_cmdline;
+
 	/* initial refresh */
 	/* FIXME: this does wrefresh() internally */
 	current_view->refresh();
@@ -493,7 +570,7 @@ InterfaceCurses::event_loop_impl(void)
 	wnoutrefresh(info_window);
 	msg_clear();
 	wnoutrefresh(msg_window);
-	cmdline_update("");
+	cmdline_update(&empty_cmdline);
 	wnoutrefresh(cmdline_window);
 	doupdate();
 
@@ -540,7 +617,7 @@ InterfaceCurses::~InterfaceCurses()
 	g_free(info_current);
 	if (cmdline_window)
 		delwin(cmdline_window);
-	g_free(cmdline_current);
+	delete[] cmdline_current;
 	if (msg_window)
 		delwin(msg_window);
 

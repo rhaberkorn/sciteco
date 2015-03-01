@@ -103,11 +103,11 @@ public:
 	void show_view_impl(ViewGtk *view);
 
 	/* implementation of Interface::info_update() */
-	void info_update_impl(QRegister *reg);
-	void info_update_impl(Buffer *buffer);
+	void info_update_impl(const QRegister *reg);
+	void info_update_impl(const Buffer *buffer);
 
 	/* implementation of Interface::cmdline_update() */
-	void cmdline_update_impl(const gchar *cmdline = NULL);
+	void cmdline_update_impl(const Cmdline *cmdline);
 
 	/* implementation of Interface::popup_add() */
 	void popup_add_impl(PopupEntryType type,
@@ -138,6 +138,8 @@ public:
 
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
+
+	void cmdline_insert_chr(gint &pos, gchar chr);
 } InterfaceCurrent;
 
 } /* namespace SciTECO */

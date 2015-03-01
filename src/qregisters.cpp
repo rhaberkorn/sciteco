@@ -71,7 +71,7 @@ namespace QRegisters {
 static QRegister *register_argument = NULL;
 
 void
-QRegisterData::set_string(const gchar *str)
+QRegisterData::set_string(const gchar *str, gsize len)
 {
 	if (QRegisters::current)
 		QRegisters::current->string.update(QRegisters::view);
@@ -80,8 +80,9 @@ QRegisterData::set_string(const gchar *str)
 	string.edit(QRegisters::view);
 
 	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
-	QRegisters::view.ssm(SCI_SETTEXT, 0,
-	                     (sptr_t)(str ? : ""));
+	QRegisters::view.ssm(SCI_CLEARALL);
+	QRegisters::view.ssm(SCI_APPENDTEXT,
+	                     len, (sptr_t)(str ? : ""));
 	QRegisters::view.ssm(SCI_ENDUNDOACTION);
 
 	if (QRegisters::current)
@@ -110,7 +111,7 @@ QRegisterData::undo_set_string(void)
 }
 
 void
-QRegisterData::append_string(const gchar *str)
+QRegisterData::append_string(const gchar *str, gsize len)
 {
 	/*
 	 * NOTE: Will not create undo action
@@ -118,7 +119,7 @@ QRegisterData::append_string(const gchar *str)
 	 * Also, appending preserves the string's
 	 * parameters.
 	 */
-	if (!str || !*str)
+	if (!len)
 		return;
 
 	if (QRegisters::current)
@@ -128,7 +129,7 @@ QRegisterData::append_string(const gchar *str)
 
 	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
 	QRegisters::view.ssm(SCI_APPENDTEXT,
-	                      strlen(str), (sptr_t)str);
+	                     len, (sptr_t)str);
 	QRegisters::view.ssm(SCI_ENDUNDOACTION);
 
 	if (QRegisters::current)

@@ -44,9 +44,6 @@
 
 namespace SciTECO {
 
-static inline const gchar *process_edit_cmd(gchar key);
-static gchar *macro_echo(const gchar *macro);
-
 static gchar *filename_complete(const gchar *filename, gchar completed = ' ');
 static gchar *symbol_complete(SymbolList &list, const gchar *symbol,
 			      gchar completed = ' ');
@@ -56,9 +53,11 @@ static const gchar *last_occurrence(const gchar *str,
 static inline gboolean filename_is_dir(const gchar *filename);
 static inline gchar derive_dir_separator(const gchar *filename);
 
-gchar *cmdline = NULL;
-gint cmdline_pos = 0;
-static gchar *last_cmdline = NULL;
+/** Current command line. */
+Cmdline cmdline;
+
+/** Last terminated command line */
+static Cmdline last_cmdline;
 
 bool quit_requested = false;
 
@@ -66,14 +65,59 @@ namespace States {
 	StateSaveCmdline save_cmdline;
 }
 
-void
-cmdline_keypress(gchar key)
+#if 0
+Cmdline *
+copy(void) const
 {
-	gchar *old_cmdline = NULL;
-	gint repl_pos = 0;
+	Cmdline *c = new Cmdline();
 
-	const gchar *insert;
-	gchar *echo;
+	if (str)
+		c->str = g_memdup(str, len+rubout_len);
+	c->len = len;
+	c->rubout_len = rubout_len;
+
+	return c;
+}
+#endif
+
+/**
+ * Throws a command line based on the command line
+ * replacement register.
+ * It is catched by Cmdline::keypress() to actually
+ * perform the command line update.
+ */
+void
+Cmdline::replace(void)
+{
+	QRegister *cmdline_reg = QRegisters::globals["\x1B"];
+	/* use heap object to avoid copy constructors etc. */
+	Cmdline *new_cmdline = new Cmdline();
+
+	/* FIXME: does not handle null bytes */
+	new_cmdline->str = cmdline_reg->get_string();
+	new_cmdline->len = strlen(new_cmdline->str);
+	new_cmdline->rubout_len = 0;
+
+	/*
+	 * Search for first differing character in old and
+	 * new command line. This avoids unnecessary rubouts
+	 * and insertions when the command line is updated.
+	 */
+	for (new_cmdline->pc = 0;
+	     new_cmdline->pc < len && new_cmdline->pc < new_cmdline->len &&
+	     str[new_cmdline->pc] == new_cmdline->str[new_cmdline->pc];
+	     new_cmdline->pc++);
+
+	throw new_cmdline;
+}
+
+void
+Cmdline::keypress(gchar key)
+{
+	Cmdline old_cmdline;
+
+	gsize old_len = len;
+	guint repl_pc = 0;
 
 	/*
 	 * Cleanup messages,etc...
@@ -81,44 +125,59 @@ cmdline_keypress(gchar key)
 	interface.msg_clear();
 
 	/*
-	 * Process immediate editing commands.
-	 * It may clear/hide the popup.
+	 * Process immediate editing commands, inserting
+	 * characters as necessary into the command line.
 	 */
-	insert = process_edit_cmd(key);
+	if (process_edit_cmd(key))
+		interface.popup_clear();
 
 	/*
 	 * Parse/execute characters, one at a time so
 	 * undo tokens get emitted for the corresponding characters.
 	 */
-	cmdline_pos = cmdline ? strlen(cmdline)+1 : 1;
-	String::append(cmdline, insert);
+	macro_pc = pc = MIN(old_len, len);
 
-	while (cmdline[cmdline_pos-1]) {
+	while (pc < len) {
 		try {
-			Execute::step(cmdline, cmdline_pos);
-		} catch (ReplaceCmdline &r) {
-			undo.pop(r.pos);
+			Execute::step(str, pc+1);
+		} catch (Cmdline *new_cmdline) {
+			/*
+			 * Result of command line replacement (}):
+			 * Exchange command lines, avoiding
+			 * deep copying
+			 */
+			undo.pop(new_cmdline->pc);
 
-			old_cmdline = cmdline;
-			cmdline = r.new_cmdline;
-			cmdline_pos = repl_pos = r.pos;
-			macro_pc = r.pos-1;
+			old_cmdline = *this;
+			*this = *new_cmdline;
+			new_cmdline->str = NULL;
+			macro_pc = repl_pc = pc;
+
+			delete new_cmdline;
 			continue;
 		} catch (Error &error) {
 			error.add_frame(new Error::ToplevelFrame());
 			error.display_short();
 
-			if (old_cmdline) {
-				undo.pop(repl_pos);
+			if (old_cmdline.str) {
+				/*
+				 * Error during command-line replacement.
+				 * Replay previous command-line.
+				 * This avoids deep copying.
+				 */
+				undo.pop(repl_pc);
 
-				g_free(cmdline);
-				cmdline = old_cmdline;
-				cmdline[strlen(cmdline)-1] = '\0';
-				old_cmdline = NULL;
-				cmdline_pos = repl_pos;
-				macro_pc = repl_pos-1;
+				g_free(str);
+				*this = old_cmdline;
+				old_cmdline.str = NULL;
+				macro_pc = pc = repl_pc;
+
+				/* rubout cmdline replacement command */
+				len--;
+				rubout_len++;
 				continue;
 			}
+
 			/*
 			 * Undo tokens may have been emitted
 			 * (or had to be) before the exception
@@ -126,156 +185,151 @@ cmdline_keypress(gchar key)
 			 * as if the character had never been
 			 * inserted.
 			 */
-			undo.pop(cmdline_pos);
-			cmdline[cmdline_pos-1] = '\0';
+			undo.pop(pc);
+			rubout_len += len-pc;
+			len = pc;
 			/* program counter could be messed up */
-			macro_pc = cmdline_pos - 1;
+			macro_pc = len;
 			break;
 		}
 
-		cmdline_pos++;
+		pc++;
 	}
-
-	g_free(old_cmdline);
 
 	/*
 	 * Echo command line
 	 */
-	echo = macro_echo(cmdline);
-	interface.cmdline_update(echo);
-	g_free(echo);
+	interface.cmdline_update(this);
 }
 
-static inline const gchar *
-process_edit_cmd(gchar key)
+void
+Cmdline::insert(const gchar *src)
 {
-	static gchar insert[255];
-	gint cmdline_len = cmdline ? strlen(cmdline) : 0;
-	bool clear_popup = true;
+	size_t src_len = strlen(src);
 
-	insert[0] = key;
-	insert[1] = '\0';
+	if (src_len <= rubout_len && !strncmp(str+len, src, src_len)) {
+		len += src_len;
+		rubout_len -= src_len;
+	} else {
+		String::append(str, len, src);
+		len += src_len;
+		rubout_len = 0;
+	}
+}
 
+bool
+Cmdline::process_edit_cmd(gchar key)
+{
 	switch (key) {
-	case '\b':
-		if (cmdline_len) {
-			undo.pop(cmdline_len);
-			cmdline[cmdline_len - 1] = '\0';
-			macro_pc--;
-		}
-		*insert = '\0';
+	case '\b': /* rubout character */
+		if (len)
+			rubout();
 		break;
 
-	case CTL_KEY('W'):
+	case CTL_KEY('W'): /* rubout word */
 		if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
 			/* rubout non-word chars */
 			while (strings[0] && strlen(strings[0]) > 0 &&
-			       !strchr(wchars, cmdline[macro_pc-1]))
-				undo.pop(macro_pc--);
+			       !strchr(wchars, str[len-1]))
+				rubout();
 
 			/* rubout word chars */
 			while (strings[0] && strlen(strings[0]) > 0 &&
-			       strchr(wchars, cmdline[macro_pc-1]))
-				undo.pop(macro_pc--);
-		} else if (cmdline_len) {
+			       strchr(wchars, str[len-1]))
+				rubout();
+		} else if (len) {
 			do
-				undo.pop(macro_pc--);
+				rubout();
 			while (States::current != &States::start);
 		}
-		cmdline[macro_pc] = '\0';
-		*insert = '\0';
 		break;
 
-	case CTL_KEY('U'):
+	case CTL_KEY('U'): /* rubout string */
 		if (States::is_string()) {
 			while (strings[0] && strlen(strings[0]) > 0)
-				undo.pop(macro_pc--);
-			cmdline[macro_pc] = '\0';
-			*insert = '\0';
+				rubout();
+		} else {
+			insert(key);
 		}
 		break;
 
-	case CTL_KEY('T'):
+	case CTL_KEY('T'): /* autocomplete file name */
+		/*
+		 * TODO: In insertion commands, we can autocomplete
+		 * the string at the buffer cursor.
+		 */
 		if (States::is_string()) {
-			*insert = '\0';
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				clear_popup = false;
-				break;
+				return false;
 			}
 
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
-			clear_popup = !interface.popup_is_shown();
-
-			if (new_chars)
-				g_stpcpy(insert, new_chars);
+			insert(new_chars);
 			g_free(new_chars);
+
+			if (interface.popup_is_shown())
+				return false;
+		} else {
+			insert(key);
 		}
 		break;
 
-	case '\t':
-		if (States::is_insertion()) {
-			if (!interface.ssm(SCI_GETUSETABS)) {
-				gint len = interface.ssm(SCI_GETTABWIDTH);
+	case '\t': /* autocomplete symbol or file name */
+		if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
+			gint spaces = interface.ssm(SCI_GETTABWIDTH);
 
-				len -= interface.ssm(SCI_GETCOLUMN,
-				                     interface.ssm(SCI_GETCURRENTPOS)) % len;
+			spaces -= interface.ssm(SCI_GETCOLUMN,
+			                        interface.ssm(SCI_GETCURRENTPOS)) % spaces;
 
-				memset(insert, ' ', len);
-				insert[len] = '\0';
-			}
+			while (spaces--)
+				insert(' ');
 		} else if (States::is_file()) {
-			*insert = '\0';
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				clear_popup = false;
-				break;
+				return false;
 			}
 
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0], complete);
 
-			clear_popup = !interface.popup_is_shown();
-
-			if (new_chars)
-				g_stpcpy(insert, new_chars);
+			insert(new_chars);
 			g_free(new_chars);
+
+			if (interface.popup_is_shown())
+				return false;
 		} else if (States::current == &States::executecommand) {
 			/*
 			 * In the EC command, <TAB> completes files just like ^T
 			 * TODO: Implement shell-command completion by iterating
 			 * executables in $PATH
 			 */
-			*insert = '\0';
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				clear_popup = false;
-				break;
+				return false;
 			}
 
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
-			clear_popup = !interface.popup_is_shown();
-
-			if (new_chars)
-				g_stpcpy(insert, new_chars);
+			insert(new_chars);
 			g_free(new_chars);
+
+			if (interface.popup_is_shown())
+				return false;
 		} else if (States::current == &States::scintilla_symbols) {
-			*insert = '\0';
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				clear_popup = false;
-				break;
+				return false;
 			}
 
 			const gchar *symbol = last_occurrence(strings[0], ",");
@@ -284,20 +338,19 @@ process_edit_cmd(gchar key)
 						: Symbols::scilexer;
 			gchar *new_chars = symbol_complete(list, symbol, ',');
 
-			clear_popup = !interface.popup_is_shown();
-
-			if (new_chars)
-				g_stpcpy(insert, new_chars);
+			insert(new_chars);
 			g_free(new_chars);
-		}
 
+			if (interface.popup_is_shown())
+				return false;
+		} else {
+			insert(key);
+		}
 		break;
 
-	case '\x1B':
+	case '\x1B': /* terminate command line */
 		if (States::current == &States::start &&
-		    cmdline && cmdline[cmdline_len - 1] == '\x1B') {
-			*insert = '\0';
-
+		    str && str[len-1] == '\x1B') {
 			if (Goto::skip_label) {
 				interface.msg(InterfaceCurrent::MSG_ERROR,
 					      "Label \"%s\" not found",
@@ -316,10 +369,16 @@ process_edit_cmd(gchar key)
 			Goto::table->clear();
 			expressions.clear();
 
-			g_free(last_cmdline);
-			last_cmdline = cmdline;
-			cmdline = NULL;
-			macro_pc = 0;
+			last_cmdline = *this;
+			str = NULL;
+			len = rubout_len = 0;
+
+			/*
+			 * FIXME: Perhaps to the malloc_trim() here
+			 * instead of in UndoStack::clear()
+			 */
+		} else {
+			insert(key);
 		}
 		break;
 
@@ -332,20 +391,20 @@ process_edit_cmd(gchar key)
 		 * terminal (GTK+)
 		 */
 		raise(SIGTSTP);
-		*insert = '\0';
 		break;
 #endif
+
+	default:
+		insert(key);
 	}
 
-	if (clear_popup)
-		interface.popup_clear();
-
-	return insert;
+	return true;
 }
 
 void
-cmdline_fnmacro(const gchar *name)
+Cmdline::fnmacro(const gchar *name)
 {
+	/* FIXME: check again if function keys are enabled */
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
 
@@ -355,7 +414,7 @@ cmdline_fnmacro(const gchar *name)
 	reg = QRegisters::globals[macro_name];
 	if (reg) {
 		gchar *macro = reg->get_string();
-		cmdline_keypress(macro);
+		keypress(macro);
 		g_free(macro);
 	}
 }
@@ -372,44 +431,6 @@ get_eol(void)
 	default:
 		return "\n";
 	}
-}
-
-static gchar *
-macro_echo(const gchar *macro)
-{
-	gchar *result, *rp;
-
-	if (!macro)
-		return g_strdup("");
-
-	rp = result = (gchar *)g_malloc(strlen(macro)*5 + 1);
-
-	for (const gchar *p = macro; *p; p++) {
-		switch (*p) {
-		case '\x1B':
-			*rp++ = '$';
-			break;
-		case '\r':
-			rp = g_stpcpy(rp, "<CR>");
-			break;
-		case '\n':
-			rp = g_stpcpy(rp, "<LF>");
-			break;
-		case '\t':
-			rp = g_stpcpy(rp, "<TAB>");
-			break;
-		default:
-			if (IS_CTL(*p)) {
-				*rp++ = '^';
-				*rp++ = CTL_ECHO(*p);
-			} else {
-				*rp++ = *p;
-			}
-		}
-	}
-	*rp = '\0';
-
-	return result;
 }
 
 static gchar *
@@ -596,7 +617,7 @@ StateSaveCmdline::got_register(QRegister &reg)
 	BEGIN_EXEC(&States::start);
 
 	reg.undo_set_string();
-	reg.set_string(last_cmdline);
+	reg.set_string(last_cmdline.str, last_cmdline.len);
 
 	return &States::start;
 }

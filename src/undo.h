@@ -41,8 +41,8 @@ public:
 	SLIST_ENTRY(UndoToken) tokens;
 
 	/**
-	 * Command-line character position corresponding
-	 * to this token.
+	 * Command-line character position (program counter)
+	 * corresponding to this token.
 	 *
 	 * @todo This wastes memory in macro calls and loops
 	 *       because all undo tokens will have the same
@@ -50,7 +50,7 @@ public:
 	 *       stack data structure - as a list/array pointing
 	 *       to undo stacks per character.
 	 */
-	gint pos;
+	gint pc;
 
 	virtual ~UndoToken() {}
 
@@ -240,7 +240,7 @@ public:
 		return push_obj<Type>(variable, variable);
 	}
 
-	void pop(gint pos);
+	void pop(gint pc);
 
 	void clear(void);
 } undo;

@@ -18,6 +18,8 @@
 #ifndef __QREGISTERS_H
 #define __QREGISTERS_H
 
+#include <string.h>
+
 #include <bsd/sys/queue.h>
 
 #include <glib.h>
@@ -94,9 +96,20 @@ public:
 		return integer;
 	}
 
-	virtual void set_string(const gchar *str);
+	virtual void set_string(const gchar *str, gsize len);
+	inline void
+	set_string(const gchar *str)
+	{
+		set_string(str, str ? strlen(str) : 0);
+	}
 	virtual void undo_set_string(void);
-	virtual void append_string(const gchar *str);
+
+	virtual void append_string(const gchar *str, gsize len);
+	inline void
+	append_string(const gchar *str)
+	{
+		append_string(str, str ? strlen(str) : 0);
+	}
 	virtual inline void
 	undo_append_string(void)
 	{
@@ -155,9 +168,9 @@ public:
 
 	tecoInt get_integer(void);
 
-	void set_string(const gchar *str) {}
+	void set_string(const gchar *str, gsize len) {}
 	void undo_set_string(void) {}
-	void append_string(const gchar *str) {}
+	void append_string(const gchar *str, gsize len) {}
 	void undo_append_string(void) {}
 
 	gchar *get_string(void);

@@ -20,25 +20,73 @@
 
 #include <glib.h>
 
-#include "sciteco.h"
 #include "parser.h"
 #include "qregisters.h"
+#include "undo.h"
 
 namespace SciTECO {
 
-extern gchar *cmdline;
-extern gint cmdline_pos;
+extern class Cmdline {
+public:
+	/**
+	 * String containing the current command line.
+	 * It is not null-terminated and contains the effective
+	 * command-line up to cmdline_len followed by the recently rubbed-out
+	 * command-line of length cmdline_rubout_len.
+	 */
+	gchar *str;
+	/** Effective command line length */
+	gsize len;
+	/** Length of the rubbed out command line */
+	gsize rubout_len;
+	/** Program counter within the command-line macro */
+	guint pc;
+
+	Cmdline() : str(NULL), len(0), rubout_len(0), pc(0) {}
+	inline
+	~Cmdline()
+	{
+		g_free(str);
+	}
+
+	inline gchar
+	operator [](guint i) const
+	{
+		return str[i];
+	}
+
+	void keypress(gchar key);
+	inline void
+	keypress(const gchar *keys)
+	{
+		while (*keys)
+			keypress(*keys++);
+	}
+
+	void fnmacro(const gchar *name);
+
+	void replace(void) G_GNUC_NORETURN;
+
+private:
+	bool process_edit_cmd(gchar key);
+
+	inline void
+	rubout(void)
+	{
+		undo.pop(--len);
+		rubout_len++;
+	}
+
+	void insert(const gchar *src);
+	inline void
+	insert(gchar key)
+	{
+		gchar src[] = {key, '\0'};
+		insert(src);
+	}
+} cmdline;
+
 extern bool quit_requested;
-
-void cmdline_keypress(gchar key);
-static inline void
-cmdline_keypress(const gchar *keys)
-{
-	while (*keys)
-		cmdline_keypress(*keys++);
-}
-
-void cmdline_fnmacro(const gchar *name);
 
 const gchar *get_eol(void);
 

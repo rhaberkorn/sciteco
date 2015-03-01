@@ -33,17 +33,13 @@
 #include "error.h"
 #include "undo.h"
 
+#define SIZE_TO_MB(SIZE) ((gdouble)(SIZE))/(1024*1024)
+
 namespace SciTECO {
 
 //#define DEBUG
 
 UndoStack undo;
-
-static inline gdouble
-size_to_mb(gsize s)
-{
-	return ((gdouble)s)/(1024*1024);
-}
 
 void
 UndoStack::set_memory_limit(gsize new_limit)
@@ -61,8 +57,8 @@ UndoStack::set_memory_limit(gsize new_limit)
 		if (memory_usage > new_limit)
 			throw Error("Cannot set undo memory limit (%gmb): "
 			            "Current stack too large (%gmb).",
-			            size_to_mb(new_limit),
-			            size_to_mb(memory_usage));
+			            SIZE_TO_MB(new_limit),
+			            SIZE_TO_MB(memory_usage));
 	}
 
 	push_var(memory_limit) = new_limit;
@@ -83,7 +79,7 @@ UndoStack::push(UndoToken *token)
 			delete token;
 			throw Error("Undo stack memory limit (%gmb) exceeded. "
 			            "See <EJ> command.",
-			            size_to_mb(memory_limit));
+			            SIZE_TO_MB(memory_limit));
 		}
 
 		memory_usage += token_size;
@@ -92,14 +88,14 @@ UndoStack::push(UndoToken *token)
 #ifdef DEBUG
 	g_printf("UNDO PUSH %p\n", token);
 #endif
-	token->pos = cmdline_pos;
+	token->pc = cmdline.pc;
 	SLIST_INSERT_HEAD(&head, token, tokens);
 }
 
 void
-UndoStack::pop(gint pos)
+UndoStack::pop(gint pc)
 {
-	while (!SLIST_EMPTY(&head) && SLIST_FIRST(&head)->pos >= pos) {
+	while (!SLIST_EMPTY(&head) && SLIST_FIRST(&head)->pc >= pc) {
 		UndoToken *top = SLIST_FIRST(&head);
 #ifdef DEBUG
 		g_printf("UNDO POP %p\n", top);
