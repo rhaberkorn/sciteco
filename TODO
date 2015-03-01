@@ -1,11 +1,11 @@
 Known Bugs:
- * ??? Dot is not always restored properly (e.g. after closing file)
-   need test case!!!
  * Null-byte in strings not always handled transparently
  * saving another user's file will only preserve the user when run as root
    (WON'T FIX!?)
  * crashes on large files: S^EM^X$ (regexp: .*)
  * m,nX crashes if m > n
+ * the glib allocators are fundamentally broken:
+   throwing exceptions is unsafe from C-linkage callbacks.
 
 Features:
  * some missing useful VideoTECO/TECO-11 commands:
@@ -18,13 +18,6 @@ Features:
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
    end of the buffer list.
- * Revert rubout: Instead of discarding rubbed out characters,
-   they should be kept in the command line placing the command line
-   cursor before them.
-   The rubbed out characters could then be re-inserted with a special
-   immediate editing command or by retyping them allowing you to move
-   back and forth in the editor state resulting from a command line.
-   This would be SciTECO's version of Redo.
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
@@ -57,6 +50,15 @@ Features:
    or lockf() interfaces. On Windows we can even enforce mandatory locks.
 
 Optimizations:
+ * C++14 is supported by GCC 5 and supports new() and delete()
+   operators with a size argument. Replacing these operators
+   with versions using g_slice_alloc() and g_slice_free() should
+   speed up things, especially Q-Register handling and the undo
+   stack.
+ * Scintilla: SETDOCPOINTER resets representations, so we
+   have to set SciTECO representations up again often
+ * commonly used (special) Q-Registers could be cached,
+   saving the q-reg table lookup
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
  * simplify parser (static jump tables are unnecessary!)
