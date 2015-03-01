@@ -488,7 +488,9 @@ Cmdline::process_edit_cmd(gchar key)
 void
 Cmdline::fnmacro(const gchar *name)
 {
-	/* FIXME: check again if function keys are enabled */
+	if (!(Flags::ed & Flags::ED_FNKEYS))
+		return;
+
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
 

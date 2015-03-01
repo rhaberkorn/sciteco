@@ -484,6 +484,12 @@ event_loop_iter()
 {
 	int key;
 
+	/*
+	 * Setting function key processing is important
+	 * on Unix Curses, as ESCAPE is handled as the beginning
+	 * of a escape sequence when terminal emulators are
+	 * involved.
+	 */
 	keypad(interface.cmdline_window, Flags::ed & Flags::ED_FNKEYS);
 
 	/* no special <CTRL/C> handling */
