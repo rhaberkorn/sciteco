@@ -71,12 +71,9 @@ static gchar *mung_file = NULL;
 sig_atomic_t sigint_occurred = FALSE;
 
 extern "C" {
-static gpointer g_malloc_exception(gsize n_bytes)
-		throw (std::bad_alloc);
-static gpointer g_calloc_exception(gsize n_blocks, gsize n_block_bytes)
-		throw (std::bad_alloc);
-static gpointer g_realloc_exception(gpointer mem, gsize n_bytes)
-		throw (std::bad_alloc);
+static gpointer g_malloc_exception(gsize n_bytes);
+static gpointer g_calloc_exception(gsize n_blocks, gsize n_block_bytes);
+static gpointer g_realloc_exception(gpointer mem, gsize n_bytes);
 
 static void sigint_handler(int signal);
 }
@@ -203,7 +200,7 @@ public:
 };
 
 static gpointer
-g_malloc_exception(gsize n_bytes) throw (std::bad_alloc)
+g_malloc_exception(gsize n_bytes)
 {
 	gpointer p = malloc(n_bytes);
 
@@ -213,7 +210,7 @@ g_malloc_exception(gsize n_bytes) throw (std::bad_alloc)
 }
 
 static gpointer
-g_calloc_exception(gsize n_blocks, gsize n_block_bytes) throw (std::bad_alloc)
+g_calloc_exception(gsize n_blocks, gsize n_block_bytes)
 {
 	gpointer p = calloc(n_blocks, n_block_bytes);
 
@@ -223,7 +220,7 @@ g_calloc_exception(gsize n_blocks, gsize n_block_bytes) throw (std::bad_alloc)
 }
 
 static gpointer
-g_realloc_exception(gpointer mem, gsize n_bytes) throw (std::bad_alloc)
+g_realloc_exception(gpointer mem, gsize n_bytes)
 {
 	gpointer p = realloc(mem, n_bytes);
 
