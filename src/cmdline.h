@@ -73,11 +73,13 @@ private:
 	inline void
 	rubout(void)
 	{
-		undo.pop(--len);
-		rubout_len++;
+		if (len) {
+			undo.pop(--len);
+			rubout_len++;
+		}
 	}
 
-	void insert(const gchar *src);
+	void insert(const gchar *src = NULL);
 	inline void
 	insert(gchar key)
 	{

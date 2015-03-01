@@ -59,6 +59,15 @@ Cmdline cmdline;
 /** Last terminated command line */
 static Cmdline last_cmdline;
 
+/**
+ * Specifies whether the immediate editing modifier
+ * is enabled/disabled.
+ * It can be toggled with the ^G immediate editing command
+ * and influences the undo/redo direction and function of the
+ * TAB key.
+ */
+static bool modifier_enabled = false;
+
 bool quit_requested = false;
 
 namespace States {
@@ -111,32 +120,50 @@ Cmdline::replace(void)
 	throw new_cmdline;
 }
 
+/**
+ * Insert string into command line and execute
+ * it immediately.
+ * It already handles command line replacement and will
+ * only throw SciTECO::Error.
+ *
+ * @param src String to insert (null-terminated).
+ *            NULL inserts a character from the previously
+ *            rubbed out command line.
+ */
 void
-Cmdline::keypress(gchar key)
+Cmdline::insert(const gchar *src)
 {
 	Cmdline old_cmdline;
+	guint repl_pc;
 
-	gsize old_len = len;
-	guint repl_pc = 0;
+	macro_pc = pc = len;
 
-	/*
-	 * Cleanup messages,etc...
-	 */
-	interface.msg_clear();
+	if (!src) {
+		if (rubout_len) {
+			len++;
+			rubout_len--;
+		}
+	} else {
+		size_t src_len = strlen(src);
 
-	/*
-	 * Process immediate editing commands, inserting
-	 * characters as necessary into the command line.
-	 */
-	if (process_edit_cmd(key))
-		interface.popup_clear();
+		if (src_len <= rubout_len && !strncmp(str+len, src, src_len)) {
+			len += src_len;
+			rubout_len -= src_len;
+		} else {
+			if (rubout_len)
+				/* automatically disable immediate editing modifier */
+				modifier_enabled = false;
+
+			String::append(str, len, src);
+			len += src_len;
+			rubout_len = 0;
+		}
+	}
 
 	/*
 	 * Parse/execute characters, one at a time so
 	 * undo tokens get emitted for the corresponding characters.
 	 */
-	macro_pc = pc = MIN(old_len, len);
-
 	while (pc < len) {
 		try {
 			Execute::step(str, pc+1);
@@ -178,22 +205,45 @@ Cmdline::keypress(gchar key)
 				continue;
 			}
 
-			/*
-			 * Undo tokens may have been emitted
-			 * (or had to be) before the exception
-			 * is thrown. They must be executed so
-			 * as if the character had never been
-			 * inserted.
-			 */
-			undo.pop(pc);
-			rubout_len += len-pc;
-			len = pc;
-			/* program counter could be messed up */
-			macro_pc = len;
-			break;
+			/* error is handled in Cmdline::keypress() */
+			throw;
 		}
 
 		pc++;
+	}
+}
+
+void
+Cmdline::keypress(gchar key)
+{
+	/*
+	 * Cleanup messages,etc...
+	 */
+	interface.msg_clear();
+
+	/*
+	 * Process immediate editing commands, inserting
+	 * characters as necessary into the command line.
+	 */
+	try {
+		if (process_edit_cmd(key))
+			interface.popup_clear();
+	} catch (Error &error) {
+		/*
+		 * NOTE: Error message already displayed in
+		 * Cmdline::insert().
+		 *
+		 * Undo tokens may have been emitted
+		 * (or had to be) before the exception
+		 * is thrown. They must be executed so
+		 * as if the character had never been
+		 * inserted.
+		 */
+		undo.pop(pc);
+		rubout_len += len-pc;
+		len = pc;
+		/* program counter could be messed up */
+		macro_pc = len;
 	}
 
 	/*
@@ -202,87 +252,107 @@ Cmdline::keypress(gchar key)
 	interface.cmdline_update(this);
 }
 
-void
-Cmdline::insert(const gchar *src)
-{
-	size_t src_len = strlen(src);
-
-	if (src_len <= rubout_len && !strncmp(str+len, src, src_len)) {
-		len += src_len;
-		rubout_len -= src_len;
-	} else {
-		String::append(str, len, src);
-		len += src_len;
-		rubout_len = 0;
-	}
-}
-
 bool
 Cmdline::process_edit_cmd(gchar key)
 {
 	switch (key) {
-	case '\b': /* rubout character */
-		if (len)
+	case CTL_KEY('G'): /* toggle immediate editing modifier */
+		modifier_enabled = !modifier_enabled;
+		interface.msg(InterfaceCurrent::MSG_INFO,
+			      "Immediate editing modifier is now %s.",
+			      modifier_enabled ? "enabled" : "disabled");
+		break;
+
+	case '\b': /* rubout/reinsert character */
+		if (modifier_enabled)
+			/* re-insert character */
+			insert();
+		else
+			/* rubout character */
 			rubout();
 		break;
 
-	case CTL_KEY('W'): /* rubout word */
+	case CTL_KEY('W'): /* rubout/reinsert word/command */
 		if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
-			/* rubout non-word chars */
-			while (strings[0] && strlen(strings[0]) > 0 &&
-			       !strchr(wchars, str[len-1]))
-				rubout();
+			if (modifier_enabled) {
+				while (States::is_string() && rubout_len &&
+				       strchr(wchars, str[len]))
+					insert();
 
-			/* rubout word chars */
-			while (strings[0] && strlen(strings[0]) > 0 &&
-			       strchr(wchars, str[len-1]))
-				rubout();
-		} else if (len) {
+				while (States::is_string() && rubout_len &&
+				       !strchr(wchars, str[len]))
+					insert();
+			} else {
+				/* rubout non-word chars */
+				while (strings[0] && strlen(strings[0]) > 0 &&
+				       !strchr(wchars, str[len-1]))
+					rubout();
+
+				/* rubout word chars */
+				while (strings[0] && strlen(strings[0]) > 0 &&
+				       strchr(wchars, str[len-1]))
+					rubout();
+			}
+		} else if (modifier_enabled) {
+			/* reinsert command */
+			do
+				insert();
+			while (States::current != &States::start);
+		} else {
+			/* rubout command */
 			do
 				rubout();
 			while (States::current != &States::start);
 		}
 		break;
 
-	case CTL_KEY('U'): /* rubout string */
+	case CTL_KEY('U'): /* rubout/reinsert string */
 		if (States::is_string()) {
-			while (strings[0] && strlen(strings[0]) > 0)
-				rubout();
-		} else {
-			insert(key);
-		}
-		break;
-
-	case CTL_KEY('T'): /* autocomplete file name */
-		/*
-		 * TODO: In insertion commands, we can autocomplete
-		 * the string at the buffer cursor.
-		 */
-		if (States::is_string()) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				return false;
+			if (modifier_enabled) {
+				/* reinsert string */
+				while (States::is_string() && rubout_len)
+					insert();
+			} else {
+				/* rubout string */
+				while (strings[0] && strlen(strings[0]) > 0)
+					rubout();
 			}
-
-			const gchar *filename = last_occurrence(strings[0]);
-			gchar *new_chars = filename_complete(filename);
-
-			insert(new_chars);
-			g_free(new_chars);
-
-			if (interface.popup_is_shown())
-				return false;
 		} else {
 			insert(key);
 		}
 		break;
 
 	case '\t': /* autocomplete symbol or file name */
-		if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
+		if (modifier_enabled) {
+			/*
+			 * TODO: In insertion commands, we can autocomplete
+			 * the string at the buffer cursor.
+			 */
+			if (States::is_string()) {
+				/* autocomplete filename using string argument */
+				if (interface.popup_is_shown()) {
+					/* cycle through popup pages */
+					interface.popup_show();
+					return false;
+				}
+
+				const gchar *filename = last_occurrence(strings[0]);
+				gchar *new_chars = filename_complete(filename);
+
+				if (new_chars)
+					insert(new_chars);
+				g_free(new_chars);
+
+				if (interface.popup_is_shown())
+					return false;
+			} else {
+				insert(key);
+			}
+		} else if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
+			/* insert soft tabs */
 			gint spaces = interface.ssm(SCI_GETTABWIDTH);
 
 			spaces -= interface.ssm(SCI_GETCOLUMN,
@@ -300,7 +370,8 @@ Cmdline::process_edit_cmd(gchar key)
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
 			gchar *new_chars = filename_complete(strings[0], complete);
 
-			insert(new_chars);
+			if (new_chars)
+				insert(new_chars);
 			g_free(new_chars);
 
 			if (interface.popup_is_shown())
@@ -320,7 +391,8 @@ Cmdline::process_edit_cmd(gchar key)
 			const gchar *filename = last_occurrence(strings[0]);
 			gchar *new_chars = filename_complete(filename);
 
-			insert(new_chars);
+			if (new_chars)
+				insert(new_chars);
 			g_free(new_chars);
 
 			if (interface.popup_is_shown())
@@ -338,7 +410,8 @@ Cmdline::process_edit_cmd(gchar key)
 						: Symbols::scilexer;
 			gchar *new_chars = symbol_complete(list, symbol, ',');
 
-			insert(new_chars);
+			if (new_chars)
+				insert(new_chars);
 			g_free(new_chars);
 
 			if (interface.popup_is_shown())
