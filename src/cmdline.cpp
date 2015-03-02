@@ -282,10 +282,12 @@ Cmdline::process_edit_cmd(gchar key)
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
 			if (modifier_enabled) {
+				/* reinsert word chars */
 				while (States::is_string() && rubout_len &&
 				       strchr(wchars, str[len]))
 					insert();
 
+				/* reinsert non-word chars */
 				while (States::is_string() && rubout_len &&
 				       !strchr(wchars, str[len]))
 					insert();
@@ -304,7 +306,7 @@ Cmdline::process_edit_cmd(gchar key)
 			/* reinsert command */
 			do
 				insert();
-			while (States::current != &States::start);
+			while (States::current != &States::start && rubout_len);
 		} else {
 			/* rubout command */
 			do
