@@ -1,6 +1,10 @@
 # Scintilla/Scinterm are cloned as submodules
 # of this repository, so we may give a rule
-# for building scintilla.a here
+# for building scintilla.a here.
+# It is built as a phony target since we do not
+# know its dependencies.
+# If it is up to date, the additional recursive
+# Make call does not hurt.
 
 if INTERFACE_GTK
 SCINTILLA_MAKE_DIR = @SCINTILLA_PATH@/gtk
@@ -8,6 +12,7 @@ else
 SCINTILLA_MAKE_DIR = @SCINTERM_PATH@
 endif
 
+.PHONY: @SCINTILLA_PATH@/bin/scintilla.a
 @SCINTILLA_PATH@/bin/scintilla.a :
 	$(MAKE) -C $(SCINTILLA_MAKE_DIR) \
 	        CXX=@CXX@ AR=@AR@
