@@ -181,9 +181,9 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * <command> just as an UNIX98 \(lq/bin/sh\(rq would, but without
  * performing any expansions.
  * The program specified in <command> is searched for in
- * standard locations (accoring to the \(lqPATH\(rq environment
+ * standard locations (according to the \(lqPATH\(rq environment
  * variable).
- * This mode of operation can also be forced on Windows and
+ * This mode of operation can also be enforced on Windows and
  * Unix by enabling bit 7 in the ED flag, e.g. by executing
  * \(lq0,128ED\(rq, and is recommended when writing cross-platform
  * macros using the EC command.
