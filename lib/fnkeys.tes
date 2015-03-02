@@ -13,6 +13,10 @@
 ! Make DELETE an alternative to ESCAPE !
 @[DC]{}
 
+! Make SHIFT+DELETE a rubout/re-insert key.
+  This reverses the ^G modifier for BACKSPACE !
+@[SDC]{}
+
 @[HOME]{
   .ESLINEFROMPOSITIONESPOSITIONFROMLINEU.p
   Q.pU.l <Q.l-."U 1; ' Q.l-.AU.c Q.c- "N Q.c-9"N Q.lU.p 1; '' %.l>
