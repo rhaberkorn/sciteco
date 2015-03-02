@@ -138,7 +138,7 @@ void
 Cmdline::insert(const gchar *src)
 {
 	Cmdline old_cmdline;
-	guint repl_pc;
+	guint repl_pc = 0;
 
 	macro_pc = pc = len;
 
