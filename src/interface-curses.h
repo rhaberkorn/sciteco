@@ -42,10 +42,13 @@ public:
 
 	inline ~ViewCurses()
 	{
-		if (sci) {
-			delwin(get_window());
+		/*
+		 * NOTE: This deletes/frees the view's
+		 * curses WINDOW, despite of what Scinterm's
+		 * documentation says.
+		 */
+		if (sci)
 			scintilla_delete(sci);
-		}
 	}
 
 	inline void
