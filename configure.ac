@@ -153,7 +153,7 @@ case $INTERFACE in
 	AC_DEFINE(INTERFACE_CURSES, , [Build with curses support])
 
 	# For Scintilla:
-	CPPFLAGS="$CPPFLAGS -DNCURSES -I$SCINTERM_PATH"
+	CPPFLAGS="$CPPFLAGS -DCURSES -I$SCINTERM_PATH"
 	;;
 
 gtk)
