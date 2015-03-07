@@ -100,14 +100,14 @@ to code 1, B to code 2, ecetera.
 \*(ST echos control codes as Caret followed by the corresponding
 upper case letter, so you seldomly need to know a control codes
 actual numeric code.
-For instance, control code 2 - typed CTRL+B - will be echoed
+For instance, control code 2 \(em typed CTRL+B \(em will be echoed
 \(lq^B\(rq.
 \*(ST also treats Caret-letter combinations equivalent to
 control codes under most circumstances.
 .IP 3.
 A few keys with non-printable representation are translated to
 control codes as well.
-The most prominent is the Escape key - it is translated to
+The most prominent is the Escape key \(em it is translated to
 code 27.
 The backspace key will always be translated to code 8, and the Tab key
 to code 9.
@@ -223,7 +223,7 @@ Inserted when the Help or shift-Help key is pressed.
 might be typed with a caret due to string building characters
 in long Q-Register names.
 The names are all derived from key definitions of the curses
-library - not all of them may be supported on any particular
+library \(em not all of them may be supported on any particular
 user interface.
 A set of useful Function Key Macros are provided in the
 standard library
@@ -418,7 +418,7 @@ Suspends process using
 This is only an immediate editing command on platforms supporting
 this signal (usually Unices).
 The process can be suspended from another process as well, for
-instance by pressing CTRL+Z in the console - this will also work
+instance by pressing CTRL+Z in the console \(em this will also work
 if \*(ST is busy.
 Therefore with GUI user interfaces (GTK+), this command will only
 work as an immediate editing command in the GUI or as a signal
@@ -615,7 +615,7 @@ The only unary operator currently supported is
 The minus-operator is special and has unique semantics.
 It sets the so called \fBprefix sign\fP which is 1 by default
 to -1.
-This prefix sign may be evaluated by commands - most often it is the
+This prefix sign may be evaluated by commands \(em most often it is the
 default value if the argument stack is empty so that expressions like
 \(lq-C\(rq are rougly equivalent to \(lq-1C\(rq.
 However in front of opening brackets, like in \(lq-(1+2)\(rq, it is
@@ -1194,7 +1194,7 @@ Therefore every macro invocation has its own label namespace and gotos
 to a label have constant complexity once a label has been parsed.
 Terminating a macro execution (or command line) fails if a label that
 is jumped to has not been defined.
-Labels also have another important role in \*(ST - they are used
+Labels also have another important role in \*(ST \(em they are used
 as comments.
 .
 .SS LOOPS
