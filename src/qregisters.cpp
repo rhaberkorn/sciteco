@@ -1058,10 +1058,10 @@ StateCopyToQReg::got_register(QRegister &reg)
 		tecoInt to = expressions.pop_num();
 		from = expressions.pop_num();
 
-		if (!Validate::pos(from) || !Validate::pos(to))
-			throw RangeError("X");
-
 		len = to - from;
+
+		if (len < 0 || !Validate::pos(from) || !Validate::pos(to))
+			throw RangeError("X");
 	}
 
 	tr.chrg.cpMin = from;
