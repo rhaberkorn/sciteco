@@ -40,6 +40,15 @@
 #include "undo.h"
 #include "error.h"
 
+/*
+ * Define this to pause the program at the beginning
+ * of main() (Windows only).
+ * This is a useful hack on Windows, where gdbserver
+ * sometimes refuses to start SciTECO but attaches
+ * to a running process just fine.
+ */
+//#define DEBUG_PAUSE
+
 namespace SciTECO {
 
 #define INI_FILE ".teco_ini"
@@ -285,6 +294,11 @@ main(int argc, char **argv)
 		malloc,			/* try_malloc */
 		realloc			/* try_realloc */
 	};
+
+#ifdef DEBUG_PAUSE
+	/* Windows debugging hack (see above) */
+	system("pause");
+#endif
 
 	signal(SIGINT, sigint_handler);
 
