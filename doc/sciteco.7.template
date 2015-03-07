@@ -109,11 +109,15 @@ A few keys with non-printable representation are translated to
 control codes as well.
 The most prominent is the Escape key - it is translated to
 code 27.
-The Backspace key will be translated to code 8, and the Tab key
+The backspace key will always be translated to code 8, and the Tab key
 to code 9.
 Last but not least, the Return key is translated to the current
 buffer's end of line sequence (linefeed, carriage return followed
 by linefeed or just carriage return).
+Naturally, all of these control codes can also be typed using a
+Control-key combination (e.g. CTRL+I for the tab character) and
+there is often an equivalent typed with the caret character
+(e.g. \(lq^I\(rq).
 .IP 4.
 A selection of other keys without printable representation (called
 function keys) are translated to user-definable character sequences.

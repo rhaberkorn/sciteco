@@ -311,7 +311,7 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 		cmdline.keypress(CTL_KEY_ESC);
 		break;
 	case GDK_BackSpace:
-		cmdline.keypress('\b');
+		cmdline.keypress(CTL_KEY('H'));
 		break;
 	case GDK_Tab:
 		cmdline.keypress('\t');

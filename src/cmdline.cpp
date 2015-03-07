@@ -268,7 +268,7 @@ Cmdline::process_edit_cmd(gchar key)
 			      modifier_enabled ? "enabled" : "disabled");
 		break;
 
-	case '\b': /* rubout/reinsert character */
+	case CTL_KEY('H'): /* rubout/reinsert character */
 		interface.popup_clear();
 
 		if (modifier_enabled)

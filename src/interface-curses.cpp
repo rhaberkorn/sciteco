@@ -509,9 +509,18 @@ event_loop_iter()
 		interface.resize_all_windows();
 		break;
 #endif
-	case 0x7F: /* DEL */
+	case CTL_KEY('H'):
+	case 0x7F: /* ^? */
 	case KEY_BACKSPACE:
-		cmdline.keypress('\b');
+		/*
+		 * For historic reasons terminals can send
+		 * ASCII 8 (^H) or 127 (^?) for backspace.
+		 * Curses also defines KEY_BACKSPACE, probably
+		 * for terminals that send an escape sequence for
+		 * backspace.
+		 * In SciTECO backspace is normalized to ^H.
+		 */
+		cmdline.keypress(CTL_KEY('H'));
 		break;
 	case KEY_ENTER:
 	case '\r':
