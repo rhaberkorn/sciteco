@@ -556,20 +556,25 @@ filename_complete(const gchar *filename, gchar completed)
 	dir_sep[0] = derive_dir_separator(filename);
 	dir_sep[1] = '\0';
 
-	dirname = g_path_get_dirname(filename);
-	dir = g_dir_open(dirname, 0, NULL);
-	if (!dir) {
-		g_free(dirname);
-		return NULL;
-	}
-	if (*dirname != *filename)
-		*dirname = '\0';
-
+	/*
+	 * Derive base and directory names.
+	 * We do not use g_path_get_basename() or g_path_get_dirname()
+	 * since we need strict suffixes and prefixes of filename
+	 * in order to construct paths of entries in dirname
+	 * that are suitable for auto completion.
+	 */
 	basename = strrchr(filename, *dir_sep);
 	if (basename)
 		basename++;
 	else
 		basename = filename;
+	dirname = g_strndup(filename, basename-filename);
+
+	dir = g_dir_open(*dirname ? dirname : ".", 0, NULL);
+	if (!dir) {
+		g_free(dirname);
+		return NULL;
+	}
 
 	while ((cur_basename = g_dir_read_name(dir))) {
 		gchar *cur_filename = g_build_path(dir_sep, dirname, cur_basename, NIL);
