@@ -257,7 +257,7 @@ InterfaceCurses::format_chr(chtype *&target, gchar chr, attr_t attr)
 	 * View::set_representations()
 	 */
 	switch (chr) {
-	case '\x1B': /* escape */
+	case CTL_KEY_ESC:
 		*target++ = '$' | attr | A_REVERSE;
 		break;
 	case '\r':

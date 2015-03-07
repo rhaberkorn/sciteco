@@ -49,15 +49,28 @@ namespace Flags {
 
 extern sig_atomic_t sigint_occurred;
 
-/*
- * for sentinels: NULL might not be defined as a
+/**
+ * For sentinels: NULL might not be defined as a
  * pointer type (LLVM/CLang)
  */
 #define NIL		((void *)0)
 
+/** true if C is a control character */
 #define IS_CTL(C)	((C) < ' ')
+/** ASCII character to echo control character C */
 #define CTL_ECHO(C)	((C) | 0x40)
+/**
+ * Control character of ASCII C, i.e.
+ * control character corresponding to CTRL+<C> keypress.
+ */
 #define CTL_KEY(C)	((C) & ~0x40)
+/**
+ * Control character of the escape key.
+ * Equivalent to CTL_KEY('[')
+ */
+#define CTL_KEY_ESC	27
+/** String containing the escape character */
+#define CTL_KEY_ESC_STR	"\x1B"
 
 #define SUCCESS		(-1)
 #define FAILURE		(0)

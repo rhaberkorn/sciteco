@@ -338,7 +338,7 @@ main(int argc, char **argv)
 	 * If munged file didn't quit, switch into interactive mode
 	 */
 	/* commandline replacement string register */
-	QRegisters::globals.insert("\x1B");
+	QRegisters::globals.insert(CTL_KEY_ESC_STR);
 
 	Goto::table = &cmdline_goto_table;
 	undo.enabled = true;

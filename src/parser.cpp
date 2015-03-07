@@ -77,7 +77,7 @@ static bool skip_else = false;
 static gint nest_level = 0;
 
 gchar *strings[2] = {NULL, NULL};
-gchar escape_char = '\x1B';
+gchar escape_char = CTL_KEY_ESC;
 
 /**
  * Handles all expected exceptions, converting them to
@@ -440,7 +440,7 @@ StateExpectString::custom(gchar chr)
 			undo.push_var(Modifiers::at) = false;
 
 		switch (escape_char) {
-		case '\x1B':
+		case CTL_KEY_ESC:
 		case '{':
 			undo.push_var(escape_char) = g_ascii_toupper(chr);
 			return this;
@@ -466,7 +466,7 @@ StateExpectString::custom(gchar chr)
 
 		undo.push_str(strings[0]) = NULL;
 		if (last)
-			undo.push_var(escape_char) = '\x1B';
+			undo.push_var(escape_char) = CTL_KEY_ESC;
 		nesting = 1;
 
 		if (string_building)
@@ -1024,7 +1024,7 @@ StateStart::custom(gchar chr)
 				    "interactive mode");
 
 		current_doc_undo_edit();
-		QRegisters::globals.edit("\x1B");
+		QRegisters::globals.edit(CTL_KEY_ESC_STR);
 
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_CLEARALL);
@@ -1041,7 +1041,7 @@ StateStart::custom(gchar chr)
 		if (!undo.enabled)
 			throw Error("Command-line editing only possible in "
 				    "interactive mode");
-		if (QRegisters::current != QRegisters::globals["\x1B"])
+		if (QRegisters::current != QRegisters::globals[CTL_KEY_ESC_STR])
 			throw Error("Command-line replacement only allowed when "
 				    "editing the replacement register");
 

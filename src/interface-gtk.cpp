@@ -196,7 +196,7 @@ InterfaceGtk::cmdline_insert_chr(gint &pos, gchar chr)
 	 * View::set_representations()
 	 */
 	switch (chr) {
-	case '\x1B': /* escape */
+	case CTL_KEY_ESC:
 		strcpy(buffer, "$");
 		break;
 	case '\r':
@@ -308,7 +308,7 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 {
 	switch (keyval) {
 	case GDK_Escape:
-		cmdline.keypress('\x1B');
+		cmdline.keypress(CTL_KEY_ESC);
 		break;
 	case GDK_BackSpace:
 		cmdline.keypress('\b');

@@ -102,7 +102,7 @@ copy(void) const
 void
 Cmdline::replace(void)
 {
-	QRegister *cmdline_reg = QRegisters::globals["\x1B"];
+	QRegister *cmdline_reg = QRegisters::globals[CTL_KEY_ESC_STR];
 	/* use heap object to avoid copy constructors etc. */
 	Cmdline *new_cmdline = new Cmdline();
 
@@ -426,11 +426,11 @@ Cmdline::process_edit_cmd(gchar key)
 		}
 		break;
 
-	case '\x1B': /* terminate command line */
+	case CTL_KEY_ESC: /* terminate command line */
 		interface.popup_clear();
 
 		if (States::current == &States::start &&
-		    str && str[len-1] == '\x1B') {
+		    str && str[len-1] == CTL_KEY_ESC) {
 			if (Goto::skip_label) {
 				interface.msg(InterfaceCurrent::MSG_ERROR,
 					      "Label \"%s\" not found",
