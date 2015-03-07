@@ -1,13 +1,28 @@
 Known Bugs:
  * Null-byte in strings not always handled transparently
- * saving another user's file will only preserve the user when run as root
-   (WON'T FIX!?)
+ * Saving another user's file will only preserve the user when run as root.
+   Generally, it is hard to ensure that a) save point files can be created
+   and b) the file mode and ownership of re-created files can be preserved.
+   We should fall back silently to an (inefficient) memory copy or temporary
+   file strategy if this is detected.
  * crashes on large files: S^EM^X$ (regexp: .*)
- * m,nX crashes if m > n
  * the glib allocators are fundamentally broken:
    throwing exceptions is unsafe from C-linkage callbacks.
+ * Colors are weird in PDCurses/win32 console.
+ * Inconsistent path separators. E.g. EN and * will contain
+   backslashes on Windows. Code not taking this into account fails.
+   Either slashes should be normalized to / or there should be
+   a conditional to check for path separators.
 
 Features:
+ * The C/C++ lexer supports preprocessor evaluation.
+   This is currently always enabled but there are no defines.
+   Could be added as a global reg to set up defines easily.
+ * Now that we have redo/reinsertion:
+   When ^G modifier is active, normal inserts could insert
+   between effective and rubbed out command line - without
+   resetting it. This would add another alternative to { and }
+   for fixing up a command line.
  * some missing useful VideoTECO/TECO-11 commands:
    * EF with buffer id
    * ER command: read file into current buffer at dot
@@ -18,6 +33,9 @@ Features:
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
    end of the buffer list.
+ * instead of 0EB to show the list of buffers, there should perhaps
+   be a special TAB-completion (^G mode?) that completes only buffers
+   in the ring. It should also display the numeric buffer ids.
  * properly support Unicode encodings and the character-based model
    * link against libncursesw if possible
    * translate documents to Unicode strings
@@ -48,6 +66,8 @@ Features:
    any changes another process could have done on the file.
    Therefore open buffers should be locked using the flock(), fcntl()
    or lockf() interfaces. On Windows we can even enforce mandatory locks.
+ * Perhaps we should evaluate $COLORTERM on Curses to automatically select
+   a monochrome Curses color scheme.
 
 Optimizations:
  * C++14 is supported by GCC 5 and supports new() and delete()
