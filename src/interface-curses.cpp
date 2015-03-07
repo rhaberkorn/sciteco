@@ -636,7 +636,8 @@ InterfaceCurses::~InterfaceCurses()
 	if (msg_window)
 		delwin(msg_window);
 
-	if (!isendwin())
+	/* PDCurses (win32) crashes if initscr() wasn't called */
+	if (info_window && !isendwin())
 		endwin();
 
 	if (screen)
