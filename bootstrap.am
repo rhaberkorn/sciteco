@@ -10,6 +10,7 @@ SUBST_MACRO = eb$<\e \
 	      <fs@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>j \
 	      <fs@PACKAGE_VERSION^Q@\e@PACKAGE_VERSION@\e;>j \
 	      <fs@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>j \
+	      <fs@PACKAGE_URL_DEV^Q@\e@PACKAGE_URL_DEV@\e;>j \
 	      <fs@bindir^Q@\e$(bindir)\e;>j \
 	      <fs@pkgdatadir^Q@\e$(pkgdatadir)\e;>j \
 	      <fs@scitecolibdir^Q@\e$(scitecolibdir)\e;>j \

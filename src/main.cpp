@@ -117,7 +117,8 @@ process_options(int &argc, char **&argv)
 		{"eval", 'e', 0, G_OPTION_ARG_STRING, &eval_macro,
 		 "Evaluate macro", "macro"},
 		{"mung", 'm', 0, G_OPTION_ARG_FILENAME, &mung_file,
-		 "Mung file instead of " INI_FILE, "file"},
+		 "Mung file instead of "
+		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE, "file"},
 		{NULL}
 	};
 
@@ -126,7 +127,17 @@ process_options(int &argc, char **&argv)
 	GOptionContext	*options;
 	GOptionGroup	*interface_group = interface.get_options();
 
-	options = g_option_context_new("- " PACKAGE_STRING);
+	options = g_option_context_new("[--] [ARGUMENT...]");
+
+	g_option_context_set_summary(
+		options,
+		PACKAGE_STRING " -- Scintilla-based Text Editor and COrrector"
+	);
+	g_option_context_set_description(
+		options,
+		"Bug reports should go to <" PACKAGE_BUGREPORT "> or "
+		"<" PACKAGE_URL_DEV ">."
+	);
 
 	g_option_context_add_main_entries(options, option_entries, NULL);
 	if (interface_group)

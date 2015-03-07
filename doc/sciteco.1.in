@@ -213,7 +213,12 @@ Language reference:
 .TP
 Homepage:
 .UR @PACKAGE_URL@
-\*(ST
+\*(ST at Sourceforge
+.UE
+.TP
+Development home, bug tracker and wiki:
+.UR @PACKAGE_URL_DEV@
+\*(ST at Github
 .UE
 .TP
 Related dialects:
