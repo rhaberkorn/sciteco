@@ -166,9 +166,12 @@ process_options(int &argc, char **&argv)
 static inline void
 initialize_environment(const gchar *program)
 {
-	gchar *default_configpath;
+	gchar *default_configpath, *abs_path;
 	gchar **env;
 
+	/*
+	 * Initialize $SCITECOCONFIG and $SCITECOPATH
+	 */
 	default_configpath = get_default_config_path(program);
 	g_setenv("SCITECOCONFIG", default_configpath, FALSE);
 #ifdef G_OS_WIN32
@@ -180,6 +183,18 @@ initialize_environment(const gchar *program)
 	g_setenv("SCITECOPATH", SCITECOLIBDIR, FALSE);
 #endif
 	g_free(default_configpath);
+
+	/*
+	 * $SCITECOCONFIG and $SCITECOPATH may still be relative.
+	 * They are canonicalized, so macros can use them even
+	 * if the current working directory changes.
+	 */
+	abs_path = get_absolute_path(g_getenv("SCITECOCONFIG"));
+	g_setenv("SCITECOCONFIG", abs_path, TRUE);
+	g_free(abs_path);
+	abs_path = get_absolute_path(g_getenv("SCITECOPATH"));
+	g_setenv("SCITECOPATH", abs_path, TRUE);
+	g_free(abs_path);
 
 	env = g_listenv();
 

@@ -168,6 +168,13 @@ On all other platforms (including UNIX/Linux) this variable
 defaults to the standard library installation path at
 .BR "@scitecolibdir@" .
 .
+.LP
+Both the \fBSCITECOCONFIG\fP and \fBSCITECOPATH\fP environment
+variables are canonicalized to absolute paths.
+Therefore it is possible to define them relative to the
+working directory of \*(ST when it starts up while macros
+can work with the corresponding registers to locate files
+even when the working directory of \*(ST is changed later on.
 .
 .SH FILES
 .
