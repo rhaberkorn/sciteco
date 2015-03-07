@@ -230,8 +230,7 @@ Cmdline::keypress(gchar key)
 	 * characters as necessary into the command line.
 	 */
 	try {
-		if (process_edit_cmd(key))
-			interface.popup_clear();
+		process_edit_cmd(key);
 	} catch (Error &error) {
 		/*
 		 * NOTE: Error message already displayed in
@@ -256,11 +255,13 @@ Cmdline::keypress(gchar key)
 	interface.cmdline_update(this);
 }
 
-bool
+void
 Cmdline::process_edit_cmd(gchar key)
 {
 	switch (key) {
 	case CTL_KEY('G'): /* toggle immediate editing modifier */
+		interface.popup_clear();
+
 		modifier_enabled = !modifier_enabled;
 		interface.msg(InterfaceCurrent::MSG_INFO,
 			      "Immediate editing modifier is now %s.",
@@ -268,6 +269,8 @@ Cmdline::process_edit_cmd(gchar key)
 		break;
 
 	case '\b': /* rubout/reinsert character */
+		interface.popup_clear();
+
 		if (modifier_enabled)
 			/* re-insert character */
 			insert();
@@ -277,6 +280,8 @@ Cmdline::process_edit_cmd(gchar key)
 		break;
 
 	case CTL_KEY('W'): /* rubout/reinsert word/command */
+		interface.popup_clear();
+
 		if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
@@ -316,6 +321,8 @@ Cmdline::process_edit_cmd(gchar key)
 		break;
 
 	case CTL_KEY('U'): /* rubout/reinsert string */
+		interface.popup_clear();
+
 		if (States::is_string()) {
 			if (modifier_enabled) {
 				/* reinsert string */
@@ -342,7 +349,7 @@ Cmdline::process_edit_cmd(gchar key)
 				if (interface.popup_is_shown()) {
 					/* cycle through popup pages */
 					interface.popup_show();
-					return false;
+					break;
 				}
 
 				const gchar *filename = last_occurrence(strings[0]);
@@ -351,13 +358,13 @@ Cmdline::process_edit_cmd(gchar key)
 				if (new_chars)
 					insert(new_chars);
 				g_free(new_chars);
-
-				if (interface.popup_is_shown())
-					return false;
 			} else {
+				interface.popup_clear();
 				insert(key);
 			}
 		} else if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
+			interface.popup_clear();
+
 			/* insert soft tabs */
 			gint spaces = interface.ssm(SCI_GETTABWIDTH);
 
@@ -370,7 +377,7 @@ Cmdline::process_edit_cmd(gchar key)
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				return false;
+				break;
 			}
 
 			gchar complete = escape_char == '{' ? ' ' : escape_char;
@@ -379,9 +386,6 @@ Cmdline::process_edit_cmd(gchar key)
 			if (new_chars)
 				insert(new_chars);
 			g_free(new_chars);
-
-			if (interface.popup_is_shown())
-				return false;
 		} else if (States::current == &States::executecommand) {
 			/*
 			 * In the EC command, <TAB> completes files just like ^T
@@ -391,7 +395,7 @@ Cmdline::process_edit_cmd(gchar key)
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				return false;
+				break;
 			}
 
 			const gchar *filename = last_occurrence(strings[0]);
@@ -400,14 +404,11 @@ Cmdline::process_edit_cmd(gchar key)
 			if (new_chars)
 				insert(new_chars);
 			g_free(new_chars);
-
-			if (interface.popup_is_shown())
-				return false;
 		} else if (States::current == &States::scintilla_symbols) {
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
 				interface.popup_show();
-				return false;
+				break;
 			}
 
 			const gchar *symbol = last_occurrence(strings[0], ",");
@@ -419,15 +420,15 @@ Cmdline::process_edit_cmd(gchar key)
 			if (new_chars)
 				insert(new_chars);
 			g_free(new_chars);
-
-			if (interface.popup_is_shown())
-				return false;
 		} else {
+			interface.popup_clear();
 			insert(key);
 		}
 		break;
 
 	case '\x1B': /* terminate command line */
+		interface.popup_clear();
+
 		if (States::current == &States::start &&
 		    str && str[len-1] == '\x1B') {
 			if (Goto::skip_label) {
@@ -474,17 +475,17 @@ Cmdline::process_edit_cmd(gchar key)
 		 * <CTL/Z> does not raise signal if handling of
 		 * special characters temporarily disabled in terminal
 		 * (Curses), or command-line is detached from
-		 * terminal (GTK+)
+		 * terminal (GTK+).
+		 * This does NOT change the state of the popup window.
 		 */
 		raise(SIGTSTP);
 		break;
 #endif
 
 	default:
+		interface.popup_clear();
 		insert(key);
 	}
-
-	return true;
 }
 
 void

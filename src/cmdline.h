@@ -68,7 +68,7 @@ public:
 	void replace(void) G_GNUC_NORETURN;
 
 private:
-	bool process_edit_cmd(gchar key);
+	void process_edit_cmd(gchar key);
 
 	inline void
 	rubout(void)
