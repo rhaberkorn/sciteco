@@ -403,7 +403,7 @@ StateEditFile::done(const gchar *str)
  * save point files.
  * It does not merely overwrite existing files when saving
  * but moves them to save point files instead.
- * Save point files are called \(lq.teco-\fIn\fP-\fIfilename\fP\(rq,
+ * Save point files are called \(lq.teco-\fIn\fP-\fIfilename\fP~\(rq,
  * where <filename> is the name of the saved file and <n> is
  * a number that is increased with every save operation.
  * Save point files are always created in the same directory
@@ -411,7 +411,7 @@ StateEditFile::done(const gchar *str)
  * on disk is necessary but only a rename of the file.
  * When rubbing out the EW command, \*(ST restores the latest
  * save point file by moving (renaming) it back to its
- * original path - also not requiring any on-disk copying.
+ * original path \(em also not requiring any on-disk copying.
  * \*(ST is impossible to crash, but just in case it still
  * does it may leave behind these save point files which
  * must be manually deleted by the user.

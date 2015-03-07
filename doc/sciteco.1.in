@@ -183,10 +183,12 @@ and opening files specified on the command line.
 .B $SCITECOPATH/*.tes
 Standard library macros.
 .TP
-.BI .teco- x - filename
+.BI .teco- n - filename ~
 Save point files created by \*(ST when saving files
 during interactive execution have this format.
-These files can be ignored by version control systems, etc.
+On Windows, these files have the hidden attribute set.
+Savepoint files are temporary and should be ignored by version
+control systems, etc.
 .TP
 .B $SCITECOCONFIG/.teco_session
 Macro storing the default buffer session.

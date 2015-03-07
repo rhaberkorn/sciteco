@@ -213,7 +213,7 @@ make_savepoint(const gchar *filename)
 
 	basename = g_path_get_basename(filename);
 	g_snprintf(savepoint_basename, sizeof(savepoint_basename),
-		   ".teco-%d-%s", savepoint_id, basename);
+		   ".teco-%d-%s~", savepoint_id, basename);
 	g_free(basename);
 	dirname = g_path_get_dirname(filename);
 	savepoint = g_build_filename(dirname, savepoint_basename, NIL);
