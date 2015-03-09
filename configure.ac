@@ -137,7 +137,8 @@ case $INTERFACE in
 		;;
 	pdcurses)
 		AC_CHECK_LIB(pdcurses, initscr, , [
-			AC_MSG_ERROR([libpdcurses missing!])
+			AC_MSG_ERROR([libpdcurses missing!
+			              Perhaps it is not named correctly or has wrong permissions.])
 		])
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
 			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
