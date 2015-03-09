@@ -38,6 +38,7 @@
 #endif
 
 #include "sciteco.h"
+#include "string-utils.h"
 #include "cmdline.h"
 #include "qregisters.h"
 #include "ring.h"
@@ -226,14 +227,27 @@ InterfaceCurses::draw_info(void)
 	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
 	waddstr(info_window, info_current);
 	wclrtoeol(info_window);
+
+#ifdef PDCURSES
+	PDC_set_title(info_current);
+#endif
 }
 
 void
 InterfaceCurses::info_update_impl(const QRegister *reg)
 {
+	/*
+	 * We cannot rely on Curses' control character drawing
+	 * and we need the info_current string for other purposes
+	 * (like PDC_set_title()), so we "canonicalize" the
+	 * register name here:
+	 */
+	gchar *name = String::canonicalize_ctl(reg->name);
+
 	g_free(info_current);
-	info_current = g_strdup_printf("%s - <QRegister> %s", PACKAGE_NAME,
-				       reg->name);
+	info_current = g_strdup_printf("%s - <QRegister> %s",
+	                               PACKAGE_NAME, name);
+	g_free(name);
 
 	draw_info();
 }

@@ -21,9 +21,45 @@
 
 #include <glib.h>
 
+#include "sciteco.h"
 #include "string-utils.h"
 
 namespace SciTECO {
+
+/**
+ * Canonicalize control characters in str.
+ * This converts all control characters to printable
+ * characters without tabs, line feeds, etc.
+ * Useful for displaying Q-Register names and
+ * TECO code.
+ */
+gchar *
+String::canonicalize_ctl(const gchar *str)
+{
+	gsize ret_len = 1; /* for trailing 0 */
+	gchar *ret, *p;
+
+	/*
+	 * Instead of approximating size with strlen()
+	 * we can just as well calculate it exactly:
+	 */
+	for (const gchar *p = str; *p; p++)
+		ret_len += IS_CTL(*p) ? 2 : 1;
+
+	p = ret = (gchar *)g_malloc(ret_len);
+
+	while (*str) {
+		if (IS_CTL(*str)) {
+			*p++ = '^';
+			*p++ = CTL_ECHO(*str++);
+		} else {
+			*p++ = *str++;
+		}
+	}
+	*p = '\0';
+
+	return ret;
+}
 
 void
 String::get_coord(const gchar *str, gint pos,

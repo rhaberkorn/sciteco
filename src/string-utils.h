@@ -75,6 +75,8 @@ append(gchar *&str, gchar chr)
 	append(str, buf);
 }
 
+gchar *canonicalize_ctl(const gchar *str);
+
 void get_coord(const gchar *str, gint pos,
 	       gint &line, gint &column);
 

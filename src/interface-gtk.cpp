@@ -36,6 +36,7 @@
 #include <ScintillaWidget.h>
 
 #include "sciteco.h"
+#include "string-utils.h"
 #include "cmdline.h"
 #include "qregisters.h"
 #include "ring.h"
@@ -168,10 +169,13 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 void
 InterfaceGtk::info_update_impl(const QRegister *reg)
 {
+	gchar *name = String::canonicalize_ctl(reg->name);
 	gchar buf[255];
 
-	g_snprintf(buf, sizeof(buf), "%s - <QRegister> %s", PACKAGE_NAME,
-		   reg->name);
+	g_snprintf(buf, sizeof(buf), "%s - <QRegister> %s",
+		   PACKAGE_NAME, name);
+	g_free(name);
+
 	gtk_window_set_title(GTK_WINDOW(window), buf);
 }
 
