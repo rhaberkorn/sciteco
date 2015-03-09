@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #include "sciteco.h"
 #include "interface.h"
@@ -35,17 +36,28 @@ namespace States {
 	StateGlob glob;
 }
 
-Globber::Globber(const gchar *_pattern)
+Globber::Globber(const gchar *pattern)
 {
-	gchar *basename;
+	gsize dirname_len = 0;
 
-	dirname = g_path_get_dirname(_pattern);
-	dir = g_dir_open(dirname, 0, NULL);
+	/*
+	 * This finds the directory component including
+	 * any trailing directory separator
+	 * without making up a directory if it is missing
+	 * (as g_path_get_dirname() does).
+	 * Important since it allows us to construct
+	 * file names with the exact same directory
+	 * prefix as the input pattern.
+	 */
+	for (const gchar *p = pattern; *p; p++)
+		if (G_IS_DIR_SEPARATOR(*p))
+			dirname_len = p - pattern + 1;
+
+	dirname = g_strndup(pattern, dirname_len);
+	dir = g_dir_open(*dirname ? dirname : ".", 0, NULL);
 	/* if dirname does not exist, dir may be NULL */
 
-	basename = g_path_get_basename(_pattern);
-	pattern = g_pattern_spec_new(basename);
-	g_free(basename);
+	Globber::pattern = g_pattern_spec_new(pattern + dirname_len);
 }
 
 gchar *
@@ -56,9 +68,13 @@ Globber::next(void)
 	if (!dir)
 		return NULL;
 
+	/*
+	 * As dirname includes the directory separator,
+	 * we can simply concatenate dirname with basename.
+	 */
 	while ((basename = g_dir_read_name(dir)))
 		if (g_pattern_match_string(pattern, basename))
-			return g_build_filename(dirname, basename, NIL);
+			return g_strconcat(dirname, basename, NIL);
 
 	return NULL;
 }
@@ -82,6 +98,9 @@ Globber::~Globber()
  * The EN command expands a glob \fIpattern\fP to a list of
  * matching file names. This is similar to globbing
  * on UNIX but not as powerful.
+ * The resulting file names have the exact same directory
+ * component as \fIpattern\fP (if any).
+ *
  * A \fIpattern\fP is a file name with \(lq*\(rq and
  * \(lq?\(rq wildcards:
  * \(lq*\(rq matches an arbitrary, possibly empty, string.
