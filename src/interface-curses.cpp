@@ -248,8 +248,7 @@ InterfaceCurses::info_update_impl(const QRegister *reg)
 	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
 	                           name, NIL);
 	g_free(name);
-
-	draw_info();
+	/* NOTE: drawn in event_loop_iter() */
 }
 
 void
@@ -259,8 +258,7 @@ InterfaceCurses::info_update_impl(const Buffer *buffer)
 	info_current = g_strconcat(PACKAGE_NAME " - <Buffer> ",
 	                           buffer->filename ? : UNNAMED_FILE,
 	                           buffer->dirty ? "*" : "", NIL);
-
-	draw_info();
+	/* NOTE: drawn in event_loop_iter() */
 }
 
 void
@@ -577,6 +575,13 @@ event_loop_iter()
 
 	sigint_occurred = FALSE;
 
+	/*
+	 * Info window is updated very often which is very
+	 * costly, especially when using PDC_set_title(),
+	 * so we redraw it here, where the overhead does
+	 * not matter much.
+	 */
+	interface.draw_info();
 	wnoutrefresh(interface.info_window);
 	/* FIXME: this does wrefresh() internally */
 	interface.current_view->refresh();

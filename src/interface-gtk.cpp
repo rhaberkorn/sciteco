@@ -90,6 +90,8 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
+	info_current = g_strdup(PACKAGE_NAME);
+
 	cmdline_widget = gtk_entry_new();
 	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
@@ -168,28 +170,21 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 void
 InterfaceGtk::info_update_impl(const QRegister *reg)
 {
-	gchar *str;
 	gchar *name = String::canonicalize_ctl(reg->name);
 
-	str = g_strconcat(PACKAGE_NAME " - <QRegister> ",
-	                  name, NIL);
+	g_free(info_current);
+	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
+	                           name, NIL);
 	g_free(name);
-
-	gtk_window_set_title(GTK_WINDOW(window), str);
-	g_free(str);
 }
 
 void
 InterfaceGtk::info_update_impl(const Buffer *buffer)
 {
-	gchar *str;
-
-	str = g_strconcat(PACKAGE_NAME " - <Buffer> ",
-	                  buffer->filename ? : UNNAMED_FILE,
-	                  buffer->dirty ? "*" : "", NIL);
-
-	gtk_window_set_title(GTK_WINDOW(window), str);
-	g_free(str);
+	g_free(info_current);
+	info_current = g_strconcat(PACKAGE_NAME " - <Buffer> ",
+	                           buffer->filename ? : UNNAMED_FILE,
+	                           buffer->dirty ? "*" : "", NIL);
 }
 
 void
@@ -290,6 +285,7 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 
 InterfaceGtk::~InterfaceGtk()
 {
+	g_free(info_current);
 	if (popup_widget)
 		gtk_widget_destroy(popup_widget);
 	if (window)
@@ -376,6 +372,15 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 			cmdline.keypress(key);
 		}
 	}
+
+	/*
+	 * The info area is updated very often and setting the
+	 * window title each time it is updated is VERY costly.
+	 * So we set it here once after every keypress even if the
+	 * info line did not change.
+	 */
+	gtk_window_set_title(GTK_WINDOW(interface.window),
+	                     interface.info_current);
 }
 
 static gboolean

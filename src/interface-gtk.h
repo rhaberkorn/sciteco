@@ -67,8 +67,12 @@ public:
 typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GtkWidget *window;
 	GtkWidget *vbox;
+
+	gchar *info_current;
+	GtkWidget *info_widget;
+
+	GtkWidget *message_widget;
 	GtkWidget *cmdline_widget;
-	GtkWidget *info_widget, *message_widget;
 
 	GtkWidget *popup_widget;
 
@@ -78,8 +82,9 @@ public:
 	InterfaceGtk() : Interface(),
 	                 window(NULL),
 	                 vbox(NULL),
+	                 info_current(NULL), info_widget(NULL),
+			 message_widget(NULL),
 			 cmdline_widget(NULL),
-			 info_widget(NULL), message_widget(NULL),
 			 popup_widget(NULL),
 	                 current_view_widget(NULL) {}
 	~InterfaceGtk();
@@ -140,6 +145,9 @@ private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
 
 	void cmdline_insert_chr(gint &pos, gchar chr);
+
+	friend static inline void handle_key_press(bool is_shift, bool is_ctl,
+	                                           guint keyval);
 } InterfaceCurrent;
 
 } /* namespace SciTECO */
