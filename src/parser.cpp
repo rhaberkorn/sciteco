@@ -1602,6 +1602,10 @@ StateCondCommand::custom(gchar chr)
 		BEGIN_EXEC(&States::start);
 		result = g_ascii_isdigit((gchar)value);
 		break;
+	case 'I':
+		BEGIN_EXEC(&States::start);
+		result = G_IS_DIR_SEPARATOR((gchar)value);
+		break;
 	case 'S':
 	case 'T':
 		BEGIN_EXEC(&States::start);

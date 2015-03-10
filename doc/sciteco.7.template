@@ -1296,8 +1296,19 @@ Like in pattern matching, a symbol constituent is defined
 as an alpha-numeric character, dot, dollar or underscore.
 .TP
 .IB n \(dqD
-Applies if \fIn\fP is the code a digit character (0 to 9).
+Applies if \fIn\fP is the code of a digit character (0 to 9).
 The current radix is insignificant.
+.TP
+.IB n \(dqI
+Applies if \fIn\fP is the code of a directory separator
+(e.g. \(lq/\(rq on UNIX, \(lq\\\(rq or \(lq/\(rq on Windows).
+This is useful for macros that have to work with different
+separator styles in a portable manner.
+Note that, \*(ST itself is designed not to produce non-forward-slash
+separators and at least allows the user to generate forward-slashes
+in portable macros.
+This is not the case, for instance when working with environment
+variables.
 .TP
 .IB n \(dqS
 .TQ
