@@ -28,6 +28,7 @@
 #include "interface.h"
 #include "parser.h"
 #include "ring.h"
+#include "ioview.h"
 #include "glob.h"
 
 namespace SciTECO {
@@ -38,7 +39,7 @@ namespace States {
 
 Globber::Globber(const gchar *pattern)
 {
-	gsize dirname_len = 0;
+	gsize dirname_len;
 
 	/*
 	 * This finds the directory component including
@@ -49,11 +50,9 @@ Globber::Globber(const gchar *pattern)
 	 * file names with the exact same directory
 	 * prefix as the input pattern.
 	 */
-	for (const gchar *p = pattern; *p; p++)
-		if (G_IS_DIR_SEPARATOR(*p))
-			dirname_len = p - pattern + 1;
-
+	dirname_len = file_get_dirname_len(pattern);
 	dirname = g_strndup(pattern, dirname_len);
+
 	dir = g_dir_open(*dirname ? dirname : ".", 0, NULL);
 	/* if dirname does not exist, dir may be NULL */
 

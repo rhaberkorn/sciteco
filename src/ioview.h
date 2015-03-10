@@ -45,6 +45,29 @@ gchar *get_absolute_path(const gchar *path);
 
 bool file_is_visible(const gchar *path);
 
+/**
+ * This gets the length of a file name's directory
+ * component including any trailing directory separator.
+ * It returns 0 if the file name does not have a directory
+ * separator.
+ * This is useful when constructing file names in the same
+ * directory as an existing one, keeping the exact same
+ * directory component (globbing, tab completion...).
+ * Also if it returns non-0, this can be used to look up
+ * the last used directory separator in the file name.
+ */
+static inline gsize
+file_get_dirname_len(const gchar *path)
+{
+	gsize len = 0;
+
+	for (const gchar *p = path; *p; p++)
+		if (G_IS_DIR_SEPARATOR(*p))
+			len = p - path + 1;
+
+	return len;
+}
+
 class IOView : public ViewCurrent {
 	class UndoTokenRemoveFile : public UndoToken {
 		gchar *filename;
