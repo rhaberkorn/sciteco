@@ -68,9 +68,17 @@ sciteco_minimal_LDADD = libsciteco-base.a \
 			@SCINTILLA_PATH@/bin/scintilla.a
 
 bin_PROGRAMS = sciteco
+sciteco_SOURCES =
 nodist_sciteco_SOURCES = $(nodist_sciteco_minimal_SOURCES) \
 			 symbols-scintilla.cpp symbols-scilexer.cpp
 sciteco_LDADD = $(sciteco_minimal_LDADD)
+
+# For MinGW: Compile in resource (contains the icon)
+if WIN32
+sciteco_SOURCES += sciteco.rc
+.rc.o:
+	@RC@ $< $@
+endif
 
 CLEANFILES = $(BUILT_SOURCES) \
 	     symbols-scintilla.cpp symbols-scilexer.cpp

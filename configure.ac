@@ -42,6 +42,18 @@ AC_PROG_INSTALL
 # Required by the Scintilla build process:
 AC_CHECK_TOOL(AR, ar)
 
+# Check for Windows resource compiler and define
+# WIN32 conditional
+case $host in
+*-mingw*)
+	LT_LANG([Windows Resource])
+	AM_CONDITIONAL(WIN32, [true])
+	;;
+*)
+	AM_CONDITIONAL(WIN32, [false])
+	;;
+esac
+
 # Emscripten uses Clang as well
 AM_CONDITIONAL(CLANG, [$CXX --version | $GREP -E "clang|Emscripten" >/dev/null])
 
