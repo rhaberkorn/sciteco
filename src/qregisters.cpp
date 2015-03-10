@@ -318,7 +318,22 @@ QRegisterBufferInfo::get_integer(void)
 gchar *
 QRegisterBufferInfo::get_string(void)
 {
-	return g_strdup(ring.current->filename ? : "");
+	gchar *str = g_strdup(ring.current->filename ? : "");
+
+	/*
+	 * On platforms with a default non-forward-slash directory
+	 * separator (i.e. Windows), Buffer::filename will have
+	 * the wrong separator.
+	 * To make the life of macros that evaluate "*" easier,
+	 * the directory separators are normalized to "/" here.
+	 * This does not change the size of the string, so
+	 * get_string_size() still works.
+	 */
+#if G_DIR_SEPARATOR != '/'
+	g_strdelimit(str, G_DIR_SEPARATOR_S, '/');
+#endif
+
+	return str;
 }
 
 gsize
@@ -330,7 +345,8 @@ QRegisterBufferInfo::get_string_size(void)
 gint
 QRegisterBufferInfo::get_character(gint position)
 {
-	if (position < 0 || position >= (gint)get_string_size())
+	if (position < 0 ||
+	    position >= (gint)QRegisterBufferInfo::get_string_size())
 		return -1;
 
 	return ring.current->filename[position];
@@ -339,11 +355,14 @@ QRegisterBufferInfo::get_character(gint position)
 void
 QRegisterBufferInfo::edit(void)
 {
+	gchar *str;
+
 	QRegister::edit();
 
 	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
-	QRegisters::view.ssm(SCI_SETTEXT, 0,
-	                     (sptr_t)(ring.current->filename ? : ""));
+	str = QRegisterBufferInfo::get_string();
+	QRegisters::view.ssm(SCI_SETTEXT, 0, (sptr_t)str);
+	g_free(str);
 	QRegisters::view.ssm(SCI_ENDUNDOACTION);
 
 	QRegisters::view.undo_ssm(SCI_UNDO);

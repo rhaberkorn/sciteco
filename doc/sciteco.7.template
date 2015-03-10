@@ -636,7 +636,10 @@ There is at most one unnamed buffer in the ring, identified
 by the empty name.
 Named buffers are buffers with an associated file name.
 The file might or might not already exist in the file system.
-The file name uses the host system's path seperator.
+The file name uses the host system's directory separator, but for
+the sake of macro portability the directory separators are
+normalized to \(lq/\(rq when accessing the current buffer's
+file name with the \(lq*\(rq Q-Register.
 File names are always tried to be normalized to absolute
 paths to make them independant of \*(ST's current working
 directory.
@@ -897,6 +900,11 @@ buffer in ring.
 The unnamed buffer has an empty name.
 If the current document is a register, this returns the
 name or id of the buffer last edited.
+Buffer file names are \fItried\fP to be made absolute paths
+by \*(ST, but this might not always be possible.
+Also, file names accessed with the \(lq*\(rq register will
+always have forward-slash directory separators even if they
+are displayed differently in the user interface.
 The \(lq*\(rq register may also be edited but changing its
 string contents has no effect on the file name of the buffer.
 Setting the numeric part of the \(lq*\(rq register,
