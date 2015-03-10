@@ -223,6 +223,20 @@ if [[ $bootstrap = no -a x$SCITECO = x ]]; then
 fi
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
 
+# This cannot be done with --enable-static as it only controls
+# which kind of libraries libtool builds.
+# Also, it cannot be controlled reliably by setting LDFLAGS for
+# ./configure, as this would be used for linking the test cases
+# without libtool and libtool would ignore it.
+# It is only possible to call `make LDFLAGS="-all-static"` but
+# this is inconvenient...
+AC_ARG_ENABLE(static-executables,
+	AS_HELP_STRING([--enable-static-executables],
+		       [Link in as many runtime dependencies as possible
+	                statically [default=no]]),
+	[static_executables=$enableval], [static_executables=no])
+AM_CONDITIONAL(STATIC_EXECUTABLES, [test x$static_executables = xyes])
+
 AC_CONFIG_FILES([Makefile src/Makefile lib/Makefile])
 AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
 AC_OUTPUT

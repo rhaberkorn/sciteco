@@ -12,6 +12,11 @@ if NEED_COMPAT
 AM_CPPFLAGS += -I@top_srcdir@/compat
 endif
 
+if STATIC_EXECUTABLES
+# AM_LDFLAGS are libtool flags, NOT compiler/linker flags
+AM_LDFLAGS = -all-static
+endif
+
 BUILT_SOURCES =
 
 EXTRA_DIST = gtk-info-popup.gob \
