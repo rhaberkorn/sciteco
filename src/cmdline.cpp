@@ -55,7 +55,6 @@ static gchar *symbol_complete(SymbolList &list, const gchar *symbol,
 static const gchar *last_occurrence(const gchar *str,
 				    const gchar *chars = " \t\v\r\n\f<>,;@");
 static inline gboolean filename_is_dir(const gchar *filename);
-static inline gchar derive_dir_separator(const gchar *filename);
 
 /** Current command line. */
 Cmdline cmdline;
@@ -525,8 +524,10 @@ get_eol(void)
 static gchar *
 filename_complete(const gchar *filename, gchar completed)
 {
-	gchar *dirname;
+	gsize dirname_len;
+	gchar *dirname, dir_sep;
 	const gchar *basename, *cur_basename;
+
 	GDir *dir;
 	GSList *files = NULL;
 	guint files_len = 0;
@@ -534,14 +535,29 @@ filename_complete(const gchar *filename, gchar completed)
 	gsize filename_len;
 	gsize prefix_len = 0;
 
-	gchar dir_sep[2];
-
 	if (!filename)
 		filename = "";
 	filename_len = strlen(filename);
 
 	if (is_glob_pattern(filename))
 		return NULL;
+
+	/*
+	 * Derive base and directory names.
+	 * We do not use g_path_get_basename() or g_path_get_dirname()
+	 * since we need strict suffixes and prefixes of filename
+	 * in order to construct paths of entries in dirname
+	 * that are suitable for auto completion.
+	 */
+	dirname_len = file_get_dirname_len(filename);
+	dirname = g_strndup(filename, dirname_len);
+	basename = filename + dirname_len;
+
+	dir = g_dir_open(dirname_len ? dirname : ".", 0, NULL);
+	if (!dir) {
+		g_free(dirname);
+		return NULL;
+	}
 
 	/*
 	 * On Windows, both forward and backslash
@@ -553,34 +569,21 @@ filename_complete(const gchar *filename, gchar completed)
 	 * This also allows forward-slash auto-completion
 	 * on Windows.
 	 */
-	dir_sep[0] = derive_dir_separator(filename);
-	dir_sep[1] = '\0';
-
-	/*
-	 * Derive base and directory names.
-	 * We do not use g_path_get_basename() or g_path_get_dirname()
-	 * since we need strict suffixes and prefixes of filename
-	 * in order to construct paths of entries in dirname
-	 * that are suitable for auto completion.
-	 */
-	basename = strrchr(filename, *dir_sep);
-	if (basename)
-		basename++;
-	else
-		basename = filename;
-	dirname = g_strndup(filename, basename-filename);
-
-	dir = g_dir_open(*dirname ? dirname : ".", 0, NULL);
-	if (!dir) {
-		g_free(dirname);
-		return NULL;
-	}
+	dir_sep = dirname_len ? dirname[dirname_len-1]
+	                      : G_DIR_SEPARATOR;
 
 	while ((cur_basename = g_dir_read_name(dir))) {
-		gchar *cur_filename = g_build_path(dir_sep, dirname, cur_basename, NIL);
+		gchar *cur_filename;
 
-		if (!g_str_has_prefix(cur_basename, basename) ||
-		    (!*basename && !file_is_visible(cur_filename))) {
+		if (!g_str_has_prefix(cur_basename, basename))
+			continue;
+
+		/*
+		 * dirname contains any directory separator,
+		 * so g_strconcat() works here.
+		 */
+		cur_filename = g_strconcat(dirname, cur_basename, NIL);
+		if (!*basename && !file_is_visible(cur_filename)) {
 			g_free(cur_filename);
 			continue;
 		}
@@ -746,31 +749,5 @@ filename_is_dir(const gchar *filename)
 	c = filename[strlen(filename)-1];
 	return G_IS_DIR_SEPARATOR(c);
 }
-
-#ifdef G_OS_WIN32
-
-static inline gchar
-derive_dir_separator(const gchar *filename)
-{
-	gchar sep = G_DIR_SEPARATOR;
-
-	while (*filename) {
-		if (G_IS_DIR_SEPARATOR(*filename))
-			sep = *filename;
-		filename++;
-	}
-
-	return sep;
-}
-
-#else /* !G_OS_WIN32 */
-
-static inline gchar
-derive_dir_separator(const gchar *filename)
-{
-	return G_DIR_SEPARATOR;
-}
-
-#endif
 
 } /* namespace SciTECO */
