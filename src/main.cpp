@@ -76,6 +76,7 @@ namespace Flags {
 
 static gchar *eval_macro = NULL;
 static gchar *mung_file = NULL;
+static gboolean mung_profile = TRUE;
 
 sig_atomic_t sigint_occurred = FALSE;
 
@@ -128,6 +129,11 @@ process_options(int &argc, char **&argv)
 		{"mung", 'm', 0, G_OPTION_ARG_FILENAME, &mung_file,
 		 "Mung file instead of "
 		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE, "file"},
+		{"no-profile", 0, G_OPTION_FLAG_REVERSE,
+		 G_OPTION_ARG_NONE, &mung_profile,
+		 "Do not mung "
+		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE
+		 " even if it exists"},
 		{NULL}
 	};
 
@@ -353,11 +359,12 @@ main(int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		if (!mung_file)
+		if (!mung_file && mung_profile)
 			mung_file = g_build_filename(g_getenv("SCITECOCONFIG"),
 			                             INI_FILE, NIL);
 
-		if (g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
+		if (mung_file &&
+		    g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
 			Execute::file(mung_file, false);
 
 			/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */

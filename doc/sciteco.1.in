@@ -17,6 +17,7 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .OP \-h|\-\-help
 .OP \-e|\-\-eval macro
 .OP \-m|\-\-mung file
+.OP \-\-no\-profile
 .OP \-\-
 .RI [ argument
 .IR .\|.\|. ]
@@ -104,6 +105,9 @@ The profile will usually set up various Scintilla and \*(ST options,
 configure syntax highlighting,
 define commonly used macros and open files specified as arguments to \*(ST.
 It will usually leave the editor in interactive mode.
+Profile execution can be suppressed with the
+.B \-\-no\-profile
+option.
 .
 .
 .SH OPTIONS
@@ -122,6 +126,14 @@ option has no effect.
 Mung \fIfile\fP.
 Default is
 .IR $SCITECOCONFIG/.teco_ini .
+.IP "\fB--no-profile\fP"
+Do not mung any profile.
+This leaves the editor in interactive mode with default
+settings just as if no profile existed or like when
+munging an empty file.
+This is useful to fix up a broken profile script.
+This option has no effect when a file is explicitly munged with
+.BR \-\-mung .
 .
 .
 .SH EXIT STATUS
