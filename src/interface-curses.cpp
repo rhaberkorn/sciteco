@@ -245,8 +245,8 @@ InterfaceCurses::info_update_impl(const QRegister *reg)
 	gchar *name = String::canonicalize_ctl(reg->name);
 
 	g_free(info_current);
-	info_current = g_strdup_printf("%s - <QRegister> %s",
-	                               PACKAGE_NAME, name);
+	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
+	                           name, NIL);
 	g_free(name);
 
 	draw_info();
@@ -256,9 +256,9 @@ void
 InterfaceCurses::info_update_impl(const Buffer *buffer)
 {
 	g_free(info_current);
-	info_current = g_strdup_printf("%s - <Buffer> %s%s", PACKAGE_NAME,
-				       buffer->filename ? : UNNAMED_FILE,
-				       buffer->dirty ? "*" : "");
+	info_current = g_strconcat(PACKAGE_NAME " - <Buffer> ",
+	                           buffer->filename ? : UNNAMED_FILE,
+	                           buffer->dirty ? "*" : "", NIL);
 
 	draw_info();
 }

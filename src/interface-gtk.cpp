@@ -24,7 +24,6 @@
 
 #include <glib.h>
 #include <glib/gprintf.h>
-#include <glib/gstdio.h>
 
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
@@ -169,25 +168,28 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 void
 InterfaceGtk::info_update_impl(const QRegister *reg)
 {
+	gchar *str;
 	gchar *name = String::canonicalize_ctl(reg->name);
-	gchar buf[255];
 
-	g_snprintf(buf, sizeof(buf), "%s - <QRegister> %s",
-		   PACKAGE_NAME, name);
+	str = g_strconcat(PACKAGE_NAME " - <QRegister> ",
+	                  name, NIL);
 	g_free(name);
 
-	gtk_window_set_title(GTK_WINDOW(window), buf);
+	gtk_window_set_title(GTK_WINDOW(window), str);
+	g_free(str);
 }
 
 void
 InterfaceGtk::info_update_impl(const Buffer *buffer)
 {
-	gchar buf[255];
+	gchar *str;
 
-	g_snprintf(buf, sizeof(buf), "%s - <Buffer> %s%s", PACKAGE_NAME,
-		   buffer->filename ? : UNNAMED_FILE,
-		   buffer->dirty ? "*" : "");
-	gtk_window_set_title(GTK_WINDOW(window), buf);
+	str = g_strconcat(PACKAGE_NAME " - <Buffer> ",
+	                  buffer->filename ? : UNNAMED_FILE,
+	                  buffer->dirty ? "*" : "", NIL);
+
+	gtk_window_set_title(GTK_WINDOW(window), str);
+	g_free(str);
 }
 
 void
