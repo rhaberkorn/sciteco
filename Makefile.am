@@ -8,6 +8,12 @@ noinst_HEADERS = compat/bsd/sys/cdefs.h \
 
 EXTRA_DIST = README TODO
 
+# The icons are not installed currently.
+# This should be left up to the Linux distro
+# packager.
+EXTRA_DIST += ico/sciteco-48.png \
+              ico/sciteco.ico
+
 # Distribute entire scintilla directory and
 # do some manual cleanup
 EXTRA_DIST += scintilla
