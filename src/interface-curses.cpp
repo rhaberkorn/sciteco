@@ -45,6 +45,22 @@
 #include "interface.h"
 #include "interface-curses.h"
 
+/**
+ * Whether we have PDCurses-only routines:
+ * Could be 0, even on PDCurses
+ */
+#ifndef PDCURSES
+#define PDCURSES 0
+#endif
+
+/**
+ * Whether we're on PDCurses/win32
+ */
+#if defined(__PDCURSES__) && defined(G_OS_WIN32) && \
+    !defined(PDCURSES_WIN32A)
+#define PDCURSES_WIN32
+#endif
+
 namespace SciTECO {
 
 extern "C" {
@@ -107,7 +123,7 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 #endif
 }
 
-#ifdef __PDCURSES__
+#ifdef __PDCURSES__ /* Any PDCurses */
 
 void
 InterfaceCurses::init_screen(void)
@@ -228,7 +244,7 @@ InterfaceCurses::draw_info(void)
 	waddstr(info_window, info_current);
 	wclrtoeol(info_window);
 
-#ifdef PDCURSES
+#if PDCURSES
 	PDC_set_title(info_current);
 #endif
 }
@@ -302,6 +318,20 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	chtype *p;
 
 	/*
+	 * AFAIK bold black should be rendered grey by any
+	 * common terminal.
+	 * If not, this problem will be gone once we support
+	 * a Scintilla view command line.
+	 * Also A_UNDERLINE is not supported by PDCurses/win32
+	 * and causes weird colors, so we better leave it away.
+	 */
+	static const attr_t rubout_attr =
+#ifndef PDCURSES_WIN32
+		A_UNDERLINE |
+#endif
+		A_BOLD | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLACK);
+
+	/*
 	 * Replace entire pre-formatted command-line.
 	 * We don't know if it is similar to the last one,
 	 * so realloc makes no sense.
@@ -318,17 +348,9 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 		format_chr(p, (*cmdline)[i]);
 	cmdline_len = p - cmdline_current;
 
-	/*
-	 * Format rubbed-out command line.
-	 * AFAIK bold black should be rendered grey by any
-	 * common terminal.
-	 * If not, this problem will be gone once we support
-	 * a Scintilla view command line.
-	 */
+	/* Format rubbed-out command line. */
 	for (guint i = cmdline->len; i < cmdline->len+cmdline->rubout_len; i++)
-		format_chr(p, (*cmdline)[i],
-		           A_UNDERLINE | A_BOLD |
-		           SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLACK));
+		format_chr(p, (*cmdline)[i], rubout_attr);
 	cmdline_rubout_len = p - cmdline_current - cmdline_len;
 
 	/* highlight cursor after effective command line */
@@ -515,7 +537,7 @@ event_loop_iter()
 	switch (key) {
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
-#ifdef PDCURSES
+#ifdef __PDCURSES__
 		resize_term(0, 0);
 #endif
 		interface.resize_all_windows();
