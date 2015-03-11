@@ -204,6 +204,9 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	wbkgdset(msg_window, ' ' | type2attr[type]);
 	vw_printw(msg_window, fmt, ap);
 	wclrtoeol(msg_window);
+
+	if (type == MSG_ERROR)
+		beep();
 }
 
 void
