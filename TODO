@@ -8,11 +8,6 @@ Known Bugs:
  * crashes on large files: S^EM^X$ (regexp: .*)
  * the glib allocators are fundamentally broken:
    throwing exceptions is unsafe from C-linkage callbacks.
- * Colors are weird in PDCurses/win32 console.
- * Inconsistent path separators. E.g. EN and * will contain
-   backslashes on Windows. Code not taking this into account fails.
-   Either slashes should be normalized to / or there should be
-   a conditional to check for path separators.
 
 Features:
  * The C/C++ lexer supports preprocessor evaluation.
@@ -58,6 +53,8 @@ Features:
    Would simplify inserting dot with string building and saving/restoring
    dot on the QReg stack
  * automatic EOL detection of buffers; easy EOL setting
+   :EL command could also convert all EOLs in the current
+   buffer.
  * command to change the current working directory. This will
    influence tab-completion and relative file names.
  * exclusive access to all opened files/buffers (locking):
@@ -66,10 +63,21 @@ Features:
    any changes another process could have done on the file.
    Therefore open buffers should be locked using the flock(), fcntl()
    or lockf() interfaces. On Windows we can even enforce mandatory locks.
- * Perhaps we should evaluate $COLORTERM on Curses to automatically select
-   a monochrome Curses color scheme.
+ * Touch restored save point files - should perhaps be configurable.
+   This is important when working with Makefiles, as make looks
+   at the modification times of files.
+ * Instead of implementing split screens, it is better to leave
+   tiling to programs dedicated to it (tmux, window manager).
+   SciTECO could create pseudo-terminals (see pty(7)), set up
+   one curses screen as the master of that PTY and spawn
+   a process accessing it as a slave (e.g. urxvt -pty-fd).
+   Each Scintilla view could then be associated with at most
+   one curses screen.
+   GTK+ would simply manage a list of windows.
 
 Optimizations:
+ * Curses UI: Command line window can be modelled as a pad
+   instead of a window. This simplifies things.
  * C++14 is supported by GCC 5 and supports new() and delete()
    operators with a size argument. Replacing these operators
    with versions using g_slice_alloc() and g_slice_free() should
