@@ -147,7 +147,9 @@ public:
 	void event_loop_impl(void);
 
 private:
-	void init_screen(void);
+	void init_batch(void);
+	void init_interactive(void);
+
 	void resize_all_windows(void);
 	void draw_info(void);
 

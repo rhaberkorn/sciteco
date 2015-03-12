@@ -21,8 +21,10 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <locale.h>
+#include <errno.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -99,10 +101,7 @@ ViewCurses::initialize_impl(void)
 void
 InterfaceCurses::main_impl(int &argc, char **&argv)
 {
-	init_screen();
-	cbreak();
-	noecho();
-	curs_set(0); /* Scintilla draws its own cursor */
+	init_batch();
 
 	setlocale(LC_CTYPE, ""); /* for displaying UTF-8 characters properly */
 
@@ -115,48 +114,81 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 
 #ifdef EMSCRIPTEN
         nodelay(cmdline_window, TRUE);
-#else
-#ifndef PDCURSES_WIN32A
+#elif !defined(PDCURSES_WIN32A)
 	/* workaround: endwin() is somewhat broken in the win32a port */
 	endwin();
 #endif
-#endif
 }
 
-#ifdef __PDCURSES__ /* Any PDCurses */
+#if defined(__PDCURSES__) || !defined(G_OS_UNIX)
 
 void
-InterfaceCurses::init_screen(void)
+InterfaceCurses::init_batch(void)
 {
 #ifdef PDCURSES_WIN32A
 	/* enables window resizing on Win32a port */
 	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
 #endif
 
+	/*
+	 * PDCurses does not seem to support redirecting
+	 * the terminal to arbitrary files, so the
+	 * newterm() hack for UNIX/ncurses does not
+	 * work here.
+	 */
 	initscr();
-
-	screen_tty = NULL;
-	screen = NULL;
 }
-
-#else
 
 void
-InterfaceCurses::init_screen(void)
+InterfaceCurses::init_interactive(void)
 {
 	/*
-	 * Prevent the initial redraw and any escape sequences that may
-	 * interfere with stdout, so we may use the terminal in
-	 * cooked mode, for commandline help and batch processing.
-	 * Scintilla must be initialized for batch processing to work.
-	 * (Frankly I have no idea why this works!)
+	 * Nothing to do, we are already controlling the
+	 * terminal.
 	 */
-	screen_tty = g_fopen("/dev/tty", "r+b");
-	screen = newterm(NULL, screen_tty, screen_tty);
-	set_term(screen);
 }
 
-#endif /* !__PDCURSES__ */
+#else /* UNIX, no PDCurses */
+
+void
+InterfaceCurses::init_batch(void)
+{
+	/*
+	 * This sets stdscr to a new screen associated
+	 * with /dev/null.
+	 * This way we get ncurses to leave the current
+	 * controlling tty alone, while still initializing
+	 * Curses (required by Scintilla and thus for
+	 * batch processing).
+	 */
+	screen_tty = g_fopen("/dev/null", "r+b");
+	g_assert(screen_tty != NULL);
+	screen = newterm(NULL, screen_tty, screen_tty);
+	def_shell_mode();
+}
+
+void
+InterfaceCurses::init_interactive(void)
+{
+	/*
+	 * To initialize interactive mode, we
+	 * reopen the file opened for Curses in init_batch()
+	 * with the current controlling terminal device
+	 * (see tty(4)).
+	 * Should also work with newterm(), but this
+	 * seems more elegant.
+	 */
+	if (!g_freopen("/dev/tty", "r+b", screen_tty)) {
+		/* no controlling terminal, process detached? */
+		g_fprintf(stderr, "Error initializing interactice mode: %s\n",
+		          strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	def_shell_mode();
+}
+
+#endif
 
 void
 InterfaceCurses::resize_all_windows(void)
@@ -621,6 +653,15 @@ void
 InterfaceCurses::event_loop_impl(void)
 {
 	static const Cmdline empty_cmdline;
+
+	/*
+	 * Initialize Curses for interactive mode
+	 */
+	init_interactive();
+
+	cbreak();
+	noecho();
+	curs_set(0); /* Scintilla draws its own cursor */
 
 	/* initial refresh */
 	/* FIXME: this does wrefresh() internally */
