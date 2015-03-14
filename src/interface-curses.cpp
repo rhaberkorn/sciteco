@@ -181,7 +181,7 @@ InterfaceCurses::init_interactive(void)
 	if (!g_freopen("/dev/tty", "r+b", screen_tty)) {
 		/* no controlling terminal, process detached? */
 		g_fprintf(stderr, "Error initializing interactice mode: %s\n",
-		          strerror(errno));
+		          g_strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
