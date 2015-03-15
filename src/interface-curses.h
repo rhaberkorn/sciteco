@@ -151,6 +151,8 @@ private:
 	void init_interactive(void);
 
 	void resize_all_windows(void);
+
+	void set_window_title(const gchar *title);
 	void draw_info(void);
 
 	void format_chr(chtype *&target, gchar chr,

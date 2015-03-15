@@ -146,6 +146,7 @@ case $INTERFACE in
 		AC_CHECK_LIB(ncurses, initscr, , [
 			AC_MSG_ERROR([libncurses missing!])
 		])
+		AC_CHECK_FUNCS([tigetstr])
 		;;
 	pdcurses)
 		AC_CHECK_LIB(pdcurses, initscr, , [

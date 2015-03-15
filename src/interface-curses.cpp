@@ -268,6 +268,57 @@ InterfaceCurses::show_view_impl(ViewCurses *view)
 	        lines - 3, cols);
 }
 
+#if PDCURSES
+
+void
+InterfaceCurses::set_window_title(const gchar *title)
+{
+	PDC_set_title(title);
+}
+
+#elif defined(HAVE_TIGETSTR)
+
+void
+InterfaceCurses::set_window_title(const gchar *title)
+{
+	/*
+	 * NOTE: terminfo variables in term.h interfere with
+	 * the rest of our code
+	 */
+	const char *tsl = tigetstr("tsl");
+	const char *fsl = tigetstr("fsl");
+
+	if (!tsl || !fsl)
+		return;
+
+	/*
+	 * Modern terminal emulators map the window title to
+	 * the historic status line.
+	 * This feature is not standardized in ncurses,
+	 * so we query the terminfo database.
+	 * NOTE: The terminfo manpage advises us to use putp(),
+	 * but I don't feel comfortable with writing to stdout.
+	 * NOTE: This leaves the title set after we quit.
+	 * xterm has escape sequences to save/restore a window title,
+	 * but there do not seem to be terminfo capabilities for that.
+	 * NOTE: Resetting the title does not always work ;-)
+	 */
+	fputs(tsl, screen_tty);
+	fputs(info_current, screen_tty);
+	fputs(fsl, screen_tty);
+	fflush(screen_tty);
+}
+
+#else
+
+void
+InterfaceCurses::set_window_title(const gchar *title)
+{
+	/* no way to set window title */
+}
+
+#endif
+
 void
 InterfaceCurses::draw_info(void)
 {
@@ -279,9 +330,7 @@ InterfaceCurses::draw_info(void)
 	waddstr(info_window, info_current);
 	wclrtoeol(info_window);
 
-#if PDCURSES
-	PDC_set_title(info_current);
-#endif
+	set_window_title(info_current);
 }
 
 void
@@ -696,7 +745,17 @@ InterfaceCurses::event_loop_impl(void)
 	}
 
 	/*
+	 * Set window title to a reasonable default,
+	 * in case it is not reset immediately by the
+	 * shell.
+	 */
+#if !PDCURSES && defined(HAVE_TIGETSTR)
+	set_window_title(g_getenv("TERM") ? : "");
+#endif
+
+	/*
 	 * Restore ordinary terminal behaviour
+	 * (i.e. return to batch mode)
 	 */
 	endwin();
 #endif
