@@ -163,6 +163,7 @@ InterfaceCurses::init_batch(void)
 	 */
 	screen_tty = g_fopen("/dev/null", "r+b");
 	g_assert(screen_tty != NULL);
+	setvbuf(screen_tty, NULL, _IOFBF, 0);
 	screen = newterm(NULL, screen_tty, screen_tty);
 	def_shell_mode();
 }
