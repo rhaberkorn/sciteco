@@ -1852,7 +1852,7 @@ StateECommand::custom(gchar chr)
 	 * [off,]on ED
 	 * ED -> flags
 	 *
-	 * With arguments, the command will set the ED flags.
+	 * With arguments, the command will set the \fBED\fP flags.
 	 * <flags> is a bitmap of flags to set.
 	 * Specifying one argument to set the flags is a special
 	 * case of specifying two arguments that allow to control
@@ -1866,6 +1866,8 @@ StateECommand::custom(gchar chr)
 	 * Without any argument ED returns the current flags.
 	 *
 	 * Currently, the following flags are used by \*(ST:
+	 *   - 16: Enable/disable automatic translation of end of
+	 *     line sequences to and from line feed.
 	 *   - 32: Enable/Disable buffer editing hooks
 	 *     (via execution of macro in global Q-Register \(lqED\(rq)
 	 *   - 64: Enable/Disable function key macros
@@ -1875,6 +1877,9 @@ StateECommand::custom(gchar chr)
 	 *
 	 * The features controlled thus are discribed in other sections
 	 * of this manual.
+	 *
+	 * The default value of the \fBED\fP flags is 16
+	 * (only automatic EOL translation enabled).
 	 */
 	case 'D':
 		BEGIN_EXEC(&States::start);
@@ -2006,8 +2011,8 @@ StateECommand::custom(gchar chr)
 	 * Like the Scintilla message, <EL> does \fBnot\fP change the
 	 * characters in the current document.
 	 * If automatic EOL translation is activated (which is the default),
-	 * \*(ST will however use this information when saving and writing
-	 * out files.
+	 * \*(ST will however use this information when saving files or
+	 * writing to external processes.
 	 *
 	 * With one argument, the EOL mode is set according to these
 	 * constants:

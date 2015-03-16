@@ -111,9 +111,7 @@ The most prominent is the Escape key \(em it is translated to
 code 27.
 The backspace key will always be translated to code 8, and the Tab key
 to code 9.
-Last but not least, the Return key is translated to the current
-buffer's end of line sequence (linefeed, carriage return followed
-by linefeed or just carriage return).
+The return/enter key is always translated to code 10 (line feed).
 Naturally, all of these control codes can also be typed using a
 Control-key combination (e.g. CTRL+I for the tab character) and
 there is often an equivalent typed with the caret character
@@ -276,6 +274,22 @@ re-insertions of previously rubbed out characters.
 Therefore \fB^G\fP (CTRL+G)
 effectively switches between undo and redo modes.
 The modifier also influences the behaviour of the TAB key.
+T}
+T{
+Insert end of line sequence
+T};10;^J, Return, Enter;T{
+Everywhere
+.br
+(no automatic EOL translation)
+T};T{
+If automatic end of line sequence translation is disabled,
+the return key will insert the current buffer's end of line
+sequence (line feed; carriage return, line feed; or
+carriage return) according to the
+.B SCI_GETEOLMODE
+Scintilla message.
+In auto-EOL-translation mode, the return key will always
+insert a line feed.
 T}
 T{
 Rub out character
@@ -674,8 +688,45 @@ bytes depending on the document's encoding.
 Consequently when querying the code at a character position
 or inserting characters by code, the code may be an Unicode
 codepoint instead of byte-sized integer.
-\# FIXME: this is currently broken/untested
 Currently however, \*(ST will only handle ASCII files.
+.LP
+To simplify working with files using different end of line
+sequences (combinations of carriage return and line feed),
+\*(ST implements an \fIautomatic EOL translation\fP
+feature.
+When loading files with the \fBEB\fP and \fBEQ\fP commands \(em
+or when reading from an external process with the \fBEC\fP and
+\fBEG\fP commands \(em
+\*(ST will normalize all end of line sequences to line feeds.
+It will also detect, correct and warn about inconsistent EOL sequences
+in the source file or process output.
+EOL normalization is thus a lossy process.
+The file's original EOL mode as guessed by \*(ST is still saved
+as the corresponding Scintilla document's EOL mode
+(see \fBSCI_SETEOLMODE\fP and the \fBEL\fP command).
+If the EOL mode could not be guessed, the document will retain
+a platform-default EOL mode (e.g. carriage return, line feed on
+Windows and line feed on UNIX).
+The EOL mode is used when saving files with the \fBEW\fP and \fBE%\fP
+commands or when writing to an external process with the \fBEC\fP and \fBEG\fP
+commands in order to reconstruct the original EOL characters.
+Translation on write-out will also work when the source document
+has inconsistent or mixed line breaks.
+Therefore macros can assume each line to be terminated by
+a single line feed character while working with files that have
+different EOL styles.
+The feature is enabled by default but is controlled by bit 4
+of the \fBED\fP flag setting.
+It can be turned off by executing:
+.EX
+16,0ED
+.EE
+This may be beneficial when working with very large files \(em
+as the EOL translation imposes a performance penalty \(em
+or non-text (binary) files.
+No automatic guessing of documents' EOL mode is performed
+when disabling this feature, so all documents will have
+platform-default EOL modes set.
 .LP
 For more details, please refer to this manual's command
 reference.

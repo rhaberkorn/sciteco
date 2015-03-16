@@ -133,8 +133,17 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * and its standard input stream is fed with data from the
  * current document, i.e. text is piped into the external
  * program.
+ * When automatic EOL translation is enabled, this will
+ * translate all end of line sequences according to the
+ * source document's EOL mode (see \fBEL\fP command).
+ * For instance when piping from a document with DOS
+ * line breaks, the receiving program will only be sent
+ * DOS line breaks.
  * The process' standard output stream is also redirected
  * and inserted into the current document.
+ * End of line sequences are normalized accordingly
+ * but the EOL mode guessed from the program's output is
+ * \fBnot\fP set on the document.
  * The process' standard error stream is discarded.
  * If data is piped into the external program, its output
  * replaces that data in the buffer.
@@ -455,6 +464,9 @@ gerror:
  * the current buffer position and writing process output
  * to the Q-Register <q>.
  * In other words, the current buffer is not modified by EG.
+ * Also since EG replaces the string value of <q>, the register's
+ * EOL mode is set to the mode guessed from the external program's
+ * output.
  *
  * The register <q> is defined if it does not already exist.
  */
