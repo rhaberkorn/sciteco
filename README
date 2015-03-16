@@ -1,6 +1,7 @@
 Overview
 ========
 
+<img align="left" alt="SciTECO" src="ico/sciteco-48.png"/>
 SciTECO is an interactive TECO dialect, similar to [Video TECO](http://www.copters.com/teco.html).
 It also adds features from classic TECO-11, as well as unique new ideas.
 
@@ -34,8 +35,6 @@ Curses, it should be easy to port to even more exotic platforms.
 __Warning: The SciTECO language is work in progress and has not yet fully stabilized.
 It may change drastically and in backwards-incompatible ways in the repository's
 master branch and between releases until version 1.0 is released.__
-
-<center><img src="ico/sciteco-48.png"/></center>
 
 Features
 ========
