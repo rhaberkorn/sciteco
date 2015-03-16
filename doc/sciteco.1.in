@@ -218,12 +218,6 @@ will also be created in the roots of Git, Mercurial and
 Subversion repositories or working copies.
 .
 .
-.SH BUGS
-.
-\*(ST does not have any such thing called \(lqbug\(rq.
-Any conceived misbehaviour must be totally your fault.
-.
-
 .SH SEE ALSO
 .
 .TP
