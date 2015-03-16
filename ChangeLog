@@ -1,0 +1,296 @@
+The following change log summarizes changes introduced
+by SciTECO releases compared to the preceding release.
+Only changes relevant to users (build from source or
+using a prebuilt binary) are included.
+
+Entries marked with "(!)" might break macro portability
+compared to the preceding release.
+
+Version 0.6
+~~~~~~~~~~~
+
+64ee414 implemented function key masking (context-sensitive function key macros).
+        The command line editing macros in fnkeys.tes will no longer insert
+        "garbage" into string parameters.
+cb8411d,
+c310c7d implemented automatic EOL translation support.
+        This means that SciTECO now properly supports editing files with
+        different line breaks. It especially simplifies editing files with
+        DOS/Windows line breaks and allows you to write portable macros that
+        are line break agnostic.
+eee4f1a added "EL" command for setting/getting the current document's EOL mode
+14ec511 also set window title on ncurses, by querying terminfo capabilities.
+        This feature is currently buggy.
+2a4acd6,
+2c0e9f7,
+4dced2c improved ncurses batch mode initialization.
+        Only relevant for UNIX/Linux: When SciTECO is run in batch mode,
+        it completely keeps away from the process' terminal device.
+        It no longer flashes the screen (was visible e.g. in rxvt-unicode).
+7ceabb2 Curses UI: beep on error. This might also perform a visual bell or
+        nothing at all (depending on the terminal emulator).
+b3acf28,
+647e6eb added cool SciTECO icon (on Windows, it is the icon of sciteco.exe)
+20cb9a7 added --no-profile command line option
+1126007 added the <"I> conditional for checking whether a character is a
+        directory separator
+(!)a0d1231 always normalize directory separators to "/" in the "*" Q-Register.
+           On Windows "*" used to contain Windows directory separators.
+           With the new behaviour it is easier to write portable macros.
+67b846c added ./configure --enable-static-executables option
+e88f9bb,
+3db42f8 optimized user interface drawing.
+        Should also speed up the GTK+ UI.
+10e4e27 fixed displaying of control characters in the "info" line (and window title)
+4a4687c improved `sciteco --help` output
+2a4e114 fixed m,nXq for m > n: this properly throws an error now instead of crashing
+63c88b9 changed save point file format to .teco-<n>-<filename>~
+        Users should adapt existing VCS ignore patterns if necessary.
+a3a340a fixed TAB completion of files in the current directory beginning with ".".
+        Not sure if this bug existed in v0.5.
+2cfc358 added function key macro for Shift+DEL to fnkeys.tes:
+        Acts as a "reverse" backspace-key (depending on the state of the
+        ^G modifier).
+800bbd8 fixed function key handling on GTK UI.
+        Function keys are now properly ignored until they are enabled by setting
+        bit 6 of the ED flags.
+a399be7 On UNIX/Linux with glibc, heap memory can be reclaimed
+        earlier when terminating a command line.
+        This means that your system will recover earlier after it began
+        swapping because SciTECO used too much memory.
+8178f8d,
+4aa51b9,
+3373274,
+ef82d22,
+83ebaea,
+482c0e7 Implemented re-insertion of rubbed out command lines.
+        This effectively implements SciTECO's version of Redo.
+        Rubbed out parts of the command line are still visible in grey.
+        The new "^G" immediate editing command can be used to
+        toggle the behaviour of the rubout commands from rubout (undo)
+        to re-insert (redo).
+        The "^G" toggle modifies other immediate editing commands as well.
+        It replaces the "^T" immediate editing command with "^G<TAB>^G".
+b40fe86 implemented undo stack memory limiting (ticket #3).
+        The size of the undo stack is now approximated and limited.
+        An error is thrown and the current command fails if more than 500mb
+        are used by it. The limit is configurable (see "EJ" command).
+        This makes it harder to crash SciTECO by using up all the memory
+        due to infinite loops in interactive mode.
+611bb22 fixed crashes when loop is closed (>) or continued (F>) without a
+        corresponding loop start (<) (ticket #3).
+4624eeb,
+c7b2da8 work around Scintilla character representation drawing bug.
+        This fixes too much space being allocated to control characters in the
+        SciTECO buffer view.
+1b07f32 Scintilla: fixed tab stop calculation on Curses
+        This is included in the Scintilla mirror at https://github.com/rhaberkorn/scintilla-mirror
+        and thus in v0.6 source bundles.
+(!)d24bc4a implemented support for different indention styles.
+           The TAB-command (^I) has been extended to insert indention characters
+           according to current Scintilla settings (SCI_SETUSETABS, SCI_SETTABWIDTH).
+           TAB has been made an immediate editing command in insertion commands
+           ("I", "^I" but also search-and-replace arguments) to insert indention
+           characters by the same rules.
+           In old macros where "^I" was used for inserting the TAB-character,
+           "9I" should be used instead.
+574d284 support filename auto completions with forward-slash directory separators on
+        Windows. Auto-completions will now use the last directory separator in
+        string that has been typed before auto-completing.
+        On platforms like Windows where both forward and backward slash separators
+        are possible, this makes a difference.
+        By default however, the platform-default directory separator is used.
+613e8c9 Curses: support cycling through long lists of possible auto-completions
+        and optimized screen refreshing/redrawing
+52ecff4 Curses: fixed formatting of popup windows
+4377770 do not show possible completions for hidden files and directories
+        They are ignore during tab completion unless the beginning of the name
+        of a hidden file or directory has been typed.
+        I.e. "../.<TAB>" will still complete hidden files on UNIX.
+(!)ad3d2f4 implemented pQq and :Qq commands
+           In other words, the "Q" command can now be used to index the
+           string part of a register and query its size without editing it first.
+           This breaks macro backward-portability since "Q" will no longer
+           ignore existing values on the stack.
+           Therefore the expression "QaQbK" must now be written "Qa,QbK".
+ebf0440,
+abda28b introduced $SCITECOCONFIG env variable, and set different default for
+        $SCITECOPATH on Windows.
+        $SCITECOCONFIG allows you to reconfigure the path where SciTECO looks
+        for the profile macro.
+        On Windows, these variables are initialized to paths relative to the
+        location of the sciteco.exe file. This keeps SciTECO self-contained on
+        Windows (unzip the release and go!) while allowing it to be added to
+        $PATH and used from any working directory.
+        The environment variables can be set explicitly, e.g. to set up
+        SciTECO for a MSYS or Cygwin environment.
+        The environment variables are always normalized to absolute paths.
+        On Windows, the profile macro is now called ".teco_ini" just like
+        on UNIX. You must rename existing "teco.ini" files or - better yet -
+        completely rewrite them.
+e030c4e fixed memory leak in batch mode
+1e5115b Added "E%" command to save a Q-Register's string contents to disk
+        without changing the current document.
+        "EW" can now also be used to save a Q-Register to disk.
+14cc71e added "EI" command as a non-string-building variant of "I"
+3e7ebb5 added "EU" command as a variant of the "^U" command with string building
+        characters enabled.
+a6c13d7 allow setting the numeric part of the "*" register as an alternative to nEB
+        Allows a few useful idioms like "1U*" instead of "1EB$" and
+        "[* ! temporarily edit another buffer ! ]*"
+6e5a611,
+5b74ef5,
+2900fcb,
+d38df48 added a buffer session module (session.tes)
+        This can be used handle buffer sessions (i.e. restore the buffer ring
+        when starting up again).
+        It also includes macros like "session.git", "session.svn" and
+        "session.hg" to set up one session per VCS repository automatically.
+a37daa8 added "EJ" command: return runtime properties
+        This may be used e.g. to query the number of buffers in the
+        ring. "EJ" or "1EJ" will return the number of buffers, while
+        "0EJ" returns the current user interface. You can use that
+        in the profile for instance to select different color schemes.
+f279d24,
+67bfd59,
+427c9d1 added globbing command "EN"
+        It is called like classic TECO's "EN" command but behaves
+        differently.
+28fd3db fixed rubbing out buffer edits ("EB") after a local Q-Register
+        has been edited. Not sure if this was present in v0.5.
+59bbee9,
+16a47e2 finally implemented the CLOSE and QUIT hooks.
+        These ED hooks were already documented but unimplemented.
+        The "CLOSE" ED hook is now executed before a buffer is removed
+        from the ring.
+        The "QUIT" hook is executed before SciTECO terminates in a batch
+        mode context. In other words, when quitting SciTECO shuts down
+        interactive mode and executes the "QUIT" hook.
+        "QUIT" hooks may be used to save buffer sessions.
+(!)efa646d renamed ED hook register to "ED" and protect ED hook executions
+           In other words, to set up ED hooks, you must now configure
+           the Q-Register "ED", as in "@^U#ED{ !...! }".
+           ED hook executions are now protected, as if run by
+           "(nM[ED]^[)". This means that buggy ED hook macros can
+           no longer result in undefined side-effects of commands
+           that trigger ED hooks.
+e909fb2 Throw error when a macro terminates while a local q-reg is edited.
+        This fixes possible crashes resulting from accessing freed resources.
+f843a09 throw error when macro returns with an unterminated command
+        E.g. the macro "@^Um{Ihello}" will throw an error if executed
+        with "Mm".
+(!)4282e7d allow a current buffer if we're editing a Q-Register.
+           This means that the Q-Register "*" contains the name of
+           the current buffer even if a Q-Register is edited.
+c80c632,
+d4f8fb3 new modular lexer (syntax highlighting) system
+        This includes configurable color profiles (colors/*.tes), one lexer
+        configuration file per language (lexers/*.tes) and automatic
+        loading of installed lexer configs.
+        Syntax highlighting can be set manually by executing
+        corresponding macros. E.g. to set C++ syntax highlighting
+        you can execute "M[lexer.set.cpp]".
+        The lexer library (lexer.tes), contains useful macros
+        for writing your own lexer configurations.
+2542eb0,
+e762a43,
+2ee2ddd,
+38fcf6d Improved overall performance by avoiding unnecessary virtual method calls
+0f413b0 Adapted sample .teco_ini: margin setup must be done for every new document
+(!)8be99d3 Every SciTECO buffer has its own Scintilla view now.
+           This fixes the rubout of the "EB" command since lexer styles
+           no longer have to be restored.
+           Therefore, it allows writing (bug-free) ED-hooks that setup
+           syntax highlighting.
+           Scintilla configurations that should apply to all buffers must now
+           always be made on all buffers (i.e. their views).
+           Q-Registers still share a single Scintilla view.
+d9f04a7 Building from source: enable bootstrapping by default
+        The language changes frequently. This ensures that an up-to-date version
+        of SciTECO is built to run the macros included in the source packages.
+        This will NOT work when cross-compiling SciTECO.
+        You must first build a version for the build system and cross-compile
+        with ./configure --disable-bootstrap
+468cb19 added ^# (XOR) operator
+3006be5 fixed number formatting for radix > 10.
+        This fixes the "\" command and "^E\" string building character
+        if the radix is set higher than 10, e.g. "16^R".
+0987ca8 Revised function key macros in fnkeys.tes
+        This fixes glitches when movement keys are used that would move "dot"
+        off-page.
+        Also, the "HOME" key binding will jump to the beginning of the line
+        skipping any leading whitespace. A second press will jump to the real
+        beginning of the line (like "0L").
+        The "UP" and "DOWN" key bindings try to keep the column of the previous
+        line.
+(!)5e1ad77 extended "^U" command:
+           allow setting and appending of strings and characters from the expression stack.
+           A colon-modified form ":^U" appends characters from the expression stack
+           and its string argument.
+           This means that integer arguments no longer "pass through" the ^U command.
+           It is now more like TECO-11's ^U, but more powerful.
+7b9d5ba support new "~" conditional: useful for implying default parameters in macros
+        E.g. the conditional expression "~1' implies the value 1.
+(!)fa12867 revised "U" command: fail if no argument is provided
+           This means that expressions like "Ua" are no longer valid and
+           must be written "1Ua" instead.
+           The expression "-U" is still allowed as a short-hand for "-1U".
+           Also, now there's ":U" which returns a condition code if the
+           argument is missing instead of throwing an error.
+01a4211 Clarify `symcasecmp` macro in string.tes (documented it)
+d59ba50 fixed undoing of initial TECO buffer/document changes
+a475ea8 fixed rubbing out local Q-Register modifications in macro calls
+1c3b2a9 fixed crashes when pushing operators without corresponding operands.
+        Instead an error is thrown.
+        This fixes expressions like "++", "+1+", etc.
+3c1125c Basic TAB-completion support for EC and EG commands
+7746480 added "EG" command: pipe from buffer into Q-Register
+1aab71c,
+20d1f0e,
+acc911a implemented "EC" command (execute operating system command).
+        This requires at least libglib v2.34 on Windows.
+        On UNIX, pre-v2.34 versions are supported as a workaround (ticket #2).
+(!!!)a395c9d changed syntax for long Q-Register names: use [] brackets instead of {}
+             This means that expressions like "M{macro}" must now be written
+             "M[macro]". This will break all existing macros!!!
+             On the other hand, it improves readability of SciTECO macros.
+06d0bac fixed reversing the "EW" command when used to save a file with another
+        name (save as)
+39406f4,
+a27b5d4,
+30d8bf3 automatically build Scintilla as part of SciTECO's build system:
+        this should simplify building SciTECO from source for new users.
+        Scintilla is now automatically checked out when cloning the Git repository
+        and it is included in every source tar ball.
+af17bd7 fixed crash on unexpected semicolon (break from loop)
+d94b188 fixed enclosing SciTECO expressions in braces that do not generate any
+        values. E.g. this fixes "1<()>".
+54de1dc build system improvements
+f6fa45e fixed array freeing using delete. Could have resulted in crashes.
+793f801 fixed severe bug related to referencing temporary values.
+        Fixes many build issues and possible memory corruptions.
+dbd252c ncurses: fixed info bar at startup
+4ae59fd avoid deprecated glib functions
+e5563f8 report argument stack overflows as errors
+5e92818 Division by zero no longer crashes SciTECO but throws an error.
+707acef,
+8046e11,
+78ad52e improved and fixed error reporting in general
+1f8d558,
+abfabda try to recover from out of memory conditions.
+        This is ultimately doomed to fail ;-)
+d374448 added support for TECO stack tracing.
+        Errors in batch mode will now print a TECO stack trace.
+0674f29,
+6d4668b added EMCurses/Emscripten support.
+        Only really "required" by the live demo at http://sciteco.sf.net/
+de616e3 Fixed compilation of the GTK+ interface
+(!)f510c10 only allow command-line replacements when actually editing the replacement register.
+           This helps avoiding to rubout the entire command line by accident.
+c5c24b0 updated lexer config: CMake and XML lexing
+6f7694e Fixed building on non-C locales (Thanks to Martin Roedel!)
+
+Version 0.5
+~~~~~~~~~~~
+
+initial release
