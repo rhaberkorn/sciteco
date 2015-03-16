@@ -103,6 +103,17 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 {
 	init_batch();
 
+	/*
+	 * We're in prog mode, so we must set it up
+	 * now, even though we're also in SciTECO batch mode.
+	 * This is because endwin() saves the prog mode
+	 * and Curses restores it automatically.
+	 */
+	cbreak();
+	noecho();
+	/* Scintilla draws its own cursor */
+	curs_set(0);
+
 	setlocale(LC_CTYPE, ""); /* for displaying UTF-8 characters properly */
 
 	info_window = newwin(1, 0, 0, 0);
@@ -708,10 +719,6 @@ InterfaceCurses::event_loop_impl(void)
 	 * Initialize Curses for interactive mode
 	 */
 	init_interactive();
-
-	cbreak();
-	noecho();
-	curs_set(0); /* Scintilla draws its own cursor */
 
 	/* initial refresh */
 	/* FIXME: this does wrefresh() internally */
