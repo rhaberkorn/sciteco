@@ -142,10 +142,12 @@ InterfaceCurses::init_batch(void)
 #endif
 
 	/*
-	 * PDCurses does not seem to support redirecting
-	 * the terminal to arbitrary files, so the
-	 * newterm() hack for UNIX/ncurses does not
-	 * work here.
+	 * PDCurses cannot support terminal redirection
+	 * into files, nor can it support multiple terminals.
+	 * So we do a classic Curses initialization here.
+	 * Unfortunately, this clears the screen in
+	 * PDCurses/win32, so that batch mode is somewhat
+	 * broken there.
 	 */
 	initscr();
 }
