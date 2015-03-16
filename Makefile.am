@@ -16,8 +16,8 @@ EXTRA_DIST += ico/sciteco-48.png \
 
 # Distribute entire scintilla directory and
 # do some manual cleanup
-EXTRA_DIST += scintilla
 dist-hook:
+	cp -r $(srcdir)/scintilla $(distdir)
 	rm -rf `find $(distdir)/scintilla -name *.o` \
 	       $(distdir)/scintilla/bin/scintilla.a
 	rm -rf `find $(distdir)/scintilla -name ".git*"` \
