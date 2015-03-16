@@ -366,6 +366,9 @@ Cmdline::process_edit_cmd(gchar key)
 				if (new_chars)
 					insert(new_chars);
 				g_free(new_chars);
+
+				/* may be reset if there was a rubbed out command line */
+				modifier_enabled = true;
 			} else {
 				interface.popup_clear();
 				insert(key);
