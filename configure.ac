@@ -103,8 +103,6 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 # They must exist on every target system.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 	AC_MSG_ERROR([Missing libc function])
 ])
