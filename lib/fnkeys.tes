@@ -10,12 +10,18 @@
   "> Q.c\IC) | -Q.c\IR) '
 }}
 
-! Make DELETE an alternative to ESCAPE !
+! Make DELETE an ESCAPE surrogate.
+  Macro is enabled everywhere. !
 @[DC]{}
 
 ! Make SHIFT+DELETE a rubout/re-insert key.
-  This reverses the ^G modifier for BACKSPACE !
+  This reverses the ^G modifier for BACKSPACE.
+  The macro is enabled everywhere. !
 @[SDC]{}
+
+! Command line editing macros.
+  They are enabled only in the start state (i.e. they
+  have no effect in string arguments, etc.). !
 
 @[HOME]{
   .ESLINEFROMPOSITIONESPOSITIONFROMLINEU.p
@@ -23,11 +29,13 @@
   Q.p-.M#c
 }
 @[HOME]{(M[HOME]}
+1U[HOME]
 
 @[END]{
   .ESLINEFROMPOSITIONESGETLINEENDPOSITION-.M#c
 }
 @[END]{(M[END]}
+1U[END]
 
 @[NPAGE]{
   .ESLINEFROMPOSITION+(ESLINESONSCREEN)
@@ -35,32 +43,38 @@
   Q.p"< Z | Q.p '-.M#c
 }
 @[NPAGE]{(M[NPAGE]}
+1U[NPAGE]
 
 @[PPAGE]{
   .ESLINEFROMPOSITION-(ESLINESONSCREEN)U.l
   Q.l"< 0 | Q.lESPOSITIONFROMLINE '-.M#c
 }
 @[PPAGE]{(M[PPAGE]}
+1U[PPAGE]
 
 @[LEFT]{
   ."=0|-1'M#c
 }
 @[LEFT]{(M[LEFT]}
+1U[LEFT]
 
 @[SLEFT]{
   0,0,.ESWORDSTARTPOSITIONESWORDSTARTPOSITION-.M#c
 }
 @[SLEFT]{(M[SLEFT]}
+1U[SLEFT]
 
 @[RIGHT]{
   .-Z"=0|1'M#c
 }
 @[RIGHT]{(M[RIGHT]}
+1U[RIGHT]
 
 @[SRIGHT]{
   0,0,.ESWORDENDPOSITIONESWORDENDPOSITION-.M#c
 }
 @[SRIGHT]{(M[SRIGHT]}
+1U[SRIGHT]
 
 @[UP]{
   .ESGETCOLUMN
@@ -68,6 +82,7 @@
   ESFINDCOLUMN-.M#c
 }
 @[UP]{(M[UP]}
+1U[UP]
 
 @[DOWN]{
   .ESGETCOLUMN
@@ -75,3 +90,4 @@
   ESFINDCOLUMN-.M#c
 }
 @[DOWN]{(M[DOWN]}
+1U[DOWN]

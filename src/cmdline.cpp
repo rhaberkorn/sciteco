@@ -499,21 +499,43 @@ Cmdline::process_edit_cmd(gchar key)
 void
 Cmdline::fnmacro(const gchar *name)
 {
+	enum {
+		FNMACRO_MASK_START =	(1 << 0),
+		FNMACRO_MASK_STRING =	(1 << 1)
+	};
+
 	if (!(Flags::ed & Flags::ED_FNKEYS))
+		/* function key macros disabled */
 		return;
 
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
+	tecoInt mask;
+	gchar *macro;
 
 	macro_name[0] = CTL_KEY('F');
 	g_strlcpy(macro_name + 1, name, sizeof(macro_name) - 1);
 
 	reg = QRegisters::globals[macro_name];
-	if (reg) {
-		gchar *macro = reg->get_string();
-		keypress(macro);
-		g_free(macro);
+	if (!reg)
+		/* macro undefined */
+		return;
+
+	mask = reg->get_integer();
+	if (States::current == &States::start) {
+		if (mask & FNMACRO_MASK_START)
+			return;
+	} else if (States::is_string()) {
+		if (mask & FNMACRO_MASK_STRING)
+			return;
+	} else if (mask & ~(tecoInt)(FNMACRO_MASK_START | FNMACRO_MASK_STRING)) {
+		/* all other bits refer to any other state */
+		return;
 	}
+
+	macro = reg->get_string();
+	keypress(macro);
+	g_free(macro);
 }
 
 static gchar *

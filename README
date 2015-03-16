@@ -50,6 +50,7 @@ Features
   the command stream.
   This also enables navigating with function keys (e.g. cursor keys) as demonstrated
   by the standard library `fnkeys.tes`.
+  Function key macros can be context-sensitive, too.
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters
 * Interactivity: supports filename completion via immediate editing commands (e.g. `<TAB>` in

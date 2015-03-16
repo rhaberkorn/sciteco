@@ -223,6 +223,39 @@ in long Q-Register names.
 The names are all derived from key definitions of the curses
 library \(em not all of them may be supported on any particular
 user interface.
+.LP
+By default function key macros are effective everywhere \(em
+pressing a function key has the same effect as processing
+the characters of the corresponding function key macro as
+immediate editing commands (or self-inserting characters).
+However function key macros that rewrite the current command line
+will only work correctly from specific \*(ST parser states.
+\*(ST therefore allows you to mask function key macros in
+specific parser states by evaluating the Q-Register's numeric
+part, thus allowing you to control \fIwhere\fP a function key
+macro is effective.
+The numeric part represents a bitmask of states where
+function keys are \fIdisabled\fP (so the default value 0
+enables that function key everywhere).
+\*(ST defines the following state flags:
+.IP 1 4
+Bit 0 represents the \(lqstart\(rq state where \*(ST accepts the
+beginning of a command.
+This is the state you will want command line editing macros
+to be enabled in.
+.IP 2
+Bit 1 represents any string argument.
+.LP
+All other bits/flags represent any other parser state.
+Consequently, setting the register to the inverse of a bitmask of
+state flags enables the corresponding macro only for the specified
+states.
+For instance, to enable the \(lq^FRIGHT\(rq function key macro
+only in the \(lqstart\(rq state, you could set:
+.EX
+1^_U[^FRIGHT]
+.EE
+.LP
 A set of useful Function Key Macros are provided in the
 standard library
 .BR fnkeys.tes .
