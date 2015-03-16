@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+# Overwrite, if building out-of-tree.
+SRCDIR=.
+
 SCITECO_VERSION = 0.6
 SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
 
@@ -60,31 +63,51 @@ ppa : debian-source
 	 dput ppa:robin-haberkorn/sciteco *.changes; \
 	)
 
+# Create Windows release.
+# Assumes a correctly installed glib (with pkgconfig script)
+# and static linking of all dependant libraries (no DLLs are
+# added to the zip).
+# If a win32.teco_ini exists, it is added to the release
+# instead of sample.teco_ini.
+# This also adds gspawn-win32-helper-console.exe to the archive
+# which is required by the glib spawn functions.
+# If we ever build a non-console version on Windows,
+# we should include gspawn-win32-helper.exe instead.
 mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip
 sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 	tar xzf $(SCITECO_SRC)
 	(cd sciteco-$(SCITECO_VERSION); \
-	 ./configure --host=i686-w64-mingw32 --prefix=/ \
+	 PKG_CONFIG=i686-w64-mingw32-pkg-config \
+	 PKG_CONFIG_LIBDIR=/usr/i686-w64-mingw32/lib/pkgconfig \
+	 ./configure --host=i686-w64-mingw32 build=i386-pc-linux-gnu \
+	             --prefix=/usr \
+	             --enable-static-executables \
+	             --disable-dependency-tracking \
 		     --with-interface=pdcurses \
 		     --disable-bootstrap \
 		     --enable-html-manual \
-		     CFLAGS="-O3" CXXFLAGS="-O3"; \
+		     CFLAGS="-g -O3" CXXFLAGS="-g -O3"; \
 	)
 	$(MAKE) -C sciteco-$(SCITECO_VERSION) \
-		install DESTDIR=`pwd`/temp-install
+		install-strip DESTDIR=`pwd`/temp-install
 	rm -rf sciteco-$(SCITECO_VERSION)/
-	i686-w64-mingw32-strip -s temp-install/bin/*
 	mkdir temp-bin/
-	cp -r temp-install/bin/* temp-install/share/sciteco/* temp-install/share/doc/sciteco/* \
+	cp -r temp-install/usr/bin/* temp-install/usr/share/sciteco/* \
+	      temp-install/usr/share/doc/sciteco/* \
 	   temp-bin/
-	cp temp-install/share/sciteco/sample.teco_ini \
-	   temp-bin/.teco_ini
+	cp $(SRCDIR)/win32.teco_ini temp-bin/.teco_ini || \
+		cp temp-install/usr/share/sciteco/sample.teco_ini \
+		   temp-bin/.teco_ini
+	cp $(SRCDIR)/COPYING $(SRCDIR)/ChangeLog temp-bin/
 	rm -rf temp-install/
-	cp /usr/i686-w64-mingw32/bin/intl.dll \
-	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
-	   /usr/i686-w64-mingw32/bin/pdcurses.dll \
+#	cp /usr/i686-w64-mingw32/bin/intl.dll \
+#	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
+#	   /usr/i686-w64-mingw32/bin/pdcurses.dll \
+#	   temp-bin/
+	cp /usr/i686-w64-mingw32/bin/gspawn-win32-helper-console.exe \
 	   temp-bin/
-	cd temp-bin/; zip -r ../$@ *
+	i686-w64-mingw32-strip -s temp-bin/gspawn-win32-helper-console.exe
+	cd temp-bin/; zip -r ../$@ .
 	rm -rf temp-bin/
 
 clean:
