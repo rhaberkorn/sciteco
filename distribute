@@ -2,6 +2,7 @@
 
 # Overwrite, if building out-of-tree.
 SRCDIR=.
+ABS_SRCDIR=$(abspath $(SRCDIR))
 
 SCITECO_VERSION = 0.6
 SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
@@ -14,13 +15,13 @@ all : $(SCITECO_SRC) debian mingw-binary
 # $(UBUNTU) sets the Ubuntu distribution and fixes the package's
 # version
 debian-prepare: debian-temp/
-debian-temp/ : bundle
+debian-temp/ : $(SCITECO_SRC)
 	mkdir debian-temp/
 	(cd debian-temp/; \
 	 cp ../$(SCITECO_SRC) \
 	    sciteco_$(SCITECO_VERSION).orig.tar.gz; \
 	 tar xzf sciteco_$(SCITECO_VERSION).orig.tar.gz; \
-	 cp -r ../debian sciteco-$(SCITECO_VERSION)/; \
+	 cp -r $(ABS_SRCDIR)/debian sciteco-$(SCITECO_VERSION)/; \
 	)
 ifneq ($(UBUNTU),)
 	sciteco -e "@EB|debian-temp/sciteco-$(SCITECO_VERSION)/debian/changelog| \
