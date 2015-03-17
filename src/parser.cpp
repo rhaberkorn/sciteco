@@ -898,7 +898,7 @@ StateStart::custom(gchar chr)
 		BEGIN_EXEC(this);
 
 		v = QRegisters::globals["_"]->get_integer();
-		rc = expressions.pop_num_calc(1, v);
+		rc = expressions.pop_num_calc(0, v);
 		if (eval_colon())
 			rc = ~rc;
 
@@ -1086,7 +1086,7 @@ StateStart::custom(gchar chr)
 	 */
 	case 'J':
 		BEGIN_EXEC(this);
-		v = expressions.pop_num_calc(1, 0);
+		v = expressions.pop_num_calc(0, 0);
 		if (Validate::pos(v)) {
 			if (current_doc_must_undo())
 				interface.undo_ssm(SCI_GOTOPOS,
@@ -1888,7 +1888,7 @@ StateECommand::custom(gchar chr)
 			expressions.push(Flags::ed);
 		} else {
 			tecoInt on = expressions.pop_num_calc();
-			tecoInt off = expressions.pop_num_calc(1, ~(tecoInt)0);
+			tecoInt off = expressions.pop_num_calc(0, ~(tecoInt)0);
 
 			undo.push_var(Flags::ed);
 			Flags::ed = (Flags::ed & ~off) | on;
@@ -2227,10 +2227,10 @@ cleanup:
 		if (!expressions.args())
 			throw Error("<ES> command requires at least a message code");
 
-		scintilla_message.iMessage = expressions.pop_num_calc(1, 0);
+		scintilla_message.iMessage = expressions.pop_num_calc(0, 0);
 	}
 	if (!scintilla_message.wParam)
-		scintilla_message.wParam = expressions.pop_num_calc(1, 0);
+		scintilla_message.wParam = expressions.pop_num_calc(0, 0);
 
 	return &States::scintilla_lparam;
 }
@@ -2242,7 +2242,7 @@ StateScintilla_lParam::done(const gchar *str)
 
 	if (!scintilla_message.lParam)
 		scintilla_message.lParam = *str ? (sptr_t)str
-						: expressions.pop_num_calc(1, 0);
+						: expressions.pop_num_calc(0, 0);
 
 	expressions.push(interface.ssm(scintilla_message.iMessage,
 				       scintilla_message.wParam,
@@ -2288,7 +2288,7 @@ StateScintilla_lParam::done(const gchar *str)
 void
 StateInsert::initial(void)
 {
-	int args;
+	guint args;
 
 	expressions.eval();
 	args = expressions.args();
@@ -2297,7 +2297,7 @@ StateInsert::initial(void)
 
 	interface.ssm(SCI_BEGINUNDOACTION);
 	for (int i = args; i > 0; i--) {
-		gchar chr = (gchar)expressions.peek_num(i);
+		gchar chr = (gchar)expressions.peek_num(i-1);
 		interface.ssm(SCI_ADDTEXT, 1, (sptr_t)&chr);
 	}
 	for (int i = args; i > 0; i--)

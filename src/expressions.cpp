@@ -22,27 +22,12 @@
 #include <glib.h>
 
 #include "sciteco.h"
-#include "undo.h"
 #include "error.h"
 #include "expressions.h"
 
 namespace SciTECO {
 
 Expressions expressions;
-
-void
-Expressions::set_num_sign(gint sign)
-{
-	undo.push_var<gint>(num_sign);
-	num_sign = sign;
-}
-
-void
-Expressions::set_radix(gint r)
-{
-	undo.push_var<gint>(radix);
-	radix = r;
-}
 
 tecoInt
 Expressions::push(tecoInt number)
@@ -62,14 +47,14 @@ Expressions::push(tecoInt number)
 }
 
 tecoInt
-Expressions::pop_num(int index)
+Expressions::pop_num(guint index)
 {
 	tecoInt n = 0;
 	Operator op = pop_op();
 
 	g_assert(op == OP_NUMBER);
 
-	if (numbers.items() > 0) {
+	if (numbers.items()) {
 		n = numbers.pop(index);
 		numbers.undo_push(n, index);
 	}
@@ -78,7 +63,7 @@ Expressions::pop_num(int index)
 }
 
 tecoInt
-Expressions::pop_num_calc(int index, tecoInt imply)
+Expressions::pop_num_calc(guint index, tecoInt imply)
 {
 	eval();
 	if (num_sign < 0)
@@ -105,21 +90,21 @@ Expressions::push(Expressions::Operator op)
 Expressions::Operator
 Expressions::push_calc(Expressions::Operator op)
 {
-	int first = first_op();
+	gint first = first_op();
 
 	/* calculate if op has lower precedence than op on stack */
-	if (first && operators.peek(first) <= op)
+	if (first >= 0 && operators.peek(first) <= op)
 		calc();
 
 	return push(op);
 }
 
 Expressions::Operator
-Expressions::pop_op(int index)
+Expressions::pop_op(guint index)
 {
 	Operator op = OP_NIL;
 
-	if (operators.items() > 0) {
+	if (operators.items()) {
 		op = operators.pop(index);
 		operators.undo_push(op, index);
 	}
@@ -191,6 +176,9 @@ Expressions::eval(bool pop_brace)
 		gint n = first_op();
 		Operator op;
 
+		if (n < 0)
+			break;
+
 		op = operators.peek(n);
 		if (op == OP_LOOP)
 			break;
@@ -199,43 +187,43 @@ Expressions::eval(bool pop_brace)
 				pop_op(n);
 			break;
 		}
-		if (n < 2)
+		if (n < 1)
 			break;
 
 		calc();
 	}
 }
 
-int
+guint
 Expressions::args(void)
 {
-	int n = 0;
-	int items = operators.items();
+	guint n = 0;
+	guint items = operators.items();
 
-	while (n < items && operators.peek(n+1) == OP_NUMBER)
+	while (n < items && operators.peek(n) == OP_NUMBER)
 		n++;
 
 	return n;
 }
 
-int
+gint
 Expressions::find_op(Operator op)
 {
-	int items = operators.items();
+	guint items = operators.items();
 
-	for (int i = 1; i <= items; i++)
+	for (guint i = 0; i < items; i++)
 		if (operators.peek(i) == op)
 			return i;
 
-	return 0;
+	return -1; /* not found */
 }
 
-int
+gint
 Expressions::first_op(void)
 {
-	int items = operators.items();
+	guint items = operators.items();
 
-	for (int i = 1; i <= items; i++) {
+	for (guint i = 0; i < items; i++) {
 		switch (operators.peek(i)) {
 		case OP_NUMBER:
 		case OP_NEW:
@@ -245,14 +233,14 @@ Expressions::first_op(void)
 		}
 	}
 
-	return 0;
+	return -1; /* no operator */
 }
 
 void
 Expressions::discard_args(void)
 {
 	eval();
-	for (int i = args(); i; i--)
+	for (guint i = args(); i; i--)
 		pop_num_calc();
 }
 

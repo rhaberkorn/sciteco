@@ -28,14 +28,18 @@ namespace SciTECO {
 template <typename Type>
 class ValueStack {
 	class UndoTokenPush : public UndoTokenWithSize<UndoTokenPush> {
+		/*
+		 * FIXME: saving the UndoStack for each undo taken
+		 * wastes a lot of memory
+		 */
 		ValueStack<Type> *stack;
 
 		Type	value;
-		int	index;
+		guint	index;
 
 	public:
 		UndoTokenPush(ValueStack<Type> *_stack,
-			      Type _value, int _index = 1)
+			      Type _value, guint _index = 0)
 			     : stack(_stack), value(_value), index(_index) {}
 
 		void
@@ -48,10 +52,10 @@ class ValueStack {
 	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop> {
 		ValueStack<Type> *stack;
 
-		int index;
+		guint index;
 
 	public:
-		UndoTokenPop(ValueStack<Type> *_stack, int _index = 1)
+		UndoTokenPop(ValueStack<Type> *_stack, guint _index = 0)
 			    : stack(_stack), index(_index) {}
 
 		void
@@ -61,15 +65,20 @@ class ValueStack {
 		}
 	};
 
-	int size;
-
+	/** Beginning of stack area */
 	Type *stack;
-	Type *top;
+	/** End of stack area */
+	Type *stack_top;
+
+	/** Pointer to top element on stack */
+	Type *sp;
 
 public:
-	ValueStack(int _size = 1024) : size(_size)
+	ValueStack(gsize size = 1024)
 	{
-		top = stack = new Type[size];
+		stack = new Type[size];
+		/* stack grows to smaller addresses */
+		sp = stack_top = stack+size;
 	}
 
 	~ValueStack()
@@ -77,57 +86,67 @@ public:
 		delete[] stack;
 	}
 
-	inline int
+	inline guint
 	items(void)
 	{
-		return top - stack;
+		return stack_top - sp;
 	}
 
 	inline Type &
-	push(Type value, int index = 1)
+	push(Type value, guint index = 0)
 	{
-		if (items() == size)
+		if (G_UNLIKELY(sp == stack))
 			throw Error("Stack overflow");
 
-		for (int i = -index + 1; i; i++)
-			top[i+1] = top[i];
+		/* reserve space for new element */
+		sp--;
+		g_assert(items() > index);
 
-		top++;
-		return peek(index) = value;
+		/* move away elements after index (index > 0) */
+		for (guint i = 0; i < index; i++)
+			sp[i] = sp[i+1];
+
+		return sp[index] = value;
 	}
 	inline void
-	undo_push(Type value, int index = 1)
+	undo_push(Type value, guint index = 0)
 	{
 		undo.push(new UndoTokenPush(this, value, index));
 	}
 
 	inline Type
-	pop(int index = 1)
+	pop(guint index = 0)
 	{
+		/* peek() already asserts */
 		Type v = peek(index);
 
-		top--;
-		while (--index)
-			top[-index] = top[-index + 1];
+		/* elements after index are moved to index (index > 0) */
+		while (index--)
+			sp[index+1] = sp[index];
+
+		/* free space of element to pop */
+		sp++;
 
 		return v;
 	}
 	inline void
-	undo_pop(int index = 1)
+	undo_pop(guint index = 0)
 	{
 		undo.push(new UndoTokenPop(this, index));
 	}
 
 	inline Type &
-	peek(int index = 1)
+	peek(guint index = 0)
 	{
-		return top[-index];
+		g_assert(items() > index);
+
+		return sp[index];
 	}
 
 	inline void
 	clear(void)
 	{
-		top = stack;
+		sp = stack_top;
 	}
 };
 
@@ -163,10 +182,18 @@ public:
 	Expressions() : num_sign(1), radix(10) {}
 
 	gint num_sign;
-	void set_num_sign(gint sign);
+	inline void
+	set_num_sign(gint sign)
+	{
+		undo.push_var(num_sign) = sign;
+	}
 
 	gint radix;
-	void set_radix(gint r);
+	inline void
+	set_radix(gint r)
+	{
+		undo.push_var(radix) = r;
+	}
 
 	tecoInt push(tecoInt number);
 
@@ -183,14 +210,14 @@ public:
 	}
 
 	inline tecoInt
-	peek_num(int index = 1)
+	peek_num(guint index = 0)
 	{
 		return numbers.peek(index);
 	}
-	tecoInt pop_num(int index = 1);
-	tecoInt pop_num_calc(int index, tecoInt imply);
+	tecoInt pop_num(guint index = 0);
+	tecoInt pop_num_calc(guint index, tecoInt imply);
 	inline tecoInt
-	pop_num_calc(int index = 1)
+	pop_num_calc(guint index = 0)
 	{
 		return pop_num_calc(index, num_sign);
 	}
@@ -200,19 +227,19 @@ public:
 	Operator push(Operator op);
 	Operator push_calc(Operator op);
 	inline Operator
-	peek_op(int index = 1)
+	peek_op(guint index = 0)
 	{
 		return operators.peek(index);
 	}
-	Operator pop_op(int index = 1);
+	Operator pop_op(guint index = 0);
 
 	void eval(bool pop_brace = false);
 
-	int args(void);
+	guint args(void);
 
 	void discard_args(void);
 
-	int find_op(Operator op);
+	gint find_op(Operator op);
 
 	inline void
 	clear(void)
@@ -226,7 +253,7 @@ public:
 private:
 	void calc(void);
 
-	int first_op(void);
+	gint first_op(void);
 } expressions;
 
 } /* namespace SciTECO */

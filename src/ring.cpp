@@ -337,7 +337,7 @@ StateEditFile::do_edit(tecoInt id)
 void
 StateEditFile::initial(void)
 {
-	tecoInt id = expressions.pop_num_calc(1, -1);
+	tecoInt id = expressions.pop_num_calc(0, -1);
 
 	allowFilename = true;
 
