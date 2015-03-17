@@ -9,6 +9,9 @@ compared to the preceding release.
 Version 0.6
 ~~~~~~~~~~~
 
+18fe073 added PDCURSES_LIBS ./configure variable to overwrite the check for PDCurses
+537b7b5 preliminary support for ncurses/win32. This port is not well
+        tested.
 64ee414 implemented function key masking (context-sensitive function key macros).
         The command line editing macros in fnkeys.tes will no longer insert
         "garbage" into string parameters.
