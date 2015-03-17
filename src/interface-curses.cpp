@@ -63,6 +63,13 @@
 #define PDCURSES_WIN32
 #endif
 
+/**
+ * Whether we're on ncurses/win32 console
+ */
+#if defined(NCURSES_VERSION) && defined(G_OS_WIN32)
+#define NCURSES_WIN32
+#endif
+
 namespace SciTECO {
 
 extern "C" {
@@ -139,6 +146,11 @@ InterfaceCurses::init_batch(void)
 #ifdef PDCURSES_WIN32A
 	/* enables window resizing on Win32a port */
 	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
+#endif
+
+#ifdef NCURSES_WIN32
+	/* $TERM must be unset for the win32 driver to load */
+	g_unsetenv("TERM");
 #endif
 
 	/*
@@ -290,7 +302,7 @@ InterfaceCurses::set_window_title(const gchar *title)
 	PDC_set_title(title);
 }
 
-#elif defined(HAVE_TIGETSTR)
+#elif defined(HAVE_TIGETSTR) && defined(G_OS_UNIX)
 
 void
 InterfaceCurses::set_window_title(const gchar *title)
@@ -299,8 +311,8 @@ InterfaceCurses::set_window_title(const gchar *title)
 	 * NOTE: terminfo variables in term.h interfere with
 	 * the rest of our code
 	 */
-	const char *tsl = tigetstr("tsl");
-	const char *fsl = tigetstr("fsl");
+	const char *tsl = tigetstr((char *)"tsl");
+	const char *fsl = tigetstr((char *)"fsl");
 
 	if (!tsl || !fsl)
 		return;

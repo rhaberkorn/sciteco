@@ -73,6 +73,8 @@ ppa : debian-source
 # which is required by the glib spawn functions.
 # If we ever build a non-console version on Windows,
 # we should include gspawn-win32-helper.exe instead.
+MINGW_UI=pdcurses
+
 mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip
 sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 	tar xzf $(SCITECO_SRC)
@@ -83,7 +85,7 @@ sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 	             --prefix=/usr \
 	             --enable-static-executables \
 	             --disable-dependency-tracking \
-		     --with-interface=pdcurses \
+		     --with-interface=$(MINGW_UI) \
 		     --disable-bootstrap \
 		     --enable-html-manual \
 		     CFLAGS="-g -O3" CXXFLAGS="-g -O3"; \
