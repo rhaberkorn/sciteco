@@ -73,6 +73,10 @@ ppa : debian-source
 # which is required by the glib spawn functions.
 # If we ever build a non-console version on Windows,
 # we should include gspawn-win32-helper.exe instead.
+#
+# When linking in PDCurses/win32a statically, the
+# environment variable PDCURSES_LIBS should be set to
+# "-lpdcurses -lgdi32 -lcomdlg32"
 MINGW_UI=pdcurses
 
 mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip

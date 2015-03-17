@@ -141,7 +141,7 @@ SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(interface,
-	AS_HELP_STRING([--with-interface=ncurses|pdcurses|emcurses|gtk],
+	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
@@ -155,19 +155,21 @@ case $INTERFACE in
 		AC_CHECK_FUNCS([tigetstr])
 		;;
 	pdcurses)
-		AC_CHECK_LIB(pdcurses, initscr, , [
-			AC_MSG_ERROR([libpdcurses missing!
-			              Perhaps it is not named correctly or has wrong permissions.])
-		])
+		AC_ARG_VAR(PDCURSES_LIBS, [linker flags for PDCurses,
+		                           overriding the autoconf check])
+		if [[ "x$PDCURSES_LIBS" = "x" ]]; then
+			AC_CHECK_LIB(pdcurses, initscr, , [
+				AC_MSG_ERROR([libpdcurses missing!
+				              Perhaps it is not named correctly or has wrong permissions.])
+			])
+		else
+			AC_MSG_CHECKING([checking for PDCurses (PDCURSES_LIBS)])
+			AC_MSG_RESULT([$PDCURSES_LIBS])
+			LIBS="$LIBS $PDCURSES_LIBS"
+		fi
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
 			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
 		])
-		;;
-	emcurses)
-		# EMCurses is the PDCurses/Emscripten port
-		# However, ordinary library checks do not work
-		# under Emscripten
-		LIBS="$LIBS -lpdcurses"
 		;;
 	esac
 
