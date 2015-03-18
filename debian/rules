@@ -3,6 +3,15 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# NOTE: Unsetting $TERM is necessary since the
+# PPA build servers have a broken curses setup.
+# They have $TERM set but do not include the corresponding
+# terminal definitions.
+# This lets SciTECO choose a reasonable default
+# and we've also added some terminal definitions to the
+# build dependencies.
+export TERM=
+
 %:
 	dh $@
 
