@@ -22,6 +22,10 @@ Known Bugs:
    are in the internal pdcwin.h.
    Also batch mode is broken in PDCurses/win32 - endwin() does not
    work.
+ * It is still possible to crash SciTECO using recursive functions,
+   since they map to the C++ program's call stack.
+   It is perhaps best to use another ValueStack as a stack of
+   macro strings and implement our own function calling.
 
 Features:
  * Support loading from stdin (--stdin) and writing to
