@@ -100,8 +100,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	} popup;
 
 public:
-	InterfaceCurses() : Interface(),
-	                    screen(NULL),
+	InterfaceCurses() : screen(NULL),
 			    screen_tty(NULL),
 			    info_window(NULL),
 			    info_current(NULL),
