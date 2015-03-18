@@ -4,7 +4,10 @@
 SRCDIR=.
 ABS_SRCDIR=$(abspath $(SRCDIR))
 
-SCITECO_VERSION = 0.6
+# Try to extract version from ./configure
+SCITECO_VERSION = $(shell $(SRCDIR)/configure --version | \
+                          sed -n 's/SciTECO configure //p')
+
 SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
 
 $(SCITECO_SRC):
@@ -15,7 +18,9 @@ all : $(SCITECO_SRC) debian mingw-binary
 # $(UBUNTU) sets the Ubuntu distribution and fixes the package's
 # version
 debian-prepare: debian-temp/
+.PHONY: debian-temp/
 debian-temp/ : $(SCITECO_SRC)
+	rm -rf debian-temp/
 	mkdir debian-temp/
 	(cd debian-temp/; \
 	 cp ../$(SCITECO_SRC) \
@@ -36,6 +41,19 @@ else
 DEBUILD_FLAGS := -us -uc
 endif
 
+# Whether to upload upstream sources (dist tarball) to the PPA
+# This must be YES for new releases.
+# It must be NO after the tarball has been
+# uploaded once, else launchpad refuses
+# building the source package.
+# Launchpad will also refuse new versions of the
+# tar ball for the same release, so the tarball
+# should NOT be cleaned when uploading for multiple
+# Ubuntu versions.
+# If a bug is found only during PPA building,
+# the upstream version must be increased since we
+# cannot upload a new tarball and adding patches to the
+# Debian package would be idiotic :-(
 UPLOAD_SRC ?= yes
 ifeq ($(UPLOAD_SRC),yes)
 DEBUILD_FLAGS += -sa
