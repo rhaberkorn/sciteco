@@ -14,7 +14,8 @@ SciTECO Build and Runtime Dependencies
 ======================================
 
  * Autotools, GNU C/C++ (v4.4 or later) or LLVM/gcc or LLVM/Clang
- * Glib 2 as a cross-platform runtime library:
+ * Glib 2 as a cross-platform runtime library
+   (v2.28 or later on Unix, v2.34 or later for MinGW):
    https://developer.gnome.org/glib/
  * When choosing the Curses interface:
    * NCurses (http://www.gnu.org/software/ncurses/),

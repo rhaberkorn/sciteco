@@ -1,10 +1,12 @@
-sciteco (0.6-1) unstable; urgency=low
+sciteco (0.6.4-5) unstable; urgency=low
 
-  * new upstream version v0.6
+  * new upstream version v0.6.4
+  * the last revision 4 is only necessary to appease
+    launchpad which already knows some outdated tarballs.
   * Debian package can now be built from the original
     source tarball since it includes Scintilla.
 
- -- Robin Haberkorn <robin.haberkorn@googlemail.com>  Tue, 17 Mar 2015 04:33:24 +0100
+ -- Robin Haberkorn <robin.haberkorn@googlemail.com>  Wed, 18 Mar 2015 01:37:14 +0100
 
 sciteco (0.5-1) unstable; urgency=low
 

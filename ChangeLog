@@ -6,8 +6,8 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
-Version 0.6
-~~~~~~~~~~~
+Version 0.6.4
+~~~~~~~~~~~~~
 
 18fe073 added PDCURSES_LIBS ./configure variable to overwrite the check for PDCurses
 537b7b5 preliminary support for ncurses/win32. This port is not well
@@ -24,6 +24,9 @@ c310c7d implemented automatic EOL translation support.
 eee4f1a added "EL" command for setting/getting the current document's EOL mode
 14ec511 also set window title on ncurses, by querying terminfo capabilities.
         This feature is currently buggy.
+34a4c7e ncurses: Fixed batch mode initialization in head-less environments
+        (where $TERM is unset). Interactive mode should no longer start in
+        headless or broken environments but report an error.
 2a4acd6,
 2c0e9f7,
 4dced2c improved ncurses batch mode initialization.
@@ -259,6 +262,10 @@ acc911a implemented "EC" command (execute operating system command).
              On the other hand, it improves readability of SciTECO macros.
 06d0bac fixed reversing the "EW" command when used to save a file with another
         name (save as)
+b62f736 depend on Scintilla v3.5.2 and Scinterm v1.5 (included in
+        tar balls). This brings many new curses features, e.g. scroll bars
+        and new Scintilla lexers. You should refer to the Scintilla v3.5.2
+        documentation when setting up SciTECO.
 39406f4,
 a27b5d4,
 30d8bf3 automatically build Scintilla as part of SciTECO's build system:

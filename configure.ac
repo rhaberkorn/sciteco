@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([SciTECO], [0.6],
+AC_INIT([SciTECO], [0.6.4],
 	[robin.haberkorn@googlemail.com],
 	[sciteco],
 	[http://sciteco.sf.net/])
@@ -76,7 +76,7 @@ AC_SUBST(DOXYGEN_HAVE_DOT)
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBGLIB, [glib-2.0], [
+PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.28], [
 	CFLAGS="$CFLAGS $LIBGLIB_CFLAGS"
 	CXXFLAGS="$CXXFLAGS $LIBGLIB_CFLAGS"
 	LIBS="$LIBS $LIBGLIB_LIBS"
