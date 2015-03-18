@@ -178,6 +178,23 @@ InterfaceCurses::init_interactive(void)
 void
 InterfaceCurses::init_batch(void)
 {
+	const gchar *term = g_getenv("TERM");
+
+	/*
+	 * In headless or broken environments,
+	 * $TERM may be unset or empty.
+	 * Still batch-mode operation is supposed
+	 * to work.
+	 * Therefore we initialize Curses with
+	 * a terminal type that ensures it will at least
+	 * start up ("ansi" is in ncurses-base).
+	 * We do not always use "ansi" since
+	 * it is also not guaranteed to work and we cannot
+	 * change it later on.
+	 */
+	if (!term || !*term)
+		term = "ansi";
+
 	/*
 	 * This sets stdscr to a new screen associated
 	 * with /dev/null.
@@ -186,26 +203,55 @@ InterfaceCurses::init_batch(void)
 	 * Curses (required by Scintilla and thus for
 	 * batch processing).
 	 */
-	screen_tty = g_fopen("/dev/null", "r+b");
+	screen_tty = g_fopen("/dev/null", "r+");
+	/* should never fail */
 	g_assert(screen_tty != NULL);
+
 	setvbuf(screen_tty, NULL, _IOFBF, 0);
-	screen = newterm(NULL, screen_tty, screen_tty);
+
+	screen = newterm(term, screen_tty, screen_tty);
+	if (!screen) {
+		/* $TERM may be set but to a wrong value */
+		g_fprintf(stderr, "Error initializing batch mode. "
+		                  "$TERM may be incorrent.\n"
+		                  "Try unsetting it if you do not need "
+		                  "the interactive mode.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	def_shell_mode();
 }
 
 void
 InterfaceCurses::init_interactive(void)
 {
+	const gchar *term = g_getenv("TERM");
+
+	/* at least try to report a broken $TERM */
+	if (!term || !*term) {
+		g_fprintf(stderr, "Error initializing interactive mode: "
+		                  "$TERM is unset or empty.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	/*
-	 * To initialize interactive mode, we
-	 * reopen the file opened for Curses in init_batch()
-	 * with the current controlling terminal device
-	 * (see tty(4)).
-	 * Should also work with newterm(), but this
-	 * seems more elegant.
+	 * Reopen screen_tty on the real terminal
+	 * device.
+	 * NOTE: It would be better to create a new
+	 * terminal with newterm() since the current
+	 * terminal might still be configured as
+	 * "ansi" to get the batch mode working.
+	 * If this is the case because we are in a head-less
+	 * or broken environment NOW would be the time
+	 * to tell the user.
+	 * However, I cannot get ncurses to switch
+	 * to a new terminal. Perhaps existing windows are
+	 * somehow "bound" to the current screen.
+	 * Perhaps this only works if we delete and recreate
+	 * ALL windows...
 	 */
-	if (!g_freopen("/dev/tty", "r+b", screen_tty)) {
-		/* no controlling terminal, process detached? */
+	if (!g_freopen("/dev/tty", "r+", screen_tty)) {
+		/* no controlling terminal? */
 		g_fprintf(stderr, "Error initializing interactice mode: %s\n",
 		          g_strerror(errno));
 		exit(EXIT_FAILURE);
