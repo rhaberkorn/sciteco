@@ -75,13 +75,10 @@ Download
 ========
 
 There are prebuilt binary packages and source bundles for your convenience:
-* [Download Archive](https://sourceforge.net/projects/sciteco/files/)
+* [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
+* [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
-
-__The prebuilt binary packages are quite outdated and buggy.
-Therefore you are currently advised to build SciTECO from source
-by cloning the Git repository.__
 
 For more details on building from source, please refer to `INSTALL`.
 
