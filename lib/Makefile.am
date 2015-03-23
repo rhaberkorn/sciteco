@@ -13,8 +13,8 @@ dist_colorscheme_DATA = colors/terminal.tes
 # This list must be extended when adding
 # a new lexer configuration:
 lexerdir = $(scitecolibdir)/lexers
-dist_lexer_DATA = lexers/patch.tes \
-                  lexers/sh.tes \
+dist_lexer_DATA = lexers/diff.tes \
+                  lexers/bash.tes \
                   lexers/cpp.tes \
                   lexers/cmake.tes \
                   lexers/batch.tes \

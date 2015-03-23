@@ -1,14 +1,15 @@
 ! Lexing for XML and its applications !
 
-@[lexer.test.xml]{
-  [_ _.[xml,xsl,svg,xul,xsd,dtd,xslt,axl,xrc,rdf]M[lexer.checkname] ]_
-}
+@[lexer.test.xml]{ [_
+  _.[xml,xsl,svg,xul,xsd,dtd,xslt,axl,xrc,rdf]M[lexer.checkname]
+]_ }
 
 @[lexer.set.xml]{
   ESSETLEXER,SCLEX_XML
   0ESSETKEYWORDS 
   ! DTD keywords !
-  5ESSETKEYWORDSELEMENT DOCTYPE ATTLIST ENTITY NOTATION
+  5ESSETKEYWORDS
+    ELEMENT DOCTYPE ATTLIST ENTITY NOTATION
   :M[color.keyword],1M[color.set] ! Tags !
   :M[color.keyword],2M[color.set] ! Tags !
   :M[color.variable],3M[color.set] ! Attributes !

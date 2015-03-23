@@ -1,10 +1,10 @@
 ! Patch/Diff Files !
 
-@[lexer.test.patch]{
-  [_ _.[diff,patch]M[lexer.checkname] ]_
-}
+@[lexer.test.diff]{ [_
+  _.[diff,patch]M[lexer.checkname]
+]_ }
 
-@[lexer.set.patch]{
+@[lexer.set.diff]{
   ESSETLEXER,SCLEX_DIFF
   :M[color.comment],1M[color.set]
   :M[color.keyword],2M[color.set] ! Command !
