@@ -1,0 +1,58 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.cs]{ [_
+  _.csM[lexer.checkname]
+]_ }
+
+@[lexer.set.cs]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    abstract as ascending base bool break by byte case catch char checked class
+    const continue decimal default delegate descending do double else enum equals
+    event explicit extern false finally fixed float for foreach from goto group if
+    implicit in int interface internal into is join lock let long namespace new null
+    object on operator orderby out override params private protected public readonly
+    ref return sbyte sealed select short sizeof stackalloc static string struct
+    switch this throw true try typeof uint ulong unchecked unsafe ushort using var
+    virtual void volatile where while
+  1ESSETKEYWORDS
+    sr kr ar ksmps nchnls
+  2ESSETKEYWORDS
+    border-top-color border-right-color border-bottom-color border-left-color
+    border-color border-top-style border-right-style border-bottom-style border-left-style
+    border-style top right bottom left position z-index direction unicode-bidi min-width
+    max-width min-height max-height overflow clip visibility content quotes counter-reset
+    counter-increment marker-offset size marks page-break-before page-break-after
+    page-break-inside page orphans widows font-stretch font-size-adjust unicode-range units-per-em
+    src panose-1 stemv stemh slope cap-height x-height ascent descent widths bbox
+    definition-src baseline centerline mathline topline text-shadow caption-side table-layout
+    border-collapse border-spacing empty-cells speak-header cursor outline outline-width
+    outline-style outline-color volume speak pause-before pause-after pause cue-before
+    cue-after cue play-during azimuth elevation speech-rate voice-family pitch pitch-range
+    stress richness speak-punctuation speak-numeral
+  3ESSETKEYWORDS
+    background-size border-radius border-top-right-radius
+    border-bottom-right-radius border-bottom-left-radius border-top-left-radius box-shadow columns
+    column-width column-count column-rule column-gap column-rule-color column-rule-style
+    column-rule-width resize opacity word-wrap
+  4ESSETKEYWORDS
+    first-letter first-line before after selection
+  5ESSETKEYWORDS
+    ^-moz- ^-webkit- ^-o- ^-ms- filter
+  6ESSETKEYWORDS
+    indeterminate default ^-moz- ^-webkit- ^-o- ^-ms-
+  7ESSETKEYWORDS
+    ^-moz- ^-webkit- ^-o- ^-ms-
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

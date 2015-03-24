@@ -1,0 +1,33 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.purebasic]{ [_
+  _.pbM[lexer.checkname]
+]_ }
+
+@[lexer.set.purebasic]{
+  ESSETLEXER,SCLEX_PUREBASIC
+  0ESSETKEYWORDS
+    and break case continue data datasection declare declarecdll declaredll
+    default deftype dim else elseif end enddatasection endenumeration endif endinterface
+    endprocedure endselect endstructure endstructureunion enumeration extends fakereturn for
+    foreach forever global gosub goto if includebinary includefile includepath interface
+    newlist next or procedure procedurecdll proceduredll procedurereturn protected read
+    repeat restore return select shared static step structure structureunion to until
+    wend while xincludefile
+  1ESSETKEYWORDS
+    compilercase compilerdefault compilerelse compilerendif compilerendselect
+    compilerif compilerselect
+  :M[color.comment],1M[color.set]
+  :M[color.number],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.string],4M[color.set]
+  :M[color.operator],6M[color.set]
+  :M[color.preproc],10M[color.set]
+  :M[color.keyword],11M[color.set]
+  :M[color.keyword],12M[color.set]
+  :M[color.number],13M[color.set]
+  :M[color.preproc],15M[color.set]
+  :M[color.error],16M[color.set]
+  :M[color.number],17M[color.set]
+  :M[color.number],18M[color.set]
+}

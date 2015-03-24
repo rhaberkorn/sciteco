@@ -1,0 +1,28 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.tacl]{ [_
+  _.taclM[lexer.checkname]
+]_ }
+
+@[lexer.set.tacl]{
+  ESSETLEXER,SCLEX_TACL
+  0ESSETKEYWORDS
+    activate add adddsttransition adduser alter altpri assign attachseg
+    backupcpu break builtins buscmd clear columnize comment compute copy dump copyvar
+    create createseg debug debugnow default delete deluser detachseg env exit fileinfo
+    filenames files filetovar help history home info initterm inlecho inleof inlout
+    inlprefix inlto join keep keys lights load loaded files logoff logon o obey outvar
+    param password pause pmsearch pmsg pop ppd purge push rcvdump receivedump reload
+    remotepassword rename reset rpasswrd run rund seginfo set setprompt settime show sink
+    status stop suspend switch system systimes time timestamp_to_text useusers
+    variables varinfo vartofile vchange vcopy vdelete vfind vinsert vlist vmove volume
+    vtree wakeup who xbusdown xbusup ybusdown ybusup _comparev _contime_to_text
+    _contime_to_text_date _contime_to_text_time _debugger _execute _longest _month3
+  :M[color.comment],2M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+}

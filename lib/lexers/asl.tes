@@ -1,0 +1,64 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.asl]{ [_
+  _.[asl,dsl]M[lexer.checkname]
+]_ }
+
+@[lexer.set.asl]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    AccessAs Acquire Add Alias And Arg0 Arg1 Arg2 Arg3 Arg4 Arg5 Arg6 BankField
+    Break BreakPoint Buffer Case Concatenate ConcatenateResTemplate CondRefOf
+    Connection Continue CopyObject CreateBitField CreateByteField CreateDWordField
+    CreateField CreateQWordField CreateWordField DataTableRegion Debug Decrement Default
+    DefinitionBlock DerefOf Device Device Divide DMA DWordIO DWordMemory DWordSpace EisaId
+    ElseIf Else EndDependentFn Event ExtendedIO ExtendedMemory ExtendedMemory
+    ExtendedSpace External Fatal Field FindSetLeftBit FindSetRightBit FixedDMA FixedIO FromBCD
+    Function GpioInt GpioIo I2CSerialBus If Include Increment Index IndexField Interrupt
+    IO IRQNoFlags IRQ LAnd LEqual LGreater LGreaterEqual LLess LLessEqual LNotEqual
+    LNot Load LoadTable Local0 Local1 Local2 Local3 Local4 Local5 Local6 Local7 LOr
+    Match Memory24 Memory32 Memory32Fixed Method Mid Mod Multiply Mutex Name NAnd NoOp
+    NOr Not Notify Offset ObjectType Ones One OperationRegion Or Package
+    PowerResource Processor QWordIO QWordMemory QWordSpace RawDataBuffer RefOf Register
+    Release Reset ResourceTemplate Return Revision Scope ShiftLeft ShiftRight Signal
+    SizeOf Sleep SPISerialBus Stall StartDependentFn StartDependentFnNoPri Store
+    Subtract Switch ThermalZone Timer ToBCD ToBuffer ToDecimalString ToHexString
+    ToInteger ToString ToUUID UARTSerialBus Unicode Unload VendorLong VendorShort Wait
+    While WordBusNumber WordIO WordSpace XOr Zero
+  1ESSETKEYWORDS
+    AttribQuick AttribSendReceive AttribByte AttribBytes AttribRawBytes
+    AttribRawProcessBytes AttribWord AttribBlock AttribProcessCall AttribBlockProcessCall AnyAcc
+    ByteAcc WordAcc DWordAcc QWordAcc BufferAcc AddressRangeMemory AddressRangeReserved
+    AddressRangeNVS AddressRangeACPI RegionSpaceKeyword FFixedHW PCC AddressingMode7Bit
+    AddressingMode10Bit DataBitsFive DataBitsSix DataBitsSeven DataBitsEight DataBitsNine BusMaster
+    NotBusMaster ClockPhaseFirst ClockPhaseSecond ClockPolarityLow ClockPolarityHigh
+    SubDecode PosDecode BigEndianing LittleEndian AttribBytes AttribRawBytes
+    AttribRawProcessBytes FlowControlNone FlowControlXon FlowControlHardware Edge Level ActiveHigh
+    ActiveLow ActiveHigh ActiveLow ActiveBoth Decode16 Decode10 IoRestrictionNone
+    IoRestrictionInputOnly IoRestrictionOutputOnly IoRestrictionNoneAndPreserve Lock NoLock MTR MEQ MLE
+    MLT MGE MGT MaxFixed MaxNotFixed Cacheable WriteCombining Prefetchable
+    NonCacheable MinFixed MinNotFixed UnknownObj IntObj StrObj BuffObj PkgObj FieldUnitObj
+    DeviceObj EventObj MethodObj MutexObj OpRegionObj PowerResObj ProcessorObj
+    ThermalZoneObj BuffFieldObj DDBHandleObj ParityTypeNone ParityTypeSpace ParityTypeMark
+    ParityTypeOdd ParityTypeEven PullDefault PullUp PullDown PullNone PolarityHigh PolarityLow
+    ISAOnlyRanges NonISAOnlyRanges EntireRange ReadWrite ReadOnly UserDefRegionSpace SystemIO
+    SystemMemory PCI_Config EmbeddedControl SMBus SystemCMOS PciBarTarget IPMI
+    GeneralPurposeIO GenericSerialBus ResourceConsumer ResourceProducer Serialized NotSerialized
+    Shared Exclusive SharedAndWake ExclusiveAndWake ControllerInitiated DeviceInitiated
+    StopBitsZero StopBitsOne StopBitsOnePlusHalf StopBitsTwo Width8Bit Width16Bit Width32Bit
+    Width64Bit Width128Bit Width256Bit SparseTranslation DenseTranslation TypeTranslation
+    TypeStatic Preserve WriteAsOnes WriteAsZeros Transfer8 Transfer16 Transfer8_16
+    ThreeWireMode FourWireMode
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

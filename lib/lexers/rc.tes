@@ -1,0 +1,28 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.rc]{ [_
+  _.[rc,rc2,dlg]M[lexer.checkname]
+]_ }
+
+@[lexer.set.rc]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    ACCELERATORS ALT AUTO3STATE AUTOCHECKBOX AUTORADIOBUTTON BEGIN BITMAP BLOCK
+    BUTTON CAPTION CHARACTERISTICS CHECKBOX CLASS COMBOBOX CONTROL CTEXT CURSOR
+    DEFPUSHBUTTON DIALOG DIALOGEX DISCARDABLE EDITTEXT END EXSTYLE FONT GROUPBOX ICON LANGUAGE
+    LISTBOX LTEXT MENU MENUEX MENUITEM MESSAGETABLE POPUP PUSHBUTTON RADIOBUTTON RCDATA
+    RTEXT SCROLLBAR SEPARATOR SHIFT STATE3 STRINGTABLE STYLE TEXTINCLUDE VALUE VERSION
+    VERSIONINFO VIRTKEY
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

@@ -1,0 +1,27 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.ch]{ [_
+  _.[ch,chf,chs]M[lexer.checkname]
+]_ }
+
+@[lexer.set.ch]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    auto array bool break case char class complex ComplexInf ComplexNaN const
+    continue default delete do double else enum export extern float for foreach goto if
+    Inf inline int long namespace NaN new NULL private public register restrict
+    return short signed sizeof static string_t struct switch this typedef union
+    unsigned using void volatile wchar_t while __declspec
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

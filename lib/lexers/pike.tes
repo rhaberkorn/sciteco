@@ -1,0 +1,25 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.pike]{ [_
+  _.pikeM[lexer.checkname]
+]_ }
+
+@[lexer.set.pike]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    constant enum if do for while else foreach case switch break continue return
+    typeof catch class lambda import inherit static void int string float mixed object
+    function program array mapping multiset
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

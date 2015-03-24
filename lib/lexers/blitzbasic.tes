@@ -1,0 +1,63 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.blitzbasic]{ [_
+  _.bbM[lexer.checkname]
+]_ }
+
+@[lexer.set.blitzbasic]{
+  ESSETLEXER,SCLEX_BLITZBASIC
+  0ESSETKEYWORDS
+    abs accepttcpstream acos after and apptitle asc asin atan atan2
+    automidhandle autosuspend availvidmem backbuffer banksize before bin calldll case ceil
+    changedir channelpan channelpitch channelplaying channelvolume chr closedir closefile
+    closemovie closetcpserver closetcpstream closeudpstream cls clscolor color colorblue
+    colorgreen colorred commandline const copybank copyfile copyimage copypixel
+    copypixelfast copyrect copystream cos countgfxdrivers countgfxmodes counthostips
+    createbank createdir createimage createnetplayer createprocess createtcpserver
+    createtimer createudpstream currentdate currentdir currenttime data debuglog default
+    delay delete deletedir deletefile deletenetplayer desktopbuffer dim dottedip
+    drawblock drawblockrect drawimage drawimagerect drawmovie each else else if elseif end
+    end function end if end select end type endgraphics endif eof execfile exit exp
+    false field filepos filesize filetype first flip float floor flushjoy flushkeys
+    flushmouse fontheight fontname fontsize fontstyle fontwidth for forever freebank
+    freefont freeimage freesound freetimer frontbuffer function gammablue gammagreen
+    gammared getcolor getenv getkey getmouse gfxdrivername gfxmodedepth gfxmodeexists
+    gfxmodeformat gfxmodeheight gfxmodewidth global gosub goto grabimage graphics
+    graphicsbuffer graphicsdepth graphicsformat graphicsheight graphicswidth handleimage hex
+    hidepointer hostip hostnetgame if imagebuffer imageheight imagerectcollide
+    imagerectoverlap imagescollide imagesoverlap imagewidth imagexhandle imageyhandle include
+    input insert instr int joinnetgame joydown joyhat joyhit joypitch joyroll joytype
+    joyu joyudir joyv joyvdir joyx joyxdir joyy joyyaw joyydir joyz joyzdir keydown
+    keyhit keywait last left len line loadanimimage loadbuffer loadfont loadimage
+    loadsound local lockbuffer lockedformat lockedpitch lockedpixels log log10 loopsound
+    lower lset maskimage mid midhandle millisecs mod morefiles mousedown mousehit
+    mousex mousexspeed mousey mouseyspeed mousez mousezspeed movemouse movieheight
+    movieplaying moviewidth netmsgdata netmsgfrom netmsgto netmsgtype netplayerlocal
+    netplayername new next nextfile not null openfile openmovie opentcpstream or origin oval
+    pausechannel pausetimer peekbyte peekfloat peekint peekshort pi playcdtrack playmusic
+    playsound plot pokebyte pokefloat pokeint pokeshort print queryobject rand read
+    readavail readbyte readbytes readdir readfile readfloat readint readline readpixel
+    readpixelfast readshort readstring rect rectsoverlap recvnetmsg recvudpmsg repeat replace
+    resettimer resizebank resizeimage restore resumechannel resumetimer return right rnd
+    rndseed rotateimage rset runtimeerror sar savebuffer saveimage scaleimage scanline
+    seedrnd seekfile select sendnetmsg sendudpmsg setbuffer setenv setfont setgamma
+    setgfxdriver sgn shl showpointer shr sin soundpan soundpitch soundvolume sqr startnetgame
+    step stop stopchannel stopnetgame str string stringheight stringwidth
+    systemproperty tan tcpstreamip tcpstreamport tcptimeouts text tformfilter tformimage then
+    tileblock tileimage timerticks to totalvidmem trim true type udpmsgip udpmsgport
+    udpstreamip udpstreamport udptimeouts unlockbuffer until updategamma upper viewport
+    vwait waitkey waitmouse waittimer wend while write writebyte writebytes writefile
+    writefloat writeint writeline writepixel writepixelfast writeshort writestring xor
+  :M[color.comment],1M[color.set]
+  :M[color.number],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.string],4M[color.set]
+  :M[color.operator],6M[color.set]
+  :M[color.keyword],10M[color.set]
+  :M[color.keyword],11M[color.set]
+  :M[color.keyword],12M[color.set]
+  :M[color.preproc],15M[color.set]
+  :M[color.error],16M[color.set]
+  :M[color.number],17M[color.set]
+  :M[color.number],18M[color.set]
+}

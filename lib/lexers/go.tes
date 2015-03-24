@@ -1,0 +1,26 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.go]{ [_
+  _.goM[lexer.checkname]
+]_ }
+
+@[lexer.set.go]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    bool byte break case chan complex64 complex128 const continue defer default
+    else for func go goto fallthrough false float32 float64 if import int interface
+    int8 int16 int32 int64 len map nil package range return select string struct
+    switch true type uint uintptr uint8 uint16 uint32 uint64 var
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

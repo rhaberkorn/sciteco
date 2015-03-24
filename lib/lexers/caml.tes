@@ -1,0 +1,21 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.caml]{ [_
+  _.[ml,mli]M[lexer.checkname]
+]_ }
+
+@[lexer.set.caml]{
+  ESSETLEXER,SCLEX_CAML
+  0ESSETKEYWORDS
+    and as assert asr begin class constraint do done downto else end exception
+    external false for fun function functor if in include inherit initializer land lazy
+    let lor lsl lsr lxor match method mod module mutable new object of open or
+    private rec sig struct then to true try type val virtual when while with
+  1ESSETKEYWORDS
+    option Some None ignore ref lnot succ pred parser
+  2ESSETKEYWORDS
+    array bool char float int list string unit
+  :M[color.keyword],3M[color.set]
+  :M[color.operator],7M[color.set]
+  :M[color.comment],12M[color.set]
+}

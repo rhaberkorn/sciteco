@@ -1,0 +1,34 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.mmixal]{ [_
+  _.mmsM[lexer.checkname]
+]_ }
+
+@[lexer.set.mmixal]{
+  ESSETLEXER,SCLEX_MMIXAL
+  0ESSETKEYWORDS
+    2ADDU 4ADDU 8ADDU 16ADDU ADD ADDU AND ANDNH ANDNL ANDNMH ANDNML BDIF BEV BN
+    BNN BNP BNZ BOD BP BSPEC BYTE BZ CMP CMPU CSEV CSN CSNN CSNP CSNZ CSOD CSP CSWAP
+    CSZ DIV DIVU ESPEC EXPR FADD FCMP FCMPE FDIV FEQL FEQLE FIX FIXU FLOT FLOTU FMUL
+    FREM FSQRT FSUB FUN FUNE GET GETA GO GREG I_BIT INCH INCL INCMH INCML IS JMP LDA
+    LDB LDBU LDHT LDO LDOU LDSF LDT LDTU LDUNC LDVTS LDW LDWU LOC LOCAL MOR MUL MULU
+    MUX MXOR NAND NEG NEGU NNIX NOR NXOR O_BIT OCTA ODIF OR ORH ORL ORMH ORML ORN
+    PBEV PBN PBNN PBNP PBNZ PBOD PBP PBZ POP PREFIX PREGO PRELD PREST PUSHGO PUSHJ
+    PUT RESUME SAVE SET SETH SETL SETMH SETML SFLOT SFLOTU SL SLU SR SRU STB STBU
+    STCO STHT STO STOU STSF STT STTU STUNC STW STWU SUB SUBU SWYM SYNC SYNCD TDIF
+    TETRA TRAP TRIP UNSAVE WDIF WYDEXOR ZSEV ZSN ZSNN ZSNP ZSNZ ZSOD ZSP ZSZ
+  1ESSETKEYWORDS
+    rA rB rC rD rE rF rG rH rI rJ rK rL rM rN rO rP rQ rR rS rT rU rV rW rX rY
+    rZ rBB rTT rWW rXX rYY rZZ
+  2ESSETKEYWORDS
+    @ Text_Segment Data_Segment Pool_Segment Stack_Segment StdErr StdIn StdOut
+    Fopen Fclose Fread Fwrite Fgets Fputs Fgetws Fputws Ftell Fseek TextRead TextWrite
+    BinaryRead BinaryWrite BinaryReadWrite
+  :M[color.comment],1M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.error],6M[color.set]
+  :M[color.number],9M[color.set]
+  :M[color.string2],11M[color.set]
+  :M[color.string],12M[color.set]
+  :M[color.comment],17M[color.set]
+}

@@ -1,0 +1,22 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.octave]{ [_
+  _.m.octaveM[lexer.checkname]
+]_ }
+
+@[lexer.set.octave]{
+  ESSETLEXER,SCLEX_OCTAVE
+  0ESSETKEYWORDS
+    __FILE__ __LINE__ break case catch classdef continue do else elseif end
+    end_try_catch end_unwind_protect endclassdef endenumeration endevents endfor endif
+    endmethods endparfor endproperties endswitch endwhile enumeration events for function
+    endfunction get global if methods otherwise parfor persistent properties return set
+    static switch try until unwind_protect unwind_protect_cleanup while
+  :M[color.comment],1M[color.set]
+  :M[color.preproc],2M[color.set]
+  :M[color.number],3M[color.set]
+  :M[color.keyword],4M[color.set]
+  :M[color.string],5M[color.set]
+  :M[color.operator],6M[color.set]
+  :M[color.string],8M[color.set]
+}

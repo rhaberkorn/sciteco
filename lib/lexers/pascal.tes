@@ -1,0 +1,32 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.pascal]{ [_
+  _.[dpr,pas,dfm,inc,pp]M[lexer.checkname]
+]_ }
+
+@[lexer.set.pascal]{
+  ESSETLEXER,SCLEX_PASCAL
+  0ESSETKEYWORDS
+    absolute abstract and array as asm assembler automated begin case cdecl
+    class const constructor delayed deprecated destructor dispid dispinterface div do
+    downto dynamic else end except experimental export exports external far file final
+    finalization finally for forward function goto helper if implementation in inherited
+    initialization inline interface is label library message mod near nil not object of on
+    operator or out overload override packed pascal platform private procedure program
+    property protected public published raise record reference register reintroduce
+    repeat resourcestring safecall sealed set shl shr static stdcall strict string then
+    threadvar to try type unit unsafe until uses var varargs virtual while winapi with xor
+    add default implements index name nodefault read readonly remove stored write
+    writeonly
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.comment],4M[color.set]
+  :M[color.preproc],5M[color.set]
+  :M[color.preproc],6M[color.set]
+  :M[color.number],7M[color.set]
+  :M[color.number],8M[color.set]
+  :M[color.keyword],9M[color.set]
+  :M[color.string],10M[color.set]
+  :M[color.string2],12M[color.set]
+  :M[color.operator],13M[color.set]
+}

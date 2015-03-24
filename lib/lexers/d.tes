@@ -1,0 +1,78 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.d]{ [_
+  _.dM[lexer.checkname]
+]_ }
+
+@[lexer.set.d]{
+  ESSETLEXER,SCLEX_D
+  0ESSETKEYWORDS
+    abstract alias align asm assert auto body bool break byte case cast catch
+    cdouble cent cfloat char class const continue creal dchar debug default delegate
+    delete deprecated do double else enum export extern false final finally float for
+    foreach foreach_reverse function goto idouble if ifloat import in inout int
+    interface invariant ireal is lazy long mixin module new null out override package
+    pragma private protected public real return scope short static struct super switch
+    synchronized template this throw true try typedef typeid typeof ubyte ucent uint ulong
+    union unittest ushort version void volatile wchar while with
+  1ESSETKEYWORDS
+    AttribQuick AttribSendReceive AttribByte AttribBytes AttribRawBytes
+    AttribRawProcessBytes AttribWord AttribBlock AttribProcessCall AttribBlockProcessCall AnyAcc
+    ByteAcc WordAcc DWordAcc QWordAcc BufferAcc AddressRangeMemory AddressRangeReserved
+    AddressRangeNVS AddressRangeACPI RegionSpaceKeyword FFixedHW PCC AddressingMode7Bit
+    AddressingMode10Bit DataBitsFive DataBitsSix DataBitsSeven DataBitsEight DataBitsNine BusMaster
+    NotBusMaster ClockPhaseFirst ClockPhaseSecond ClockPolarityLow ClockPolarityHigh
+    SubDecode PosDecode BigEndianing LittleEndian AttribBytes AttribRawBytes
+    AttribRawProcessBytes FlowControlNone FlowControlXon FlowControlHardware Edge Level ActiveHigh
+    ActiveLow ActiveHigh ActiveLow ActiveBoth Decode16 Decode10 IoRestrictionNone
+    IoRestrictionInputOnly IoRestrictionOutputOnly IoRestrictionNoneAndPreserve Lock NoLock MTR MEQ MLE
+    MLT MGE MGT MaxFixed MaxNotFixed Cacheable WriteCombining Prefetchable
+    NonCacheable MinFixed MinNotFixed UnknownObj IntObj StrObj BuffObj PkgObj FieldUnitObj
+    DeviceObj EventObj MethodObj MutexObj OpRegionObj PowerResObj ProcessorObj
+    ThermalZoneObj BuffFieldObj DDBHandleObj ParityTypeNone ParityTypeSpace ParityTypeMark
+    ParityTypeOdd ParityTypeEven PullDefault PullUp PullDown PullNone PolarityHigh PolarityLow
+    ISAOnlyRanges NonISAOnlyRanges EntireRange ReadWrite ReadOnly UserDefRegionSpace SystemIO
+    SystemMemory PCI_Config EmbeddedControl SMBus SystemCMOS PciBarTarget IPMI
+    GeneralPurposeIO GenericSerialBus ResourceConsumer ResourceProducer Serialized NotSerialized
+    Shared Exclusive SharedAndWake ExclusiveAndWake ControllerInitiated DeviceInitiated
+    StopBitsZero StopBitsOne StopBitsOnePlusHalf StopBitsTwo Width8Bit Width16Bit Width32Bit
+    Width64Bit Width128Bit Width256Bit SparseTranslation DenseTranslation TypeTranslation
+    TypeStatic Preserve WriteAsOnes WriteAsZeros Transfer8 Transfer16 Transfer8_16
+    ThreeWireMode FourWireMode
+  2ESSETKEYWORDS
+    addressof alias and as attribute base begin binary boolean byref byte byval
+    call case cdbl cint clng compare const csng cstr currency date decimal declare
+    defbool defbyte defcur defdate defdbl defdec defint deflng defobj defsng defstr
+    defvar dim do double each else elseif empty end enum eqv erase error event exit
+    explicit false for friend function get global gosub goto if imp implements in input
+    integer is len let lib like load lock long loop lset me mid midb mod new next not
+    nothing null object on option optional or paramarray preserve print private property
+    public raiseevent randomize redim rem resume return rset seek select set single
+    static step stop string sub text then time to true type typeof unload until variant
+    wend while with withevents xor
+  3ESSETKEYWORDS
+    and as assert break class continue def del elif else except exec finally for
+    from global if import in is lambda not or pass print raise return try while with
+    yield
+  4ESSETKEYWORDS
+    and array as bool boolean break case cfunction class const continue declare
+    default die directory do double echo else elseif empty enddeclare endfor endforeach
+    endif endswitch endwhile eval exit extends false float for foreach function global
+    goto if include include_once int integer isset list namespace new null object
+    old_function or parent print real require require_once resource return static stdclass
+    string switch true unset use var while xor abstract catch clone exception final
+    implements interface php_user_filter private protected public this throw try __class__
+    __dir__ __file__ __function__ __line__ __method__ __namespace__ __sleep __wakeup
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],5M[color.set]
+  :M[color.keyword],6M[color.set]
+  :M[color.keyword],7M[color.set]
+  :M[color.keyword],8M[color.set]
+  :M[color.keyword],9M[color.set]
+  :M[color.string],10M[color.set]
+  :M[color.string2],12M[color.set]
+  :M[color.operator],13M[color.set]
+  :M[color.comment],15M[color.set]
+}

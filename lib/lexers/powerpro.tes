@@ -1,0 +1,30 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.powerpro]{ [_
+  _.powerproM[lexer.checkname]
+]_ }
+
+@[lexer.set.powerpro]{
+  ESSETLEXER,SCLEX_POWERPRO
+  0ESSETKEYWORDS
+    break do else elseif endfor endif for function global gt if ifelse ifx jump
+    local lt quit static
+  1ESSETKEYWORDS
+    win.debug win.debugshow win.exists win.getdisplayrect win.getfocus
+    win.gethandle win.getrect win.getsystemmetrics win.gettext win.maximize win.minimize
+    win.move win.sendkeys win.setdebug win.setfocus win.setrect win.settext win.show|bar
+    case clip env exec fill flag floattostring format formattime ftos index input
+    inputcancel inputdefault inputdialog join length messagebox mouse not note readline
+    remove replace replacechars replaceg revindex select stof validpath visiblewindow
+    wait wait.activity wait.for wait.forinterval wait.message wait.quit wait.ready
+    wait.sleep wait.until wallpaper window window word
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.number],3M[color.set]
+  :M[color.string],8M[color.set]
+  :M[color.string2],9M[color.set]
+  :M[color.preproc],10M[color.set]
+  :M[color.operator],11M[color.set]
+  :M[color.string2],14M[color.set]
+  :M[color.string],15M[color.set]
+}

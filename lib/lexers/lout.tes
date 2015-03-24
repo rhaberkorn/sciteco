@@ -1,0 +1,40 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.lout]{ [_
+  _.ltM[lexer.checkname]
+]_ }
+
+@[lexer.set.lout]{
+  ESSETLEXER,SCLEX_LOUT
+  0ESSETKEYWORDS
+    @OptGall @FontDef @Family @Face @Name @Metrics @ExtraMetrics @Mapping
+    @Recode @Filter @FilterIn @FilterOut @FilterErr @Common @Rump @Meld @Insert @OneOf
+    @Next @Plus @Minus @Wide @High @HShift @VShift @BeginHeaderComponent
+    @EndHeaderComponent @SetHeaderComponent @ClearHeaderComponent @OneCol @OneRow @HMirror @VMirror
+    @HScale @VScale @HCover @VCover @Scale @KernShrink @HContract @VContract @HLimited
+    @VLimited @HExpand @VExpand @StartHVSpan @StartHSpan @StartVSpan @HSpan @VSpan
+    @PAdjust @HAdjust @VAdjust @Rotate @Background @IncludeGraphic @SysIncludeGraphic
+    @Graphic @LinkSource @LinkDest @URLLink @PlainGraphic @Verbatim @RawVerbatim @Case
+    @Yield @BackEnd @Char @Font @Space @YUnit @ZUnit @Break @Underline @SetColour
+    @SetColor @SetUnderlineColour @SetUnderlineColor @SetTexture @Outline @Language
+    @CurrLang @CurrFamily @CurrFace @CurrYUnit @CurrZUnit @LEnv @@A @@B @@C @@D @@E @LClos
+    @@V @LUse @LEO @Open @Use @NotRevealed @Tagged @Database @SysDatabase @Include
+    @SysInclude @IncludeGraphicRepeated @SysIncludeGraphicRepeated @PrependGraphic
+    @SysPrependGraphic @Target @Null @PageLabel @Galley @ForceGalley @LInput @Split @Tag @Key
+    @Optimize @Merge @Enclose @Begin @End @Moment @Second @Minute @Hour @Day @Month @Year
+    @Century @WeekDay @YearDay @DaylightSaving @SetContext @GetContext
+  ! NOTE: carets are doubled to escape them !
+  1ESSETKEYWORDS
+    &&& && & ^^// ^^/ ^^|| ^^| ^^& // / || |
+  2ESSETKEYWORDS
+    def langdef force horizontally into extend import export precedence
+    associativity left right body macro named compulsory following preceding foll_or_prec now
+  :M[color.comment],1M[color.set]
+  :M[color.number],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.keyword],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.keyword],6M[color.set]
+  :M[color.string],7M[color.set]
+  :M[color.operator],8M[color.set]
+}

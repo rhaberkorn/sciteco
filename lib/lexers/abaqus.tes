@@ -1,0 +1,28 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.abaqus]{ [_
+  _.[inp,dat,msg]M[lexer.checkname]
+]_ }
+
+@[lexer.set.abaqus]{
+  ESSETLEXER,SCLEX_ABAQUS
+  1ESSETKEYWORDS
+    *amplitude *assembly *beam *boundary *buckle *bulk *cload *conditions
+    *conductivity *contact *damping *density *dload *dsflux *dsload *dynamic *el *elastic
+    *element *element output *elgen *elset *encastre *end step *expansion *explicit
+    *equation *embedded element *field *freq *frequency *friction *generate *heading *heat
+    transfer *history *imperfectio *import *include *initial *initial conditions
+    *instance *interactio *internal *interval *marks *material *monitor *mpc *ncopy *nfill
+    *ngen *nlgeom *node *node output *node print *nset *number *output *pair
+    *parameter *part *physical constants *plastic *print *preprint *radiate *restart *shell
+    *shell section *solid section *specific heat *sradiate *static *step *surface
+    *temperature *time *type *variable *viscosity
+  4ESSETKEYWORDS
+    elset engineering inc input line material name nset pin tie type write
+    generate field variable history stefan boltzmann absolute zero zero frequency steady
+    state new old set change number shift model position newset oldset host
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.number],3M[color.set]
+  :M[color.string],4M[color.set]
+}

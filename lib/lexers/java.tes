@@ -1,0 +1,36 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.java]{ [_
+  _.[java,jad,pde]M[lexer.checkname]
+]_ }
+
+@[lexer.set.java]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    abstract assert boolean break byte case catch char class const continue
+    default do double else enum extends final finally float for goto if implements
+    import instanceof int interface long native new package private protected public
+    return short static strictfp super switch synchronized this throw throws transient
+    try var void volatile while
+  2ESSETKEYWORDS
+    a addindex addtogroup anchor arg attention author b brief bug c class code
+    date def defgroup deprecated dontinclude e em endcode endhtmlonly endif
+    endlatexonly endlink endverbatim enum example exception f$ f[ f] file fn hideinitializer
+    htmlinclude htmlonly if image include ingroup internal invariant interface latexonly li
+    line link mainpage name namespace nosubgrouping note overload p page par param
+    param[in] param[out] post pre ref relates remarks return retval sa section see
+    showinitializer since skip skipline struct subsection test throw throws todo typedef union
+    until var verbatim verbinclude version warning weakgroup $ @ \ & < > # { }
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

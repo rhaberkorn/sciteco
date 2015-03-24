@@ -1,0 +1,44 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.vxml]{ [_
+  _.vxmlM[lexer.checkname]
+]_ }
+
+@[lexer.set.vxml]{
+  ESSETLEXER,SCLEX_HYPERTEXT
+  0ESSETKEYWORDS
+    assign audio block break catch choice clear disconnect else elseif emphasis
+    enumerate error exit field filled form goto grammar help if initial link log menu meta
+    noinput nomatch object option p paragraph param phoneme prompt property prosody
+    record reprompt return s say-as script sentence subdialog submit throw transfer
+    value var voice vxml accept age alphabet anchor application base beep bridge
+    category charset classid cond connecttimeout content contour count dest destexpr dtmf
+    dtmfterm duration enctype event eventexpr expr expritem fetchtimeout finalsilence
+    gender http-equiv id level maxage maxstale maxtime message messageexpr method mime
+    modal mode name namelist next nextitem ph pitch range rate scope size sizeexpr
+    skiplist slot src srcexpr sub time timeexpr timeout transferaudio type value variant
+    version volume xml:lang public !doctype
+  1ESSETKEYWORDS
+    abstract boolean break byte case catch char class const continue debugger
+    default delete do double else enum export extends final finally float for function
+    goto if implements import in instanceof int interface long native new package
+    private protected public return short static super switch synchronized this throw
+    throws transient try typeof var void volatile while with
+  :M[color.number],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string],7M[color.set]
+  :M[color.comment],42M[color.set]
+  :M[color.comment],43M[color.set]
+  :M[color.comment],44M[color.set]
+  :M[color.number],45M[color.set]
+  :M[color.keyword],47M[color.set]
+  :M[color.string],48M[color.set]
+  :M[color.string],49M[color.set]
+  :M[color.operator],50M[color.set]
+  :M[color.comment],72M[color.set]
+  :M[color.comment],82M[color.set]
+  :M[color.comment],92M[color.set]
+  :M[color.comment],107M[color.set]
+  :M[color.comment],124M[color.set]
+  :M[color.comment],125M[color.set]
+}

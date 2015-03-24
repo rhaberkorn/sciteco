@@ -1,0 +1,16 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.baan]{ [_
+  _.[bc,cln]M[lexer.checkname]
+]_ }
+
+@[lexer.set.baan]{
+  ESSETLEXER,SCLEX_BAAN
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.number],3M[color.set]
+  :M[color.keyword],4M[color.set]
+  :M[color.string],5M[color.set]
+  :M[color.preproc],6M[color.set]
+  :M[color.operator],7M[color.set]
+}

@@ -1,0 +1,24 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.awk]{ [_
+  _.awkM[lexer.checkname]
+]_ }
+
+@[lexer.set.awk]{
+  ESSETLEXER,SCLEX_PERL
+  0ESSETKEYWORDS
+    BEGIN END if else while do for in break continue delete exit function return
+    print printf sprintf system close getline next nextfile fflush atan2 cos exp int
+    log rand sin sqrt srand asort asorti gensub sub gsub index length match split
+    strtonum substr tolower toupper mktime strftime systime and compl lshift or rshift
+    xor bindtextdomain dcgettext dcngettext ARGC ARGIND ARGV BINMODE CONVFMT ENVIRON
+    ERRNO FIELDWIDTHS FILENAME FNR FS IGNORECASE LINT NF NR OFMT OFS ORS PROCINFO RS
+    RT RSTART RLENGTH SUBSEP TEXTDOMAIN
+  :M[color.error],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.operator],10M[color.set]
+}

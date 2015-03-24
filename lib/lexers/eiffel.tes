@@ -1,0 +1,105 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.eiffel]{ [_
+  _.eM[lexer.checkname]
+]_ }
+
+@[lexer.set.eiffel]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    struct unit integer real bool int long uint nibble byte bits bytes bit time
+    string var instance event verilog vhdl on compute start expect check that routine
+    specman is also first only with like list of all radix hex dec bin ignore illegal
+    traceable untraceable cover using count_only trace_only at_least transition item
+    ranges cross text call task within packing low high locker address body code vec
+    chars byte_array external_pointer choose matches if then else when try case casex
+    casez default and or not xor until repeat while for from to step each do break
+    continue before next always -kind network index it me in new return result select
+    cycle sample events forever wait change negedge rise fall delay sync sim true
+    detach eventually emit gen keep keeping soft before define as computed type extend
+    variable global sys import untyped symtab ECHO DOECHO initialize non_terminal
+    testgroup delayed exit finish out append print outf appendf post_generate pre_generate
+    setup_test finalize_test extract_test init run copy as_a a set_config dut_error add
+    clear lock quit lock unlock release swap quit to_string value stop_run crc_8
+    crc_32 crc_32_flip get_config add0 all_indices and_all apply average count delete
+    exists first_index get_indices has insert is_a_permutation is_empty key key_exists
+    key_index last last_index max max_index max_value min min_index min_value or_all pop
+    pop0 push push0 product resize reverse sort split sum top top0 unique clear
+    is_all_iterations get_enclosing_unit hdl_path exec deep_compare deep_compare_physical pack
+    unpack warning error fatal size files load module ntv source_ref script read write
+    initial idle others posedge clock cycles statement action command member exp block
+    num file
+  1ESSETKEYWORDS
+    apply build buildindex evaluate fail keydiff keypatch loadxml notify output
+    parallel sequential soapcall
+  2ESSETKEYWORDS
+    tk_bisque tk_chooseColor tk_dialog tk_focusFollowsMouse tk_focusNext
+    tk_focusPrev tk_getOpenFile tk_getSaveFile tk_messageBox tk_optionMenu tk_popup
+    tk_setPalette tk_textCopy tk_textCut tk_textPaste tkButtonAutoInvoke tkButtonDown
+    tkButtonEnter tkButtonInvoke tkButtonLeave tkButtonUp tkCancelRepeat tkCheckRadioDown
+    tkCheckRadioEnter tkCheckRadioInvoke tkColorDialog tkColorDialog_BuildDialog
+    tkColorDialog_CancelCmd tkColorDialog_Config tkColorDialog_CreateSelector
+    tkColorDialog_DrawColorScale tkColorDialog_EnterColorBar tkColorDialog_HandleRGBEntry
+    tkColorDialog_HandleSelEntry tkColorDialog_InitValues tkColorDialog_LeaveColorBar
+    tkColorDialog_MoveSelector tkColorDialog_OkCmd tkColorDialog_RedrawColorBars
+    tkColorDialog_RedrawFinalColor tkColorDialog_ReleaseMouse tkColorDialog_ResizeColorBars
+    tkColorDialog_RgbToX tkColorDialog_SetRGBValue tkColorDialog_StartMove tkColorDialog_XToRgb
+    tkConsoleAbout tkConsoleBind tkConsoleExit tkConsoleHistory tkConsoleInit tkConsoleInsert
+    tkConsoleInvoke tkConsoleOutput tkConsolePrompt tkConsoleSource tkDarken tkEntryAutoScan
+    tkEntryBackspace tkEntryButton1 tkEntryClosestGap tkEntryGetSelection tkEntryInsert
+    tkEntryKeySelect tkEntryMouseSelect tkEntryNextWord tkEntryPaste tkEntryPreviousWord
+    tkEntrySeeInsert tkEntrySetCursor tkEntryTranspose tkEventMotifBindings tkFDGetFileTypes
+    tkFirstMenu tkFocusGroup_BindIn tkFocusGroup_BindOut tkFocusGroup_Create
+    tkFocusGroup_Destroy tkFocusGroup_In tkFocusGroup_Out tkFocusOK tkGenerateMenuSelect tkIconList
+    tkIconList_Add tkIconList_Arrange tkIconList_AutoScan tkIconList_Btn1 tkIconList_Config
+    tkIconList_Create tkIconList_CtrlBtn1 tkIconList_Curselection tkIconList_DeleteAll
+    tkIconList_Double1 tkIconList_DrawSelection tkIconList_FocusIn tkIconList_FocusOut
+    tkIconList_Get tkIconList_Goto tkIconList_Index tkIconList_Invoke tkIconList_KeyPress
+    tkIconList_Leave1 tkIconList_LeftRight tkIconList_Motion1 tkIconList_Reset
+    tkIconList_ReturnKey tkIconList_See tkIconList_Select tkIconList_Selection tkIconList_ShiftBtn1
+    tkIconList_UpDown tkListbox tkListboxAutoScan tkListboxBeginExtend tkListboxBeginSelect
+    tkListboxBeginToggle tkListboxCancel tkListboxDataExtend tkListboxExtendUpDown
+    tkListboxKeyAccel_Goto tkListboxKeyAccel_Key tkListboxKeyAccel_Reset tkListboxKeyAccel_Set
+    tkListboxKeyAccel_Unset tkListboxMotion tkListboxSelectAll tkListboxUpDown tkMbButtonUp tkMbEnter
+    tkMbLeave tkMbMotion tkMbPost tkMenuButtonDown tkMenuDownArrow tkMenuDup tkMenuEscape
+    tkMenuFind tkMenuFindName tkMenuFirstEntry tkMenuInvoke tkMenuLeave tkMenuLeftArrow
+    tkMenuMotion tkMenuNextEntry tkMenuNextMenu tkMenuRightArrow tkMenuUnpost tkMenuUpArrow
+    tkMessageBox tkMotifFDialog tkMotifFDialog_ActivateDList tkMotifFDialog_ActivateFEnt
+    tkMotifFDialog_ActivateFList tkMotifFDialog_ActivateSEnt tkMotifFDialog_BrowseDList
+    tkMotifFDialog_BrowseFList tkMotifFDialog_BuildUI tkMotifFDialog_CancelCmd tkMotifFDialog_Config
+    tkMotifFDialog_Create tkMotifFDialog_FileTypes tkMotifFDialog_FilterCmd
+    tkMotifFDialog_InterpFilter tkMotifFDialog_LoadFiles tkMotifFDialog_MakeSList tkMotifFDialog_OkCmd
+    tkMotifFDialog_SetFilter tkMotifFDialog_SetListMode tkMotifFDialog_Update tkPostOverPoint
+    tkRecolorTree tkRestoreOldGrab tkSaveGrabInfo tkScaleActivate tkScaleButton2Down
+    tkScaleButtonDown tkScaleControlPress tkScaleDrag tkScaleEndDrag tkScaleIncrement
+    tkScreenChanged tkScrollButton2Down tkScrollButtonDown tkScrollButtonDrag tkScrollButtonUp
+    tkScrollByPages tkScrollByUnits tkScrollDrag tkScrollEndDrag tkScrollSelect
+    tkScrollStartDrag tkScrollTopBottom tkScrollToPos tkTabToWindow tkTearOffMenu tkTextAutoScan
+    tkTextButton1 tkTextClosestGap tkTextInsert tkTextKeyExtend tkTextKeySelect tkTextNextPara
+    tkTextNextPos tkTextNextWord tkTextPaste tkTextPrevPara tkTextPrevPos tkTextPrevWord
+    tkTextResetAnchor tkTextScrollPages tkTextSelectTo tkTextSetCursor tkTextTranspose
+    tkTextUpDownLine tkTraverseToMenu tkTraverseWithinMenu
+  3ESSETKEYWORDS
+    ascii big_endian boolean data decimal ebcdic integer pattern qstring real
+    record rule set of string token udecimal unicode unsigned varstring varunicode
+  4ESSETKEYWORDS
+    @author @clear @copyright @deprecated @doc @docfile @end @equiv @headerfile
+    @hidden @private @reference @see @since @spec @throws @title @todo @TODO @type
+    @version
+  5ESSETKEYWORDS
+    #append #break #declare #demangle #end #for #getdatatype #if #inmodule #loop
+    #mangle #onwarning #option #set #stored #uniquename #workunit integer symbol value
+    text symbol value
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

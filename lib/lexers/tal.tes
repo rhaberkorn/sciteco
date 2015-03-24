@@ -1,0 +1,26 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.tal]{ [_
+  _.TALM[lexer.checkname]
+]_ }
+
+@[lexer.set.tal]{
+  ESSETLEXER,SCLEX_TAL
+  0ESSETKEYWORDS
+    and assert baddr begin by call callable case cbaddr code cwaddr define do
+    downto drop else end entry external fixed for forward goto if int interrupt label
+    land literal lor main not of or otherwise priv proc procaddr real resident return
+    rscan scan sgbaddr sgwaddr sgxbaddr sgxwaddr stack store string struct subproc
+    then to unsigned until use variable waddr while xor
+  1ESSETKEYWORDS
+    at below bit_filler block bytes c cobol elements ext extensible filler
+    fortran language name pascal private unspecified words
+  :M[color.comment],2M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.keyword],8M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+}

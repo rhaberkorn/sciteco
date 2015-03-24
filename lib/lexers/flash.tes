@@ -1,0 +1,41 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.flash]{ [_
+  _.[as,asc,jsfl]M[lexer.checkname]
+]_ }
+
+@[lexer.set.flash]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    add and break case catch class continue default delete do dynamic else eq
+    extends false finally for function ge get gt if implements import in instanceof
+    interface intrinsic le lt ne new not null or private public return set static super
+    switch this throw true try typeof undefined var void while with
+  1ESSETKEYWORDS
+    Array Arguments Accessibility Boolean Button Camera Color ContextMenu
+    ContextMenuItem Date Error Function Key LoadVars LocalConnection Math Microphone Mouse
+    MovieClip MovieClipLoader NetConnection NetStream Number Object PrintJob Selection
+    SharedObject Sound Stage String StyleSheet System TextField TextFormat TextSnapshot Video
+    Void XML XMLNode XMLSocket _accProps _focusrect _global _highquality _parent
+    _quality _root _soundbuftime arguments asfunction call capabilities chr clearInterval
+    duplicateMovieClip escape eval fscommand getProperty getTimer getURL getVersion gotoAndPlay
+    gotoAndStop ifFrameLoaded Infinity -Infinity int isFinite isNaN length loadMovie
+    loadMovieNum loadVariables loadVariablesNum maxscroll mbchr mblength mbord mbsubstring
+    MMExecute NaN newline nextFrame nextScene on onClipEvent onUpdate ord parseFloat
+    parseInt play prevFrame prevScene print printAsBitmap printAsBitmapNum printNum
+    random removeMovieClip scroll set setInterval setProperty startDrag stop
+    stopAllSounds stopDrag substring targetPath tellTarget toggleHighQuality trace unescape
+    unloadMovie unLoadMovieNum updateAfterEvent
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

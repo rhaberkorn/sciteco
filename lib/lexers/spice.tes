@@ -1,0 +1,38 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.spice]{ [_
+  _.[scp,out]M[lexer.checkname]
+]_ }
+
+@[lexer.set.spice]{
+  ESSETLEXER,SCLEX_SPICE
+  0ESSETKEYWORDS
+    ac alias alter alterparam append askvalues assertvalid autoscale break
+    compose copy copytodoc dc delete destroy destroyvec diff display disto dowhile echo
+    else end errorstop fftinit filter foreach fourier freqtotime function
+    functionundef goto homecursors if isdisplayed label let linearize listing load
+    loadaccumulator makelabel movelabel makesmithplot movecursorleft movecursorright msgbox
+    nameplot newplot nextparam noise nopoints op plot plotf plotref poly print
+    printcursors printevent printname printplot printstatus printtext printtol printunits
+    printval printvector pwl pz quit removesmithplot rename repeat resume rotate runs
+    rusage save sendplot sendscript sens set setcursor setdoc setlabel setlabeltype
+    setmargins setnthtrigger setunits setvec setparam setplot setquery setscaletype
+    settracecolor settracestyle setsource settrigger setvec setxlimits setylimits show showmod
+    sort status step stop switch tf timetofreq timetowave tran unalias unlet unset
+    unalterparam update version view wavefilter wavetotime where while write
+  1ESSETKEYWORDS
+    abs askvalue atan average ceil cos db differentiate differentiatex exp
+    finalvalue floor getcursorx getcursory getcursory0 getcursory1 getparam im ln
+    initialvalue integrate integratex interpolate isdef isdisplayed j log length mag, max
+    maxscale mean meanpts min minscale nextplot nextvector norm operatingpoint ph phase
+    phaseextend pk_pk pos pulse re rms rmspts rnd sameplot sin sqrt stddev stddevpts tan
+    tfall tolerance trise unitvec vector
+  2ESSETKEYWORDS
+    param nodeset include options dcconv subckt ends model
+  :M[color.keyword],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.number],5M[color.set]
+  :M[color.operator],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.comment],8M[color.set]
+}

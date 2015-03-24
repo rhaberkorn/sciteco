@@ -1,0 +1,20 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.ave]{ [_
+  _.aveM[lexer.checkname]
+]_ }
+
+@[lexer.set.ave]{
+  ESSETLEXER,SCLEX_AVE
+  0ESSETKEYWORDS
+    nil true false else for if while then elseif end av self in exit
+  :M[color.comment],1M[color.set]
+  :M[color.number],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.preproc],7M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.keyword],14M[color.set]
+  :M[color.keyword],15M[color.set]
+  :M[color.keyword],16M[color.set]
+}

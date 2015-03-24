@@ -1,0 +1,29 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.swift]{ [_
+  _.swiftM[lexer.checkname]
+]_ }
+
+@[lexer.set.swift]{
+  ESSETLEXER,SCLEX_CPP
+  0ESSETKEYWORDS
+    class deinit enum extension func import init internal let operator private
+    protocol public static struct subscript typealias var break case continue default do
+    else fallthrough for if in return switch where while as dynamicType false is nil
+    self Self super true __COLUMN__ __FILE__ __FUNCTION__ __LINE__ associativity
+    convenience dynamic didSet final get infix inout lazy left mutating none nonmutating
+    optional override postfix precedence prefix Protocol required right set Type unowned
+    weak willSet
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.comment],24M[color.set]
+}

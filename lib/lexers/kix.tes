@@ -1,0 +1,42 @@
+! AUTO-GENERATED FROM SCITE PROPERTY SET !
+
+@[lexer.test.kix]{ [_
+  _.kixM[lexer.checkname]
+]_ }
+
+@[lexer.set.kix]{
+  ESSETLEXER,SCLEX_KIX
+  0ESSETKEYWORDS
+    ? and beep big break call cd cls color cookie1 copy debug del dim display do
+    until exit flushkb for each next function endfunction get gets global go gosub
+    goto if else endif md or password play quit rd redim return run select case
+    endselect set setl setm settime shell sleep small use while loop
+  1ESSETKEYWORDS
+    abs addkey addprinterconnection addprogramgroup addprogramitem asc ascan at
+    backupeventlog box cdbl chr cint cleareventlog close comparefiletimes createobject cstr
+    dectohex delkey delprinterconnection delprogramgroup delprogramitem deltree delvalue
+    dir enumgroup enumipinfo enumkey enumlocalgroup enumvalue execute exist existkey
+    expandenvironmentvars fix formatnumber freefilehandle getdiskspace getfileattr getfilesize
+    getfiletime getfileversion getobject iif ingroup instr instrrev int isdeclared join
+    kbhit keyexist lcase left len loadhive loadkey logevent logoff ltrim memorysize
+    messagebox open readline readprofilestring readtype readvalue redirectoutput right rnd
+    round rtrim savekey sendkeys sendmessage setascii setconsole setdefaultprinter
+    setfileattr setfocus setoption setsystemstate settitle setwallpaper showprogramgroup
+    shutdown sidtoname split srnd substr trim ubound ucase unloadhive val vartype
+    vartypename writeline writeprofilestring writevalue
+  2ESSETKEYWORDS
+    address build color comment cpu crlf csd curdir date day domain dos error
+    fullname homedir homedrive homeshr hostname inwin ipaddress0 ipaddress1 ipaddress2
+    ipaddress3 kix lanroot ldomain ldrive lm logonmode longhomedir lserver maxpwage mdayno
+    mhz monthno month msecs pid primarygroup priv productsuite producttype pwage ras
+    result rserver scriptdir scriptexe scriptname serror sid site startdir syslang
+    ticks time userid userlang wdayno wksta wuserid ydayno year
+  :M[color.comment],1M[color.set]
+  :M[color.string],2M[color.set]
+  :M[color.string],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.preproc],6M[color.set]
+  :M[color.keyword],7M[color.set]
+  :M[color.keyword],8M[color.set]
+  :M[color.operator],9M[color.set]
+}
