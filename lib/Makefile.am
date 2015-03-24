@@ -2,6 +2,9 @@
 dist_scitecolib_DATA = color.tes lexer.tes session.tes fnkeys.tes
 dist_scitecolib_DATA += string.tes
 
+# Helper script for creating lexer definitions
+EXTRA_DIST = scite2co.lua
+
 # This list must be extended when adding
 # a new color scheme:
 colorschemedir = $(scitecolibdir)/colors
