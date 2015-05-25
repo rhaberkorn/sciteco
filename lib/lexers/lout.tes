@@ -1,8 +1,8 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.lout]{ [_
-  _.ltM[lexer.checkname]
-]_ }
+@[lexer.test.lout]{
+  :EN*.ltQ*
+}
 
 @[lexer.set.lout]{
   ESSETLEXER,SCLEX_LOUT

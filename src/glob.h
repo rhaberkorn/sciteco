@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include "sciteco.h"
 #include "parser.h"
@@ -37,12 +38,14 @@ is_glob_pattern(const gchar *str)
 }
 
 class Globber {
+	GFileTest test;
 	gchar *dirname;
 	GDir *dir;
 	GPatternSpec *pattern;
 
 public:
-	Globber(const gchar *pattern);
+	Globber(const gchar *pattern,
+	        GFileTest test = G_FILE_TEST_EXISTS);
 	~Globber();
 
 	gchar *next(void);
@@ -52,13 +55,22 @@ public:
  * Command states
  */
 
-class StateGlob : public StateExpectFile {
+class StateGlob_pattern : public StateExpectFile {
+public:
+	StateGlob_pattern() : StateExpectFile(true, false) {}
+
+private:
+	State *done(const gchar *str);
+};
+
+class StateGlob_filename : public StateExpectFile {
 private:
 	State *done(const gchar *str);
 };
 
 namespace States {
-	extern StateGlob glob;
+	extern StateGlob_pattern	glob_pattern;
+	extern StateGlob_filename	glob_filename;
 }
 
 } /* namespace SciTECO */

@@ -26,12 +26,11 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 @[session.load]{
   EJ<-EF>
   ! now we have only one unnamed buffer !
-  EQ.x ENQ[session.path]
-  Z"=
-    1EB
-  |
-    :EMQ[session.path]
-  '
+  [_
+    1:EN*Q[session.path]"S
+      :EMQ[session.path]
+    '
+  ]_
 }
 
 ! Call this to set up the session path unique to the
@@ -59,12 +58,12 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
   Requires the SVN client v1.7 or later in $PATH. !
 @[session.svn]{
   ! if there is no SVN working copy, session.path is left as it is !
-  :EG.isvn info --xml"S [*
+  :EG.isvn info --xml"S [*[_
     EQ.i
     :S<wcroot-abspath>"S
       .(S</.-2)X[session.path] :[session.path]/.teco_session
     '
-  ]* '
+  ]_]* '
 }
 
 ! Call to set up the session path unique to the

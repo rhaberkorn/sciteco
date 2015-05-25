@@ -7,20 +7,17 @@
   [* EQ.h :SQ_ ]*
 }
 
-! Match Q-Reg "_" against end of current doc's file name !
-@[lexer.checkname]{
-  [* EQ* ZJ I H:SQ_ ]*
-}
-
 @[lexer.auto]{
   ! Set up brace lightning !
   :M[color.bracelight],34M[color.set]
   :M[color.error],35M[color.set]
+  [_
 }
 
 ! Automatically mung all the lexers and add them to "lexer.auto" !
 [*
-  EQ.[lexers] ENQ[$SCITECOPATH]/lexers/*.tes J
+  EQ.[lexers]
+  [_ 1ENQ[$SCITECOPATH]/lexers/*.tes ]_ J
   <:L;R
     0X.[filename] 4R .U.p <-A-^^/"= 1; ':R;> .,Q.pX.[name]
     EMQ.[filename]
@@ -31,4 +28,6 @@
 ]*
 
 ! append "end" label to "lexer.auto" !
-:[lexer.auto]!end!
+:@[lexer.auto]{
+  !end! ]_
+}

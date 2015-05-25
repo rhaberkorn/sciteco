@@ -1,8 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.f77]{ [_
-  _.[f,for]M[lexer.checkname]
-]_ }
+@[lexer.test.f77]{
+  :EN*.fQ*U.r
+  Q.r"F :EN*.forQ*U.r '
+Q.r}
 
 @[lexer.set.f77]{
   ESSETLEXER,SCLEX_F77

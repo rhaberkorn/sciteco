@@ -90,22 +90,21 @@ io.write("! AUTO-GENERATED FROM SCITE PROPERTY SET !\n\n")
 -- print [lexer.test...] macro
 local shbang = expand(props["shbang."..language])
 local file_patterns = expand(props["file.patterns."..language])
-local teco_patterns = file_patterns:gsub("%*%.", ""):gsub(";", ",")
-if teco_patterns:find(",", 1, true) then
-	teco_patterns = "["..teco_patterns.."]"
-end
 io.write([=[
-@[lexer.test.]=]..language:lower()..[=[]{ [_
+@[lexer.test.]=]..language:lower()..[=[]{
 ]=])
-if shbang then io.write([=[  _#!M]=]..shbang..[=[M[lexer.checkheader]"S
-    -1
-  |
-  ]=]) end
-io.write([=[  _.]=]..teco_patterns..[=[M[lexer.checkname]
-]=])
-if shbang then io.write([=[  '
+if shbang then io.write([=[  _#!M]=]..shbang..[=[M[lexer.checkheader]U.r
 ]=]) end
-io.write([=[]_ }
+local first_pattern = not shbang
+for pattern in file_patterns:gmatch("[^;]+") do
+	io.write([=[  ]=])
+	if not first_pattern then io.write([=[Q.r"F ]=]) end
+	io.write([=[:EN]=]..pattern..[=[Q*U.r]=])
+	if not first_pattern then io.write([=[ ']=]) end
+	io.write("\n")
+	first_pattern = false
+end
+io.write([=[Q.r}
 
 ]=])
 

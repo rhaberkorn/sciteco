@@ -1,8 +1,10 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.ch]{ [_
-  _.[ch,chf,chs]M[lexer.checkname]
-]_ }
+@[lexer.test.ch]{
+  :EN*.chQ*U.r
+  Q.r"F :EN*.chfQ*U.r '
+  Q.r"F :EN*.chsQ*U.r '
+Q.r}
 
 @[lexer.set.ch]{
   ESSETLEXER,SCLEX_CPP

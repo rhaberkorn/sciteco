@@ -1,8 +1,10 @@
 ! DOS, Windows, OS/2 Batch Files !
 
-@[lexer.test.batch]{ [_
-  _.[bat,cmd,nt]M[lexer.checkname]
-]_ }
+@[lexer.test.batch]{
+  :EN*.batQ*U.r
+  Q.r"F :EN*.cmdQ*U.r '
+  Q.r"F :EN*.ntQ*U.r '
+Q.r}
 
 @[lexer.set.batch]{
   ESSETLEXER,SCLEX_BATCH

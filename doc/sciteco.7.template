@@ -973,10 +973,12 @@ global registers:
 .TP 2
 .BR _ " (underscore)"
 Search string and search condition register.
+Also used by the globbing command \fBEN\fP, so it is also
+the glob string and condition register.
 .TP
 .BR - " (minus)"
 Replacement string register.
-Its integer part is unused.
+Its integer part is currently unused.
 .TP
 .BR * " (asterisk)"
 File name (string part) and id (numeric part) of current

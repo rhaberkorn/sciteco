@@ -1,8 +1,9 @@
 ! Patch/Diff Files !
 
-@[lexer.test.diff]{ [_
-  _.[diff,patch]M[lexer.checkname]
-]_ }
+@[lexer.test.diff]{
+  :EN*.diffQ*U.r
+  Q.r"F :EN*.patchQ*U.r '
+Q.r}
 
 @[lexer.set.diff]{
   ESSETLEXER,SCLEX_DIFF

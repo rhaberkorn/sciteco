@@ -1,8 +1,8 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.blitzbasic]{ [_
-  _.bbM[lexer.checkname]
-]_ }
+@[lexer.test.blitzbasic]{
+  :EN*.bbQ*
+}
 
 @[lexer.set.blitzbasic]{
   ESSETLEXER,SCLEX_BLITZBASIC

@@ -1,8 +1,10 @@
 ! Makefile Lexing !
 
 @[lexer.test.make]{
-  [_ _[makefile,.mak]M[lexer.checkname] ]_
-}
+  :EN*/MakefileQ*U.r
+  Q.r"F :EN*/makefileQ*U.r '
+  Q.r"F :EN*.makQ*U.r '
+Q.r}
 
 @[lexer.set.make]{
   ESSETLEXER,SCLEX_MAKEFILE

@@ -1,8 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.caml]{ [_
-  _.[ml,mli]M[lexer.checkname]
-]_ }
+@[lexer.test.caml]{
+  :EN*.mlQ*U.r
+  Q.r"F :EN*.mliQ*U.r '
+Q.r}
 
 @[lexer.set.caml]{
   ESSETLEXER,SCLEX_CAML

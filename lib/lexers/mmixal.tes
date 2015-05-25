@@ -1,8 +1,8 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.mmixal]{ [_
-  _.mmsM[lexer.checkname]
-]_ }
+@[lexer.test.mmixal]{
+  :EN*.mmsQ*
+}
 
 @[lexer.set.mmixal]{
   ESSETLEXER,SCLEX_MMIXAL

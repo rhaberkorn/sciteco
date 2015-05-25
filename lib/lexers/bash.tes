@@ -2,13 +2,13 @@
   It's called bash.tes only because SciTE calls it this way
   internally !
 
-@[lexer.test.bash]{ [_
-  _#!M[sh,bash,ksh]M[lexer.checkheader]"S
-    -1
-  |
-    _[.sh,.bsh,configure,.ksh]M[lexer.checkname]
-  '
-]_ }
+@[lexer.test.bash]{
+  _#!M[sh,bash,ksh]M[lexer.checkheader]U.r
+  Q.r"F :EN*.shQ*U.r '
+  Q.r"F :EN*.bshQ*U.r '
+  Q.r"F :EN*/configureQ*U.r '
+  Q.r"F :EN*.kshQ*U.r '
+Q.r}
 
 @[lexer.set.bash]{
   ESSETLEXER,SCLEX_BASH

@@ -1,8 +1,17 @@
 ! Lexing for XML and its applications !
 
-@[lexer.test.xml]{ [_
-  _.[xml,xsl,svg,xul,xsd,dtd,xslt,axl,xrc,rdf]M[lexer.checkname]
-]_ }
+@[lexer.test.xml]{
+  :EN*.xmlQ*U.r
+  Q.r"F :EN*.xslQ*U.r '
+  Q.r"F :EN*.svgQ*U.r '
+  Q.r"F :EN*.xulQ*U.r '
+  Q.r"F :EN*.xsdQ*U.r '
+  Q.r"F :EN*.dtdQ*U.r '
+  Q.r"F :EN*.xsltQ*U.r '
+  Q.r"F :EN*.axlQ*U.r '
+  Q.r"F :EN*.xrcQ*U.r '
+  Q.r"F :EN*.rdfQ*U.r '
+Q.r}
 
 @[lexer.set.xml]{
   ESSETLEXER,SCLEX_XML

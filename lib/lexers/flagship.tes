@@ -1,8 +1,8 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.flagship]{ [_
-  _.prgM[lexer.checkname]
-]_ }
+@[lexer.test.flagship]{
+  :EN*.prgQ*
+}
 
 @[lexer.set.flagship]{
   ESSETLEXER,SCLEX_FLAGSHIP

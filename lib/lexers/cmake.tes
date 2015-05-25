@@ -1,8 +1,10 @@
 ! CMake Lexing !
 
-@[lexer.test.cmake]{ [_
-  _[CMakeLists.txt,.cmake,.cmake.in,.ctest,.ctest.in]M[lexer.checkname]
-]_ }
+@[lexer.test.cmake]{
+  :EN*/CMakeLists.txtQ*U.r
+  Q.r"F :EN*.cmake*Q*U.r '
+  Q.r"F :EN*.ctest*Q*U.r '
+Q.r}
 
 @[lexer.set.cmake]{
   ESSETLEXER,SCLEX_CMAKE

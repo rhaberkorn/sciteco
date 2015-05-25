@@ -1802,7 +1802,7 @@ StateECommand::StateECommand() : State()
 	transitions['G'] = &States::egcommand;
 	transitions['I'] = &States::insert_nobuilding;
 	transitions['M'] = &States::macro_file;
-	transitions['N'] = &States::glob;
+	transitions['N'] = &States::glob_pattern;
 	transitions['S'] = &States::scintilla_symbols;
 	transitions['Q'] = &States::eqcommand;
 	transitions['U'] = &States::eucommand;

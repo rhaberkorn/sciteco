@@ -1,8 +1,19 @@
 ! C/C++ Lexing !
 
-@[lexer.test.cpp]{ [_
-  _.[c,cc,cpp,cxx,h,hh,hpp,hxx,ipp,m,mm,sma]M[lexer.checkname]
-]_ }
+@[lexer.test.cpp]{
+  :EN*.cQ*U.r
+  Q.r"F :EN*.ccQ*U.r '
+  Q.r"F :EN*.cppQ*U.r '
+  Q.r"F :EN*.cxxQ*U.r '
+  Q.r"F :EN*.hQ*U.r '
+  Q.r"F :EN*.hhQ*U.r '
+  Q.r"F :EN*.hppQ*U.r '
+  Q.r"F :EN*.hxxQ*U.r '
+  Q.r"F :EN*.ippQ*U.r '
+  Q.r"F :EN*.mQ*U.r '
+  Q.r"F :EN*.mmQ*U.r '
+  Q.r"F :EN*.smaQ*U.r '
+Q.r}
 
 @[lexer.set.cpp]{
   ESSETLEXER,SCLEX_CPP

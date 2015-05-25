@@ -1,8 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.verilog]{ [_
-  _.[v,vh]M[lexer.checkname]
-]_ }
+@[lexer.test.verilog]{
+  :EN*.vQ*U.r
+  Q.r"F :EN*.vhQ*U.r '
+Q.r}
 
 @[lexer.set.verilog]{
   ESSETLEXER,SCLEX_VERILOG

@@ -1,8 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.vhdl]{ [_
-  _.[vhd,vhdl]M[lexer.checkname]
-]_ }
+@[lexer.test.vhdl]{
+  :EN*.vhdQ*U.r
+  Q.r"F :EN*.vhdlQ*U.r '
+Q.r}
 
 @[lexer.set.vhdl]{
   ESSETLEXER,SCLEX_VHDL

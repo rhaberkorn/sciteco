@@ -1,8 +1,15 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.vb]{ [_
-  _.[vb,bas,frm,cls,ctl,pag,dsr,dob]M[lexer.checkname]
-]_ }
+@[lexer.test.vb]{
+  :EN*.vbQ*U.r
+  Q.r"F :EN*.basQ*U.r '
+  Q.r"F :EN*.frmQ*U.r '
+  Q.r"F :EN*.clsQ*U.r '
+  Q.r"F :EN*.ctlQ*U.r '
+  Q.r"F :EN*.pagQ*U.r '
+  Q.r"F :EN*.dsrQ*U.r '
+  Q.r"F :EN*.dobQ*U.r '
+Q.r}
 
 @[lexer.set.vb]{
   ESSETLEXER,SCLEX_VB

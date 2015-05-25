@@ -1,8 +1,10 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.js]{ [_
-  _.[js,es,json]M[lexer.checkname]
-]_ }
+@[lexer.test.js]{
+  :EN*.jsQ*U.r
+  Q.r"F :EN*.esQ*U.r '
+  Q.r"F :EN*.jsonQ*U.r '
+Q.r}
 
 @[lexer.set.js]{
   ESSETLEXER,SCLEX_CPP

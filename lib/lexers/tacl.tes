@@ -1,8 +1,8 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.tacl]{ [_
-  _.taclM[lexer.checkname]
-]_ }
+@[lexer.test.tacl]{
+  :EN*.taclQ*
+}
 
 @[lexer.set.tacl]{
   ESSETLEXER,SCLEX_TACL

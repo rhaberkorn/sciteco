@@ -1,8 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
-@[lexer.test.spice]{ [_
-  _.[scp,out]M[lexer.checkname]
-]_ }
+@[lexer.test.spice]{
+  :EN*.scpQ*U.r
+  Q.r"F :EN*.outQ*U.r '
+Q.r}
 
 @[lexer.set.spice]{
   ESSETLEXER,SCLEX_SPICE
