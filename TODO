@@ -1,8 +1,10 @@
- * submit patch for Scintilla and libglib (initialization when
+ * submit patch for libglib (initialization when
    linking statically with win32 threads - see glib/glib-init.c).
    Also gspawn helpers should probably link with -all-static when compiling
    a static glib. Why would be build a static glib but have the programs
    depend on other libraries?
+ * Scintilla fix has been merged into upstream - we should update
+   to Scinterm 1.6.
 
 Known Bugs:
  * Null-byte in strings not always handled transparently
@@ -138,14 +140,12 @@ Optimizations:
    in batch mode, or in loops/macros there is no need to rematch every character!
    -> immediate vs. non-immediate command execution
    * can be handled automatically in StateExpectString
+   * but it requires to be able to determine whether we're in the
+     command line macro stack frame and are executing the end of it.
  * batch mode can be optimized by preventing unnecessary allocations/deallocations
    for UNDO token creation. Check for undo.enabled in constructors like
    undo.push_msg|var() where the undo token destruction does not have any
    significant side effects.
- * use "friend" functions for C-linkage callbacks that must access a class'
-   member instead of making that member public.
-   Alternatively, I can use public context structures that are private
-   attributes.
 
 Documentation:
  * Code docs (Doxygen)
