@@ -306,7 +306,7 @@ StateEditFile::do_edit(tecoInt id)
  * mode.
  *
  * <file> may also be a glob pattern, in which case
- * all files matching the pattern are opened/edited.
+ * all regular files matching the pattern are opened/edited.
  * Globbing is performed exactly the same as the
  * EN command does.
  *
@@ -368,7 +368,7 @@ StateEditFile::done(const gchar *str)
 	}
 
 	if (is_glob_pattern(str)) {
-		Globber globber(str);
+		Globber globber(str, G_FILE_TEST_IS_REGULAR);
 		gchar *filename;
 
 		while ((filename = globber.next()))
