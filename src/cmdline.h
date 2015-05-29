@@ -79,6 +79,14 @@ private:
 		}
 	}
 
+	inline void
+	rubout_command(void)
+	{
+		do
+			rubout();
+		while (States::current != &States::start);
+	}
+
 	void insert(const gchar *src = NULL);
 	inline void
 	insert(gchar key)

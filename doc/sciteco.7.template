@@ -346,7 +346,7 @@ T}
 T{
 Rub out word/command
 T};23;^W;T{
-File name arguments
+Non-empty file name arguments
 .br
 (modifier \fIdisabled\fP)
 T};T{
@@ -355,7 +355,7 @@ last filename component up to but not inluding
 the preceding directory separator.
 T}
 \^;\^;\^;T{
-String arguments
+Non-empty string arguments
 .br
 (modifier \fIdisabled\fP)
 T};T{

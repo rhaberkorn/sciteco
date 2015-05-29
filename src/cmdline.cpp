@@ -301,7 +301,7 @@ Cmdline::process_edit_cmd(gchar key)
 				if (States::is_file() && rubout_len &&
 				    G_IS_DIR_SEPARATOR(str[len]))
 					insert();
-			} else {
+			} else if (strings[0] && *strings[0]) {
 				/* rubout directory separator */
 				if (strings[0] && *strings[0] &&
 				    G_IS_DIR_SEPARATOR(str[len-1]))
@@ -311,6 +311,12 @@ Cmdline::process_edit_cmd(gchar key)
 				while (strings[0] && *strings[0] &&
 				       !G_IS_DIR_SEPARATOR(str[len-1]))
 					rubout();
+			} else {
+				/*
+				 * Rub out entire command instead of
+				 * rubbing out nothing.
+				 */
+				rubout_command();
 			}
 		} else if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
@@ -326,7 +332,7 @@ Cmdline::process_edit_cmd(gchar key)
 				while (States::is_string() && rubout_len &&
 				       !strchr(wchars, str[len]))
 					insert();
-			} else {
+			} else if (strings[0] && *strings[0]) {
 				/* rubout non-word chars */
 				while (strings[0] && *strings[0] &&
 				       !strchr(wchars, str[len-1]))
@@ -336,6 +342,12 @@ Cmdline::process_edit_cmd(gchar key)
 				while (strings[0] && *strings[0] &&
 				       strchr(wchars, str[len-1]))
 					rubout();
+			} else {
+				/*
+				 * Rub out entire command instead of
+				 * rubbing out nothing.
+				 */
+				rubout_command();
 			}
 		} else if (modifier_enabled) {
 			/* reinsert command */
@@ -344,9 +356,7 @@ Cmdline::process_edit_cmd(gchar key)
 			while (States::current != &States::start && rubout_len);
 		} else {
 			/* rubout command */
-			do
-				rubout();
-			while (States::current != &States::start);
+			rubout_command();
 		}
 		break;
 
