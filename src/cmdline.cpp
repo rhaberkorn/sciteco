@@ -290,7 +290,29 @@ Cmdline::process_edit_cmd(gchar key)
 	case CTL_KEY('W'): /* rubout/reinsert word/command */
 		interface.popup_clear();
 
-		if (States::is_string()) {
+		if (States::is_file()) {
+			if (modifier_enabled) {
+				/* reinsert one level of file name */
+				while (States::is_file() && rubout_len &&
+				       !G_IS_DIR_SEPARATOR(str[len]))
+					insert();
+
+				/* reinsert final directory separator */
+				if (States::is_file() && rubout_len &&
+				    G_IS_DIR_SEPARATOR(str[len]))
+					insert();
+			} else {
+				/* rubout directory separator */
+				if (strings[0] && *strings[0] &&
+				    G_IS_DIR_SEPARATOR(str[len-1]))
+					rubout();
+
+				/* rubout one level of file name */
+				while (strings[0] && *strings[0] &&
+				       !G_IS_DIR_SEPARATOR(str[len-1]))
+					rubout();
+			}
+		} else if (States::is_string()) {
 			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
 			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
 
@@ -306,12 +328,12 @@ Cmdline::process_edit_cmd(gchar key)
 					insert();
 			} else {
 				/* rubout non-word chars */
-				while (strings[0] && strlen(strings[0]) > 0 &&
+				while (strings[0] && *strings[0] &&
 				       !strchr(wchars, str[len-1]))
 					rubout();
 
 				/* rubout word chars */
-				while (strings[0] && strlen(strings[0]) > 0 &&
+				while (strings[0] && *strings[0] &&
 				       strchr(wchars, str[len-1]))
 					rubout();
 			}
@@ -338,7 +360,7 @@ Cmdline::process_edit_cmd(gchar key)
 					insert();
 			} else {
 				/* rubout string */
-				while (strings[0] && strlen(strings[0]) > 0)
+				while (strings[0] && *strings[0])
 					rubout();
 			}
 		} else {

@@ -346,6 +346,15 @@ T}
 T{
 Rub out word/command
 T};23;^W;T{
+File name arguments
+.br
+(modifier \fIdisabled\fP)
+T};T{
+Rub out directory separator at end of filename and the
+last filename component up to but not inluding
+the preceding directory separator.
+T}
+\^;\^;\^;T{
 String arguments
 .br
 (modifier \fIdisabled\fP)
@@ -365,6 +374,14 @@ T}
 T{
 Re-insert word/command
 T};23;^W;T{
+File name arguments
+.br
+(modifier \fIenabled\fP)
+T};T{
+Re-insert next file name component up to and including the next
+directory separator from the rubbed-out command line.
+T}
+\^;\^;\^;T{
 String arguments
 .br
 (modifier \fIenabled\fP)
