@@ -28,6 +28,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "error.h"
 #include "interface.h"
 #include "ioview.h"
 #include "undo.h"
@@ -177,9 +178,18 @@ public:
 
 	tecoInt get_integer(void);
 
-	void set_string(const gchar *str, gsize len) {}
+	void
+	set_string(const gchar *str, gsize len)
+	{
+		throw QRegOpUnsupportedError(name);
+	}
 	void undo_set_string(void) {}
-	void append_string(const gchar *str, gsize len) {}
+
+	void
+	append_string(const gchar *str, gsize len)
+	{
+		throw QRegOpUnsupportedError(name);
+	}
 	void undo_append_string(void) {}
 
 	gchar *get_string(void);
@@ -195,7 +205,12 @@ public:
 
 	void set_string(const gchar *str, gsize len);
 	void undo_set_string(void);
-	void append_string(const gchar *str, gsize len) {}
+
+	void
+	append_string(const gchar *str, gsize len)
+	{
+		throw QRegOpUnsupportedError(name);
+	}
 	void undo_append_string(void) {}
 
 	gchar *get_string(void);

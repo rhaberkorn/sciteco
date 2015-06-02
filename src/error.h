@@ -193,6 +193,14 @@ public:
 				local ? "." : "", name) {}
 };
 
+class QRegOpUnsupportedError : public Error {
+public:
+	QRegOpUnsupportedError(const gchar *name, bool local = false)
+	                      : Error("Operation unsupported on "
+	                              "Q-Register \"%s%s\"",
+	                              local ? "." : "", name) {}
+};
+
 } /* namespace SciTECO */
 
 #endif

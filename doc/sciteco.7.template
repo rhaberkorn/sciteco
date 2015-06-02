@@ -1017,6 +1017,7 @@ always have forward-slash directory separators even if they
 are displayed differently in the user interface.
 The \(lq*\(rq register may also be edited but changing its
 string contents has no effect on the file name of the buffer.
+Setting and appending to the \(lq*\(rq register is unsupported.
 Setting the numeric part of the \(lq*\(rq register,
 as in \(lq1U*\(rq, is equivalent to editing a buffer by id
 (e.g. \(lq1EB\fB$\fP\(rq) but is shorter since there is no
@@ -1048,6 +1049,7 @@ but querying \(lq$\(rq will still return an absolute path.
 The \(lq$\(rq register may also be edited but changing its
 string contents this way has no effect on the current
 working directory.
+Appending to the \(lq$\(rq register is unsupported.
 .TP
 .BR $ " (Escape)"
 Command-line replacement register.
