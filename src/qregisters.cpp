@@ -36,6 +36,7 @@
 #include "expressions.h"
 #include "document.h"
 #include "ring.h"
+#include "ioview.h"
 #include "error.h"
 #include "qregisters.h"
 
@@ -204,6 +205,15 @@ QRegisterData::get_character(gint position)
 }
 
 void
+QRegisterData::undo_exchange_string(QRegisterData &reg)
+{
+	if (must_undo)
+		string.undo_exchange();
+	if (reg.must_undo)
+		reg.string.undo_exchange();
+}
+
+void
 QRegister::edit(void)
 {
 	if (QRegisters::current)
@@ -368,11 +378,7 @@ QRegisterBufferInfo::get_string(void)
 	 * This does not change the size of the string, so
 	 * get_string_size() still works.
 	 */
-#if G_DIR_SEPARATOR != '/'
-	g_strdelimit(str, G_DIR_SEPARATOR_S, '/');
-#endif
-
-	return str;
+	return normalize_path(str);
 }
 
 gsize
@@ -405,6 +411,102 @@ QRegisterBufferInfo::edit(void)
 	QRegisters::view.ssm(SCI_ENDUNDOACTION);
 
 	QRegisters::view.undo_ssm(SCI_UNDO);
+}
+
+void
+QRegisterWorkingDir::set_string(const gchar *str, gsize len)
+{
+	/* str is not null-terminated */
+	gchar *dir = g_strndup(str, len);
+	int ret = g_chdir(dir);
+
+	g_free(dir);
+
+	if (ret)
+		/* FIXME: Is errno usable on Windows here? */
+		throw Error("Cannot change working directory "
+		            "to \"%.*s\"", len, str);
+}
+
+void
+QRegisterWorkingDir::undo_set_string(void)
+{
+	/* passes ownership of string to undo token object */
+	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
+}
+
+gchar *
+QRegisterWorkingDir::get_string(void)
+{
+	/*
+	 * On platforms with a default non-forward-slash directory
+	 * separator (i.e. Windows), Buffer::filename will have
+	 * the wrong separator.
+	 * To make the life of macros that evaluate "$" easier,
+	 * the directory separators are normalized to "/" here.
+	 * This does not change the size of the string, so
+	 * get_string_size() still works.
+	 */
+	return normalize_path(g_get_current_dir());
+}
+
+gsize
+QRegisterWorkingDir::get_string_size(void)
+{
+	gchar *str = g_get_current_dir();
+	gsize len = strlen(str);
+
+	g_free(str);
+	return len;
+}
+
+gint
+QRegisterWorkingDir::get_character(gint position)
+{
+	gchar *str = QRegisterWorkingDir::get_string();
+	gint ret = -1;
+
+	if (position >= 0 &&
+	    position < (gint)strlen(str))
+		ret = str[position];
+
+	g_free(str);
+	return ret;
+}
+
+void
+QRegisterWorkingDir::edit(void)
+{
+	gchar *str;
+
+	QRegister::edit();
+
+	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
+	str = QRegisterWorkingDir::get_string();
+	QRegisters::view.ssm(SCI_SETTEXT, 0, (sptr_t)str);
+	g_free(str);
+	QRegisters::view.ssm(SCI_ENDUNDOACTION);
+
+	QRegisters::view.undo_ssm(SCI_UNDO);
+}
+
+void
+QRegisterWorkingDir::exchange_string(QRegisterData &reg)
+{
+	gchar *own_str = QRegisterWorkingDir::get_string();
+	gchar *other_str = reg.get_string();
+
+	QRegisterData::set_string(other_str);
+	g_free(other_str);
+	reg.set_string(own_str);
+	g_free(own_str);
+}
+
+void
+QRegisterWorkingDir::undo_exchange_string(QRegisterData &reg)
+{
+	QRegisterWorkingDir::undo_set_string();
+	reg.undo_set_string();
 }
 
 QRegisterTable::QRegisterTable(bool _undo) : RBTree(), must_undo(_undo)
@@ -495,10 +597,8 @@ QRegisterStack::pop(QRegister &reg)
 	reg.set_integer(entry->get_integer());
 
 	/* exchange document ownership between Stack entry and Q-Register */
-	if (reg.must_undo)
-		reg.string.undo_exchange();
-	entry->string.undo_exchange();
-	entry->string.exchange(reg.string);
+	reg.undo_exchange_string(*entry);
+	reg.exchange_string(*entry);
 
 	SLIST_REMOVE_HEAD(&head, entries);
 	/* pass entry ownership to undo stack */

@@ -177,7 +177,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * This feature may be used to take action depending on a
  * specific process exit code.
  *
- * <command> execution is by default platform-dependant.
+ * <command> execution is by default platform-dependent.
  * On Windows, <command> is passed to the default command
  * interpreter \(lqcmd.exe\(rq with the \(lq/c\(rq
  * command-line argument.
@@ -186,7 +186,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * Therefore operating system restrictions on the maximum
  * length of command-line arguments apply to <command> and
  * quoting of parameters within <command> is somewhat platform
- * dependant.
+ * dependent.
  * On all other platforms, \*(ST will uniformly parse
  * <command> just as an UNIX98 \(lq/bin/sh\(rq would, but without
  * performing any expansions.

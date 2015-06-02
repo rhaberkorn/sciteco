@@ -119,10 +119,16 @@ public:
 	virtual gsize get_string_size(void);
 	virtual gint get_character(gint position);
 
+	virtual void
+	exchange_string(QRegisterData &reg)
+	{
+		string.exchange(reg.string);
+	}
+	virtual void undo_exchange_string(QRegisterData &reg);
+
 	/*
-	 * The QRegisterStack must currently access the
-	 * integer and string fields directly to exchange
-	 * data efficiently.
+	 * The QRegisterStack must currently still access the
+	 * string fields directly to exchange data efficiently.
 	 */
 	friend class QRegisterStack;
 };
@@ -181,6 +187,25 @@ public:
 	gint get_character(gint pos);
 
 	void edit(void);
+};
+
+class QRegisterWorkingDir : public QRegister {
+public:
+	QRegisterWorkingDir() : QRegister("$") {}
+
+	void set_string(const gchar *str, gsize len);
+	void undo_set_string(void);
+	void append_string(const gchar *str, gsize len) {}
+	void undo_append_string(void) {}
+
+	gchar *get_string(void);
+	gsize get_string_size(void);
+	gint get_character(gint pos);
+
+	void edit(void);
+
+	void exchange_string(QRegisterData &reg);
+	void undo_exchange_string(QRegisterData &reg);
 };
 
 class QRegisterTable : private RBTree {

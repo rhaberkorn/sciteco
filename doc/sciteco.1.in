@@ -145,23 +145,32 @@ batch mode processing.
 .SH ENVIRONMENT
 .
 Before \*(ST executes any macro, all of the variables in the process
-environment are inserted into the global
-.I Q-Register
-table.
+environment are inserted into the global Q-Register table.
 A dollar sign is prepended before each variable name, so that for
 instance the variable \(lqHOME\(rq can be examined by macros by
 reading the string-content of Q-Register \(lq$HOME\(rq.
+Changes to these Q-Registers are currently not applied to
+the corresponding environment variables.
+.LP
 The following environment variables are initialized with default
 values by \*(ST if they are unset:
+.TP
+.B HOME
+Home directory of the current user.
+This may be used e.g. by the \fBFG\fP command.
+If unset, it defaults to the current user's home directory
+as set by
+.BR passwd (5)
+or as determined by other platform-dependent means.
+Initialization of this variable ensures that the
+\(lq$HOME\(rq Q-Register is available even on Windows
+and the home directory can always be re-configured.
 .TP
 .B SCITECOCONFIG
 Path where \*(ST looks for configuration files.
 For instance, this is the path of the default profile.
 If unset, this variable defaults to the \fBHOME\fP
-environment variable on UNIX/Linux.
-If \fBHOME\fP is unset, it defaults to the current user's
-home directory as set by
-.BR passwd (5).
+environment variable on Unix.
 On Windows, this variable defaults to the location of the
 \*(ST program executable, so that \*(ST is self-contained
 on Windows.
@@ -181,7 +190,7 @@ defaults to the standard library installation path at
 .BR "@scitecolibdir@" .
 .
 .LP
-Both the \fBSCITECOCONFIG\fP and \fBSCITECOPATH\fP environment
+The \fBHOME\fP, \fBSCITECOCONFIG\fP and \fBSCITECOPATH\fP environment
 variables are canonicalized to absolute paths.
 Therefore it is possible to define them relative to the
 working directory of \*(ST when it starts up while macros

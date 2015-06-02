@@ -737,7 +737,7 @@ get_absolute_path(const gchar *path)
 }
 
 /*
- * There's no platform-independant way to determine if a file
+ * There's no platform-independent way to determine if a file
  * is visible/hidden, so we just assume that all files are
  * visible.
  */

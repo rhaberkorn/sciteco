@@ -22,6 +22,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <glib/gprintf.h>
 
 #include "sciteco.h"
 #include "interface.h"
@@ -42,6 +43,28 @@ namespace SciTECO {
  * @return Newly-allocated absolute path name.
  */
 gchar *get_absolute_path(const gchar *path);
+
+/**
+ * Normalize path or file name.
+ *
+ * This changes the directory separators
+ * to forward slash (on platforms that support
+ * different directory separator styles).
+ *
+ * @param path The path to normalize.
+ *             It is changed in place.
+ * @return Returns `path`. The return value
+ *         may be ignored.
+ */
+static inline gchar *
+normalize_path(gchar *path)
+{
+#if G_DIR_SEPARATOR != '/'
+	return g_strdelimit(path, G_DIR_SEPARATOR_S, '/');
+#else
+	return path;
+#endif
+}
 
 bool file_is_visible(const gchar *path);
 

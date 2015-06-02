@@ -18,6 +18,8 @@
 #ifndef __PARSER_H
 #define __PARSER_H
 
+#include <string.h>
+
 #include <glib.h>
 
 #include "sciteco.h"
@@ -160,6 +162,12 @@ public:
 		       : StateExpectString(_building, _last) {}
 };
 
+class StateExpectDir : public StateExpectFile {
+public:
+	StateExpectDir(bool _building = true, bool _last = true)
+		      : StateExpectFile(_building, _last) {}
+};
+
 class StateStart : public State {
 public:
 	StateStart();
@@ -198,6 +206,37 @@ public:
 
 private:
 	State *custom(gchar chr);
+};
+
+class UndoTokenChangeDir : public UndoToken {
+	gchar *dir;
+
+public:
+	/**
+	 * Construct undo token.
+	 *
+	 * This passes ownership of the directory string
+	 * to the undo token object.
+	 */
+	UndoTokenChangeDir(gchar *_dir) : dir(_dir) {}
+	~UndoTokenChangeDir()
+	{
+		g_free(dir);
+	}
+
+	void run(void);
+
+	gsize
+	get_size(void) const
+	{
+		return dir ? sizeof(*this) + strlen(dir)
+		           : sizeof(*this);
+	}
+};
+
+class StateChangeDir : public StateExpectDir {
+private:
+	State *done(const gchar *str);
 };
 
 class StateCondCommand : public State {
@@ -253,6 +292,7 @@ namespace States {
 	extern StateControl		control;
 	extern StateASCII		ascii;
 	extern StateFCommand		fcommand;
+	extern StateChangeDir		changedir;
 	extern StateCondCommand		condcommand;
 	extern StateECommand		ecommand;
 	extern StateScintilla_symbols	scintilla_symbols;
@@ -279,6 +319,12 @@ namespace States {
 	is_file()
 	{
 		return dynamic_cast<StateExpectFile *>(current);
+	}
+
+	static inline bool
+	is_dir()
+	{
+		return dynamic_cast<StateExpectDir *>(current);
 	}
 }
 

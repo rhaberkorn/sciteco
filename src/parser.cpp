@@ -53,6 +53,7 @@ namespace States {
 	StateControl		control;
 	StateASCII		ascii;
 	StateFCommand		fcommand;
+	StateChangeDir		changedir;
 	StateCondCommand	condcommand;
 	StateECommand		ecommand;
 	StateScintilla_symbols	scintilla_symbols;
@@ -1448,6 +1449,7 @@ StateFCommand::StateFCommand() : State()
 	transitions['D'] = &States::searchdelete;
 	transitions['S'] = &States::replace;
 	transitions['R'] = &States::replacedefault;
+	transitions['G'] = &States::changedir;
 }
 
 State *
@@ -1548,6 +1550,60 @@ StateFCommand::custom(gchar chr)
 	default:
 		throw SyntaxError(chr);
 	}
+
+	return &States::start;
+}
+
+void
+UndoTokenChangeDir::run(void)
+{
+	/*
+	 * Changing the directory on rub-out may fail.
+	 * This is handled silently.
+	 */
+	g_chdir(dir);
+}
+
+/*$
+ * FG[directory]$ -- Change working directory
+ *
+ * Changes the process' current working directory
+ * to <directory> which affects all subsequent
+ * operations on relative file names like
+ * tab-completions.
+ * It is also inherited by external processes spawned
+ * via \fBEC\fP and \fBEG\fP.
+ *
+ * If <directory> is omitted, the working directory
+ * is changed to the current user's home directory
+ * as set by the \fBHOME\fP environment variable.
+ * This variable is alwas initialized by \*(ST
+ * (see \fBsciteco\fP(1)).
+ * Therefore \(lqFG\fB$\fP\(rq is roughly equivalent
+ * to \(lqFG^EQ[$HOME]\fB$\fP\(rq.
+ *
+ * The current working directory is also mapped to
+ * the Q-Register \(lq$\(rq (dollar sign) which
+ * may be used retrieve the current working directory.
+ *
+ * String-building characters are enabled on this
+ * command and directories can be tab-completed.
+ */
+State *
+StateChangeDir::done(const gchar *str)
+{
+	BEGIN_EXEC(&States::start);
+
+	/* passes ownership of string to undo token object */
+	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
+
+	if (!*str)
+		str = g_getenv("HOME");
+
+	if (g_chdir(str))
+		/* FIXME: Is errno usable on Windows here? */
+		throw Error("Cannot change working directory "
+		            "to \"%s\"", str);
 
 	return &States::start;
 }

@@ -121,7 +121,7 @@ get_default_config_path(const gchar *program)
 static inline gchar *
 get_default_config_path(const gchar *program)
 {
-	return g_strdup(g_getenv("HOME") ? : g_get_home_dir());
+	return g_strdup(g_getenv("HOME"));
 }
 
 #else
@@ -197,6 +197,18 @@ initialize_environment(const gchar *program)
 {
 	gchar *default_configpath, *abs_path;
 	gchar **env;
+
+	/*
+	 * Initialize and canonicalize $HOME.
+	 * Therefore we can refer to $HOME as the
+	 * current user's home directory on any platform
+	 * and it can be re-configured even though g_get_home_dir()
+	 * evaluates $HOME only beginning with glib v2.36.
+	 */
+	g_setenv("HOME", g_get_home_dir(), FALSE);
+	abs_path = get_absolute_path(g_getenv("HOME"));
+	g_setenv("HOME", abs_path, TRUE);
+	g_free(abs_path);
 
 	/*
 	 * Initialize $SCITECOCONFIG and $SCITECOPATH
@@ -340,6 +352,8 @@ main(int argc, char **argv)
 	QRegisters::globals.insert("-");
 	/* current buffer name and number ("*") */
 	QRegisters::globals.insert(new QRegisterBufferInfo());
+	/* current working directory ("$") */
+	QRegisters::globals.insert(new QRegisterWorkingDir());
 	/* environment defaults and registers */
 	initialize_environment(argv[0]);
 

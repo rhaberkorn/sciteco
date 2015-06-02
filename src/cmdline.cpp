@@ -48,7 +48,8 @@
 
 namespace SciTECO {
 
-static gchar *filename_complete(const gchar *filename, gchar completed = ' ');
+static gchar *filename_complete(const gchar *filename, gchar completed = ' ',
+                                GFileTest file_test = G_FILE_TEST_EXISTS);
 static gchar *symbol_complete(SymbolList &list, const gchar *symbol,
 			      gchar completed = ' ');
 
@@ -291,6 +292,7 @@ Cmdline::process_edit_cmd(gchar key)
 		interface.popup_clear();
 
 		if (States::is_file()) {
+			/* File names, including directories */
 			if (modifier_enabled) {
 				/* reinsert one level of file name */
 				while (States::is_file() && rubout_len &&
@@ -416,6 +418,19 @@ Cmdline::process_edit_cmd(gchar key)
 
 			while (spaces--)
 				insert(' ');
+		} else if (States::is_dir()) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				break;
+			}
+
+			gchar *new_chars = filename_complete(strings[0], '\0',
+			                                     G_FILE_TEST_IS_DIR);
+
+			if (new_chars)
+				insert(new_chars);
+			g_free(new_chars);
 		} else if (States::is_file()) {
 			if (interface.popup_is_shown()) {
 				/* cycle through popup pages */
@@ -423,7 +438,7 @@ Cmdline::process_edit_cmd(gchar key)
 				break;
 			}
 
-			gchar complete = escape_char == '{' ? ' ' : escape_char;
+			gchar complete = escape_char == '{' ? '\0' : escape_char;
 			gchar *new_chars = filename_complete(strings[0], complete);
 
 			if (new_chars)
@@ -574,7 +589,8 @@ Cmdline::fnmacro(const gchar *name)
 }
 
 static gchar *
-filename_complete(const gchar *filename, gchar completed)
+filename_complete(const gchar *filename, gchar completed,
+                  GFileTest file_test)
 {
 	gsize dirname_len;
 	gchar *dirname, dir_sep;
@@ -635,12 +651,20 @@ filename_complete(const gchar *filename, gchar completed)
 		 * so g_strconcat() works here.
 		 */
 		cur_filename = g_strconcat(dirname, cur_basename, NIL);
-		if (!*basename && !file_is_visible(cur_filename)) {
+
+		/*
+		 * NOTE: This avoids g_file_test() for G_FILE_TEST_EXISTS
+		 * since the file we process here should always exist.
+		 */
+		if ((!*basename && !file_is_visible(cur_filename)) ||
+		    (file_test != G_FILE_TEST_EXISTS &&
+		     !g_file_test(cur_filename, file_test))) {
 			g_free(cur_filename);
 			continue;
 		}
 
-		if (g_file_test(cur_filename, G_FILE_TEST_IS_DIR))
+		if (file_test == G_FILE_TEST_IS_DIR ||
+		    g_file_test(cur_filename, G_FILE_TEST_IS_DIR))
 			String::append(cur_filename, dir_sep);
 
 		files = g_slist_prepend(files, cur_filename);
@@ -683,7 +707,13 @@ filename_complete(const gchar *filename, gchar completed)
 		}
 
 		interface.popup_show();
-	} else if (files_len == 1 && !filename_is_dir((gchar *)files->data)) {
+	} else if (completed && files_len == 1 &&
+	           !filename_is_dir((gchar *)files->data)) {
+		/*
+		 * FIXME: If we are completing only directories,
+		 * we can theoretically insert the completed character
+		 * after directories without subdirectories
+		 */
 		String::append(insert, completed);
 	}
 

@@ -443,6 +443,13 @@ Fully completed filenames terminate the string argument,
 except if the \(lq{\(rq terminator is used.
 T}
 T{
+Auto complete directory
+T};9;^I, Tab;T{
+Directory arguments
+T};T{
+Auto complete directory beginning at the start of the argument.
+T}
+T{
 Auto complete symbol
 T};9;^I, Tab;T{
 Scintilla symbol arguments
@@ -1021,6 +1028,26 @@ temporarily:
 .EX
 [* ! ...change current buffer... ! ]*
 .EE
+.TP
+.BR $ " (dollar)"
+The process' current working directory (string part).
+Its numeric part is currently unused.
+The working directory will always be returned as an
+absolute path with normalized forward-slash directory
+separators.
+It is possible to set this register using the \fB^U\fP or
+\fBEU\fP commands which will change the current working
+directory in a manner similar to the \fBFG\fP command.
+This allows you to change the current directory temporarily
+with the following idiom:
+.EX
+[$ ! ...change current directory... ! ]$
+.EE
+As with \fBFG\fP, relative directories may be specified
+but querying \(lq$\(rq will still return an absolute path.
+The \(lq$\(rq register may also be edited but changing its
+string contents this way has no effect on the current
+working directory.
 .TP
 .BR $ " (Escape)"
 Command-line replacement register.
