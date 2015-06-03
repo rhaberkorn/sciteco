@@ -425,7 +425,7 @@ QRegisterWorkingDir::set_string(const gchar *str, gsize len)
 	if (ret)
 		/* FIXME: Is errno usable on Windows here? */
 		throw Error("Cannot change working directory "
-		            "to \"%.*s\"", len, str);
+		            "to \"%.*s\"", (int)len, str);
 }
 
 void
