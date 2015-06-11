@@ -12,6 +12,7 @@
   :M[color.bracelight],34M[color.set]
   :M[color.error],35M[color.set]
   [_
+  :Q*"= Oend '
 }
 
 ! Automatically mung all the lexers and add them to "lexer.auto" !
