@@ -160,6 +160,12 @@ class StateExpectFile : public StateExpectString {
 public:
 	StateExpectFile(bool _building = true, bool _last = true)
 		       : StateExpectString(_building, _last) {}
+
+private:
+	State *done(const gchar *str);
+
+protected:
+	virtual State *got_file(const gchar *filename) = 0;
 };
 
 class StateExpectDir : public StateExpectFile {
@@ -236,7 +242,7 @@ public:
 
 class StateChangeDir : public StateExpectDir {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateCondCommand : public State {

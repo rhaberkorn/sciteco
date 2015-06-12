@@ -18,8 +18,6 @@
 #ifndef __GLOB_H
 #define __GLOB_H
 
-#include <string.h>
-
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -34,7 +32,16 @@ namespace SciTECO {
 static inline bool
 is_glob_pattern(const gchar *str)
 {
-	return strchr(str, '*') || strchr(str, '?');
+	if (!str)
+		return false;
+
+	while (*str) {
+		if (*str == '*' || *str == '?')
+			return true;
+		str++;
+	}
+
+	return false;
 }
 
 class Globber {
@@ -60,12 +67,12 @@ public:
 	StateGlob_pattern() : StateExpectFile(true, false) {}
 
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateGlob_filename : public StateExpectFile {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 namespace States {

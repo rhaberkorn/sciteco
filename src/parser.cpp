@@ -40,6 +40,7 @@
 #include "spawn.h"
 #include "glob.h"
 #include "cmdline.h"
+#include "ioview.h"
 #include "error.h"
 
 namespace SciTECO {
@@ -473,6 +474,7 @@ StateExpectString::custom(gchar chr)
 		if (string_building)
 			machine.reset();
 
+		/* FIXME: possible memleak because of `string`? */
 		next = done(string ? : "");
 		g_free(string);
 		return next;
@@ -500,6 +502,23 @@ StateExpectString::custom(gchar chr)
 	process(strings[0], strlen(insert));
 	g_free(insert);
 	return this;
+}
+
+State *
+StateExpectFile::done(const gchar *str)
+{
+	gchar *filename = expand_path(str);
+	State *next;
+
+	try {
+		next = got_file(filename);
+	} catch (...) {
+		g_free(filename);
+		throw;
+	}
+
+	g_free(filename);
+	return next;
 }
 
 StateStart::StateStart() : State()
@@ -1579,8 +1598,9 @@ UndoTokenChangeDir::run(void)
  * as set by the \fBHOME\fP environment variable.
  * This variable is alwas initialized by \*(ST
  * (see \fBsciteco\fP(1)).
- * Therefore \(lqFG\fB$\fP\(rq is roughly equivalent
- * to \(lqFG^EQ[$HOME]\fB$\fP\(rq.
+ * Therefore the expression \(lqFG\fB$\fP\(rq is
+ * roughly equivalent to both \(lqFG~\fB$\fP\(rq and
+ * \(lqFG^EQ[$HOME]\fB$\fP\(rq.
  *
  * The current working directory is also mapped to
  * the Q-Register \(lq$\(rq (dollar sign) which
@@ -1590,20 +1610,20 @@ UndoTokenChangeDir::run(void)
  * command and directories can be tab-completed.
  */
 State *
-StateChangeDir::done(const gchar *str)
+StateChangeDir::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
 	/* passes ownership of string to undo token object */
 	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
 
-	if (!*str)
-		str = g_getenv("HOME");
+	if (!*filename)
+		filename = g_getenv("HOME");
 
-	if (g_chdir(str))
+	if (g_chdir(filename))
 		/* FIXME: Is errno usable on Windows here? */
 		throw Error("Cannot change working directory "
-		            "to \"%s\"", str);
+		            "to \"%s\"", filename);
 
 	return &States::start;
 }

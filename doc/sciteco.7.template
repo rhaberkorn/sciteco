@@ -582,16 +582,13 @@ to backslash.
 Therefore forward-slash auto-completion is possible on Windows,
 e.g. by using a forward-slash in the file name or by prefixing
 file names with \(lq./\(rq.
-This is useful for writing cross-platform \*(ST macros since
-on other platforms (notably UNIX), only forward slashes are
-accepted in file names and directories.
+This is useful for writing cross-platform \*(ST macros (see
+.BR "FILE NAMES AND DIRECTORIES" ).
 .LP
-Note that no additional expansions are performed before attempting
-a completion, so for instance \(lq~/foo\(rq will not complete a file
-in the user's home directory (tilde is not part of the file name but
-tilde-expansions are performed by the shell).
-\*(ST does however perform completions after string building so that
-\(lq^EQ[$HOME]/foo\(rq could be completed.
+Note that completions take place after string building and
+tilde-expansion is also performed by file name completions,
+so for instance \(lq~/foo\(rq will complete a file
+in the user's home directory.
 .
 .
 .SH ARITHMETICS AND EXPRESSIONS
@@ -1285,6 +1282,73 @@ The pattern alternatives must be separated by commas.
 All non-pattern-match-characters match themselves.
 Note however that currently, all pattern matching is performed
 .BR case-insensitive .
+.
+.
+.SH FILE NAMES AND DIRECTORIES
+.
+One class of \*(ST commands accepts file names or directory
+path arguments.
+The most prominent is the \fBEB\fP command.
+All file names or directories can be absolute or relative
+paths.
+Relative paths will be resolved according to the process'
+current working directory (as can be set e.g. via the
+\fBFG\fP command).
+Nevertheless, \*(ST will function properly after changing
+the working directory as \*(ST canonicalizes relative
+paths to absolute paths if necessary.
+Both buffer file names and some special environment
+variables (as well as their corresponding Q-Registers)
+documented in
+.BR sciteco (1)
+are canonicalized in this way.
+.LP
+The directory separator style (forward or backslash) accepted
+by \*(ST commands is platform dependent.
+Forward slash directory separators can be used on every supported
+platform.
+On Windows, both forward and backslash directory separators
+are accepted in order to faciliate a native look and feel.
+Since on some supported platforms (notably UNIX), forward slash
+directory separators are the only supported separator style,
+they are recommended when writing cross-platform \*(ST macros.
+File names queried via some \*(ST command or Q-Register
+are also normalized to contain only forward slash directory
+separators (on platforms supporting both styles) in order to
+ease the task of cross-platform macros.
+.LP
+Currently all path name arguments also support string building
+characters.
+Therefore it is possible to refer to environment variables
+in path arguments.
+For instance, \(lq^EQ[$HOME]/.teco_ini\(rq will refer to the
+\*(ST profile on UNIX by default.
+.LP
+Even though the \(lqHOME\(rq environment variable is initialized
+to a sane value by \*(ST, it is cumbersome to type in frequently
+used commands.
+Therefore, \*(ST also supports UNIX-shell-like tilde-expansions.
+So for instance, the file name \(lq~/.teco_ini\(rq also expands
+to the \*(ST profile on UNIX by default and is roughly equivalent
+to \(lq^EQ[$HOME]/.teco_ini\(rq.
+It is important to note that \(lq~\(rq is not part of the file
+name proper (not even on UNIX) but a token that needs to be
+expanded first.
+In \*(ST this expansion takes place \fIafter\fP processing
+string building characters.
+Unlike the UNIX-shell, \*(ST will only expand the \fIcurrent
+user's\fP home directory using the value of the
+\(lqHOME\(rq environment variable.
+Thus the \(lq~\fIusername\fP\(rq syntax is \fBnot\fP supported.
+.LP
+Last but not least, some commands accept glob patterns
+in their file name arguments to refer to multiple files at once
+(see \fBEN\fP command).
+There is special immediate editing command support for
+file and directory path arguments (e.g. tab-completions and
+specialized rub-out/rub-in commands).
+These are documented in the section
+.BR "COMMANDLINE EDITING" .
 .
 .
 .SH FLOW CONTROL

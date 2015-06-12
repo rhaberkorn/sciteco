@@ -831,13 +831,13 @@ StateEQCommand::got_register(QRegister &reg)
 }
 
 State *
-StateLoadQReg::done(const gchar *str)
+StateLoadQReg::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
-	if (*str) {
+	if (*filename) {
 		/* Load file into Q-Register */
-		register_argument->load(str);
+		register_argument->load(filename);
 	} else {
 		/* Edit Q-Register */
 		current_doc_undo_edit();
@@ -871,10 +871,10 @@ StateEPctCommand::got_register(QRegister &reg)
 }
 
 State *
-StateSaveQReg::done(const gchar *str)
+StateSaveQReg::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
-	register_argument->save(str);
+	register_argument->save(filename);
 	return &States::start;
 }
 
@@ -1158,12 +1158,12 @@ StateMacro::got_register(QRegister &reg)
  * If <file> could not be read, the command yields an error.
  */
 State *
-StateMacroFile::done(const gchar *str)
+StateMacroFile::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
 	/* don't create new local Q-Registers if colon modifier is given */
-	Execute::file(str, !eval_colon());
+	Execute::file(filename, !eval_colon());
 
 	return &States::start;
 }

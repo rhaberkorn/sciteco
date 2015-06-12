@@ -420,7 +420,7 @@ private:
 
 class StateLoadQReg : public StateExpectFile {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateEPctCommand : public StateExpectQReg {
@@ -430,7 +430,7 @@ private:
 
 class StateSaveQReg : public StateExpectFile {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateQueryQReg : public StateExpectQReg {
@@ -494,7 +494,7 @@ private:
 
 class StateMacroFile : public StateExpectFile {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateCopyToQReg : public StateExpectQReg {

@@ -355,26 +355,26 @@ StateEditFile::initial(void)
 }
 
 State *
-StateEditFile::done(const gchar *str)
+StateEditFile::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
 	if (!allowFilename) {
-		if (*str)
+		if (*filename)
 			throw Error("If a buffer is selected by id, the <EB> "
 				    "string argument must be empty");
 
 		return &States::start;
 	}
 
-	if (is_glob_pattern(str)) {
-		Globber globber(str, G_FILE_TEST_IS_REGULAR);
-		gchar *filename;
+	if (is_glob_pattern(filename)) {
+		Globber globber(filename, G_FILE_TEST_IS_REGULAR);
+		gchar *globbed_filename;
 
-		while ((filename = globber.next()))
-			do_edit(filename);
+		while ((globbed_filename = globber.next()))
+			do_edit(globbed_filename);
 	} else {
-		do_edit(*str ? str : NULL);
+		do_edit(*filename ? filename : NULL);
 	}
 
 	return &States::start;
@@ -422,14 +422,14 @@ StateEditFile::done(const gchar *str)
  * characters are enabled by default.
  */
 State *
-StateSaveFile::done(const gchar *str)
+StateSaveFile::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
 	if (QRegisters::current)
-		QRegisters::current->save(str);
+		QRegisters::current->save(filename);
 	else
-		ring.current->save(*str ? str : NULL);
+		ring.current->save(*filename ? filename : NULL);
 
 	return &States::start;
 }

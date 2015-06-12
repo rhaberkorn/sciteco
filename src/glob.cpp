@@ -238,22 +238,22 @@ Globber::~Globber()
  * have to edit that register anyway.
  */
 State *
-StateGlob_pattern::done(const gchar *str)
+StateGlob_pattern::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::glob_filename);
 
-	if (*str) {
+	if (*filename) {
 		QRegister *glob_reg = QRegisters::globals["_"];
 
 		glob_reg->undo_set_string();
-		glob_reg->set_string(str);
+		glob_reg->set_string(filename);
 	}
 
 	return &States::glob_filename;
 }
 
 State *
-StateGlob_filename::done(const gchar *str)
+StateGlob_filename::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -287,16 +287,16 @@ StateGlob_filename::done(const gchar *str)
 
 	pattern_str = glob_reg->get_string();
 
-	if (*str) {
+	if (*filename) {
 		/*
 		 * Match pattern against provided file name
 		 */
-		if (g_pattern_match_simple(pattern_str, str) &&
-		    (!teco_test_mode || g_file_test(str, file_flags))) {
+		if (g_pattern_match_simple(pattern_str, filename) &&
+		    (!teco_test_mode || g_file_test(filename, file_flags))) {
 			if (!colon_modified) {
 				interface.ssm(SCI_BEGINUNDOACTION);
-				interface.ssm(SCI_ADDTEXT, strlen(str),
-				              (sptr_t)str);
+				interface.ssm(SCI_ADDTEXT, strlen(filename),
+				              (sptr_t)filename);
 				interface.ssm(SCI_ADDTEXT, 1, (sptr_t)"\n");
 				interface.ssm(SCI_SCROLLCARET);
 				interface.ssm(SCI_ENDUNDOACTION);
@@ -310,11 +310,11 @@ StateGlob_filename::done(const gchar *str)
 		 * returning SUCCESS if at least one file matches
 		 */
 		Globber globber(pattern_str, file_flags);
-		gchar *filename = globber.next();
+		gchar *globbed_filename = globber.next();
 
-		matching = filename != NULL;
+		matching = globbed_filename != NULL;
 
-		g_free(filename);
+		g_free(globbed_filename);
 	} else {
 		/*
 		 * Match pattern against directory contents (globbing),
@@ -322,14 +322,14 @@ StateGlob_filename::done(const gchar *str)
 		 */
 		Globber globber(pattern_str, file_flags);
 
-		gchar *filename;
+		gchar *globbed_filename;
 
 		interface.ssm(SCI_BEGINUNDOACTION);
 
-		while ((filename = globber.next())) {
-			size_t len = strlen(filename);
+		while ((globbed_filename = globber.next())) {
+			size_t len = strlen(globbed_filename);
 			/* overwrite trailing null */
-			filename[len] = '\n';
+			globbed_filename[len] = '\n';
 
 			/*
 			 * FIXME: Once we're 8-bit clean, we should
@@ -337,9 +337,9 @@ StateGlob_filename::done(const gchar *str)
 			 * (there may be linebreaks in filename).
 			 */
 			interface.ssm(SCI_ADDTEXT, len+1,
-			              (sptr_t)filename);
+			              (sptr_t)globbed_filename);
 
-			g_free(filename);
+			g_free(globbed_filename);
 			matching = true;
 		}
 

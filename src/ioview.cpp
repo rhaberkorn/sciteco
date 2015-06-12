@@ -669,6 +669,33 @@ IOView::save(const gchar *filename)
 /*
  * Auxiliary functions
  */
+
+/**
+ * Perform tilde expansion on a file name or path.
+ *
+ * This supports only strings with a "~" prefix.
+ * A user name after "~" is not supported.
+ * The $HOME environment variable is used to retrieve
+ * the current user's home directory.
+ */
+gchar *
+expand_path(const gchar *path)
+{
+	if (!path)
+		path = "";
+
+	if (path[0] != '~' || (path[1] && !G_IS_DIR_SEPARATOR(path[1])))
+		return g_strdup(path);
+
+	/*
+	 * $HOME should not have a trailing directory separator since
+	 * it is canonicalized to an absolute path at startup,
+	 * but this ensures that a proper path is constructed even if
+	 * it does (e.g. $HOME is changed later on).
+	 */
+	return g_build_filename(g_getenv("HOME"), path+1, NIL);
+}
+
 #ifdef G_OS_UNIX
 
 gchar *

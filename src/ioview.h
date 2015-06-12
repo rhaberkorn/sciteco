@@ -34,6 +34,8 @@ namespace SciTECO {
  * Auxiliary functions
  */
 
+gchar *expand_path(const gchar *path);
+
 /**
  * Get absolute/full version of a possibly relative path.
  * Works with existing and non-existing paths (in the latter case,

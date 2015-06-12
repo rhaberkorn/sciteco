@@ -592,23 +592,23 @@ static gchar *
 filename_complete(const gchar *filename, gchar completed,
                   GFileTest file_test)
 {
+	gchar *filename_expanded;
+	gsize filename_len;
+	gchar *dirname, *basename, dir_sep;
 	gsize dirname_len;
-	gchar *dirname, dir_sep;
-	const gchar *basename, *cur_basename;
+	const gchar *cur_basename;
 
 	GDir *dir;
 	GSList *files = NULL;
 	guint files_len = 0;
 	gchar *insert = NULL;
-	gsize filename_len;
 	gsize prefix_len = 0;
-
-	if (!filename)
-		filename = "";
-	filename_len = strlen(filename);
 
 	if (is_glob_pattern(filename))
 		return NULL;
+
+	filename_expanded = expand_path(filename);
+	filename_len = strlen(filename_expanded);
 
 	/*
 	 * Derive base and directory names.
@@ -617,13 +617,14 @@ filename_complete(const gchar *filename, gchar completed,
 	 * in order to construct paths of entries in dirname
 	 * that are suitable for auto completion.
 	 */
-	dirname_len = file_get_dirname_len(filename);
-	dirname = g_strndup(filename, dirname_len);
-	basename = filename + dirname_len;
+	dirname_len = file_get_dirname_len(filename_expanded);
+	dirname = g_strndup(filename_expanded, dirname_len);
+	basename = filename_expanded + dirname_len;
 
 	dir = g_dir_open(dirname_len ? dirname : ".", 0, NULL);
 	if (!dir) {
 		g_free(dirname);
+		g_free(filename_expanded);
 		return NULL;
 	}
 
@@ -632,7 +633,7 @@ filename_complete(const gchar *filename, gchar completed,
 	 * directory separators are allowed in directory
 	 * names passed to glib.
 	 * To imitate glib's behaviour, we use
-	 * the last valid directory separator in `filename`
+	 * the last valid directory separator in `filename_expanded`
 	 * to generate new separators.
 	 * This also allows forward-slash auto-completion
 	 * on Windows.
@@ -684,8 +685,9 @@ filename_complete(const gchar *filename, gchar completed,
 	if (prefix_len > 0)
 		insert = g_strndup((gchar *)files->data + filename_len, prefix_len);
 
-	g_free(dirname);
 	g_dir_close(dir);
+	g_free(dirname);
+	g_free(filename_expanded);
 
 	if (!insert && files_len > 1) {
 		files = g_slist_sort(files, (GCompareFunc)g_strcmp0);

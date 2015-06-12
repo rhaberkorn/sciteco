@@ -223,12 +223,12 @@ private:
 	void do_edit(tecoInt id);
 
 	void initial(void);
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 class StateSaveFile : public StateExpectFile {
 private:
-	State *done(const gchar *str);
+	State *got_file(const gchar *filename);
 };
 
 namespace States {
