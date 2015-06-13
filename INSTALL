@@ -42,9 +42,15 @@ installed by the user manually:
 Building from Source Tar Ball or Repository
 ===========================================
 
-This is now the only way to build SciTECO from source.
-You may either download a source tarball (sciteco-VERSION.tar.gz)
-or build from a cloned Git repository.
+Warning: These instructions are mainly targetted at Linux/UNIX
+users. Building Windows binaries is of course possible both by
+cross-compiling on Linux and in a native environment.
+However these builds are generally harder to prepare,
+so you are discouraged to do it on your own.
+
+Using a source tarball (sciteco-VERSION.tar.gz) or building
+from a cloned Git repository is now the only way to build
+SciTECO from source.
 Cloning the Git repository is recommended because SciTECO is not
 released often -- the source tarballs you find will probably be
 quite outdated.
@@ -98,7 +104,48 @@ To install SciTECO, type something like:
   $ sudo make install
 
 You are recommended to use the included "sample.teco_ini" as a starting
-point for your profile, so copy it to your $HOME directory at "~/.teco_ini".
+point for your profile. On UNIX, you can copy it to your $HOME directory
+at "~/.teco_ini" while on Windows, it should be in the same directory
+as `sciteco.exe` unless you adapt the $SCITECOCONFIG variable.
+Note that Windows builds are by default optimized for stand-alone
+operation in specially prepared directories unless you adapt
+$SCITECOCONFIG, $SCITECOPATH and $HOME.
+
+Prebuilt packages, like Debian source and binary packages, as well as
+Windows releases need special configuration options.
+Building these packages is automated by the `./distribute` script
+(a standalone Makefile script).
+
+Out of Tree Builds
+==================
+
+Like any Autoconf/Automake-based project, SciTECO can generally
+be built out-of-tree (in a different directory than its sources).
+This is often useful, especially when cross-compiling.
+Unfortunately, the Scintilla build-system does not support
+out-of-tree builds, so even though Scintilla has been tied
+into SciTECO's build system for convenience, out-of-tree builds
+cannot be performed directly as Scintilla would still be built
+in SciTECO's source directory by default.
+
+Fortunately, SciTECO allows you to overwrite the Scintilla
+source and build path via the ./configure --with-scintilla option.
+This may be used to clone a copy of Scintilla into SciTECO's
+build directory, initialize its Scinterm submodule and direct
+SciTECO's build system to this copy.
+An out-of-tree build of SciTECO can thus be achieved using the
+following steps (supposing that the build directory will be
+a subdirectory of the Git repository called `build-dir`):
+
+  $ mkdir build-dir
+  $ cd build-dir
+  $ git clone ../scintilla
+  $ cd scintilla
+  $ git submodule update --init
+  $ cd ..
+  $ ../configure --with-scintilla=scintilla
+  $ make
+  ...
 
 For more details on building Autoconf-based projects refer to the
 remainder of this document which covers installing Autoconf-based
