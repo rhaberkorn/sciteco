@@ -33,10 +33,10 @@ These dependencies are bundled with the SciTECO Git repository
 and with source tar balls, so they usually do not have to be
 installed by the user manually:
 
- * Scintilla (v3.5.2):
+ * Scintilla (v3.5.5 or later):
    http://www.scintilla.org/
  * When choosing the Curses interface:
-   * Scinterm (v1.5 or later):
+   * Scinterm (v1.6 or later):
      http://foicica.com/scinterm/
 
 Building from Source Tar Ball or Repository
