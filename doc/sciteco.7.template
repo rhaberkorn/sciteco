@@ -989,17 +989,26 @@ Macro invocations might create new local Q-Register tables for
 the executed code.
 \*(ST initializes the Q-Registers \(lqA\(rq to \(lqZ\(rq and
 \(lq0\(rq to \(lq9\(rq in every Q-Register table.
-Furthermore \*(ST defines and initializes the following special
-global registers:
+.LP
+There are global Q-Registers with special significance for \*(ST
+because they may be accessed by commands opaquely.
+Some of these registers represent information beyond their
+textual and numeric cells \(em they overwrite default operations
+with custom side-effects in order to support unique idioms.
+Some of the registers with special significance are initialized
+by \*(ST while others must be manually defined.
+The following list is an overview of all special global registers:
 .TP 2
 .BR _ " (underscore)"
 Search string and search condition register.
 Also used by the globbing command \fBEN\fP, so it is also
 the glob string and condition register.
+It is initialized automatically on startup.
 .TP
 .BR - " (minus)"
 Replacement string register.
 Its integer part is currently unused.
+It is initialized automatically on startup.
 .TP
 .BR * " (asterisk)"
 File name (string part) and id (numeric part) of current
@@ -1026,6 +1035,7 @@ temporarily:
 .EX
 [* ! ...change current buffer... ! ]*
 .EE
+The register is initialized automatically on startup.
 .TP
 .BR $ " (dollar)"
 The process' current working directory (string part).
@@ -1047,14 +1057,36 @@ The \(lq$\(rq register may also be edited but changing its
 string contents this way has no effect on the current
 working directory.
 Appending to the \(lq$\(rq register is unsupported.
+The register is initialized automatically on startup.
 .TP
 .BR $ " (Escape)"
 Command-line replacement register.
 Its integer part is unused.
+It is initialized automatically on startup.
+.TP
+.BI $ variable
+Global Q-Registers beginning with a dollar sign that
+do not contain any \(lq=\(rq represent the process environment
+(the environment variables).
+The register \(lq$\(rq does \fBnot\fP belong to the process
+environment.
+Some environment variables are initialized with default values
+if the corresponding environment variable is unset and
+some may be accessed internally by \*(ST commands.
+In other respects, the environment registers are ordinary
+non-customized registers that support all operations.
+Their numeric parts are currently unused.
+The mechanisms involved are documented more elaborately in
+.BR sciteco (1).
+.TP
+.BI ^F key
+Function key registers as documented in section
+\fBKEY TRANSLATION\fP.
+Their string-content represents a function key macro
+and their numeric part is a function key mask.
+None of those registers are automatically initialized
+on startup.
 .LP
-The \*(ST runtime may access other special Q-Registers
-(e.g. function key macros), but they are not initialized by
-default.
 Some commands may create and initialize new registers if
 necessary, while it is an error to access undefined registers
 for some other commands.
@@ -1297,9 +1329,8 @@ current working directory (as can be set e.g. via the
 Nevertheless, \*(ST will function properly after changing
 the working directory as \*(ST canonicalizes relative
 paths to absolute paths if necessary.
-Both buffer file names and some special environment
-variables (as well as their corresponding Q-Registers)
-documented in
+Both buffer file names and some special Q-Registers
+corresponding to environment variables documented in
 .BR sciteco (1)
 are canonicalized in this way.
 .LP
@@ -1338,7 +1369,7 @@ In \*(ST this expansion takes place \fIafter\fP processing
 string building characters.
 Unlike the UNIX-shell, \*(ST will only expand the \fIcurrent
 user's\fP home directory using the value of the
-\(lqHOME\(rq environment variable.
+\(lq$HOME\(rq environment register.
 Thus the \(lq~\fIusername\fP\(rq syntax is \fBnot\fP supported.
 .LP
 Last but not least, some commands accept glob patterns
@@ -1504,7 +1535,7 @@ Note that, \*(ST itself is designed not to produce non-forward-slash
 separators and at least allows the user to generate forward-slashes
 in portable macros.
 This is not the case, for instance when working with environment
-variables.
+registers.
 .TP
 .IB n \(dqS
 .TQ

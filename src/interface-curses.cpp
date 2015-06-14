@@ -178,6 +178,13 @@ InterfaceCurses::init_interactive(void)
 void
 InterfaceCurses::init_batch(void)
 {
+	/*
+	 * NOTE: It's still safe to use g_getenv().
+	 * Actually the process environment has not yet been
+	 * imported into the Q-Register table.
+	 * Also, the batch mode initialization will be
+	 * simplified soon, anyway.
+	 */
 	const gchar *term = g_getenv("TERM");
 
 	/*
@@ -227,7 +234,13 @@ InterfaceCurses::init_interactive(void)
 {
 	const gchar *term = g_getenv("TERM");
 
-	/* at least try to report a broken $TERM */
+	/*
+	 * At least try to report a broken $TERM.
+	 * g_getenv() may still be used here since we must refer to
+	 * same value as used in init_batch() as opposed to the
+	 * current value of the "$TERM" register.
+	 * Also, this code will have to be simplified soon, anyway.
+	 */
 	if (!term || !*term) {
 		g_fprintf(stderr, "Error initializing interactive mode: "
 		                  "$TERM is unset or empty.\n");
@@ -816,6 +829,10 @@ InterfaceCurses::event_loop_impl(void)
 	 * Set window title to a reasonable default,
 	 * in case it is not reset immediately by the
 	 * shell.
+	 * FIXME: It may be unsafe to access $TERM here
+	 * and the value of Q-Register $TERM may have
+	 * diverged. This should be adapted once we rewrite
+	 * batch-mode initialization!
 	 */
 #if !PDCURSES && defined(HAVE_TIGETSTR)
 	set_window_title(g_getenv("TERM") ? : "");

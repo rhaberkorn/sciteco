@@ -255,6 +255,10 @@ public:
 	insert(QRegister *reg)
 	{
 		reg->must_undo = must_undo;
+		/* FIXME: Returns already existing regs with the same name.
+		   This could be used to optimize commands that initialize
+		   a register if it does not yet exist (saves one table
+		   lookup): */
 		RBTree::insert(reg);
 		return reg;
 	}
@@ -283,6 +287,13 @@ public:
 		return operator [](buf);
 	}
 
+	inline QRegister *
+	nfind(const gchar *name)
+	{
+		QRegister reg(name);
+		return (QRegister *)RBTree::nfind(&reg);
+	}
+
 	void edit(QRegister *reg);
 	inline QRegister *
 	edit(const gchar *name)
@@ -294,6 +305,9 @@ public:
 		edit(reg);
 		return reg;
 	}
+
+	void set_environ(void);
+	gchar **get_environ(void);
 
 	void clear(void);
 };

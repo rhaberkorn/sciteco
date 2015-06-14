@@ -1595,16 +1595,18 @@ UndoTokenChangeDir::run(void)
  *
  * If <directory> is omitted, the working directory
  * is changed to the current user's home directory
- * as set by the \fBHOME\fP environment variable.
- * This variable is alwas initialized by \*(ST
+ * as set by the \fBHOME\fP environment variable
+ * (i.e. its corresponding \(lq$HOME\(rq environment
+ * register).
+ * This variable is always initialized by \*(ST
  * (see \fBsciteco\fP(1)).
  * Therefore the expression \(lqFG\fB$\fP\(rq is
- * roughly equivalent to both \(lqFG~\fB$\fP\(rq and
+ * exactly equivalent to both \(lqFG~\fB$\fP\(rq and
  * \(lqFG^EQ[$HOME]\fB$\fP\(rq.
  *
  * The current working directory is also mapped to
- * the Q-Register \(lq$\(rq (dollar sign) which
- * may be used retrieve the current working directory.
+ * the special global Q-Register \(lq$\(rq (dollar sign)
+ * which may be used retrieve the current working directory.
  *
  * String-building characters are enabled on this
  * command and directories can be tab-completed.
@@ -1612,19 +1614,25 @@ UndoTokenChangeDir::run(void)
 State *
 StateChangeDir::got_file(const gchar *filename)
 {
+	gchar *dir;
+
 	BEGIN_EXEC(&States::start);
 
 	/* passes ownership of string to undo token object */
 	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
 
-	if (!*filename)
-		filename = g_getenv("HOME");
+	dir = *filename ? g_strdup(filename)
+	                : QRegisters::globals["$HOME"]->get_string();
 
-	if (g_chdir(filename))
+	if (g_chdir(dir)) {
 		/* FIXME: Is errno usable on Windows here? */
-		throw Error("Cannot change working directory "
-		            "to \"%s\"", filename);
+		Error err("Cannot change working directory "
+		          "to \"%s\"", dir);
+		g_free(dir);
+		throw err;
+	}
 
+	g_free(dir);
 	return &States::start;
 }
 

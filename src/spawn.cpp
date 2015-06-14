@@ -198,6 +198,14 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * \(lq0,128ED\(rq, and is recommended when writing cross-platform
  * macros using the EC command.
  *
+ * The spawned process inherits both \*(ST's current working
+ * directory and its environment variables.
+ * More precisely, \*(ST uses its environment registers
+ * to construct the spawned process' environment.
+ * Therefore it is also straight forward to change the working
+ * directory or some environment variable temporarily
+ * for a spawned process.
+ *
  * Note that when run interactively and subsequently rubbed
  * out, \*(ST can easily undo all changes to the editor
  * state.
@@ -211,7 +219,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  *
  * In interactive mode, \*(ST performs TAB-completion
  * of filenames in the <command> string parameter but
- * by doing so does not attempt any escaping of shell-relevant
+ * does not attempt any escaping of shell-relevant
  * characters like whitespaces.
  */
 StateExecuteCommand::StateExecuteCommand() : StateExpectString()
@@ -308,7 +316,7 @@ StateExecuteCommand::done(const gchar *str)
 		 */
 		return &States::start;
 
-	gchar **argv;
+	gchar **argv, **envp;
 	static const gint flags = G_SPAWN_DO_NOT_REAP_CHILD |
 	                          G_SPAWN_SEARCH_PATH |
 	                          G_SPAWN_STDERR_TO_DEV_NULL;
@@ -330,11 +338,14 @@ StateExecuteCommand::done(const gchar *str)
 	if (!argv)
 		goto gerror;
 
-	g_spawn_async_with_pipes(NULL, argv, NULL, (GSpawnFlags)flags,
+	envp = QRegisters::globals.get_environ();
+
+	g_spawn_async_with_pipes(NULL, argv, envp, (GSpawnFlags)flags,
 	                         NULL, NULL, &pid,
 	                         &stdin_fd, &stdout_fd, NULL,
 	                         &ctx.error);
 
+	g_strfreev(envp);
 	g_strfreev(argv);
 
 	if (ctx.error)

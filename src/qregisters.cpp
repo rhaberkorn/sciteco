@@ -529,7 +529,80 @@ QRegisterTable::edit(QRegister *reg)
 	QRegisters::current = reg;
 }
 
-/*
+void
+QRegisterTable::set_environ(void)
+{
+	/*
+	 * NOTE: Using g_get_environ() would be more efficient,
+	 * but it appears to be broken, at least on Wine
+	 * and Windows 2000.
+	 */
+	gchar **env = g_listenv();
+
+	for (gchar **key = env; *key; key++) {
+		gchar name[1 + strlen(*key) + 1];
+		QRegister *reg;
+
+		name[0] = '$';
+		strcpy(name + 1, *key);
+
+		reg = insert(name);
+		reg->set_string(g_getenv(*key));
+	}
+
+	g_strfreev(env);
+}
+
+gchar **
+QRegisterTable::get_environ(void)
+{
+	QRegister *first = nfind("$");
+
+	gint envp_len = 1;
+	gchar **envp, **p;
+
+	/*
+	 * Iterate over all registers beginning with "$" to
+	 * guess the size required for the environment array.
+	 * This may waste a few bytes because not __every__
+	 * register beginning with "$" is an environment
+	 * register.
+	 */
+	for (QRegister *cur = first;
+	     cur && cur->name[0] == '$';
+	     cur = (QRegister *)cur->next())
+		envp_len++;
+
+	p = envp = (gchar **)g_malloc(sizeof(gchar *)*envp_len);
+
+	for (QRegister *cur = first;
+	     cur && cur->name[0] == '$';
+	     cur = (QRegister *)cur->next()) {
+		gchar *value;
+
+		/*
+		 * Ignore the "$" register (not an environment
+		 * variable register) and registers whose
+		 * name contains "=" (not allowed in environment
+		 * variable names).
+		 */
+		if (!cur->name[1] || strchr(cur->name+1, '='))
+			continue;
+
+		value = cur->get_string();
+		/* more efficient than g_environ_setenv() */
+		*p++ = g_strconcat(cur->name+1, "=", value, NIL);
+		g_free(value);
+	}
+
+	*p = NULL;
+
+	return envp;
+}
+
+/**
+ * Free resources associated with table.
+ *
  * This is similar to RBTree::clear() but
  * has the advantage that we can check whether some
  * register is currently edited.

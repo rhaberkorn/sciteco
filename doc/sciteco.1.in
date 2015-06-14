@@ -149,15 +149,27 @@ environment are inserted into the global Q-Register table.
 A dollar sign is prepended before each variable name, so that for
 instance the variable \(lqHOME\(rq can be examined by macros by
 reading the string-content of Q-Register \(lq$HOME\(rq.
-Changes to these Q-Registers are currently not applied to
-the corresponding environment variables.
 .LP
-The following environment variables are initialized with default
-values by \*(ST if they are unset:
+Changes to these environment registers are not applied to
+the process environment for technical reasons.
+Nevertheless, \*(ST will always access the environment registers
+instead of the process environment when it needs to evaluate
+an environment variable internally.
+Furthermore, when spawning subprocesses, \*(ST will export
+all Q-Registers beginning with \(lq$\(rq that do not have
+a \(lq=\(rq in their name into the subprocess environment.
+Therefore, the subset of Q-Registers whose name begins with \(lq$\(rq
+can be considered practically identical to the process environment
+and \*(ST macros can access, modify and extend the environment using
+these registers.
+.LP
+The following environment variables and registers are initialized with
+default values by \*(ST if they are unset:
 .TP
 .B HOME
 Home directory of the current user.
-This may be used e.g. by the \fBFG\fP command.
+This may be used e.g. by the \fBFG\fP command and for
+tilde-expansions.
 If unset, it defaults to the current user's home directory
 as set by
 .BR passwd (5)
@@ -191,7 +203,7 @@ defaults to the standard library installation path at
 .
 .LP
 The \fBHOME\fP, \fBSCITECOCONFIG\fP and \fBSCITECOPATH\fP environment
-variables are canonicalized to absolute paths.
+variables and registers are canonicalized to absolute paths.
 Therefore it is possible to define them relative to the
 working directory of \*(ST when it starts up while macros
 can work with the corresponding registers to locate files

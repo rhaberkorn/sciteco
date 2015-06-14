@@ -196,9 +196,15 @@ static inline void
 initialize_environment(const gchar *program)
 {
 	gchar *default_configpath, *abs_path;
-	gchar **env;
 
 	/*
+	 * Initialize some "special" environment variables.
+	 * For ease of use and because there are no threads yet,
+	 * we modify the process environment directly.
+	 * Later it is imported into the global Q-Register table
+	 * and the process environment should no longer be accessed
+	 * directly.
+	 *
 	 * Initialize and canonicalize $HOME.
 	 * Therefore we can refer to $HOME as the
 	 * current user's home directory on any platform
@@ -237,20 +243,19 @@ initialize_environment(const gchar *program)
 	g_setenv("SCITECOPATH", abs_path, TRUE);
 	g_free(abs_path);
 
-	env = g_listenv();
-
-	for (gchar **key = env; *key; key++) {
-		gchar name[1 + strlen(*key) + 1];
-		QRegister *reg;
-
-		name[0] = '$';
-		strcpy(name + 1, *key);
-
-		reg = QRegisters::globals.insert(name);
-		reg->set_string(g_getenv(*key));
-	}
-
-	g_strfreev(env);
+	/*
+	 * Import process environment into global Q-Register
+	 * table. While it is safe to use g_setenv() early
+	 * on at startup, it might be problematic later on
+	 * (e.g. it's non-thread-safe).
+	 * Therefore the environment registers in the global
+	 * table should be used from now on to set and get
+	 * environment variables.
+	 * When spawning external processes that should inherit
+	 * the environment variables, the environment should
+	 * be exported via QRegisters::globals.get_environ().
+	 */
+	QRegisters::globals.set_environ();
 }
 
 /*
@@ -388,6 +393,7 @@ main(int argc, char **argv)
 		}
 
 		if (!mung_file && mung_profile)
+			/* NOTE: Still safe to use g_getenv() */
 			mung_file = g_build_filename(g_getenv("SCITECOCONFIG"),
 			                             INI_FILE, NIL);
 

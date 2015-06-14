@@ -36,6 +36,7 @@
 #include "interface.h"
 #include "undo.h"
 #include "error.h"
+#include "qregisters.h"
 #include "ioview.h"
 
 #ifdef HAVE_WINDOWS_H
@@ -675,12 +676,14 @@ IOView::save(const gchar *filename)
  *
  * This supports only strings with a "~" prefix.
  * A user name after "~" is not supported.
- * The $HOME environment variable is used to retrieve
+ * The $HOME environment variable/register is used to retrieve
  * the current user's home directory.
  */
 gchar *
 expand_path(const gchar *path)
 {
+	gchar *home, *ret;
+
 	if (!path)
 		path = "";
 
@@ -693,7 +696,11 @@ expand_path(const gchar *path)
 	 * but this ensures that a proper path is constructed even if
 	 * it does (e.g. $HOME is changed later on).
 	 */
-	return g_build_filename(g_getenv("HOME"), path+1, NIL);
+	home = QRegisters::globals["$HOME"]->get_string();
+	ret = g_build_filename(home, path+1, NIL);
+	g_free(home);
+
+	return ret;
 }
 
 #ifdef G_OS_UNIX
