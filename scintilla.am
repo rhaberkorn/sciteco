@@ -1,10 +1,6 @@
 # Scintilla/Scinterm are cloned as submodules
 # of this repository, so we may give a rule
 # for building scintilla.a here.
-# It is built as a phony target since we do not
-# know its dependencies.
-# If it is up to date, the additional recursive
-# Make call does not hurt.
 
 if INTERFACE_GTK
 SCINTILLA_MAKE_DIR = @SCINTILLA_PATH@/gtk
@@ -12,11 +8,25 @@ else
 SCINTILLA_MAKE_DIR = @SCINTERM_PATH@
 endif
 
-.PHONY: @SCINTILLA_PATH@/bin/scintilla.a
-@SCINTILLA_PATH@/bin/scintilla.a :
+# Build as phony target - we do not know
+# scintilla.a's dependencies.
+# If it's up to date, the additional recursive
+# make call does not hurt.
+# NOTE: We can pass the (cross-)compiler to
+# Scintilla's build process, but no CFLAGS :-(
+.PHONY: make-scintilla
+make-scintilla:
 	$(MAKE) -C $(SCINTILLA_MAKE_DIR) \
 	        CXX=@CXX@ AR=@AR@
 
+# scintilla.a itself is not phony.
+# This avoids unnecessary relinking if it is
+# up to date.
+# Also note the ; which defines this recipe as
+# empty.
+@SCINTILLA_PATH@/bin/scintilla.a : make-scintilla;
+
+.PHONY: clean-local-scintilla
 clean-local-scintilla:
 	$(MAKE) -C $(SCINTILLA_MAKE_DIR) clean
 
@@ -24,4 +34,3 @@ clean-local-scintilla:
 # target allows us to add more custom rules to the
 # including Automake file
 clean-local: clean-local-scintilla
-.PHONY: clean-local-scintilla
