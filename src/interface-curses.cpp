@@ -30,7 +30,20 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+#ifdef G_OS_UNIX
+#include <unistd.h>
+#endif
+
 #include <curses.h>
+
+#ifdef HAVE_TIGETSTR
+#include <term.h>
+
+/*
+ * Some macros in term.h interfere with our code.
+ */
+#undef lines
+#endif
 
 #include <Scintilla.h>
 #include <ScintillaTerm.h>
@@ -63,11 +76,18 @@
 #define PDCURSES_WIN32
 #endif
 
+#ifdef NCURSES_VERSION
+#ifdef G_OS_UNIX
+/**
+ * Whether we're on ncurses/UNIX
+ */
+#define NCURSES_UNIX
+#elif defined(G_OS_WIN32)
 /**
  * Whether we're on ncurses/win32 console
  */
-#if defined(NCURSES_VERSION) && defined(G_OS_WIN32)
 #define NCURSES_WIN32
+#endif
 #endif
 
 namespace SciTECO {
@@ -79,52 +99,120 @@ static void scintilla_notify(Scintilla *sci, int idFrom,
 
 #define UNNAMED_FILE "(Unnamed)"
 
+/**
+ * Curses attribute for the color combination
+ * `f` (foreground) and `b` (background)
+ * according to the color pairs initialized by
+ * Scinterm.
+ * NOTE: This depends on the global variable
+ * `COLORS` and is thus not a constant expression.
+ */
 #define SCI_COLOR_ATTR(f, b) \
 	((attr_t)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
 
 void
 ViewCurses::initialize_impl(void)
 {
-	WINDOW *window;
-
-	/* NOTE: Scintilla initializes color pairs */
 	sci = scintilla_new(scintilla_notify);
-	window = get_window();
-
-	/*
-	 * Window must have dimension before it can be
-	 * positioned.
-	 * Perhaps it's better to leave the window
-	 * unitialized and set the position in
-	 * InterfaceCurses::show_view().
-	 */
-	wresize(window, 1, 1);
-	/* Set up window position: never changes */
-	mvwin(window, 1, 0);
-
 	setup();
 }
 
 void
 InterfaceCurses::main_impl(int &argc, char **&argv)
 {
-	init_batch();
+	/*
+	 * Make sure we have a string for the info line
+	 * even if info_update() is never called.
+	 */
+	info_current = g_strdup(PACKAGE_NAME);
+}
+
+#ifdef NCURSES_UNIX
+
+void
+InterfaceCurses::init_screen(void)
+{
+	screen_tty = g_fopen("/dev/tty", "r+");
+	/* should never fail */
+	g_assert(screen_tty != NULL);
+
+	screen = newterm(NULL, screen_tty, screen_tty);
+	if (!screen) {
+		g_fprintf(stderr, "Error initializing interactive mode. "
+		                  "$TERM may be incorrect.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	/*
-	 * We're in prog mode, so we must set it up
-	 * now, even though we're also in SciTECO batch mode.
-	 * This is because endwin() saves the prog mode
-	 * and Curses restores it automatically.
+	 * If stdout or stderr would go to the terminal,
+	 * redirect it. Otherwise, they are already redirected
+	 * (e.g. to a file) and writing to them does not
+	 * interrupt terminal interaction.
 	 */
+	if (isatty(1)) {
+		FILE *stdout_new;
+		stdout_orig = dup(1);
+		g_assert(stdout_orig >= 0);
+		stdout_new = g_freopen("/dev/null", "a+", stdout);
+		g_assert(stdout_new != NULL);
+	}
+	if (isatty(2)) {
+		FILE *stderr_new;
+		stderr_orig = dup(2);
+		g_assert(stderr_orig >= 0);
+		stderr_new = g_freopen("/dev/null", "a+", stderr);
+		g_assert(stderr_new != NULL);
+	}
+}
+
+#else
+
+void
+InterfaceCurses::init_screen(void)
+{
+	initscr();
+}
+
+#endif
+
+void
+InterfaceCurses::init_interactive(void)
+{
+	/*
+	 * Curses accesses many environment variables
+	 * internally. In order to be able to modify them in
+	 * the SciTECO profile, we must update the process
+	 * environment before initscr()/newterm().
+	 * This is safe to do here since there are no threads.
+	 */
+	QRegisters::globals.update_environ();
+
+#ifdef NCURSES_WIN32
+	/*
+	 * $TERM must be unset for the win32 driver to load.
+	 * So we always ignore any $TERM changes by the user.
+	 */
+	//g_unsetenv("TERM");
+	// May be necessary to set window title on ncurses/win32
+	g_setenv("TERM", "#win32con", TRUE);
+#endif
+
+#ifdef PDCURSES_WIN32A
+	/* enables window resizing on Win32a port */
+	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
+#endif
+
+	/* for displaying UTF-8 characters properly */
+	setlocale(LC_CTYPE, "");
+
+	init_screen();
+
 	cbreak();
 	noecho();
 	/* Scintilla draws its own cursor */
 	curs_set(0);
 
-	setlocale(LC_CTYPE, ""); /* for displaying UTF-8 characters properly */
-
 	info_window = newwin(1, 0, 0, 0);
-	info_current = g_strdup(PACKAGE_NAME);
 
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
@@ -132,148 +220,60 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 
 #ifdef EMSCRIPTEN
         nodelay(cmdline_window, TRUE);
-#elif !defined(PDCURSES_WIN32A)
-	/* workaround: endwin() is somewhat broken in the win32a port */
+#endif
+
+	/*
+	 * Will also initialize Scinterm, Curses color pairs
+	 * and resizes the current view.
+	 */
+	if (current_view)
+		show_view(current_view);
+}
+
+void
+InterfaceCurses::restore_batch(void)
+{
+	/*
+	 * Set window title to a reasonable default,
+	 * in case it is not reset immediately by the
+	 * shell.
+	 * FIXME: See set_window_title() why this
+	 * is necessary.
+	 */
+#if defined(NCURSES_UNIX) && defined(HAVE_TIGETSTR)
+	set_window_title(g_getenv("TERM") ? : "");
+#endif
+
+	/*
+	 * Restore ordinary terminal behaviour
+	 * (i.e. return to batch mode)
+	 */
 	endwin();
-#endif
-}
-
-#if defined(__PDCURSES__) || !defined(G_OS_UNIX)
-
-void
-InterfaceCurses::init_batch(void)
-{
-#ifdef PDCURSES_WIN32A
-	/* enables window resizing on Win32a port */
-	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
-#endif
-
-#ifdef NCURSES_WIN32
-	/* $TERM must be unset for the win32 driver to load */
-	g_unsetenv("TERM");
-#endif
 
 	/*
-	 * PDCurses cannot support terminal redirection
-	 * into files, nor can it support multiple terminals.
-	 * So we do a classic Curses initialization here.
-	 * Unfortunately, this clears the screen in
-	 * PDCurses/win32, so that batch mode is somewhat
-	 * broken there.
+	 * Restore stdout and stderr, so output goes to
+	 * the terminal again in case we "muted" them.
 	 */
-	initscr();
-}
-
-void
-InterfaceCurses::init_interactive(void)
-{
-	/*
-	 * Nothing to do, we are already controlling the
-	 * terminal.
-	 */
-}
-
-#else /* UNIX, no PDCurses */
-
-void
-InterfaceCurses::init_batch(void)
-{
-	/*
-	 * NOTE: It's still safe to use g_getenv().
-	 * Actually the process environment has not yet been
-	 * imported into the Q-Register table.
-	 * Also, the batch mode initialization will be
-	 * simplified soon, anyway.
-	 */
-	const gchar *term = g_getenv("TERM");
-
-	/*
-	 * In headless or broken environments,
-	 * $TERM may be unset or empty.
-	 * Still batch-mode operation is supposed
-	 * to work.
-	 * Therefore we initialize Curses with
-	 * a terminal type that ensures it will at least
-	 * start up ("ansi" is in ncurses-base).
-	 * We do not always use "ansi" since
-	 * it is also not guaranteed to work and we cannot
-	 * change it later on.
-	 */
-	if (!term || !*term)
-		term = "ansi";
-
-	/*
-	 * This sets stdscr to a new screen associated
-	 * with /dev/null.
-	 * This way we get ncurses to leave the current
-	 * controlling tty alone, while still initializing
-	 * Curses (required by Scintilla and thus for
-	 * batch processing).
-	 */
-	screen_tty = g_fopen("/dev/null", "r+");
-	/* should never fail */
-	g_assert(screen_tty != NULL);
-
-	setvbuf(screen_tty, NULL, _IOFBF, 0);
-
-	screen = newterm(term, screen_tty, screen_tty);
-	if (!screen) {
-		/* $TERM may be set but to a wrong value */
-		g_fprintf(stderr, "Error initializing batch mode. "
-		                  "$TERM may be incorrent.\n"
-		                  "Try unsetting it if you do not need "
-		                  "the interactive mode.\n");
-		exit(EXIT_FAILURE);
+#ifdef NCURSES_UNIX
+	if (stdout_orig >= 0) {
+		int fd = dup2(stdout_orig, 1);
+		g_assert(fd == 1);
 	}
-
-	def_shell_mode();
-}
-
-void
-InterfaceCurses::init_interactive(void)
-{
-	const gchar *term = g_getenv("TERM");
-
-	/*
-	 * At least try to report a broken $TERM.
-	 * g_getenv() may still be used here since we must refer to
-	 * same value as used in init_batch() as opposed to the
-	 * current value of the "$TERM" register.
-	 * Also, this code will have to be simplified soon, anyway.
-	 */
-	if (!term || !*term) {
-		g_fprintf(stderr, "Error initializing interactive mode: "
-		                  "$TERM is unset or empty.\n");
-		exit(EXIT_FAILURE);
+	if (stderr_orig >= 0) {
+		int fd = dup2(stderr_orig, 2);
+		g_assert(fd == 2);
 	}
-
-	/*
-	 * Reopen screen_tty on the real terminal
-	 * device.
-	 * NOTE: It would be better to create a new
-	 * terminal with newterm() since the current
-	 * terminal might still be configured as
-	 * "ansi" to get the batch mode working.
-	 * If this is the case because we are in a head-less
-	 * or broken environment NOW would be the time
-	 * to tell the user.
-	 * However, I cannot get ncurses to switch
-	 * to a new terminal. Perhaps existing windows are
-	 * somehow "bound" to the current screen.
-	 * Perhaps this only works if we delete and recreate
-	 * ALL windows...
-	 */
-	if (!g_freopen("/dev/tty", "r+", screen_tty)) {
-		/* no controlling terminal? */
-		g_fprintf(stderr, "Error initializing interactice mode: %s\n",
-		          g_strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-
-	def_shell_mode();
-}
-
 #endif
+
+	/*
+	 * See vmsg_impl(): It looks at msg_win to determine
+	 * whether we're in batch mode.
+	 */
+	if (msg_window) {
+		delwin(msg_window);
+		msg_window = NULL;
+	}
+}
 
 void
 InterfaceCurses::resize_all_windows(void)
@@ -299,37 +299,50 @@ InterfaceCurses::resize_all_windows(void)
 void
 InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
-	static const attr_t type2attr[] = {
-		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE),  /* MSG_USER */
-		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN),  /* MSG_INFO */
-		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW), /* MSG_WARNING */
-		SCI_COLOR_ATTR(COLOR_BLACK, COLOR_RED)	   /* MSG_ERROR */
-	};
+	attr_t attr;
 
-#ifdef PDCURSES_WIN32A
+	/*
+	 * On most platforms we can write to stdout/stderr
+	 * even in interactive mode.
+	 */
+#if defined(PDCURSES_WIN32A) || defined(NCURSES_UNIX)
 	stdio_vmsg(type, fmt, ap);
-	if (isendwin()) /* batch mode */
+	if (!msg_window) /* batch mode */
 		return;
 #else
-	if (isendwin()) { /* batch mode */
+	if (!msg_window) { /* batch mode */
 		stdio_vmsg(type, fmt, ap);
 		return;
 	}
 #endif
 
+	switch (type) {
+	default:
+	case MSG_USER:
+		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE);
+		break;
+	case MSG_INFO:
+		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN);
+		break;
+	case MSG_WARNING:
+		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW);
+		break;
+	case MSG_ERROR:
+		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_RED);
+		beep();
+		break;
+	}
+
 	wmove(msg_window, 0, 0);
-	wbkgdset(msg_window, ' ' | type2attr[type]);
+	wbkgdset(msg_window, ' ' | attr);
 	vw_printw(msg_window, fmt, ap);
 	wclrtoeol(msg_window);
-
-	if (type == MSG_ERROR)
-		beep();
 }
 
 void
 InterfaceCurses::msg_clear(void)
 {
-	if (isendwin()) /* batch mode */
+	if (!msg_window) /* batch mode */
 		return;
 
 	wmove(msg_window, 0, 0);
@@ -341,16 +354,23 @@ void
 InterfaceCurses::show_view_impl(ViewCurses *view)
 {
 	int lines, cols; /* screen dimensions */
+	WINDOW *current_view_win;
 
 	current_view = view;
+
+	if (!cmdline_window) /* batch mode */
+		return;
+
+	current_view_win = current_view->get_window();
 
 	/*
 	 * screen size might have changed since
 	 * this view's WINDOW was last active
 	 */
 	getmaxyx(stdscr, lines, cols);
-	wresize(current_view->get_window(),
-	        lines - 3, cols);
+	wresize(current_view_win, lines - 3, cols);
+	/* Set up window position: never changes */
+	mvwin(current_view_win, 1, 0);
 }
 
 #if PDCURSES
@@ -361,19 +381,12 @@ InterfaceCurses::set_window_title(const gchar *title)
 	PDC_set_title(title);
 }
 
-#elif defined(HAVE_TIGETSTR) && defined(G_OS_UNIX)
+#elif defined(HAVE_TIGETSTR)
 
 void
 InterfaceCurses::set_window_title(const gchar *title)
 {
-	/*
-	 * NOTE: terminfo variables in term.h interfere with
-	 * the rest of our code
-	 */
-	const char *tsl = tigetstr((char *)"tsl");
-	const char *fsl = tigetstr((char *)"fsl");
-
-	if (!tsl || !fsl)
+	if (!has_status_line || !to_status_line || !from_status_line)
 		return;
 
 	/*
@@ -381,17 +394,37 @@ InterfaceCurses::set_window_title(const gchar *title)
 	 * the historic status line.
 	 * This feature is not standardized in ncurses,
 	 * so we query the terminfo database.
-	 * NOTE: The terminfo manpage advises us to use putp(),
-	 * but I don't feel comfortable with writing to stdout.
+	 * This feature may make problems with terminal emulators
+	 * that do support a status line but do not map them
+	 * to the window title. Some emulators (like xterm)
+	 * support setting the window title via custom escape
+	 * sequences and via the status line but their
+	 * terminfo entry does not say so. (xterm can also
+	 * save and restore window titles but there is not
+	 * even a terminfo capability defined for this.)
+	 * Taken the different emulator incompatibilites
+	 * it may be best to make this configurable.
+	 * Once we support configurable status lines,
+	 * there could be a special status line that's sent
+	 * to the terminal that may be set up in the profile
+	 * depending on $TERM.
+	 *
+	 * NOTE: The terminfo manpage advises us to use putp()
+	 * but on ncurses/UNIX (where terminfo is available),
+	 * we do not let curses write to stdout.
 	 * NOTE: This leaves the title set after we quit.
-	 * xterm has escape sequences to save/restore a window title,
-	 * but there do not seem to be terminfo capabilities for that.
-	 * NOTE: Resetting the title does not always work ;-)
 	 */
-	fputs(tsl, screen_tty);
-	fputs(info_current, screen_tty);
-	fputs(fsl, screen_tty);
+#ifdef G_OS_UNIX
+	fputs(to_status_line, screen_tty);
+	fputs(title, screen_tty);
+	fputs(from_status_line, screen_tty);
 	fflush(screen_tty);
+#else	/* presumably ncurses/win32 */
+	putp(to_status_line);
+	putp(title);
+	putp(from_status_line);
+	//fflush(stdout);
+#endif
 }
 
 #else
@@ -407,7 +440,7 @@ InterfaceCurses::set_window_title(const gchar *title)
 void
 InterfaceCurses::draw_info(void)
 {
-	if (isendwin()) /* batch mode */
+	if (!info_window) /* batch mode */
 		return;
 
 	wmove(info_window, 0, 0);
@@ -494,7 +527,7 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	 * Also A_UNDERLINE is not supported by PDCurses/win32
 	 * and causes weird colors, so we better leave it away.
 	 */
-	static const attr_t rubout_attr =
+	const attr_t rubout_attr =
 #ifndef PDCURSES_WIN32
 		A_UNDERLINE |
 #endif
@@ -558,7 +591,7 @@ InterfaceCurses::popup_add_impl(PopupEntryType type,
 {
 	gchar *entry;
 
-	if (isendwin()) /* batch mode */
+	if (!cmdline_window) /* batch mode */
 		return;
 
 	entry = g_strconcat(highlight ? "*" : " ", name, NIL);
@@ -578,7 +611,7 @@ InterfaceCurses::popup_show_impl(void)
 	gint popup_colwidth;
 	gint cur_col;
 
-	if (isendwin() || !popup.length)
+	if (!cmdline_window || !popup.length)
 		/* batch mode or nothing to display */
 		return;
 
@@ -699,6 +732,7 @@ event_loop_iter()
 	raw();
 	key = wgetch(interface.cmdline_window);
 	/* allow asynchronous interruptions on <CTRL/C> */
+	sigint_occurred = FALSE;
 	cbreak();
 	if (key == ERR)
 		return;
@@ -764,8 +798,6 @@ event_loop_iter()
 			cmdline.keypress((gchar)key);
 	}
 
-	sigint_occurred = FALSE;
-
 	/*
 	 * Info window is updated very often which is very
 	 * costly, especially when using PDC_set_title(),
@@ -825,24 +857,7 @@ InterfaceCurses::event_loop_impl(void)
 		/* SciTECO termination (e.g. EX$$) */
 	}
 
-	/*
-	 * Set window title to a reasonable default,
-	 * in case it is not reset immediately by the
-	 * shell.
-	 * FIXME: It may be unsafe to access $TERM here
-	 * and the value of Q-Register $TERM may have
-	 * diverged. This should be adapted once we rewrite
-	 * batch-mode initialization!
-	 */
-#if !PDCURSES && defined(HAVE_TIGETSTR)
-	set_window_title(g_getenv("TERM") ? : "");
-#endif
-
-	/*
-	 * Restore ordinary terminal behaviour
-	 * (i.e. return to batch mode)
-	 */
-	endwin();
+	restore_batch();
 #endif
 }
 
@@ -873,6 +888,10 @@ InterfaceCurses::~InterfaceCurses()
 		delscreen(screen);
 	if (screen_tty)
 		fclose(screen_tty);
+	if (stderr_orig >= 0)
+		close(stderr_orig);
+	if (stdout_orig >= 0)
+		close(stdout_orig);
 }
 
 /*

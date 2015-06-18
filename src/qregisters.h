@@ -308,6 +308,7 @@ public:
 
 	void set_environ(void);
 	gchar **get_environ(void);
+	void update_environ(void);
 
 	void clear(void);
 };

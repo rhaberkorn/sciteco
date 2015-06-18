@@ -529,6 +529,16 @@ QRegisterTable::edit(QRegister *reg)
 	QRegisters::current = reg;
 }
 
+/**
+ * Import process environment into table
+ * by setting environment registers for every
+ * environment variable.
+ * It is assumed that the table does not yet
+ * contain any environment register.
+ *
+ * In general this method is only safe to call
+ * at startup.
+ */
 void
 QRegisterTable::set_environ(void)
 {
@@ -553,6 +563,13 @@ QRegisterTable::set_environ(void)
 	g_strfreev(env);
 }
 
+/**
+ * Export environment registers as a list of environment
+ * variables compatible with `g_get_environ()`.
+ *
+ * @return Zero-terminated list of strings in the form
+ *         `NAME=VALUE`. Should be freed with `g_strfreev()`.
+ */
 gchar **
 QRegisterTable::get_environ(void)
 {
@@ -598,6 +615,40 @@ QRegisterTable::get_environ(void)
 	*p = NULL;
 
 	return envp;
+}
+
+/**
+ * Update process environment with environment registers
+ * using `g_setenv()`.
+ * It does not try to unset environment variables that
+ * are no longer in the Q-Register table.
+ *
+ * This method may be dangerous in a multi-threaded environment
+ * but may be necessary for libraries that access important
+ * environment variables internally without providing alternative
+ * APIs.
+ */
+void
+QRegisterTable::update_environ(void)
+{
+	for (QRegister *cur = nfind("$");
+	     cur && cur->name[0] == '$';
+	     cur = (QRegister *)cur->next()) {
+		gchar *value;
+
+		/*
+		 * Ignore the "$" register (not an environment
+		 * variable register) and registers whose
+		 * name contains "=" (not allowed in environment
+		 * variable names).
+		 */
+		if (!cur->name[1] || strchr(cur->name+1, '='))
+			continue;
+
+		value = cur->get_string();
+		g_setenv(cur->name+1, value, TRUE);
+		g_free(value);
+	}
 }
 
 /**

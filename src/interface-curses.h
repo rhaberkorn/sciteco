@@ -44,8 +44,8 @@ public:
 	{
 		/*
 		 * NOTE: This deletes/frees the view's
-		 * curses WINDOW, despite of what Scinterm's
-		 * documentation says.
+		 * curses WINDOW, despite of what old versions
+		 * of the Scinterm documentation claim.
 		 */
 		if (sci)
 			scintilla_delete(sci);
@@ -72,6 +72,7 @@ public:
 } ViewCurrent;
 
 typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
+	int stdout_orig, stderr_orig;
 	SCREEN *screen;
 	FILE *screen_tty;
 
@@ -100,7 +101,8 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	} popup;
 
 public:
-	InterfaceCurses() : screen(NULL),
+	InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
+	                    screen(NULL),
 			    screen_tty(NULL),
 			    info_window(NULL),
 			    info_current(NULL),
@@ -146,8 +148,9 @@ public:
 	void event_loop_impl(void);
 
 private:
-	void init_batch(void);
+	void init_screen(void);
 	void init_interactive(void);
+	void restore_batch(void);
 
 	void resize_all_windows(void);
 

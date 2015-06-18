@@ -14,13 +14,13 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .SH SYNOPSIS
 .
 .SY @PACKAGE@
-.OP \-h|\-\-help
-.OP \-e|\-\-eval macro
-.OP \-m|\-\-mung file
-.OP \-\-no\-profile
-.OP \-\-
-.RI [ argument
-.IR .\|.\|. ]
+.OP "-h|--help"
+.OP "-e|--eval" macro
+.OP "-m|--mung" file
+.OP "--no-profile"
+.RI [ "UI option .\|.\|." ]
+.OP "--"
+.RI [ "argument .\|.\|." ]
 .YS
 .
 .
@@ -39,14 +39,14 @@ natively supports Microsoft Windows NT\*(Tm.
 .LP
 When executed, \*(ST mungs (executes) the TECO macro stored in the file
 specified by the
-.B \-\-mung
-option.
-The munged file is executed in non-interactive
-.RI ( batch )
+.B "--mung"
+option or the macro specified via
+.B "--eval"
+respectively.
+Munged files and macros are executed in non-interactive (\fIbatch\fP)
 mode, allowing the user to write stand-alone TECO scripts.
-In contrast to ordinary macro execution,
-if the first two characters of the file are \(lq#!\(rq its first line
-is ignored.
+Only when munging files as opposed to other means of executing macros,
+the first line is ignored if it begins with \(lq#!\(rq.
 Therefore under UNIX-like operating systems, TECO macro files may be
 invoked as scripts by using a Hashbang line like
 .RS
@@ -54,13 +54,6 @@ invoked as scripts by using a Hashbang line like
 #!@bindir@/sciteco -m
 .EE
 .RE
-If the munged macro does not request program termination using the
-.I EX
-command, \*(ST will automatically switch into its graphical
-.I interactive
-mode.
-\*(ST may be built with different graphical user interfaces,
-including Curses and GTK+ based ones.
 .
 .LP
 Upon startup \*(ST's buffer ring contains only one unnamed empty buffer.
@@ -71,25 +64,58 @@ the buffer.
 In any case the current buffer position (called
 .IR dot )
 is left at the beginning of the buffer.
-Optionally \(lq\-\-\(rq might be used to separate \*(ST options and
+Optionally \(lq\-\-\(rq might be used to explicitly separate \*(ST options and
 macro arguments.
 .
 .LP
-Batch mode also has the following differences compared to interactive mode:
+If the munged macro does not request program termination using the
+\fBEX\fP command, \*(ST will automatically switch into its graphical
+\fIinteractive\fP mode.
+\*(ST may be built with different graphical user interfaces,
+including Curses and GTK+ based ones.
+Eventually when the user terminates interactive mode by calling
+\fBEX\fP, \*(ST will return to its batch mode before exiting.
+\*(ST macros may still execute in batch mode after leaving
+interactive mode and shutting down any GUI if the user has configured
+\fBED\fP hooks (see \fBsciteco\fP(7)).
+.
+.LP
+The differences between \fIbatch\fP and \fIinteractive\fP mode
+are outlined below:
 .RS
 .IP \(bu
-Messages are logged to
-.I stdout
-or
-.I stderr
-prefixed with a string signifying message severity.
+In batch mode, no terminal interaction takes place beyond writing
+plain-text messages to the \fIstdout\fP and \fIstderr\fP file descriptors.
+\fIstdin\fP is currently not read in batch mode.
+It is therefore safe to redirect \*(ST's \fIstdout\fP or \fIstderr\fP
+into files or pipes.
+On most UIs, it is even safe to redirect \fIstdout\fP or \fIstderr\fP
+if \*(ST enters interactive mode.
+Depending on the GUI compiled into \*(ST, either nothing is written
+to these streams while in interactive mode, or messages are continued to
+be written to these streams (in addition to being displayed in the GUI).
 .IP \(bu
-Any error will terminate the program.
+Messages logged to \fIstdout\fP or \fIstderr\fP \(em except
+for messages written explicitly via some \*(ST command \(em
+are prefixed with a string signifying the message's severity.
+In interactive mode, messages are also shown in a GUI-dependant
+manner.
 .IP \(bu
-Character rubout is disabled.
-Therefore code runs significantly faster than in interactive mode
-and less care needs to be taken regarding memory clutter due to
-undo token accumulation.
+In batch mode, any \*(ST command failure will terminate the program.
+A full stack trace of \*(ST macro invocations will be printed to
+\fIstderr\fP and the process' return code will signify failure.
+In interactive mode, \*(ST will \(lqrub out\(rq any character
+resulting in a command failure.
+.IP \(bu
+The interactive mode enables character rub-out and thus undoing
+of command side-effects.
+Therefore code runs significantly slower in interactive mode
+and all algorithms have non-constant memory requirements
+as they will constantly accumulate \(lqundo tokens\(rqP.
+Batch mode does not have these restrictions.
+.IP \(bu
+A few commands that modify the command line are only available
+in interactive mode.
 .RE
 .
 .LP
@@ -134,6 +160,10 @@ munging an empty file.
 This is useful to fix up a broken profile script.
 This option has no effect when a file is explicitly munged with
 .BR \-\-mung .
+.IP "\fIUI options .\|.\|.\fP"
+Some graphical user interfaces, notably GTK+, provide
+additional command line options.
+Execute \(lqsciteco --help\(rq for more details.
 .
 .
 .SH EXIT STATUS
@@ -208,6 +238,43 @@ Therefore it is possible to define them relative to the
 working directory of \*(ST when it starts up while macros
 can work with the corresponding registers to locate files
 even when the working directory of \*(ST is changed later on.
+.
+.LP
+Additionally \*(ST may be influenced by the
+.UR https://developer.gnome.org/glib/stable/glib-running.html
+environment variables accessed by glib
+.UE .
+On a Curses UI, there are other important environment variables
+like \fBTERM\fP, \fBLINES\fP and \fBCOLUMNS\fP that may be
+accesses when \*(ST enters interactive mode.
+For ncurses, see section \fBENVIRONMENT\fP in
+.BR ncurses (3NCURSES)
+for details.
+\*(ST exports the environment registers into the process
+environment before initializing Curses, so these variables
+can be modified in the profile macro.
+.
+.
+.SH SIGNALS
+.
+\*(ST currently reacts to the following signals or uses them
+internally:
+.TP
+.B SIGINT
+Interrupts the currently running macro.
+The character resulting in the macro execution will fail
+causing \*(ST to exit in batch mode, or reject the character
+resulting in the execution when in interactive mode.
+For instance, this signal will interrupt long-running loops.
+If the GUI is waiting on user input, this signal is effectively
+ignored.
+Some GUIs may depend on delivery of \fBSIGINT\fP when \fB^C\fP
+is pressed in order to interrupt macros interactively.
+Note that this signal can usually also be generated when pressing
+\fB^C\fP on the process (also if there is a graphical window).
+This is useful for GUIs that do not yet support interruptions
+directly.
+.
 .
 .SH FILES
 .

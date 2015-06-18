@@ -503,11 +503,13 @@ T};T{
 .B "Not a real immediate editing command."
 Will interrupt the current operation (character processing),
 yielding a \*(ST error.
-It depends on asynchronous delivery of the
+On some GUIs it depends on asynchronous delivery of the
 .B SIGINT
 signal and is useful to interrupt infinite loops.
-Therefore with GUI user interfaces, the signal might has to be
-delivered via the attached console or from another process.
+Since not all user interfaces support interruptions via
+\fB^C\fP, it may be necessary to deliver the signal by
+pressing \fB^C\fP on the attached console or by explicitly
+sending it.
 If \*(ST is not busy,
 .B ^C
 is self-inserting and might be used as a regular command.
