@@ -421,7 +421,22 @@ InterfaceCurses::show_view_impl(ViewCurses *view)
 void
 InterfaceCurses::set_window_title(const gchar *title)
 {
+	static gchar *last_title = NULL;
+
+	/*
+	 * PDC_set_title() can result in flickering
+	 * even when executed only once per pressed key,
+	 * so we check whether it is really necessary to change
+	 * the title.
+	 * This is an issue at least with PDCurses/win32.
+	 */
+	if (!g_strcmp0(title, last_title))
+		return;
+
 	PDC_set_title(title);
+
+	g_free(last_title);
+	last_title = g_strdup(title);
 }
 
 #elif defined(HAVE_TIGETSTR)
