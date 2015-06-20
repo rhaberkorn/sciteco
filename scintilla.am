@@ -3,21 +3,25 @@
 # for building scintilla.a here.
 
 if INTERFACE_GTK
-SCINTILLA_MAKE_DIR = @SCINTILLA_PATH@/gtk
+MAKE_SCINTILLA = $(MAKE) -C @SCINTILLA_PATH@/gtk \
+                 CONFIGFLAGS='@LIBGTK_CFLAGS@'
 else
-SCINTILLA_MAKE_DIR = @SCINTERM_PATH@
+MAKE_SCINTILLA = $(MAKE) -C @SCINTERM_PATH@ \
+                 CURSES_CFLAGS='@PDCURSES_CFLAGS@ @NCURSES_CFLAGS@'
 endif
+
+# Pass toolchain configuration to Scintilla.
+# This is what allows cross compilation
+MAKE_SCINTILLA += CC='@CC@' CXX='@CXX@' \
+                  AR='@AR@' RANLIB='@RANLIB@'
 
 # Build as phony target - we do not know
 # scintilla.a's dependencies.
 # If it's up to date, the additional recursive
 # make call does not hurt.
-# NOTE: We can pass the (cross-)compiler to
-# Scintilla's build process, but no CFLAGS :-(
 .PHONY: make-scintilla
 make-scintilla:
-	$(MAKE) -C $(SCINTILLA_MAKE_DIR) \
-	        CXX=@CXX@ AR=@AR@
+	$(MAKE_SCINTILLA)
 
 # scintilla.a itself is not phony.
 # This avoids unnecessary relinking if it is
@@ -28,7 +32,7 @@ make-scintilla:
 
 .PHONY: clean-local-scintilla
 clean-local-scintilla:
-	$(MAKE) -C $(SCINTILLA_MAKE_DIR) clean
+	$(MAKE_SCINTILLA) clean
 
 # NOTE: using a separate `clean-local-scintilla`
 # target allows us to add more custom rules to the

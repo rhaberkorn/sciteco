@@ -39,8 +39,9 @@ AC_PROG_CC_C99
 AC_PROG_GREP
 AC_PROG_INSTALL
 
-# Required by the Scintilla build process:
+# Additionally required by the Scintilla build process:
 AC_CHECK_TOOL(AR, ar)
+AC_PROG_RANLIB
 
 # Check for Windows resource compiler and define
 # WIN32 conditional
@@ -110,7 +111,7 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 # Library functions that should exist on UNIX/Linux
 case $host in
 *-*-darwin* | *-*-linux* | *-*-cygwin*)
-	AC_CHECK_FUNCS([realpath fchown], , [
+	AC_CHECK_FUNCS([realpath fchown dup dup2], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
 	;;
@@ -149,14 +150,30 @@ case $INTERFACE in
 *curses)
 	case $INTERFACE in
 	ncurses)
-		AC_CHECK_LIB(ncurses, initscr, , [
-			AC_MSG_ERROR([libncurses missing!])
+		PKG_CHECK_MODULES(NCURSES, [ncurses], [
+			CFLAGS="$CFLAGS $NCURSES_CFLAGS"
+			CXXFLAGS="$CXXFLAGS $NCURSES_CFLAGS"
+			LIBS="$LIBS $NCURSES_LIBS"
+		], [
+			AC_CHECK_LIB(ncurses, initscr, , [
+				AC_MSG_ERROR([libncurses missing!])
+			])
 		])
 		AC_CHECK_FUNCS([tigetstr])
 		;;
+
 	pdcurses)
-		AC_ARG_VAR(PDCURSES_LIBS, [linker flags for PDCurses,
-		                           overriding the autoconf check])
+		AC_ARG_VAR(PDCURSES_CFLAGS, [
+			C compiler flags for PDCurses,
+		        overriding the autoconf check
+		])
+		CFLAGS="$CFLAGS $PDCURSES_CFLAGS"
+		CXXFLAGS="$CXXFLAGS $PDCURSES_CFLAGS"
+
+		AC_ARG_VAR(PDCURSES_LIBS, [
+			linker flags for PDCurses,
+		        overriding the autoconf check
+		])
 		if [[ "x$PDCURSES_LIBS" = "x" ]]; then
 			AC_CHECK_LIB(pdcurses, initscr, , [
 				AC_MSG_ERROR([libpdcurses missing!
@@ -167,6 +184,7 @@ case $INTERFACE in
 			AC_MSG_RESULT([$PDCURSES_LIBS])
 			LIBS="$LIBS $PDCURSES_LIBS"
 		fi
+
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
 			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
 		])
