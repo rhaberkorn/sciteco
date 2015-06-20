@@ -13,12 +13,17 @@ EMQ[$SCITECOPATH]/session.tes
   Oadd,edit,close,quit
   !add!
     ! Add code here to execute when a document is added !
+    32,0ED
+
     M[lexer.auto]
+
     ! Set up margins !
     33ESTEXTWIDTH9U.w
     5*Q.w,0ESSETMARGINWIDTHN
     0,1ESSETMARGINWIDTHN
     Q.w,2ESSETMARGINWIDTHN
+
+    0,32ED
     ! fall through !
 
   !edit!
