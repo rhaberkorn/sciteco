@@ -23,16 +23,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <locale.h>
 #include <errno.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
-
-#ifdef G_OS_UNIX
-#include <unistd.h>
-#endif
 
 #include <curses.h>
 
@@ -59,6 +56,17 @@
 #include "ring.h"
 #include "interface.h"
 #include "interface-curses.h"
+
+#ifdef HAVE_WINDOWS_H
+/* here it shouldn't cause conflicts with other headers */
+#include <windows.h>
+
+/*
+ * MinGW headers define an `interface` macro to work around
+ * Objective C issues
+ */
+#undef interface
+#endif
 
 /**
  * Whether we have PDCurses-only routines:
@@ -95,7 +103,32 @@ namespace SciTECO {
 extern "C" {
 static void scintilla_notify(Scintilla *sci, int idFrom,
 			    void *notify, void *user_data);
+
+#ifdef PDCURSES_WIN32
+
+/**
+ * This handler is the Windows-analogue of a signal
+ * handler. MinGW provides signal(), but it's not
+ * reliable.
+ * This may also be used to handle CTRL_CLOSE_EVENTs.
+ * NOTE: Unlike signal handlers, this is executed in a
+ * separate thread.
+ */
+static BOOL WINAPI
+console_ctrl_handler(DWORD type)
+{
+	switch (type) {
+	case CTRL_C_EVENT:
+		sigint_occurred = TRUE;
+		return TRUE;
+	}
+
+	return FALSE;
 }
+
+#endif
+
+} /* extern "C" */
 
 #define UNNAMED_FILE "(Unnamed)"
 
@@ -120,6 +153,16 @@ ViewCurses::initialize_impl(void)
 void
 InterfaceCurses::main_impl(int &argc, char **&argv)
 {
+	/*
+	 * We must register this handler to handle
+	 * asynchronous interruptions via CTRL+C
+	 * reliably. The signal handler we already
+	 * have won't do.
+	 */
+#ifdef PDCURSES_WIN32
+	SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
+#endif
+
 	/*
 	 * Make sure we have a string for the info line
 	 * even if info_update() is never called.
@@ -721,6 +764,20 @@ event_loop_iter()
 	int key;
 
 	/*
+	 * On PDCurses/win32, raw() and cbreak() does
+	 * not disable and enable CTRL+C handling properly.
+	 * Since I don't want to patch PDCurses/win32,
+	 * we do this manually here.
+	 * NOTE: This exploits the fact that PDCurses uses
+	 * STD_INPUT_HANDLE internally!
+	 */
+#ifdef PDCURSES_WIN32
+	HANDLE console_hnd = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD console_mode;
+	GetConsoleMode(console_hnd, &console_mode);
+#endif
+
+	/*
 	 * Setting function key processing is important
 	 * on Unix Curses, as ESCAPE is handled as the beginning
 	 * of a escape sequence when terminal emulators are
@@ -730,10 +787,16 @@ event_loop_iter()
 
 	/* no special <CTRL/C> handling */
 	raw();
+#ifdef PDCURSES_WIN32
+	SetConsoleMode(console_hnd, console_mode & ~ENABLE_PROCESSED_INPUT);
+#endif
 	key = wgetch(interface.cmdline_window);
 	/* allow asynchronous interruptions on <CTRL/C> */
 	sigint_occurred = FALSE;
 	cbreak();
+#ifdef PDCURSES_WIN32
+	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
+#endif
 	if (key == ERR)
 		return;
 
