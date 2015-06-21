@@ -19,6 +19,8 @@ SciTECO Build and Runtime Dependencies
    https://developer.gnome.org/glib/
  * When choosing the Curses interface, you need one of:
    * NCurses (http://www.gnu.org/software/ncurses/).
+     If you plan to use the ncurses MinGW port,
+     I recommend ncurses 6.0 or later.
    * PDCurses/XCurses (http://pdcurses.sourceforge.net/).
      Note that XCurses v3.4 appears to be broken, you should
      build from PDCurses Git instead.

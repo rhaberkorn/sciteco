@@ -97,9 +97,9 @@ namespace SciTECO {
 
 extern "C" {
 static void scintilla_notify(Scintilla *sci, int idFrom,
-			    void *notify, void *user_data);
+                             void *notify, void *user_data);
 
-#ifdef PDCURSES_WIN32
+#if defined(PDCURSES_WIN32) || defined(NCURSES_WIN32)
 
 /**
  * This handler is the Windows-analogue of a signal
@@ -154,7 +154,7 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 	 * reliably. The signal handler we already
 	 * have won't do.
 	 */
-#ifdef PDCURSES_WIN32
+#if defined(PDCURSES_WIN32) || defined(NCURSES_WIN32)
 	SetConsoleCtrlHandler(console_ctrl_handler, TRUE);
 #endif
 
@@ -246,13 +246,12 @@ InterfaceCurses::init_interactive(void)
 	 */
 	QRegisters::globals.update_environ();
 
-#ifdef NCURSES_WIN32
 	/*
-	 * $TERM must be unset for the win32 driver to load.
+	 * $TERM must be unset or "#win32con" for the win32
+	 * driver to load.
 	 * So we always ignore any $TERM changes by the user.
 	 */
-	//g_unsetenv("TERM");
-	// May be necessary to set window title on ncurses/win32
+#ifdef NCURSES_WIN32
 	g_setenv("TERM", "#win32con", TRUE);
 #endif
 
@@ -365,7 +364,8 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	 * On most platforms we can write to stdout/stderr
 	 * even in interactive mode.
 	 */
-#if defined(XCURSES) || defined(PDCURSES_WIN32A) || defined(NCURSES_UNIX)
+#if defined(XCURSES) || defined(PDCURSES_WIN32A) || \
+    defined(NCURSES_UNIX) || defined(NCURSES_WIN32)
 	stdio_vmsg(type, fmt, ap);
 	if (!msg_window) /* batch mode */
 		return;
@@ -456,7 +456,7 @@ InterfaceCurses::set_window_title(const gchar *title)
 	last_title = g_strdup(title);
 }
 
-#elif defined(HAVE_TIGETSTR)
+#elif defined(NCURSES_UNIX) && defined(HAVE_TIGETSTR)
 
 void
 InterfaceCurses::set_window_title(const gchar *title)
@@ -489,17 +489,10 @@ InterfaceCurses::set_window_title(const gchar *title)
 	 * we do not let curses write to stdout.
 	 * NOTE: This leaves the title set after we quit.
 	 */
-#ifdef G_OS_UNIX
 	fputs(to_status_line, screen_tty);
 	fputs(title, screen_tty);
 	fputs(from_status_line, screen_tty);
 	fflush(screen_tty);
-#else	/* presumably ncurses/win32 */
-	putp(to_status_line);
-	putp(title);
-	putp(from_status_line);
-	//fflush(stdout);
-#endif
 }
 
 #else
@@ -829,6 +822,7 @@ event_loop_iter()
 	key = wgetch(interface.cmdline_window);
 	/* allow asynchronous interruptions on <CTRL/C> */
 	sigint_occurred = FALSE;
+	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
 #ifdef PDCURSES_WIN32
 	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
