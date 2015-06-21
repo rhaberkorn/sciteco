@@ -59,13 +59,8 @@
 
 #ifdef HAVE_WINDOWS_H
 /* here it shouldn't cause conflicts with other headers */
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-/*
- * MinGW headers define an `interface` macro to work around
- * Objective C issues
- */
-#undef interface
 #endif
 
 /**
