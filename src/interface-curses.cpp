@@ -203,6 +203,27 @@ InterfaceCurses::init_screen(void)
 	}
 }
 
+#elif defined(XCURSES)
+
+void
+InterfaceCurses::init_screen(void)
+{
+	const char *argv[] = {PACKAGE_NAME, NULL};
+
+	/*
+	 * This sets the program name to "SciTECO"
+	 * which may then also be used as the X11 class name
+	 * for overwriting X11 resources in .Xdefaults
+	 * FIXME: We could support passing in resource
+	 * overrides via the SciTECO command line.
+	 * But unfortunately, Xinitscr() is called too
+	 * late to modify argc/argv for command-line parsing.
+	 * Therefore this could only be supported by
+	 * adding a special option like --resource.
+	 */
+	Xinitscr(1, (char **)argv);
+}
+
 #else
 
 void
@@ -255,6 +276,7 @@ InterfaceCurses::init_interactive(void)
 	msg_window = newwin(1, 0, LINES - 2, 0);
 
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
+	keypad(cmdline_window, TRUE);
 
 #ifdef EMSCRIPTEN
         nodelay(cmdline_window, TRUE);
@@ -343,7 +365,7 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	 * On most platforms we can write to stdout/stderr
 	 * even in interactive mode.
 	 */
-#if defined(PDCURSES_WIN32A) || defined(NCURSES_UNIX)
+#if defined(XCURSES) || defined(PDCURSES_WIN32A) || defined(NCURSES_UNIX)
 	stdio_vmsg(type, fmt, ap);
 	if (!msg_window) /* batch mode */
 		return;
@@ -792,8 +814,12 @@ event_loop_iter()
 	 * on Unix Curses, as ESCAPE is handled as the beginning
 	 * of a escape sequence when terminal emulators are
 	 * involved.
+	 * On some Curses variants (XCurses) however, keypad
+	 * must always be TRUE so we receive KEY_RESIZE.
 	 */
+#ifdef NCURSES_UNIX
 	keypad(interface.cmdline_window, Flags::ed & Flags::ED_FNKEYS);
+#endif
 
 	/* no special <CTRL/C> handling */
 	raw();
@@ -813,7 +839,7 @@ event_loop_iter()
 	switch (key) {
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
-#ifdef __PDCURSES__
+#if PDCURSES
 		resize_term(0, 0);
 #endif
 		interface.resize_all_windows();
@@ -953,9 +979,16 @@ InterfaceCurses::~InterfaceCurses()
 	if (msg_window)
 		delwin(msg_window);
 
-	/* PDCurses (win32) crashes if initscr() wasn't called */
+	/*
+	 * PDCurses (win32) crashes if initscr() wasn't called.
+	 * Others (XCurses) crash if we try to use isendwin() here.
+	 * Perhaps Curses cleanup should be in restore_batch()
+	 * instead.
+	 */
+#ifndef XCURSES
 	if (info_window && !isendwin())
 		endwin();
+#endif
 
 	if (screen)
 		delscreen(screen);

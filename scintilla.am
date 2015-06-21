@@ -7,7 +7,7 @@ MAKE_SCINTILLA = $(MAKE) -C @SCINTILLA_PATH@/gtk \
                  CONFIGFLAGS='@LIBGTK_CFLAGS@'
 else
 MAKE_SCINTILLA = $(MAKE) -C @SCINTERM_PATH@ \
-                 CURSES_CFLAGS='@PDCURSES_CFLAGS@ @NCURSES_CFLAGS@'
+                 CURSES_CFLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @NCURSES_CFLAGS@'
 endif
 
 # Pass toolchain configuration to Scintilla.

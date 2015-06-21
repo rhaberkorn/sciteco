@@ -17,11 +17,13 @@ SciTECO Build and Runtime Dependencies
  * Glib 2 as a cross-platform runtime library
    (v2.28 or later on Unix, v2.34 or later for MinGW):
    https://developer.gnome.org/glib/
- * When choosing the Curses interface:
-   * NCurses (http://www.gnu.org/software/ncurses/),
-     PDCurses/XCurses (http://pdcurses.sourceforge.net/),
-     PDCurses/Win32a (http://www.projectpluto.com/win32a.htm) or
-     PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses)
+ * When choosing the Curses interface, you need one of:
+   * NCurses (http://www.gnu.org/software/ncurses/).
+   * PDCurses/XCurses (http://pdcurses.sourceforge.net/).
+     Note that XCurses v3.4 appears to be broken, you should
+     build from PDCurses Git instead.
+   * PDCurses/Win32a (http://www.projectpluto.com/win32a.htm).
+   * PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses).
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
    * GTK+ 2: http://www.gtk.org/

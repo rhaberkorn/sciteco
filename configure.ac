@@ -142,7 +142,7 @@ SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(interface,
-	AS_HELP_STRING([--with-interface=ncurses|pdcurses|gtk],
+	AS_HELP_STRING([--with-interface=ncurses|xcurses|pdcurses|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
@@ -160,6 +160,38 @@ case $INTERFACE in
 			])
 		])
 		AC_CHECK_FUNCS([tigetstr])
+		;;
+
+	xcurses)
+		AC_CHECK_PROG(XCURSES_CONFIG, xcurses-config, xcurses-config)
+
+		AC_ARG_VAR(XCURSES_CFLAGS, [
+			C compiler flags for XCurses,
+		        overriding the autoconf check
+		])
+		if [[ "x$XCURSES_CFLAGS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
+			XCURSES_CFLAGS=`$XCURSES_CONFIG --cflags`
+		fi
+		CFLAGS="$CFLAGS $XCURSES_CFLAGS"
+		CXXFLAGS="$CXXFLAGS $XCURSES_CFLAGS"
+
+		AC_ARG_VAR(XCURSES_LIBS, [
+			linker flags for XCurses,
+		        overriding the autoconf check
+		])
+		AC_MSG_CHECKING([checking for XCurses])
+		if [[ "x$XCURSES_LIBS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
+			XCURSES_LIBS=`$XCURSES_CONFIG --libs`
+		fi
+		if [[ "x$XCURSES_LIBS" = "x" ]]; then
+			AC_MSG_ERROR([libXCurses not configured correctly!
+			              xcurses-config must be present or XCURSES_LIBS must be specified.])
+		fi
+		AC_MSG_RESULT([$XCURSES_LIBS])
+		LIBS="$LIBS $XCURSES_LIBS"
+
+		# This is also used by the curses.h itself:
+		AC_DEFINE(XCURSES, , [Enable PDCurses/XCurses extensions])
 		;;
 
 	pdcurses)
