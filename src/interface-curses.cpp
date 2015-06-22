@@ -96,6 +96,20 @@
 namespace SciTECO {
 
 extern "C" {
+
+/*
+ * PDCurses/win32a by default assigns functions to certain
+ * keys like CTRL+V, CTRL++, CTRL+- and CTRL+=.
+ * This conflicts with SciTECO that must remain in control
+ * of keyboard processing.
+ * Unfortunately, the default mapping can only be disabled
+ * or changed via the internal PDC_set_function_key() in
+ * pdcwin.h. Therefore we declare it manually here.
+ */
+#ifdef PDCURSES_WIN32A
+int PDC_set_function_key(const unsigned function, const int new_key);
+#endif
+
 static void scintilla_notify(Scintilla *sci, int idFrom,
                              void *notify, void *user_data);
 
@@ -256,8 +270,18 @@ InterfaceCurses::init_interactive(void)
 #endif
 
 #ifdef PDCURSES_WIN32A
-	/* enables window resizing on Win32a port */
+	/*
+	 * Necessary to enable window resizing in Win32a port
+	 */
 	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
+
+	/*
+	 * Disable all magic function keys.
+	 * NOTE: This could also be used to assign
+	 * a "shutdown" key when program termination is requested.
+	 */
+	for (int i = 0; i < 5; i++)
+		PDC_set_function_key(i, 0);
 #endif
 
 	/* for displaying UTF-8 characters properly */
