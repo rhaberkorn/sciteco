@@ -47,9 +47,10 @@ namespace SciTECO {
 extern "C" {
 static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
                              SCNotification *notify, gpointer user_data);
+static gpointer exec_thread_cb(gpointer data);
 static gboolean cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
                                     gpointer user_data);
-static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
+static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer user_data);
 }
 
 #define UNNAMED_FILE "(Unnamed)"
@@ -57,6 +58,8 @@ static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 void
 ViewGtk::initialize_impl(void)
 {
+	gdk_threads_enter();
+
 	sci = SCINTILLA(scintilla_new());
 	/*
 	 * We don't want the object to be destroyed
@@ -72,6 +75,12 @@ ViewGtk::initialize_impl(void)
 	g_signal_connect(G_OBJECT(sci), SCINTILLA_NOTIFY,
 			 G_CALLBACK(scintilla_notify), NULL);
 
+	/*
+	 * setup() calls Scintilla messages, so we must unlock
+	 * here already to avoid deadlocks.
+	 */
+	gdk_threads_leave();
+
 	setup();
 }
 
@@ -81,31 +90,57 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	static const Cmdline empty_cmdline;
 	GtkWidget *info_content;
 
+	/*
+	 * g_thread_init() is required prior to v2.32
+	 * (we still support v2.28) but generates a warning
+	 * on newer versions.
+	 */
+#if !GLIB_CHECK_VERSION(2,32,0)
+	g_thread_init(NULL);
+#endif
+	gdk_threads_init();
 	gtk_init(&argc, &argv);
+
+	/*
+	 * The event queue is initialized now, so we can
+	 * pass it as user data to C-linkage callbacks.
+	 */
+	event_queue = g_async_queue_new();
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), PACKAGE_NAME);
 	g_signal_connect(G_OBJECT(window), "delete-event",
-			 G_CALLBACK(exit_app), NULL);
+			 G_CALLBACK(exit_app), event_queue);
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
 	info_current = g_strdup(PACKAGE_NAME);
 
-	cmdline_widget = gtk_entry_new();
-	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
-	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
-	widget_set_font(cmdline_widget, "Courier");
-	g_signal_connect(G_OBJECT(cmdline_widget), "key-press-event",
-			 G_CALLBACK(cmdline_key_pressed), NULL);
-	gtk_box_pack_end(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
+	/*
+	 * The event box is the parent of all Scintilla views
+	 * that should be displayed.
+	 * This is handy when adding or removing current views,
+	 * enabling and disabling GDK updates and in order to filter
+	 * mouse and keyboard events going to Scintilla.
+	 */
+	event_box_widget = gtk_event_box_new();
+	gtk_event_box_set_above_child(GTK_EVENT_BOX(event_box_widget), TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), event_box_widget, TRUE, TRUE, 0);
 
 	info_widget = gtk_info_bar_new();
 	info_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_widget));
 	message_widget = gtk_label_new("");
 	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
 	gtk_container_add(GTK_CONTAINER(info_content), message_widget);
-	gtk_box_pack_end(GTK_BOX(vbox), info_widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), info_widget, FALSE, FALSE, 0);
+
+	cmdline_widget = gtk_entry_new();
+	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
+	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
+	widget_set_font(cmdline_widget, "Courier");
+	g_signal_connect(G_OBJECT(cmdline_widget), "key-press-event",
+			 G_CALLBACK(cmdline_key_pressed), event_queue);
+	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
 
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -134,37 +169,31 @@ InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	g_vsnprintf(buf, sizeof(buf), fmt, aq);
 	va_end(aq);
 
+	gdk_threads_enter();
+
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
 				      type2gtk[type]);
 	gtk_label_set_text(GTK_LABEL(message_widget), buf);
+
+	gdk_threads_leave();
 }
 
 void
 InterfaceGtk::msg_clear(void)
 {
+	gdk_threads_enter();
+
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
 				      GTK_MESSAGE_OTHER);
 	gtk_label_set_text(GTK_LABEL(message_widget), "");
+
+	gdk_threads_leave();
 }
 
 void
 InterfaceGtk::show_view_impl(ViewGtk *view)
 {
-	/*
-	 * The last view's object is not guaranteed to
-	 * still exist.
-	 * However its widget is, due to reference counting.
-	 */
-	if (current_view_widget)
-		gtk_container_remove(GTK_CONTAINER(vbox),
-		                     current_view_widget);
-
 	current_view = view;
-	current_view_widget = view->get_widget();
-
-	gtk_box_pack_start(GTK_BOX(vbox), current_view_widget,
-	                   TRUE, TRUE, 0);
-	gtk_widget_show(current_view_widget);
 }
 
 void
@@ -230,6 +259,8 @@ InterfaceGtk::cmdline_update_impl(const Cmdline *cmdline)
 	gint pos = 1;
 	gint cmdline_len;
 
+	gdk_threads_enter();
+
 	/*
 	 * We don't know if the new command line is similar to
 	 * the old one, so we can just as well rebuild it.
@@ -248,6 +279,8 @@ InterfaceGtk::cmdline_update_impl(const Cmdline *cmdline)
 
 	/* set cursor after effective command line */
 	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), cmdline_len);
+
+	gdk_threads_leave();
 }
 
 void
@@ -260,17 +293,25 @@ InterfaceGtk::popup_add_impl(PopupEntryType type,
 		/* [POPUP_DIRECTORY]	= */ GTK_INFO_POPUP_DIRECTORY
 	};
 
+	gdk_threads_enter();
+
 	gtk_info_popup_add(GTK_INFO_POPUP(popup_widget),
 			   type2gtk[type], name, highlight);
+
+	gdk_threads_leave();
 }
 
 void
 InterfaceGtk::popup_clear_impl(void)
 {
+	gdk_threads_enter();
+
 	if (gtk_widget_get_visible(popup_widget)) {
 		gtk_widget_hide(popup_widget);
 		gtk_info_popup_clear(GTK_INFO_POPUP(popup_widget));
 	}
+
+	gdk_threads_leave();
 }
 
 void
@@ -284,9 +325,129 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 }
 
 void
+InterfaceGtk::event_loop_impl(void)
+{
+	GThread *thread;
+
+	/*
+	 * When changing views, the new widget is not
+	 * added immediately to avoid flickering in the GUI.
+	 * It is only updated once per key press and only
+	 * if it really changed.
+	 * Therefore we must add the current view to the
+	 * window initially.
+	 * For the same reason, window title updates are
+	 * deferred to once after every key press, so we must
+	 * set the window title initially.
+	 */
+	if (current_view) {
+		current_view_widget = current_view->get_widget();
+		gtk_container_add(GTK_CONTAINER(event_box_widget),
+		                  current_view_widget);
+	}
+	gtk_window_set_title(GTK_WINDOW(window), info_current);
+
+	gtk_widget_show_all(window);
+
+	/*
+	 * Start up SciTECO execution thread.
+	 * Whenever it needs to send a Scintilla message
+	 * it locks the GDK mutex.
+	 */
+	thread = g_thread_new("sciteco-exec",
+	                      exec_thread_cb, event_queue);
+
+	/*
+	 * NOTE: The watchers do not modify any GTK objects
+	 * using one of the methods that lock the GDK mutex.
+	 * This is from now on reserved to the execution
+	 * thread. Therefore there can be no dead-locks.
+	 */
+	gdk_threads_enter();
+	gtk_main();
+	gdk_threads_leave();
+
+	/*
+	 * This usually means that the user requested program
+	 * termination and the execution thread called
+	 * gtk_main_quit().
+	 * We still wait for the execution thread to shut down
+	 * properly. This also frees `thread`.
+	 */
+	g_thread_join(thread);
+
+	/*
+	 * Make sure the window is hidden
+	 * now already, as there may be code that has to be
+	 * executed in batch mode.
+	 */
+	gtk_widget_hide(window);
+}
+
+static gpointer
+exec_thread_cb(gpointer data)
+{
+	GAsyncQueue *event_queue = (GAsyncQueue *)data;
+
+	for (;;) {
+		GdkEventKey *event = (GdkEventKey *)g_async_queue_pop(event_queue);
+
+		bool is_shift = event->state & GDK_SHIFT_MASK;
+		bool is_ctl   = event->state & GDK_CONTROL_MASK;
+
+		try {
+			sigint_occurred = FALSE;
+			interface.handle_key_press(is_shift, is_ctl, event->keyval);
+			sigint_occurred = FALSE;
+		} catch (Quit) {
+			/*
+			 * SciTECO should terminate, so we exit
+			 * this thread.
+			 * The main loop will terminate and
+			 * event_loop() will return.
+			 */
+			gdk_event_free((GdkEvent *)event);
+
+			gdk_threads_enter();
+			gtk_main_quit();
+			gdk_threads_leave();
+			break;
+		}
+
+		gdk_event_free((GdkEvent *)event);
+	}
+
+	return NULL;
+}
+
+void
 InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 {
+	GdkWindow *view_window;
+	ViewGtk *last_view = current_view;
+
+	/*
+	 * Avoid redraws of the current view freezing updates
+	 * on the view's GDK window.
+	 * Since we're running in parallel to the main loop
+	 * this would in frequent redraws.
+	 * By freezing updates, the behaviour is similar to
+	 * the Curses UI.
+	 */
+	gdk_threads_enter();
+	view_window = gtk_widget_get_parent_window(event_box_widget);
+	gdk_window_freeze_updates(view_window);
+	gdk_threads_leave();
+
 	switch (keyval) {
+	case GDK_Break:
+		/*
+		 * FIXME: This usually means that the window's close
+		 * button was pressed.
+		 * It should be a function key macro, with quitting
+		 * as the default action.
+		 */
+		throw Quit();
 	case GDK_Escape:
 		cmdline.keypress(CTL_KEY_ESC);
 		break;
@@ -356,8 +517,34 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	 * window title each time it is updated is VERY costly.
 	 * So we set it here once after every keypress even if the
 	 * info line did not change.
+	 * View changes are also only applied here to the GTK
+	 * window even though GDK updates have been frozen since
+	 * the size reallocations are very costly.
 	 */
+	gdk_threads_enter();
+
+	if (current_view != last_view) {
+		/*
+		 * The last view's object is not guaranteed to
+		 * still exist.
+		 * However its widget is, due to reference counting.
+		 */
+		if (current_view_widget)
+			gtk_container_remove(GTK_CONTAINER(event_box_widget),
+			                     current_view_widget);
+
+		current_view_widget = current_view->get_widget();
+
+		gtk_container_add(GTK_CONTAINER(event_box_widget),
+		                  current_view_widget);
+		gtk_widget_show(current_view_widget);
+	}
+
 	gtk_window_set_title(GTK_WINDOW(window), info_current);
+
+	gdk_window_thaw_updates(view_window);
+
+	gdk_threads_leave();
 }
 
 InterfaceGtk::~InterfaceGtk()
@@ -369,6 +556,15 @@ InterfaceGtk::~InterfaceGtk()
 		gtk_widget_destroy(window);
 
 	scintilla_release_resources();
+
+	if (event_queue) {
+		GdkEvent *e;
+
+		while ((e = (GdkEvent *)g_async_queue_try_pop(event_queue)))
+			gdk_event_free(e);
+
+		g_async_queue_unref(event_queue);
+	}
 }
 
 /*
@@ -386,8 +582,9 @@ static gboolean
 cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		    gpointer user_data)
 {
-	bool is_shift	= event->state & GDK_SHIFT_MASK;
-	bool is_ctl	= event->state & GDK_CONTROL_MASK;
+	GAsyncQueue *event_queue = (GAsyncQueue *)user_data;
+
+	bool is_ctl = event->state & GDK_CONTROL_MASK;
 
 #ifdef DEBUG
 	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
@@ -395,27 +592,52 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
 #endif
 
-	try {
-		interface.handle_key_press(is_shift, is_ctl, event->keyval);
-	} catch (Quit) {
+	g_async_queue_lock(event_queue);
+
+	if (g_async_queue_length_unlocked(event_queue) >= 0 &&
+	    is_ctl && gdk_keyval_to_upper(event->keyval) == GDK_C) {
 		/*
-		 * SciTECO should terminate, so we exit
-		 * the main loop. event_loop() will return.
+		 * Handle asynchronous interruptions if CTRL+C is pressed.
+		 * If the execution thread is currently blocking,
+		 * the key is delivered like an ordinary key press.
 		 */
-		gtk_main_quit();
+		sigint_occurred = TRUE;
+	} else {
+		/*
+		 * Copies the key-press event, since it must be evaluated
+		 * by the exec_thread_cb. This is costly, but since we're
+		 * using the event queue as a kind of keyboard buffer,
+		 * who cares?
+		 */
+		g_async_queue_push_unlocked(event_queue,
+		                            gdk_event_copy((GdkEvent *)event));
 	}
+
+	g_async_queue_unlock(event_queue);
 
 	return TRUE;
 }
 
 static gboolean
-exit_app(GtkWidget *w, GdkEventAny *e, gpointer p)
+exit_app(GtkWidget *w, GdkEventAny *e, gpointer user_data)
 {
+	GAsyncQueue *event_queue = (GAsyncQueue *)user_data;
+	GdkEventKey *break_event;
+
 	/*
-	 * FIXME: should instead insert "(EX)" or similar
-	 * Perhaps something like a "QUIT" function key macro
+	 * We cannot yet call gtk_main_quit() as the execution
+	 * thread must shut down properly.
+	 * Therefore we emulate that the "break" key was pressed
+	 * which may then be handled by the execution thread.
+	 * It may also be used to insert a function key macro.
+	 * NOTE: We might also create a GDK_DELETE event.
 	 */
-	gtk_main_quit();
+	break_event = (GdkEventKey *)gdk_event_new(GDK_KEY_RELEASE);
+	break_event->window = gtk_widget_get_parent_window(w);
+	break_event->keyval = GDK_Break;
+
+	g_async_queue_push(event_queue, break_event);
+
 	return TRUE;
 }
 

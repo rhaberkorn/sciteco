@@ -21,6 +21,8 @@
 #include <stdarg.h>
 
 #include <glib.h>
+
+#include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
 #include <Scintilla.h>
@@ -60,13 +62,21 @@ public:
 	inline sptr_t
 	ssm_impl(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		return scintilla_send_message(sci, iMessage, wParam, lParam);
+		sptr_t ret;
+
+		gdk_threads_enter();
+		ret = scintilla_send_message(sci, iMessage, wParam, lParam);
+		gdk_threads_leave();
+
+		return ret;
 	}
 } ViewCurrent;
 
 typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GtkWidget *window;
 	GtkWidget *vbox;
+
+	GtkWidget *event_box_widget;
 
 	gchar *info_current;
 	GtkWidget *info_widget;
@@ -78,15 +88,19 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 
 	GtkWidget *current_view_widget;
 
+	GAsyncQueue *event_queue;
+
 public:
 	InterfaceGtk() : Interface(),
 	                 window(NULL),
 	                 vbox(NULL),
+	                 event_box_widget(NULL),
 	                 info_current(NULL), info_widget(NULL),
 			 message_widget(NULL),
 			 cmdline_widget(NULL),
 			 popup_widget(NULL),
-	                 current_view_widget(NULL) {}
+	                 current_view_widget(NULL),
+	                 event_queue(NULL) {}
 	~InterfaceGtk();
 
 	/* overrides Interface::get_options() */
@@ -122,24 +136,27 @@ public:
 	popup_show_impl(void)
 	{
 		/* FIXME: scroll through popup contents */
+		gdk_threads_enter();
 		gtk_widget_show(popup_widget);
+		gdk_threads_leave();
 	}
 	/* implementation of Interface::popup_is_shown() */
 	inline bool
 	popup_is_shown_impl(void)
 	{
-		return gtk_widget_get_visible(popup_widget);
+		bool ret;
+
+		gdk_threads_enter();
+		ret = gtk_widget_get_visible(popup_widget);
+		gdk_threads_leave();
+
+		return ret;
 	}
 	/* implementation of Interface::popup_clear() */
 	void popup_clear_impl(void);
 
 	/* main entry point (implementation) */
-	inline void
-	event_loop_impl(void)
-	{
-		gtk_widget_show_all(window);
-		gtk_main();
-	}
+	void event_loop_impl(void);
 
 	/*
 	 * FIXME: This is for internal use only and could be
