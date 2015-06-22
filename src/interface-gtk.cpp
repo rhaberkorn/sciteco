@@ -191,6 +191,9 @@ InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 				      type2gtk[type]);
 	gtk_label_set_text(GTK_LABEL(message_widget), buf);
 
+	if (type == MSG_ERROR)
+		gtk_widget_error_bell(window);
+
 	gdk_threads_leave();
 }
 
