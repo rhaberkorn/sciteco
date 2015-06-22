@@ -8,11 +8,11 @@ noinst_HEADERS = compat/bsd/sys/cdefs.h \
 
 EXTRA_DIST = README TODO
 
-# The icons are not installed currently.
-# This should be left up to the Linux distro
-# packager.
-EXTRA_DIST += ico/sciteco-48.png \
-              ico/sciteco.ico
+# Only the PNG icon is installed as it is
+# required by the GTK UI.
+# Other uses are left to the distro package manager.
+dist_pkgdata_DATA += ico/sciteco-48.png
+EXTRA_DIST += ico/sciteco.ico
 
 # Distribute entire scintilla directory and
 # do some manual cleanup

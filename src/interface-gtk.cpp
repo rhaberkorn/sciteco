@@ -27,6 +27,7 @@
 
 #include <gdk/gdk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include <gtk/gtk.h>
 #include "gtk-info-popup.h"
@@ -346,7 +347,20 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 void
 InterfaceGtk::event_loop_impl(void)
 {
+	GdkPixbuf *icon;
 	GThread *thread;
+
+	/*
+	 * Assign an icon to the window.
+	 * If the file could not be found, we fail silently.
+	 * On Windows, it may be better to load the icon compiled
+	 * as a resource into the binary.
+	 */
+	icon = gdk_pixbuf_new_from_file(SCITECODATADIR G_DIR_SEPARATOR_S
+	                                "sciteco-48.png",
+	                                NULL);
+	if (icon)
+		gtk_window_set_icon(GTK_WINDOW(window), icon);
 
 	/*
 	 * When changing views, the new widget is not

@@ -7,7 +7,11 @@ if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif
 
-AM_CPPFLAGS = -D'SCITECOLIBDIR="@scitecolibdir@"'
+# These paths can be changed at install-time and
+# should not be written into config.h:
+AM_CPPFLAGS = -D'SCITECODATADIR="$(pkgdatadir)"' \
+              -D'SCITECOLIBDIR="@scitecolibdir@"'
+
 if NEED_COMPAT
 AM_CPPFLAGS += -I@top_srcdir@/compat
 endif
