@@ -63,6 +63,13 @@ View<ViewImpl>::setup(void)
 
 	ssm(SCI_SETFOCUS, TRUE);
 
+	/*
+	 * Some Scintilla implementations show the horizontal
+	 * scroll bar by default.
+	 * Ensure it is never displayed by default.
+	 */
+	ssm(SCI_SETHSCROLLBAR, FALSE);
+
 	ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
 	ssm(SCI_SETCARETFORE, 0xFFFFFF);
 
