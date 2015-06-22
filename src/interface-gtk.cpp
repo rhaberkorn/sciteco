@@ -46,9 +46,9 @@ namespace SciTECO {
 
 extern "C" {
 static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
-			     SCNotification *notify, gpointer user_data);
+                             SCNotification *notify, gpointer user_data);
 static gboolean cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
-				    gpointer user_data);
+                                    gpointer user_data);
 static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer p);
 }
 
@@ -283,30 +283,8 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 	pango_font_description_free(font_desc);
 }
 
-InterfaceGtk::~InterfaceGtk()
-{
-	g_free(info_current);
-	if (popup_widget)
-		gtk_widget_destroy(popup_widget);
-	if (window)
-		gtk_widget_destroy(window);
-
-	scintilla_release_resources();
-}
-
-/*
- * GTK+ callbacks
- */
-
-static void
-scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
-		 SCNotification *notify, gpointer user_data)
-{
-	interface.process_notify(notify);
-}
-
-static inline void
-handle_key_press(bool is_shift, bool is_ctl, guint keyval)
+void
+InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 {
 	switch (keyval) {
 	case GDK_Escape:
@@ -379,8 +357,29 @@ handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	 * So we set it here once after every keypress even if the
 	 * info line did not change.
 	 */
-	gtk_window_set_title(GTK_WINDOW(interface.window),
-	                     interface.info_current);
+	gtk_window_set_title(GTK_WINDOW(window), info_current);
+}
+
+InterfaceGtk::~InterfaceGtk()
+{
+	g_free(info_current);
+	if (popup_widget)
+		gtk_widget_destroy(popup_widget);
+	if (window)
+		gtk_widget_destroy(window);
+
+	scintilla_release_resources();
+}
+
+/*
+ * GTK+ callbacks
+ */
+
+static void
+scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
+		 SCNotification *notify, gpointer user_data)
+{
+	interface.process_notify(notify);
 }
 
 static gboolean
@@ -397,7 +396,7 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 #endif
 
 	try {
-		handle_key_press(is_shift, is_ctl, event->keyval);
+		interface.handle_key_press(is_shift, is_ctl, event->keyval);
 	} catch (Quit) {
 		/*
 		 * SciTECO should terminate, so we exit

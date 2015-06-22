@@ -141,13 +141,16 @@ public:
 		gtk_main();
 	}
 
+	/*
+	 * FIXME: This is for internal use only and could be
+	 * hidden in a nested forward-declared friend struct.
+	 */
+	void handle_key_press(bool is_shift, bool is_ctl, guint keyval);
+
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
 
 	void cmdline_insert_chr(gint &pos, gchar chr);
-
-	friend static inline void handle_key_press(bool is_shift, bool is_ctl,
-	                                           guint keyval);
 } InterfaceCurrent;
 
 } /* namespace SciTECO */
