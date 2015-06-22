@@ -58,6 +58,8 @@ static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer user_data);
 void
 ViewGtk::initialize_impl(void)
 {
+	gint events;
+
 	gdk_threads_enter();
 
 	sci = SCINTILLA(scintilla_new());
@@ -70,7 +72,21 @@ ViewGtk::initialize_impl(void)
 	scintilla_set_id(sci, 0);
 
 	gtk_widget_set_usize(get_widget(), 500, 300);
+
+	/*
+	 * This disables mouse and key events on this view.
+	 * For some strange reason, masking events on
+	 * the event box does NOT work.
+	 * NOTE: Scroll events are still allowed - scrolling
+	 * is currently not under direct control of SciTECO
+	 * (i.e. it is OK the side effects of scrolling are not
+	 * tracked).
+	 */
 	gtk_widget_set_can_focus(get_widget(), FALSE);
+	events = gtk_widget_get_events(get_widget());
+	events &= ~(GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
+	events &= ~(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
+	gtk_widget_set_events(get_widget(), events);
 
 	g_signal_connect(G_OBJECT(sci), SCINTILLA_NOTIFY,
 			 G_CALLBACK(scintilla_notify), NULL);
