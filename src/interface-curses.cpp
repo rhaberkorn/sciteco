@@ -384,20 +384,21 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
 	attr_t attr;
 
+	if (!msg_window) { /* batch mode */
+		stdio_vmsg(type, fmt, ap);
+		return;
+	}
+
 	/*
 	 * On most platforms we can write to stdout/stderr
 	 * even in interactive mode.
 	 */
 #if defined(XCURSES) || defined(PDCURSES_WIN32A) || \
     defined(NCURSES_UNIX) || defined(NCURSES_WIN32)
-	stdio_vmsg(type, fmt, ap);
-	if (!msg_window) /* batch mode */
-		return;
-#else
-	if (!msg_window) { /* batch mode */
-		stdio_vmsg(type, fmt, ap);
-		return;
-	}
+	va_list aq;
+	va_copy(aq, ap);
+	stdio_vmsg(type, fmt, aq);
+	va_end(aq);
 #endif
 
 	switch (type) {

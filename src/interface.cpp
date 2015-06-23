@@ -107,6 +107,14 @@ Interface<InterfaceImpl, ViewImpl>::UndoTokenInfoUpdate<Type>::run(void)
 	interface.info_update(obj);
 }
 
+/**
+ * Print a message to the appropriate stdio streams.
+ *
+ * This method has similar semantics to `vprintf`, i.e.
+ * it leaves `ap` undefined. Therefore to pass the format
+ * string and arguments to another `vprintf`-like function,
+ * you have to copy the arguments via `va_copy`.
+ */
 template <class InterfaceImpl, class ViewImpl>
 void
 Interface<InterfaceImpl, ViewImpl>::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
