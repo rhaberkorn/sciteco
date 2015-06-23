@@ -460,10 +460,9 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	ViewGtk *last_view = current_view;
 
 	/*
-	 * Avoid redraws of the current view freezing updates
-	 * on the view's GDK window.
-	 * Since we're running in parallel to the main loop
-	 * this would in frequent redraws.
+	 * Avoid redraws of the current view by freezing updates
+	 * on the view's GDK window (we're running in parallel
+	 * to the main loop so there could be frequent redraws).
 	 * By freezing updates, the behaviour is similar to
 	 * the Curses UI.
 	 */
