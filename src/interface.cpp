@@ -111,24 +111,26 @@ template <class InterfaceImpl, class ViewImpl>
 void
 Interface<InterfaceImpl, ViewImpl>::stdio_vmsg(MessageType type, const gchar *fmt, va_list ap)
 {
-	gchar buf[255];
-
-	g_vsnprintf(buf, sizeof(buf), fmt, ap);
+	FILE *stream = stdout;
 
 	switch (type) {
 	case MSG_USER:
-		g_printf("%s\n", buf);
 		break;
 	case MSG_INFO:
-		g_printf("Info: %s\n", buf);
+		fputs("Info: ", stream);
 		break;
 	case MSG_WARNING:
-		g_fprintf(stderr, "Warning: %s\n", buf);
+		stream = stderr;
+		fputs("Warning: ", stream);
 		break;
 	case MSG_ERROR:
-		g_fprintf(stderr, "Error: %s\n", buf);
+		stream = stderr;
+		fputs("Error: ", stream);
 		break;
 	}
+
+	g_vfprintf(stream, fmt, ap);
+	fputc('\n', stream);
 }
 
 template <class InterfaceImpl, class ViewImpl>
