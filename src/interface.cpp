@@ -70,6 +70,12 @@ View<ViewImpl>::setup(void)
 	 */
 	ssm(SCI_SETHSCROLLBAR, FALSE);
 
+	/*
+	 * Only margin 1 is given a width by default.
+	 * To provide a minimalist default view, it is disabled.
+	 */
+	ssm(SCI_SETMARGINWIDTHN, 1, 0);
+
 	ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
 	ssm(SCI_SETCARETPERIOD, 0);
 	ssm(SCI_SETCARETFORE, 0xFFFFFF);

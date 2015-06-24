@@ -20,7 +20,6 @@ EMQ[$SCITECOPATH]/session.tes
     ! Set up margins !
     33ESTEXTWIDTH9U.w
     5*Q.w,0ESSETMARGINWIDTHN
-    0,1ESSETMARGINWIDTHN
     Q.w,2ESSETMARGINWIDTHN
 
     0,32ED
