@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <signal.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -43,16 +44,34 @@
 #include "interface.h"
 #include "interface-gtk.h"
 
+/*
+ * Signal handlers (e.g. for handling SIGTERM) are only
+ * available on Unix and beginning with v2.30, while
+ * we still support v2.28.
+ * Handlers using `signal()` cannot be used easily for
+ * this purpose.
+ */
+#if defined(G_OS_UNIX) && GLIB_CHECK_VERSION(2,30,0)
+#include <glib-unix.h>
+#define SCITECO_HANDLE_SIGNALS
+#endif
+
 namespace SciTECO {
 
 extern "C" {
+
 static void scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
                              SCNotification *notify, gpointer user_data);
+
 static gpointer exec_thread_cb(gpointer data);
-static gboolean cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
-                                    gpointer user_data);
-static gboolean exit_app(GtkWidget *w, GdkEventAny *e, gpointer user_data);
-}
+static gboolean cmdline_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
+                                       gpointer user_data);
+static gboolean window_delete_cb(GtkWidget *w, GdkEventAny *e,
+                                 gpointer user_data);
+
+static gboolean sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
+
+} /* extern "C" */
 
 #define UNNAMED_FILE "(Unnamed)"
 
@@ -127,7 +146,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), PACKAGE_NAME);
 	g_signal_connect(G_OBJECT(window), "delete-event",
-			 G_CALLBACK(exit_app), event_queue);
+			 G_CALLBACK(window_delete_cb), event_queue);
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
@@ -156,7 +175,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
 	widget_set_font(cmdline_widget, "Courier");
 	g_signal_connect(G_OBJECT(cmdline_widget), "key-press-event",
-			 G_CALLBACK(cmdline_key_pressed), event_queue);
+			 G_CALLBACK(cmdline_key_pressed_cb), event_queue);
 	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
 
 	gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -181,6 +200,10 @@ InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	va_list aq;
 	gchar buf[255];
 
+	/*
+	 * stdio_vmsg() leaves `ap` undefined and we are expected
+	 * to do the same and behave like vprintf().
+	 */
 	va_copy(aq, ap);
 	stdio_vmsg(type, fmt, ap);
 	g_vsnprintf(buf, sizeof(buf), fmt, aq);
@@ -383,6 +406,16 @@ InterfaceGtk::event_loop_impl(void)
 	gtk_widget_show_all(window);
 
 	/*
+	 * SIGTERM emulates the "Close" key just like when
+	 * closing the window if supported by this version of glib.
+	 * Note that this replaces SciTECO's default SIGTERM handler
+	 * so it will additionally raise(SIGINT).
+	 */
+#ifdef SCITECO_HANDLE_SIGNALS
+	g_unix_signal_add(SIGTERM, sigterm_handler, event_queue);
+#endif
+
+	/*
 	 * Start up SciTECO execution thread.
 	 * Whenever it needs to send a Scintilla message
 	 * it locks the GDK mutex.
@@ -472,14 +505,6 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	gdk_threads_leave();
 
 	switch (keyval) {
-	case GDK_Break:
-		/*
-		 * FIXME: This usually means that the window's close
-		 * button was pressed.
-		 * It should be a function key macro, with quitting
-		 * as the default action.
-		 */
-		throw Quit();
 	case GDK_Escape:
 		cmdline.keypress(CTL_KEY_ESC);
 		break;
@@ -522,6 +547,7 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	FN(KP_End, C1); FN(KP_Next, C3);
 	FNS(End, END);
 	FNS(Help, HELP);
+	FN(Close, CLOSE);
 #undef FNS
 #undef FN
 
@@ -611,8 +637,8 @@ scintilla_notify(ScintillaObject *sci, uptr_t idFrom,
 }
 
 static gboolean
-cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
-		    gpointer user_data)
+cmdline_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
+                       gpointer user_data)
 {
 	GAsyncQueue *event_queue = (GAsyncQueue *)user_data;
 
@@ -630,10 +656,12 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 	    is_ctl && gdk_keyval_to_upper(event->keyval) == GDK_C) {
 		/*
 		 * Handle asynchronous interruptions if CTRL+C is pressed.
+		 * This will usually send SIGINT to the entire process
+		 * group and set `sigint_occurred`.
 		 * If the execution thread is currently blocking,
 		 * the key is delivered like an ordinary key press.
 		 */
-		sigint_occurred = TRUE;
+		interrupt();
 	} else {
 		/*
 		 * Copies the key-press event, since it must be evaluated
@@ -651,26 +679,49 @@ cmdline_key_pressed(GtkWidget *widget, GdkEventKey *event,
 }
 
 static gboolean
-exit_app(GtkWidget *w, GdkEventAny *e, gpointer user_data)
+window_delete_cb(GtkWidget *w, GdkEventAny *e, gpointer user_data)
 {
 	GAsyncQueue *event_queue = (GAsyncQueue *)user_data;
-	GdkEventKey *break_event;
+	GdkEventKey *close_event;
 
 	/*
-	 * We cannot yet call gtk_main_quit() as the execution
-	 * thread must shut down properly.
-	 * Therefore we emulate that the "break" key was pressed
-	 * which may then be handled by the execution thread.
-	 * It may also be used to insert a function key macro.
-	 * NOTE: We might also create a GDK_DELETE event.
+	 * Emulate that the "close" key was pressed
+	 * which may then be handled by the execution thread
+	 * which invokes the appropriate "function key macro"
+	 * if it exists. Its default action will ensure that
+	 * the execution thread shuts down and the main loop
+	 * will eventually terminate.
 	 */
-	break_event = (GdkEventKey *)gdk_event_new(GDK_KEY_RELEASE);
-	break_event->window = gtk_widget_get_parent_window(w);
-	break_event->keyval = GDK_Break;
+	close_event = (GdkEventKey *)gdk_event_new(GDK_KEY_PRESS);
+	close_event->window = gtk_widget_get_parent_window(w);
+	close_event->keyval = GDK_Close;
 
-	g_async_queue_push(event_queue, break_event);
+	g_async_queue_push(event_queue, close_event);
 
 	return TRUE;
+}
+
+static gboolean
+sigterm_handler(gpointer user_data)
+{
+	GAsyncQueue *event_queue = (GAsyncQueue *)user_data;
+	GdkEventKey *close_event;
+
+	/*
+	 * Since this handler replaces the default one, we
+	 * also have to make sure it interrupts.
+	 */
+	interrupt();
+
+	/*
+	 * Similar to window deletion - emulate "close" key press.
+	 */
+	close_event = (GdkEventKey *)gdk_event_new(GDK_KEY_PRESS);
+	close_event->keyval = GDK_Close;
+
+	g_async_queue_push(event_queue, close_event);
+
+	return G_SOURCE_CONTINUE;
 }
 
 } /* namespace SciTECO */

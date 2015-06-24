@@ -556,7 +556,7 @@ Cmdline::fnmacro(const gchar *name)
 
 	if (!(Flags::ed & Flags::ED_FNKEYS))
 		/* function key macros disabled */
-		return;
+		goto default_action;
 
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
@@ -569,7 +569,7 @@ Cmdline::fnmacro(const gchar *name)
 	reg = QRegisters::globals[macro_name];
 	if (!reg)
 		/* macro undefined */
-		return;
+		goto default_action;
 
 	mask = reg->get_integer();
 	if (States::current == &States::start) {
@@ -584,8 +584,30 @@ Cmdline::fnmacro(const gchar *name)
 	}
 
 	macro = reg->get_string();
-	keypress(macro);
+	try {
+		keypress(macro);
+	} catch (...) {
+		/* could be "Quit" for instance */
+		g_free(macro);
+		throw;
+	}
 	g_free(macro);
+
+	return;
+
+	/*
+	 * Most function key macros have no default action,
+	 * except "CLOSE" which quits the application
+	 * (this may loose unsaved data but is better than
+	 * not doing anything if the user closes the window).
+	 * NOTE: Doing the check here is less efficient than
+	 * doing it in the UI implementations, but defines
+	 * the default actions centrally.
+	 * Also, fnmacros are only handled after key presses.
+	 */
+default_action:
+	if (!strcmp(name, "CLOSE"))
+		throw Quit();
 }
 
 static gchar *

@@ -81,6 +81,9 @@ extern sig_atomic_t sigint_occurred;
 #define IS_FAILURE(X)	(!IS_SUCCESS(X))
 
 /* in main.cpp */
+void interrupt(void);
+
+/* in main.cpp */
 const gchar *get_eol_seq(gint eol_mode);
 
 namespace Validate {

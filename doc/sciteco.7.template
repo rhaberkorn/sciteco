@@ -215,6 +215,22 @@ Inserted when the End or shift-End key is pressed.
 .TQ
 .B ^FSHELP
 Inserted when the Help or shift-Help key is pressed.
+.TQ
+.B ^FCLOSE
+Inserted when the Close key has been pressed.
+More importantly, this key is emulated in some GUIs
+(notably GTK+) when the user tries to close \*(ST's
+window or when the \fBSIGTERM\fP signal is received.
+This allows customizing \*(ST's behaviour when
+program termination is requested (e.g. only quit if
+there are no unsaved buffers).
+The close key is also special because
+it has a default action if function key macros are
+disabled or the \(lq^FCLOSE\(rq macro is undefined:
+It unconditionally quits \*(ST.
+The default action is \fBnot\fP performed when
+\(lq^FCLOSE\(rq has merely been masked out in the
+current parser state (see below).
 .
 .LP
 \(lq^F\(rq corresponds to CTRL+F in the above list but

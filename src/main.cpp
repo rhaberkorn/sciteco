@@ -88,6 +88,31 @@ static gpointer g_realloc_exception(gpointer mem, gsize n_bytes);
 static void sigint_handler(int signal);
 }
 
+#ifdef G_OS_UNIX
+
+void
+interrupt(void)
+{
+	/*
+	 * This sends SIGINT to the entire process group,
+	 * which makes sure that subprocesses are signalled,
+	 * even when called from the wrong thread.
+	 */
+	if (kill(0, SIGINT))
+		sigint_occurred = TRUE;
+}
+
+#else
+
+void
+interrupt(void)
+{
+	if (raise(SIGINT))
+		sigint_occurred = TRUE;
+}
+
+#endif
+
 const gchar *
 get_eol_seq(gint eol_mode)
 {
@@ -338,6 +363,7 @@ main(int argc, char **argv)
 #endif
 
 	signal(SIGINT, sigint_handler);
+	signal(SIGTERM, sigint_handler);
 
 	g_mem_set_vtable(&vtable);
 

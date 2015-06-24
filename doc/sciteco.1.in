@@ -246,7 +246,7 @@ environment variables accessed by glib
 .UE .
 On a Curses UI, there are other important environment variables
 like \fBTERM\fP, \fBLINES\fP and \fBCOLUMNS\fP that may be
-accesses when \*(ST enters interactive mode.
+accessed when \*(ST enters interactive mode.
 For ncurses, see section \fBENVIRONMENT\fP in
 .BR ncurses (3NCURSES)
 for details.
@@ -271,9 +271,19 @@ ignored.
 Some GUIs may depend on delivery of \fBSIGINT\fP when \fB^C\fP
 is pressed in order to interrupt macros interactively.
 Note that this signal can usually also be generated when pressing
-\fB^C\fP on the process (also if there is a graphical window).
+\fB^C\fP on the process' associated console
+(also if there is a graphical window).
 This is useful for GUIs that do not yet support interruptions
 directly.
+.TP
+.B SIGTERM
+Try to gracefully shut down \*(ST.
+In batch mode this only interrupts the currently running macro
+similar to \fBSIGINT\fP causing \*(ST to exit.
+If technically possible, user interfaces will additionally
+process \fBSIGTERM\fP in interactive mode as if the \fICLOSE\fP
+function key has been pressed, which will result in unconditional
+program termination or user-programmed behaviour.
 .
 .
 .SH FILES

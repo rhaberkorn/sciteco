@@ -905,6 +905,7 @@ event_loop_iter()
 	FN(A1); FN(A3); FN(B2); FN(C1); FN(C3);
 	FNS(END);
 	FNS(HELP);
+	FN(CLOSE);
 #undef FNS
 #undef FN
 
