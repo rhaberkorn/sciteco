@@ -1315,14 +1315,17 @@ StateStart::custom(gchar chr)
 	 * on the console.
 	 * It is currently always formatted as a decimal integer and
 	 * shown with the user-message severity.
+	 * The command fails if <n> is not given.
 	 */
 	/**
-	 * @bug makes no sense to imply the sign-prefix!
 	 * @todo perhaps care about current radix
 	 * @todo colon-modifier to suppress line-break on console?
 	 */
 	case '=':
 		BEGIN_EXEC(this);
+		expressions.eval();
+		if (!expressions.args())
+			throw ArgExpectedError('=');
 		interface.msg(InterfaceCurrent::MSG_USER,
 		              "%" TECO_INTEGER_FORMAT,
 			      expressions.pop_num_calc());
