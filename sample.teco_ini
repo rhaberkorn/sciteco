@@ -39,10 +39,8 @@ EMQ[$SCITECOPATH]/session.tes
 !end!}
 0,32ED
 
-! Keyboard macros !
-EMQ[$SCITECOPATH]/fnkeys.tes
-! Uncomment to enable default keyboard macros !
-! 0,64ED !
+! Uncomment to enable default keyboard macros and function keys !
+! EMQ[$SCITECOPATH]/fnkeys.tes !
 
 ! Uncomment to tweak the undo stack memory limit !
 ! 500*1024*1024,2EJ !

@@ -94,3 +94,6 @@
 
 @[CLOSE]{(EX)}
 1U[CLOSE]
+
+! enable function key (macro) support !
+0,64ED
