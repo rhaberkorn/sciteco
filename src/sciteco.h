@@ -73,8 +73,8 @@ extern sig_atomic_t sigint_occurred;
 /** String containing the escape character */
 #define CTL_KEY_ESC_STR	"\x1B"
 
-#define SUCCESS		(-1)
-#define FAILURE		(0)
+#define SUCCESS		((tecoBool)-1)
+#define FAILURE		((tecoBool)0)
 #define TECO_BOOL(X)	((X) ? SUCCESS : FAILURE)
 
 #define IS_SUCCESS(X)	((X) < 0)
