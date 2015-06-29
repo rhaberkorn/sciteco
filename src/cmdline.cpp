@@ -815,12 +815,12 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
  * Q-Register <q>.
  */
 State *
-StateSaveCmdline::got_register(QRegister &reg)
+StateSaveCmdline::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
-	reg.undo_set_string();
-	reg.set_string(last_cmdline.str, last_cmdline.len);
+	reg->undo_set_string();
+	reg->set_string(last_cmdline.str, last_cmdline.len);
 
 	return &States::start;
 }

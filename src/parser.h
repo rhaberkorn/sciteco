@@ -101,7 +101,7 @@ public:
 		set(StateStart);
 	}
 
-	virtual Type input(gchar chr) = 0;
+	virtual bool input(gchar chr, Type &result) = 0;
 };
 
 /* avoid circular dependency on qregisters.h */
@@ -126,7 +126,7 @@ public:
 
 	void reset(void);
 
-	gchar *input(gchar chr);
+	bool input(gchar chr, gchar *&result);
 };
 
 /*

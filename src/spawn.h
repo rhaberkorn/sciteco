@@ -60,7 +60,7 @@ public:
 	StateEGCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 namespace States {

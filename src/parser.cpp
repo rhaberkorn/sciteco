@@ -303,8 +303,8 @@ StringBuildingMachine::reset(void)
 	undo.push_var(toctl) = false;
 }
 
-gchar *
-StringBuildingMachine::input(gchar chr)
+bool
+StringBuildingMachine::input(gchar chr, gchar *&result)
 {
 	QRegister *reg;
 
@@ -325,7 +325,7 @@ StringBuildingMachine::input(gchar chr)
 		undo.push_var(toctl) = false;
 	} else if (chr == '^') {
 		undo.push_var(toctl) = true;
-		return NULL;
+		return false;
 	}
 
 MICROSTATE_START;
@@ -339,25 +339,29 @@ MICROSTATE_START;
 		goto StateEscaped;
 	}
 
-	return NULL;
+	return false;
 
 StateLower:
 	set(StateStart);
 
-	if (chr != CTL_KEY('V'))
-		return String::chrdup(g_ascii_tolower(chr));
+	if (chr != CTL_KEY('V')) {
+		result = String::chrdup(g_ascii_tolower(chr));
+		return true;
+	}
 
 	undo.push_var(mode) = MODE_LOWER;
-	return NULL;
+	return false;
 
 StateUpper:
 	set(StateStart);
 
-	if (chr != CTL_KEY('W'))
-		return String::chrdup(g_ascii_toupper(chr));
+	if (chr != CTL_KEY('W')) {
+		result = String::chrdup(g_ascii_toupper(chr));
+		return true;
+	}
 
 	undo.push_var(mode) = MODE_UPPER;
-	return NULL;
+	return false;
 
 StateCtlE:
 	switch (g_ascii_toupper(chr)) {
@@ -373,49 +377,49 @@ StateCtlE:
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlEU);
 		break;
-	default: {
-		gchar *ret = (gchar *)g_malloc(3);
+	default:
+		result = (gchar *)g_malloc(3);
 
 		set(StateStart);
-		ret[0] = CTL_KEY('E');
-		ret[1] = chr;
-		ret[2] = '\0';
-		return ret;
-	}
+		result[0] = CTL_KEY('E');
+		result[1] = chr;
+		result[2] = '\0';
+		return true;
 	}
 
-	return NULL;
+	return false;
 
 StateCtlENum:
-	reg = qregspec_machine->input(chr);
-	if (!reg)
-		return NULL;
+	if (!qregspec_machine->input(chr, reg))
+		return false;
 
 	undo.push_obj(qregspec_machine) = NULL;
 	set(StateStart);
-	return g_strdup(expressions.format(reg->get_integer()));
+	result = g_strdup(expressions.format(reg->get_integer()));
+	return true;
 
 StateCtlEU:
-	reg = qregspec_machine->input(chr);
-	if (!reg)
-		return NULL;
+	if (!qregspec_machine->input(chr, reg))
+		return false;
 
 	undo.push_obj(qregspec_machine) = NULL;
 	set(StateStart);
-	return String::chrdup((gchar)reg->get_integer());
+	result = String::chrdup((gchar)reg->get_integer());
+	return true;
 
 StateCtlEQ:
-	reg = qregspec_machine->input(chr);
-	if (!reg)
-		return NULL;
+	if (!qregspec_machine->input(chr, reg))
+		return false;
 
 	undo.push_obj(qregspec_machine) = NULL;
 	set(StateStart);
-	return reg->get_string();
+	result = reg->get_string();
+	return true;
 
 StateEscaped:
 	set(StateStart);
-	return String::chrdup(chr);
+	result = String::chrdup(chr);
+	return true;
 }
 
 StringBuildingMachine::~StringBuildingMachine()
@@ -486,8 +490,7 @@ StateExpectString::custom(gchar chr)
 	 * String building characters
 	 */
 	if (string_building) {
-		insert = machine.input(chr);
-		if (!insert)
+		if (!machine.input(chr, insert))
 			return this;
 	} else {
 		insert = String::chrdup(chr);

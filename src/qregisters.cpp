@@ -796,8 +796,8 @@ QRegSpecMachine::reset(void)
 	name = NULL;
 }
 
-QRegister *
-QRegSpecMachine::input(gchar chr)
+bool
+QRegSpecMachine::input(gchar chr, QRegister *&result)
 {
 	gchar *insert;
 
@@ -811,13 +811,13 @@ MICROSTATE_START;
 		goto done;
 	}
 
-	return NULL;
+	return false;
 
 StateFirstChar:
 	undo.push_str(name) = (gchar *)g_malloc(3);
 	name[0] = g_ascii_toupper(chr);
 	set(&&StateSecondChar);
-	return NULL;
+	return false;
 
 StateSecondChar:
 	name[1] = g_ascii_toupper(chr);
@@ -837,37 +837,34 @@ StateString:
 	}
 
 	if (mode > MODE_NORMAL)
-		return NULL;
+		return false;
 
-	insert = string_machine.input(chr);
-	if (!insert)
-		return NULL;
+	if (!string_machine.input(chr, insert))
+		return false;
 
 	undo.push_str(name);
 	String::append(name, insert);
 	g_free(insert);
-	return NULL;
+	return false;
 
 done:
-	if (mode > MODE_NORMAL)
-		/*
-		 * FIXME: currently we must return *some* register
-		 * since got_register() expects one
-		 */
-		return QRegisters::globals["0"];
-
-	QRegisterTable &table = is_local ? *QRegisters::locals
-					 : QRegisters::globals;
-	QRegister *reg = table[name];
-
-	if (!reg) {
-		if (!initialize)
-			throw InvalidQRegError(name, is_local);
-		reg = table.insert(name);
-		table.undo_remove(reg);
+	if (mode > MODE_NORMAL) {
+		result = NULL;
+		return true;
 	}
 
-	return reg;
+	QRegisterTable &table = is_local ? *QRegisters::locals
+	                                 : QRegisters::globals;
+
+	result = table[name];
+	if (!result) {
+		if (!initialize)
+			throw InvalidQRegError(name, is_local);
+		result = table.insert(name);
+		table.undo_remove(result);
+	}
+
+	return true;
 }
 
 /*
@@ -882,13 +879,13 @@ StateExpectQReg::StateExpectQReg(bool initialize) : State(), machine(initialize)
 State *
 StateExpectQReg::custom(gchar chr)
 {
-	QRegister *reg = machine.input(chr);
+	QRegister *reg;
 
-	if (!reg)
+	if (!machine.input(chr, reg))
 		return this;
 	machine.reset();
 
-	return got_register(*reg);
+	return got_register(reg);
 }
 
 /*$
@@ -898,11 +895,11 @@ StateExpectQReg::custom(gchar chr)
  * stack.
  */
 State *
-StatePushQReg::got_register(QRegister &reg)
+StatePushQReg::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
-	QRegisters::stack.push(reg);
+	QRegisters::stack.push(*reg);
 
 	return &States::start;
 }
@@ -921,11 +918,11 @@ StatePushQReg::got_register(QRegister &reg)
  * Memory is reclaimed on command-line termination.
  */
 State *
-StatePopQReg::got_register(QRegister &reg)
+StatePopQReg::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
-	if (!QRegisters::stack.pop(reg))
+	if (!QRegisters::stack.pop(*reg))
 		throw Error("Q-Register stack is empty");
 
 	return &States::start;
@@ -947,10 +944,10 @@ StatePopQReg::got_register(QRegister &reg)
  * The command fails if <file> could not be read.
  */
 State *
-StateEQCommand::got_register(QRegister &reg)
+StateEQCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::loadqreg);
-	register_argument = &reg;
+	register_argument = reg;
 	return &States::loadqreg;
 }
 
@@ -987,10 +984,10 @@ StateLoadQReg::got_file(const gchar *filename)
  * characters are enabled by default.
  */
 State *
-StateEPctCommand::got_register(QRegister &reg)
+StateEPctCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::saveqreg);
-	register_argument = &reg;
+	register_argument = reg;
 	return &States::saveqreg;
 }
 
@@ -1024,7 +1021,7 @@ StateSaveQReg::got_file(const gchar *filename)
  * The command fails for undefined registers.
  */
 State *
-StateQueryQReg::got_register(QRegister &reg)
+StateQueryQReg::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
@@ -1032,16 +1029,16 @@ StateQueryQReg::got_register(QRegister &reg)
 
 	if (eval_colon()) {
 		/* Query Q-Register string size */
-		expressions.push(reg.get_string_size());
+		expressions.push(reg->get_string_size());
 	} else if (expressions.args() > 0) {
 		/* Query character from Q-Register string */
-		gint c = reg.get_character(expressions.pop_num_calc());
+		gint c = reg->get_character(expressions.pop_num_calc());
 		if (c < 0)
 			throw RangeError('Q');
 		expressions.push(c);
 	} else {
 		/* Query integer */
-		expressions.push(reg.get_integer());
+		expressions.push(reg->get_integer());
 	}
 
 	return &States::start;
@@ -1074,10 +1071,10 @@ StateQueryQReg::got_register(QRegister &reg)
  * is desired.
  */
 State *
-StateCtlUCommand::got_register(QRegister &reg)
+StateCtlUCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::setqregstring_nobuilding);
-	register_argument = &reg;
+	register_argument = reg;
 	return &States::setqregstring_nobuilding;
 }
 
@@ -1092,10 +1089,10 @@ StateCtlUCommand::got_register(QRegister &reg)
  * characters \fBenabled\fP.
  */
 State *
-StateEUCommand::got_register(QRegister &reg)
+StateEUCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::setqregstring_building);
-	register_argument = &reg;
+	register_argument = reg;
 	return &States::setqregstring_building;
 }
 
@@ -1159,13 +1156,13 @@ StateSetQRegString::done(const gchar *str)
  * Specifying an undefined <q> yields an error.
  */
 State *
-StateGetQRegString::got_register(QRegister &reg)
+StateGetQRegString::got_register(QRegister *reg)
 {
 	gchar *str;
 
 	BEGIN_EXEC(&States::start);
 
-	str = reg.get_string();
+	str = reg->get_string();
 	if (*str) {
 		interface.ssm(SCI_BEGINUNDOACTION);
 		interface.ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
@@ -1197,14 +1194,14 @@ StateGetQRegString::got_register(QRegister &reg)
  * The register is defined if it does not exist.
  */
 State *
-StateSetQRegInteger::got_register(QRegister &reg)
+StateSetQRegInteger::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
 	expressions.eval();
 	if (expressions.args() || expressions.num_sign < 0) {
-		reg.undo_set_integer();
-		reg.set_integer(expressions.pop_num_calc());
+		reg->undo_set_integer();
+		reg->set_integer(expressions.pop_num_calc());
 
 		if (eval_colon())
 			expressions.push(SUCCESS);
@@ -1225,15 +1222,15 @@ StateSetQRegInteger::got_register(QRegister &reg)
  * <q> will be defined if it does not exist.
  */
 State *
-StateIncreaseQReg::got_register(QRegister &reg)
+StateIncreaseQReg::got_register(QRegister *reg)
 {
 	tecoInt res;
 
 	BEGIN_EXEC(&States::start);
 
-	reg.undo_set_integer();
-	res = reg.get_integer() + expressions.pop_num_calc();
-	expressions.push(reg.set_integer(res));
+	reg->undo_set_integer();
+	res = reg->get_integer() + expressions.pop_num_calc();
+	expressions.push(reg->set_integer(res));
 
 	return &States::start;
 }
@@ -1261,12 +1258,12 @@ StateIncreaseQReg::got_register(QRegister &reg)
  * not modify the executed code.
  */
 State *
-StateMacro::got_register(QRegister &reg)
+StateMacro::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::start);
 
 	/* don't create new local Q-Registers if colon modifier is given */
-	reg.execute(!eval_colon());
+	reg->execute(!eval_colon());
 
 	return &States::start;
 }
@@ -1314,7 +1311,7 @@ StateMacroFile::got_file(const gchar *filename)
  * Register <q> will be created if it is undefined.
  */
 State *
-StateCopyToQReg::got_register(QRegister &reg)
+StateCopyToQReg::got_register(QRegister *reg)
 {
 	tecoInt from, len;
 	Sci_TextRange tr;
@@ -1352,11 +1349,11 @@ StateCopyToQReg::got_register(QRegister &reg)
 	interface.ssm(SCI_GETTEXTRANGE, 0, (sptr_t)&tr);
 
 	if (eval_colon()) {
-		reg.undo_append_string();
-		reg.append_string(tr.lpstrText);
+		reg->undo_append_string();
+		reg->append_string(tr.lpstrText);
 	} else {
-		reg.undo_set_string();
-		reg.set_string(tr.lpstrText);
+		reg->undo_set_string();
+		reg->set_string(tr.lpstrText);
 	}
 	g_free(tr.lpstrText);
 

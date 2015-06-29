@@ -389,7 +389,7 @@ public:
 
 	void reset(void);
 
-	QRegister *input(gchar chr);
+	bool input(gchar chr, QRegister *&result);
 };
 
 /*
@@ -409,12 +409,12 @@ private:
 	State *custom(gchar chr);
 
 protected:
-	virtual State *got_register(QRegister &reg) = 0;
+	virtual State *got_register(QRegister *reg) = 0;
 };
 
 class StatePushQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StatePopQReg : public StateExpectQReg {
@@ -422,7 +422,7 @@ public:
 	StatePopQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateEQCommand : public StateExpectQReg {
@@ -430,7 +430,7 @@ public:
 	StateEQCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateLoadQReg : public StateExpectFile {
@@ -440,7 +440,7 @@ private:
 
 class StateEPctCommand : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateSaveQReg : public StateExpectFile {
@@ -450,7 +450,7 @@ private:
 
 class StateQueryQReg : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateCtlUCommand : public StateExpectQReg {
@@ -458,7 +458,7 @@ public:
 	StateCtlUCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateEUCommand : public StateExpectQReg {
@@ -466,7 +466,7 @@ public:
 	StateEUCommand() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateSetQRegString : public StateExpectString {
@@ -483,7 +483,7 @@ private:
 
 class StateGetQRegString : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateSetQRegInteger : public StateExpectQReg {
@@ -491,7 +491,7 @@ public:
 	StateSetQRegInteger() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateIncreaseQReg : public StateExpectQReg {
@@ -499,12 +499,12 @@ public:
 	StateIncreaseQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateMacro : public StateExpectQReg {
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 class StateMacroFile : public StateExpectFile {
@@ -517,7 +517,7 @@ public:
 	StateCopyToQReg() : StateExpectQReg(true) {}
 
 private:
-	State *got_register(QRegister &reg);
+	State *got_register(QRegister *reg);
 };
 
 namespace States {

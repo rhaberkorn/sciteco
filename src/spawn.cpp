@@ -482,10 +482,10 @@ gerror:
  * The register <q> is defined if it does not already exist.
  */
 State *
-StateEGCommand::got_register(QRegister &reg)
+StateEGCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::executecommand);
-	undo.push_var(register_argument) = &reg;
+	undo.push_var(register_argument) = reg;
 	return &States::executecommand;
 }
 

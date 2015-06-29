@@ -221,8 +221,7 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 			break;
 
 		case STATE_ANYQ:
-			reg = qreg_machine.input(*pattern);
-			if (!reg)
+			if (!qreg_machine.input(*pattern, reg))
 				break;
 			qreg_machine.reset();
 
