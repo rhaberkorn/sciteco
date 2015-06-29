@@ -2,12 +2,12 @@
 
 ! Path of the session profile.
   Change this to save/load a custom profile.
-  If empty, no session will be saved. !
+  If empty or undefined, no session will be saved. !
 EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
 ! Save current session to the file specified by "session.path" !
 @[session.save]{
-  :Q[session.path]"= Oend '
+  :Q[session.path]-1"< Oend '
   Q*U.[curbuf]
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]

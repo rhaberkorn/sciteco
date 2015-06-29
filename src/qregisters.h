@@ -368,18 +368,30 @@ public:
 	bool pop(QRegister &reg);
 };
 
+enum QRegSpecType {
+	/** Register must exist, else fail */
+	QREG_REQUIRED,
+	/**
+	 * Return NULL if register does not exist.
+	 * You can still call QRegSpecMachine::fail() to require it.
+	 */
+	QREG_OPTIONAL,
+	/** Initialize register if it does not already exist */
+	QREG_OPTIONAL_INIT
+};
+
 class QRegSpecMachine : public MicroStateMachine<QRegister *> {
 	StringBuildingMachine string_machine;
-	bool initialize;
+	QRegSpecType type;
 
 	bool is_local;
 	gint nesting;
 	gchar *name;
 
 public:
-	QRegSpecMachine(bool _init = false)
+	QRegSpecMachine(QRegSpecType _type = QREG_REQUIRED)
 		       : MicroStateMachine<QRegister *>(),
-			 initialize(_init),
+			 type(_type),
 			 is_local(false), nesting(0), name(NULL) {}
 
 	~QRegSpecMachine()
@@ -390,6 +402,12 @@ public:
 	void reset(void);
 
 	bool input(gchar chr, QRegister *&result);
+
+	inline void
+	fail(void) G_GNUC_NORETURN
+	{
+		throw InvalidQRegError(name, is_local);
+	}
 };
 
 /*
@@ -400,15 +418,15 @@ public:
  * Super class for states accepting Q-Register specifications
  */
 class StateExpectQReg : public State {
-	QRegSpecMachine machine;
-
 public:
-	StateExpectQReg(bool initialize = false);
+	StateExpectQReg(QRegSpecType type = QREG_REQUIRED);
 
 private:
 	State *custom(gchar chr);
 
 protected:
+	QRegSpecMachine machine;
+
 	virtual State *got_register(QRegister *reg) = 0;
 };
 
@@ -419,7 +437,7 @@ private:
 
 class StatePopQReg : public StateExpectQReg {
 public:
-	StatePopQReg() : StateExpectQReg(true) {}
+	StatePopQReg() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -427,7 +445,7 @@ private:
 
 class StateEQCommand : public StateExpectQReg {
 public:
-	StateEQCommand() : StateExpectQReg(true) {}
+	StateEQCommand() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -449,13 +467,16 @@ private:
 };
 
 class StateQueryQReg : public StateExpectQReg {
+public:
+	StateQueryQReg() : StateExpectQReg(QREG_OPTIONAL) {}
+
 private:
 	State *got_register(QRegister *reg);
 };
 
 class StateCtlUCommand : public StateExpectQReg {
 public:
-	StateCtlUCommand() : StateExpectQReg(true) {}
+	StateCtlUCommand() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -463,7 +484,7 @@ private:
 
 class StateEUCommand : public StateExpectQReg {
 public:
-	StateEUCommand() : StateExpectQReg(true) {}
+	StateEUCommand() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -488,7 +509,7 @@ private:
 
 class StateSetQRegInteger : public StateExpectQReg {
 public:
-	StateSetQRegInteger() : StateExpectQReg(true) {}
+	StateSetQRegInteger() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -496,7 +517,7 @@ private:
 
 class StateIncreaseQReg : public StateExpectQReg {
 public:
-	StateIncreaseQReg() : StateExpectQReg(true) {}
+	StateIncreaseQReg() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);
@@ -514,7 +535,7 @@ private:
 
 class StateCopyToQReg : public StateExpectQReg {
 public:
-	StateCopyToQReg() : StateExpectQReg(true) {}
+	StateCopyToQReg() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);

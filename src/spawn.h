@@ -57,7 +57,7 @@ private:
 
 class StateEGCommand : public StateExpectQReg {
 public:
-	StateEGCommand() : StateExpectQReg(true) {}
+	StateEGCommand() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);

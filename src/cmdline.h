@@ -104,7 +104,7 @@ extern bool quit_requested;
 
 class StateSaveCmdline : public StateExpectQReg {
 public:
-	StateSaveCmdline() : StateExpectQReg(true) {}
+	StateSaveCmdline() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
 
 private:
 	State *got_register(QRegister *reg);

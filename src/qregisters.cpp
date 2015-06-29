@@ -849,6 +849,11 @@ StateString:
 
 done:
 	if (mode > MODE_NORMAL) {
+		/*
+		 * StateExpectQRegs with type != OPTIONAL
+		 * will never see this NULL pointer beyond
+		 * BEGIN_EXEC()
+		 */
 		result = NULL;
 		return true;
 	}
@@ -856,12 +861,24 @@ done:
 	QRegisterTable &table = is_local ? *QRegisters::locals
 	                                 : QRegisters::globals;
 
-	result = table[name];
-	if (!result) {
-		if (!initialize)
-			throw InvalidQRegError(name, is_local);
-		result = table.insert(name);
-		table.undo_remove(result);
+	switch (type) {
+	case QREG_REQUIRED:
+		result = table[name];
+		if (!result)
+			fail();
+		break;
+
+	case QREG_OPTIONAL:
+		result = table[name];
+		break;
+
+	case QREG_OPTIONAL_INIT:
+		result = table[name];
+		if (!result) {
+			result = table.insert(name);
+			table.undo_remove(result);
+		}
+		break;
 	}
 
 	return true;
@@ -871,7 +888,7 @@ done:
  * Command states
  */
 
-StateExpectQReg::StateExpectQReg(bool initialize) : State(), machine(initialize)
+StateExpectQReg::StateExpectQReg(QRegSpecType type) : machine(type)
 {
 	transitions['\0'] = this;
 }
@@ -1000,9 +1017,9 @@ StateSaveQReg::got_file(const gchar *filename)
 }
 
 /*$
- * Qq -> n -- Query Q-Register integer or string
+ * Qq -> n -- Query Q-Register existence, its integer or string characters
  * <position>Qq -> character
- * :Qq -> size
+ * :Qq -> -1 | size
  *
  * Without any arguments, get and return the integer-part of
  * Q-Register <q>.
@@ -1012,13 +1029,26 @@ StateSaveQReg::got_file(const gchar *filename)
  * Positions are handled like buffer positions \(em they
  * begin at 0 up to the length of the string minus 1.
  * An error is thrown for invalid positions.
+ * Both non-colon-modified forms of Q require register <q>
+ * to be defined and fail otherwise.
  *
  * When colon-modified, Q does not pop any arguments from
  * the expression stack and returns the <size> of the string
- * in Q-Register <q>.
+ * in Q-Register <q> if register <q> exists (i.e. is defined).
  * Naturally, for empty strings, 0 is returned.
- *
- * The command fails for undefined registers.
+ * When colon-modified and Q-Register <q> is undefined,
+ * -1 is returned instead.
+ * Therefore checking the return value \fB:Q\fP for values smaller
+ * 0 allows checking the existence of a register.
+ * Note that if <q> exists, its string part is not initialized,
+ * so \fB:Q\fP may be used to handle purely numeric data structures
+ * without creating Scintilla documents by accident.
+ * These semantics allow the useful idiom \(lq:Q\fIq\fP">\(rq for
+ * checking whether a Q-Register exists and has a non-empty string.
+ * Note also that the return value of \fB:Q\fP may be interpreted
+ * as a condition boolean that represents the non-existence of <q>.
+ * If <q> is undefined, it returns \fIsuccess\fP, else a \fIfailure\fP
+ * boolean.
  */
 State *
 StateQueryQReg::got_register(QRegister *reg)
@@ -1028,9 +1058,23 @@ StateQueryQReg::got_register(QRegister *reg)
 	expressions.eval();
 
 	if (eval_colon()) {
-		/* Query Q-Register string size */
-		expressions.push(reg->get_string_size());
-	} else if (expressions.args() > 0) {
+		/* Query Q-Register's existence or string size */
+		expressions.push(reg ? reg->get_string_size()
+		                     : (tecoInt)-1);
+		return &States::start;
+	}
+
+	/*
+	 * NOTE: This command is special since the QRegister is required
+	 * without colon and otherwise optional.
+	 * While it may be clearer to model this as two States,
+	 * we cannot currently let parsing depend on the colon-modifier.
+	 * That's why we have to delegate exception throwing to QRegSpecMachine.
+	 */
+	if (!reg)
+		machine.fail();
+
+	if (expressions.args() > 0) {
 		/* Query character from Q-Register string */
 		gint c = reg->get_character(expressions.pop_num_calc());
 		if (c < 0)
