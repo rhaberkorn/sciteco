@@ -108,6 +108,13 @@ extern "C" {
  */
 #ifdef PDCURSES_WIN32A
 int PDC_set_function_key(const unsigned function, const int new_key);
+
+#define N_FUNCTION_KEYS			5
+#define FUNCTION_KEY_SHUT_DOWN		0
+#define FUNCTION_KEY_PASTE		1
+#define FUNCTION_KEY_ENLARGE_FONT	2
+#define FUNCTION_KEY_SHRINK_FONT	3
+#define FUNCTION_KEY_CHOOSE_FONT	4
 #endif
 
 static void scintilla_notify(Scintilla *sci, int idFrom,
@@ -394,8 +401,15 @@ InterfaceCurses::init_interactive(void)
 	 * NOTE: This could also be used to assign
 	 * a "shutdown" key when program termination is requested.
 	 */
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < N_FUNCTION_KEYS; i++)
 		PDC_set_function_key(i, 0);
+
+	/*
+	 * Register the special shutdown function with the
+	 * CLOSE key, so closing the window behaves similar as on
+	 * GTK+.
+	 */
+	PDC_set_function_key(FUNCTION_KEY_SHUT_DOWN, KEY_CLOSE);
 #endif
 
 	/* for displaying UTF-8 characters properly */
