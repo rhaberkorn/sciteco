@@ -8,7 +8,8 @@ EXTRA_DIST = scite2co.lua
 # This list must be extended when adding
 # a new color scheme:
 colorschemedir = $(scitecolibdir)/colors
-dist_colorscheme_DATA = colors/terminal.tes
+dist_colorscheme_DATA = colors/terminal.tes \
+                        colors/solarized.tes
 
 # This list must be extended when adding
 # a new lexer configuration:

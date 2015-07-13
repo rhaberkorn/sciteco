@@ -1,0 +1,138 @@
+!*
+ * A port the Solarized color scheme: http://ethanschoonover.com/solarized
+ * Solarized was invented by Ethan Schoonover, Copyright 2011.
+ * This port is by Robin Haberkorn and licensed like the rest of SciTECO.
+ *
+ * This color scheme requires at least a 16 color terminal on
+ * ncurses with color initialization support.
+ * If colors are incorrect, try setting TERM=linux-16color on
+ * the Linux console or TERM=xterm-256color on xterm-compatible
+ * emulators.
+ *
+ * Set -U[solarized.light] before munging this file to
+ * enable the light version of Solarized.
+ * This also provides the macro `solarized.toggle` to
+ * toggle between light and dark modes. This will restyle
+ * all buffers, so it cannot be rubbed out properly.
+ * `solarized.toggle` will be mapped to the F5 function key.
+ * F5 will also automatically terminate the command line.
+ *!
+0EJ-1"=
+  000,043,054:M[color.rgb],08,3EJ Q[color.lblack]  U[color.base03]
+  007,054,066:M[color.rgb],00,3EJ Q[color.black]   U[color.base02]
+  088,110,117:M[color.rgb],10,3EJ Q[color.lgreen]  U[color.base01]
+  101,123,131:M[color.rgb],11,3EJ Q[color.lyellow] U[color.base00]
+  131,148,150:M[color.rgb],12,3EJ Q[color.lblue]   U[color.base0]
+  147,161,161:M[color.rgb],14,3EJ Q[color.lcyan]   U[color.base1]
+  238,232,213:M[color.rgb],07,3EJ Q[color.white]   U[color.base2]
+  253,246,227:M[color.rgb],15,3EJ Q[color.lwhite]  U[color.base3]
+  181,137,000:M[color.rgb],03,3EJ ! yellow !
+  203,075,022:M[color.rgb],09,3EJ Q[color.lred]    U[color.orange]
+  220,050,047:M[color.rgb],01,3EJ ! red !
+  211,054,130:M[color.rgb],05,3EJ ! magenta !
+  108,113,196:M[color.rgb],13,3EJ Q[color.lmagenta]U[color.violet]
+  038,139,210:M[color.rgb],04,3EJ ! blue !
+  042,161,152:M[color.rgb],06,3EJ ! cyan !
+  133,153,000:M[color.rgb],02,3EJ ! green !
+|
+  000,043,054:M[color.rgb]U[color.base03]
+  007,054,066:M[color.rgb]U[color.base02]
+  088,110,117:M[color.rgb]U[color.base01]
+  101,123,131:M[color.rgb]U[color.base00]
+  131,148,150:M[color.rgb]U[color.base0]
+  147,161,161:M[color.rgb]U[color.base1]
+  238,232,213:M[color.rgb]U[color.base2]
+  253,246,227:M[color.rgb]U[color.base3]
+  181,137,000:M[color.rgb]U[color.yellow]
+  203,075,022:M[color.rgb]U[color.orange]
+  220,050,047:M[color.rgb]U[color.red]
+  211,054,130:M[color.rgb]U[color.magenta]
+  108,113,196:M[color.rgb]U[color.violet]
+  038,139,210:M[color.rgb]U[color.blue]
+  042,161,152:M[color.rgb]U[color.cyan]
+  133,153,000:M[color.rgb]U[color.green]
+'
+
+:Q[solarized.light]"< 0U[solarized.light] '
+@[solarized.light]{
+  [color.default]    0,Q[color.base3],Q[color.base00] 
+  [color.linenumber] 0,Q[color.base2],Q[color.base00] 
+  Q[color.base2]U[color.caretline]
+  Q[color.base01]U[color.caretfore]
+
+  [color.calltip]  0,Q[color.blue],Q[color.base03]    
+
+  [color.comment]  2,Q[color.base3],Q[color.base01]   
+  [color.number]   0,Q[color.base3],Q[color.cyan]     
+  [color.keyword]  0,Q[color.base3],Q[color.green]    
+  [color.string]   0,Q[color.base3],Q[color.cyan]     
+  [color.string2]  1,Q[color.base3],Q[color.cyan]     
+  [color.preproc]  0,Q[color.base3],Q[color.orange]   
+  [color.preproc2] 1,Q[color.base3],Q[color.orange]   
+  [color.operator] 1,Q[color.base3],Q[color.green]    
+  [color.variable] 0,Q[color.base3],Q[color.blue]     
+  [color.error]    1,Q[color.base3],Q[color.red]      
+
+  ! Makes only sense for Makefiles (FIXME) !
+  [color.target]   1,Q[color.base3],Q[color.yellow]   
+
+  ! Makes only sense for Patch/Diff files !
+  [color.deletion] 0,Q[color.base2],Q[color.red]      
+  [color.addition] 0,Q[color.base2],Q[color.green]    
+  [color.change]   0,Q[color.base2],Q[color.yellow]   
+
+  ! For highlighting braces !
+  [color.bracelight] 0,Q[color.base00],Q[color.base3] 
+}
+
+@[solarized.dark]{
+  [color.default]    0,Q[color.base03],Q[color.base0] 
+  [color.linenumber] 0,Q[color.base02],Q[color.base0] 
+  Q[color.base02]U[color.caretline]
+  Q[color.base1]U[color.caretfore]
+
+  [color.calltip]  0,Q[color.blue],Q[color.base03]    
+
+  [color.comment]  2,Q[color.base03],Q[color.base01]  
+  [color.number]   0,Q[color.base03],Q[color.cyan]    
+  [color.keyword]  0,Q[color.base03],Q[color.green]   
+  [color.string]   0,Q[color.base03],Q[color.cyan]    
+  [color.string2]  1,Q[color.base03],Q[color.cyan]    
+  [color.preproc]  0,Q[color.base03],Q[color.orange]  
+  [color.preproc2] 1,Q[color.base03],Q[color.orange]  
+  [color.operator] 1,Q[color.base03],Q[color.green]   
+  [color.variable] 0,Q[color.base03],Q[color.blue]    
+  [color.error]    1,Q[color.base03],Q[color.red]     
+
+  ! Makes only sense for Makefiles (FIXME) !
+  [color.target]   1,Q[color.base03],Q[color.yellow]  
+
+  ! Makes only sense for Patch/Diff files !
+  [color.deletion] 0,Q[color.base02],Q[color.red]     
+  [color.addition] 0,Q[color.base02],Q[color.green]   
+  [color.change]   0,Q[color.base02],Q[color.yellow]  
+
+  ! For highlighting braces !
+  [color.bracelight] 0,Q[color.base0],Q[color.base03] 
+}
+
+Q[solarized.light]"T :M[solarized.light] | :M[solarized.dark] '
+! Style the Q-Register view !
+[* EQ.b :M[color.init] ]*
+
+@[solarized.toggle]{
+  Q[solarized.light]U[solarized.light]
+  Q[solarized.light]"T :M[solarized.light] | :M[solarized.dark] '
+  ! restyle all buffers and update Q-Reg view !
+  [*
+    EJ<%.bEB M[lexer.auto]>
+    EQ.b :M[color.init]
+  ]*
+}
+
+!*
+ * register `solarized.toggle` as the function key macro for F5.
+ * This terminates the command line as it cannot be rubbed out.
+ *!
+@[F5]{(M[solarized.toggle])}
+1U[F5]
