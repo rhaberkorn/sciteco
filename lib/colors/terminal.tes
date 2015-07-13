@@ -1,22 +1,32 @@
 ! Default terminal color scheme !
-[color.comment]  1,Q[color.black],Q[color.black]   
-[color.number]   0,Q[color.black],Q[color.cyan]    
-[color.keyword]  1,Q[color.black],Q[color.white]   
-[color.string]   0,Q[color.black],Q[color.green]   
-[color.string2]  1,Q[color.black],Q[color.green]   
-[color.preproc]  0,Q[color.black],Q[color.magenta] 
-[color.preproc2] 1,Q[color.black],Q[color.magenta] 
-[color.operator] 0,Q[color.black],Q[color.yellow]  
-[color.variable] 1,Q[color.black],Q[color.blue]    
-[color.error]    1,Q[color.black],Q[color.red]     
+[color.default]    0,Q[color.black],Q[color.white] 
+[color.linenumber] 0,Q[color.black],Q[color.white] 
+Q[color.black]U[color.caretline]
+Q[color.white]U[color.caretfore]
+
+[color.calltip]  0,Q[color.lblue],Q[color.black]    
+
+[color.comment]  1,Q[color.black],Q[color.lblack]   
+[color.number]   0,Q[color.black],Q[color.cyan]     
+[color.keyword]  1,Q[color.black],Q[color.lwhite]   
+[color.string]   0,Q[color.black],Q[color.green]    
+[color.string2]  1,Q[color.black],Q[color.lgreen]   
+[color.preproc]  0,Q[color.black],Q[color.magenta]  
+[color.preproc2] 1,Q[color.black],Q[color.lmagenta] 
+[color.operator] 0,Q[color.black],Q[color.yellow]   
+[color.variable] 1,Q[color.black],Q[color.lblue]    
+[color.error]    1,Q[color.black],Q[color.lred]     
 
 ! Makes only sense for Makefiles !
-[color.target]   1,Q[color.black],Q[color.yellow]  
+[color.target]   1,Q[color.black],Q[color.lyellow]  
 
 ! Makes only sense for Patch/Diff files !
-[color.deletion] 0,Q[color.black],Q[color.red]     
-[color.addition] 0,Q[color.black],Q[color.green]   
-[color.change]   0,Q[color.black],Q[color.yellow]  
+[color.deletion] 0,Q[color.black],Q[color.red]      
+[color.addition] 0,Q[color.black],Q[color.green]    
+[color.change]   0,Q[color.black],Q[color.yellow]   
 
 ! For highlighting braces !
-[color.bracelight] 1,Q[color.white],Q[color.black] 
+[color.bracelight] 0,Q[color.white],Q[color.black]  
+
+! Style the Q-Register view !
+[* EQ.b :M[color.init] ]*

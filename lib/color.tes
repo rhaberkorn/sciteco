@@ -1,22 +1,50 @@
-! n:M.c -- Get one of the 8 basic colors !
-@.c{
-  U.c ((Q.c&1)*255) # ((Q.c/2 & 1)*255*256) # ((Q.c/4 & 1)*255*256*256)
+! <r,g,b>M[color.rgb] -> Scintilla color !
+@[color.rgb]{
+  U.bU.gU.r
+  (Q.r # Q.g*256 # Q.b*256*256)
 }
 
-! Save the 8 basic colors, may be referenced by the color schemes !
-0:M.cU[color.black]
-1:M.cU[color.red]
-2:M.cU[color.green]
-3:M.cU[color.yellow]
-4:M.cU[color.blue]
-5:M.cU[color.magenta]
-6:M.cU[color.cyan]
-7:M.cU[color.white]
+! These 8 colors should be available on every system !
+000,000,000:M[color.rgb]U[color.black]
+128,000,000:M[color.rgb]U[color.red]
+000,128,000:M[color.rgb]U[color.green]
+128,128,000:M[color.rgb]U[color.yellow]
+000,000,128:M[color.rgb]U[color.blue]
+128,000,128:M[color.rgb]U[color.magenta]
+000,128,128:M[color.rgb]U[color.cyan]
+192,192,192:M[color.rgb]U[color.white]
 
-! <[[bold,]bg,]fg,style>M[color.set] !
+! Light color variants, might not be available on every terminal  !
+064,064,064:M[color.rgb]U[color.lblack]
+255,000,000:M[color.rgb]U[color.lred]
+000,255,000:M[color.rgb]U[color.lgreen]
+255,255,000:M[color.rgb]U[color.lyellow]
+000,000,255:M[color.rgb]U[color.lblue]
+255,000,255:M[color.rgb]U[color.lmagenta]
+000,255,255:M[color.rgb]U[color.lcyan]
+255,255,255:M[color.rgb]U[color.lwhite]
+
+! <[[flags,]bg,]fg,style>M[color.set] !
 @[color.set]{
   U.s U.f "~0'U.b "~0'U.h
   Q.f,Q.sESSTYLESETFORE
   Q.b,Q.sESSTYLESETBACK
-  Q.h,Q.sESSTYLESETBOLD
+  Q.h&1,Q.sESSTYLESETBOLD
+  Q.h&2,Q.sESSTYLESETITALIC
+}
+
+! Reset all styles and setup the standard ones !
+@[color.init]{
+  ! Default text colors !
+  :M[color.default],32M[color.set]
+  ESSTYLECLEARALL
+  :M[color.linenumber],33M[color.set]
+  Q[color.caretfore]ESSETCARETFORE
+  Q[color.caretline]ESSETCARETLINEBACK
+  1ESSETCARETLINEVISIBLE
+  ! Calltips and popup windows !
+  :M[color.calltip],38M[color.set]
+  ! Set up brace lightning !
+  :M[color.bracelight],34M[color.set]
+  :M[color.error],35M[color.set]
 }

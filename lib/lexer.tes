@@ -8,9 +8,7 @@
 }
 
 @[lexer.auto]{
-  ! Set up brace lightning !
-  :M[color.bracelight],34M[color.set]
-  :M[color.error],35M[color.set]
+  :M[color.init]
   [_
   :Q*"= Oend '
 }
