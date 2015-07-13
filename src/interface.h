@@ -193,12 +193,14 @@ public:
 		return NULL;
 	}
 
-	/* expected to initialize Scintilla */
 	inline void
 	main(int &argc, char **&argv)
 	{
 		impl().main_impl(argc, argv);
 	}
+
+	/* makes sense only on Curses */
+	inline void init_color(guint color, guint32 rgb) {}
 
 	enum MessageType {
 		MSG_USER,

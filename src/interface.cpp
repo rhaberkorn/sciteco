@@ -76,20 +76,39 @@ View<ViewImpl>::setup(void)
 	 */
 	ssm(SCI_SETMARGINWIDTHN, 1, 0);
 
+	/*
+	 * Set some basic styles in order to provide
+	 * a consistent look across UIs if no profile
+	 * is used. This makes writing UI-agnostic profiles
+	 * and color schemes easier.
+	 * FIXME: Some settings like fonts should probably
+	 * be set per UI (i.e. Scinterm doesn't use it,
+	 * GTK might try to use a system-wide default
+	 * monospaced font).
+	 */
 	ssm(SCI_SETCARETSTYLE, CARETSTYLE_BLOCK);
 	ssm(SCI_SETCARETPERIOD, 0);
 	ssm(SCI_SETCARETFORE, 0xFFFFFF);
 
-	/*
-	 * FIXME: Default styles should probably be set interface-based
-	 * (system defaults)
-	 */
 	ssm(SCI_STYLESETFORE, STYLE_DEFAULT, 0xFFFFFF);
 	ssm(SCI_STYLESETBACK, STYLE_DEFAULT, 0x000000);
 	ssm(SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");
 	ssm(SCI_STYLECLEARALL);
 
+	/*
+	 * FIXME: The line number background is apparently not
+	 * affected by SCI_STYLECLEARALL
+	 */
 	ssm(SCI_STYLESETBACK, STYLE_LINENUMBER, 0x000000);
+
+	/*
+	 * Use (light) blue as the default background color
+	 * for call tips. Necessary since this style is also
+	 * used for popup windows and we need to provide a sane
+	 * default if no color-scheme is applied (and --no-profile).
+	 */
+	ssm(SCI_STYLESETFORE, STYLE_CALLTIP, 0x000000);
+	ssm(SCI_STYLESETBACK, STYLE_CALLTIP, 0xFF0000);
 }
 
 template class View<ViewCurrent>;

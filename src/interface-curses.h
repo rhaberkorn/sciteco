@@ -72,6 +72,16 @@ public:
 } ViewCurrent;
 
 typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
+	/**
+	 * Mapping of the first 16 curses color codes (that may or may not
+	 * correspond with the standard terminal color codes) to
+	 * Scintilla-compatible RGB values (red is LSB) to initialize after
+	 * Curses startup.
+	 * Negative values mean no color redefinition (keep the original
+	 * palette entry).
+	 */
+	gint32 color_table[16];
+
 	int stdout_orig, stderr_orig;
 	SCREEN *screen;
 	FILE *screen_tty;
@@ -81,8 +91,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 
 	WINDOW *msg_window;
 
-	WINDOW *cmdline_window;
-	chtype *cmdline_current;
+	WINDOW *cmdline_window, *cmdline_pad;
 	gsize cmdline_len, cmdline_rubout_len;
 
 	struct Popup {
@@ -92,7 +101,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 		gint length;		/**! total number of popup entries */
 
 		GSList *cur_list;	/**! next entry to display */
-		gint cur_entry;	/**! next entry to display (position) */
+		gint cur_entry;		/**! next entry to display (position) */
 
 		Popup() : window(NULL), list(NULL),
 		          longest(3), length(0),
@@ -107,13 +116,19 @@ public:
 			    info_window(NULL),
 			    info_current(NULL),
 			    msg_window(NULL),
-			    cmdline_window(NULL),
-			    cmdline_current(NULL),
-	                    cmdline_len(0), cmdline_rubout_len(0) {}
+			    cmdline_window(NULL), cmdline_pad(NULL),
+	                    cmdline_len(0), cmdline_rubout_len(0)
+	{
+		for (guint i = 0; i < G_N_ELEMENTS(color_table); i++)
+			color_table[i] = -1;
+	}
 	~InterfaceCurses();
 
 	/* implementation of Interface::main() */
 	void main_impl(int &argc, char **&argv);
+
+	/* override of Interface::init_color() */
+	void init_color(guint color, guint32 rgb);
 
 	/* implementation of Interface::vmsg() */
 	void vmsg_impl(MessageType type, const gchar *fmt, va_list ap);
@@ -156,9 +171,6 @@ private:
 
 	void set_window_title(const gchar *title);
 	void draw_info(void);
-
-	void format_chr(chtype *&target, gchar chr,
-	                attr_t attr = 0);
 	void draw_cmdline(void);
 
 	friend void event_loop_iter();

@@ -609,6 +609,85 @@ so for instance \(lq~/foo\(rq will complete a file
 in the user's home directory.
 .
 .
+.SH USER INTERFACE
+.
+\*(ST can be built with support for different textual and
+graphical user interfaces.
+In \*(ST's batch mode, there is little difference between
+the user interfaces (as no graphical window will be visible).
+Naturally the interfaces have different graphical capabilities
+but \*(ST tries to provide a consistent look and feel across
+all user interfaces and reasonable defaults to make writing
+user-interface agnostic macros and profiles easier.
+The user interface will always be segmented into the following
+areas from top of the program window to bottom:
+.IP \(bu 2
+The \fIinfo area\fP identifying the currently edited buffer or
+Q-Register.
+This area is currently sometimes omitted.
+If technically possible, \*(ST will include the same information in the
+window's title.
+.IP \(bu
+The \fIScintilla area\fP displaying the current document's
+contents.
+This corresponds to a Scintilla view (see section \fBBUFFER RING\fP)
+and can be customized extensively using Scintilla messages
+(see the \fBES\fP command).
+.IP \(bu
+The \fImessage area\fP which will show the last \*(ST message
+that occurred.
+This area will show errors, warnings, \(lquser messages\(rq
+and other notes and tries to highlight them appropriately.
+.IP \(bu
+The auto-completion \fIpopup area\fP which is only shown when
+presenting the user with a choice of auto-completions.
+This area will overlap the \fIScintilla\fP and \fImessage
+areas\fP.
+.IP \(bu
+The \fIcommand line area\fP, showing the currently effective
+and rubbed-out command line as it is edited.
+This is currently a single line of text that is scrolled
+automatically.
+.
+.SS Colors and Theming
+.
+\*(ST supports customizing its look predominantly by setting
+up the current Scintilla view using Scintilla messages
+(see the \fBES\fP command and Scintilla documentation).
+Most visual properties of the Scintilla view can be set
+via its styles.
+This is also how syntax highlighting (lexing) is set up.
+.LP
+The \fBSTYLE_DEFAULT\fP (32) style defines the default foreground,
+background color, font etc. and is initialized to white on
+black with some monospaced font by \*(ST.
+The \fBSTYLE_DEFAULT\fP is also accessed by \*(ST to style the
+\fIinfo area\fP, \fImessage area\fP (if it is empty or when
+showing \(lquser messages\(rq) and \fIcommand line area\fP.
+The info and message areas are styled reverse to the setting
+of this style to provide good contrast, i.e. with foreground and
+background colors swapped.
+The colors used to highlight errors, warnings and other messages
+in the \fImessage area\fP are currently hardcoded and cannot
+be customized.
+The command line area on the other hand will be styled with
+the original colors of \fBSTYLE_DEFAULT\fP and should look
+similar to the current Scintilla view.
+.LP
+The \fBSTYLE_CALLTIP\fP (38) style is also accessed by
+\*(ST to style the \fIpopup area\fP and is initialized
+to black on (light) blue by \*(ST.
+.LP
+On curses user interfaces, only a selection of 16 terminal
+colors can be used, although it is possible to request changing
+the default color mapping (see \fBEJ\fP command).
+.LP
+Scintilla styles will usually be set up in the profile
+macro or \fBED\fP hook (for syntax highlighting).
+\*(ST ships with a standard library with color schemes
+and lexer configurations for a wide range of languages.
+.
+.
 .SH ARITHMETICS AND EXPRESSIONS
 .
 \*(ST abstracts classic TECO's scheme of commands accepting at most
@@ -1678,6 +1757,12 @@ Program invocation and options:
 Scintilla messages and other documentation:
 .UR http://scintilla.org/ScintillaDoc.html
 Scintilla
+.UE
+.TP
+Scinterm manual, documenting the mapping of
+\(lqRGB\(rq values to terminal colors on curses user interfaces:
+.UR http://foicica.com/scinterm/manual.html
+Scinterm manual
 .UE
 .
 .

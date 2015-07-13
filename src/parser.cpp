@@ -1989,6 +1989,7 @@ StateECommand::custom(gchar chr)
 	 * [key]EJ -> value -- Get and set system properties
 	 * -EJ -> value
 	 * value,keyEJ
+	 * rgb,color,3EJ
 	 *
 	 * This command may be used to get and set system
 	 * properties.
@@ -1997,8 +1998,9 @@ StateECommand::custom(gchar chr)
 	 * If \fIkey\fP is omitted, the prefix sign is implied
 	 * (1 or -1).
 	 * With two arguments, it sets property \fIkey\fP to
-	 * \fIvalue\fP and returns nothing. Properties may be
-	 * read-only.
+	 * \fIvalue\fP and returns nothing. Some property \fIkeys\fP
+	 * may require more than one value. Properties may be
+	 * write-only or read-only.
 	 *
 	 * The following property keys are defined:
 	 * .IP 0 4
@@ -2028,6 +2030,50 @@ StateECommand::custom(gchar chr)
 	 * is too large for the new limit \(em if this happens
 	 * you may have to clear your command-line first.
 	 * Undo stack memory limiting is enabled by default.
+	 * .IP 3
+	 * This \fBwrite-only\fP property allows redefining the
+	 * first 16 entries of the terminal color palette \(em a
+	 * feature required by some
+	 * color schemes when using the Curses user interface.
+	 * When setting this property, you are making a request
+	 * to define the terminal \fIcolor\fP as the Scintilla-compatible
+	 * RGB color value given in the \fIrgb\fP parameter.
+	 * \fIcolor\fP must be a value between 0 and 15
+	 * corresponding to black, red, green, yellow, blue, magenta,
+	 * cyan, white, bright black, bright red, etc. in that order.
+	 * The \fIrgb\fP value has the format 0xBBGGRR, i.e. the red
+	 * component is the least-significant byte and all other bytes
+	 * are ignored.
+	 * Note that on curses, RGB color values sent to Scintilla
+	 * are actually mapped to these 16 colors by the Scinterm port
+	 * and may represent colors with no resemblance to the \(lqRGB\(rq
+	 * value used (depending on the current palette) \(em they should
+	 * instead be viewed as placeholders for 16 standard terminal
+	 * color codes.
+	 * Please refer to the Scinterm manual for details on the allowed
+	 * \(lqRGB\(rq values and how they map to terminal colors.
+	 * This command provides a crude way to request exact RGB colors
+	 * for the first 16 terminal colors.
+	 * The color definition may be queued or be completely ignored
+	 * on other user interfaces and no feedback is given
+	 * if it fails. In fact feedback cannot be given reliably anyway.
+	 * Note that on 8 color terminals, only the first 8 colors
+	 * can be redefined (if you are lucky).
+	 * Note that due to restrictions of most terminal emulators
+	 * and some curses implementations, this command will not
+	 * and cannot restore the original palette entry or request
+	 * when rubbed out and should generally only be used in
+	 * \fIbatch-mode\fP \(em typically when loading a color scheme.
+	 * For the same reasons, palette changes may persist
+	 * after \*(ST terminates on most terminal emulators.
+	 * The only emulator which restores the palette on exit the
+	 * author is aware of is the Linux console driver.
+	 * Few other emulators like \fBxterm\fP(1) might support
+	 * palette resets but this cannot be done automatically
+	 * by \*(ST for technical and historical reasons.
+	 * Users might try to work around this by tweaking their
+	 * \fBterminfo\fP(5) database.
+	 * You have been warned. Good luck.
 	 */
 	case 'J': {
 		BEGIN_EXEC(&States::start);
@@ -2035,7 +2081,8 @@ StateECommand::custom(gchar chr)
 		enum {
 			EJ_USER_INTERFACE = 0,
 			EJ_BUFFERS,
-			EJ_UNDO_MEMORY_LIMIT
+			EJ_UNDO_MEMORY_LIMIT,
+			EJ_INIT_COLOR
 		};
 		tecoInt property;
 
@@ -2048,6 +2095,16 @@ StateECommand::custom(gchar chr)
 			switch (property) {
 			case EJ_UNDO_MEMORY_LIMIT:
 				undo.set_memory_limit(MAX(0, value));
+				break;
+
+			case EJ_INIT_COLOR:
+				if (value < 0 || value >= 16)
+					throw Error("Invalid color code %" TECO_INTEGER_FORMAT
+					            " specified for <EJ>", value);
+				if (!expressions.args())
+					throw ArgExpectedError("EJ");
+				interface.init_color((guint)value,
+				                     (guint32)expressions.pop_num_calc());
 				break;
 
 			default:

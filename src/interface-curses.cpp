@@ -142,6 +142,32 @@ console_ctrl_handler(DWORD type)
 #define UNNAMED_FILE "(Unnamed)"
 
 /**
+ * Get bright variant of one of the 8 standard
+ * curses colors.
+ * On 8 color terminals, this returns the non-bright
+ * color - but you __may__ get a bright version using
+ * the A_BOLD attribute.
+ * NOTE: This references `COLORS` and is thus not a
+ * constant expression.
+ */
+#define COLOR_LIGHT(C) \
+	(COLORS < 16 ? (C) : (C) + 8)
+
+/*
+ * The 8 bright colors (if terminal supports at
+ * least 16 colors), else they are identical to
+ * the non-bright colors (default curses colors).
+ */
+#define COLOR_LBLACK	COLOR_LIGHT(COLOR_BLACK)
+#define COLOR_LRED	COLOR_LIGHT(COLOR_RED)
+#define COLOR_LGREEN	COLOR_LIGHT(COLOR_GREEN)
+#define COLOR_LYELLOW	COLOR_LIGHT(COLOR_YELLOW)
+#define COLOR_LBLUE	COLOR_LIGHT(COLOR_BLUE)
+#define COLOR_LMAGENTA	COLOR_LIGHT(COLOR_MAGENTA)
+#define COLOR_LCYAN	COLOR_LIGHT(COLOR_CYAN)
+#define COLOR_LWHITE	COLOR_LIGHT(COLOR_WHITE)
+
+/**
  * Curses attribute for the color combination
  * `f` (foreground) and `b` (background)
  * according to the color pairs initialized by
@@ -151,6 +177,54 @@ console_ctrl_handler(DWORD type)
  */
 #define SCI_COLOR_ATTR(f, b) \
 	((attr_t)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
+
+/**
+ * Translate a Scintilla-compatible RGB color value
+ * (0xBBGGRR) to a Curses color triple (0 to 1000
+ * for each component).
+ */
+static inline void
+rgb2curses(guint32 rgb, short &r, short &g, short &b)
+{
+	/* NOTE: We could also use 200/51 */
+	r = ((rgb & 0x0000FF) >> 0)*1000/0xFF;
+	g = ((rgb & 0x00FF00) >> 8)*1000/0xFF;
+	b = ((rgb & 0xFF0000) >> 16)*1000/0xFF;
+}
+
+/**
+ * Convert a Scintilla-compatible RGB color value
+ * (0xBBGGRR) to a Curses color code (e.g. COLOR_BLACK).
+ * This does not work with arbitrary RGB values but
+ * only the 16 RGB color values defined by Scinterm
+ * corresponding to the 16 terminal colors.
+ * It is equivalent to Scinterm's internal `term_color`
+ * function.
+ */
+static short
+rgb2curses(guint32 rgb)
+{
+	switch (rgb) {
+	case 0x000000: return COLOR_BLACK;
+	case 0x000080: return COLOR_RED;
+	case 0x008000: return COLOR_GREEN;
+	case 0x008080: return COLOR_YELLOW;
+	case 0x800000: return COLOR_BLUE;
+	case 0x800080: return COLOR_MAGENTA;
+	case 0x808000: return COLOR_CYAN;
+	case 0xC0C0C0: return COLOR_WHITE;
+	case 0x404040: return COLOR_LBLACK;
+	case 0x0000FF: return COLOR_LRED;
+	case 0x00FF00: return COLOR_LGREEN;
+	case 0x00FFFF: return COLOR_LYELLOW;
+	case 0xFF0000: return COLOR_LBLUE;
+	case 0xFF00FF: return COLOR_LMAGENTA;
+	case 0xFFFF00: return COLOR_LCYAN;
+	case 0xFFFFFF: return COLOR_LWHITE;
+	}
+
+	return COLOR_WHITE;
+}
 
 void
 ViewCurses::initialize_impl(void)
@@ -177,6 +251,46 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 	 * even if info_update() is never called.
 	 */
 	info_current = g_strdup(PACKAGE_NAME);
+}
+
+void
+InterfaceCurses::init_color(guint color, guint32 rgb)
+{
+#if defined(__PDCURSES__) && !defined(PDC_RGB)
+	/*
+	 * PDCurses will usually number color codes differently
+	 * (least significant bit is the blue component) while
+	 * SciTECO macros will assume a standard terminal color
+	 * code numbering with red as the LSB.
+	 * Therefore we have to swap the bit order of the least
+	 * significant 3 bits here.
+	 */
+	if (color < 16)
+		color = (color & ~0x5) |
+		        ((color & 0x1) << 2) | ((color & 0x4) >> 2);
+#endif
+
+	if (cmdline_window) {
+		/* interactive mode */
+		short r, g, b;
+
+		if (!can_change_color())
+			return;
+
+		rgb2curses(rgb, r, g, b);
+		::init_color((short)color, r, g, b);
+	} else {
+		/*
+		 * batch mode: store colors,
+		 * they can only be initialized after start_color()
+		 * which is called by Scinterm when interactive
+		 * mode is initialized
+		 */
+		if (color >= G_N_ELEMENTS(color_table))
+			return;
+
+		color_table[color] = (gint32)rgb;
+	}
 }
 
 #ifdef NCURSES_UNIX
@@ -311,6 +425,45 @@ InterfaceCurses::init_interactive(void)
 	 */
 	if (current_view)
 		show_view(current_view);
+
+	/*
+	 * Only now it's safe to redefine the 16 default colors.
+	 *
+	 * FIXME: On UNIX/ncurses this __may__ change the terminal's palette
+	 * permanently and there does not appear to be any portable way of
+	 * restoring the original one.
+	 * Curses has color_content(), but there is actually no terminal
+	 * that allows querying the current palette and so color_content()
+	 * will return bogus "default" values and only for the first 8 colors.
+	 * xterm has the escape sequence "\e]104\x04" which restores
+	 * the palette from Xdefaults but not all terminal emulators
+	 * claiming to be "xterm" via $TERM support this escape sequence.
+	 * lxterminal for instance will print gibberish instead.
+	 * There are hardly any other terminal emulators that support palette
+	 * resets.
+	 * The only emulator I'm aware of which can be identified reliably
+	 * by $TERM supporting a palette reset is the linux console
+	 * (see console_codes(4)). The escape sequence "\e]R" is already
+	 * part of its terminfo description (orig_colors capability)
+	 * which is apparently sent by endwin(), so the palette is
+	 * already properly restored on endwin().
+	 * Welcome in Curses hell.
+	 */
+	if (can_change_color()) {
+		for (guint i = 0; i < G_N_ELEMENTS(color_table); i++) {
+			short r, g, b;
+
+			if (color_table[i] < 0)
+				/* no redefinition */
+				continue;
+
+			/*
+			 * init_color() may still fail if COLORS < 16
+			 */
+			rgb2curses((guint32)color_table[i], r, g, b);
+			::init_color((short)i, r, g, b);
+		}
+	}
 }
 
 void
@@ -379,10 +532,59 @@ InterfaceCurses::resize_all_windows(void)
 	draw_cmdline();
 }
 
+static gsize
+format_str(WINDOW *win, const gchar *str, gsize len)
+{
+	int old_x = getcurx(win);
+
+	while (len > 0) {
+		/*
+		 * NOTE: This mapping is similar to
+		 * View::set_representations()
+		 */
+		switch (*str) {
+		case CTL_KEY_ESC:
+			waddch(win, '$' | A_REVERSE);
+			break;
+		case '\r':
+			waddch(win, 'C' | A_REVERSE);
+			waddch(win, 'R' | A_REVERSE);
+			break;
+		case '\n':
+			waddch(win, 'L' | A_REVERSE);
+			waddch(win, 'F' | A_REVERSE);
+			break;
+		case '\t':
+			waddch(win, 'T' | A_REVERSE);
+			waddch(win, 'A' | A_REVERSE);
+			waddch(win, 'B' | A_REVERSE);
+			break;
+		default:
+			if (IS_CTL(*str)) {
+				waddch(win, '^' | A_REVERSE);
+				waddch(win, CTL_ECHO(*str) | A_REVERSE);
+			} else {
+				waddch(win, *str);
+			}
+		}
+
+		str++;
+		len--;
+	}
+
+	return getcurx(win) - old_x;
+}
+
+static inline gsize
+format_str(WINDOW *win, const gchar *str)
+{
+	return format_str(win, str, strlen(str));
+}
+
 void
 InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
-	attr_t attr;
+	short fg, bg;
 
 	if (!msg_window) { /* batch mode */
 		stdio_vmsg(type, fmt, ap);
@@ -401,25 +603,27 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	va_end(aq);
 #endif
 
+	fg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_DEFAULT));
+
 	switch (type) {
 	default:
 	case MSG_USER:
-		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE);
+		bg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_DEFAULT));
 		break;
 	case MSG_INFO:
-		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_GREEN);
+		bg = COLOR_GREEN;
 		break;
 	case MSG_WARNING:
-		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_YELLOW);
+		bg = COLOR_YELLOW;
 		break;
 	case MSG_ERROR:
-		attr = SCI_COLOR_ATTR(COLOR_BLACK, COLOR_RED);
+		bg = COLOR_RED;
 		beep();
 		break;
 	}
 
 	wmove(msg_window, 0, 0);
-	wbkgdset(msg_window, ' ' | attr);
+	wbkgdset(msg_window, ' ' | SCI_COLOR_ATTR(fg, bg));
 	vw_printw(msg_window, fmt, ap);
 	wclrtoeol(msg_window);
 }
@@ -427,12 +631,16 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 void
 InterfaceCurses::msg_clear(void)
 {
+	short fg, bg;
+
 	if (!msg_window) /* batch mode */
 		return;
 
-	wmove(msg_window, 0, 0);
-	wbkgdset(msg_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
-	wclrtoeol(msg_window);
+	fg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_DEFAULT));
+	bg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_DEFAULT));
+
+	wbkgdset(msg_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	werase(msg_window);
 }
 
 void
@@ -533,32 +741,42 @@ InterfaceCurses::set_window_title(const gchar *title)
 void
 InterfaceCurses::draw_info(void)
 {
+	short fg, bg;
+	gchar *title;
+
 	if (!info_window) /* batch mode */
 		return;
 
+	/*
+	 * The info line is printed in reverse colors of
+	 * the current buffer's STYLE_DEFAULT.
+	 * The same style is used for MSG_USER messages.
+	 */
+	fg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_DEFAULT));
+	bg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_DEFAULT));
+
 	wmove(info_window, 0, 0);
-	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_WHITE));
-	waddstr(info_window, info_current);
+	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	/* same formatting as in command lines */
+	format_str(info_window, info_current);
 	wclrtoeol(info_window);
 
-	set_window_title(info_current);
+	/*
+	 * Make sure the title will consist only of printable
+	 * characters
+	 */
+	title = String::canonicalize_ctl(info_current);
+	set_window_title(title);
+	g_free(title);
 }
 
 void
 InterfaceCurses::info_update_impl(const QRegister *reg)
 {
-	/*
-	 * We cannot rely on Curses' control character drawing
-	 * and we need the info_current string for other purposes
-	 * (like PDC_set_title()), so we "canonicalize" the
-	 * register name here:
-	 */
-	gchar *name = String::canonicalize_ctl(reg->name);
-
 	g_free(info_current);
+	/* NOTE: will contain control characters */
 	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
-	                           name, NIL);
-	g_free(name);
+	                           reg->name, NIL);
 	/* NOTE: drawn in event_loop_iter() */
 }
 
@@ -573,87 +791,65 @@ InterfaceCurses::info_update_impl(const Buffer *buffer)
 }
 
 void
-InterfaceCurses::format_chr(chtype *&target, gchar chr, attr_t attr)
-{
-	/*
-	 * NOTE: This mapping is similar to
-	 * View::set_representations()
-	 */
-	switch (chr) {
-	case CTL_KEY_ESC:
-		*target++ = '$' | attr | A_REVERSE;
-		break;
-	case '\r':
-		*target++ = 'C' | attr | A_REVERSE;
-		*target++ = 'R' | attr | A_REVERSE;
-		break;
-	case '\n':
-		*target++ = 'L' | attr | A_REVERSE;
-		*target++ = 'F' | attr | A_REVERSE;
-		break;
-	case '\t':
-		*target++ = 'T' | attr | A_REVERSE;
-		*target++ = 'A' | attr | A_REVERSE;
-		*target++ = 'B' | attr | A_REVERSE;
-		break;
-	default:
-		if (IS_CTL(chr)) {
-			*target++ = '^' | attr | A_REVERSE;
-			*target++ = CTL_ECHO(chr) | attr | A_REVERSE;
-		} else {
-			*target++ = chr | attr;
-		}
-	}
-}
-
-void
 InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 {
-	gsize alloc_len = 1;
-	chtype *p;
-
-	/*
-	 * AFAIK bold black should be rendered grey by any
-	 * common terminal.
-	 * If not, this problem will be gone once we support
-	 * a Scintilla view command line.
-	 * Also A_UNDERLINE is not supported by PDCurses/win32
-	 * and causes weird colors, so we better leave it away.
-	 */
-	const attr_t rubout_attr =
-#ifndef PDCURSES_WIN32
-		A_UNDERLINE |
-#endif
-		A_BOLD | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLACK);
+	short fg, bg;
+	int max_cols = 1;
 
 	/*
 	 * Replace entire pre-formatted command-line.
 	 * We don't know if it is similar to the last one,
-	 * so realloc makes no sense.
+	 * so resizing makes no sense.
 	 * We approximate the size of the new formatted command-line,
 	 * wasting a few bytes for control characters.
 	 */
-	delete[] cmdline_current;
+	if (cmdline_pad)
+		delwin(cmdline_pad);
 	for (guint i = 0; i < cmdline->len+cmdline->rubout_len; i++)
-		alloc_len += IS_CTL((*cmdline)[i]) ? 3 : 1;
-	p = cmdline_current = new chtype[alloc_len];
+		max_cols += IS_CTL((*cmdline)[i]) ? 3 : 1;
+	cmdline_pad = newpad(1, max_cols);
+
+	fg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_DEFAULT));
+	bg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_DEFAULT));
+	wcolor_set(cmdline_pad, SCI_COLOR_PAIR(fg, bg), NULL);
 
 	/* format effective command line */
-	for (guint i = 0; i < cmdline->len; i++)
-		format_chr(p, (*cmdline)[i]);
-	cmdline_len = p - cmdline_current;
+	cmdline_len = format_str(cmdline_pad, cmdline->str, cmdline->len);
+
+	/*
+	 * Also A_UNDERLINE is not supported by PDCurses/win32
+	 * and causes weird colors, so we better leave it away.
+	 * A_BOLD should result in either a bold font or a brighter
+	 * color both on 8 and 16 color terminals.
+	 * This is not quite color-scheme-agnostic, but works
+	 * with both the `terminal` and `solarized` themes.
+	 * This problem will be gone once we use a Scintilla view
+	 * as command line, since we can then define a style
+	 * for rubbed out parts of the command line which will
+	 * be user-configurable.
+	 */
+#ifndef PDCURSES_WIN32
+	wattron(cmdline_pad, A_UNDERLINE);
+#endif
+	wattron(cmdline_pad, A_BOLD);
 
 	/* Format rubbed-out command line. */
-	for (guint i = cmdline->len; i < cmdline->len+cmdline->rubout_len; i++)
-		format_chr(p, (*cmdline)[i], rubout_attr);
-	cmdline_rubout_len = p - cmdline_current - cmdline_len;
+	cmdline_rubout_len = format_str(cmdline_pad, cmdline->str + cmdline->len,
+	                                cmdline->rubout_len);
 
 	/* highlight cursor after effective command line */
 	if (cmdline_rubout_len) {
-		cmdline_current[cmdline_len] &= A_CHARTEXT | A_UNDERLINE;
-		cmdline_current[cmdline_len] |= A_REVERSE;
+		attr_t attr;
+		short pair;
+
+		wmove(cmdline_pad, 0, cmdline_len);
+		wattr_get(cmdline_pad, &attr, &pair, NULL);
+		wchgat(cmdline_pad, 1,
+		       (attr & A_UNDERLINE) | A_REVERSE, pair, NULL);
 	} else {
-		cmdline_current[cmdline_len++] = ' ' | A_REVERSE;
+		cmdline_len++;
+		wattroff(cmdline_pad, A_UNDERLINE | A_BOLD);
+		waddch(cmdline_pad, ' ' | A_REVERSE);
 	}
 
 	draw_cmdline();
@@ -662,8 +858,9 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 void
 InterfaceCurses::draw_cmdline(void)
 {
+	short fg, bg;
 	/* total width available for command line */
-	guint total_width = getmaxx(stdscr) - 1;
+	guint total_width = getmaxx(cmdline_window) - 1;
 	/* beginning of command line to show */
 	guint disp_offset;
 	/* length of command line to show */
@@ -671,11 +868,20 @@ InterfaceCurses::draw_cmdline(void)
 
 	disp_offset = cmdline_len -
 	              MIN(cmdline_len, total_width/2 + cmdline_len % (total_width/2));
+	/*
+	 * NOTE: we do not use getmaxx(cmdline_pad) here since it may be
+	 * larger than the text the pad contains.
+	 */
 	disp_len = MIN(total_width, cmdline_len+cmdline_rubout_len - disp_offset);
 
+	fg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_DEFAULT));
+	bg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_DEFAULT));
+
+	wbkgdset(cmdline_window, ' ' | SCI_COLOR_ATTR(fg, bg));
 	werase(cmdline_window);
 	mvwaddch(cmdline_window, 0, 0, '*' | A_BOLD);
-	waddchnstr(cmdline_window, cmdline_current+disp_offset, disp_len);
+	copywin(cmdline_pad, cmdline_window,
+	        0, disp_offset, 0, 1, 0, disp_len, FALSE);
 }
 
 void
@@ -703,6 +909,8 @@ InterfaceCurses::popup_show_impl(void)
 	gint popup_cols;
 	gint popup_colwidth;
 	gint cur_col;
+
+	short fg, bg;
 
 	if (!cmdline_window || !popup.length)
 		/* batch mode or nothing to display */
@@ -738,7 +946,10 @@ InterfaceCurses::popup_show_impl(void)
 
 	/* window covers message, scintilla and info windows */
 	popup.window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
-	wbkgd(popup.window, ' ' | SCI_COLOR_ATTR(COLOR_BLACK, COLOR_BLUE));
+
+	fg = rgb2curses(ssm(SCI_STYLEGETFORE, STYLE_CALLTIP));
+	bg = rgb2curses(ssm(SCI_STYLEGETBACK, STYLE_CALLTIP));
+	wbkgd(popup.window, ' ' | SCI_COLOR_ATTR(fg, bg));
 
 	/*
 	 * cur_col is the row currently written.
@@ -995,7 +1206,8 @@ InterfaceCurses::~InterfaceCurses()
 	g_free(info_current);
 	if (cmdline_window)
 		delwin(cmdline_window);
-	delete[] cmdline_current;
+	if (cmdline_pad)
+		delwin(cmdline_pad);
 	if (msg_window)
 		delwin(msg_window);
 
