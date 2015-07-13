@@ -867,7 +867,8 @@ InterfaceCurses::draw_cmdline(void)
 	guint disp_len;
 
 	disp_offset = cmdline_len -
-	              MIN(cmdline_len, total_width/2 + cmdline_len % (total_width/2));
+	              MIN(cmdline_len,
+	                  total_width/2 + cmdline_len % MAX(total_width/2, 1));
 	/*
 	 * NOTE: we do not use getmaxx(cmdline_pad) here since it may be
 	 * larger than the text the pad contains.
