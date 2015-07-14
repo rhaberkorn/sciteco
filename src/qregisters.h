@@ -466,12 +466,14 @@ private:
 	State *got_file(const gchar *filename);
 };
 
-class StateQueryQReg : public StateExpectQReg {
+class StateQueryQReg : public State {
+	QRegSpecMachine machine;
+
 public:
-	StateQueryQReg() : StateExpectQReg(QREG_OPTIONAL) {}
+	StateQueryQReg();
 
 private:
-	State *got_register(QRegister *reg);
+	State *custom(gchar chr);
 };
 
 class StateCtlUCommand : public StateExpectQReg {

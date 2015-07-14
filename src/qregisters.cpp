@@ -900,8 +900,13 @@ StateExpectQReg::custom(gchar chr)
 
 	if (!machine.input(chr, reg))
 		return this;
-	machine.reset();
 
+	/*
+	 * NOTE: We must reset the Q-Reg machine
+	 * now, since we have commands like <M>
+	 * that indirectly call their state recursively.
+	 */
+	machine.reset();
 	return got_register(reg);
 }
 
@@ -1050,10 +1055,22 @@ StateSaveQReg::got_file(const gchar *filename)
  * If <q> is undefined, it returns \fIsuccess\fP, else a \fIfailure\fP
  * boolean.
  */
-State *
-StateQueryQReg::got_register(QRegister *reg)
+StateQueryQReg::StateQueryQReg() : machine(QREG_OPTIONAL)
 {
-	BEGIN_EXEC(&States::start);
+	transitions['\0'] = this;
+}
+
+State *
+StateQueryQReg::custom(gchar chr)
+{
+	QRegister *reg;
+
+	if (!machine.input(chr, reg))
+		return this;
+
+	/* like BEGIN_EXEC(&States::start), but resets machine */
+	if (mode > MODE_NORMAL)
+		goto reset;
 
 	expressions.eval();
 
@@ -1061,7 +1078,7 @@ StateQueryQReg::got_register(QRegister *reg)
 		/* Query Q-Register's existence or string size */
 		expressions.push(reg ? reg->get_string_size()
 		                     : (tecoInt)-1);
-		return &States::start;
+		goto reset;
 	}
 
 	/*
@@ -1069,7 +1086,11 @@ StateQueryQReg::got_register(QRegister *reg)
 	 * without colon and otherwise optional.
 	 * While it may be clearer to model this as two States,
 	 * we cannot currently let parsing depend on the colon-modifier.
-	 * That's why we have to delegate exception throwing to QRegSpecMachine.
+	 * That's why we have to declare the Q-Reg machine as QREG_OPTIONAL
+	 * and care about exception throwing on our own.
+	 * Since we need the machine's state to throw a reasonable error
+	 * we cannot derive from StateExpectQReg since it has to reset the
+	 * machine before calling got_register().
 	 */
 	if (!reg)
 		machine.fail();
@@ -1085,6 +1106,8 @@ StateQueryQReg::got_register(QRegister *reg)
 		expressions.push(reg->get_integer());
 	}
 
+reset:
+	machine.reset();
 	return &States::start;
 }
 
