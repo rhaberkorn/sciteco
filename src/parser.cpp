@@ -1455,7 +1455,11 @@ StateStart::custom(gchar chr)
 		BEGIN_EXEC(this);
 		v = interface.ssm(SCI_GETCURRENTPOS) +
 		    expressions.pop_num_calc();
-		if (!Validate::pos(v))
+		/*
+		 * NOTE: We cannot use Validate::pos() here since
+		 * the end of the buffer is not a valid position for <A>.
+		 */
+		if (v < 0 || v >= interface.ssm(SCI_GETLENGTH))
 			throw RangeError("A");
 		expressions.push(interface.ssm(SCI_GETCHARAT, v));
 		break;
