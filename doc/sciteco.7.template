@@ -1183,6 +1183,13 @@ Their string-content represents a function key macro
 and their numeric part is a function key mask.
 None of those registers are automatically initialized
 on startup.
+.TP
+.B ED
+The \fBED\fP hook Q-Register.
+Its string-content is called as a macro when bit 5 is set
+in the \fBED\fP flags (see subsection \fBBuffer Editing Hooks\fP).
+The numeric part of register \fBED\fP is currently unused and
+the register is not automatically initialized on startup.
 .LP
 Some commands may create and initialize new registers if
 necessary, while it is an error to access undefined registers
