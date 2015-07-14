@@ -240,6 +240,21 @@ ViewCurses::initialize_impl(void)
 	setup();
 }
 
+InterfaceCurses::InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
+                                     screen(NULL),
+                                     screen_tty(NULL),
+                                     info_window(NULL),
+                                     info_current(NULL),
+                                     msg_window(NULL),
+                                     cmdline_window(NULL), cmdline_pad(NULL),
+                                     cmdline_len(0), cmdline_rubout_len(0)
+{
+	for (guint i = 0; i < G_N_ELEMENTS(color_table); i++)
+		color_table[i] = -1;
+	for (guint i = 0; i < G_N_ELEMENTS(orig_color_table); i++)
+		orig_color_table[i].r = -1;
+}
+
 void
 InterfaceCurses::main_impl(int &argc, char **&argv)
 {
@@ -261,8 +276,106 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 }
 
 void
+InterfaceCurses::init_color_safe(guint color, guint32 rgb)
+{
+	short r, g, b;
+
+#ifdef PDCURSES_WIN32
+	if (orig_color_table[color].r < 0) {
+		color_content((short)color,
+		              &orig_color_table[color].r,
+		              &orig_color_table[color].g,
+		              &orig_color_table[color].b);
+	}
+#endif
+
+	rgb2curses(rgb, r, g, b);
+	::init_color((short)color, r, g, b);
+}
+
+#ifdef PDCURSES_WIN32
+
+/*
+ * On PDCurses/win32, color_content() will actually return
+ * the real console color palette - or at least the default
+ * palette when the console started.
+ */
+void
+InterfaceCurses::restore_colors(void)
+{
+	if (!can_change_color())
+		return;
+
+	for (guint i = 0; i < G_N_ELEMENTS(orig_color_table); i++) {
+		if (orig_color_table[i].r < 0)
+			continue;
+
+		::init_color((short)i,
+		             orig_color_table[i].r,
+		             orig_color_table[i].g,
+		             orig_color_table[i].b);
+	}
+}
+
+#elif defined(NCURSES_UNIX)
+
+/*
+ * FIXME: On UNIX/ncurses init_color_safe() __may__ change the
+ * terminal's palette permanently and there does not appear to be
+ * any portable way of restoring the original one.
+ * Curses has color_content(), but there is actually no terminal
+ * that allows querying the current palette and so color_content()
+ * will return bogus "default" values and only for the first 8 colors.
+ * It would do more damage to restore the palette returned by
+ * color_content() than it helps.
+ * xterm has the escape sequence "\e]104\x07" which restores
+ * the palette from Xdefaults but not all terminal emulators
+ * claiming to be "xterm" via $TERM support this escape sequence.
+ * lxterminal for instance will print gibberish instead.
+ * So we try to look whether $XTERM_VERSION is set.
+ * There are hardly any other terminal emulators that support palette
+ * resets.
+ * The only emulator I'm aware of which can be identified reliably
+ * by $TERM supporting a palette reset is the Linux console
+ * (see console_codes(4)). The escape sequence "\e]R" is already
+ * part of its terminfo description (orig_colors capability)
+ * which is apparently sent by endwin(), so the palette is
+ * already properly restored on endwin().
+ * Welcome in Curses hell.
+ */
+void
+InterfaceCurses::restore_colors(void)
+{
+	if (g_str_has_prefix(g_getenv("TERM") ? : "", "xterm") &&
+	    g_getenv("XTERM_VERSION")) {
+		/*
+		 * Looks like a real xterm. $TERM alone is not
+		 * sufficient to tell.
+		 */
+		fputs("\e]104\x07", screen_tty);
+		fflush(screen_tty);
+	}
+}
+
+#else /* !PDCURSES_WIN32 && !NCURSES_UNIX */
+
+void
+InterfaceCurses::restore_colors(void)
+{
+	/*
+	 * No way to restore the palette, or it's
+	 * unnecessary (e.g. XCurses)
+	 */
+}
+
+#endif
+
+void
 InterfaceCurses::init_color(guint color, guint32 rgb)
 {
+	if (color >= G_N_ELEMENTS(color_table))
+		return;
+
 #if defined(__PDCURSES__) && !defined(PDC_RGB)
 	/*
 	 * PDCurses will usually number color codes differently
@@ -272,20 +385,16 @@ InterfaceCurses::init_color(guint color, guint32 rgb)
 	 * Therefore we have to swap the bit order of the least
 	 * significant 3 bits here.
 	 */
-	if (color < 16)
-		color = (color & ~0x5) |
-		        ((color & 0x1) << 2) | ((color & 0x4) >> 2);
+	color = (color & ~0x5) |
+	        ((color & 0x1) << 2) | ((color & 0x4) >> 2);
 #endif
 
 	if (cmdline_window) {
 		/* interactive mode */
-		short r, g, b;
-
 		if (!can_change_color())
 			return;
 
-		rgb2curses(rgb, r, g, b);
-		::init_color((short)color, r, g, b);
+		init_color_safe(color, rgb);
 	} else {
 		/*
 		 * batch mode: store colors,
@@ -293,9 +402,6 @@ InterfaceCurses::init_color(guint color, guint32 rgb)
 		 * which is called by Scinterm when interactive
 		 * mode is initialized
 		 */
-		if (color >= G_N_ELEMENTS(color_table))
-			return;
-
 		color_table[color] = (gint32)rgb;
 	}
 }
@@ -442,40 +548,14 @@ InterfaceCurses::init_interactive(void)
 
 	/*
 	 * Only now it's safe to redefine the 16 default colors.
-	 *
-	 * FIXME: On UNIX/ncurses this __may__ change the terminal's palette
-	 * permanently and there does not appear to be any portable way of
-	 * restoring the original one.
-	 * Curses has color_content(), but there is actually no terminal
-	 * that allows querying the current palette and so color_content()
-	 * will return bogus "default" values and only for the first 8 colors.
-	 * xterm has the escape sequence "\e]104\x04" which restores
-	 * the palette from Xdefaults but not all terminal emulators
-	 * claiming to be "xterm" via $TERM support this escape sequence.
-	 * lxterminal for instance will print gibberish instead.
-	 * There are hardly any other terminal emulators that support palette
-	 * resets.
-	 * The only emulator I'm aware of which can be identified reliably
-	 * by $TERM supporting a palette reset is the linux console
-	 * (see console_codes(4)). The escape sequence "\e]R" is already
-	 * part of its terminfo description (orig_colors capability)
-	 * which is apparently sent by endwin(), so the palette is
-	 * already properly restored on endwin().
-	 * Welcome in Curses hell.
 	 */
 	if (can_change_color()) {
 		for (guint i = 0; i < G_N_ELEMENTS(color_table); i++) {
-			short r, g, b;
-
-			if (color_table[i] < 0)
-				/* no redefinition */
-				continue;
-
 			/*
 			 * init_color() may still fail if COLORS < 16
 			 */
-			rgb2curses((guint32)color_table[i], r, g, b);
-			::init_color((short)i, r, g, b);
+			if (color_table[i] >= 0)
+				init_color_safe(i, (guint32)color_table[i]);
 		}
 	}
 }
@@ -499,6 +579,7 @@ InterfaceCurses::restore_batch(void)
 	 * (i.e. return to batch mode)
 	 */
 	endwin();
+	restore_colors();
 
 	/*
 	 * Restore stdout and stderr, so output goes to

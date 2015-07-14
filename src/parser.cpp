@@ -2060,19 +2060,16 @@ StateECommand::custom(gchar chr)
 	 * Note that on 8 color terminals, only the first 8 colors
 	 * can be redefined (if you are lucky).
 	 * Note that due to restrictions of most terminal emulators
-	 * and some curses implementations, this command will not
-	 * and cannot restore the original palette entry or request
+	 * and some curses implementations, this command simply will not
+	 * restore the original palette entry or request
 	 * when rubbed out and should generally only be used in
 	 * \fIbatch-mode\fP \(em typically when loading a color scheme.
-	 * For the same reasons, palette changes may persist
-	 * after \*(ST terminates on most terminal emulators.
-	 * The only emulator which restores the palette on exit the
-	 * author is aware of is the Linux console driver.
-	 * Few other emulators like \fBxterm\fP(1) might support
-	 * palette resets but this cannot be done automatically
-	 * by \*(ST for technical and historical reasons.
-	 * Users might try to work around this by tweaking their
-	 * \fBterminfo\fP(5) database.
+	 * For the same reasons \(em even though \*(ST tries hard to
+	 * restore the original palette on exit \(em palette changes may
+	 * persist after \*(ST terminates on most terminal emulators on Unix.
+	 * The only emulator which will restore their default palette
+	 * on exit the author is aware of is \fBxterm\fP(1) and
+	 * the Linux console driver.
 	 * You have been warned. Good luck.
 	 */
 	case 'J': {

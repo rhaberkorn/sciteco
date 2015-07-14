@@ -82,6 +82,16 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	 */
 	gint32 color_table[16];
 
+	/**
+	 * Mapping of the first 16 curses color codes to their
+	 * original values for restoring them on shutdown.
+	 * Unfortunately, this may not be supported on all
+	 * curses ports, so this array may be unused.
+	 */
+	struct {
+		short r, g, b;
+	} orig_color_table[G_N_ELEMENTS(color_table)];
+
 	int stdout_orig, stderr_orig;
 	SCREEN *screen;
 	FILE *screen_tty;
@@ -110,18 +120,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	} popup;
 
 public:
-	InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
-	                    screen(NULL),
-			    screen_tty(NULL),
-			    info_window(NULL),
-			    info_current(NULL),
-			    msg_window(NULL),
-			    cmdline_window(NULL), cmdline_pad(NULL),
-	                    cmdline_len(0), cmdline_rubout_len(0)
-	{
-		for (guint i = 0; i < G_N_ELEMENTS(color_table); i++)
-			color_table[i] = -1;
-	}
+	InterfaceCurses();
 	~InterfaceCurses();
 
 	/* implementation of Interface::main() */
@@ -163,6 +162,9 @@ public:
 	void event_loop_impl(void);
 
 private:
+	void init_color_safe(guint color, guint32 rgb);
+	void restore_colors(void);
+
 	void init_screen(void);
 	void init_interactive(void);
 	void restore_batch(void);
