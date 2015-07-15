@@ -576,9 +576,8 @@ If no completion can be performed, the invocation will display a
 list of file names (or tokens) that begin with the token to complete
 in \*(ST's popup area.
 If the popup area is not large enough to display all possible
-completions, this is highlighted by the user interface either
-by showing an ellipsis (\(lq...\(rq) in the bottom right corner
-of the popup area or by its scrollbars.
+completions, this is highlighted by the user interface
+using scroll bars.
 If the immediate editing command is invoked again, the next page
 of file names or tokens is displayed in the popup area.
 I.e. it is possible to cycle through long lists of possible

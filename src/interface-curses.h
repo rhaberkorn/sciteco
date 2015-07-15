@@ -52,6 +52,12 @@ public:
 	}
 
 	inline void
+	noutrefresh(void)
+	{
+		scintilla_noutrefresh(sci);
+	}
+
+	inline void
 	refresh(void)
 	{
 		scintilla_refresh(sci);
@@ -104,19 +110,44 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	WINDOW *cmdline_window, *cmdline_pad;
 	gsize cmdline_len, cmdline_rubout_len;
 
-	struct Popup {
-		WINDOW *window;
+	class Popup {
+		WINDOW *window;		/**! window showing part of pad */
+		WINDOW *pad;		/**! full-height entry list */
+
 		GSList *list;		/**! list of popup entries */
 		gint longest;		/**! size of longest entry */
 		gint length;		/**! total number of popup entries */
 
-		GSList *cur_list;	/**! next entry to display */
-		gint cur_entry;		/**! next entry to display (position) */
+		gint pad_first_line;	/**! first line in pad to show */
 
-		Popup() : window(NULL), list(NULL),
-		          longest(3), length(0),
-		          cur_list(NULL), cur_entry(0) {}
+	public:
+		Popup() : window(NULL), pad(NULL),
+		          list(NULL), longest(0), length(0),
+		          pad_first_line(0) {}
+
+		void add(PopupEntryType type,
+			 const gchar *name, bool highlight = false);
+
+		void show(attr_t attr);
+		inline bool
+		is_shown(void)
+		{
+			return window != NULL;
+		}
+
+		void clear(void);
+
+		inline void
+		noutrefresh(void)
+		{
+			if (window)
+				wnoutrefresh(window);
+		}
+
 		~Popup();
+
+	private:
+		void init_pad(attr_t attr);
 	} popup;
 
 public:
@@ -145,16 +176,24 @@ public:
 	void cmdline_update_impl(const Cmdline *cmdline);
 
 	/* implementation of Interface::popup_add() */
-	void popup_add_impl(PopupEntryType type,
-		            const gchar *name, bool highlight = false);
+	inline void
+	popup_add_impl(PopupEntryType type,
+	               const gchar *name, bool highlight = false)
+	{
+		if (cmdline_window)
+			/* interactive mode */
+			popup.add(type, name, highlight);
+	}
+
 	/* implementation of Interface::popup_show() */
 	void popup_show_impl(void);
 	/* implementation of Interface::popup_is_shown() */
 	inline bool
 	popup_is_shown_impl(void)
 	{
-		return popup.window != NULL;
+		return popup.is_shown();
 	}
+
 	/* implementation of Interface::popup_clear() */
 	void popup_clear_impl(void);
 
