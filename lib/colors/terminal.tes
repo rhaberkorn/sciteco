@@ -4,7 +4,7 @@
 Q[color.black]U[color.caretline]
 Q[color.white]U[color.caretfore]
 
-[color.calltip]  0,Q[color.lblue],Q[color.black]    
+[color.calltip]  0,Q[color.lwhite],Q[color.black]   
 
 [color.comment]  1,Q[color.black],Q[color.lblack]   
 [color.number]   0,Q[color.black],Q[color.cyan]     

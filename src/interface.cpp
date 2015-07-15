@@ -102,13 +102,13 @@ View<ViewImpl>::setup(void)
 	ssm(SCI_STYLESETBACK, STYLE_LINENUMBER, 0x000000);
 
 	/*
-	 * Use (light) blue as the default background color
+	 * Use white as the default background color
 	 * for call tips. Necessary since this style is also
 	 * used for popup windows and we need to provide a sane
 	 * default if no color-scheme is applied (and --no-profile).
 	 */
 	ssm(SCI_STYLESETFORE, STYLE_CALLTIP, 0x000000);
-	ssm(SCI_STYLESETBACK, STYLE_CALLTIP, 0xFF0000);
+	ssm(SCI_STYLESETBACK, STYLE_CALLTIP, 0xFFFFFF);
 }
 
 template class View<ViewCurrent>;

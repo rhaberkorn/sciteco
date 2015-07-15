@@ -60,7 +60,7 @@
   Q[color.base2]U[color.caretline]
   Q[color.base01]U[color.caretfore]
 
-  [color.calltip]  0,Q[color.blue],Q[color.base03]    
+  [color.calltip]  0,Q[color.base01],Q[color.base2]   
 
   [color.comment]  2,Q[color.base3],Q[color.base01]   
   [color.number]   0,Q[color.base3],Q[color.cyan]     
@@ -91,7 +91,7 @@
   Q[color.base02]U[color.caretline]
   Q[color.base1]U[color.caretfore]
 
-  [color.calltip]  0,Q[color.blue],Q[color.base03]    
+  [color.calltip]  0,Q[color.base1],Q[color.base02]   
 
   [color.comment]  2,Q[color.base03],Q[color.base01]  
   [color.number]   0,Q[color.base03],Q[color.cyan]    
