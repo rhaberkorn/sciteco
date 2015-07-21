@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.f77]{
-  ESSETLEXER,SCLEX_F77
+  ESSETLEXERLANGUAGEf77
   0ESSETKEYWORDS
     access action advance allocatable allocate apostrophe assign assignment
     associate asynchronous backspace bind blank blockdata call case character class close

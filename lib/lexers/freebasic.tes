@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.freebasic]{
-  ESSETLEXER,SCLEX_FREEBASIC
+  ESSETLEXERLANGUAGEfreebasic
   0ESSETKEYWORDS
     append as asc asin asm atan2 atn beep bin binary bit bitreset bitset bload
     bsave byref byte byval call callocate case cbyte cdbl cdecl chain chdir chr cint

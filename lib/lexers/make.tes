@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.make]{
-  ESSETLEXER,SCLEX_MAKEFILE
+  ESSETLEXERLANGUAGEmakefile
   :M[color.comment],1M[color.set]
   :M[color.preproc],2M[color.set]
   :M[color.variable],3M[color.set]

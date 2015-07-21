@@ -109,10 +109,14 @@ io.write([=[Q.r}
 ]=])
 
 -- print [lexer.set...] macro
+-- NOTE: The lexer encoded in the property file is not
+-- a SCLEX_* name but rather the lexer's module name
+-- as set by the LexerModule constructor.
+-- Therefore we must emit SCI_SETLEXERLANGUAGE calls here.
 local lexer = expand(get_property_by_pattern("lexer.", file_patterns))
 io.write([=[
 @[lexer.set.]=]..language:lower()..[=[]{
-  ESSETLEXER,SCLEX_]=]..lexer:upper()..[=[
+  ESSETLEXERLANGUAGE]=]..lexer..[=[
 ]=])
 -- print keyword definitions with word wrapping
 for i = 1, 9 do

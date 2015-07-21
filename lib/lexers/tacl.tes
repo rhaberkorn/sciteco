@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.tacl]{
-  ESSETLEXER,SCLEX_TACL
+  ESSETLEXERLANGUAGETACL
   0ESSETKEYWORDS
     activate add adddsttransition adduser alter altpri assign attachseg
     backupcpu break builtins buscmd clear columnize comment compute copy dump copyvar

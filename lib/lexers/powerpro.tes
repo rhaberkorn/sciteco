@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.powerpro]{
-  ESSETLEXER,SCLEX_POWERPRO
+  ESSETLEXERLANGUAGEpowerpro
   0ESSETKEYWORDS
     break do else elseif endfor endif for function global gt if ifelse ifx jump
     local lt quit static

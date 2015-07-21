@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.cobol]{
-  ESSETLEXER,SCLEX_COBOL
+  ESSETLEXERLANGUAGECOBOL
   0ESSETKEYWORDS
     configuration data declaratives division environment environment-division
     file file-control function i-o i-o-control identification input input-output

@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.java]{
-  ESSETLEXER,SCLEX_CPP
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     abstract assert boolean break byte case catch char class const continue
     default do double else enum extends final finally float for goto if implements

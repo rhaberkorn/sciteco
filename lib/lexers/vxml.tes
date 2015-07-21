@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.vxml]{
-  ESSETLEXER,SCLEX_HYPERTEXT
+  ESSETLEXERLANGUAGEhypertext
   0ESSETKEYWORDS
     assign audio block break catch choice clear disconnect else elseif emphasis
     enumerate error exit field filled form goto grammar help if initial link log menu meta

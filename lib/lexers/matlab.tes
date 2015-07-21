@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.matlab]{
-  ESSETLEXER,SCLEX_MATLAB
+  ESSETLEXERLANGUAGEmatlab
   0ESSETKEYWORDS
     break case catch continue else elseif end for function global if otherwise
     persistent return switch try while

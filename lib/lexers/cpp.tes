@@ -16,7 +16,7 @@
 Q.r}
 
 @[lexer.set.cpp]{
-  ESSETLEXER,SCLEX_CPP
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     and and_eq asm auto bitand bitor bool break case catch char class compl
     const const_cast constexpr continue default delete do double dynamic_cast else

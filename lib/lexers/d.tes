@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.d]{
-  ESSETLEXER,SCLEX_D
+  ESSETLEXERLANGUAGEd
   0ESSETKEYWORDS
     abstract alias align asm assert auto body bool break byte case cast catch
     cdouble cent cfloat char class const continue creal dchar debug default delegate

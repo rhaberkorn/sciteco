@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.cs]{
-  ESSETLEXER,SCLEX_CPP
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     abstract as ascending base bool break by byte case catch char checked class
     const continue decimal default delegate descending do double else enum equals

@@ -14,7 +14,7 @@
 Q.r}
 
 @[lexer.set.xml]{
-  ESSETLEXER,SCLEX_XML
+  ESSETLEXERLANGUAGExml
   0ESSETKEYWORDS 
   ! DTD keywords !
   5ESSETKEYWORDS

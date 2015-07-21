@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.tcl]{
-  ESSETLEXER,SCLEX_TCL
+  ESSETLEXERLANGUAGEtcl
   0ESSETKEYWORDS
     after append array auto_execok auto_import auto_load auto_load_index
     auto_qualify beep bgerror binary break case catch cd clock close concat continue dde

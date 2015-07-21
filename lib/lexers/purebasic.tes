@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.purebasic]{
-  ESSETLEXER,SCLEX_PUREBASIC
+  ESSETLEXERLANGUAGEpurebasic
   0ESSETKEYWORDS
     and break case continue data datasection declare declarecdll declaredll
     default deftype dim else elseif end enddatasection endenumeration endif endinterface

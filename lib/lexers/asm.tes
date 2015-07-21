@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.asm]{
-  ESSETLEXER,SCLEX_ASM
+  ESSETLEXERLANGUAGEasm
   0ESSETKEYWORDS
     aaa aad aam aas daa das ja jae jb jbe jc jcxz je jg jge jl jle jmp jna jnae
     jnb jnbe jnc jne jng jnge jnl jnle jno jnp jns jnz jo jp jpe jpo js jz jcxz

@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.diff]{
-  ESSETLEXER,SCLEX_DIFF
+  ESSETLEXERLANGUAGEdiff
   :M[color.comment],1M[color.set]
   :M[color.keyword],2M[color.set] ! Command !
   :M[color.preproc],3M[color.set] ! Source/Dest !

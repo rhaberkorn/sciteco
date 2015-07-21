@@ -11,7 +11,7 @@
 Q.r}
 
 @[lexer.set.bash]{
-  ESSETLEXER,SCLEX_BASH
+  ESSETLEXERLANGUAGEbash
   0ESSETKEYWORDS
     alias ar asa awk banner basename bash bc bdiff break bunzip2 bzip2 cal
     calendar case cat cc cd chmod cksum clear cmp col comm compress continue cp cpio
