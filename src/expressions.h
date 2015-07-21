@@ -159,11 +159,11 @@ public:
 	enum Operator {
 		OP_NIL = 0,
 		OP_POW,		// ^*
-		OP_MUL,		// *
-		OP_DIV,		// /
 		OP_MOD,		// ^/
-		OP_ADD,		// +
+		OP_DIV,		// /
+		OP_MUL,		// *
 		OP_SUB,		// -
+		OP_ADD,		// +
 		OP_AND,		// &
 		OP_XOR,		// ^#
 		OP_OR,		// #

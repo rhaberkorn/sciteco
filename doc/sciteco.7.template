@@ -731,23 +731,23 @@ precedence:
 .IB base " ^* " power
 Raise \fIbase\fP to \fIpower\fP.
 .TP
-.IB a " * " b
-Multiply \fIa\fP by \fIb\fP.
-.TP
-.IB a " / " b
-Divide \fIa\fP by \fIb\fP.
-Naturally it is a division without remainder.
-.TP
 .IB a " ^/ " b
 Remainder of \fIa\fP divided by \fIb\fP.
 It is actually a modulo operation conforming to the
 host C compiler's modulo semantics.
 .TP
-.IB a " + " b
-Add \fIb\fP to \fIa\fP.
+.IB a " / " b
+Divide \fIa\fP by \fIb\fP.
+Naturally it is a division without remainder.
+.TP
+.IB a " * " b
+Multiply \fIa\fP by \fIb\fP.
 .TP
 .IB a " - " b
 Subtract \fIb\fP from \fIa\fP.
+.TP
+.IB a " + " b
+Add \fIb\fP to \fIa\fP.
 .TP
 .IB a " & " b
 Binary AND.
@@ -774,6 +774,20 @@ mandatory in classic TECO, like in \(lq.ZD\(rq.
 I recommend to use it as much as possible in code where clarity
 matters.
 .LP
+Note that \*(ST assigns an unique precedence to each operator
+instead of having several operators (like addition and subtraction)
+share the same precedence and evaluate them according to their
+associativity.
+Still the precedence rules should ensure that expressions are
+evaluated similarily to other programming languages.
+When the same operator is used repeatedly, expressions are always
+evaluated with left-to-right associativity.
+For instance, \(lq2^*3^*4\(rq is evaluated like \(lq(2^*3)^*4\(rq.
+The arithmetic evaluation order established by the operator precedence
+or braces must not be confused with the execution order of \*(ST commands
+which is always strictly from left to right (unless flow control
+commands are used).
+.LP
 The only unary operator currently supported is
 .RB \(lq - \(rq.
 The minus-operator is special and has unique semantics.
@@ -781,7 +795,7 @@ It sets the so called \fBprefix sign\fP which is 1 by default
 to -1.
 This prefix sign may be evaluated by commands \(em most often it is the
 default value if the argument stack is empty so that expressions like
-\(lq-C\(rq are rougly equivalent to \(lq-1C\(rq.
+\(lq-C\(rq are roughly equivalent to \(lq-1C\(rq.
 However in front of opening brackets, like in \(lq-(1+2)\(rq, it is
 roughly equivalent to \(lq-1*(1+2)\(rq so that values calculated in
 brackets can be easily negated.
