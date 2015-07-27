@@ -38,8 +38,13 @@ gchar *expand_path(const gchar *path);
 
 /**
  * Get absolute/full version of a possibly relative path.
+ * The path is tried to be canonicalized so it does
+ * not contain relative components.
  * Works with existing and non-existing paths (in the latter case,
- * heuristics may be applied.)
+ * heuristics may be applied).
+ * Depending on platform and existence of the path,
+ * canonicalization might fail, but the path returned is
+ * always absolute.
  *
  * @param path Possibly relative path name.
  * @return Newly-allocated absolute path name.

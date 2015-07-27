@@ -709,16 +709,14 @@ get_absolute_path(const gchar *path)
 	if (!path)
 		return NULL;
 
-	if (!realpath(path, buf)) {
-		if (g_path_is_absolute(path)) {
-			resolved = g_strdup(path);
-		} else {
-			gchar *cwd = g_get_current_dir();
-			resolved = g_build_filename(cwd, path, NIL);
-			g_free(cwd);
-		}
-	} else {
+	if (realpath(path, buf)) {
 		resolved = g_strdup(buf);
+	} else if (g_path_is_absolute(path)) {
+		resolved = g_strdup(path);
+	} else {
+		gchar *cwd = g_get_current_dir();
+		resolved = g_build_filename(cwd, path, NIL);
+		g_free(cwd);
 	}
 
 	return resolved;
@@ -754,15 +752,32 @@ file_is_visible(const gchar *path)
 	return !(get_file_attributes(path) & FILE_ATTRIBUTE_HIDDEN);
 }
 
-#else
+#else /* !G_OS_UNIX && !G_OS_WIN32 */
 
 /*
- * FIXME: I doubt that works on any platform...
+ * This will never canonicalize relative paths.
+ * I.e. the absolute path will often contain
+ * relative components, even if `path` exists.
+ * The only exception would be a simple filename
+ * not containing any "..".
  */
 gchar *
 get_absolute_path(const gchar *path)
 {
-	return path ? g_file_read_link(path, NULL) : NULL;
+	gchar *resolved;
+
+	if (!path)
+		return NULL;
+
+	if (g_path_is_absolute(path)) {
+		resolved = g_strdup(path);
+	} else {
+		gchar *cwd = g_get_current_dir();
+		resolved = g_build_filename(cwd, path, NIL);
+		g_free(cwd);
+	}
+
+	return resolved;
 }
 
 /*
