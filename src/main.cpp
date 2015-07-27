@@ -88,7 +88,7 @@ static gpointer g_realloc_exception(gpointer mem, gsize n_bytes);
 static void sigint_handler(int signal);
 }
 
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 
 void
 interrupt(void)
@@ -102,7 +102,7 @@ interrupt(void)
 		sigint_occurred = TRUE;
 }
 
-#else
+#else /* !G_OS_UNIX && !G_OS_HAIKU */
 
 void
 interrupt(void)
@@ -143,6 +143,12 @@ get_default_config_path(const gchar *program)
 
 #elif defined(G_OS_UNIX)
 
+/*
+ * NOTE: We explicitly do not handle
+ * Haiku like UNIX here, since it appears to
+ * be uncommon on Haiku to clutter the HOME directory
+ * with config files.
+ */
 static inline gchar *
 get_default_config_path(const gchar *program)
 {

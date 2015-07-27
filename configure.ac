@@ -109,8 +109,9 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 ])
 
 # Library functions that should exist on UNIX/Linux
+# and UNIXoid systems
 case $host in
-*-*-darwin* | *-*-linux* | *-*-cygwin*)
+*-*-darwin* | *-*-linux* | *-*-cygwin* | *-*-haiku*)
 	AC_CHECK_FUNCS([realpath fchown dup dup2], , [
 		AC_MSG_ERROR([Missing libc function])
 	])

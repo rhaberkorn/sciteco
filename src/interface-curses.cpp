@@ -80,9 +80,12 @@
 #endif
 
 #ifdef NCURSES_VERSION
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 /**
- * Whether we're on ncurses/UNIX
+ * Whether we're on ncurses/UNIX.
+ * Haiku has a UNIX-like terminal and is largely
+ * POSIX compliant, so we can handle it like a
+ * UNIX ncurses.
  */
 #define NCURSES_UNIX
 #elif defined(G_OS_WIN32)

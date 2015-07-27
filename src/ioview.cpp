@@ -467,7 +467,7 @@ make_savepoint(const gchar *filename)
 	undo.push(new UndoTokenRestoreSavePoint(savepoint, filename));
 }
 
-#endif /* !G_OS_UNIX */
+#endif
 
 GIOStatus
 IOView::save(GIOChannel *channel, guint position, gsize len,
@@ -603,7 +603,7 @@ IOView::save(const gchar *filename)
 	GError *error = NULL;
 	GIOChannel *channel;
 
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 	GStatBuf file_stat;
 	file_stat.st_uid = -1;
 	file_stat.st_gid = -1;
@@ -612,7 +612,7 @@ IOView::save(const gchar *filename)
 
 	if (undo.enabled) {
 		if (g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 			g_stat(filename, &file_stat);
 #endif
 			attributes = get_file_attributes(filename);
@@ -644,7 +644,7 @@ IOView::save(const gchar *filename)
 	/* if file existed but has been renamed, restore attributes */
 	if (attributes != INVALID_FILE_ATTRIBUTES)
 		set_file_attributes(filename, attributes);
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 	/*
 	 * only a good try to inherit owner since process user must have
 	 * CHOWN capability traditionally reserved to root only.
@@ -698,7 +698,7 @@ expand_path(const gchar *path)
 	return ret;
 }
 
-#ifdef G_OS_UNIX
+#if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 
 gchar *
 get_absolute_path(const gchar *path)
@@ -752,7 +752,7 @@ file_is_visible(const gchar *path)
 	return !(get_file_attributes(path) & FILE_ATTRIBUTE_HIDDEN);
 }
 
-#else /* !G_OS_UNIX && !G_OS_WIN32 */
+#else /* !G_OS_UNIX && !G_OS_HAIKU && !G_OS_WIN32 */
 
 /*
  * This will never canonicalize relative paths.
@@ -791,6 +791,6 @@ file_is_visible(const gchar *path)
 	return true;
 }
 
-#endif /* !G_OS_UNIX && !G_OS_WIN32 */
+#endif /* !G_OS_UNIX && !G_OS_HAIKU && !G_OS_WIN32 */
 
 } /* namespace SciTECO */

@@ -24,13 +24,15 @@ The Curses frontend is verified to work with [ncurses](https://www.gnu.org/softw
 [EMCurses](https://github.com/rhaberkorn/emcurses).
 Others might work as well.
 
-Both Linux and Windows (MinGW 32/64) are tested and supported.
+Linux, Windows (MinGW 32/64) and
+[Haiku](https://www.haiku-os.org/) (gcc4) are tested and supported.
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms,
 like Mac OS X - however I cannot test it regularily and there is currently no
 Mac OS X maintainer.
+However UNIX-compatibility is not strictly required:
 Since SciTECO primarily depends on [glib](https://developer.gnome.org/glib/) and
-Curses, it should be easy to port to even more exotic platforms.
+some implementation of Curses, it should be easy to port to even more exotic platforms.
 
 __Warning: The SciTECO language is work in progress and has not yet fully stabilized.
 It may change drastically and in backwards-incompatible ways in the repository's

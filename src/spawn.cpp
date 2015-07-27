@@ -102,7 +102,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
 		};
 		return g_strdupv((gchar **)argv_win32);
 	}
-#elif defined(G_OS_UNIX)
+#elif defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 	if (!(Flags::ed & Flags::ED_SHELLEMU)) {
 		const gchar *argv_unix[] = {
 			"/bin/sh", "-c", cmdline, NULL
