@@ -236,7 +236,16 @@ StateExecuteCommand::StateExecuteCommand() : StateExpectString()
 StateExecuteCommand::~StateExecuteCommand()
 {
 	g_main_loop_unref(ctx.mainloop);
+#ifndef G_OS_HAIKU
+	/*
+	 * Apparently, there's some kind of double-free
+	 * bug in Haiku's glib-2.38.
+	 * It is unknown whether this is has
+	 * already been fixed and affects other platforms
+	 * (but I never observed any segfaults).
+	 */
 	g_main_context_unref(ctx.mainctx);
+#endif
 }
 
 void
