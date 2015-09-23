@@ -150,31 +150,45 @@ public:
 	}
 };
 
-/*
+/**
  * Arithmetic expression stacks
  */
 extern class Expressions {
 public:
-	/* reflects also operator precedence */
+	/**
+	 * Operator type.
+	 * The enumeration value divided by 16 represents
+	 * its precedence (the lower, the higher).
+	 * In other words, the value's lower nibble is
+	 * reserved for enumerating operators of the
+	 * same precedence.
+	 */
 	enum Operator {
-		OP_NIL = 0,
-		OP_POW,		// ^*
-		OP_MOD,		// ^/
+		OP_NIL	= 0,
+		OP_POW	= 0x10,	// ^*
+		OP_MOD	= 0x20,	// ^/
 		OP_DIV,		// /
 		OP_MUL,		// *
-		OP_SUB,		// -
+		OP_SUB	= 0x30,	// -
 		OP_ADD,		// +
-		OP_AND,		// &
-		OP_XOR,		// ^#
-		OP_OR,		// #
+		OP_AND	= 0x40,	// &
+		OP_XOR	= 0x50,	// ^#
+		OP_OR	= 0x60,	// #
 				// pseudo operators:
-		OP_NEW,
+		OP_NEW	= 0xF0,
 		OP_BRACE,
 		OP_LOOP,
 		OP_NUMBER
 	};
 
 private:
+	/** Get operator precedence */
+	inline gint
+	precedence(Operator op)
+	{
+		return op >> 4;
+	}
+
 	ValueStack<tecoInt>	numbers;
 	ValueStack<Operator>	operators;
 

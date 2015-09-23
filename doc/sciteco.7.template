@@ -726,40 +726,55 @@ command.
 .SS Operators
 .
 The following binary operators are supported with descending
+precedence, whereas borders separate operators of the \fIsame\fP
 precedence:
-.TP 2
-.IB base " ^* " power
+.TS
+expand,box,tab(;);
+L LX.
+\fIbase\fB ^* \fIpower\fR;T{
 Raise \fIbase\fP to \fIpower\fP.
-.TP
-.IB a " ^/ " b
+T}
+=
+\fIa\fB ^/ \fIb\fR;T{
 Remainder of \fIa\fP divided by \fIb\fP.
 It is actually a modulo operation conforming to the
 host C compiler's modulo semantics.
-.TP
-.IB a " / " b
+T}
+\fIa\fB / \fIb\fR;T{
 Divide \fIa\fP by \fIb\fP.
 Naturally it is a division without remainder.
-.TP
-.IB a " * " b
+T}
+\fIa\fB * \fIb\fP;T{
 Multiply \fIa\fP by \fIb\fP.
-.TP
-.IB a " - " b
+T}
+=
+\fIa\fB - \fIb\fP;T{
 Subtract \fIb\fP from \fIa\fP.
-.TP
-.IB a " + " b
+T}
+\fIa\fB + \fIb\fP;T{
 Add \fIb\fP to \fIa\fP.
-.TP
-.IB a " & " b
+T}
+=
+\fIa\fB & \fIb\fP;T{
 Binary AND.
-.TP
-.IB a " ^# " b
+T}
+=
+\fIa\fB ^# \fIb\fP;T{
 Binary exclusive OR (XOR).
-.TP
-.IB a " # " b
+T}
+=
+\fIa\fB # \fIb\fP;T{
 Binary OR.
+T}
+.TE
 .LP
+All binary operators are \fIleft-associative\fP, ie. associate
+from left to right, in \*(ST.
 Round brackets may be used for grouping expressions to override
-operator precedence.
+operator precedence and associativity.
+For instance, since \(lq\fB^/\fP\(rq, \(lq\fB/\fP\(rq and \(lq\fB*\fP\(rq
+all have the same precedence, the expression \(lq1 ^/ 2 / 3 * 4\(rq is
+equivalent to \(lq(((1 ^/ 2) / 3) * 4)\(rq.
 The opening bracket also represents an argument barrier, ie. the first
 command after the opening bracket does not see and cannot pop any
 arguments from the stack.
@@ -774,15 +789,6 @@ mandatory in classic TECO, like in \(lq.ZD\(rq.
 I recommend to use it as much as possible in code where clarity
 matters.
 .LP
-Note that \*(ST assigns an unique precedence to each operator
-instead of having several operators (like addition and subtraction)
-share the same precedence and evaluate them according to their
-associativity.
-Still the precedence rules should ensure that expressions are
-evaluated similarily to other programming languages.
-When the same operator is used repeatedly, expressions are always
-evaluated with left-to-right associativity.
-For instance, \(lq2^*3^*4\(rq is evaluated like \(lq(2^*3)^*4\(rq.
 The arithmetic evaluation order established by the operator precedence
 or braces must not be confused with the execution order of \*(ST commands
 which is always strictly from left to right (unless flow control

@@ -93,7 +93,8 @@ Expressions::push_calc(Expressions::Operator op)
 	gint first = first_op();
 
 	/* calculate if op has lower precedence than op on stack */
-	if (first >= 0 && operators.peek(first) <= op)
+	if (first >= 0 &&
+	    precedence(operators.peek(first)) <= precedence(op))
 		calc();
 
 	return push(op);
