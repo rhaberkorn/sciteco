@@ -9,7 +9,19 @@
  * OS X port (macports and/or homebrew)
 
 Known Bugs:
- * 0A at end of buffer should fail
+ * Colors are still wrong in Linux console even if TERM=linux-16color
+   when using Solarized. Affects e.g. the message line which uses the
+   reverse of STYLE_DEFAULT.
+   Perhaps we must call init_color() before initializing color pairs
+   (currently done by Scinterm).
+ * session.save should save and reset ^R. Perhaps ^R should be
+   mapped to a Q-Reg to allow [^R. Currently, saving the buffer session
+   fails if ^R != 10.
+   On the other hand, given that almost any macro depends on the
+   correct radix, __every__ portable macro would have to save the
+   old radix. Perhaps it's better to make the radix a property of the
+   current macro invocation frame and guarantee ^R == 10 at the beginning
+   of macros.
  * Null-byte in strings not always handled transparently
  * Saving another user's file will only preserve the user when run as root.
    Generally, it is hard to ensure that a) save point files can be created
@@ -25,9 +37,23 @@ Known Bugs:
    since they map to the C++ program's call stack.
    It is perhaps best to use another ValueStack as a stack of
    macro strings and implement our own function calling.
+ * SciTECO crashes can leave orphaned savepoint files lying around.
+   Unfortunately, both the Windows and Linux ways of deleting files
+   on close cannot be used here since that would disallow cheap
+   savepoint restoration.
+   On Windows we could work around this using
+   MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT)
 
 Features:
- * Use "SHUT_DOWN" function key on PDCurses/Win32a (see pdcwin.h).
+ * Numbers could be separate states instead of stack operating
+   commands. The current behaviour has few benefits.
+   If a number is a regular command that stops parsing at the
+   first invalid character in the current radix, we could write
+   hexadcimal constants like 16^R0BEEF^D (still clumsy...)
+ * Function key masking flag for the beginning of the command
+   line. May be useful e.g. for solarized's F5 key (i.e. function
+   key macros that need to terminate the command line as they
+   cannot be rubbed out properly).
  * Some command to query the dirty-status of buffers (e.g. EJ).
    This allows us to save all modified buffers. See #4.
  * Mouse support. Not that hard to implement. Mouse events
@@ -95,10 +121,12 @@ Features:
    * A Scintilla view will allow syntax highlighting
  * command line could highlight dead branches (e.g. gray them out)
  * improve GTK interface
-   * shell-like popup widget
+   * shell-like popup widget (similar to curses UI)
    * proper command-line widget (best would be a Scintilla view, s.a.)
    * speed improvements
-   * color schemes
+   * STYLE_DEFAULT and STYLE_CALLTIP should be used for styling the
+     info, message, command line and popup widgets just as the Curses
+     UI does.
  * backup files, or even better Journal files:
    could write a Macro file for each modified file containing
    only basic commands (no loops etc.). it is removed when the file is
@@ -119,6 +147,10 @@ Features:
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
+ * At least on Windows we could implement file restoration via
+   filesystem forks (called Alternate Data Streams) and fall back
+   to the generic savepoint file solution if this is not possible
+   (e.g. on a FAT32 drive).
  * Instead of implementing split screens, it is better to leave
    tiling to programs dedicated to it (tmux, window manager).
    SciTECO could create pseudo-terminals (see pty(7)), set up
@@ -140,8 +172,6 @@ Features:
    Use Autotest for instance.
 
 Optimizations:
- * Curses UI: Command line window can be modelled as a pad
-   instead of a window. This simplifies things.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
    state, this could be modelled via virtual methods in State.
@@ -185,3 +215,33 @@ Optimizations:
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
  * clean up/fix generate-docs.tes
+   generate-docs.tes could be turned into a general purpose script to
+   extract command and macro documentation from C and SciTECO code.
+   It should then be installed so it may be used by third-party macro
+   library authors as well.
+ * An online help system based on manpages/Troff documents.
+   The internal commands and macro libraries are continued to be
+   documented using man-pages (perhaps generated via generate-docs.tes).
+   These troff documents can be augmented with SciTECO-specific tagging
+   troff macros which are invisible when processed by man/grotty.
+   Online documentation could be generated using a new dedicated
+   groff post-processor that generates SciTECO macros that fill a
+   buffer with the formatted text and style it. Let's call the roffed
+   documentation page a "womanpage" and the post-processor "womanizer".
+   While the source document will usually be man or mandoc, this would
+   allow writing online documentation using any troff macro package
+   and for simple documentations, the "womanpage" can be coded directly
+   in SciTECO.
+   SciTECO will support a new interactive-mode-only command (e.g. ^H)
+   that loads a "womanpage" by consulting a tag index, that is built
+   up when interactive mode boots and links a tag to a "womanpage" file
+   (allowing tab completion of course).
+   The "womanpage" macro not only builds up the formatted page when
+   executed but also a tag table that associates individual tags with
+   buffer positions. After the "womanpage" has been munged, SciTECO
+   consults this table to jump to the correct position.
+   The "womanizer" script is distributed as well, to allow third party
+   macro authors to properly document their macros by manpage and
+   only-help.
+   The nice thing about this scheme is that groff is not required
+   at run time since tagged womanpages are generated at build time.
