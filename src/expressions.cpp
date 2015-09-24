@@ -94,7 +94,7 @@ Expressions::push_calc(Expressions::Operator op)
 
 	/* calculate if op has lower precedence than op on stack */
 	if (first >= 0 &&
-	    precedence(operators.peek(first)) <= precedence(op))
+	    precedence(op) <= precedence(operators.peek(first)))
 		calc();
 
 	return push(op);

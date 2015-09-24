@@ -158,27 +158,32 @@ public:
 	/**
 	 * Operator type.
 	 * The enumeration value divided by 16 represents
-	 * its precedence (the lower, the higher).
+	 * its precedence (small values mean low precedence).
 	 * In other words, the value's lower nibble is
 	 * reserved for enumerating operators of the
 	 * same precedence.
 	 */
 	enum Operator {
-		OP_NIL	= 0,
-		OP_POW	= 0x10,	// ^*
-		OP_MOD	= 0x20,	// ^/
-		OP_DIV,		// /
-		OP_MUL,		// *
-		OP_SUB	= 0x30,	// -
-		OP_ADD,		// +
-		OP_AND	= 0x40,	// &
-		OP_XOR	= 0x50,	// ^#
-		OP_OR	= 0x60,	// #
-				// pseudo operators:
-		OP_NEW	= 0xF0,
+		/*
+		 * Pseudo operators
+		 */
+		OP_NIL	= 0x00,
+		OP_NEW,
 		OP_BRACE,
 		OP_LOOP,
-		OP_NUMBER
+		OP_NUMBER,
+		/*
+		 * Real operators
+		 */
+		OP_POW	= 0x60,	// ^*
+		OP_MOD	= 0x50,	// ^/
+		OP_DIV,		// /
+		OP_MUL,		// *
+		OP_SUB	= 0x40,	// -
+		OP_ADD,		// +
+		OP_AND	= 0x30,	// &
+		OP_XOR	= 0x20,	// ^#
+		OP_OR	= 0x10	// #
 	};
 
 private:
