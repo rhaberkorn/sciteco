@@ -80,6 +80,8 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
+* Users of OpenWrt may try to install the
+  [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
 For more details on building from source, please refer to `INSTALL`.
