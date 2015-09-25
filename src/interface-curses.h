@@ -103,6 +103,10 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	FILE *screen_tty;
 
 	WINDOW *info_window;
+	enum {
+		INFO_TYPE_BUFFER = 0,
+		INFO_TYPE_QREGISTER
+	} info_type;
 	gchar *info_current;
 
 	WINDOW *msg_window;

@@ -77,6 +77,13 @@
 #if defined(__PDCURSES__) && defined(G_OS_WIN32) && \
     !defined(PDCURSES_WIN32A)
 #define PDCURSES_WIN32
+
+/*
+ * A_UNDERLINE is not supported by PDCurses/win32
+ * and causes weird colors, so we simply disable it globally.
+ */
+#undef  A_UNDERLINE
+#define A_UNDERLINE 0
 #endif
 
 #ifdef NCURSES_VERSION
@@ -236,6 +243,124 @@ rgb2curses(guint32 rgb)
 	return COLOR_WHITE;
 }
 
+static gsize
+format_str(WINDOW *win, const gchar *str,
+           gssize len = -1, gint max_width = -1)
+{
+	int old_x, old_y;
+	gint chars_added = 0;
+
+	getyx(win, old_y, old_x);
+
+	if (len < 0)
+		len = strlen(str);
+	if (max_width < 0)
+		max_width = getmaxx(win) - old_x;
+
+	while (len > 0) {
+		/*
+		 * NOTE: This mapping is similar to
+		 * View::set_representations()
+		 */
+		switch (*str) {
+		case CTL_KEY_ESC:
+			chars_added++;
+			if (chars_added > max_width)
+				goto truncate;
+			waddch(win, '$' | A_REVERSE);
+			break;
+		case '\r':
+			chars_added += 2;
+			if (chars_added > max_width)
+				goto truncate;
+			waddch(win, 'C' | A_REVERSE);
+			waddch(win, 'R' | A_REVERSE);
+			break;
+		case '\n':
+			chars_added += 2;
+			if (chars_added > max_width)
+				goto truncate;
+			waddch(win, 'L' | A_REVERSE);
+			waddch(win, 'F' | A_REVERSE);
+			break;
+		case '\t':
+			chars_added += 3;
+			if (chars_added > max_width)
+				goto truncate;
+			waddch(win, 'T' | A_REVERSE);
+			waddch(win, 'A' | A_REVERSE);
+			waddch(win, 'B' | A_REVERSE);
+			break;
+		default:
+			if (IS_CTL(*str)) {
+				chars_added += 2;
+				if (chars_added > max_width)
+					goto truncate;
+				waddch(win, '^' | A_REVERSE);
+				waddch(win, CTL_ECHO(*str) | A_REVERSE);
+			} else {
+				chars_added++;
+				if (chars_added > max_width)
+					goto truncate;
+				waddch(win, *str);
+			}
+		}
+
+		str++;
+		len--;
+	}
+
+	return getcurx(win) - old_x;
+
+truncate:
+	if (max_width >= 3) {
+		/*
+		 * Truncate string
+		 */
+		wattron(win, A_UNDERLINE | A_BOLD);
+		mvwaddstr(win, old_y, old_x + max_width - 3, "...");
+		wattroff(win, A_UNDERLINE | A_BOLD);
+	}
+
+	return getcurx(win) - old_x;
+}
+
+static gsize
+format_filename(WINDOW *win, const gchar *filename,
+                gint max_width = -1)
+{
+	int old_x = getcurx(win);
+
+	gchar *filename_canon = String::canonicalize_ctl(filename);
+	size_t filename_len = strlen(filename_canon);
+
+	if (max_width < 0)
+		max_width = getmaxx(win) - old_x;
+
+	if (filename_len <= (size_t)max_width) {
+		waddstr(win, filename_canon);
+	} else {
+		const gchar *keep_post = filename_canon + filename_len -
+		                         max_width + 3;
+
+#ifdef G_OS_WIN32
+		const gchar *keep_pre = g_path_skip_root(filename_canon);
+		if (keep_pre) {
+			waddnstr(win, filename_canon,
+			         keep_pre - filename_canon);
+			keep_post += keep_pre - filename_canon;
+		}
+#endif
+		wattron(win, A_UNDERLINE | A_BOLD);
+		waddstr(win, "...");
+		wattroff(win, A_UNDERLINE | A_BOLD);
+		waddstr(win, keep_post);
+	}
+
+	g_free(filename_canon);
+	return getcurx(win) - old_x;
+}
+
 void
 ViewCurses::initialize_impl(void)
 {
@@ -247,6 +372,7 @@ InterfaceCurses::InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
                                      screen(NULL),
                                      screen_tty(NULL),
                                      info_window(NULL),
+                                     info_type(INFO_TYPE_BUFFER),
                                      info_current(NULL),
                                      msg_window(NULL),
                                      cmdline_window(NULL), cmdline_pad(NULL),
@@ -318,21 +444,7 @@ InterfaceCurses::Popup::init_pad(attr_t attr)
 
 		wattrset(pad, *entry == '*' ? A_BOLD : A_NORMAL);
 
-		if ((int)strlen(entry + 1) > cols - 2) {
-			/* truncate entry */
-			waddnstr(pad, entry + 1, cols - 2 - 3);
-			wattron(pad, A_BOLD);
-			/*
-			 * A_UNDERLINE is not supported by PDCurses/win32
-			 * and causes weird colors, so we better leave it away.
-			 */
-#ifndef PDCURSES_WIN32
-			wattron(pad, A_UNDERLINE);
-#endif
-			waddstr(pad, "...");
-		} else {
-			waddstr(pad, entry + 1);
-		}
+		format_filename(pad, entry+1);
 
 		cur_col++;
 	}
@@ -817,55 +929,6 @@ InterfaceCurses::resize_all_windows(void)
 	draw_cmdline();
 }
 
-static gsize
-format_str(WINDOW *win, const gchar *str, gsize len)
-{
-	int old_x = getcurx(win);
-
-	while (len > 0) {
-		/*
-		 * NOTE: This mapping is similar to
-		 * View::set_representations()
-		 */
-		switch (*str) {
-		case CTL_KEY_ESC:
-			waddch(win, '$' | A_REVERSE);
-			break;
-		case '\r':
-			waddch(win, 'C' | A_REVERSE);
-			waddch(win, 'R' | A_REVERSE);
-			break;
-		case '\n':
-			waddch(win, 'L' | A_REVERSE);
-			waddch(win, 'F' | A_REVERSE);
-			break;
-		case '\t':
-			waddch(win, 'T' | A_REVERSE);
-			waddch(win, 'A' | A_REVERSE);
-			waddch(win, 'B' | A_REVERSE);
-			break;
-		default:
-			if (IS_CTL(*str)) {
-				waddch(win, '^' | A_REVERSE);
-				waddch(win, CTL_ECHO(*str) | A_REVERSE);
-			} else {
-				waddch(win, *str);
-			}
-		}
-
-		str++;
-		len--;
-	}
-
-	return getcurx(win) - old_x;
-}
-
-static inline gsize
-format_str(WINDOW *win, const gchar *str)
-{
-	return format_str(win, str, strlen(str));
-}
-
 void
 InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
@@ -1027,7 +1090,8 @@ void
 InterfaceCurses::draw_info(void)
 {
 	short fg, bg;
-	gchar *title;
+	const gchar *info_type_str;
+	gchar *info_current_canon, *title;
 
 	if (!info_window) /* batch mode */
 		return;
@@ -1042,15 +1106,31 @@ InterfaceCurses::draw_info(void)
 
 	wmove(info_window, 0, 0);
 	wbkgdset(info_window, ' ' | SCI_COLOR_ATTR(fg, bg));
-	/* same formatting as in command lines */
-	format_str(info_window, info_current);
+
+	switch (info_type) {
+	case INFO_TYPE_QREGISTER:
+		info_type_str = PACKAGE_NAME " - <QRegister> ";
+		waddstr(info_window, info_type_str);
+		/* same formatting as in command lines */
+		format_str(info_window, info_current);
+		break;
+
+	case INFO_TYPE_BUFFER:
+		info_type_str = PACKAGE_NAME " - <Buffer> ";
+		waddstr(info_window, info_type_str);
+		format_filename(info_window, info_current);
+		break;
+	}
+
 	wclrtoeol(info_window);
 
 	/*
 	 * Make sure the title will consist only of printable
 	 * characters
 	 */
-	title = String::canonicalize_ctl(info_current);
+	info_current_canon = String::canonicalize_ctl(info_current);
+	title = g_strconcat(info_type_str, info_current_canon, NIL);
+	g_free(info_current_canon);
 	set_window_title(title);
 	g_free(title);
 }
@@ -1060,8 +1140,8 @@ InterfaceCurses::info_update_impl(const QRegister *reg)
 {
 	g_free(info_current);
 	/* NOTE: will contain control characters */
-	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
-	                           reg->name, NIL);
+	info_type = INFO_TYPE_QREGISTER;
+	info_current = g_strdup(reg->name);
 	/* NOTE: drawn in event_loop_iter() */
 }
 
@@ -1069,9 +1149,9 @@ void
 InterfaceCurses::info_update_impl(const Buffer *buffer)
 {
 	g_free(info_current);
-	info_current = g_strconcat(PACKAGE_NAME " - <Buffer> ",
-	                           buffer->filename ? : UNNAMED_FILE,
-	                           buffer->dirty ? "*" : "", NIL);
+	info_type = INFO_TYPE_BUFFER;
+	info_current = g_strconcat(buffer->filename ? : UNNAMED_FILE,
+	                           buffer->dirty ? "*" : " ", NIL);
 	/* NOTE: drawn in event_loop_iter() */
 }
 
@@ -1102,8 +1182,6 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	cmdline_len = format_str(cmdline_pad, cmdline->str, cmdline->len);
 
 	/*
-	 * Also A_UNDERLINE is not supported by PDCurses/win32
-	 * and causes weird colors, so we better leave it away.
 	 * A_BOLD should result in either a bold font or a brighter
 	 * color both on 8 and 16 color terminals.
 	 * This is not quite color-scheme-agnostic, but works
@@ -1113,12 +1191,13 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	 * for rubbed out parts of the command line which will
 	 * be user-configurable.
 	 */
-#ifndef PDCURSES_WIN32
-	wattron(cmdline_pad, A_UNDERLINE);
-#endif
-	wattron(cmdline_pad, A_BOLD);
+	wattron(cmdline_pad, A_UNDERLINE | A_BOLD);
 
-	/* Format rubbed-out command line. */
+	/*
+	 * Format rubbed-out command line.
+	 * NOTE: This formatting will never be truncated since we're
+	 * writing into the pad which is large enough.
+	 */
 	cmdline_rubout_len = format_str(cmdline_pad, cmdline->str + cmdline->len,
 	                                cmdline->rubout_len);
 
