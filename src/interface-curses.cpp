@@ -1133,6 +1133,9 @@ InterfaceCurses::draw_info(void)
 		waddstr(info_window, info_type_str);
 		format_filename(info_window, info_current);
 		break;
+
+	default:
+		g_assert_not_reached();
 	}
 
 	wclrtoeol(info_window);
