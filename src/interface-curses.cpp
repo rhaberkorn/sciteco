@@ -388,9 +388,14 @@ void
 InterfaceCurses::Popup::add(PopupEntryType type,
                             const gchar *name, bool highlight)
 {
-	gchar *entry = g_strconcat(highlight ? "*" : " ", name, NIL);
+	size_t name_len = strlen(name);
+	Entry *entry = (Entry *)g_malloc(sizeof(Entry) + name_len + 1);
 
-	longest = MAX(longest, (gint)strlen(name));
+	entry->type = type;
+	entry->highlight = highlight;
+	strcpy(entry->name, name);
+
+	longest = MAX(longest, (gint)name_len);
 	length++;
 
 	/*
@@ -436,15 +441,23 @@ InterfaceCurses::Popup::init_pad(attr_t attr)
 	 */
 	cur_col = 0;
 	for (GSList *cur = list; cur != NULL; cur = g_slist_next(cur)) {
-		gchar *entry = (gchar *)cur->data;
+		Entry *entry = (Entry *)cur->data;
 		gint cur_line = cur_col/pad_cols + 1;
 
 		wmove(pad, cur_line-1,
 		      (cur_col % pad_cols)*pad_colwidth);
 
-		wattrset(pad, *entry == '*' ? A_BOLD : A_NORMAL);
+		wattrset(pad, entry->highlight ? A_BOLD : A_NORMAL);
 
-		format_filename(pad, entry+1);
+		switch (entry->type) {
+		case POPUP_FILE:
+		case POPUP_DIRECTORY:
+			format_filename(pad, entry->name);
+			break;
+		default:
+			format_str(pad, entry->name);
+			break;
+		}
 
 		cur_col++;
 	}

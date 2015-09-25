@@ -118,6 +118,12 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 		WINDOW *window;		/**! window showing part of pad */
 		WINDOW *pad;		/**! full-height entry list */
 
+		struct Entry {
+			PopupEntryType type;
+			bool highlight;
+			gchar name[];
+		};
+
 		GSList *list;		/**! list of popup entries */
 		gint longest;		/**! size of longest entry */
 		gint length;		/**! total number of popup entries */
