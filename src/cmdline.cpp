@@ -554,14 +554,14 @@ Cmdline::fnmacro(const gchar *name)
 		FNMACRO_MASK_STRING =	(1 << 1)
 	};
 
-	if (!(Flags::ed & Flags::ED_FNKEYS))
-		/* function key macros disabled */
-		goto default_action;
-
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
 	tecoInt mask;
 	gchar *macro;
+
+	if (!(Flags::ed & Flags::ED_FNKEYS))
+		/* function key macros disabled */
+		goto default_action;
 
 	macro_name[0] = CTL_KEY('F');
 	g_strlcpy(macro_name + 1, name, sizeof(macro_name) - 1);

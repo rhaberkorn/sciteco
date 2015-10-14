@@ -96,7 +96,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	 */
 	struct {
 		short r, g, b;
-	} orig_color_table[G_N_ELEMENTS(color_table)];
+	} orig_color_table[16];
 
 	int stdout_orig, stderr_orig;
 	SCREEN *screen;
