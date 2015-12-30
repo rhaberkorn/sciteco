@@ -137,6 +137,8 @@ With certain interfaces (curses) after enabling function keys,
 the Escape key might only be handled after a short delay.
 This is because it might be used by the terminal to transmit
 Escape Sequences.
+This delay is minimized by \*(ST, so using the escape key
+should not be a problem even on ncurses/UNIX.
 .LP
 Enabling function keys also enables Function Key Macros.
 These are Q-Register strings inserted into the command stream

@@ -245,8 +245,8 @@ Additionally \*(ST may be influenced by the
 environment variables accessed by glib
 .UE .
 On a Curses UI, there are other important environment variables
-like \fBTERM\fP, \fBLINES\fP and \fBCOLUMNS\fP that may be
-accessed when \*(ST enters interactive mode.
+like \fBTERM\fP, \fBLINES\fP, \fBCOLUMNS\fP and \fBESCDELAY\fP
+that may be accessed when \*(ST enters interactive mode.
 For ncurses, see section \fBENVIRONMENT\fP in
 .BR ncurses (3NCURSES)
 for details.
