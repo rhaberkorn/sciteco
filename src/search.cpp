@@ -161,6 +161,27 @@ regexp_escape_chr(gchar chr)
 	return g_ascii_isalnum(chr) ? escaped + 1 : escaped;
 }
 
+/**
+ * Convert a SciTECO pattern character class to a regular
+ * expression character class.
+ * It will throw an error for wrong class specs (like invalid
+ * Q-Registers) but not incomplete ones.
+ *
+ * @param state Initial pattern converter state.
+ *              May be modified on return, e.g. when ^E has been
+ *              scanned without a valid class.
+ * @param pattern The character class definition to convert.
+ *                This may point into a longer pattern.
+ *                The pointer is modified and always left after
+ *                the last character used, so it may point to the
+ *                terminating null byte after the call.
+ * @param escape_default Whether to treat single characters
+ *                       as classes or not.
+ * @return A regular expression string or NULL for incomplete
+ *         class specifications. When a string is returned, the
+ *         state has always been reset to STATE_START.
+ *         Must be freed with g_free().
+ */
 gchar *
 StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 			  bool escape_default)
@@ -173,74 +194,119 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 		case STATE_START:
 			switch (*pattern) {
 			case CTL_KEY('S'):
+				pattern++;
 				return g_strdup("[:^alnum:]");
 			case CTL_KEY('E'):
 				state = STATE_CTL_E;
 				break;
 			default:
-				temp = escape_default
-					? g_strdup(regexp_escape_chr(*pattern))
-					: NULL;
-				return temp;
+				/*
+				 * Either a single character "class" or
+				 * not a valid class at all.
+				 */
+				return escape_default ? g_strdup(regexp_escape_chr(*pattern++))
+				                      : NULL;
 			}
 			break;
 
 		case STATE_CTL_E:
 			switch (g_ascii_toupper(*pattern)) {
 			case 'A':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:alpha:]");
 			/* same as <CTRL/S> */
 			case 'B':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:^alnum:]");
 			case 'C':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:alnum:].$");
 			case 'D':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:digit:]");
 			case 'G':
 				state = STATE_ANYQ;
 				break;
 			case 'L':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("\r\n\v\f");
 			case 'R':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:alnum:]");
 			case 'V':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:lower:]");
 			case 'W':
+				pattern++;
 				state = STATE_START;
 				return g_strdup("[:upper:]");
 			default:
+				/*
+				 * Not a valid ^E class, but could still
+				 * be a higher-level ^E pattern.
+				 */
 				return NULL;
 			}
 			break;
 
 		case STATE_ANYQ:
+			/* will throw an error for invalid specs */
 			if (!qreg_machine.input(*pattern, reg))
+				/* incomplete, but consume byte */
 				break;
 			qreg_machine.reset();
 
 			temp = reg->get_string();
 			temp2 = g_regex_escape_string(temp, -1);
 			g_free(temp);
+
+			pattern++;
 			state = STATE_START;
 			return temp2;
 
 		default:
+			/*
+			 * Not a class, but could still be any other
+			 * high-level pattern.
+			 */
 			return NULL;
 		}
 
 		pattern++;
 	}
 
+	/*
+	 * End of string. May happen for empty strings but also
+	 * incomplete ^E or ^EG classes.
+	 */
 	return NULL;
 }
 
+/**
+ * Convert SciTECO pattern to regular expression.
+ * It will throw an error for definitely wrong pattern constructs
+ * but not for incomplete patterns (a necessity of search-as-you-type).
+ *
+ * @bug Incomplete patterns after a pattern has been closed (i.e. its
+ *      string argument) are currently not reported as errors.
+ *
+ * @param pattern The pattern to scan through.
+ *                Modifies the pointer to point after the last
+ *                successfully scanned character, so it can be
+ *                called recursively. It may also point to the
+ *                terminating null byte after the call.
+ * @param single_expr Whether to scan a single pattern
+ *                    expression or an arbitrary sequence.
+ * @return The regular expression string or NULL.
+ *         Must be freed with g_free().
+ */
 gchar *
 StateSearch::pattern2regexp(const gchar *&pattern,
 			    bool single_expr)
@@ -248,19 +314,36 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 	MatchState state = STATE_START;
 	gchar *re = NULL;
 
-	while (*pattern) {
+	do {
 		gchar *new_re, *temp;
 
-		temp = class2regexp(state, pattern);
+		/*
+		 * First check whether it is a class.
+		 * This will not treat individual characters
+		 * as classes, so we do not convert them to regexp
+		 * classes unnecessarily.
+		 * NOTE: This might throw an error.
+		 */
+		try {
+			temp = class2regexp(state, pattern);
+		} catch (...) {
+			g_free(re);
+			throw;
+		}
 		if (temp) {
+			g_assert(state == STATE_START);
+
 			new_re = g_strconcat(re ? : "", "[", temp, "]", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;
 
-			goto next;
+			/* class2regexp() already consumed all the bytes */
+			continue;
 		}
+
 		if (!*pattern)
+			/* end of pattern */
 			break;
 
 		switch (state) {
@@ -275,15 +358,24 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 
 		case STATE_NOT:
 			state = STATE_START;
-			temp = class2regexp(state, pattern, true);
+			try {
+				temp = class2regexp(state, pattern, true);
+			} catch (...) {
+				g_free(re);
+				throw;
+			}
 			if (!temp)
-				goto error;
+				/* a complete class is strictly required */
+				goto incomplete;
+			g_assert(state == STATE_START);
+
 			new_re = g_strconcat(re ? : "", "[^", temp, "]", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;
-			g_assert(state == STATE_START);
-			break;
+
+			/* class2regexp() already consumed all the bytes */
+			continue;
 
 		case STATE_CTL_E:
 			state = STATE_START;
@@ -298,20 +390,32 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 				state = STATE_ALT;
 				break;
 			default:
-				goto error;
+				g_free(re);
+				throw SyntaxError(*pattern);
 			}
 			break;
 
 		case STATE_MANY:
-			temp = pattern2regexp(pattern, true);
+			/* consume exactly one pattern element */
+			try {
+				temp = pattern2regexp(pattern, true);
+			} catch (...) {
+				g_free(re);
+				throw;
+			}
 			if (!temp)
-				goto error;
+				/* a complete expression is strictly required */
+				goto incomplete;
+			/* FIXME: this might return something for an imcomplete pattern */
+
 			new_re = g_strconcat(re ? : "", "(", temp, ")+", NIL);
 			g_free(temp);
 			g_free(re);
 			re = new_re;
 			state = STATE_START;
-			break;
+
+			/* pattern2regexp() already consumed all the bytes */
+			continue;
 
 		case STATE_ALT:
 			switch (*pattern) {
@@ -323,11 +427,21 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 				state = STATE_START;
 				break;
 			default:
-				temp = pattern2regexp(pattern, true);
+				try {
+					temp = pattern2regexp(pattern, true);
+				} catch (...) {
+					g_free(re);
+					throw;
+				}
 				if (!temp)
-					goto error;
+					/* a complete expression is strictly required */
+					goto incomplete;
+
 				String::append(re, temp);
 				g_free(temp);
+
+				/* pattern2regexp() already consumed all the bytes */
+				continue;
 			}
 			break;
 
@@ -336,19 +450,20 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 			g_assert_not_reached();
 		}
 
-next:
-		if (single_expr && state == STATE_START)
-			return re;
-
 		pattern++;
-	}
+	} while (!single_expr || state != STATE_START);
 
+	/*
+	 * Complete open alternative.
+	 * This could be handled like an incomplete expression,
+	 * but closing it automatically improved search-as-you-type.
+	 */
 	if (state == STATE_ALT)
 		String::append(re, ")");
 
 	return re;
 
-error:
+incomplete:
 	g_free(re);
 	return NULL;
 }
@@ -428,7 +543,9 @@ StateSearch::process(const gchar *str, gint new_chars)
 	search_reg->undo_set_integer();
 	search_reg->set_integer(FAILURE);
 
-	/* NOTE: pattern2regexp() modifies str pointer */
+	/*
+	 * NOTE: pattern2regexp() modifies str pointer and may throw
+	 */
 	re_pattern = pattern2regexp(str);
 	qreg_machine.reset();
 #ifdef DEBUG
