@@ -315,7 +315,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 	gchar *re = NULL;
 
 	do {
-		gchar *new_re, *temp;
+		gchar *temp;
 
 		/*
 		 * First check whether it is a class.
@@ -333,10 +333,10 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 		if (temp) {
 			g_assert(state == STATE_START);
 
-			new_re = g_strconcat(re ? : "", "[", temp, "]", NIL);
+			String::append(re, "[");
+			String::append(re, temp);
+			String::append(re, "]");
 			g_free(temp);
-			g_free(re);
-			re = new_re;
 
 			/* class2regexp() already consumed all the bytes */
 			continue;
@@ -369,10 +369,10 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 				goto incomplete;
 			g_assert(state == STATE_START);
 
-			new_re = g_strconcat(re ? : "", "[^", temp, "]", NIL);
+			String::append(re, "[^");
+			String::append(re, temp);
+			String::append(re, "]");
 			g_free(temp);
-			g_free(re);
-			re = new_re;
 
 			/* class2regexp() already consumed all the bytes */
 			continue;
@@ -406,12 +406,11 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 			if (!temp)
 				/* a complete expression is strictly required */
 				goto incomplete;
-			/* FIXME: this might return something for an imcomplete pattern */
 
-			new_re = g_strconcat(re ? : "", "(", temp, ")+", NIL);
+			String::append(re, "(");
+			String::append(re, temp);
+			String::append(re, ")+");
 			g_free(temp);
-			g_free(re);
-			re = new_re;
 			state = STATE_START;
 
 			/* pattern2regexp() already consumed all the bytes */

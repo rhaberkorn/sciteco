@@ -44,6 +44,8 @@ chrdup(gchar chr)
  * Append null-terminated str2 to non-null-terminated
  * str1 of length str1_size.
  * The result is not null-terminated.
+ * This is a very efficient implementation and well
+ * suited for appending lots of small strings often.
  */
 static inline void
 append(gchar *&str1, gsize str1_size, const gchar *str2)
@@ -56,6 +58,8 @@ append(gchar *&str1, gsize str1_size, const gchar *str2)
 
 /**
  * Append str2 to str1 (both null-terminated).
+ * This is a very efficient implementation and well
+ * suited for appending lots of small strings often.
  */
 static inline void
 append(gchar *&str1, const gchar *str2)
