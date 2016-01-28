@@ -190,6 +190,7 @@ public:
 
 	void dirtify(void);
 	bool is_any_dirty(void);
+	void save_all_dirty_buffers(void);
 
 	bool edit(tecoInt id);
 	void edit(const gchar *filename);

@@ -160,6 +160,16 @@ Ring::is_any_dirty(void)
 	return false;
 }
 
+void
+Ring::save_all_dirty_buffers(void)
+{
+	Buffer *cur;
+
+	TAILQ_FOREACH(cur, &head, buffers)
+		if (cur->dirty && cur->filename)
+			cur->save();
+}
+
 bool
 Ring::edit(tecoInt id)
 {

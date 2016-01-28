@@ -2245,35 +2245,50 @@ StateECommand::custom(gchar chr)
 	/*$
 	 * [bool]EX -- Exit program
 	 * -EX
+	 * :EX
 	 *
-	 * Exits \*(ST.
-	 * It is one of the few commands that is not executed
-	 * immediately both in batch and interactive mode.
+	 * Exits \*(ST, or rather requests program termination
+	 * at the end of the top-level macro.
+	 * Therefore instead of exiting immediately which
+	 * could be annoying in interactive mode, EX will
+	 * result in program termination only when the command line
+	 * is terminated.
+	 * This allows EX to be rubbed out and used in macros.
+	 * The usual command to exit \*(ST in interactive mode
+	 * is thus \(lqEX\fB$$\fP\(rq.
 	 * In batch mode EX will exit the program if control
-	 * reaches the end of the munged file, preventing
-	 * interactive mode editing.
-	 * In interactive mode, EX will request an exit that
-	 * is performed on command line termination
-	 * (i.e. after \fB$$\fP).
+	 * reaches the end of the munged file \(em instead of
+	 * starting up interactive mode.
 	 *
 	 * If any buffer is dirty (modified), EX will yield
 	 * an error.
-	 * When specifying <bool> as a Failure condition
-	 * boolean, EX will exit unconditionally.
+	 * When specifying <bool> as a success/truth condition
+	 * boolean, EX will not check whether there are modified
+	 * buffers and will always succeed.
 	 * If <bool> is omitted, the sign prefix is implied
 	 * (1 or -1).
-	 * In other words \(lq-EX\(rq will always succeed.
+	 * In other words \(lq-EX\fB$$\fP\(rq is the usual
+	 * interactive command sequence to discard all unsaved
+	 * changes and exit.
+	 *
+	 * When colon-modified, <bool> is ignored and EX
+	 * will instead immediately save all modified buffers \(em
+	 * this can of course be reversed using rubout.
+	 * \(lq:EX\fB$$\fP\(rq is thus the usual interactive
+	 * command sequence to exit while saving all modified
+	 * buffers.
 	 */
 	/** @bug what if changing file after EX? will currently still exit */
 	case 'X':
 		BEGIN_EXEC(&States::start);
 
-		if (IS_FAILURE(expressions.pop_num_calc()) &&
-		    ring.is_any_dirty())
+		if (eval_colon())
+			ring.save_all_dirty_buffers();
+		else if (IS_FAILURE(expressions.pop_num_calc()) &&
+		         ring.is_any_dirty())
 			throw Error("Modified buffers exist");
 
-		undo.push_var<bool>(quit_requested);
-		quit_requested = true;
+		undo.push_var(quit_requested) = true;
 		break;
 
 	default:
