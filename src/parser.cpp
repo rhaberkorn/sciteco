@@ -2272,9 +2272,11 @@ StateECommand::custom(gchar chr)
 	 * changes and exit.
 	 *
 	 * When colon-modified, <bool> is ignored and EX
-	 * will instead immediately save all modified buffers \(em
+	 * will instead immediately try to save all modified buffers \(em
 	 * this can of course be reversed using rubout.
-	 * \(lq:EX\fB$$\fP\(rq is thus the usual interactive
+	 * Saving all buffers can fail, e.g. if the unnamed file
+	 * is modified or if there is an IO error.
+	 * \(lq:EX\fB$$\fP\(rq is nevertheless the usual interactive
 	 * command sequence to exit while saving all modified
 	 * buffers.
 	 */

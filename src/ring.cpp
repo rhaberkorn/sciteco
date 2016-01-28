@@ -56,7 +56,8 @@ void
 Buffer::save(const gchar *filename)
 {
 	if (!filename && !Buffer::filename)
-		throw Error("File name expected");
+		throw Error("Cannot save the unnamed file "
+		            "without providing a file name");
 
 	IOView::save(filename ? : Buffer::filename);
 
@@ -166,7 +167,8 @@ Ring::save_all_dirty_buffers(void)
 	Buffer *cur;
 
 	TAILQ_FOREACH(cur, &head, buffers)
-		if (cur->dirty && cur->filename)
+		if (cur->dirty)
+			/* NOTE: Will fail for the unnamed file */
 			cur->save();
 }
 
