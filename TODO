@@ -172,6 +172,9 @@ Features:
    Use Autotest for instance.
 
 Optimizations:
+ * Support link-time-optimization for Scintilla and SciTECO.
+   This could significantly improve performance esp. when linking
+   in everything statically as is done on Windows.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
    state, this could be modelled via virtual methods in State.
@@ -193,6 +196,12 @@ Optimizations:
    (it would be glibc-specific).
    We should test whether it brings any benefit on Windows
    and implement with a build-time option.
+ * String::append() could be optimized by ORing a padding
+   into the realloc() size (e.g. 0xFF).
+   However, this has not proven effective on Linux/glibc
+   probably because it will already allocate in blocks of
+   roughly the same size.
+   Should be tested on Windows, though.
  * Scintilla: SETDOCPOINTER resets representations, so we
    have to set SciTECO representations up again often.
    This should be patched in Scintilla.
