@@ -478,8 +478,13 @@ StateExpectString::custom(gchar chr)
 		if (string_building)
 			machine.reset();
 
-		/* FIXME: possible memleak because of `string`? */
-		next = done(string ? : "");
+		try {
+			next = done(string ? : "");
+		} catch (...) {
+			g_free(string);
+			throw;
+		}
+
 		g_free(string);
 		return next;
 	}
@@ -502,7 +507,13 @@ StateExpectString::custom(gchar chr)
 	undo.push_str(strings[0]);
 	String::append(strings[0], insert);
 
-	process(strings[0], strlen(insert));
+	try {
+		process(strings[0], strlen(insert));
+	} catch (...) {
+		g_free(insert);
+		throw;
+	}
+
 	g_free(insert);
 	return this;
 }
