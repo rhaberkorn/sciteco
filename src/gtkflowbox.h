@@ -25,11 +25,7 @@
 #ifndef __GTK_FLOW_BOX_H__
 #define __GTK_FLOW_BOX_H__
 
-#if !defined (__GTK_H_INSIDE__) && !defined (GTK_COMPILATION)
-#error "Only <gtk/gtk.h> can be included directly."
-#endif
-
-#include <gtk/gtkbin.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -99,62 +95,41 @@ struct _GtkFlowBoxChildClass
   void (*_gtk_reserved2) (void);
 };
 
-GDK_AVAILABLE_IN_3_12
 GType                 gtk_flow_box_child_get_type            (void) G_GNUC_CONST;
-GDK_AVAILABLE_IN_3_12
 GtkWidget*            gtk_flow_box_child_new                 (void);
-GDK_AVAILABLE_IN_3_12
 gint                  gtk_flow_box_child_get_index           (GtkFlowBoxChild *child);
-GDK_AVAILABLE_IN_3_12
 gboolean              gtk_flow_box_child_is_selected         (GtkFlowBoxChild *child);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_child_changed             (GtkFlowBoxChild *child);
 
 
-GDK_AVAILABLE_IN_3_12
 GType                 gtk_flow_box_get_type                  (void) G_GNUC_CONST;
 
-GDK_AVAILABLE_IN_3_12
 GtkWidget            *gtk_flow_box_new                       (void);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_homogeneous           (GtkFlowBox           *box,
                                                               gboolean              homogeneous);
-GDK_AVAILABLE_IN_3_12
 gboolean              gtk_flow_box_get_homogeneous           (GtkFlowBox           *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_row_spacing           (GtkFlowBox           *box,
                                                               guint                 spacing);
-GDK_AVAILABLE_IN_3_12
 guint                 gtk_flow_box_get_row_spacing           (GtkFlowBox           *box);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_column_spacing        (GtkFlowBox           *box,
                                                               guint                 spacing);
-GDK_AVAILABLE_IN_3_12
 guint                 gtk_flow_box_get_column_spacing        (GtkFlowBox           *box);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_min_children_per_line (GtkFlowBox           *box,
                                                               guint                 n_children);
-GDK_AVAILABLE_IN_3_12
 guint                 gtk_flow_box_get_min_children_per_line (GtkFlowBox           *box);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_max_children_per_line (GtkFlowBox           *box,
                                                               guint                 n_children);
-GDK_AVAILABLE_IN_3_12
 guint                 gtk_flow_box_get_max_children_per_line (GtkFlowBox           *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_activate_on_single_click (GtkFlowBox        *box,
                                                                  gboolean           single);
-GDK_AVAILABLE_IN_3_12
 gboolean              gtk_flow_box_get_activate_on_single_click (GtkFlowBox        *box);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_insert                       (GtkFlowBox        *box,
                                                                  GtkWidget         *widget,
                                                                  gint               position);
-GDK_AVAILABLE_IN_3_12
 GtkFlowBoxChild      *gtk_flow_box_get_child_at_index           (GtkFlowBox        *box,
                                                                  gint               idx);
 
@@ -162,55 +137,41 @@ typedef void (* GtkFlowBoxForeachFunc) (GtkFlowBox      *box,
                                         GtkFlowBoxChild *child,
                                         gpointer         user_data);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_selected_foreach             (GtkFlowBox        *box,
                                                                  GtkFlowBoxForeachFunc func,
                                                                  gpointer           data);
-GDK_AVAILABLE_IN_3_12
 GList                *gtk_flow_box_get_selected_children        (GtkFlowBox        *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_select_child                 (GtkFlowBox        *box,
                                                                  GtkFlowBoxChild   *child);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_unselect_child               (GtkFlowBox        *box,
                                                                  GtkFlowBoxChild   *child);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_select_all                   (GtkFlowBox        *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_unselect_all                 (GtkFlowBox        *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_selection_mode           (GtkFlowBox        *box,
                                                                  GtkSelectionMode   mode);
-GDK_AVAILABLE_IN_3_12
 GtkSelectionMode      gtk_flow_box_get_selection_mode           (GtkFlowBox        *box);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_hadjustment              (GtkFlowBox        *box,
                                                                  GtkAdjustment     *adjustment);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_vadjustment              (GtkFlowBox        *box,
                                                                  GtkAdjustment     *adjustment);
 
 typedef gboolean (*GtkFlowBoxFilterFunc) (GtkFlowBoxChild *child,
                                           gpointer         user_data);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_filter_func              (GtkFlowBox        *box,
                                                                  GtkFlowBoxFilterFunc filter_func,
                                                                  gpointer             user_data,
                                                                  GDestroyNotify       destroy);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_invalidate_filter            (GtkFlowBox        *box);
 
 typedef gint (*GtkFlowBoxSortFunc) (GtkFlowBoxChild *child1,
                                     GtkFlowBoxChild *child2,
                                     gpointer         user_data);
 
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_set_sort_func                (GtkFlowBox        *box,
                                                                  GtkFlowBoxSortFunc  sort_func,
                                                                  gpointer            user_data,
                                                                  GDestroyNotify      destroy);
-GDK_AVAILABLE_IN_3_12
 void                  gtk_flow_box_invalidate_sort              (GtkFlowBox         *box);
 
 G_END_DECLS

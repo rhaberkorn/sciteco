@@ -52,16 +52,13 @@
  *
  * GtkFlowBox was added in GTK+ 3.12.
  */
-
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#include <gtk/gtk.h>
 
 #include "gtkflowbox.h"
-#include "gtkmarshalers.h"
-#include "gtkprivate.h"
-#include "gtkintl.h"
-
-#include "a11y/gtkflowboxaccessibleprivate.h"
-#include "a11y/gtkflowboxchildaccessible.h"
 
 /* Forward declarations and utilities {{{1 */
 
@@ -596,7 +593,7 @@ gtk_flow_box_child_class_init (GtkFlowBoxChildClass *class)
    * it can be used by applications for their own purposes.
    */
   child_signals[CHILD_ACTIVATE] =
-    g_signal_new (I_("activate"),
+    g_signal_new ("activate",
                   G_OBJECT_CLASS_TYPE (object_class),
                   G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
                   G_STRUCT_OFFSET (GtkFlowBoxChildClass, activate),
@@ -1024,7 +1021,6 @@ gtk_flow_box_update_cursor (GtkFlowBox      *box,
   BOX_PRIV (box)->cursor_child = child;
   gtk_widget_grab_focus (GTK_WIDGET (child));
   gtk_widget_queue_draw (GTK_WIDGET (child));
-  _gtk_flow_box_accessible_update_cursor (GTK_WIDGET (box), GTK_WIDGET (child));
 }
 
 static void
@@ -3485,7 +3481,6 @@ gtk_flow_box_move_cursor (GtkFlowBox      *box,
 static void
 gtk_flow_box_selected_children_changed (GtkFlowBox *box)
 {
-  _gtk_flow_box_accessible_selection_changed (GTK_WIDGET (box));
 }
 
 /* GObject implementation {{{2 */
@@ -3644,8 +3639,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_SELECTION_MODE,
                                    g_param_spec_enum ("selection-mode",
-                                                      P_("Selection mode"),
-                                                      P_("The selection mode"),
+                                                      "Selection mode",
+                                                      "The selection mode",
                                                       GTK_TYPE_SELECTION_MODE,
                                                       GTK_SELECTION_SINGLE,
                                                       G_PARAM_READWRITE));
@@ -3659,8 +3654,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_ACTIVATE_ON_SINGLE_CLICK,
                                    g_param_spec_boolean ("activate-on-single-click",
-                                                         P_("Activate on Single Click"),
-                                                         P_("Activate row on a single click"),
+                                                         "Activate on Single Click",
+                                                         "Activate row on a single click",
                                                          TRUE,
                                                          G_PARAM_READWRITE));
 
@@ -3673,8 +3668,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_HOMOGENEOUS,
                                    g_param_spec_boolean ("homogeneous",
-                                                         P_("Homogeneous"),
-                                                         P_("Whether the children should all be the same size"),
+                                                         "Homogeneous",
+                                                         "Whether the children should all be the same size",
                                                          FALSE,
                                                          G_PARAM_READWRITE));
 
@@ -3691,9 +3686,9 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_MIN_CHILDREN_PER_LINE,
                                    g_param_spec_uint ("min-children-per-line",
-                                                      P_("Minimum Children Per Line"),
-                                                      P_("The minimum number of children to allocate "
-                                                         "consecutively in the given orientation."),
+                                                      "Minimum Children Per Line",
+                                                      "The minimum number of children to allocate "
+                                                         "consecutively in the given orientation.",
                                                       0,
                                                       G_MAXUINT,
                                                       0,
@@ -3708,9 +3703,9 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_MAX_CHILDREN_PER_LINE,
                                    g_param_spec_uint ("max-children-per-line",
-                                                      P_("Maximum Children Per Line"),
-                                                      P_("The maximum amount of children to request space for "
-                                                         "consecutively in the given orientation."),
+                                                      "Maximum Children Per Line",
+                                                      "The maximum amount of children to request space for "
+                                                         "consecutively in the given orientation.",
                                                       0,
                                                       G_MAXUINT,
                                                       DEFAULT_MAX_CHILDREN_PER_LINE,
@@ -3724,8 +3719,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_ROW_SPACING,
                                    g_param_spec_uint ("row-spacing",
-                                                      P_("Vertical spacing"),
-                                                      P_("The amount of vertical space between two children"),
+                                                      "Vertical spacing",
+                                                      "The amount of vertical space between two children",
                                                       0,
                                                       G_MAXUINT,
                                                       0,
@@ -3739,8 +3734,8 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
   g_object_class_install_property (object_class,
                                    PROP_COLUMN_SPACING,
                                    g_param_spec_uint ("column-spacing",
-                                                      P_("Horizontal spacing"),
-                                                      P_("The amount of horizontal space between two children"),
+                                                      "Horizontal spacing",
+                                                      "The amount of horizontal space between two children",
                                                       0,
                                                       G_MAXUINT,
                                                       0,
@@ -3845,7 +3840,7 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
                                        G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
                                        G_STRUCT_OFFSET (GtkFlowBoxClass, move_cursor),
                                        NULL, NULL,
-                                       _gtk_marshal_VOID__ENUM_INT,
+                                       NULL,
                                        G_TYPE_NONE, 2,
                                        GTK_TYPE_MOVEMENT_STEP, G_TYPE_INT);
   /**
@@ -3932,8 +3927,6 @@ gtk_flow_box_class_init (GtkFlowBoxClass *class)
                                 "select-all", 0);
   gtk_binding_entry_add_signal (binding_set, GDK_KEY_a, GDK_CONTROL_MASK | GDK_SHIFT_MASK,
                                 "unselect-all", 0);
-
-  gtk_widget_class_set_accessible_type (widget_class, GTK_TYPE_FLOW_BOX_ACCESSIBLE);
 }
 
 static void
