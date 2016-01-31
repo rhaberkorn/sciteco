@@ -8,11 +8,12 @@ noinst_HEADERS = compat/bsd/sys/cdefs.h \
 
 EXTRA_DIST = README TODO
 
-# Only the PNG icon is installed as it is
+# Only the lower resolution PNG icons are installed as they are
 # required by the GTK UI.
 # Other uses are left to the distro package manager.
-dist_pkgdata_DATA += ico/sciteco-48.png
-EXTRA_DIST += ico/sciteco.ico
+dist_pkgdata_DATA += ico/sciteco-16.png ico/sciteco-32.png \
+                     ico/sciteco-48.png
+EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
 # Distribute entire scintilla directory and
 # do some manual cleanup

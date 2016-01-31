@@ -36,6 +36,7 @@
  */
 #define GDK_DISABLE_DEPRECATION_WARNINGS
 #include <gdk/gdk.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include <gtk/gtk.h>
 #include "gtk-info-popup.h"
@@ -401,6 +402,14 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 void
 InterfaceGtk::event_loop_impl(void)
 {
+	static const gchar *icon_files[] = {
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
+		NULL
+	};
+
+	GList *icon_list = NULL;
 	GThread *thread;
 
 	/*
@@ -408,12 +417,19 @@ InterfaceGtk::event_loop_impl(void)
 	 * If the file could not be found, we fail silently.
 	 * FIXME: On Windows, it may be better to load the icon compiled
 	 * as a resource into the binary.
-	 * FIXME: Provide all the different icon sizes we have
-	 * (gtk_window_set_default_icon_list()).
 	 */
-	gtk_window_set_default_icon_from_file(SCITECODATADIR G_DIR_SEPARATOR_S
-	                                      "sciteco-48.png",
-	                                      NULL);
+	for (const gchar **file = icon_files; *file; file++) {
+		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(*file, NULL);
+
+		/* fail silently if there's a problem with one of the icons */
+		if (icon_pixbuf)
+			icon_list = g_list_append(icon_list, icon_pixbuf);
+	}
+
+	gtk_window_set_default_icon_list(icon_list);
+
+	if (icon_list)
+		g_list_free_full(icon_list, g_object_unref);
 
 	/*
 	 * When changing views, the new widget is not
