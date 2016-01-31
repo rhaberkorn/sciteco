@@ -4,16 +4,23 @@ Upstream-Contact: robin.haberkorn@googlemail.com
 Source: https://sourceforge.net/projects/sciteco
 
 Files: debian/*
-Copyright: Copyright 2013-2015 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Copyright: Copyright 2013-2016 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
 Files: sciteco/*
-Copyright: Copyright 2012-2015 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Copyright: Copyright 2012-2016 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
-Files: sciteco/compat/bsd/*
+Files: sciteco/gtkflowbox.c sciteco/gtkflowbox.h
+Copyright:
+ Copyright 2007-2010 Openismus GmbH
+ Copyright 2013 Red Hat, Inc.
+License: LGPL-2+
+ /usr/share/common-licenses/LGPL-2
+
+Files: compat/bsd/*
 Copyright: Copyright 1991, 1993 The Regents of the University of California
 License: BSD
  /usr/share/common-licenses/BSD
@@ -43,11 +50,11 @@ License:
  OR PERFORMANCE OF THIS SOFTWARE.
 
 Files: scintilla/scinterm/*
-Copyright: Copyright 2012-2014 Mitchell <mitchell.att.foicica.com>
+Copyright: Copyright 2012-2015 Mitchell <mitchell.att.foicica.com>
 License:
  The MIT License
  .
- Copyright (c) 2012-2014 Mitchell
+ Copyright (c) 2012-2015 Mitchell
  .
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
