@@ -15,8 +15,7 @@ When you delete a character from the end of the command line macro (called rubou
 side-effects of that character which may be a command or part of a command, are undone.
 
 SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
-GTK+ 2 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
-Currently, the Curses frontend is recommended.
+GTK+ 3 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
 
 The Curses frontend is verified to work with [ncurses](https://www.gnu.org/software/ncurses/),
 [PDCurses/XCurses](http://pdcurses.sourceforge.net/), the

@@ -26,9 +26,16 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+/*
+ * FIXME: Because of gdk_threads_enter().
+ * The only way to do it in Gtk3 style would be using
+ * idle callbacks into the main thread and sync barriers (inefficient!)
+ * or doing it single-threaded and ticking the Gtk main loop
+ * (may be inefficient since gtk_events_pending() is doing
+ * syscalls; however that may be ailed by doing it less frequently).
+ */
+#define GDK_DISABLE_DEPRECATION_WARNINGS
 #include <gdk/gdk.h>
-#include <gdk/gdkkeysyms.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include <gtk/gtk.h>
 #include "gtk-info-popup.h"
@@ -91,7 +98,7 @@ ViewGtk::initialize_impl(void)
 
 	scintilla_set_id(sci, 0);
 
-	gtk_widget_set_usize(get_widget(), 500, 300);
+	gtk_widget_set_size_request(get_widget(), 500, 300);
 
 	/*
 	 * This disables mouse and key events on this view.
@@ -124,6 +131,7 @@ void
 InterfaceGtk::main_impl(int &argc, char **&argv)
 {
 	static const Cmdline empty_cmdline;
+	GtkWidget *overlay_widget;
 	GtkWidget *info_content;
 
 	/*
@@ -159,9 +167,11 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	 * enabling and disabling GDK updates and in order to filter
 	 * mouse and keyboard events going to Scintilla.
 	 */
+	overlay_widget = gtk_overlay_new();
 	event_box_widget = gtk_event_box_new();
 	gtk_event_box_set_above_child(GTK_EVENT_BOX(event_box_widget), TRUE);
-	gtk_box_pack_start(GTK_BOX(vbox), event_box_widget, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(overlay_widget), event_box_widget);
+	gtk_box_pack_start(GTK_BOX(vbox), overlay_widget, TRUE, TRUE, 0);
 
 	info_widget = gtk_info_bar_new();
 	info_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_widget));
@@ -180,7 +190,15 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 
 	gtk_container_add(GTK_CONTAINER(window), vbox);
 
-	popup_widget = gtk_info_popup_new(cmdline_widget);
+	/*
+	 * Popup widget will be shown in the bottom
+	 * of the overlay widget (i.e. the Scintilla views),
+	 * filling the entire width.
+	 */
+	popup_widget = gtk_info_popup_new();
+	gtk_widget_set_halign(popup_widget, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(popup_widget, GTK_ALIGN_END);
+	gtk_overlay_add_overlay(GTK_OVERLAY(overlay_widget), popup_widget);
 
 	gtk_widget_grab_focus(cmdline_widget);
 
@@ -345,6 +363,19 @@ InterfaceGtk::popup_add_impl(PopupEntryType type,
 }
 
 void
+InterfaceGtk::popup_show_impl(void)
+{
+	gdk_threads_enter();
+
+	if (gtk_widget_get_visible(popup_widget))
+		gtk_info_popup_scroll_page(GTK_INFO_POPUP(popup_widget));
+	else
+		gtk_widget_show(popup_widget);
+
+	gdk_threads_leave();
+}
+
+void
 InterfaceGtk::popup_clear_impl(void)
 {
 	gdk_threads_enter();
@@ -370,20 +401,19 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 void
 InterfaceGtk::event_loop_impl(void)
 {
-	GdkPixbuf *icon;
 	GThread *thread;
 
 	/*
 	 * Assign an icon to the window.
 	 * If the file could not be found, we fail silently.
-	 * On Windows, it may be better to load the icon compiled
+	 * FIXME: On Windows, it may be better to load the icon compiled
 	 * as a resource into the binary.
+	 * FIXME: Provide all the different icon sizes we have
+	 * (gtk_window_set_default_icon_list()).
 	 */
-	icon = gdk_pixbuf_new_from_file(SCITECODATADIR G_DIR_SEPARATOR_S
-	                                "sciteco-48.png",
-	                                NULL);
-	if (icon)
-		gtk_window_set_icon(GTK_WINDOW(window), icon);
+	gtk_window_set_default_icon_from_file(SCITECODATADIR G_DIR_SEPARATOR_S
+	                                      "sciteco-48.png",
+	                                      NULL);
 
 	/*
 	 * When changing views, the new widget is not
@@ -404,6 +434,8 @@ InterfaceGtk::event_loop_impl(void)
 	gtk_window_set_title(GTK_WINDOW(window), info_current);
 
 	gtk_widget_show_all(window);
+	/* don't show popup by default */
+	gtk_widget_hide(popup_widget);
 
 	/*
 	 * SIGTERM emulates the "Close" key just like when
@@ -505,16 +537,16 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	gdk_threads_leave();
 
 	switch (keyval) {
-	case GDK_Escape:
+	case GDK_KEY_Escape:
 		cmdline.keypress(CTL_KEY_ESC);
 		break;
-	case GDK_BackSpace:
+	case GDK_KEY_BackSpace:
 		cmdline.keypress(CTL_KEY('H'));
 		break;
-	case GDK_Tab:
+	case GDK_KEY_Tab:
 		cmdline.keypress('\t');
 		break;
-	case GDK_Return:
+	case GDK_KEY_Return:
 		cmdline.keypress('\n');
 		break;
 
@@ -522,19 +554,19 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	 * Function key macros
 	 */
 #define FN(KEY, MACRO) \
-	case GDK_##KEY: cmdline.fnmacro(#MACRO); break
+	case GDK_KEY_##KEY: cmdline.fnmacro(#MACRO); break
 #define FNS(KEY, MACRO) \
-	case GDK_##KEY: cmdline.fnmacro(is_shift ? "S" #MACRO : #MACRO); break
+	case GDK_KEY_##KEY: cmdline.fnmacro(is_shift ? "S" #MACRO : #MACRO); break
 	FN(Down, DOWN); FN(Up, UP);
 	FNS(Left, LEFT); FNS(Right, RIGHT);
 	FN(KP_Down, DOWN); FN(KP_Up, UP);
 	FNS(KP_Left, LEFT); FNS(KP_Right, RIGHT);
 	FNS(Home, HOME);
-	case GDK_F1...GDK_F35: {
+	case GDK_KEY_F1...GDK_KEY_F35: {
 		gchar macro_name[3+1];
 
 		g_snprintf(macro_name, sizeof(macro_name),
-			   "F%d", keyval - GDK_F1 + 1);
+			   "F%d", keyval - GDK_KEY_F1 + 1);
 		cmdline.fnmacro(macro_name);
 		break;
 	}
@@ -653,7 +685,7 @@ cmdline_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
 	g_async_queue_lock(event_queue);
 
 	if (g_async_queue_length_unlocked(event_queue) >= 0 &&
-	    is_ctl && gdk_keyval_to_upper(event->keyval) == GDK_C) {
+	    is_ctl && gdk_keyval_to_upper(event->keyval) == GDK_KEY_C) {
 		/*
 		 * Handle asynchronous interruptions if CTRL+C is pressed.
 		 * This will usually send SIGINT to the entire process
@@ -694,7 +726,7 @@ window_delete_cb(GtkWidget *w, GdkEventAny *e, gpointer user_data)
 	 */
 	close_event = (GdkEventKey *)gdk_event_new(GDK_KEY_PRESS);
 	close_event->window = gtk_widget_get_parent_window(w);
-	close_event->keyval = GDK_Close;
+	close_event->keyval = GDK_KEY_Close;
 
 	g_async_queue_push(event_queue, close_event);
 
@@ -717,7 +749,7 @@ sigterm_handler(gpointer user_data)
 	 * Similar to window deletion - emulate "close" key press.
 	 */
 	close_event = (GdkEventKey *)gdk_event_new(GDK_KEY_PRESS);
-	close_event->keyval = GDK_Close;
+	close_event->keyval = GDK_KEY_Close;
 
 	g_async_queue_push(event_queue, close_event);
 

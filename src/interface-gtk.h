@@ -22,6 +22,8 @@
 
 #include <glib.h>
 
+/* FIXME: see interface-gtk.cpp */
+#define GDK_DISABLE_DEPRECATION_WARNINGS
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 
@@ -132,14 +134,8 @@ public:
 	void popup_add_impl(PopupEntryType type,
 		            const gchar *name, bool highlight = false);
 	/* implementation of Interface::popup_show() */
-	inline void
-	popup_show_impl(void)
-	{
-		/* FIXME: scroll through popup contents */
-		gdk_threads_enter();
-		gtk_widget_show(popup_widget);
-		gdk_threads_leave();
-	}
+	void popup_show_impl(void);
+
 	/* implementation of Interface::popup_is_shown() */
 	inline bool
 	popup_is_shown_impl(void)

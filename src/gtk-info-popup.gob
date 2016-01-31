@@ -1,7 +1,18 @@
-requires 2.0.16
+requires 2.0.20
 
-%privateheader{
-#include <gdk/gdk.h>
+%ctop{
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <math.h>
+
+#include <glib/gprintf.h>
+#include <gio/gio.h>
+
+#ifndef HAVE_GTK_FLOW_BOX_NEW
+#include "gtkflowbox.h"
+#endif
 %}
 
 %h{
@@ -14,114 +25,181 @@ enum GTK_INFO_POPUP {
 	DIRECTORY
 } Gtk:Info:Popup:Entry:Type;
 
-class Gtk:Info:Popup from Gtk:Window {
-	private GtkWidget *parent;
+class Gtk:Info:Popup from Gtk:Event:Box {
+	public GtkAdjustment *hadjustment;
+	public GtkAdjustment *vadjustment;
+
+	private GtkWidget *flow_box;
 
 	init(self)
 	{
-		GtkWidget *vbox;
+		GtkWidget *box, *viewport;
 
-		//gtk_window_set_gravity(GTK_WINDOW(self), GDK_GRAVITY_SOUTH_WEST);
-		gtk_container_set_border_width(GTK_CONTAINER(self), 10);
+		/*
+		 * A box containing a viewport and scrollbar will
+		 * "emulate" a scrolled window.
+		 * We cannot use a scrolled window since it ignores
+		 * the preferred height of its viewport which breaks
+		 * height-for-width management.
+		 */
+		box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 
-		vbox = gtk_vbox_new(FALSE, 5);
-		gtk_container_set_resize_mode(GTK_CONTAINER(vbox), GTK_RESIZE_PARENT);
-		gtk_container_add(GTK_CONTAINER(self), vbox);
-		gtk_widget_show(vbox);
-	}
+		self->hadjustment = gtk_adjustment_new(0, 0, 0, 0, 0, 0);
+		self->vadjustment = gtk_adjustment_new(0, 0, 0, 0, 0, 0);
 
-	public GtkWidget *
-	new(Gtk:Widget *parent)
-	{
-		Self *widget;
-		GtkWidget *toplevel;
+		GtkWidget *scrollbar = gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL,
+		                                         self->vadjustment);
 
-		widget = GET_NEW_VARG("type", GTK_WINDOW_POPUP, NULL);
-		widget->_priv->parent = parent;
+		self->_priv->flow_box = gtk_flow_box_new();
+		/* take as little height as necessary */
+		gtk_orientable_set_orientation(GTK_ORIENTABLE(self->_priv->flow_box),
+		                               GTK_ORIENTATION_HORIZONTAL);
+		//gtk_flow_box_set_homogeneous(GTK_FLOW_BOX(self->_priv->flow_box), TRUE);
+		/* this for focus handling only, not for scrolling */
+		gtk_flow_box_set_hadjustment(GTK_FLOW_BOX(self->_priv->flow_box),
+		                             self->hadjustment);
+		gtk_flow_box_set_vadjustment(GTK_FLOW_BOX(self->_priv->flow_box),
+		                             self->vadjustment);
 
-		g_signal_connect(parent, "size-allocate",
-				 G_CALLBACK(self_size_allocate_cb), widget);
-		toplevel = gtk_widget_get_toplevel(parent);
-		g_signal_connect(toplevel, "configure-event",
-				 G_CALLBACK(self_configure_cb), widget);
+		gtk_container_set_border_width(GTK_CONTAINER(self->_priv->flow_box), 10);
 
-		return GTK_WIDGET(widget);
-	}
+		viewport = gtk_viewport_new(self->hadjustment, self->vadjustment);
+		gtk_container_add(GTK_CONTAINER(viewport), self->_priv->flow_box);
 
-	private void
-	position(self)
-	{
-		GdkWindow *window = gtk_widget_get_window(self->_priv->parent);
-		gint x, y;
-		gint w, h;
+		gtk_box_pack_start(GTK_BOX(box), viewport, TRUE, TRUE, 0);
+		gtk_box_pack_start(GTK_BOX(box), scrollbar, FALSE, FALSE, 0);
+		gtk_widget_show_all(box);
 
-		if (!window)
-			return;
-
-		gdk_window_get_origin(window, &x, &y);
-		gtk_window_get_size(GTK_WINDOW(self), &w, &h);
-
-		gtk_window_move(GTK_WINDOW(self), x, y - h);
-	}
-
-	private void
-	size_allocate_cb(Gtk:Widget *parent,
-			 Gtk:Allocation *alloc, gpointer user_data)
-	{
-		self_position(SELF(user_data));
-	}
-
-	private gboolean
-	configure_cb(Gtk:Widget *toplevel,
-		     Gdk:Event:Configure *event, gpointer user_data)
-	{
-		self_position(SELF(user_data));
-		return FALSE;
+		/*
+		 * The top-level widget is a GtkEventBox, so it can have
+		 * a background. We assign a default color since the popup
+		 * will usually be put in an overlay and we don't want it
+		 * to be transparent.
+		 * It can also be styled with rounded corners etc.
+		 * FIXME: This method of setting a background color is
+		 * deprecated. We are supposed to use CSS style providers...
+		 */
+		gtk_container_add(GTK_CONTAINER(self), box);
+		GdkRGBA color = {0.5, 0.5, 0.5, 1.0};
+		gtk_widget_override_background_color(GTK_WIDGET(self), GTK_STATE_FLAG_NORMAL,
+		                                     &color);
 	}
 
 	override (Gtk:Widget) void
-	show(Gtk:Widget *self)
+	size_allocate(Gtk:Widget *widget,
+	              Gtk:Allocation *allocation)
+        {
+		GtkWidget *parent = gtk_widget_get_parent(widget);
+		GtkAllocation parent_alloc;
+
+
+		/*
+		 * Adjust the allocation of the popup to be within the
+		 * bounds of its parent widget which GtkOvelay does
+		 * not seem to do automatically.
+		 * Also Gtk does not seem to query this widget's
+		 * preferred height.
+		 * FIXME: Only works if the GtkInfoPopup is added
+		 * directly to the GtkOverlay.
+		 */
+		gtk_widget_get_allocation(parent, &parent_alloc);
+		allocation->width = MIN(allocation->width, parent_alloc.width);
+		if (allocation->height > parent_alloc.height) {
+			allocation->y += allocation->height - parent_alloc.height;
+			allocation->height = parent_alloc.height;
+		}
+
+		/*
+		 * Allocate the adjusted/clipped allocation
+		 */
+		PARENT_HANDLER(widget, allocation);
+	}
+
+	/*
+	 * Adapted from GtkScrolledWindow's gtk_scrolled_window_scroll_event()
+	 * since the viewport does not react to scroll events.
+	 * FIXME: May need to handle non-delta scrolling, i.e. GDK_SCROLL_UP
+	 * and GDK_SCROLL_DOWN.
+	 */
+	override (Gtk:Widget) gboolean
+	scroll_event(Gtk:Widget *widget, GdkEventScroll *event)
 	{
-		GtkRequisition req;
+		Self *self = GTK_INFO_POPUP(widget);
+		gdouble delta_x, delta_y;
 
-		gtk_widget_size_request(self, &req);
-		gtk_window_resize(GTK_WINDOW(self), req.width, req.height);
-		self_position(SELF(self));
+		if (gdk_event_get_scroll_deltas((GdkEvent *)event,
+		                                &delta_x, &delta_y)) {
+			GtkAdjustment *adj = self->vadjustment;
+			gdouble page_size = gtk_adjustment_get_page_size(adj);
+			gdouble scroll_unit = pow(page_size, 2.0 / 3.0);
+			gdouble new_value;
 
-		PARENT_HANDLER(self);
+			new_value = CLAMP(gtk_adjustment_get_value(adj) + delta_y * scroll_unit,
+			                  gtk_adjustment_get_lower(adj),
+			                  gtk_adjustment_get_upper(adj) -
+			                  gtk_adjustment_get_page_size(adj));
+
+			gtk_adjustment_set_value(adj, new_value);
+
+			return TRUE;
+		}
+
+		return FALSE;
+	}
+
+	public GtkWidget *
+	new(void)
+	{
+		Self *widget = GET_NEW;
+		return GTK_WIDGET(widget);
+	}
+
+	private GIcon *
+	get_icon_for_path(const gchar *path, const gchar *fallback_name)
+	{
+		GFile *file;
+		GFileInfo *info;
+		GIcon *icon = NULL;
+
+		file = g_file_new_for_path(path);
+		info = g_file_query_info(file, "standard::icon", 0, NULL, NULL);
+		if (info) {
+			icon = g_file_info_get_icon(info);
+			g_object_ref(icon);
+			g_object_unref(info);
+		} else {
+			/* fall back to standard icon, but this can still return NULL! */
+			icon = g_icon_new_for_string(fallback_name, NULL);
+		}
+		g_object_unref(file);
+
+		return icon;
 	}
 
 	public void
 	add(self, Gtk:Info:Popup:Entry:Type type,
 	    const gchar *name, gboolean highlight)
 	{
-		static const gchar *type2stock[] = {
-			[GTK_INFO_POPUP_PLAIN]		= NULL,
-			[GTK_INFO_POPUP_FILE]		= GTK_STOCK_FILE,
-			[GTK_INFO_POPUP_DIRECTORY]	= GTK_STOCK_DIRECTORY
-		};
-
-		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
-		GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(self));
-		GtkRequisition req;
-
 		GtkWidget *hbox;
 		GtkWidget *label;
 		gchar *markup;
 
-		gtk_widget_size_request(GTK_WIDGET(self), &req);
-		if (req.height > gdk_screen_get_height(screen))
-			return;
+		hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
-		hbox = gtk_hbox_new(FALSE, 5);
+		if (type == GTK_INFO_POPUP_FILE || type == GTK_INFO_POPUP_DIRECTORY) {
+			const gchar *fallback = type == GTK_INFO_POPUP_FILE ? "text-x-generic"
+			                                                    : "folder";
+			GIcon *icon;
 
-		if (type2stock[type]) {
-			GtkWidget *image;
+			icon = self_get_icon_for_path(name, fallback);
+			if (icon) {
+				GtkWidget *image;
 
-			image = gtk_image_new_from_stock(type2stock[type],
-							 GTK_ICON_SIZE_MENU);
-			gtk_box_pack_start(GTK_BOX(hbox), image,
-					   FALSE, FALSE, 0);
+				image = gtk_image_new_from_gicon(icon, GTK_ICON_SIZE_MENU);
+				g_object_unref(icon);
+				gtk_box_pack_start(GTK_BOX(hbox), image,
+				                   FALSE, FALSE, 0);
+			}
 		}
 
 		/*
@@ -137,25 +215,51 @@ class Gtk:Info:Popup from Gtk:Window {
 		gtk_misc_set_alignment(GTK_MISC(label), 0., 0.5);
 		gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
 
-		gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 		gtk_widget_show_all(hbox);
+		gtk_container_add(GTK_CONTAINER(self->_priv->flow_box), hbox);
+	}
 
-		gtk_widget_size_request(GTK_WIDGET(self), &req);
-		if (req.height > gdk_screen_get_height(screen)) {
-			label = gtk_label_new("...");
-			gtk_box_pack_start(GTK_BOX(vbox), label,
-					   FALSE, FALSE, 0);
-			gtk_widget_show(label);
+	public void
+	scroll_page(self)
+	{
+		GtkAdjustment *adj = self->vadjustment;
+		gdouble new_value;
+
+		if (gtk_adjustment_get_value(adj) + gtk_adjustment_get_page_size(adj) ==
+		    gtk_adjustment_get_upper(adj)) {
+			/* wrap and scroll back to the top */
+			new_value = gtk_adjustment_get_lower(adj);
+		} else {
+			/* scroll one page */
+			GList *child_list;
+
+			new_value = gtk_adjustment_get_value(adj) +
+			            gtk_adjustment_get_page_size(adj);
+
+			/*
+			 * Adjust this so only complete entries are shown.
+			 * Effectively, this rounds down to the line height.
+			 */
+			child_list = gtk_container_get_children(GTK_CONTAINER(self->_priv->flow_box));
+			if (child_list) {
+				new_value -= (gint)new_value %
+				             gtk_widget_get_allocated_height(GTK_WIDGET(child_list->data));
+				g_list_free(child_list);
+			}
+
+			/* clip to the maximum possible value */
+			new_value = MIN(new_value, gtk_adjustment_get_upper(adj));
 		}
+
+		gtk_adjustment_set_value(adj, new_value);
 	}
 
 	public void
 	clear(self)
 	{
-		GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(self));
 		GList *children;
 
-		children = gtk_container_get_children(GTK_CONTAINER(vbox));
+		children = gtk_container_get_children(GTK_CONTAINER(self->_priv->flow_box));
 		for (GList *cur = g_list_first(children);
 		     cur != NULL;
 		     cur = g_list_next(cur))

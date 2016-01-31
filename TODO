@@ -121,7 +121,6 @@ Features:
    * A Scintilla view will allow syntax highlighting
  * command line could highlight dead branches (e.g. gray them out)
  * improve GTK interface
-   * shell-like popup widget (similar to curses UI)
    * proper command-line widget (best would be a Scintilla view, s.a.)
    * speed improvements
    * STYLE_DEFAULT and STYLE_CALLTIP should be used for styling the

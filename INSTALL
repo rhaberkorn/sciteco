@@ -28,8 +28,8 @@ SciTECO Build and Runtime Dependencies
    * PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses).
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
-   * GTK+ 2: http://www.gtk.org/
-   * GObject Builder: http://www.jirka.org/gob.html
+   * GTK+ v3.10 or later: http://www.gtk.org/
+   * GObject Builder v2.0.20 or later: http://www.jirka.org/gob.html
  * Groff (only when formatting HTML manuals)
  * Doxygen (only when generating developer documentation)
 

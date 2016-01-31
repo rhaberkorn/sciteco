@@ -229,21 +229,32 @@ case $INTERFACE in
 	])
 	AC_DEFINE(INTERFACE_CURSES, , [Build with curses support])
 
-	# For Scintilla:
+	# For Scintilla/Scinterm:
 	CPPFLAGS="$CPPFLAGS -DCURSES -I$SCINTERM_PATH"
 	;;
 
 gtk)
-	PKG_CHECK_MODULES(LIBGTK, [gtk+-2.0 gmodule-2.0], [
+	# NOTE: Ubuntu 14.04 only has Gtk+ 3.10, so we have to support it.
+	# This version lacks GtkFlowBox.
+	# gmodule is required by Scintilla.
+	PKG_CHECK_MODULES(LIBGTK, [gtk+-3.0 >= 3.10 gmodule-2.0], [
 		CFLAGS="$CFLAGS $LIBGTK_CFLAGS"
 		CXXFLAGS="$CXXFLAGS $LIBGTK_CFLAGS"
 		LIBS="$LIBS $LIBGTK_LIBS"
 	])
+
+	# Should be available since v3.12
+	AC_CHECK_FUNCS(gtk_flow_box_new, [], [
+		GTK_FLOW_BOX_FALLBACK=true
+	])
+	AM_CONDITIONAL(GTK_FLOW_BOX_FALLBACK, [test x$GTK_FLOW_BOX_FALLBACK = xtrue])
+
 	AC_CHECK_PROG(GOB2, gob2, gob2)
 	if [[ x$GOB2 = x ]]; then
 		AC_MSG_ERROR([Gob2 (GObject Builder) not found!])
 	fi
-	AC_DEFINE(INTERFACE_GTK, , [Build with GTK+ 2.0 support])
+
+	AC_DEFINE(INTERFACE_GTK, , [Build with GTK+ 3.0 support])
 
 	# For Scintilla:
 	CPPFLAGS="$CPPFLAGS -DGTK"

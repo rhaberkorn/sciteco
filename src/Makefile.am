@@ -52,9 +52,12 @@ if INTERFACE_GTK
 
 BUILT_SOURCES += gtk-info-popup.c \
 		 gtk-info-popup.h gtk-info-popup-private.h
+nodist_libsciteco_base_a_SOURCES += gtk-info-popup.c
 
 libsciteco_base_a_SOURCES += interface-gtk.cpp interface-gtk.h
-nodist_libsciteco_base_a_SOURCES += gtk-info-popup.c
+if GTK_FLOW_BOX_FALLBACK
+libsciteco_base_a_SOURCES += gtkflowbox.c gtkflowbox.h
+endif
 
 else
 # else must be Curses interface
@@ -88,7 +91,7 @@ CLEANFILES = $(BUILT_SOURCES) \
 	     symbols-scintilla.cpp symbols-scilexer.cpp
 
 %.c %.h %-private.h : %.gob
-	@GOB2@ $<
+	@GOB2@ --gtk3 $<
 
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
 			symbols-extract.tes
