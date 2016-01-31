@@ -340,9 +340,9 @@ public:
 } /* namespace SciTECO */
 
 #ifdef INTERFACE_GTK
-#include "interface-gtk.h"
+#include "interface-gtk/interface-gtk.h"
 #elif defined(INTERFACE_CURSES)
-#include "interface-curses.h"
+#include "interface-curses/interface-curses.h"
 #else
 #error No interface selected!
 #endif

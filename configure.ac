@@ -19,9 +19,18 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
+# Automake build flag substitutions.
+# Necessary so we can change their default values here
+AC_SUBST(AM_CPPFLAGS)
+
 # SciTECO library macro directory
 scitecolibdir=$datadir/$PACKAGE/lib
 AC_SUBST(scitecolibdir)
+
+# These paths can be changed at install-time and
+# should not be written into config.h:
+AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(pkgdatadir)\"' \
+                          -D'SCITECOLIBDIR=\"\$(scitecolibdir)\"'"
 
 # Auxiliary functions
 
@@ -86,8 +95,9 @@ PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.28], [
 # Checks for header files.
 AC_HEADER_STDC
 
-AC_CHECK_HEADERS([bsd/sys/queue.h])
-AM_CONDITIONAL(NEED_COMPAT, [test $ac_cv_header_bsd_sys_queue_h = no])
+AC_CHECK_HEADERS([bsd/sys/queue.h], [], [
+	AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/compat"
+])
 
 case $host in
 *-mingw*)
@@ -247,7 +257,6 @@ gtk)
 	AC_CHECK_FUNCS(gtk_flow_box_new, [], [
 		GTK_FLOW_BOX_FALLBACK=true
 	])
-	AM_CONDITIONAL(GTK_FLOW_BOX_FALLBACK, [test x$GTK_FLOW_BOX_FALLBACK = xtrue])
 
 	AC_CHECK_PROG(GOB2, gob2, gob2)
 	if [[ x$GOB2 = x ]]; then
@@ -266,6 +275,7 @@ gtk)
 esac
 
 AM_CONDITIONAL(INTERFACE_GTK, [test x$INTERFACE = xgtk])
+AM_CONDITIONAL(GTK_FLOW_BOX_FALLBACK, [test x$GTK_FLOW_BOX_FALLBACK = xtrue])
 
 AC_ARG_WITH(teco-integer,
 	AS_HELP_STRING([--with-teco-integer=SIZE],
@@ -320,6 +330,8 @@ AC_ARG_ENABLE(static-executables,
 	[static_executables=$enableval], [static_executables=no])
 AM_CONDITIONAL(STATIC_EXECUTABLES, [test x$static_executables = xyes])
 
-AC_CONFIG_FILES([Makefile src/Makefile lib/Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([src/Makefile src/interface-gtk/Makefile src/interface-curses/Makefile])
+AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
 AC_OUTPUT
