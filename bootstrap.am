@@ -18,5 +18,8 @@ SUBST_MACRO = eb$<\e \
 	      <fs@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>j \
 	      ew$@\e
 
+# Don't try to generate config.h:
+%/config.h: ;
+
 % : %.in
 	$(BOOTSTRAP_SCITECO) -e $$'$(SUBST_MACRO)'
