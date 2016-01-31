@@ -28,6 +28,7 @@
 #include <ScintillaTerm.h>
 
 #include "interface.h"
+#include "curses-info-popup.h"
 
 namespace SciTECO {
 
@@ -114,51 +115,7 @@ typedef class InterfaceCurses : public Interface<InterfaceCurses, ViewCurses> {
 	WINDOW *cmdline_window, *cmdline_pad;
 	gsize cmdline_len, cmdline_rubout_len;
 
-	class Popup {
-		WINDOW *window;		/**! window showing part of pad */
-		WINDOW *pad;		/**! full-height entry list */
-
-		struct Entry {
-			PopupEntryType type;
-			bool highlight;
-			gchar name[];
-		};
-
-		GSList *list;		/**! list of popup entries */
-		gint longest;		/**! size of longest entry */
-		gint length;		/**! total number of popup entries */
-
-		gint pad_first_line;	/**! first line in pad to show */
-
-	public:
-		Popup() : window(NULL), pad(NULL),
-		          list(NULL), longest(0), length(0),
-		          pad_first_line(0) {}
-
-		void add(PopupEntryType type,
-			 const gchar *name, bool highlight = false);
-
-		void show(attr_t attr);
-		inline bool
-		is_shown(void)
-		{
-			return window != NULL;
-		}
-
-		void clear(void);
-
-		inline void
-		noutrefresh(void)
-		{
-			if (window)
-				wnoutrefresh(window);
-		}
-
-		~Popup();
-
-	private:
-		void init_pad(attr_t attr);
-	} popup;
+	CursesInfoPopup popup;
 
 public:
 	InterfaceCurses();
@@ -190,9 +147,11 @@ public:
 	popup_add_impl(PopupEntryType type,
 	               const gchar *name, bool highlight = false)
 	{
+		/* FIXME: The enum casting is dangerous */
 		if (cmdline_window)
 			/* interactive mode */
-			popup.add(type, name, highlight);
+			popup.add((CursesInfoPopup::PopupEntryType)type,
+			          name, highlight);
 	}
 
 	/* implementation of Interface::popup_show() */

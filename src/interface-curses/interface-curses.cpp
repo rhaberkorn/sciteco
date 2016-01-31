@@ -56,6 +56,8 @@
 #include "ring.h"
 #include "interface.h"
 #include "interface-curses.h"
+#include "curses-utils.h"
+#include "curses-info-popup.h"
 
 #ifdef HAVE_WINDOWS_H
 /* here it shouldn't cause conflicts with other headers */
@@ -243,124 +245,6 @@ rgb2curses(guint32 rgb)
 	return COLOR_WHITE;
 }
 
-static gsize
-format_str(WINDOW *win, const gchar *str,
-           gssize len = -1, gint max_width = -1)
-{
-	int old_x, old_y;
-	gint chars_added = 0;
-
-	getyx(win, old_y, old_x);
-
-	if (len < 0)
-		len = strlen(str);
-	if (max_width < 0)
-		max_width = getmaxx(win) - old_x;
-
-	while (len > 0) {
-		/*
-		 * NOTE: This mapping is similar to
-		 * View::set_representations()
-		 */
-		switch (*str) {
-		case CTL_KEY_ESC:
-			chars_added++;
-			if (chars_added > max_width)
-				goto truncate;
-			waddch(win, '$' | A_REVERSE);
-			break;
-		case '\r':
-			chars_added += 2;
-			if (chars_added > max_width)
-				goto truncate;
-			waddch(win, 'C' | A_REVERSE);
-			waddch(win, 'R' | A_REVERSE);
-			break;
-		case '\n':
-			chars_added += 2;
-			if (chars_added > max_width)
-				goto truncate;
-			waddch(win, 'L' | A_REVERSE);
-			waddch(win, 'F' | A_REVERSE);
-			break;
-		case '\t':
-			chars_added += 3;
-			if (chars_added > max_width)
-				goto truncate;
-			waddch(win, 'T' | A_REVERSE);
-			waddch(win, 'A' | A_REVERSE);
-			waddch(win, 'B' | A_REVERSE);
-			break;
-		default:
-			if (IS_CTL(*str)) {
-				chars_added += 2;
-				if (chars_added > max_width)
-					goto truncate;
-				waddch(win, '^' | A_REVERSE);
-				waddch(win, CTL_ECHO(*str) | A_REVERSE);
-			} else {
-				chars_added++;
-				if (chars_added > max_width)
-					goto truncate;
-				waddch(win, *str);
-			}
-		}
-
-		str++;
-		len--;
-	}
-
-	return getcurx(win) - old_x;
-
-truncate:
-	if (max_width >= 3) {
-		/*
-		 * Truncate string
-		 */
-		wattron(win, A_UNDERLINE | A_BOLD);
-		mvwaddstr(win, old_y, old_x + max_width - 3, "...");
-		wattroff(win, A_UNDERLINE | A_BOLD);
-	}
-
-	return getcurx(win) - old_x;
-}
-
-static gsize
-format_filename(WINDOW *win, const gchar *filename,
-                gint max_width = -1)
-{
-	int old_x = getcurx(win);
-
-	gchar *filename_canon = String::canonicalize_ctl(filename);
-	size_t filename_len = strlen(filename_canon);
-
-	if (max_width < 0)
-		max_width = getmaxx(win) - old_x;
-
-	if (filename_len <= (size_t)max_width) {
-		waddstr(win, filename_canon);
-	} else {
-		const gchar *keep_post = filename_canon + filename_len -
-		                         max_width + 3;
-
-#ifdef G_OS_WIN32
-		const gchar *keep_pre = g_path_skip_root(filename_canon);
-		if (keep_pre) {
-			waddnstr(win, filename_canon,
-			         keep_pre - filename_canon);
-			keep_post += keep_pre - filename_canon;
-		}
-#endif
-		wattron(win, A_UNDERLINE | A_BOLD);
-		waddstr(win, "...");
-		wattroff(win, A_UNDERLINE | A_BOLD);
-		waddstr(win, keep_post);
-	}
-
-	g_free(filename_canon);
-	return getcurx(win) - old_x;
-}
-
 void
 ViewCurses::initialize_impl(void)
 {
@@ -382,192 +266,6 @@ InterfaceCurses::InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
 		color_table[i] = -1;
 	for (guint i = 0; i < G_N_ELEMENTS(orig_color_table); i++)
 		orig_color_table[i].r = -1;
-}
-
-void
-InterfaceCurses::Popup::add(PopupEntryType type,
-                            const gchar *name, bool highlight)
-{
-	size_t name_len = strlen(name);
-	Entry *entry = (Entry *)g_malloc(sizeof(Entry) + name_len + 1);
-
-	entry->type = type;
-	entry->highlight = highlight;
-	strcpy(entry->name, name);
-
-	longest = MAX(longest, (gint)name_len);
-	length++;
-
-	/*
-	 * Entries are added in reverse (constant time for GSList),
-	 * so they will later have to be reversed.
-	 */
-	list = g_slist_prepend(list, entry);
-}
-
-void
-InterfaceCurses::Popup::init_pad(attr_t attr)
-{
-	int cols = getmaxx(stdscr);	/* screen width */
-	int pad_lines;			/* pad height */
-	gint pad_cols;			/* entry columns */
-	gint pad_colwidth;		/* width per entry column */
-
-	gint cur_col;
-
-	/* reserve 2 spaces between columns */
-	pad_colwidth = MIN(longest + 2, cols - 2);
-
-	/* pad_cols = floor((cols - 2) / pad_colwidth) */
-	pad_cols = (cols - 2) / pad_colwidth;
-	/* pad_lines = ceil(length / pad_cols) */
-	pad_lines = (length+pad_cols-1) / pad_cols;
-
-	/*
-	 * Render the entire autocompletion list into a pad
-	 * which can be higher than the physical screen.
-	 * The pad uses two columns less than the screen since
-	 * it will be drawn into the popup window which has left
-	 * and right borders.
-	 */
-	pad = newpad(pad_lines, cols - 2);
-
-	wbkgd(pad, ' ' | attr);
-
-	/*
-	 * cur_col is the row currently written.
-	 * It does not wrap but grows indefinitely.
-	 * Therefore the real current row is (cur_col % popup_cols)
-	 */
-	cur_col = 0;
-	for (GSList *cur = list; cur != NULL; cur = g_slist_next(cur)) {
-		Entry *entry = (Entry *)cur->data;
-		gint cur_line = cur_col/pad_cols + 1;
-
-		wmove(pad, cur_line-1,
-		      (cur_col % pad_cols)*pad_colwidth);
-
-		wattrset(pad, entry->highlight ? A_BOLD : A_NORMAL);
-
-		switch (entry->type) {
-		case POPUP_FILE:
-		case POPUP_DIRECTORY:
-			format_filename(pad, entry->name);
-			break;
-		default:
-			format_str(pad, entry->name);
-			break;
-		}
-
-		cur_col++;
-	}
-}
-
-void
-InterfaceCurses::Popup::show(attr_t attr)
-{
-	int lines, cols; /* screen dimensions */
-	gint pad_lines;
-	gint popup_lines;
-	gint bar_height, bar_y;
-
-	if (!length)
-		/* nothing to display */
-		return;
-
-	getmaxyx(stdscr, lines, cols);
-
-	if (window)
-		delwin(window);
-	else
-		/* reverse list only once */
-		list = g_slist_reverse(list);
-
-	if (!pad)
-		init_pad(attr);
-	pad_lines = getmaxy(pad);
-
-	/*
-	 * Popup window can cover all but one screen row.
-	 * Another row is reserved for the top border.
-	 */
-	popup_lines = MIN(pad_lines + 1, lines - 1);
-
-	/* window covers message, scintilla and info windows */
-	window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
-
-	wbkgdset(window, ' ' | attr);
-
-	wborder(window,
-	        ACS_VLINE,
-	        ACS_VLINE,	/* may be overwritten with scrollbar */
-	        ACS_HLINE,
-	        ' ',		/* no bottom line */
-	        ACS_ULCORNER, ACS_URCORNER,
-	        ACS_VLINE, ACS_VLINE);
-
-	copywin(pad, window,
-	        pad_first_line, 0,
-	        1, 1, popup_lines - 1, cols - 2, FALSE);
-
-	if (pad_lines <= popup_lines - 1)
-		/* no need for scrollbar */
-		return;
-
-	/* bar_height = ceil((popup_lines-1)/pad_lines * (popup_lines-2)) */
-	bar_height = ((popup_lines-1)*(popup_lines-2) + pad_lines-1) /
-	             pad_lines;
-	/* bar_y = floor(pad_first_line/pad_lines * (popup_lines-2)) + 1 */
-	bar_y = pad_first_line*(popup_lines-2) / pad_lines + 1;
-
-	mvwvline(window, 1, cols-1, ACS_CKBOARD, popup_lines-2);
-	/*
-	 * We do not use ACS_BLOCK here since it will not
-	 * always be drawn as a solid block (e.g. xterm).
-	 * Instead, simply draw reverse blanks.
-	 */
-	wmove(window, bar_y, cols-1);
-	wattron(window, A_REVERSE);
-	wvline(window, ' ', bar_height);
-
-	/* progress scroll position */
-	pad_first_line += popup_lines - 1;
-	/* wrap on last shown page */
-	pad_first_line %= pad_lines;
-	if (pad_lines - pad_first_line < popup_lines - 1)
-		/* show last page */
-		pad_first_line = pad_lines - (popup_lines - 1);
-}
-
-void
-InterfaceCurses::Popup::clear(void)
-{
-	g_slist_free_full(list, g_free);
-	list = NULL;
-	length = 0;
-	longest = 0;
-
-	pad_first_line = 0;
-
-	if (window) {
-		delwin(window);
-		window = NULL;
-	}
-
-	if (pad) {
-		delwin(pad);
-		pad = NULL;
-	}
-}
-
-InterfaceCurses::Popup::~Popup()
-{
-	if (window)
-		delwin(window);
-	if (pad)
-		delwin(pad);
-	if (list)
-		g_slist_free_full(list, g_free);
 }
 
 void
@@ -1145,13 +843,13 @@ InterfaceCurses::draw_info(void)
 		info_type_str = PACKAGE_NAME " - <QRegister> ";
 		waddstr(info_window, info_type_str);
 		/* same formatting as in command lines */
-		format_str(info_window, info_current);
+		Curses::format_str(info_window, info_current);
 		break;
 
 	case INFO_TYPE_BUFFER:
 		info_type_str = PACKAGE_NAME " - <Buffer> ";
 		waddstr(info_window, info_type_str);
-		format_filename(info_window, info_current);
+		Curses::format_filename(info_window, info_current);
 		break;
 
 	default:
@@ -1215,7 +913,7 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	wcolor_set(cmdline_pad, SCI_COLOR_PAIR(fg, bg), NULL);
 
 	/* format effective command line */
-	cmdline_len = format_str(cmdline_pad, cmdline->str, cmdline->len);
+	cmdline_len = Curses::format_str(cmdline_pad, cmdline->str, cmdline->len);
 
 	/*
 	 * A_BOLD should result in either a bold font or a brighter
@@ -1234,8 +932,8 @@ InterfaceCurses::cmdline_update_impl(const Cmdline *cmdline)
 	 * NOTE: This formatting will never be truncated since we're
 	 * writing into the pad which is large enough.
 	 */
-	cmdline_rubout_len = format_str(cmdline_pad, cmdline->str + cmdline->len,
-	                                cmdline->rubout_len);
+	cmdline_rubout_len = Curses::format_str(cmdline_pad, cmdline->str + cmdline->len,
+	                                        cmdline->rubout_len);
 
 	/* highlight cursor after effective command line */
 	if (cmdline_rubout_len) {
