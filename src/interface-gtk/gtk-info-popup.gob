@@ -25,7 +25,6 @@ requires 2.0.20
 #include <math.h>
 
 #include <glib/gprintf.h>
-#include <gio/gio.h>
 
 #ifndef HAVE_GTK_FLOW_BOX_NEW
 #include "gtkflowbox.h"
@@ -35,6 +34,8 @@ requires 2.0.20
 %h{
 #include <gtk/gtk.h>
 #include <gdk/gdk.h>
+
+#include <gio/gio.h>
 %}
 
 enum GTK_INFO_POPUP {
@@ -206,7 +207,7 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		return GTK_WIDGET(widget);
 	}
 
-	private GIcon *
+	public GIcon *
 	get_icon_for_path(const gchar *path, const gchar *fallback_name)
 	{
 		GFile *file;

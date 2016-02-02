@@ -39,6 +39,9 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include <gtk/gtk.h>
+
+#include <gio/gio.h>
+
 #include "gtk-info-popup.h"
 
 #include <Scintilla.h>
@@ -133,7 +136,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 {
 	static const Cmdline empty_cmdline;
 	GtkWidget *overlay_widget;
-	GtkWidget *info_content;
+	GtkWidget *message_bar_content;
 
 	/*
 	 * g_thread_init() is required prior to v2.32
@@ -153,13 +156,27 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	event_queue = g_async_queue_new();
 
 	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(window), PACKAGE_NAME);
 	g_signal_connect(G_OBJECT(window), "delete-event",
 			 G_CALLBACK(window_delete_cb), event_queue);
 
 	vbox = gtk_vbox_new(FALSE, 0);
 
-	info_current = g_strdup(PACKAGE_NAME);
+	info_current = g_strdup("");
+
+	/*
+	 * The info bar is tried to be made the title bar of the
+	 * window which also disables the default window decorations
+	 * (client-side decorations).
+	 * FIXME: This could fail, leaving us with a standard title
+	 * bar and the info bar with close buttons. In this case,
+	 * we should at least disable the info bar close button.
+	 * FIXME: At lease on Gtk 3.12 we could disable the subtitle.
+	 */
+	info_bar_widget = gtk_header_bar_new();
+	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(info_bar_widget), TRUE);
+	info_image = gtk_image_new();
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(info_bar_widget), info_image);
+	gtk_window_set_titlebar(GTK_WINDOW(window), info_bar_widget);
 
 	/*
 	 * The event box is the parent of all Scintilla views
@@ -174,12 +191,12 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_container_add(GTK_CONTAINER(overlay_widget), event_box_widget);
 	gtk_box_pack_start(GTK_BOX(vbox), overlay_widget, TRUE, TRUE, 0);
 
-	info_widget = gtk_info_bar_new();
-	info_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(info_widget));
+	message_bar_widget = gtk_info_bar_new();
+	message_bar_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(message_bar_widget));
 	message_widget = gtk_label_new("");
 	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
-	gtk_container_add(GTK_CONTAINER(info_content), message_widget);
-	gtk_box_pack_start(GTK_BOX(vbox), info_widget, FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(message_bar_content), message_widget);
+	gtk_box_pack_start(GTK_BOX(vbox), message_bar_widget, FALSE, FALSE, 0);
 
 	cmdline_widget = gtk_entry_new();
 	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
@@ -230,7 +247,7 @@ InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 
 	gdk_threads_enter();
 
-	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(message_bar_widget),
 				      type2gtk[type]);
 	gtk_label_set_text(GTK_LABEL(message_widget), buf);
 
@@ -245,7 +262,7 @@ InterfaceGtk::msg_clear(void)
 {
 	gdk_threads_enter();
 
-	gtk_info_bar_set_message_type(GTK_INFO_BAR(info_widget),
+	gtk_info_bar_set_message_type(GTK_INFO_BAR(message_bar_widget),
 				      GTK_MESSAGE_OTHER);
 	gtk_label_set_text(GTK_LABEL(message_widget), "");
 
@@ -259,23 +276,66 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 }
 
 void
+InterfaceGtk::refresh_info(void)
+{
+	const gchar *info_type_str;
+	gchar *info_current_canon = String::canonicalize_ctl(info_current);
+	GIcon *icon;
+	gchar *title;
+
+	switch (info_type) {
+	case INFO_TYPE_QREGISTER:
+		info_type_str = PACKAGE_NAME " - <QRegister> ";
+		gtk_header_bar_set_title(GTK_HEADER_BAR(info_bar_widget),
+		                         info_current_canon);
+		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(info_bar_widget),
+		                            "QRegister");
+
+		gtk_image_clear(GTK_IMAGE(info_image));
+		break;
+
+	case INFO_TYPE_BUFFER_DIRTY:
+		String::append(info_current_canon, "*");
+		/* fall through */
+	case INFO_TYPE_BUFFER:
+		info_type_str = PACKAGE_NAME " - <Buffer> ";
+		gtk_header_bar_set_title(GTK_HEADER_BAR(info_bar_widget),
+		                         info_current_canon);
+		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(info_bar_widget),
+		                            "Buffer");
+
+		icon = gtk_info_popup_get_icon_for_path(info_current,
+		                                        "text-x-generic");
+		if (!icon)
+			break;
+		gtk_image_set_from_gicon(GTK_IMAGE(info_image),
+		                         icon, GTK_ICON_SIZE_LARGE_TOOLBAR);
+		g_object_unref(icon);
+		break;
+	}
+
+	title = g_strconcat(info_type_str, info_current_canon, NIL);
+	gtk_window_set_title(GTK_WINDOW(window), title);
+	g_free(title);
+	g_free(info_current_canon);
+}
+
+void
 InterfaceGtk::info_update_impl(const QRegister *reg)
 {
-	gchar *name = String::canonicalize_ctl(reg->name);
-
 	g_free(info_current);
-	info_current = g_strconcat(PACKAGE_NAME " - <QRegister> ",
-	                           name, NIL);
-	g_free(name);
+	info_type = INFO_TYPE_QREGISTER;
+	/* NOTE: will contain control characters */
+	info_current = g_strdup(reg->name);
 }
 
 void
 InterfaceGtk::info_update_impl(const Buffer *buffer)
 {
 	g_free(info_current);
-	info_current = g_strconcat(PACKAGE_NAME " - <Buffer> ",
-	                           buffer->filename ? : UNNAMED_FILE,
-	                           buffer->dirty ? "*" : "", NIL);
+	info_type = buffer->dirty ? INFO_TYPE_BUFFER_DIRTY
+	                          : INFO_TYPE_BUFFER;
+	info_current = g_strdup(buffer->filename ? : UNNAMED_FILE);
 }
 
 void
@@ -431,6 +491,8 @@ InterfaceGtk::event_loop_impl(void)
 	if (icon_list)
 		g_list_free_full(icon_list, g_object_unref);
 
+	refresh_info();
+
 	/*
 	 * When changing views, the new widget is not
 	 * added immediately to avoid flickering in the GUI.
@@ -447,7 +509,6 @@ InterfaceGtk::event_loop_impl(void)
 		gtk_container_add(GTK_CONTAINER(event_box_widget),
 		                  current_view_widget);
 	}
-	gtk_window_set_title(GTK_WINDOW(window), info_current);
 
 	gtk_widget_show_all(window);
 	/* don't show popup by default */
@@ -629,6 +690,8 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	 */
 	gdk_threads_enter();
 
+	refresh_info();
+
 	if (current_view != last_view) {
 		/*
 		 * The last view's object is not guaranteed to
@@ -645,8 +708,6 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 		                  current_view_widget);
 		gtk_widget_show(current_view_widget);
 	}
-
-	gtk_window_set_title(GTK_WINDOW(window), info_current);
 
 	gdk_window_thaw_updates(view_window);
 

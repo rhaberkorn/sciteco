@@ -78,12 +78,20 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GtkWidget *window;
 	GtkWidget *vbox;
 
+	enum {
+		INFO_TYPE_BUFFER = 0,
+		INFO_TYPE_BUFFER_DIRTY,
+		INFO_TYPE_QREGISTER
+	} info_type;
+	gchar *info_current;
+	GtkWidget *info_bar_widget;
+	GtkWidget *info_image;
+
 	GtkWidget *event_box_widget;
 
-	gchar *info_current;
-	GtkWidget *info_widget;
-
+	GtkWidget *message_bar_widget;
 	GtkWidget *message_widget;
+
 	GtkWidget *cmdline_widget;
 
 	GtkWidget *popup_widget;
@@ -96,9 +104,10 @@ public:
 	InterfaceGtk() : Interface(),
 	                 window(NULL),
 	                 vbox(NULL),
+	                 info_type(INFO_TYPE_BUFFER), info_current(NULL),
+	                 info_bar_widget(NULL), info_image(NULL),
 	                 event_box_widget(NULL),
-	                 info_current(NULL), info_widget(NULL),
-			 message_widget(NULL),
+	                 message_bar_widget(NULL), message_widget(NULL),
 			 cmdline_widget(NULL),
 			 popup_widget(NULL),
 	                 current_view_widget(NULL),
@@ -163,6 +172,7 @@ public:
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
 
+	void refresh_info(void);
 	void cmdline_insert_chr(gint &pos, gchar chr);
 } InterfaceCurrent;
 
