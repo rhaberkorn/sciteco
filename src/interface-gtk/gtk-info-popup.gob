@@ -66,6 +66,9 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 
 		GtkWidget *scrollbar = gtk_scrollbar_new(GTK_ORIENTATION_VERTICAL,
 		                                         self->vadjustment);
+		/* show/hide the scrollbar dynamically */
+		g_signal_connect(self->vadjustment, "changed",
+		                 G_CALLBACK(self_vadjustment_changed), scrollbar);
 
 		self->_priv->flow_box = gtk_flow_box_new();
 		/* take as little height as necessary */
@@ -78,9 +81,8 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		gtk_flow_box_set_vadjustment(GTK_FLOW_BOX(self->_priv->flow_box),
 		                             self->vadjustment);
 
-		gtk_container_set_border_width(GTK_CONTAINER(self->_priv->flow_box), 10);
-
 		viewport = gtk_viewport_new(self->hadjustment, self->vadjustment);
+		gtk_viewport_set_shadow_type(GTK_VIEWPORT(viewport), GTK_SHADOW_NONE);
 		gtk_container_add(GTK_CONTAINER(viewport), self->_priv->flow_box);
 
 		gtk_box_pack_start(GTK_BOX(box), viewport, TRUE, TRUE, 0);
@@ -109,7 +111,6 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		GtkWidget *parent = gtk_widget_get_parent(widget);
 		GtkAllocation parent_alloc;
 
-
 		/*
 		 * Adjust the allocation of the popup to be within the
 		 * bounds of its parent widget which GtkOvelay does
@@ -135,6 +136,8 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 	/*
 	 * Adapted from GtkScrolledWindow's gtk_scrolled_window_scroll_event()
 	 * since the viewport does not react to scroll events.
+	 * This is registered for our container widget instead of only for
+	 * GtkViewport since this is what GtkScrolledWindow does.
 	 * FIXME: May need to handle non-delta scrolling, i.e. GDK_SCROLL_UP
 	 * and GDK_SCROLL_DOWN.
 	 */
@@ -162,6 +165,22 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		}
 
 		return FALSE;
+	}
+
+	private void
+	vadjustment_changed(Gtk:Adjustment *vadjustment, gpointer user_data)
+	{
+		GtkWidget *scrollbar = GTK_WIDGET(user_data);
+
+		/*
+		 * This shows/hides the widget using opacity instead of using
+		 * gtk_widget_set_visibility() since the latter would influence
+		 * size allocations. A widget with opacity 0 keeps its size.
+		 */
+		gtk_widget_set_opacity(scrollbar,
+		                       gtk_adjustment_get_upper(vadjustment) -
+		                       gtk_adjustment_get_lower(vadjustment) >
+		                       gtk_adjustment_get_page_size(vadjustment) ? 1 : 0);
 	}
 
 	public GtkWidget *
