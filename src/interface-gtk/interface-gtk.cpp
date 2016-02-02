@@ -131,6 +131,22 @@ ViewGtk::initialize_impl(void)
 	setup();
 }
 
+GOptionGroup *
+InterfaceGtk::get_options(void)
+{
+	const GOptionEntry entries[] = {
+		{"no-csd", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &use_csd,
+		 "Disable client-side decorations.", NULL},
+		{NULL}
+	};
+
+	GOptionGroup *group = gtk_get_option_group(TRUE);
+
+	g_option_group_add_entries(group, entries);
+
+	return group;
+}
+
 void
 InterfaceGtk::main_impl(int &argc, char **&argv)
 {
@@ -166,17 +182,23 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	/*
 	 * The info bar is tried to be made the title bar of the
 	 * window which also disables the default window decorations
-	 * (client-side decorations).
-	 * FIXME: This could fail, leaving us with a standard title
-	 * bar and the info bar with close buttons. In this case,
-	 * we should at least disable the info bar close button.
+	 * (client-side decorations) unless --no-csd was specified.
+	 * NOTE: Client-side decoations could fail, leaving us with a
+	 * standard title bar and the info bar with close buttons.
+	 * Other window managers have undesirable side-effects.
 	 * FIXME: At lease on Gtk 3.12 we could disable the subtitle.
 	 */
 	info_bar_widget = gtk_header_bar_new();
-	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(info_bar_widget), TRUE);
 	info_image = gtk_image_new();
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(info_bar_widget), info_image);
-	gtk_window_set_titlebar(GTK_WINDOW(window), info_bar_widget);
+	if (use_csd) {
+		/* use client-side decorations */
+		gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(info_bar_widget), TRUE);
+		gtk_window_set_titlebar(GTK_WINDOW(window), info_bar_widget);
+	} else {
+		/* fall back to adding the info bar as an ordinary widget */
+		gtk_box_pack_start(GTK_BOX(vbox), info_bar_widget, FALSE, FALSE, 0);
+	}
 
 	/*
 	 * The event box is the parent of all Scintilla views

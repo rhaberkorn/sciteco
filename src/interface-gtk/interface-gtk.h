@@ -84,6 +84,7 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 		INFO_TYPE_QREGISTER
 	} info_type;
 	gchar *info_current;
+	gboolean use_csd;
 	GtkWidget *info_bar_widget;
 	GtkWidget *info_image;
 
@@ -105,6 +106,7 @@ public:
 	                 window(NULL),
 	                 vbox(NULL),
 	                 info_type(INFO_TYPE_BUFFER), info_current(NULL),
+	                 use_csd(TRUE),
 	                 info_bar_widget(NULL), info_image(NULL),
 	                 event_box_widget(NULL),
 	                 message_bar_widget(NULL), message_widget(NULL),
@@ -115,11 +117,7 @@ public:
 	~InterfaceGtk();
 
 	/* overrides Interface::get_options() */
-	inline GOptionGroup *
-	get_options(void)
-	{
-		return gtk_get_option_group(TRUE);
-	}
+	GOptionGroup *get_options(void);
 
 	/* implementation of Interface::main() */
 	void main_impl(int &argc, char **&argv);
