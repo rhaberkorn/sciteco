@@ -34,6 +34,7 @@ requires 2.0.20
 
 %h{
 #include <gtk/gtk.h>
+#include <gdk/gdk.h>
 %}
 
 enum GTK_INFO_POPUP {
@@ -104,33 +105,48 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		                                     &color);
 	}
 
-	override (Gtk:Widget) void
-	size_allocate(Gtk:Widget *widget,
-	              Gtk:Allocation *allocation)
+	/**
+	 * Allocate position in an overlay.
+	 *
+	 * This function can be used as the "get-child-position" signal
+	 * handler of a GtkOverlay in order to position the popup at the
+	 * bottom of the overlay's main child, spanning the entire width.
+	 * In contrast to the GtkOverlay's default allocation schemes,
+	 * this makes sure that the widget will not be larger than the
+	 * main child, so the popup properly scrolls when becoming too large
+	 * in height.
+	 *
+	 * @param user_data unused by this callback
+	 */
+	public gboolean
+	get_position_in_overlay(Gtk:Overlay *overlay, Gtk:Widget *widget,
+	                        Gdk:Rectangle *allocation, gpointer user_data)
         {
-		GtkWidget *parent = gtk_widget_get_parent(widget);
-		GtkAllocation parent_alloc;
+		GtkWidget *main_child = gtk_bin_get_child(GTK_BIN(overlay));
+		GtkAllocation main_child_alloc;
+		gint natural_height;
+
+		gtk_widget_get_allocation(main_child, &main_child_alloc);
+		gtk_widget_get_preferred_height_for_width(widget,
+		                                          main_child_alloc.width,
+		                                          NULL, &natural_height);
 
 		/*
-		 * Adjust the allocation of the popup to be within the
-		 * bounds of its parent widget which GtkOvelay does
-		 * not seem to do automatically.
-		 * Also Gtk does not seem to query this widget's
-		 * preferred height.
-		 * FIXME: Only works if the GtkInfoPopup is added
-		 * directly to the GtkOverlay.
+		 * FIXME: Probably due to some bug in the height-for-width
+		 * calculation of Gtk (at least in 3.10 or in the GtkFlowBox
+		 * fallback included with SciTECO), the natural height
+		 * is a bit too small to accommodate the entire GtkFlowBox,
+		 * resulting in the GtkViewport always scrolling.
+		 * This hack fixes it up in a NONPORTABLE manner.
 		 */
-		gtk_widget_get_allocation(parent, &parent_alloc);
-		allocation->width = MIN(allocation->width, parent_alloc.width);
-		if (allocation->height > parent_alloc.height) {
-			allocation->y += allocation->height - parent_alloc.height;
-			allocation->height = parent_alloc.height;
-		}
+		natural_height += 5;
 
-		/*
-		 * Allocate the adjusted/clipped allocation
-		 */
-		PARENT_HANDLER(widget, allocation);
+		allocation->width = main_child_alloc.width;
+		allocation->height = MIN(natural_height, main_child_alloc.height);
+		allocation->x = 0;
+		allocation->y = main_child_alloc.height - allocation->height;
+
+		return TRUE;
 	}
 
 	/*
@@ -142,9 +158,9 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 	 * and GDK_SCROLL_DOWN.
 	 */
 	override (Gtk:Widget) gboolean
-	scroll_event(Gtk:Widget *widget, GdkEventScroll *event)
+	scroll_event(Gtk:Widget *widget, Gdk:Event:Scroll *event)
 	{
-		Self *self = GTK_INFO_POPUP(widget);
+		Self *self = SELF(widget);
 		gdouble delta_x, delta_y;
 
 		if (gdk_event_get_scroll_deltas((GdkEvent *)event,

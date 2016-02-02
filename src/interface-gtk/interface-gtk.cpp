@@ -197,9 +197,9 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	 * filling the entire width.
 	 */
 	popup_widget = gtk_info_popup_new();
-	gtk_widget_set_halign(popup_widget, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(popup_widget, GTK_ALIGN_END);
 	gtk_overlay_add_overlay(GTK_OVERLAY(overlay_widget), popup_widget);
+	g_signal_connect(overlay_widget, "get-child-position",
+	                 G_CALLBACK(gtk_info_popup_get_position_in_overlay), NULL);
 
 	gtk_widget_grab_focus(cmdline_widget);
 
