@@ -314,6 +314,19 @@ standard library \fBsession.tes\fP macros.
 When the \(lqsession.vcs\(rq macro is used, these files
 will also be created in the roots of Git, Mercurial and
 Subversion repositories or working copies.
+.TP
+.B $SCITECOCONFIG/.teco_css
+When using the Gtk UI, this will be the location of a
+CSS file that can be used to apply \*(ST color schemes
+to the entire UI and to do other style customizations.
+.TP
+.B @pkgdatadir@/fallback.css
+When using the Gtk UI, this is a fallback stylesheet
+in case
+.B $SCITECOCONFIG/.teco_css
+does not exist.
+It may also be used as a template for
+.BR $SCITECOCONFIG/.teco_css .
 .
 .
 .SH SEE ALSO

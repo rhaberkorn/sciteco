@@ -1,0 +1,47 @@
+/*
+ * This CSS will loaded as a fallback if there is no
+ * $SCITECOCONFIG/.teco_css.
+ * It tries to apply the current SciTECO color scheme
+ * by using predefined variables (see sciteco(7)).
+ * This may cause problems with your current Gtk theme.
+ * You can copy this file to $SCITECOCONFIG/.teco_css
+ * to fix it up or add other style customizations.
+ */
+
+/*
+ * Original STYLE_DEFAULT foregrounds on backgrounds:
+ */
+#sciteco-cmdline {
+	color: @sciteco_default_fg_color;
+	text-shadow: none;
+	background-color: @sciteco_default_bg_color;
+	background-image: none;
+}
+
+/*
+ * Reversed STYLE_DEFAULT colors:
+ * The "question" class refers to G_MESSAGE_QUESTION.
+ * This is used for showing user-level messages for the sole
+ * reason that there is no class for G_MESSAGE_OTHER that
+ * we could use for styling.
+ */
+#sciteco-info-bar,
+#sciteco-info-bar GtkLabel,
+.titlebar, /* info bar in CSD mode */
+#sciteco-message-bar.question {
+	color: @sciteco_default_bg_color;
+	text-shadow: none;
+	background-color: @sciteco_default_fg_color;
+	background-image: none;
+}
+
+/*
+ * The popup widget (uses STYLE_CALLTIP)
+ */
+#sciteco-info-popup,
+#sciteco-info-popup GtkLabel {
+	color: @sciteco_calltip_fg_color;
+	text-shadow: none;
+	background-color: @sciteco_calltip_bg_color;
+	background-image: none;
+}

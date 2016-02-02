@@ -44,6 +44,10 @@ enum GTK_INFO_POPUP {
 	DIRECTORY
 } Gtk:Info:Popup:Entry:Type;
 
+/*
+ * NOTE: Deriving from GtkEventBox ensures that we can
+ * set a background on the entire popup widget.
+ */
 class Gtk:Info:Popup from Gtk:Event:Box {
 	public GtkAdjustment *hadjustment;
 	public GtkAdjustment *vadjustment;
@@ -92,18 +96,10 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 		gtk_widget_show_all(box);
 
 		/*
-		 * The top-level widget is a GtkEventBox, so it can have
-		 * a background. We assign a default color since the popup
-		 * will usually be put in an overlay and we don't want it
-		 * to be transparent.
-		 * It can also be styled with rounded corners etc.
-		 * FIXME: This method of setting a background color is
-		 * deprecated. We are supposed to use CSS style providers...
+		 * NOTE: Everything shown except the top-level container.
+		 * Therefore a gtk_widget_show() is enough to show our popup.
 		 */
 		gtk_container_add(GTK_CONTAINER(self), box);
-		GdkRGBA color = {0.5, 0.5, 0.5, 1.0};
-		gtk_widget_override_background_color(GTK_WIDGET(self), GTK_STATE_FLAG_NORMAL,
-		                                     &color);
 	}
 
 	/**

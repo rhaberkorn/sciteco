@@ -688,6 +688,48 @@ macro or \fBED\fP hook (for syntax highlighting).
 \*(ST ships with a standard library with color schemes
 and lexer configurations for a wide range of languages.
 .
+.SS Gtk CSS Styling
+.
+While the tools mentioned above are sufficient for
+Curses UIs, the Gtk+ 3 UI has many more styling possibilities.
+The basic color scheme will be automatically effective for
+the buffer view since this is handled by Scintilla.
+In order to apply the color scheme to the other UI components,
+a CSS file must be provided that overrides certain styling
+settings of the Gtk theme.
+.LP
+Therefore \*(ST automatically exports the following Gtk
+CSS variables that can be referred to by user-provided
+CSS files:
+.TP
+.B @sciteco_default_fg_color
+The foreground color of Scintilla's \fBSTYLE_DEFAULT\fP.
+.TP
+.B @sciteco_default_bg_color
+The background color of Scintilla's \fBSTYLE_DEFAULT\fP.
+.TP
+.B @sciteco_calltip_fg_color
+The foreground color of Scintilla's \fBSTYLE_CALLTIP\fP.
+.TP
+.B @sciteco_calltip_bg_color
+The background color of Scintilla's \fBSTYLE_CALLTIP\fP.
+.LP
+Furthermore, \*(ST defines the following named widgets for its
+main UI components: \fB#sciteco-info-bar\fP, \fB#sciteco-message-bar\fP,
+\fB#sciteco-cmdline\fP and \fB#sciteco-info-popup\fP.
+.LP
+The CSS file is loaded from
+.B $SCITECOCONFIG/.teco_css
+if it is existing.
+Else, \*(ST loads the fallback CSS at
+.BR @pkgdatadir@/fallback.css ,
+which can also be used as a template when writing \fB.teco_css\fP.
+The CSS file can be written such that it works for any
+\*(ST color scheme and may also be used to tweak other
+aspects of \*(ST's user interface.
+Please refer to the Gtk documentation for more details on
+CSS theming.
+.
 .
 .SH ARITHMETICS AND EXPRESSIONS
 .
@@ -1791,6 +1833,12 @@ Scinterm manual, documenting the mapping of
 \(lqRGB\(rq values to terminal colors on curses user interfaces:
 .UR http://foicica.com/scinterm/manual.html
 Scinterm manual
+.UE
+.TP
+Gtk+ 3 documentation, containg details about
+its CSS support and syntax:
+.UR https://developer.gnome.org/gtk3/stable/GtkCssProvider.html
+GtkCssProvider
 .UE
 .
 .

@@ -17,6 +17,8 @@ libsciteco_interface_la_SOURCES += gtkflowbox.c gtkflowbox.h
 endif
 nodist_libsciteco_interface_la_SOURCES = gtk-info-popup.c
 
+dist_pkgdata_DATA = fallback.css
+
 CLEANFILES = $(BUILT_SOURCES)
 
 %.c %.h %-private.h : %.gob

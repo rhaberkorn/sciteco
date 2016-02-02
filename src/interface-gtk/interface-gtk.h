@@ -75,6 +75,8 @@ public:
 } ViewCurrent;
 
 typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
+	GtkCssProvider *css_var_provider;
+
 	GtkWidget *window;
 	GtkWidget *vbox;
 
@@ -102,7 +104,7 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GAsyncQueue *event_queue;
 
 public:
-	InterfaceGtk() : Interface(),
+	InterfaceGtk() : css_var_provider(NULL),
 	                 window(NULL),
 	                 vbox(NULL),
 	                 info_type(INFO_TYPE_BUFFER), info_current(NULL),
@@ -169,6 +171,8 @@ public:
 
 private:
 	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
+
+	void set_css_variables_from_view(ViewGtk *view);
 
 	void refresh_info(void);
 	void cmdline_insert_chr(gint &pos, gchar chr);

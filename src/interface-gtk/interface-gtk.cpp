@@ -25,6 +25,7 @@
 
 #include <glib.h>
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 /*
  * FIXME: Because of gdk_threads_enter().
@@ -42,10 +43,10 @@
 
 #include <gio/gio.h>
 
-#include "gtk-info-popup.h"
-
 #include <Scintilla.h>
 #include <ScintillaWidget.h>
+
+#include "gtk-info-popup.h"
 
 #include "sciteco.h"
 #include "string-utils.h"
@@ -84,7 +85,24 @@ static gboolean sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
 
 } /* extern "C" */
 
-#define UNNAMED_FILE "(Unnamed)"
+#define UNNAMED_FILE		"(Unnamed)"
+
+#define USER_CSS_FILE		".teco_css"
+
+/** printf() format for CSS RGB colors given as guint32 */
+#define CSS_COLOR_FORMAT	"#%06" G_GINT32_MODIFIER "X"
+
+/**
+ * Convert Scintilla-style BGR color triple to
+ * RGB.
+ */
+static inline guint32
+bgr2rgb(guint32 bgr)
+{
+	return ((bgr & 0x0000FF) << 16) |
+	       ((bgr & 0x00FF00) << 0) |
+	       ((bgr & 0xFF0000) >> 16);
+}
 
 void
 ViewGtk::initialize_impl(void)
@@ -189,6 +207,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	 * FIXME: At lease on Gtk 3.12 we could disable the subtitle.
 	 */
 	info_bar_widget = gtk_header_bar_new();
+	gtk_widget_set_name(info_bar_widget, "sciteco-info-bar");
 	info_image = gtk_image_new();
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(info_bar_widget), info_image);
 	if (use_csd) {
@@ -214,6 +233,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_box_pack_start(GTK_BOX(vbox), overlay_widget, TRUE, TRUE, 0);
 
 	message_bar_widget = gtk_info_bar_new();
+	gtk_widget_set_name(message_bar_widget, "sciteco-message-bar");
 	message_bar_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(message_bar_widget));
 	message_widget = gtk_label_new("");
 	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
@@ -221,6 +241,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_box_pack_start(GTK_BOX(vbox), message_bar_widget, FALSE, FALSE, 0);
 
 	cmdline_widget = gtk_entry_new();
+	gtk_widget_set_name(cmdline_widget, "sciteco-cmdline");
 	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
 	widget_set_font(cmdline_widget, "Courier");
@@ -236,6 +257,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	 * filling the entire width.
 	 */
 	popup_widget = gtk_info_popup_new();
+	gtk_widget_set_name(popup_widget, "sciteco-info-popup");
 	gtk_overlay_add_overlay(GTK_OVERLAY(overlay_widget), popup_widget);
 	g_signal_connect(overlay_widget, "get-child-position",
 	                 G_CALLBACK(gtk_info_popup_get_position_in_overlay), NULL);
@@ -248,8 +270,13 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 void
 InterfaceGtk::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 {
+	/*
+	 * The message types are chosen such that there is a CSS class
+	 * for every one of them. GTK_MESSAGE_OTHER does not have
+	 * a CSS class.
+	 */
 	static const GtkMessageType type2gtk[] = {
-		/* [MSG_USER]		= */ GTK_MESSAGE_OTHER,
+		/* [MSG_USER]		= */ GTK_MESSAGE_QUESTION,
 		/* [MSG_INFO]		= */ GTK_MESSAGE_INFO,
 		/* [MSG_WARNING]	= */ GTK_MESSAGE_WARNING,
 		/* [MSG_ERROR]		= */ GTK_MESSAGE_ERROR
@@ -285,7 +312,7 @@ InterfaceGtk::msg_clear(void)
 	gdk_threads_enter();
 
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(message_bar_widget),
-				      GTK_MESSAGE_OTHER);
+				      GTK_MESSAGE_QUESTION);
 	gtk_label_set_text(GTK_LABEL(message_widget), "");
 
 	gdk_threads_leave();
@@ -482,6 +509,38 @@ InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
 }
 
 void
+InterfaceGtk::set_css_variables_from_view(ViewGtk *view)
+{
+	gchar buffer[256];
+
+	/*
+	 * Generates a CSS that sets some predefined color variables.
+	 * This effectively "exports" Scintilla styles into the CSS
+	 * world.
+	 * Those colors are used by the fallback.css shipping with SciTECO
+	 * in order to apply the SciTECO-controlled color scheme to all the
+	 * predefined UI elements.
+	 * They can also be used in user-customizations.
+	 */
+	g_snprintf(buffer, sizeof(buffer),
+	           "@define-color sciteco_default_fg_color " CSS_COLOR_FORMAT ";"
+	           "@define-color sciteco_default_bg_color " CSS_COLOR_FORMAT ";"
+	           "@define-color sciteco_calltip_fg_color " CSS_COLOR_FORMAT ";"
+	           "@define-color sciteco_calltip_bg_color " CSS_COLOR_FORMAT ";",
+	           bgr2rgb(view->ssm(SCI_STYLEGETFORE, STYLE_DEFAULT)),
+	           bgr2rgb(view->ssm(SCI_STYLEGETBACK, STYLE_DEFAULT)),
+	           bgr2rgb(view->ssm(SCI_STYLEGETFORE, STYLE_CALLTIP)),
+	           bgr2rgb(view->ssm(SCI_STYLEGETBACK, STYLE_CALLTIP)));
+
+	/*
+	 * The GError and return value has been deprecated.
+	 * A CSS parsing error would point to a programming
+	 * error anyway.
+	 */
+	gtk_css_provider_load_from_data(css_var_provider, buffer, -1, NULL);
+}
+
+void
 InterfaceGtk::event_loop_impl(void)
 {
 	static const gchar *icon_files[] = {
@@ -490,6 +549,10 @@ InterfaceGtk::event_loop_impl(void)
 		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
 		NULL
 	};
+
+	GdkScreen *default_screen = gdk_screen_get_default();
+	GtkCssProvider *user_css_provider;
+	gchar *config_path, *user_css_file;
 
 	GList *icon_list = NULL;
 	GThread *thread;
@@ -514,6 +577,41 @@ InterfaceGtk::event_loop_impl(void)
 		g_list_free_full(icon_list, g_object_unref);
 
 	refresh_info();
+
+	/*
+	 * Initialize the CSS variable provider and the CSS provider
+	 * for the included fallback.css.
+	 * NOTE: The return value of gtk_css_provider_load() is deprecated.
+	 * Instead we could register for the "parsing-error" signal.
+	 * For the time being we just silently ignore parsing errors.
+	 * They will be printed to stderr by Gtk anyway.
+	 */
+	css_var_provider = gtk_css_provider_new();
+	if (current_view)
+		/* set CSS variables initially */
+		set_css_variables_from_view(current_view);
+	gtk_style_context_add_provider_for_screen(default_screen,
+	                                          GTK_STYLE_PROVIDER(css_var_provider),
+	                                          GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+	user_css_provider = gtk_css_provider_new();
+	/* get path of $SCITECOCONFIG/.teco_css */
+	config_path = QRegisters::globals["$SCITECOCONFIG"]->get_string();
+	user_css_file = g_build_filename(config_path, USER_CSS_FILE, NIL);
+	if (g_file_test(user_css_file, G_FILE_TEST_IS_REGULAR))
+		/* open user CSS */
+		gtk_css_provider_load_from_path(user_css_provider,
+		                                user_css_file, NULL);
+	else
+		/* use fallback CSS */
+		gtk_css_provider_load_from_path(user_css_provider,
+		                                SCITECODATADIR G_DIR_SEPARATOR_S
+		                                "fallback.css",
+		                                NULL);
+	g_free(user_css_file);
+	g_free(config_path);
+	gtk_style_context_add_provider_for_screen(default_screen,
+	                                          GTK_STYLE_PROVIDER(user_css_provider),
+	                                          GTK_STYLE_PROVIDER_PRIORITY_USER);
 
 	/*
 	 * When changing views, the new widget is not
@@ -702,6 +800,12 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 	}
 
 	/*
+	 * The styles configured via Scintilla might change
+	 * with every keypress.
+	 */
+	set_css_variables_from_view(current_view);
+
+	/*
 	 * The info area is updated very often and setting the
 	 * window title each time it is updated is VERY costly.
 	 * So we set it here once after every keypress even if the
@@ -739,8 +843,7 @@ InterfaceGtk::handle_key_press(bool is_shift, bool is_ctl, guint keyval)
 InterfaceGtk::~InterfaceGtk()
 {
 	g_free(info_current);
-	if (popup_widget)
-		gtk_widget_destroy(popup_widget);
+
 	if (window)
 		gtk_widget_destroy(window);
 
@@ -754,6 +857,9 @@ InterfaceGtk::~InterfaceGtk()
 
 		g_async_queue_unref(event_queue);
 	}
+
+	if (css_var_provider)
+		g_object_unref(css_var_provider);
 }
 
 /*
