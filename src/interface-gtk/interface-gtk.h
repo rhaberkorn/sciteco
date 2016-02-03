@@ -168,8 +168,6 @@ public:
 	void handle_key_press(bool is_shift, bool is_ctl, guint keyval);
 
 private:
-	static void widget_set_font(GtkWidget *widget, const gchar *font_name);
-
 	void set_css_variables_from_view(ViewGtk *view);
 
 	void refresh_info(void);

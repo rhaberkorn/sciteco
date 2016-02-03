@@ -8,6 +8,10 @@
 }
 
 @[lexer.auto]{
+  0EJ-1"> :Q[lexer.font]">
+    32ESSTYLESETFONTQ[lexer.font]
+    Q[lexer.font],32ESSTYLESETSIZEFRACTIONAL
+  ' '
   :M[color.init]
   [_
   :Q*"= Oend '

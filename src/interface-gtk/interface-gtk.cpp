@@ -258,7 +258,6 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_widget_set_name(cmdline_widget, "sciteco-cmdline");
 	gtk_entry_set_has_frame(GTK_ENTRY(cmdline_widget), FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(cmdline_widget), FALSE);
-	widget_set_font(cmdline_widget, "Courier");
 	g_signal_connect(G_OBJECT(cmdline_widget), "key-press-event",
 			 G_CALLBACK(cmdline_key_pressed_cb), event_queue);
 	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
@@ -513,19 +512,27 @@ InterfaceGtk::popup_clear_impl(void)
 }
 
 void
-InterfaceGtk::widget_set_font(GtkWidget *widget, const gchar *font_name)
-{
-	PangoFontDescription *font_desc;
-
-	font_desc = pango_font_description_from_string(font_name);
-	gtk_widget_modify_font(widget, font_desc);
-	pango_font_description_free(font_desc);
-}
-
-void
 InterfaceGtk::set_css_variables_from_view(ViewGtk *view)
 {
+	guint font_size;
 	gchar buffer[256];
+
+	/*
+	 * Unfortunately, we cannot use CSS variables to pass around
+	 * font names and sizes, necessary for styling the command line
+	 * widget.
+	 * Therefore we just style it using generated CSS here.
+	 * This one of the few non-deprecated ways that Gtk leaves us
+	 * to set a custom font name.
+	 * CSS customizations have to take that into account.
+	 * NOTE: We don't actually know apriori how
+	 * large our buffer should be, but luckily STYLEGETFONT with
+	 * a sptr==0 will return only the size.
+	 * This is undocumented in the Scintilla docs.
+	 */
+	gchar font_name[view->ssm(SCI_STYLEGETFONT, STYLE_DEFAULT) + 1];
+	view->ssm(SCI_STYLEGETFONT, STYLE_DEFAULT, (sptr_t)font_name);
+	font_size = view->ssm(SCI_STYLEGETSIZEFRACTIONAL, STYLE_DEFAULT);
 
 	/*
 	 * Generates a CSS that sets some predefined color variables.
@@ -540,11 +547,18 @@ InterfaceGtk::set_css_variables_from_view(ViewGtk *view)
 	           "@define-color sciteco_default_fg_color " CSS_COLOR_FORMAT ";"
 	           "@define-color sciteco_default_bg_color " CSS_COLOR_FORMAT ";"
 	           "@define-color sciteco_calltip_fg_color " CSS_COLOR_FORMAT ";"
-	           "@define-color sciteco_calltip_bg_color " CSS_COLOR_FORMAT ";",
+	           "@define-color sciteco_calltip_bg_color " CSS_COLOR_FORMAT ";"
+	           "#%s{"
+	           "font: %s %u.%u"
+	           "}",
 	           bgr2rgb(view->ssm(SCI_STYLEGETFORE, STYLE_DEFAULT)),
 	           bgr2rgb(view->ssm(SCI_STYLEGETBACK, STYLE_DEFAULT)),
 	           bgr2rgb(view->ssm(SCI_STYLEGETFORE, STYLE_CALLTIP)),
-	           bgr2rgb(view->ssm(SCI_STYLEGETBACK, STYLE_CALLTIP)));
+	           bgr2rgb(view->ssm(SCI_STYLEGETBACK, STYLE_CALLTIP)),
+	           gtk_widget_get_name(cmdline_widget),
+	           font_name,
+	           font_size / SC_FONT_SIZE_MULTIPLIER,
+	           font_size % SC_FONT_SIZE_MULTIPLIER);
 
 	/*
 	 * The GError and return value has been deprecated.
