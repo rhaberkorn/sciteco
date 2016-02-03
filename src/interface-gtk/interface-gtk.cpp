@@ -169,7 +169,9 @@ void
 InterfaceGtk::main_impl(int &argc, char **&argv)
 {
 	static const Cmdline empty_cmdline;
-	GtkWidget *overlay_widget;
+
+	GtkWidget *vbox;
+	GtkWidget *overlay_widget, *overlay_vbox;
 	GtkWidget *message_bar_content;
 
 	/*
@@ -193,7 +195,7 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	g_signal_connect(G_OBJECT(window), "delete-event",
 			 G_CALLBACK(window_delete_cb), event_queue);
 
-	vbox = gtk_vbox_new(FALSE, 0);
+	vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
 	info_current = g_strdup("");
 
@@ -220,17 +222,25 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	}
 
 	/*
+	 * Overlay widget will allow overlaying the Scintilla view
+	 * and message widgets with the info popup.
+	 * Therefore overlay_vbox (containing the view and popup)
+	 * will be the main child of the overlay.
+	 */
+	overlay_widget = gtk_overlay_new();
+	overlay_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+	/*
 	 * The event box is the parent of all Scintilla views
 	 * that should be displayed.
 	 * This is handy when adding or removing current views,
 	 * enabling and disabling GDK updates and in order to filter
 	 * mouse and keyboard events going to Scintilla.
 	 */
-	overlay_widget = gtk_overlay_new();
 	event_box_widget = gtk_event_box_new();
 	gtk_event_box_set_above_child(GTK_EVENT_BOX(event_box_widget), TRUE);
-	gtk_container_add(GTK_CONTAINER(overlay_widget), event_box_widget);
-	gtk_box_pack_start(GTK_BOX(vbox), overlay_widget, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(overlay_vbox), event_box_widget,
+	                   TRUE, TRUE, 0);
 
 	message_bar_widget = gtk_info_bar_new();
 	gtk_widget_set_name(message_bar_widget, "sciteco-message-bar");
@@ -238,7 +248,11 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	message_widget = gtk_label_new("");
 	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
 	gtk_container_add(GTK_CONTAINER(message_bar_content), message_widget);
-	gtk_box_pack_start(GTK_BOX(vbox), message_bar_widget, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(overlay_vbox), message_bar_widget,
+	                   FALSE, FALSE, 0);
+
+	gtk_container_add(GTK_CONTAINER(overlay_widget), overlay_vbox);
+	gtk_box_pack_start(GTK_BOX(vbox), overlay_widget, TRUE, TRUE, 0);
 
 	cmdline_widget = gtk_entry_new();
 	gtk_widget_set_name(cmdline_widget, "sciteco-cmdline");

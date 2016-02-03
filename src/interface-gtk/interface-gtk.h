@@ -78,7 +78,6 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	GtkCssProvider *css_var_provider;
 
 	GtkWidget *window;
-	GtkWidget *vbox;
 
 	enum {
 		INFO_TYPE_BUFFER = 0,
@@ -106,7 +105,6 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 public:
 	InterfaceGtk() : css_var_provider(NULL),
 	                 window(NULL),
-	                 vbox(NULL),
 	                 info_type(INFO_TYPE_BUFFER), info_current(NULL),
 	                 use_csd(TRUE),
 	                 info_bar_widget(NULL), info_image(NULL),
