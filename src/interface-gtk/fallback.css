@@ -8,27 +8,9 @@
  * to fix it up or add other style customizations.
  */
 
-/*
- * Original STYLE_DEFAULT foregrounds on backgrounds:
- */
-#sciteco-cmdline {
-	color: @sciteco_default_fg_color;
-	text-shadow: none;
-	background-color: @sciteco_default_bg_color;
-	background-image: none;
-}
-
-/*
- * Reversed STYLE_DEFAULT colors:
- * The "question" class refers to G_MESSAGE_QUESTION.
- * This is used for showing user-level messages for the sole
- * reason that there is no class for G_MESSAGE_OTHER that
- * we could use for styling.
- */
-#sciteco-info-bar,
-#sciteco-info-bar GtkLabel,
 .titlebar, /* info bar in CSD mode */
-#sciteco-message-bar.question {
+#sciteco-info-bar,
+#sciteco-info-bar GtkLabel {
 	color: @sciteco_default_bg_color;
 	text-shadow: none;
 	background-color: @sciteco_default_fg_color;
@@ -36,8 +18,25 @@
 }
 
 /*
- * The popup widget (uses STYLE_CALLTIP)
+ * The "question" class refers to G_MESSAGE_QUESTION.
+ * This is used for showing user-level messages for the sole
+ * reason that there is no class for G_MESSAGE_OTHER that
+ * we could use for styling.
  */
+#sciteco-message-bar.question {
+	color: @sciteco_default_bg_color;
+	text-shadow: none;
+	background-color: @sciteco_default_fg_color;
+	background-image: none;
+}
+
+#sciteco-cmdline {
+	color: @sciteco_default_fg_color;
+	text-shadow: none;
+	background-color: @sciteco_default_bg_color;
+	background-image: none;
+}
+
 #sciteco-info-popup,
 #sciteco-info-popup GtkLabel {
 	color: @sciteco_calltip_fg_color;
