@@ -176,7 +176,8 @@ GOptionGroup *
 InterfaceGtk::get_options(void)
 {
 	const GOptionEntry entries[] = {
-		{"no-csd", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &use_csd,
+		{"no-csd", 0, G_OPTION_FLAG_IN_MAIN | G_OPTION_FLAG_REVERSE,
+	         G_OPTION_ARG_NONE, &use_csd,
 		 "Disable client-side decorations.", NULL},
 		{NULL}
 	};
