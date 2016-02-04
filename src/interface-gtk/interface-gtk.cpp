@@ -83,6 +83,13 @@ static gboolean window_delete_cb(GtkWidget *w, GdkEventAny *e,
 
 static gboolean sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
 
+static gboolean
+g_object_unref_idle_cb(gpointer user_data)
+{
+	g_object_unref(user_data);
+	return G_SOURCE_REMOVE;
+}
+
 } /* extern "C" */
 
 #define UNNAMED_FILE		"(Unnamed)"
@@ -116,7 +123,7 @@ ViewGtk::initialize_impl(void)
 	 * We don't want the object to be destroyed
 	 * when it is removed from the vbox.
 	 */
-	g_object_ref_sink(G_OBJECT(sci));
+	g_object_ref_sink(sci);
 
 	scintilla_set_id(sci, 0);
 
@@ -137,7 +144,7 @@ ViewGtk::initialize_impl(void)
 	events &= ~(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
 	gtk_widget_set_events(get_widget(), events);
 
-	g_signal_connect(G_OBJECT(sci), SCINTILLA_NOTIFY,
+	g_signal_connect(sci, SCINTILLA_NOTIFY,
 			 G_CALLBACK(scintilla_notify), NULL);
 
 	/*
@@ -147,6 +154,22 @@ ViewGtk::initialize_impl(void)
 	gdk_threads_leave();
 
 	setup();
+}
+
+ViewGtk::~ViewGtk()
+{
+	/*
+	 * This does NOT destroy the Scintilla object
+	 * and GTK widget, if it is the current view
+	 * (and therefore added to the vbox).
+	 * FIXME: This only uses an idle watcher
+	 * because the destructor can be called with
+	 * the Gdk lock held and without.
+	 * Once the threading model is revised this
+	 * can be simplified and inlined again.
+	 */
+	if (sci)
+		gdk_threads_add_idle(g_object_unref_idle_cb, sci);
 }
 
 GOptionGroup *
