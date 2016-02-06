@@ -54,8 +54,18 @@ Features:
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
    cannot be rubbed out properly).
- * Some command to query the dirty-status of buffers (e.g. EJ).
-   This allows us to save all modified buffers. See #4.
+ * Function key macros should behave more like regular macros:
+   If inserting a character results in an error, the entire
+   macro should be rubbed out. This means it would be OK to
+   let commands in function key macros fail and would fix, e.g.
+   ^FCLOSE.
+ * Function key handling should always be enabled. This was
+   configurable because of the way escape was handled in ncurses.
+   Now that escape is always immediate, there is little benefit
+   in having this still configurable. In fact if turned off,
+   SciTECO would try to execute escape sequences.
+   The ED flag could still exist and tell whether the function
+   key macros are used at all (i.e. this is how Gtk behaves currently).
  * Mouse support. Not that hard to implement. Mouse events
    use a pseudo function key macro as in Curses.
    Using some special command, macros can query the current
@@ -150,6 +160,9 @@ Features:
    filesystem forks (called Alternate Data Streams) and fall back
    to the generic savepoint file solution if this is not possible
    (e.g. on a FAT32 drive).
+   On the other hand, just like leftover savepoints, there could
+   be leftover forks. And they wouldn't be as easy to find as the
+   current files.
  * Instead of implementing split screens, it is better to leave
    tiling to programs dedicated to it (tmux, window manager).
    SciTECO could create pseudo-terminals (see pty(7)), set up
