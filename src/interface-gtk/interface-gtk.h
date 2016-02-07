@@ -79,6 +79,8 @@ typedef class InterfaceGtk : public Interface<InterfaceGtk, ViewGtk> {
 	gboolean use_csd;
 	GtkWidget *info_bar_widget;
 	GtkWidget *info_image;
+	GtkWidget *info_type_widget;
+	GtkWidget *info_name_widget;
 
 	GtkWidget *event_box_widget;
 
@@ -98,7 +100,8 @@ public:
 	                 window(NULL),
 	                 info_type(INFO_TYPE_BUFFER), info_current(NULL),
 	                 use_csd(TRUE),
-	                 info_bar_widget(NULL), info_image(NULL),
+	                 info_bar_widget(NULL),
+	                 info_image(NULL), info_type_widget(NULL), info_name_widget(NULL),
 	                 event_box_widget(NULL),
 	                 message_bar_widget(NULL), message_widget(NULL),
 			 cmdline_widget(NULL),

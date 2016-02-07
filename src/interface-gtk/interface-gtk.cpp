@@ -47,6 +47,7 @@
 #include <ScintillaWidget.h>
 
 #include "gtk-info-popup.h"
+#include "gtk-canonicalized-label.h"
 
 #include "sciteco.h"
 #include "string-utils.h"
@@ -230,12 +231,25 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	 * NOTE: Client-side decoations could fail, leaving us with a
 	 * standard title bar and the info bar with close buttons.
 	 * Other window managers have undesirable side-effects.
-	 * FIXME: At lease on Gtk 3.12 we could disable the subtitle.
 	 */
 	info_bar_widget = gtk_header_bar_new();
 	gtk_widget_set_name(info_bar_widget, "sciteco-info-bar");
+	info_name_widget = gtk_canonicalized_label_new(NULL);
+	gtk_widget_set_valign(info_name_widget, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(info_name_widget),
+	                            "name-label");
+	gtk_label_set_selectable(GTK_LABEL(info_name_widget), TRUE);
+	/* NOTE: Header bar does not resize for multi-line labels */
+	//gtk_label_set_line_wrap(GTK_LABEL(info_name_widget), TRUE);
+	//gtk_label_set_lines(GTK_LABEL(info_name_widget), 2);
+	gtk_header_bar_set_custom_title(GTK_HEADER_BAR(info_bar_widget), info_name_widget);
 	info_image = gtk_image_new();
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(info_bar_widget), info_image);
+	info_type_widget = gtk_label_new(NULL);
+	gtk_widget_set_valign(info_type_widget, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(info_type_widget),
+	                            "type-label");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(info_bar_widget), info_type_widget);
 	if (use_csd) {
 		/* use client-side decorations */
 		gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(info_bar_widget), TRUE);
@@ -269,8 +283,10 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	message_bar_widget = gtk_info_bar_new();
 	gtk_widget_set_name(message_bar_widget, "sciteco-message-bar");
 	message_bar_content = gtk_info_bar_get_content_area(GTK_INFO_BAR(message_bar_widget));
-	message_widget = gtk_label_new("");
-	gtk_misc_set_alignment(GTK_MISC(message_widget), 0., 0.);
+	/* NOTE: Messages are always pre-canonicalized */
+	message_widget = gtk_label_new(NULL);
+	gtk_label_set_selectable(GTK_LABEL(message_widget), TRUE);
+	gtk_label_set_line_wrap(GTK_LABEL(message_widget), TRUE);
 	gtk_container_add(GTK_CONTAINER(message_bar_content), message_widget);
 	gtk_box_pack_start(GTK_BOX(overlay_vbox), message_bar_widget,
 	                   FALSE, FALSE, 0);
@@ -364,31 +380,47 @@ InterfaceGtk::show_view_impl(ViewGtk *view)
 void
 InterfaceGtk::refresh_info(void)
 {
+	GtkStyleContext *style = gtk_widget_get_style_context(info_bar_widget);
 	const gchar *info_type_str;
-	gchar *info_current_canon = String::canonicalize_ctl(info_current);
+	gchar *info_current_temp = g_strdup(info_current);
+	gchar *info_current_canon;
 	GIcon *icon;
 	gchar *title;
 
+	gtk_style_context_remove_class(style, "info-qregister");
+	gtk_style_context_remove_class(style, "info-buffer");
+	gtk_style_context_remove_class(style, "dirty");
+
+	if (info_type == INFO_TYPE_BUFFER_DIRTY)
+		String::append(info_current_temp, "*");
+	gtk_canonicalized_label_set_text(GTK_CANONICALIZED_LABEL(info_name_widget),
+	                                 info_current_temp);
+	info_current_canon = String::canonicalize_ctl(info_current_temp);
+	g_free(info_current_temp);
+
 	switch (info_type) {
 	case INFO_TYPE_QREGISTER:
-		info_type_str = PACKAGE_NAME " - <QRegister> ";
-		gtk_header_bar_set_title(GTK_HEADER_BAR(info_bar_widget),
-		                         info_current_canon);
-		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(info_bar_widget),
-		                            "QRegister");
+		gtk_style_context_add_class(style, "info-qregister");
 
+		info_type_str = PACKAGE_NAME " - <QRegister> ";
+		gtk_label_set_text(GTK_LABEL(info_type_widget), "QRegister");
+		gtk_label_set_ellipsize(GTK_LABEL(info_name_widget),
+		                        PANGO_ELLIPSIZE_START);
+
+		/* FIXME: Use a Q-Register icon */
 		gtk_image_clear(GTK_IMAGE(info_image));
 		break;
 
 	case INFO_TYPE_BUFFER_DIRTY:
-		String::append(info_current_canon, "*");
+		gtk_style_context_add_class(style, "dirty");
 		/* fall through */
 	case INFO_TYPE_BUFFER:
+		gtk_style_context_add_class(style, "info-buffer");
+
 		info_type_str = PACKAGE_NAME " - <Buffer> ";
-		gtk_header_bar_set_title(GTK_HEADER_BAR(info_bar_widget),
-		                         info_current_canon);
-		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(info_bar_widget),
-		                            "Buffer");
+		gtk_label_set_text(GTK_LABEL(info_type_widget), "Buffer");
+		gtk_label_set_ellipsize(GTK_LABEL(info_name_widget),
+		                        PANGO_ELLIPSIZE_MIDDLE);
 
 		icon = gtk_info_popup_get_icon_for_path(info_current,
 		                                        "text-x-generic");

@@ -8,28 +8,62 @@
  * to fix it up or add other style customizations.
  */
 
-.titlebar, /* info bar in CSD mode */
-#sciteco-info-bar,
-#sciteco-info-bar GtkLabel {
-	color: @sciteco_default_bg_color;
-	text-shadow: none;
+/*
+ * The info or title bar (#sciteco-info-bar).
+ * The following classes are defined:
+ *   - info-qregister: The title bar if a QRegister is edited
+ *   - info-buffer: The title bar if a buffer is edited
+ *   - dirty: The title bar for dirty buffers
+ *   - type-label: The label showing the current document type
+ *   - name-label: THe label showing the current document name
+ */
+.info-qregister,
+.info-buffer {
 	background-color: @sciteco_default_fg_color;
 	background-image: none;
 }
 
+.info-qregister GtkLabel,
+.info-buffer GtkLabel {
+	color: @sciteco_default_bg_color;
+	text-shadow: none;
+}
+
+.type-label {
+	font-variant: small-caps;
+	font-weight: 300; /* light */
+}
+
+.info-buffer.dirty .name-label {
+	font-style: italic;
+}
+
 /*
+ * Scintilla views
+ */
+ScintillaObject {}
+
+/*
+ * The message bar (#sciteco-message-bar).
+ *
  * The "question" class refers to G_MESSAGE_QUESTION.
  * This is used for showing user-level messages for the sole
  * reason that there is no class for G_MESSAGE_OTHER that
  * we could use for styling.
  */
 #sciteco-message-bar.question {
-	color: @sciteco_default_bg_color;
-	text-shadow: none;
 	background-color: @sciteco_default_fg_color;
 	background-image: none;
 }
 
+#sciteco-message-bar.question GtkLabel {
+	color: @sciteco_default_bg_color;
+	text-shadow: none;
+}
+
+/*
+ * The command line area (#sciteco-cmdline)
+ */
 #sciteco-cmdline {
 	color: @sciteco_default_fg_color;
 	text-shadow: none;
@@ -37,10 +71,21 @@
 	background-image: none;
 }
 
-#sciteco-info-popup,
+/*
+ * The autocompletion popup (#sciteco-info-popup).
+ * The following classes are defined:
+ *   - highlight: A highlighted popup entry
+ */
+#sciteco-info-popup {
+	background-color: @sciteco_calltip_bg_color;
+	background-image: none;
+}
+
 #sciteco-info-popup GtkLabel {
 	color: @sciteco_calltip_fg_color;
 	text-shadow: none;
-	background-color: @sciteco_calltip_bg_color;
-	background-image: none;
+}
+
+#sciteco-info-popup .highlight GtkLabel {
+	font-weight: bold;
 }

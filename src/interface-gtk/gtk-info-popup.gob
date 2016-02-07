@@ -29,6 +29,8 @@ requires 2.0.20
 #ifndef HAVE_GTK_FLOW_BOX_NEW
 #include "gtkflowbox.h"
 #endif
+
+#include "gtk-canonicalized-label.h"
 %}
 
 %h{
@@ -231,9 +233,11 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 	{
 		GtkWidget *hbox;
 		GtkWidget *label;
-		gchar *markup;
 
 		hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+		if (highlight)
+			gtk_style_context_add_class(gtk_widget_get_style_context(hbox),
+			                            "highlight");
 
 		if (type == GTK_INFO_POPUP_FILE || type == GTK_INFO_POPUP_DIRECTORY) {
 			const gchar *fallback = type == GTK_INFO_POPUP_FILE ? "text-x-generic"
@@ -251,17 +255,26 @@ class Gtk:Info:Popup from Gtk:Event:Box {
 			}
 		}
 
+		label = gtk_canonicalized_label_new(name);
+		gtk_widget_set_halign(label, GTK_ALIGN_START);
+		gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+
 		/*
-		 * FIXME: setting Pango attributes directly would be
-		 * much more efficient
+		 * FIXME: This makes little sense once we've got mouse support.
+		 * But for the time being, it's a useful setting.
 		 */
-		label = gtk_label_new(NULL);
-		markup = g_markup_printf_escaped("<span weight=\"%s\">%s</span>",
-						 highlight ? "bold" : "normal",
-						 name);
-		gtk_label_set_markup(GTK_LABEL(label), markup);
-		g_free(markup);
-		gtk_misc_set_alignment(GTK_MISC(label), 0., 0.5);
+		gtk_label_set_selectable(GTK_LABEL(label), TRUE);
+
+		switch (type) {
+		case GTK_INFO_POPUP_PLAIN:
+			gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_START);
+			break;
+		case GTK_INFO_POPUP_FILE:
+		case GTK_INFO_POPUP_DIRECTORY:
+			gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_MIDDLE);
+			break;
+		}
+
 		gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
 
 		gtk_widget_show_all(hbox);
