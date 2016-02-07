@@ -1,0 +1,226 @@
+/*
+ * Copyright (C) 2012-2016 Robin Haberkorn
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+requires 2.0.20
+
+%ctop{
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <string.h>
+
+#include <glib/gprintf.h>
+
+#include <gdk/gdk.h>
+
+/*
+ * NOTE: These definitions are also in sciteco.h,
+ * but we cannot include them from a plain C file.
+ */
+#define IS_CTL(C)	((C) < ' ')
+#define CTL_ECHO(C)	((C) | 0x40)
+#define CTL_KEY_ESC	27
+
+#define GDK_TO_PANGO_COLOR(X) \
+	((guint16)((X) * G_MAXUINT16))
+%}
+
+%h{
+#include <gtk/gtk.h>
+%}
+
+class Gtk:Canonicalized:Label from Gtk:Label {
+	private PangoColor fg;
+	private guint16 fg_alpha;
+	private PangoColor bg;
+	private guint16 bg_alpha;
+
+	override (Gtk:Widget) void
+	style_updated(Gtk:Widget *widget)
+	{
+		Self *self = SELF(widget);
+
+		GtkStyleContext *style;
+		GdkRGBA normal_color;
+
+		PARENT_HANDLER(widget);
+		style = gtk_widget_get_style_context(widget);
+
+		gtk_style_context_get_color(style, GTK_STATE_NORMAL, &normal_color);
+		self->_priv->bg.red   = GDK_TO_PANGO_COLOR(normal_color.red);
+		self->_priv->bg.green = GDK_TO_PANGO_COLOR(normal_color.green);
+		self->_priv->bg.blue  = GDK_TO_PANGO_COLOR(normal_color.blue);
+		self->_priv->bg_alpha = GDK_TO_PANGO_COLOR(normal_color.alpha);
+
+		/*
+		 * If Pango does not support transparent foregrounds,
+		 * it will at least use a high-contrast foreground.
+		 * NOTE: It would be very hard to get an appropriate background
+		 * color even if Gtk supports it since the label itself may
+		 * not have one but one of its parents.
+		 * FIXME: We may want to honour the background color,
+		 * so we can at least get decent reverse text when setting
+		 * the background color in the CSS.
+		 */
+		self->_priv->fg.red   = G_MAXUINT16 - self->_priv->bg.red;
+		self->_priv->fg.green = G_MAXUINT16 - self->_priv->bg.green;
+		self->_priv->fg.blue  = G_MAXUINT16 - self->_priv->bg.blue;
+		/* try hard to get a transparent foreground anyway */
+		self->_priv->fg_alpha = G_MAXUINT16;
+	}
+
+	public GtkWidget *
+	new(const gchar *str)
+	{
+		Self *widget = GET_NEW;
+
+		self_set_text(widget, str);
+
+		return GTK_WIDGET(widget);
+	}
+
+	private void
+	add_highlight_attribs(Pango:Attr:List *attribs,
+	                      Pango:Color *fg, guint16 fg_alpha,
+	                      Pango:Color *bg, guint16 bg_alpha,
+	                      guint index, gsize len)
+	{
+		PangoAttribute *attr;
+
+#if PANGO_VERSION_CHECK(1,38,0)
+		attr = pango_attr_foreground_alpha_new(fg_alpha);
+		attr->start_index = index;
+		attr->end_index = index + len;
+		pango_attr_list_insert(attribs, attr);
+
+		attr = pango_attr_background_alpha_new(bg_alpha);
+		attr->start_index = index;
+		attr->end_index = index + len;
+		pango_attr_list_insert(attribs, attr);
+#endif
+
+		attr = pango_attr_foreground_new(fg->red, fg->green, fg->blue);
+		attr->start_index = index;
+		attr->end_index = index + len;
+		pango_attr_list_insert(attribs, attr);
+
+		attr = pango_attr_background_new(bg->red, bg->green, bg->blue);
+		attr->start_index = index;
+		attr->end_index = index + len;
+		pango_attr_list_insert(attribs, attr);
+	}
+
+	public void
+	parse_string(const gchar *str, gssize len,
+	             Pango:Color *fg, guint16 fg_alpha,
+	             Pango:Color *bg, guint16 bg_alpha,
+	             Pango:Attr:List **attribs, gchar **text)
+	{
+		gsize text_len = 1; /* for trailing 0 */
+		gint index = 0;
+
+		if (len < 0)
+			len = strlen(str);
+
+		/*
+		 * Approximate size of unformatted text.
+		 */
+		for (gint i = 0; i < len; i++)
+			text_len += IS_CTL(str[i]) ? 3 : 1;
+
+		*attribs = pango_attr_list_new();
+		*text = g_malloc(text_len);
+
+		while (len > 0) {
+			/*
+			 * NOTE: This mapping is similar to
+			 * View::set_presentations()
+			 */
+			switch (*str) {
+			case CTL_KEY_ESC:
+				self_add_highlight_attribs(*attribs,
+				                           fg, fg_alpha,
+				                           bg, bg_alpha,
+				                           index, 1);
+				(*text)[index++] = '$';
+				break;
+			case '\r':
+				self_add_highlight_attribs(*attribs,
+				                           fg, fg_alpha,
+				                           bg, bg_alpha,
+				                           index, 2);
+				(*text)[index++] = 'C';
+				(*text)[index++] = 'R';
+				break;
+			case '\n':
+				self_add_highlight_attribs(*attribs,
+				                           fg, fg_alpha,
+				                           bg, bg_alpha,
+				                           index, 2);
+				(*text)[index++] = 'L';
+				(*text)[index++] = 'F';
+				break;
+			case '\t':
+				self_add_highlight_attribs(*attribs,
+				                           fg, fg_alpha,
+				                           bg, bg_alpha,
+				                           index, 3);
+				(*text)[index++] = 'T';
+				(*text)[index++] = 'A';
+				(*text)[index++] = 'B';
+				break;
+			default:
+				if (IS_CTL(*str)) {
+					self_add_highlight_attribs(*attribs,
+					                           fg, fg_alpha,
+					                           bg, bg_alpha,
+					                           index, 2);
+					(*text)[index++] = '^';
+					(*text)[index++] = CTL_ECHO(*str);
+				} else {
+					(*text)[index++] = *str;
+				}
+				break;
+			}
+
+			str++;
+			len--;
+		}
+
+		/* null-terminate generated text */
+		(*text)[index] = '\0';
+	}
+
+	public void
+	set_text(self, const gchar *str)
+	{
+		PangoAttrList *attribs = NULL;
+		gchar *plaintext = NULL;
+
+		if (str)
+			self_parse_string(str, -1,
+			                  &self->_priv->fg, self->_priv->fg_alpha,
+			                  &self->_priv->bg, self->_priv->bg_alpha,
+			                  &attribs, &plaintext);
+
+		gtk_label_set_attributes(GTK_LABEL(self), attribs);
+		pango_attr_list_unref(attribs);
+		gtk_label_set_text(GTK_LABEL(self), plaintext);
+		g_free(plaintext);
+	}
+}
