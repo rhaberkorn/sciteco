@@ -27,6 +27,18 @@ namespace SciTECO {
 namespace String {
 
 /**
+ * Upper-case ASCII character.
+ *
+ * There are implementations in glib and libc,
+ * but defining it here ensures it can be inlined.
+ */
+static inline gchar
+toupper(gchar chr)
+{
+	return chr >= 'a' && chr <= 'z' ? chr & ~0x20 : chr;
+}
+
+/**
  * Allocate a string containing a single character chr.
  */
 static inline gchar *

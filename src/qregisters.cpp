@@ -807,7 +807,7 @@ MICROSTATE_START;
 	case '#': set(&&StateFirstChar); break;
 	case '[': set(&&StateString); break;
 	default:
-		undo.push_str(name) = String::chrdup(g_ascii_toupper(chr));
+		undo.push_str(name) = String::chrdup(String::toupper(chr));
 		goto done;
 	}
 
@@ -815,12 +815,12 @@ MICROSTATE_START;
 
 StateFirstChar:
 	undo.push_str(name) = (gchar *)g_malloc(3);
-	name[0] = g_ascii_toupper(chr);
+	name[0] = String::toupper(chr);
 	set(&&StateSecondChar);
 	return false;
 
 StateSecondChar:
-	name[1] = g_ascii_toupper(chr);
+	name[1] = String::toupper(chr);
 	name[2] = '\0';
 	goto done;
 

@@ -210,7 +210,7 @@ StateSearch::class2regexp(MatchState &state, const gchar *&pattern,
 			break;
 
 		case STATE_CTL_E:
-			switch (g_ascii_toupper(*pattern)) {
+			switch (String::toupper(*pattern)) {
 			case 'A':
 				pattern++;
 				state = STATE_START;
@@ -379,7 +379,7 @@ StateSearch::pattern2regexp(const gchar *&pattern,
 
 		case STATE_CTL_E:
 			state = STATE_START;
-			switch (g_ascii_toupper(*pattern)) {
+			switch (String::toupper(*pattern)) {
 			case 'M': state = STATE_MANY; break;
 			case 'S': String::append(re, "\\s+"); break;
 			/* same as <CTRL/X> */

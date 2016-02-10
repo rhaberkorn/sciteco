@@ -282,7 +282,7 @@ State *
 State::get_next_state(gchar chr)
 {
 	State *next = NULL;
-	guint upper = g_ascii_toupper(chr);
+	guint upper = String::toupper(chr);
 
 	if (upper < G_N_ELEMENTS(transitions))
 		next = transitions[upper];
@@ -321,7 +321,7 @@ StringBuildingMachine::input(gchar chr, gchar *&result)
 
 	if (toctl) {
 		if (chr != '^')
-			chr = CTL_KEY(g_ascii_toupper(chr));
+			chr = CTL_KEY(String::toupper(chr));
 		undo.push_var(toctl) = false;
 	} else if (chr == '^') {
 		undo.push_var(toctl) = true;
@@ -364,7 +364,7 @@ StateUpper:
 	return false;
 
 StateCtlE:
-	switch (g_ascii_toupper(chr)) {
+	switch (String::toupper(chr)) {
 	case '\\':
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlENum);
@@ -448,7 +448,7 @@ StateExpectString::custom(gchar chr)
 		switch (escape_char) {
 		case CTL_KEY_ESC:
 		case '{':
-			undo.push_var(escape_char) = g_ascii_toupper(chr);
+			undo.push_var(escape_char) = String::toupper(chr);
 			return this;
 		}
 	}
@@ -462,7 +462,7 @@ StateExpectString::custom(gchar chr)
 			undo.push_var(nesting)--;
 			break;
 		}
-	} else if (g_ascii_toupper(chr) == escape_char) {
+	} else if (String::toupper(chr) == escape_char) {
 		undo.push_var(nesting)--;
 	}
 
@@ -589,7 +589,7 @@ StateStart::read_integer(void)
 	}
 
 	for (;;) {
-		c = g_ascii_toupper((gchar)interface.ssm(SCI_GETCHARAT, pos));
+		c = String::toupper((gchar)interface.ssm(SCI_GETCHARAT, pos));
 		if (c >= '0' && c <= '0' + MIN(expressions.radix, 10) - 1)
 			v = (v*expressions.radix) + (c - '0');
 		else if (c >= 'A' &&
@@ -724,7 +724,7 @@ StateStart::custom(gchar chr)
 		return this;
 	}
 
-	chr = g_ascii_toupper(chr);
+	chr = String::toupper(chr);
 	switch (chr) {
 	case '/':
 		BEGIN_EXEC(this);
@@ -1689,7 +1689,7 @@ StateCondCommand::custom(gchar chr)
 		break;
 	}
 
-	switch (g_ascii_toupper(chr)) {
+	switch (String::toupper(chr)) {
 	case '~':
 		BEGIN_EXEC(&States::start);
 		result = !expressions.args();
@@ -1774,7 +1774,7 @@ StateControl::StateControl() : State()
 State *
 StateControl::custom(gchar chr)
 {
-	switch (g_ascii_toupper(chr)) {
+	switch (String::toupper(chr)) {
 	/*$
 	 * ^O -- Set radix to 8 (octal)
 	 */
@@ -1917,7 +1917,7 @@ StateECommand::StateECommand() : State()
 State *
 StateECommand::custom(gchar chr)
 {
-	switch (g_ascii_toupper(chr)) {
+	switch (String::toupper(chr)) {
 	/*$
 	 * [bool]EF -- Remove buffer from ring
 	 * -EF
