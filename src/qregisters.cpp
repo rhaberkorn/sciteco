@@ -431,8 +431,8 @@ QRegisterWorkingDir::set_string(const gchar *str, gsize len)
 void
 QRegisterWorkingDir::undo_set_string(void)
 {
-	/* passes ownership of string to undo token object */
-	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
+	/* pass ownership of current dir string */
+	undo.push_own<UndoTokenChangeDir>(g_get_current_dir());
 }
 
 gchar *
@@ -706,7 +706,7 @@ QRegisterStack::push(QRegister &reg)
 	entry->set_integer(reg.get_integer());
 
 	SLIST_INSERT_HEAD(&head, entry, entries);
-	undo.push(new UndoTokenPop(this));
+	undo.push<UndoTokenPop>(this);
 }
 
 bool
@@ -725,8 +725,8 @@ QRegisterStack::pop(QRegister &reg)
 	reg.exchange_string(*entry);
 
 	SLIST_REMOVE_HEAD(&head, entries);
-	/* pass entry ownership to undo stack */
-	undo.push(new UndoTokenPush(this, entry));
+	/* Pass entry ownership to undo stack. */
+	undo.push_own<UndoTokenPush>(this, entry);
 
 	return true;
 }

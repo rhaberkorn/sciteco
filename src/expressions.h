@@ -111,7 +111,7 @@ public:
 	inline void
 	undo_push(Type value, guint index = 0)
 	{
-		undo.push(new UndoTokenPush(this, value, index));
+		undo.push<UndoTokenPush>(this, value, index);
 	}
 
 	inline Type
@@ -132,7 +132,7 @@ public:
 	inline void
 	undo_pop(guint index = 0)
 	{
-		undo.push(new UndoTokenPop(this, index));
+		undo.push<UndoTokenPop>(this, index);
 	}
 
 	inline Type &

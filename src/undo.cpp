@@ -67,10 +67,12 @@ UndoStack::set_memory_limit(gsize new_limit)
 void
 UndoStack::push(UndoToken *token)
 {
-	if (!enabled) {
-		delete token;
-		return;
-	}
+	/*
+	 * All undo token allocations should take place using the
+	 * variadic template version of UndoStack::push(), so we
+	 * don't have to check `enabled` here.
+	 */
+	g_assert(enabled == true);
 
 	if (memory_limit) {
 		gsize token_size = token->get_size();

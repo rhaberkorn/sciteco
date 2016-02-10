@@ -175,6 +175,8 @@ extern class UndoStack {
 	 */
 	gsize memory_usage;
 
+	void push(UndoToken *token);
+
 public:
 	bool enabled;
 
@@ -194,13 +196,50 @@ public:
 
 	void set_memory_limit(gsize new_limit = 0);
 
-	void push(UndoToken *token);
+	/**
+	 * Allocate and push undo token.
+	 *
+	 * This does nothing if undo is disabled and should
+	 * not be used when ownership of some data is to be
+	 * passed to the undo token.
+	 */
+	template <class TokenType, typename... Params>
+	inline void
+	push(Params && ... params)
+	{
+		if (enabled)
+			push(new TokenType(params...));
+	}
+
+	/**
+	 * Allocate and push undo token, passing ownership.
+	 *
+	 * This creates and deletes the undo token cheaply
+	 * if undo is disabled, so that data whose ownership
+	 * is passed to the undo token is correctly reclaimed.
+	 *
+	 * @bug We must know which version of push to call
+	 * depending on the token type. This could be hidden
+	 * if UndoTokens had static push methods that take care
+	 * of reclaiming memory.
+	 */
+	template <class TokenType, typename... Params>
+	inline void
+	push_own(Params && ... params)
+	{
+		if (enabled) {
+			push(new TokenType(params...));
+		} else {
+			/* ensures that all memory is reclaimed */
+			TokenType dummy(params...);
+		}
+	}
 
 	template <typename Type>
 	inline Type &
 	push_var(Type &variable, Type value)
 	{
-		push(new UndoTokenVariable<Type>(variable, value));
+		push<UndoTokenVariable<Type>>(variable, value);
 		return variable;
 	}
 
@@ -214,7 +253,7 @@ public:
 	inline gchar *&
 	push_str(gchar *&variable, gchar *str)
 	{
-		push(new UndoTokenString(variable, str));
+		push<UndoTokenString>(variable, str);
 		return variable;
 	}
 	inline gchar *&
@@ -227,7 +266,8 @@ public:
 	inline Type *&
 	push_obj(Type *&variable, Type *obj)
 	{
-		push(new UndoTokenObject<Type>(variable, obj));
+		/* pass ownership of original object */
+		push_own<UndoTokenObject<Type>>(variable, obj);
 		return variable;
 	}
 

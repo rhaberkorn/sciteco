@@ -1640,7 +1640,7 @@ StateChangeDir::got_file(const gchar *filename)
 	BEGIN_EXEC(&States::start);
 
 	/* passes ownership of string to undo token object */
-	undo.push(new UndoTokenChangeDir(g_get_current_dir()));
+	undo.push_own<UndoTokenChangeDir>(g_get_current_dir());
 
 	dir = *filename ? g_strdup(filename)
 	                : QRegisters::globals["$HOME"]->get_string();

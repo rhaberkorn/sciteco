@@ -248,7 +248,7 @@ public:
 	undo_remove(QRegister *reg)
 	{
 		if (must_undo)
-			undo.push(new UndoTokenRemove(this, reg));
+			undo.push<UndoTokenRemove>(this, reg);
 	}
 
 	inline QRegister *

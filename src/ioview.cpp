@@ -463,8 +463,10 @@ make_savepoint(const gchar *filename)
 	}
 	savepoint_id++;
 
-	/* NOTE: passes ownership of savepoint string to undo token */
-	undo.push(new UndoTokenRestoreSavePoint(savepoint, filename));
+	/*
+	 * NOTE: passes ownership of savepoint string to undo token.
+	 */
+	undo.push_own<UndoTokenRestoreSavePoint>(savepoint, filename);
 }
 
 #endif
@@ -618,7 +620,7 @@ IOView::save(const gchar *filename)
 			attributes = get_file_attributes(filename);
 			make_savepoint(filename);
 		} else {
-			undo.push(new UndoTokenRemoveFile(filename));
+			undo.push<UndoTokenRemoveFile>(filename);
 		}
 	}
 

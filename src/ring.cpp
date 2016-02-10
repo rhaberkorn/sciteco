@@ -252,8 +252,8 @@ Ring::close(void)
 	QRegisters::hook(QRegisters::HOOK_CLOSE);
 	close(buffer);
 	current = buffer->next() ? : buffer->prev();
-	/* transfer responsibility to UndoToken object */
-	undo.push(new UndoTokenEdit(this, buffer));
+	/* Transfer responsibility to UndoToken object. */
+	undo.push_own<UndoTokenEdit>(this, buffer);
 
 	if (current) {
 		current->edit();

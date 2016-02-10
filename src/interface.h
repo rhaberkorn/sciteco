@@ -122,14 +122,14 @@ public:
 	undo_ssm(unsigned int iMessage,
 		 uptr_t wParam = 0, sptr_t lParam = 0)
 	{
-		undo.push(new UndoTokenMessage(impl(), iMessage, wParam, lParam));
+		undo.push<UndoTokenMessage>(impl(), iMessage, wParam, lParam);
 	}
 
 	void set_representations(void);
 	inline void
 	undo_set_representations(void)
 	{
-		undo.push(new UndoTokenSetRepresentations(impl()));
+		undo.push<UndoTokenSetRepresentations>(impl());
 	}
 
 	inline void
@@ -233,7 +233,7 @@ public:
 	inline void
 	undo_show_view(ViewImpl *view)
 	{
-		undo.push(new UndoTokenShowView(view));
+		undo.push<UndoTokenShowView>(view);
 	}
 
 	inline ViewImpl *
@@ -273,12 +273,12 @@ public:
 	inline void
 	undo_info_update(const QRegister *reg)
 	{
-		undo.push(new UndoTokenInfoUpdate<QRegister>(reg));
+		undo.push<UndoTokenInfoUpdate<QRegister>>(reg);
 	}
 	inline void
 	undo_info_update(const Buffer *buffer)
 	{
-		undo.push(new UndoTokenInfoUpdate<Buffer>(buffer));
+		undo.push<UndoTokenInfoUpdate<Buffer>>(buffer);
 	}
 
 	inline void

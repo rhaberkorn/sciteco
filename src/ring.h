@@ -53,7 +53,7 @@ class Buffer : private IOView {
 	inline void
 	undo_close(void)
 	{
-		undo.push(new UndoTokenClose(this));
+		undo.push<UndoTokenClose>(this);
 	}
 
 public:

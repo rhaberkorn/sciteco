@@ -96,7 +96,7 @@ public:
 	undo_set(gchar *name, gint pc = -1)
 	{
 		if (must_undo)
-			undo.push(new UndoTokenSet(this, name, pc));
+			undo.push<UndoTokenSet>(this, name, pc);
 	}
 
 #ifdef DEBUG

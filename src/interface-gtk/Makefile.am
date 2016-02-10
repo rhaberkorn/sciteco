@@ -1,7 +1,7 @@
 AM_CPPFLAGS += -I$(top_srcdir)/src
 
-AM_CFLAGS = -Wall -std=c99
-AM_CXXFLAGS = -Wall -Wno-char-subscripts
+AM_CFLAGS = -std=c99 -Wall
+AM_CXXFLAGS = -std=c++11 -Wall -Wno-char-subscripts
 if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif

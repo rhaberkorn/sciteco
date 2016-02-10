@@ -11,7 +11,7 @@ endif
 include $(top_srcdir)/bootstrap.am
 include $(top_srcdir)/scintilla.am
 
-AM_CXXFLAGS = -Wall -Wno-char-subscripts
+AM_CXXFLAGS = -std=c++11 -Wall -Wno-char-subscripts
 if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif

@@ -193,9 +193,9 @@ Optimizations:
    This would almost eradicate Cmdline::process_edit_cmd() and the
    huge switch-case statement, would be more efficient (but who cares
    in this case?) and would allow us to -fno-rtti saving a few bytes.
-   However, this would mean to make some more Cmdline methods public and
-   it distributes command line behaviour all over SciTECO instead of
-   concentrating it in the Cmdline class...
+   However, this would mean to make some more Cmdline methods public.
+   The implementations of the States' commandline editing handlers
+   could all be concentrated in cmdline.cpp.
  * C++14 is supported by GCC 5 and supports new() and delete()
    operators with a size argument. Replacing these operators
    with versions using g_slice_alloc() and g_slice_free() should
@@ -228,10 +228,6 @@ Optimizations:
    * can be handled automatically in StateExpectString
    * but it requires to be able to determine whether we're in the
      command line macro stack frame and are executing the end of it.
- * batch mode can be optimized by preventing unnecessary allocations/deallocations
-   for UNDO token creation. Check for undo.enabled in constructors like
-   undo.push_msg|var() where the undo token destruction does not have any
-   significant side effects.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
