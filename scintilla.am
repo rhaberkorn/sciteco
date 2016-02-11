@@ -4,10 +4,13 @@
 
 if INTERFACE_GTK
 MAKE_SCINTILLA = $(MAKE) -C @SCINTILLA_PATH@/gtk \
-                 GTK3=yes CONFIGFLAGS='@LIBGTK_CFLAGS@'
+                 GTK3=yes CONFIGFLAGS='@LIBGTK_CFLAGS@' \
+                 CXXFLAGS='@SCINTILLA_CXXFLAGS@'
 else
+# FIXME: There is currently no way to override the standard optimization
+# flags of Scinterm, so we pass them in CURSES_FLAGS.
 MAKE_SCINTILLA = $(MAKE) -C @SCINTERM_PATH@ \
-                 CURSES_FLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @NCURSES_CFLAGS@'
+                 CURSES_FLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @NCURSES_CFLAGS@ @SCINTILLA_CXXFLAGS@'
 endif
 
 # Pass toolchain configuration to Scintilla.

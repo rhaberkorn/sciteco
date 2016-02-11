@@ -12,6 +12,11 @@
 # build dependencies.
 export TERM=
 
+# Build with link-time-optimizations
+export DEB_CFLAGS_MAINT_APPEND=-flto
+export DEB_CXXFLAGS_MAINT_APPEND=-flto
+export DEB_LDFLAGS_MAINT_APPEND=-flto
+
 %:
 	dh $@
 
@@ -19,7 +24,8 @@ build:
 	dh_testdir
 	dh_auto_configure -- \
 			  --enable-bootstrap \
-			  --with-interface=ncurses
+			  --with-interface=ncurses \
+	                  $(shell dpkg-buildflags --export=configure)
 	dh_auto_build
 	touch $@
 

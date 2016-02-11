@@ -111,7 +111,8 @@ sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 		     --with-interface=$(MINGW_UI) \
 		     --disable-bootstrap \
 		     --enable-html-manual \
-		     CFLAGS="-g -O3" CXXFLAGS="-g -O3"; \
+		     CFLAGS="-g -O3 -flto" CXXFLAGS="-g -O3 -flto"; \
+	             LDFLAGS="-flto" \
 	)
 	$(MAKE) -C sciteco-$(SCITECO_VERSION) \
 		install-strip DESTDIR=`pwd`/temp-install

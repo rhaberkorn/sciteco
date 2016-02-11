@@ -19,6 +19,14 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
+# Use the user provided CXXFLAGS for Scintilla as well.
+# This makes sure that the same optimizations are applied
+# to SciTECO and Scintilla.
+# We cannot pass CXXFLAGS directly to Scintilla since
+# we modify it during library checking.
+SCINTILLA_CXXFLAGS="$CXXFLAGS"
+AC_SUBST(SCINTILLA_CXXFLAGS)
+
 # Automake build flag substitutions.
 # Necessary so we can change their default values here
 AC_SUBST(AM_CPPFLAGS)

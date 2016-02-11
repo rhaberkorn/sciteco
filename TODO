@@ -184,9 +184,6 @@ Features:
    Use Autotest for instance.
 
 Optimizations:
- * Support link-time-optimization for Scintilla and SciTECO.
-   This could significantly improve performance esp. when linking
-   in everything statically as is done on Windows.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
    state, this could be modelled via virtual methods in State.
