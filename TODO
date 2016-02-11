@@ -222,12 +222,6 @@ Optimizations:
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
  * simplify parser (static jump tables are unnecessary!)
- * search and other commands can be significantly optimized:
-   in batch mode, or in loops/macros there is no need to rematch every character!
-   -> immediate vs. non-immediate command execution
-   * can be handled automatically in StateExpectString
-   * but it requires to be able to determine whether we're in the
-     command line macro stack frame and are executing the end of it.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...

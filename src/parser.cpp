@@ -90,31 +90,42 @@ gchar escape_char = CTL_KEY_ESC;
 void
 Execute::step(const gchar *macro, gint stop_pos)
 {
-	while (macro_pc < stop_pos) {
+	try {
+		/*
+		 * convert bad_alloc and other C++ standard
+		 * library exceptions
+		 */
+		try {
+			while (macro_pc < stop_pos) {
 #ifdef DEBUG
-		g_printf("EXEC(%d): input='%c'/%x, state=%p, mode=%d\n",
-			 macro_pc, macro[macro_pc], macro[macro_pc],
-			 States::current, mode);
+				g_printf("EXEC(%d): input='%c'/%x, state=%p, mode=%d\n",
+					 macro_pc, macro[macro_pc], macro[macro_pc],
+					 States::current, mode);
 #endif
 
-		try {
-			/*
-			 * convert bad_alloc and other C++ standard
-			 * library exceptions
-			 */
-			try {
 				if (interface.is_interrupted())
 					throw Error("Interrupted");
 
 				State::input(macro[macro_pc]);
-			} catch (std::exception &error) {
-				throw StdError(error);
+				macro_pc++;
 			}
-		} catch (Error &error) {
-			error.set_coord(macro, macro_pc);
-			throw; /* forward */
+
+			/*
+			 * Provide interactive feedback when the
+			 * PC is at the end of the command line.
+			 * This will actually be called in other situations,
+			 * like at the end of macros but that does not hurt.
+			 * It should perhaps be in Cmdline::insert(),
+			 * but doing it here ensures that exceptions get
+			 * normalized.
+			 */
+			States::current->refresh();
+		} catch (std::exception &error) {
+			throw StdError(error);
 		}
-		macro_pc++;
+	} catch (Error &error) {
+		error.set_coord(macro, macro_pc);
+		throw; /* forward */
 	}
 }
 
@@ -430,8 +441,6 @@ StringBuildingMachine::~StringBuildingMachine()
 State *
 StateExpectString::custom(gchar chr)
 {
-	gchar *insert;
-
 	if (chr == '\0') {
 		BEGIN_EXEC(this);
 		initial();
@@ -479,6 +488,15 @@ StateExpectString::custom(gchar chr)
 			machine.reset();
 
 		try {
+			/*
+			 * Call process() even if interactive feedback
+			 * has not been requested using refresh().
+			 * This is necessary since commands are either
+			 * written for interactive execution or not,
+			 * so they may do their main activity in process().
+			 */
+			if (insert_len)
+				process(string ? : "", insert_len);
 			next = done(string ? : "");
 		} catch (...) {
 			g_free(string);
@@ -486,36 +504,50 @@ StateExpectString::custom(gchar chr)
 		}
 
 		g_free(string);
+		insert_len = 0;
 		return next;
 	}
 
 	BEGIN_EXEC(this);
 
 	/*
-	 * String building characters
+	 * String building characters and
+	 * string argument accumulation.
+	 *
+	 * NOTE: As an optimization insert_len is not
+	 * restored on undo since that is only
+	 * necessary in interactive mode and we get
+	 * called once per character when this is necessary.
+	 * If this gets too confusing, just undo changes
+	 * to insert_len.
 	 */
 	if (string_building) {
+		gchar *insert;
+
 		if (!machine.input(chr, insert))
 			return this;
-	} else {
-		insert = String::chrdup(chr);
-	}
 
-	/*
-	 * String accumulation
-	 */
-	undo.push_str(strings[0]);
-	String::append(strings[0], insert);
+		undo.push_str(strings[0]);
+		String::append(strings[0], insert);
+		insert_len += strlen(insert);
 
-	try {
-		process(strings[0], strlen(insert));
-	} catch (...) {
 		g_free(insert);
-		throw;
+	} else {
+		undo.push_str(strings[0]);
+		String::append(strings[0], chr);
+		insert_len++;
 	}
 
-	g_free(insert);
 	return this;
+}
+
+void
+StateExpectString::refresh(void)
+{
+	/* never calls process() in parse-only mode */
+	if (insert_len)
+		process(strings[0], insert_len);
+	insert_len = 0;
 }
 
 State *

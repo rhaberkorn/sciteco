@@ -54,9 +54,20 @@ public:
 	static void input(gchar chr);
 	State *get_next_state(gchar chr);
 
+	/**
+	 * Provide interactive feedback.
+	 *
+	 * This gets called whenever a state with
+	 * immediate interactive feedback should provide that
+	 * feedback; allowing them to optimize batch mode,
+	 * macro and many other cases.
+	 */
+	virtual void refresh(void) {}
+
 protected:
 	static bool eval_colon(void);
 
+	/** Get next state given an input character */
 	virtual State *
 	custom(gchar chr)
 	{
@@ -136,6 +147,7 @@ public:
  */
 class StateExpectString : public State {
 	StringBuildingMachine machine;
+	gsize insert_len;
 
 	gint nesting;
 
@@ -144,11 +156,12 @@ class StateExpectString : public State {
 
 public:
 	StateExpectString(bool _building = true, bool _last = true)
-			 : State(), nesting(1),
+			 : insert_len(0), nesting(1),
 			   string_building(_building), last(_last) {}
 
 private:
 	State *custom(gchar chr);
+	void refresh(void);
 
 protected:
 	virtual void initial(void) {}
