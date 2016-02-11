@@ -62,7 +62,7 @@ extern sig_atomic_t sigint_occurred;
 #define CTL_ECHO(C)	((C) | 0x40)
 /**
  * Control character of ASCII C, i.e.
- * control character corresponding to CTRL+<C> keypress.
+ * control character corresponding to CTRL+C keypress.
  */
 #define CTL_KEY(C)	((C) & ~0x40)
 /**

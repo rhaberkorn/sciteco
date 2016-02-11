@@ -111,8 +111,8 @@ set_file_attributes(const gchar *filename, FileAttributes attrs)
  * @param eol_style Will be set to the EOL style guessed from
  *                  the data in channel (if the data allows it).
  *                  Should be initialized with -1 (unknown).
- * @param eol_style_consistent Will be set to TRUE if
- *                             inconsistent EOL styles are detected.
+ * @param eol_style_inconsistent Will be set to TRUE if
+ *                               inconsistent EOL styles are detected.
  * @param error If not NULL and an error occurred, it is set to
  *              the error. It should be initialized to -1.
  * @return A GIOStatus as returned by g_io_channel_read_chars()
