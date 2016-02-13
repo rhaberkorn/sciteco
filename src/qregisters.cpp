@@ -969,7 +969,7 @@ State *
 StateEQCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::loadqreg);
-	register_argument = reg;
+	undo.push_var(register_argument) = reg;
 	return &States::loadqreg;
 }
 
@@ -1009,7 +1009,7 @@ State *
 StateEPctCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::saveqreg);
-	register_argument = reg;
+	undo.push_var(register_argument) = reg;
 	return &States::saveqreg;
 }
 
@@ -1141,7 +1141,7 @@ State *
 StateCtlUCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::setqregstring_nobuilding);
-	register_argument = reg;
+	undo.push_var(register_argument) = reg;
 	return &States::setqregstring_nobuilding;
 }
 
@@ -1159,7 +1159,7 @@ State *
 StateEUCommand::got_register(QRegister *reg)
 {
 	BEGIN_EXEC(&States::setqregstring_building);
-	register_argument = reg;
+	undo.push_var(register_argument) = reg;
 	return &States::setqregstring_building;
 }
 
