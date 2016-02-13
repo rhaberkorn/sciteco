@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.lisp]{
-  ESSETLEXERLANGUAGElisp
+  ESSETLEXERLANGUAGElisp
   0ESSETKEYWORDS
     not defun + - * / = < > <= >= princ eval apply funcall quote identity
     function complement backquote lambda set setq setf defun defmacro gensym make symbol

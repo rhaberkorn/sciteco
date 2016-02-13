@@ -12,7 +12,7 @@
 Q.r}
 
 @[lexer.set.vb]{
-  ESSETLEXERLANGUAGEvb
+  ESSETLEXERLANGUAGEvb
   0ESSETKEYWORDS
     addressof alias and as attribute base begin binary boolean byref byte byval
     call case cdbl cint clng compare const csng cstr currency date decimal declare

@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.scheme]{
-  ESSETLEXERLANGUAGElisp
+  ESSETLEXERLANGUAGElisp
   0ESSETKEYWORDS
     + - * / = < > <= >= => abs acos and angle append apply asin assoc assoc assq
     assv atan begin boolean? caar cadr call-with-current-continuation call/cc

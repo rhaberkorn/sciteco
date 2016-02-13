@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.ch]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     auto array bool break case char class complex ComplexInf ComplexNaN const
     continue default delete do double else enum export extern float for foreach goto if

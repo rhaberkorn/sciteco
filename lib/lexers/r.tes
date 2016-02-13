@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.r]{
-  ESSETLEXERLANGUAGEr
+  ESSETLEXERLANGUAGEr
   0ESSETKEYWORDS
     if else repeat while function for in next break TRUE FALSE NULL NA Inf NaN
   1ESSETKEYWORDS

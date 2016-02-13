@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.ave]{
-  ESSETLEXERLANGUAGEave
+  ESSETLEXERLANGUAGEave
   0ESSETKEYWORDS
     nil true false else for if while then elseif end av self in exit
   :M[color.comment],1M[color.set]

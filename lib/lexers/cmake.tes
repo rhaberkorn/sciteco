@@ -7,7 +7,7 @@
 Q.r}
 
 @[lexer.set.cmake]{
-  ESSETLEXERLANGUAGEcmake
+  ESSETLEXERLANGUAGEcmake
   ! Commands !
   0ESSETKEYWORDS
     add_custom_command add_custom_target add_definitions add_dependencies

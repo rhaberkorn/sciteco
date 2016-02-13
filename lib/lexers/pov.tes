@@ -6,7 +6,7 @@
 Q.r}
 
 @[lexer.set.pov]{
-  ESSETLEXERLANGUAGEpov
+  ESSETLEXERLANGUAGEpov
   0ESSETKEYWORDS
     declare local include undef fopen fclose read write default version case
     range break debug error warning if ifdef ifndef switch while macro else end

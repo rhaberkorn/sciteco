@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.pike]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     constant enum if do for while else foreach case switch break continue return
     typeof catch class lambda import inherit static void int string float mixed object

@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.vala]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     if else switch case default break continue return yield for foreach in do
     while try catch finally throw

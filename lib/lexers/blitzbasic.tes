@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.blitzbasic]{
-  ESSETLEXERLANGUAGEblitzbasic
+  ESSETLEXERLANGUAGEblitzbasic
   0ESSETKEYWORDS
     abs accepttcpstream acos after and apptitle asc asin atan atan2
     automidhandle autosuspend availvidmem backbuffer banksize before bin calldll case ceil

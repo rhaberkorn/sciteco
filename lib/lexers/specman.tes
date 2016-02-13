@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.specman]{
-  ESSETLEXERLANGUAGEeiffel
+  ESSETLEXERLANGUAGEeiffel
   0ESSETKEYWORDS
     abs acos ascii asin asstring atan atan2 ave case choose choosen choosesets
     clustersize cos cosh count cron dataset dedup denormalize distribute distributed

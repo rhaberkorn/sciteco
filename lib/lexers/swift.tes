@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.swift]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     class deinit enum extension func import init internal let operator private
     protocol public static struct subscript typealias var break case continue default do
