@@ -27,16 +27,16 @@ EMQ[$SCITECOPATH]/session.tes
 
   !edit!
     ! Add code here to execute when a document is edited !
-    Oend
+    
 
   !close!
     ! Add code here to execute when a document is closed !
-    Oend
+    
 
   !quit!
     ! Add code here to execute when SciTECO quits !
     M[session.save]
-!end!}
+}
 0,32ED
 
 ! Tweak the default font name and size.

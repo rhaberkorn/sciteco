@@ -219,6 +219,14 @@ private:
 	State *custom(gchar chr);
 };
 
+class StateEscape : public State {
+public:
+	StateEscape();
+
+private:
+	State *custom(gchar chr);
+};
+
 class StateFCommand : public State {
 public:
 	StateFCommand();
@@ -310,6 +318,7 @@ namespace States {
 	extern StateStart		start;
 	extern StateControl		control;
 	extern StateASCII		ascii;
+	extern StateEscape		escape;
 	extern StateFCommand		fcommand;
 	extern StateChangeDir		changedir;
 	extern StateCondCommand		condcommand;

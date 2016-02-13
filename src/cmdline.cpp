@@ -231,6 +231,39 @@ Cmdline::keypress(gchar key)
 	 */
 	try {
 		process_edit_cmd(key);
+	} catch (Return) {
+		/*
+		 * Return from top-level macro, results
+		 * in command line termination.
+		 */
+		interface.popup_clear();
+
+		if (quit_requested)
+			/* cought by user interface */
+			throw Quit();
+
+		undo.clear();
+		/* also empties all Scintilla undo buffers */
+		ring.set_scintilla_undo(true);
+		QRegisters::view.set_scintilla_undo(true);
+		Goto::table->clear();
+		expressions.clear();
+
+		last_cmdline = *this;
+		str = NULL;
+		len = rubout_len = 0;
+
+#ifdef HAVE_MALLOC_TRIM
+		/*
+		 * Glibc/Linux-only optimization: Undo stacks can grow very
+		 * large - sometimes large enough to make the system
+		 * swap and become unresponsive.
+		 * This will often reduce the amount of memory previously
+		 * freed that's still allocated to the program immediately
+		 * when the command-line is terminated:
+		 */
+		malloc_trim(0);
+#endif
 	} catch (Error &error) {
 		/*
 		 * NOTE: Error message already displayed in
@@ -480,49 +513,6 @@ Cmdline::process_edit_cmd(gchar key)
 			g_free(new_chars);
 		} else {
 			interface.popup_clear();
-			insert(key);
-		}
-		break;
-
-	case CTL_KEY_ESC: /* terminate command line */
-		interface.popup_clear();
-
-		if (States::current == &States::start &&
-		    str && str[len-1] == CTL_KEY_ESC) {
-			if (Goto::skip_label) {
-				interface.msg(InterfaceCurrent::MSG_ERROR,
-					      "Label \"%s\" not found",
-					      Goto::skip_label);
-				break;
-			}
-
-			if (quit_requested)
-				/* cought by user interface */
-				throw Quit();
-
-			undo.clear();
-			/* also empties all Scintilla undo buffers */
-			ring.set_scintilla_undo(true);
-			QRegisters::view.set_scintilla_undo(true);
-			Goto::table->clear();
-			expressions.clear();
-
-			last_cmdline = *this;
-			str = NULL;
-			len = rubout_len = 0;
-
-#ifdef HAVE_MALLOC_TRIM
-			/*
-			 * Glibc/Linux-only optimization: Undo stacks can grow very
-			 * large - sometimes large enough to make the system
-			 * swap and become unresponsive.
-			 * This will often reduce the amount of memory previously
-			 * freed that's still allocated to the program immediately
-			 * when the command-line is terminated:
-			 */
-			malloc_trim(0);
-#endif
-		} else {
 			insert(key);
 		}
 		break;

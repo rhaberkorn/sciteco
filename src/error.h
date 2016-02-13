@@ -29,11 +29,17 @@
 
 namespace SciTECO {
 
-/*
+/**
  * Thrown as exception to signify that program
  * should be terminated.
  */
 class Quit {};
+
+/**
+ * Thrown as exception to cause a macro to
+ * return or a command-line termination.
+ */
+class Return {};
 
 class Error {
 	gchar *description;

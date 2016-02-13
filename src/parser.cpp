@@ -53,6 +53,7 @@ namespace States {
 	StateStart		start;
 	StateControl		control;
 	StateASCII		ascii;
+	StateEscape		escape;
 	StateFCommand		fcommand;
 	StateChangeDir		changedir;
 	StateCondCommand	condcommand;
@@ -139,7 +140,7 @@ Execute::macro(const gchar *macro, bool locals)
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
 
-	QRegisterTable *parent_locals;
+	QRegisterTable *parent_locals = NULL;
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
@@ -160,7 +161,20 @@ Execute::macro(const gchar *macro, bool locals)
 	}
 
 	try {
-		step(macro, strlen(macro));
+		try {
+			step(macro, strlen(macro));
+		} catch (Return) {
+			/*
+			 * Macro returned - handle like regular
+			 * end of macro, even though some checks
+			 * are unnecessary here.
+			 * macro_pc will still point to the return PC.
+			 * We are still in the "escape" state and must
+			 * reset it here, so it is not confused
+			 * with a trailing ^[ in macro.
+			 */
+			States::current = &States::start;
+		}
 
 		/*
 		 * Subsequent errors must still be
@@ -172,12 +186,22 @@ Execute::macro(const gchar *macro, bool locals)
 				throw Error("Label \"%s\" not found",
 				            Goto::skip_label);
 
-			if (States::current != &States::start)
+			if (States::current == &States::escape) {
+				/*
+				 * Due to the deferred nature of ^[,
+				 * it is valid to end in the "escape" state.
+				 * FIXME: This could be avoided by signalling
+				 * the state the end of macro but State::refresh()
+				 * cannot be used :-(.
+				 */
+				expressions.discard_args();
+			} else if (States::current != &States::start) {
 				/*
 				 * can only happen if we returned because
 				 * of macro end
 				 */
 				throw Error("Unterminated command");
+			}
 
 			/*
 			 * This handles the problem of Q-Registers
@@ -190,7 +214,7 @@ Execute::macro(const gchar *macro, bool locals)
 			if (locals)
 				QRegisters::locals->clear();
 		} catch (Error &error) {
-			error.set_coord(macro, strlen(macro));
+			error.set_coord(macro, macro_pc);
 			throw; /* forward */
 		}
 	} catch (...) {
@@ -726,7 +750,7 @@ StateStart::custom(gchar chr)
 	tecoBool rc;
 
 	/*
-	 * <CTRL/x> commands implemented in StateCtrlCmd
+	 * <CTRL/x> commands implemented in StateControl
 	 */
 	if (IS_CTL(chr))
 		return States::control.get_next_state(CTL_ECHO(chr));
@@ -1801,6 +1825,7 @@ StateControl::StateControl() : State()
 	transitions['I'] = &States::insert_indent;
 	transitions['U'] = &States::ctlucommand;
 	transitions['^'] = &States::ascii;
+	transitions['['] = &States::escape;
 }
 
 State *
@@ -1838,31 +1863,6 @@ StateControl::custom(gchar chr)
 			expressions.push(expressions.radix);
 		else
 			expressions.set_radix(expressions.pop_num_calc());
-		break;
-
-	/*
-	 * Alternatives: ^[, <CTRL/[>, <ESC>
-	 */
-	/*$
-	 * ^[ -- Discard all arguments
-	 * $
-	 *
-	 * Pops and discards all values from the stack that
-	 * might otherwise be used as arguments to following
-	 * commands.
-	 * Therefore it stops popping on stack boundaries like
-	 * they are introduced by arithmetic brackets or loops.
-	 *
-	 * Note that ^[ is usually typed using the Escape key.
-	 * CTRL+[ however is possible as well and equivalent to
-	 * Escape in every manner.
-	 * The Caret-[ notation however is processed like any
-	 * ordinary command and only works as the discard-arguments
-	 * command.
-	 */
-	case '[':
-		BEGIN_EXEC(&States::start);
-		expressions.discard_args();
 		break;
 
 	/*
@@ -1928,6 +1928,82 @@ StateASCII::custom(gchar chr)
 	expressions.push(chr);
 
 	return &States::start;
+}
+
+/*
+ * The Escape state is special, as it implements
+ * a kind of "lookahead" for the ^[ command (dicard all
+ * arguments).
+ * It is not executed immediately as usual in SciTECO
+ * but only if not followed by an escape character.
+ * This is necessary since $$ is the macro return
+ * and command-line termination command and it must not
+ * discard arguments.
+ * Deferred execution of ^[ is possible since it does
+ * not have any visible side-effects - its effects can
+ * only be seen when executing the following command.
+ */
+StateEscape::StateEscape()
+{
+	transitions['\0'] = this;
+}
+
+State *
+StateEscape::custom(gchar chr)
+{
+	/*$
+	 * [a1,a2,...]$$ -- Terminate command line or return from macro
+	 * [a1,a2,...]^[$
+	 *
+	 * Returns from the current macro invocation.
+	 * The numeric stack is not modified, giving the
+	 * effect of returning the arguments or stack contents
+	 * preceding the command to the macro caller.
+	 * It is generally semantically equivalent to reaching
+	 * the end of the current macro but is executed faster.
+	 *
+	 * Therefore returning from the top-level macro in batch mode
+	 * will exit the program or start up interactive mode depending
+	 * on whether program exit has been requested.
+	 * \(lqEX\fB$$\fP\(rq is thus a common idiom to exit
+	 * prematurely.
+	 *
+	 * In interactive mode, returning from the top-level macro
+	 * (i.e. typing \fB$$\fP at the command line) has the
+	 * effect of command line termination.
+	 *
+	 * Only the first \fIescape\fP of \fB$$\fP may be typed
+	 * in up-arrow mode as \fB^[$\fP \(em the second character
+	 * must be a real escape character.
+	 */
+	if (chr == CTL_KEY_ESC) {
+		BEGIN_EXEC(&States::start);
+		throw Return();
+	}
+
+	/*
+	 * Alternatives: ^[, <CTRL/[>, <ESC>
+	 */
+	/*$
+	 * ^[ -- Discard all arguments
+	 * $
+	 *
+	 * Pops and discards all values from the stack that
+	 * might otherwise be used as arguments to following
+	 * commands.
+	 * Therefore it stops popping on stack boundaries like
+	 * they are introduced by arithmetic brackets or loops.
+	 *
+	 * Note that ^[ is usually typed using the Escape key.
+	 * CTRL+[ however is possible as well and equivalent to
+	 * Escape in every manner.
+	 * The Caret-[ notation however is processed like any
+	 * ordinary command and only works as the discard-arguments
+	 * command.
+	 */
+	if (mode == MODE_NORMAL)
+		expressions.discard_args();
+	return States::start.get_next_state(chr);
 }
 
 StateECommand::StateECommand() : State()

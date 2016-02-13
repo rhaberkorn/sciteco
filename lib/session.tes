@@ -7,7 +7,7 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
 ! Save current session to the file specified by "session.path" !
 @[session.save]{
-  :Q[session.path]-1"< Oend '
+  :Q[session.path]-1"<  '
   Q*U.[curbuf]
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
@@ -20,7 +20,7 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
   E%.[session]Q[session.path]
   Q.[curbuf]EB
-!end!}
+}
 
 ! Load session specified by "session.path" !
 @[session.load]{

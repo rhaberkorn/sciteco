@@ -13,8 +13,8 @@
     Q[lexer.font],32ESSTYLESETSIZEFRACTIONAL
   ' '
   :M[color.init]
+  :Q*"=  '
   [_
-  :Q*"= Oend '
 }
 
 ! Automatically mung all the lexers and add them to "lexer.auto" !
@@ -25,12 +25,11 @@
     0X.[filename] 4R .U.p <-A-^^/"= 1; ':R;> .,Q.pX.[name]
     EMQ.[filename]
     :@EU[lexer.auto]{
-      :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] Oend '
+      :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] ]_ '
     }
   L>
 ]*
 
-! append "end" label to "lexer.auto" !
 :@[lexer.auto]{
-  !end! ]_
+  ]_
 }
