@@ -63,6 +63,9 @@ Rubbed out characters are kept and displayed to the user
 who has the possibility of re-inserting rubbed out characters
 into the input stream.
 The input stream is called command line macro.
+Since \*(ST's undo capabilities requires memory and other
+resources, command lines may be terminated, reclaiming all
+resources and emptying the command line macro.
 The language of the command-line macro is basically the same
 as the language used in batch processing, with the exception
 of some commands that depend on the command line macro or
@@ -488,16 +491,6 @@ This takes Scintilla's indention policy into account
 and results in the same indention as the \fB^I\fP command.
 T}
 T{
-Terminate command line
-T};27;^[, Escape;T{
-Immediately after regular command ^[
-T};T{
-Two escape characters (string terminators do
-.B not
-count) terminate the command line, freeing all undo-stack related
-resources and beginning a new command line.
-T}
-T{
 Suspend process
 T};26;^Z;T{
 Everywhere
@@ -567,6 +560,27 @@ command line.
 This will also automatically disable the \fB^G\fP modifier.
 The \fB^G\fP modifier is \fIdisabled\fP by default, so the
 corresponding commands work similar to their Unix shell counterparts.
+.LP
+Since \*(ST's undo stack requires an increasing amount of memory
+and other resources proportional to the length of the command line,
+it is occasionally useful to reclaim these resources, especially after
+operations that consumed a lot of memory.
+In some cases, commands like tight loops might even make the system
+swap until \*(ST hits its configurable memory limit.
+It is therefore possible to terminate command lines using the
+\fB$$\fP (double escape) command \(em or in other words by returning from the
+command line macro.
+Since this is a regular command respecting \*(ST's syntax, it is
+much less likely to accidentally terminate a command line than
+in classic TECOs where \fB$$\fP is a special immediate editing key
+sequence.
+Command line termination will reclaim all undo-related resources without
+undoing any side effects, thus \(lqpersisting\(rq or \(lqcommitting\(rq
+them.
+Since undoing those side effects (of the last command line) will
+no longer be possible, command line termination will also reset
+the command line macro.
+Global and local Q-Registers are not affected by command line termination.
 .
 .SS Auto Completion
 .
@@ -714,9 +728,8 @@ The foreground color of Scintilla's \fBSTYLE_CALLTIP\fP.
 .B @sciteco_calltip_bg_color
 The background color of Scintilla's \fBSTYLE_CALLTIP\fP.
 .LP
-Furthermore, \*(ST defines the following named widgets for its
-main UI components: \fB#sciteco-info-bar\fP, \fB#sciteco-message-bar\fP,
-\fB#sciteco-cmdline\fP and \fB#sciteco-info-popup\fP.
+Furthermore, \*(ST defines named widgets for its
+main UI components as well as several CSS classes.
 .LP
 The CSS file is loaded from
 .B $SCITECOCONFIG/.teco_css
@@ -724,6 +737,8 @@ if it is existing.
 Else, \*(ST loads the fallback CSS at
 .BR @pkgdatadir@/fallback.css ,
 which can also be used as a template when writing \fB.teco_css\fP.
+The fallback CSS can also be consulted for additional documentation
+on \*(ST's named widgets and special CSS classes.
 The CSS file can be written such that it works for any
 \*(ST color scheme and may also be used to tweak other
 aspects of \*(ST's user interface.
@@ -825,6 +840,16 @@ arguments from the stack.
 This may be useful for mixing commands with arithmetic expressions.
 An expression enclosed in brackets returns all of the values that have
 been pushed onto the stack.
+\*(ST currently performs minimal checking on the validity of braces
+(i.e. the closing brace \(lqcommand\(rq) which are handled more or less
+like regular commands with regards to flow control.
+Care should thus be taken when jumping out of braces or leaving open
+braces at the end of macros as this might leave the parser in an unexpected state.
+Conversely, the return command \fB$$\fP has special support for
+dealing with braces.
+As the current behaviour has probably little benefits, the rules
+governing braces might be made stricter in a future release of \*(ST.
+.LP
 Another construct that may be used as an argument barrier to explicitly
 separate arguments is the comma (\(lq,\(rq).
 It is obligatory when trying to push a sequence of number constants
@@ -1571,8 +1596,8 @@ program code, paying no attention to string boundaries and comments,
 to care about characters relevant for flow control in string arguments
 and the like.
 \*(ST will never ever jump into string arguments!
-Also \*(ST caches program counters in tables and on the expression
-stack so that flow-control statements are generally faster than
+Also \*(ST caches program counters in tables and dedicated stacks
+so that flow-control statements are generally faster than
 in classic TECOs.
 .
 .SS GOTOS AND LABELS
@@ -1611,9 +1636,10 @@ Its syntax is as follows:
 In other words, sharp brackets (less-than and greater-than signs)
 correspond to the loop start and end.
 The opening bracket acts as an argument barrier (i.e. the command
-immediately following does not see any argument) and the closing
-bracket discards all values accumulated on the expression stack
-since the loop's beginning (similar to a \fB^[\fP command).
+immediately following does not see any argument) just like a round
+bracket and the closing sharp bracket discards all values accumulated
+on the expression stack since the loop's beginning
+(similar to a \fB^[\fP command).
 The opening bracket takes an optional argument \fIn\fP.
 If \fIn\fP is omitted, -1 is implied.
 The loops behaviour depends on the value of \fIn\fP:
@@ -1634,6 +1660,31 @@ The loop does not terminate automatically but you must break
 from it manually.
 Consequently, if \fIn\fP is omitted the loop will be an
 infinite one.
+.LP
+Additionally \*(ST supports special colon-modified forms
+of the loop start and end commands for processing the
+argument stack dynamically.
+The \fB:>\fP loop end command will \fInot\fP pop values left
+on the stack since the beginning of the loop and can be used
+to aggregate stack values.
+For instance, the following command will leave the numbers
+1 to 5 on the expression stack:
+.EX
+0Ua 5<%a:>
+.EE
+The command can be understood as an aggregated form of the
+expression \(lq(%a,%a,%a,%a,%a)\(rq.
+Consequently, the colon-modified loop start command will
+\fInot\fP represent an argument barrier and the corresponding
+loop end command will not discard any values which is useful
+for looping over the contents of the stack.
+E.g. the following command will print the numbers 1 to 5
+(actually every additional number argument):
+.EX
+1,2,3,4,5,-1:<"~1;'=>
+.EE
+If the loop start is colon-modified, the colon in front
+of the loop end command is ignored if present.
 .LP
 Furthermore there are a number of flow control commands that
 may be used in loops like \fBF<\fP and \fBF>\fP.
