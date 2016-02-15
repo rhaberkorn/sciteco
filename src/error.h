@@ -39,7 +39,12 @@ class Quit {};
  * Thrown as exception to cause a macro to
  * return or a command-line termination.
  */
-class Return {};
+class Return {
+public:
+	guint args;
+
+	Return(guint _args = 0) : args(_args) {}
+};
 
 class Error {
 	gchar *description;

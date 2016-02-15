@@ -642,7 +642,7 @@ StateSearch::done(const gchar *str)
 	if (eval_colon())
 		expressions.push(search_reg->get_integer());
 	else if (IS_FAILURE(search_reg->get_integer()) &&
-		 expressions.find_op(Expressions::OP_LOOP) < 0 /* not in loop */)
+	         !loop_stack.items() /* not in loop */)
 		interface.msg(InterfaceCurrent::MSG_ERROR, "Search string not found!");
 
 	return &States::start;

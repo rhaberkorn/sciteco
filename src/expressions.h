@@ -27,41 +27,39 @@ namespace SciTECO {
 
 template <typename Type>
 class ValueStack {
-	class UndoTokenPush : public UndoTokenWithSize<UndoTokenPush> {
-		/*
-		 * FIXME: saving the UndoStack for each undo taken
-		 * wastes a lot of memory
-		 */
-		ValueStack<Type> *stack;
-
+	/*
+	 * NOTE: Since value stacks are usually singleton,
+	 * we pass them as a template parameter, saving space
+	 * in the undo token.
+	 */
+	template <ValueStack<Type> &stack>
+	class UndoTokenPush : public UndoTokenWithSize<UndoTokenPush<stack>> {
 		Type	value;
 		guint	index;
 
 	public:
-		UndoTokenPush(ValueStack<Type> *_stack,
-			      Type _value, guint _index = 0)
-			     : stack(_stack), value(_value), index(_index) {}
+		UndoTokenPush(Type _value, guint _index = 0)
+			     : value(_value), index(_index) {}
 
 		void
 		run(void)
 		{
-			stack->push(value, index);
+			stack.push(value, index);
 		}
 	};
 
-	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop> {
-		ValueStack<Type> *stack;
-
+	template <ValueStack<Type> &stack>
+	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop<stack>> {
 		guint index;
 
 	public:
-		UndoTokenPop(ValueStack<Type> *_stack, guint _index = 0)
-			    : stack(_stack), index(_index) {}
+		UndoTokenPop(guint _index = 0)
+			    : index(_index) {}
 
 		void
 		run(void)
 		{
-			stack->pop(index);
+			stack.pop(index);
 		}
 	};
 
@@ -108,10 +106,12 @@ public:
 
 		return sp[index] = value;
 	}
-	inline void
+
+	template <ValueStack<Type> &stack>
+	static inline void
 	undo_push(Type value, guint index = 0)
 	{
-		undo.push<UndoTokenPush>(this, value, index);
+		undo.push<UndoTokenPush<stack>>(value, index);
 	}
 
 	inline Type
@@ -129,10 +129,12 @@ public:
 
 		return v;
 	}
-	inline void
+
+	template <ValueStack<Type> &stack>
+	static inline void
 	undo_pop(guint index = 0)
 	{
-		undo.push<UndoTokenPop>(this, index);
+		undo.push<UndoTokenPop<stack>>(index);
 	}
 
 	inline Type &
@@ -143,10 +145,13 @@ public:
 		return sp[index];
 	}
 
+	/** Clear all but `keep_items` items. */
 	inline void
-	clear(void)
+	clear(guint keep_items = 0)
 	{
-		sp = stack_top;
+		g_assert(keep_items <= items());
+
+		sp = stack_top - keep_items;
 	}
 };
 
@@ -170,7 +175,6 @@ public:
 		OP_NIL	= 0x00,
 		OP_NEW,
 		OP_BRACE,
-		OP_LOOP,
 		OP_NUMBER,
 		/*
 		 * Real operators
@@ -194,11 +198,19 @@ private:
 		return op >> 4;
 	}
 
-	ValueStack<tecoInt>	numbers;
-	ValueStack<Operator>	operators;
+	/*
+	 * Number and operator stacks are static, so
+	 * they can be passed to the undo token constructors.
+	 * This is OK since Expression is singleton.
+	 */
+	typedef ValueStack<tecoInt> NumberStack;
+	static NumberStack numbers;
+
+	typedef ValueStack<Operator> OperatorStack;
+	static OperatorStack operators;
 
 public:
-	Expressions() : num_sign(1), radix(10) {}
+	Expressions() : num_sign(1), radix(10), brace_level(0) {}
 
 	gint num_sign;
 	inline void
@@ -258,13 +270,33 @@ public:
 
 	void discard_args(void);
 
-	gint find_op(Operator op);
+	/** The nesting level of braces */
+	guint brace_level;
+
+	inline void
+	brace_open(void)
+	{
+		push(OP_BRACE);
+		undo.push_var(brace_level)++;
+	}
+
+	void brace_return(guint keep_braces, guint args = 0);
+
+	inline void
+	brace_close(void)
+	{
+		if (!brace_level)
+			throw Error("Missing opening brace");
+		undo.push_var(brace_level)--;
+		eval(true);
+	}
 
 	inline void
 	clear(void)
 	{
 		numbers.clear();
 		operators.clear();
+		brace_level = 0;
 	}
 
 	const gchar *format(tecoInt number);

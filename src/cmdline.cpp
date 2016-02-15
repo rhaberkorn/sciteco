@@ -235,6 +235,8 @@ Cmdline::keypress(gchar key)
 		/*
 		 * Return from top-level macro, results
 		 * in command line termination.
+		 * The return "arguments" are currently
+		 * ignored.
 		 */
 		interface.popup_clear();
 
@@ -248,6 +250,7 @@ Cmdline::keypress(gchar key)
 		QRegisters::view.set_scintilla_undo(true);
 		Goto::table->clear();
 		expressions.clear();
+		loop_stack.clear();
 
 		last_cmdline = *this;
 		str = NULL;

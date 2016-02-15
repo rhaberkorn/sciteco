@@ -771,11 +771,11 @@ QRegisters::hook(Hook type)
 		 * So this effectively executes:
 		 * (typeM[ED]^[)
 		 */
-		expressions.push(Expressions::OP_BRACE);
+		expressions.brace_open();
 		expressions.push(type);
 		reg->execute();
 		expressions.discard_args();
-		expressions.eval(true);
+		expressions.brace_close();
 	} catch (Error &error) {
 		const gchar *type_str = type2name[type-1];
 

@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <exception>
+#include <new>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -81,6 +82,18 @@ static gint nest_level = 0;
 
 gchar *strings[2] = {NULL, NULL};
 gchar escape_char = CTL_KEY_ESC;
+
+LoopStack loop_stack;
+
+/**
+ * Loop frame pointer: The number of elements on
+ * the loop stack when a macro invocation frame is
+ * created.
+ * This is used to perform checks for flow control
+ * commands to avoid jumping with invalid PCs while
+ * not creating a new stack per macro frame.
+ */
+static guint loop_stack_fp = 0;
 
 /**
  * Handles all expected exceptions, converting them to
@@ -144,6 +157,9 @@ Execute::macro(const gchar *macro, bool locals)
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
+	guint parent_loop_fp = loop_stack_fp;
+
+	guint parent_brace_level = expressions.brace_level;
 
 	/*
 	 * need this to fixup state on rubout: state machine emits undo token
@@ -152,18 +168,26 @@ Execute::macro(const gchar *macro, bool locals)
 	 */
 	undo.push_var(States::current) = &States::start;
 	macro_pc = 0;
+	loop_stack_fp = loop_stack.items();
 
 	Goto::table = &macro_goto_table;
-	/* locals are allocated so that we do not waste call stack space */
 	if (locals) {
+		/*
+		 * Locals are only allocated when needed to save
+		 * space on the call stack and to improve the speed
+		 * of local macro calls.
+		 * However since the QRegisterTable object is rather
+		 * small we can allocate it using alloca() on the stack.
+		 */
 		parent_locals = QRegisters::locals;
-		QRegisters::locals = new QRegisterTable(false);
+		QRegisters::locals = g_newa(QRegisterTable, 1);
+		new (QRegisters::locals) QRegisterTable(false);
 	}
 
 	try {
 		try {
 			step(macro, strlen(macro));
-		} catch (Return) {
+		} catch (Return &info) {
 			/*
 			 * Macro returned - handle like regular
 			 * end of macro, even though some checks
@@ -174,6 +198,24 @@ Execute::macro(const gchar *macro, bool locals)
 			 * with a trailing ^[ in macro.
 			 */
 			States::current = &States::start;
+
+			/*
+			 * Discard all braces, except the current one.
+			 */
+			expressions.brace_return(parent_brace_level, info.args);
+
+			/*
+			 * Clean up the loop stack.
+			 * We are allowed to return in loops.
+			 * NOTE: This does not have to be undone.
+			 */
+			loop_stack.clear(loop_stack_fp);
+		}
+
+		if (G_UNLIKELY(loop_stack.items() > loop_stack_fp)) {
+			Error error("Unterminated loop");
+			error.set_coord(macro, loop_stack.peek().pc);
+			throw error;
 		}
 
 		/*
@@ -182,7 +224,7 @@ Execute::macro(const gchar *macro, bool locals)
 		 * via Error::set_coord()
 		 */
 		try {
-			if (Goto::skip_label)
+			if (G_UNLIKELY(Goto::skip_label))
 				throw Error("Label \"%s\" not found",
 				            Goto::skip_label);
 
@@ -195,7 +237,7 @@ Execute::macro(const gchar *macro, bool locals)
 				 * cannot be used :-(.
 				 */
 				expressions.discard_args();
-			} else if (States::current != &States::start) {
+			} else if (G_UNLIKELY(States::current != &States::start)) {
 				/*
 				 * can only happen if we returned because
 				 * of macro end
@@ -222,11 +264,13 @@ Execute::macro(const gchar *macro, bool locals)
 		Goto::skip_label = NULL;
 
 		if (locals) {
-			delete QRegisters::locals;
+			/* memory is reclaimed on return */
+			QRegisters::locals->~QRegisterTable();
 			QRegisters::locals = parent_locals;
 		}
 		Goto::table = parent_goto_table;
 
+		loop_stack_fp = parent_loop_fp;
 		macro_pc = parent_pc;
 		States::current = parent_state;
 
@@ -234,11 +278,13 @@ Execute::macro(const gchar *macro, bool locals)
 	}
 
 	if (locals) {
-		delete QRegisters::locals;
+		/* memory is reclaimed on return */
+		QRegisters::locals->~QRegisterTable();
 		QRegisters::locals = parent_locals;
 	}
 	Goto::table = parent_goto_table;
 
+	loop_stack_fp = parent_loop_fp;
 	macro_pc = parent_pc;
 	States::current = parent_state;
 }
@@ -827,12 +873,12 @@ StateStart::custom(gchar chr)
 			expressions.push(-1);
 			expressions.push_calc(Expressions::OP_MUL);
 		}
-		expressions.push(Expressions::OP_BRACE);
+		expressions.brace_open();
 		break;
 
 	case ')':
 		BEGIN_EXEC(this);
-		expressions.eval(true);
+		expressions.brace_close();
 		break;
 
 	case ',':
@@ -912,55 +958,75 @@ StateStart::custom(gchar chr)
 	 */
 	case '<':
 		if (mode == MODE_PARSE_ONLY_LOOP) {
-			undo.push_var<gint>(nest_level);
-			nest_level++;
-			return this;
-		}
-		BEGIN_EXEC(this);
-
-		expressions.eval();
-		if (!expressions.args())
-			/* infinite loop */
-			expressions.push(-1);
-
-		if (!expressions.peek_num()) {
-			expressions.pop_num();
-
-			/* skip to end of loop */
-			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY_LOOP;
+			undo.push_var(nest_level)++;
 		} else {
-			expressions.push(macro_pc);
-			expressions.push(Expressions::OP_LOOP);
+			LoopContext ctx;
+
+			BEGIN_EXEC(this);
+
+			expressions.eval();
+			ctx.pass_through = eval_colon();
+			ctx.counter = expressions.pop_num_calc(0, -1);
+			if (ctx.counter) {
+				/*
+				 * Non-colon modified, we add implicit
+				 * braces, so loop body won't see parameters.
+				 * Colon modified, loop starts can be used
+				 * to process stack elements which is symmetric
+				 * to ":>".
+				 */
+				if (!ctx.pass_through)
+					expressions.brace_open();
+
+				ctx.pc = macro_pc;
+				loop_stack.push(ctx);
+				LoopStack::undo_pop<loop_stack>();
+			} else {
+				/* skip to end of loop */
+				undo.push_var(mode) = MODE_PARSE_ONLY_LOOP;
+			}
 		}
 		break;
 
 	case '>':
 		if (mode == MODE_PARSE_ONLY_LOOP) {
-			if (!nest_level) {
-				undo.push_var<Mode>(mode);
-				mode = MODE_NORMAL;
-			} else {
-				undo.push_var<gint>(nest_level);
-				nest_level--;
-			}
+			if (!nest_level)
+				undo.push_var(mode) = MODE_NORMAL;
+			else
+				undo.push_var(nest_level)--;
 		} else {
 			BEGIN_EXEC(this);
-			tecoInt loop_pc, loop_cnt;
 
-			expressions.discard_args();
-			if (expressions.pop_op() != Expressions::OP_LOOP)
+			if (loop_stack.items() <= loop_stack_fp)
 				throw Error("Loop end without corresponding "
 				            "loop start command");
-			loop_pc = expressions.pop_num();
-			loop_cnt = expressions.pop_num();
+			LoopContext &ctx = loop_stack.peek();
+			bool colon_modified = eval_colon();
 
-			if (loop_cnt != 1) {
+			/*
+			 * Colon-modified loop ends can be used to
+			 * aggregate values on the stack.
+			 * A non-colon modified ">" behaves like ":>"
+			 * for pass-through loop starts, though.
+			 */
+			if (!ctx.pass_through) {
+				if (colon_modified) {
+					expressions.eval();
+					expressions.push(Expressions::OP_NEW);
+				} else {
+					expressions.discard_args();
+				}
+			}
+
+			if (ctx.counter == 1) {
+				/* this was the last loop iteration */
+				if (!ctx.pass_through)
+					expressions.brace_close();
+				LoopStack::undo_push<loop_stack>(loop_stack.pop());
+			} else {
 				/* repeat loop */
-				macro_pc = loop_pc;
-				expressions.push(MAX(loop_cnt - 1, -1));
-				expressions.push(loop_pc);
-				expressions.push(Expressions::OP_LOOP);
+				macro_pc = ctx.pc;
+				ctx.counter = MAX(ctx.counter - 1, -1);
 			}
 		}
 		break;
@@ -981,11 +1047,15 @@ StateStart::custom(gchar chr)
 	 * without colon-modifying the search command (or at a
 	 * later point).
 	 *
-	 * Executing \(lq;\(rq outside of iterations yields an
-	 * error.
+	 * Executing \(lq;\(rq outside of iterations in the current
+	 * macro invocation level yields an error. It is thus not
+	 * possible to let a macro break a caller's loop.
 	 */
 	case ';':
 		BEGIN_EXEC(this);
+
+		if (loop_stack.items() <= loop_stack_fp)
+			throw Error("<;> only allowed in iterations");
 
 		v = QRegisters::globals["_"]->get_integer();
 		rc = expressions.pop_num_calc(0, v);
@@ -993,22 +1063,16 @@ StateStart::custom(gchar chr)
 			rc = ~rc;
 
 		if (IS_FAILURE(rc)) {
+			LoopContext ctx = loop_stack.pop();
+
 			expressions.discard_args();
-			/*
-			 * FIXME: it would be better accroding to the
-			 * TECO standard to throw an error
-			 * always when we're not in a loop.
-			 * But this is not easy to find out without
-			 * modifying the expression stack.
-			 */
-			if (expressions.pop_op() != Expressions::OP_LOOP)
-				throw Error("<;> only allowed in iterations");
-			expressions.pop_num(); /* pc */
-			expressions.pop_num(); /* counter */
+			if (!ctx.pass_through)
+				expressions.brace_close();
+
+			LoopStack::undo_push<loop_stack>(ctx);
 
 			/* skip to end of loop */
-			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY_LOOP;
+			undo.push_var(mode) = MODE_PARSE_ONLY_LOOP;
 		}
 		break;
 
@@ -1556,60 +1620,79 @@ StateFCommand::custom(gchar chr)
 	 * loop flow control
 	 */
 	/*$
-	 * F< -- Go to loop start
+	 * F< -- Go to loop start or jump to beginning of macro
 	 *
 	 * Immediately jumps to the current loop's start.
 	 * Also works from inside conditionals.
+	 *
+	 * Outside of loops \(em or in a macro without
+	 * a loop \(em this jumps to the beginning of the macro.
 	 */
 	case '<':
 		BEGIN_EXEC(&States::start);
 		/* FIXME: what if in brackets? */
 		expressions.discard_args();
-		if (expressions.peek_op() == Expressions::OP_LOOP)
-			/* repeat loop */
-			macro_pc = expressions.peek_num();
-		else
-			macro_pc = -1;
+
+		macro_pc = loop_stack.items() > loop_stack_fp
+					? loop_stack.peek().pc : -1;
 		break;
 
 	/*$
 	 * F> -- Go to loop end
+	 * :F>
 	 *
 	 * Jumps to the current loop's end.
-	 * If the loop has a counter or runs idefinitely, the jump
-	 * is performed immediately.
-	 * If the loop has reached its last iteration, parsing
-	 * until the loop end command has been found is performed.
+	 * If the loop has remaining iterations or runs indefinitely,
+	 * the jump is performed immediately just as if \(lq>\(rq
+	 * had been executed.
+	 * If the loop has reached its last iteration, \*(ST will
+	 * parse until the loop end command has been found and control
+	 * resumes after the end of the loop.
 	 *
 	 * In interactive mode, if the loop is incomplete and must
 	 * be exited, you can type in the loop's remaining commands
 	 * without them being executed (but they are parsed).
 	 *
-	 * Calling \fBF\>\fP outside of a loop will throw an
-	 * error.
+	 * When colon-modified, \fB:F>\fP behaves like \fB:>\fP
+	 * and allows numbers to be aggregated on the stack.
+	 *
+	 * Calling \fBF>\fP outside of a loop at the current
+	 * macro invocation level will throw an error.
+	 */
+	/*
+	 * NOTE: This is almost identical to the normal
+	 * loop end since we don't really want to or need to
+	 * parse till the end of the loop.
 	 */
 	case '>': {
-		tecoInt loop_pc, loop_cnt;
-
 		BEGIN_EXEC(&States::start);
-		/* FIXME: what if in brackets? */
-		expressions.discard_args();
-		if (expressions.pop_op() != Expressions::OP_LOOP)
+
+		if (loop_stack.items() <= loop_stack_fp)
 			throw Error("Jump to loop end without corresponding "
 			            "loop start command");
-		loop_pc = expressions.pop_num();
-		loop_cnt = expressions.pop_num();
+		LoopContext &ctx = loop_stack.peek();
+		bool colon_modified = eval_colon();
 
-		if (loop_cnt != 1) {
-			/* repeat loop */
-			macro_pc = loop_pc;
-			expressions.push(MAX(loop_cnt - 1, -1));
-			expressions.push(loop_pc);
-			expressions.push(Expressions::OP_LOOP);
-		} else {
+		if (!ctx.pass_through) {
+			if (colon_modified) {
+				expressions.eval();
+				expressions.push(Expressions::OP_NEW);
+			} else {
+				expressions.discard_args();
+			}
+		}
+
+		if (ctx.counter == 1) {
+			/* this was the last loop iteration */
+			if (!ctx.pass_through)
+				expressions.brace_close();
+			LoopStack::undo_push<loop_stack>(loop_stack.pop());
 			/* skip to end of loop */
-			undo.push_var<Mode>(mode);
-			mode = MODE_PARSE_ONLY_LOOP;
+			undo.push_var(mode) = MODE_PARSE_ONLY_LOOP;
+		} else {
+			/* repeat loop */
+			macro_pc = ctx.pc;
+			ctx.counter = MAX(ctx.counter - 1, -1);
 		}
 		break;
 	}
@@ -1956,13 +2039,19 @@ StateEscape::custom(gchar chr)
 	 * [a1,a2,...]^[$
 	 *
 	 * Returns from the current macro invocation.
-	 * The numeric stack is not modified, giving the
-	 * effect of returning the arguments or stack contents
-	 * preceding the command to the macro caller.
-	 * It is generally semantically equivalent to reaching
-	 * the end of the current macro but is executed faster.
+	 * This will pass control to the calling macro immediately
+	 * and is thus faster than letting control reach the macro's end.
+	 * Also, direct arguments to \fB$$\fP will be left on the expression
+	 * stack when the macro returns.
+	 * \fB$$\fP closes loops automatically and is thus safe to call
+	 * from loop bodies.
+	 * Furthermore, it has defined semantics when executed
+	 * from within braced expressions:
+	 * All braces opened in the current macro invocation will
+	 * be closed and their values discarded.
+	 * Only the direct arguments to \fB$$\fP will be kept.
 	 *
-	 * Therefore returning from the top-level macro in batch mode
+	 * Returning from the top-level macro in batch mode
 	 * will exit the program or start up interactive mode depending
 	 * on whether program exit has been requested.
 	 * \(lqEX\fB$$\fP\(rq is thus a common idiom to exit
@@ -1971,6 +2060,9 @@ StateEscape::custom(gchar chr)
 	 * In interactive mode, returning from the top-level macro
 	 * (i.e. typing \fB$$\fP at the command line) has the
 	 * effect of command line termination.
+	 * The arguments to \fB$$\fP are currently not used
+	 * when terminating a command line \(em the new command line
+	 * will always start with a clean expression stack.
 	 *
 	 * Only the first \fIescape\fP of \fB$$\fP may be typed
 	 * in up-arrow mode as \fB^[$\fP \(em the second character
@@ -1978,15 +2070,16 @@ StateEscape::custom(gchar chr)
 	 */
 	if (chr == CTL_KEY_ESC) {
 		BEGIN_EXEC(&States::start);
-		throw Return();
+		expressions.eval();
+		throw Return(expressions.args());
 	}
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
 	 */
 	/*$
-	 * ^[ -- Discard all arguments
-	 * $
+	 * $ -- Discard all arguments
+	 * ^[
 	 *
 	 * Pops and discards all values from the stack that
 	 * might otherwise be used as arguments to following
@@ -1997,9 +2090,9 @@ StateEscape::custom(gchar chr)
 	 * Note that ^[ is usually typed using the Escape key.
 	 * CTRL+[ however is possible as well and equivalent to
 	 * Escape in every manner.
-	 * The Caret-[ notation however is processed like any
-	 * ordinary command and only works as the discard-arguments
-	 * command.
+	 * The up-arrow notation however is processed like any
+	 * ordinary command and only works at the begining of
+	 * a command.
 	 */
 	if (mode == MODE_NORMAL)
 		expressions.discard_args();

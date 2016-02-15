@@ -27,7 +27,9 @@
 
 namespace SciTECO {
 
-Expressions expressions;
+Expressions			expressions;
+Expressions::NumberStack	Expressions::numbers;
+Expressions::OperatorStack	Expressions::operators;
 
 tecoInt
 Expressions::push(tecoInt number)
@@ -42,7 +44,7 @@ Expressions::push(tecoInt number)
 		number *= -1;
 	}
 
-	numbers.undo_pop();
+	NumberStack::undo_pop<numbers>();
 	return numbers.push(number);
 }
 
@@ -56,7 +58,7 @@ Expressions::pop_num(guint index)
 
 	if (numbers.items()) {
 		n = numbers.pop(index);
-		numbers.undo_push(n, index);
+		NumberStack::undo_push<numbers>(n, index);
 	}
 
 	return n;
@@ -83,7 +85,7 @@ Expressions::add_digit(gchar digit)
 Expressions::Operator
 Expressions::push(Expressions::Operator op)
 {
-	operators.undo_pop();
+	OperatorStack::undo_pop<operators>();
 	return operators.push(op);
 }
 
@@ -107,7 +109,7 @@ Expressions::pop_op(guint index)
 
 	if (operators.items()) {
 		op = operators.pop(index);
-		operators.undo_push(op, index);
+		OperatorStack::undo_push<operators>(op, index);
 	}
 
 	return op;
@@ -181,8 +183,6 @@ Expressions::eval(bool pop_brace)
 			break;
 
 		op = operators.peek(n);
-		if (op == OP_LOOP)
-			break;
 		if (op == OP_BRACE) {
 			if (pop_brace)
 				pop_op(n);
@@ -205,18 +205,6 @@ Expressions::args(void)
 		n++;
 
 	return n;
-}
-
-gint
-Expressions::find_op(Operator op)
-{
-	guint items = operators.items();
-
-	for (guint i = 0; i < items; i++)
-		if (operators.peek(i) == op)
-			return i;
-
-	return -1; /* not found */
 }
 
 gint
@@ -243,6 +231,26 @@ Expressions::discard_args(void)
 	eval();
 	for (guint i = args(); i; i--)
 		pop_num_calc();
+}
+
+void
+Expressions::brace_return(guint keep_braces, guint args)
+{
+	tecoInt return_numbers[args];
+
+	for (guint i = args; i; i--)
+		return_numbers[i-1] = pop_num();
+
+	undo.push_var(brace_level);
+
+	while (brace_level > keep_braces) {
+		discard_args();
+		eval(true);
+		brace_level--;
+	}
+
+	for (guint i = 0; i < args; i++)
+		push(return_numbers[i]);
 }
 
 const gchar *

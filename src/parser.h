@@ -25,6 +25,7 @@
 #include "sciteco.h"
 #include "undo.h"
 #include "error.h"
+#include "expressions.h"
 
 namespace SciTECO {
 
@@ -372,6 +373,25 @@ extern gint macro_pc;
 
 extern gchar *strings[2];
 extern gchar escape_char;
+
+struct LoopContext {
+	/** how many iterations are left */
+	tecoInt counter;
+	/** Program counter of loop start command */
+	guint pc : sizeof(guint)*8 - 1;
+	/**
+	 * Whether the loop represents an argument
+	 * barrier or not (it "passes through"
+	 * stack arguments).
+	 *
+	 * Since the program counter is usually
+	 * a signed integer, it's ok steal one
+	 * bit for the pass_through flag.
+	 */
+	bool pass_through : 1;
+};
+typedef ValueStack<LoopContext> LoopStack;
+extern LoopStack loop_stack;
 
 namespace Execute {
 	void step(const gchar *macro, gint stop_pos);
