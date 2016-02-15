@@ -69,8 +69,8 @@ macro arguments.
 .
 .LP
 If the munged macro does not request program termination using the
-\fBEX\fP command, \*(ST will automatically switch into its graphical
-\fIinteractive\fP mode.
+\fBEX\fP command or exits using \fB^C\fP, \*(ST will automatically
+switch into its graphical \fIinteractive\fP mode.
 \*(ST may be built with different graphical user interfaces,
 including Curses and GTK+ based ones.
 Eventually when the user terminates interactive mode by calling

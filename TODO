@@ -98,8 +98,6 @@ Features:
  * some missing useful VideoTECO/TECO-11 commands:
    * EF with buffer id
    * ER command: read file into current buffer at dot
-   * ^C: exit from program. Should probably be disallowed
-     in interactive mode.
    * nEW to save a buffer by id
  * use CRTP for RBTrees to avoid unnecessary virtual method calls.
    This means that like the original BSD headers, implementations

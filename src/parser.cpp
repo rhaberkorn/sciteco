@@ -1916,6 +1916,29 @@ StateControl::custom(gchar chr)
 {
 	switch (String::toupper(chr)) {
 	/*$
+	 * ^C -- Exit program immediately
+	 *
+	 * Lets the top-level macro return immediately
+	 * regardless of the current macro invocation frame.
+	 * This command is only allowed in batch mode,
+	 * so it is not invoked accidentally when using
+	 * the CTRL+C immediate editing command to
+	 * interrupt long running operations.
+	 * When using \fB^C\fP in a munged file,
+	 * interactive mode is never started, so it behaves
+	 * effectively just like \(lq-EX\fB$$\fP\(rq
+	 * (when executed in the top-level macro at least).
+	 *
+	 * The \fBquit\fP hook is still executed.
+	 */
+	case 'C':
+		BEGIN_EXEC(&States::start);
+		if (undo.enabled)
+			throw Error("<^C> not allowed in interactive mode");
+		quit_requested = true;
+		throw Quit();
+
+	/*$
 	 * ^O -- Set radix to 8 (octal)
 	 */
 	case 'O':

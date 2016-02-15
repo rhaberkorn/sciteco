@@ -419,6 +419,11 @@ main(int argc, char **argv)
 			} catch (Error &error) {
 				error.add_frame(new Error::ToplevelFrame());
 				throw; /* forward */
+			} catch (Quit) {
+				/*
+				 * ^C invoked, quit hook should still
+				 * be executed.
+				 */
 			}
 			QRegisters::hook(QRegisters::HOOK_QUIT);
 			exit(EXIT_SUCCESS);
@@ -431,9 +436,15 @@ main(int argc, char **argv)
 
 		if (mung_file &&
 		    g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-			Execute::file(mung_file, false);
+			try {
+				Execute::file(mung_file, false);
+			} catch (Quit) {
+				/*
+				 * ^C invoked, quit hook should still
+				 * be executed.
+				 */
+			}
 
-			/* FIXME: make quit immediate in batch/macro mode (non-UNDO)? */
 			if (quit_requested) {
 				QRegisters::hook(QRegisters::HOOK_QUIT);
 				exit(EXIT_SUCCESS);

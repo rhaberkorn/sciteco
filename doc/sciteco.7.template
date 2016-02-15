@@ -523,7 +523,8 @@ pressing \fB^C\fP on the attached console or by explicitly
 sending it.
 If \*(ST is not busy,
 .B ^C
-is self-inserting and might be used as a regular command.
+is self-inserting and might be typed as part of regular commands.
+The \fB^C\fP command itself is disallowed in interactive mode, though.
 T}
 .TE
 .
@@ -1034,13 +1035,15 @@ This is \*(ST's equivalent of
 handlers.
 The hook is not run when some command fails,
 but only when \*(ST exits normally.
-This is the case when a macro specified via
-\fB--eval\fP reaches the end, when a munged
-file calls \fBEX\fP or when \fBEX\fP has been
-called in interactive mode.
-Note however that \fBEX\fP is never executed
-immediately, but only requests program termination
-(so it can still be rubbed out).
+This is the case when control in a macro specified via
+\fB--eval\fP reaches the end, or otherwise returns
+(using \fB^C\fP or by returning from the top-level
+macro via \fB$$\fP).
+Similarily the hook is executed when a munged
+file calls \fB^C\fP or \fBEX\fP has been called before
+the top-level macro returns.
+It is also called after the interactive mode has shut down
+by calling \fBEX$$\fP.
 The \fBquit\fP hook will always run in \fIbatch\fP
 mode (after any user interface has shut down).
 Errors in the hook's execution will not prevent
