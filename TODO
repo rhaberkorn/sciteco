@@ -45,6 +45,16 @@ Known Bugs:
    MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT)
 
 Features:
+ * :$ and :$$ to pop/return only single values
+ * allow top-level macros to influence the proces return code.
+   This can be used in macros to call $$ or ^C akin to exit(1).
+ * Special macro assignment command.
+   It could use the SciTECO parser for finding the end of the
+   macro definition which is more reliable than @^Uq{}.
+   Also this opens up new possibilities for optimizations.
+   Macros could be special QRegs that are not backed by a
+   Scintilla document but a normal string. This would immensely
+   speed up macro calls.
  * Numbers could be separate states instead of stack operating
    commands. The current behaviour has few benefits.
    If a number is a regular command that stops parsing at the
@@ -88,14 +98,9 @@ Features:
  * some missing useful VideoTECO/TECO-11 commands:
    * EF with buffer id
    * ER command: read file into current buffer at dot
-   * $$, ^C: return from macro. $ should probably be a "complex"
-     command with two states, whereas the second character
-     determines the action. This will also improve command-line
-     termination which is now sometimes too early.
-     A lookahead is possible for "$" since it does not have
-     to be executed immediately - there's no side-effect visible
-     to the user until the second key has been pressed.
- * nEW to save a buffer by id
+   * ^C: exit from program. Should probably be disallowed
+     in interactive mode.
+   * nEW to save a buffer by id
  * use CRTP for RBTrees to avoid unnecessary virtual method calls.
    This means that like the original BSD headers, implementations
    of the rbtree ops will be generated for every usage.
@@ -121,7 +126,8 @@ Features:
  * Progress indication in commandline cursor:
    Perhaps blinking or invisible?
  * Command to free Q-Register (remove from table).
-   e.g. FQ (free Q). :FQ could free by QRegister prefix name.
+   e.g. FQ (free Q). :FQ could free by QRegister prefix name for
+   the common use case of Q-Register subtables and lists.
  * autocompletion of long Q-Reg names
  * TECO syntax highlighting
  * multiline commandline
@@ -133,9 +139,6 @@ Features:
  * improve GTK interface
    * proper command-line widget (best would be a Scintilla view, s.a.)
    * speed improvements
-   * STYLE_DEFAULT and STYLE_CALLTIP should be used for styling the
-     info, message, command line and popup widgets just as the Curses
-     UI does.
  * backup files, or even better Journal files:
    could write a Macro file for each modified file containing
    only basic commands (no loops etc.). it is removed when the file is
@@ -184,6 +187,7 @@ Features:
    Use Autotest for instance.
 
 Optimizations:
+ * Add G_UNLIKELY to all error throws.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
    state, this could be modelled via virtual methods in State.
@@ -218,7 +222,6 @@ Optimizations:
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
- * simplify parser (static jump tables are unnecessary!)
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
