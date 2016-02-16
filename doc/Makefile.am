@@ -1,3 +1,9 @@
+# Make sure that $BOOTSTRAP_SCITECO and the SciTECO-based
+# substitutor is available.
+# The target `sciteco` binary has already been built,
+# but using $BOOTSTRAP_SCITECO ensures that we use
+# a version running on the host machine when cross-compiling
+# with --disable-bootstrap.
 include $(top_srcdir)/bootstrap.am
 
 man_MANS = sciteco.1
