@@ -333,6 +333,17 @@ namespace States {
 	extern State *current;
 
 	static inline bool
+	is_start()
+	{
+		/*
+		 * The "escape" state exists only as a hack,
+		 * to support $$. Otherwise it should behave
+		 * like the start state.
+		 */
+		return current == &start || current == &escape;
+	}
+
+	static inline bool
 	is_string()
 	{
 		return dynamic_cast<StateExpectString *>(current);

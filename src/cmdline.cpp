@@ -391,7 +391,7 @@ Cmdline::process_edit_cmd(gchar key)
 			/* reinsert command */
 			do
 				insert();
-			while (States::current != &States::start && rubout_len);
+			while (!States::is_start() && rubout_len);
 		} else {
 			/* rubout command */
 			rubout_command();
@@ -565,7 +565,7 @@ Cmdline::fnmacro(const gchar *name)
 		goto default_action;
 
 	mask = reg->get_integer();
-	if (States::current == &States::start) {
+	if (States::is_start()) {
 		if (mask & FNMACRO_MASK_START)
 			return;
 	} else if (States::is_string()) {
