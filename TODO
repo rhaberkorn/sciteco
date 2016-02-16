@@ -180,9 +180,6 @@ Features:
    Unfortunately, not every UNIX has X11 (e.g. linux console,
    OS X). What do we do on those systems?
    This will also allow us to reverse clipboard modifications.
- * Add a test suite. Most bugs can be tested for regressions
-   using a simple test suite that calls sciteco.
-   Use Autotest for instance.
 
 Optimizations:
  * Add G_UNLIKELY to all error throws.

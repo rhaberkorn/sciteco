@@ -13,6 +13,7 @@ AC_DEFINE_UNQUOTED(PACKAGE_URL_DEV, ["$PACKAGE_URL_DEV"],
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE
 
+AC_CONFIG_TESTDIR([tests])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([config.h])
 
@@ -342,4 +343,5 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile src/interface-gtk/Makefile src/interface-curses/Makefile])
 AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
+AC_CONFIG_FILES([tests/Makefile tests/atlocal])
 AC_OUTPUT

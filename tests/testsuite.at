@@ -1,0 +1,5 @@
+AT_INIT
+
+AT_SETUP([Closing loops at the correct macro level])
+AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
+AT_CLEANUP

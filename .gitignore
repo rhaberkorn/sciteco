@@ -18,17 +18,29 @@
 Makefile
 Makefile.in
 stamp-*
+
+# Autotest
+/tests/package.m4
+atconfig
+atlocal
+testsuite
+testsuite.log
+testsuite.dir
+
+# Binaries
 /src/sciteco
 /src/sciteco-minimal
 
-# Generated code
+# Generated source files
+/src/interface-gtk/gtk-info-popup.[ch]
+/src/interface-gtk/gtk-canonicalized-label.[ch]
+/src/symbols-scintilla.cpp
+/src/symbols-scilexer.cpp
+
+# Generated documentation
 /doc/sciteco.[17]
 /doc/sciteco.[17].html
 /doc/sciteco.7.in
 /doc/sciteco.7.htbl
 /doc/Doxyfile
 /doc/doxygen
-
-/src/gtk-info-popup*.[ch]
-/src/symbols-scintilla.cpp
-/src/symbols-scilexer.cpp

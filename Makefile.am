@@ -1,4 +1,4 @@
-SUBDIRS = src lib doc
+SUBDIRS = lib src doc tests
 
 dist_pkgdata_DATA = sample.teco_ini
 

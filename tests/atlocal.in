@@ -1,0 +1,9 @@
+# `tests` is after `src`, so the target SciTECO is already
+# built.
+# Using the $BOOTSTRAP_SCITECO wouldn't make sense
+# anyway as we don't want to test some preinstalled SciTECO.
+SCITECO=@abs_top_builddir@/src/sciteco
+
+# Make sure that the standard library from the source package
+# is used.
+SCITECOPATH=@abs_top_srcdir@/lib
