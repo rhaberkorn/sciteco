@@ -1,14 +1,17 @@
 #!/usr/bin/make -f
+# This is a Makefile "script" that aids in creating
+# releases of SciTECO.
+# It is probably of little help to ordinary users.
+# It is not part of the normal build process.
+# Since we need the source tarball and other files
+# from the source tree, this script is substituted
+# by ./configure and must thus be run from some configured
+# build directory.
 
-# Overwrite, if building out-of-tree.
-SRCDIR=.
-ABS_SRCDIR=$(abspath $(SRCDIR))
-
-# Try to extract version from ./configure
-SCITECO_VERSION = $(shell $(SRCDIR)/configure --version | \
-                          sed -n 's/SciTECO configure //p')
-
-SCITECO_SRC = sciteco-$(SCITECO_VERSION).tar.gz
+# Distribution tarball
+SCITECO_SRC = @PACKAGE@-@VERSION@.tar.gz
+# Directory name in $(SCITECO_SRC)
+SCITECO_DIR = @PACKAGE@-@VERSION@
 
 $(SCITECO_SRC):
 	$(MAKE) dist
@@ -24,12 +27,12 @@ debian-temp/ : $(SCITECO_SRC)
 	mkdir debian-temp/
 	(cd debian-temp/; \
 	 cp ../$(SCITECO_SRC) \
-	    sciteco_$(SCITECO_VERSION).orig.tar.gz; \
-	 tar xzf sciteco_$(SCITECO_VERSION).orig.tar.gz; \
-	 cp -r $(ABS_SRCDIR)/debian sciteco-$(SCITECO_VERSION)/; \
+	    sciteco_@PACKAGE_VERSION@.orig.tar.gz; \
+	 tar xzf sciteco_@PACKAGE_VERSION@.orig.tar.gz; \
+	 cp -r @abs_srcdir@/debian $(SCITECO_DIR)/; \
 	)
 ifneq ($(UBUNTU),)
-	sciteco -e "@EB|debian-temp/sciteco-$(SCITECO_VERSION)/debian/changelog| \
+	sciteco -e "@EB|debian-temp/$(SCITECO_DIR)/debian/changelog| \
                     <@FS/ unstable;/ $(UBUNTU);/; -@S/)/R @I/ppa1~$(UBUNTU)1/ L> \
                     @EW||"
 endif
@@ -63,14 +66,14 @@ endif
 
 debian-source : debian-temp/source-stamp
 debian-temp/source-stamp : debian-prepare
-	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
+	(cd debian-temp/$(SCITECO_DIR)/; \
 	 debuild -S $(DEBUILD_FLAGS); \
 	)
 	touch $@
 
 debian-binary : debian-temp/binary-stamp
 debian-temp/binary-stamp : debian-prepare
-	(cd debian-temp/sciteco-$(SCITECO_VERSION)/; \
+	(cd debian-temp/$(SCITECO_DIR)/; \
 	 debuild -b $(DEBUILD_FLAGS); \
 	)
 	touch $@
@@ -98,10 +101,10 @@ ppa : debian-source
 # "-lpdcurses -lgdi32 -lcomdlg32"
 MINGW_UI=pdcurses
 
-mingw-binary : sciteco-$(SCITECO_VERSION)-win32.zip
-sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
+mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
+@PACKAGE@-@PACKAGE_VERSION@-win32.zip : $(SCITECO_SRC)
 	tar xzf $(SCITECO_SRC)
-	(cd sciteco-$(SCITECO_VERSION); \
+	(cd $(SCITECO_DIR); \
 	 PKG_CONFIG=i686-w64-mingw32-pkg-config \
 	 PKG_CONFIG_LIBDIR=/usr/i686-w64-mingw32/lib/pkgconfig \
 	 ./configure --host=i686-w64-mingw32 build=i386-pc-linux-gnu \
@@ -114,17 +117,17 @@ sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 		     CFLAGS="-g -O3 -flto" CXXFLAGS="-g -O3 -flto" \
 	             LDFLAGS="-flto"; \
 	)
-	$(MAKE) -C sciteco-$(SCITECO_VERSION) \
+	$(MAKE) -C $(SCITECO_DIR) \
 		install-strip DESTDIR=`pwd`/temp-install
-	rm -rf sciteco-$(SCITECO_VERSION)/
+	rm -rf $(SCITECO_DIR)/
 	mkdir temp-bin/
 	cp -r temp-install/usr/bin/* temp-install/usr/share/sciteco/* \
 	      temp-install/usr/share/doc/sciteco/* \
 	   temp-bin/
-	cp $(SRCDIR)/win32.teco_ini temp-bin/.teco_ini || \
+	cp @srcdir@/win32.teco_ini temp-bin/.teco_ini || \
 		cp temp-install/usr/share/sciteco/sample.teco_ini \
 		   temp-bin/.teco_ini
-	cp $(SRCDIR)/COPYING $(SRCDIR)/ChangeLog temp-bin/
+	cp @srcdir@/COPYING @srcdir@/ChangeLog temp-bin/
 	rm -rf temp-install/
 #	cp /usr/i686-w64-mingw32/bin/intl.dll \
 #	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
@@ -139,4 +142,4 @@ sciteco-$(SCITECO_VERSION)-win32.zip : $(SCITECO_SRC)
 clean:
 	rm -rf $(SCITECO_SRC)
 	rm -rf debian-temp/
-	rm -rf sciteco-$(SCITECO_VERSION)/
+	rm -rf $(SCITECO_DIR)/

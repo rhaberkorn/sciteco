@@ -18,6 +18,7 @@
 Makefile
 Makefile.in
 stamp-*
+/distribute.mk
 
 # Autotest
 /tests/package.m4

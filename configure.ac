@@ -339,7 +339,7 @@ AC_ARG_ENABLE(static-executables,
 	[static_executables=$enableval], [static_executables=no])
 AM_CONDITIONAL(STATIC_EXECUTABLES, [test x$static_executables = xyes])
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile distribute.mk])
 AC_CONFIG_FILES([src/Makefile src/interface-gtk/Makefile src/interface-curses/Makefile])
 AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
