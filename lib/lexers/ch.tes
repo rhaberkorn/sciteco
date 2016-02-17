@@ -1,10 +1,10 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.ch]{
-  :EN*.chQ*U.r
-  Q.r"F :EN*.chfQ*U.r '
-  Q.r"F :EN*.chsQ*U.r '
-Q.r}
+  :EN*.chQ*"S -1 '
+  :EN*.chfQ*"S -1 '
+  :EN*.chsQ*
+}
 
 @[lexer.set.ch]{
   ESSETLEXERLANGUAGEcpp

@@ -93,18 +93,18 @@ local file_patterns = expand(props["file.patterns."..language])
 io.write([=[
 @[lexer.test.]=]..language:lower()..[=[]{
 ]=])
-if shbang then io.write([=[  _#!M]=]..shbang..[=[M[lexer.checkheader]U.r
+if shbang then io.write([=[  _#!M]=]..shbang..[=[M[lexer.checkheader]"S -1 '
 ]=]) end
-local first_pattern = not shbang
+local patterns = {}
 for pattern in file_patterns:gmatch("[^;]+") do
-	io.write([=[  ]=])
-	if not first_pattern then io.write([=[Q.r"F ]=]) end
-	io.write([=[:EN]=]..pattern..[=[Q*U.r]=])
-	if not first_pattern then io.write([=[ ']=]) end
-	io.write("\n")
-	first_pattern = false
+	table.insert(patterns, pattern)
 end
-io.write([=[Q.r}
+for i, pattern in ipairs(patterns) do
+	io.write([=[  :EN]=]..pattern..[=[Q*]=])
+	if i ~= #patterns then io.write([=["S -1 ']=]) end
+	io.write("\n")
+end
+io.write([=[}
 
 ]=])
 

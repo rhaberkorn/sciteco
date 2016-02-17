@@ -1,9 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.verilog]{
-  :EN*.vQ*U.r
-  Q.r"F :EN*.vhQ*U.r '
-Q.r}
+  :EN*.vQ*"S -1 '
+  :EN*.vhQ*
+}
 
 @[lexer.set.verilog]{
   ESSETLEXERLANGUAGEverilog

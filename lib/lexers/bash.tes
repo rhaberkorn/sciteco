@@ -3,12 +3,12 @@
   internally !
 
 @[lexer.test.bash]{
-  _#!M[sh,bash,ksh]M[lexer.checkheader]U.r
-  Q.r"F :EN*.shQ*U.r '
-  Q.r"F :EN*.bshQ*U.r '
-  Q.r"F :EN*/configureQ*U.r '
-  Q.r"F :EN*.kshQ*U.r '
-Q.r}
+  _#!M[sh,bash,ksh]M[lexer.checkheader]"S -1 '
+  :EN*.shQ*"S -1 '
+  :EN*.bshQ*"S -1 '
+  :EN*/configureQ*"S -1 '
+  :EN*.kshQ*
+}
 
 @[lexer.set.bash]{
   ESSETLEXERLANGUAGEbash

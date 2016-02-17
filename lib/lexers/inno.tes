@@ -1,9 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.inno]{
-  :EN*.issQ*U.r
-  Q.r"F :EN*.islQ*U.r '
-Q.r}
+  :EN*.issQ*"S -1 '
+  :EN*.islQ*
+}
 
 @[lexer.set.inno]{
   ESSETLEXERLANGUAGEinno

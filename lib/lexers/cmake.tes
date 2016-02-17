@@ -1,10 +1,10 @@
 ! CMake Lexing !
 
 @[lexer.test.cmake]{
-  :EN*/CMakeLists.txtQ*U.r
-  Q.r"F :EN*.cmake*Q*U.r '
-  Q.r"F :EN*.ctest*Q*U.r '
-Q.r}
+  :EN*/CMakeLists.txtQ*"S -1 '
+  :EN*.cmake*Q*"S -1 '
+  :EN*.ctest*Q*
+}
 
 @[lexer.set.cmake]{
   ESSETLEXERLANGUAGEcmake

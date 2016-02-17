@@ -1,11 +1,11 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.perl]{
-  _#!M[perl,pl]M[lexer.checkheader]U.r
-  Q.r"F :EN*.plQ*U.r '
-  Q.r"F :EN*.pmQ*U.r '
-  Q.r"F :EN*.podQ*U.r '
-Q.r}
+  _#!M[perl,pl]M[lexer.checkheader]"S -1 '
+  :EN*.plQ*"S -1 '
+  :EN*.pmQ*"S -1 '
+  :EN*.podQ*
+}
 
 @[lexer.set.perl]{
   ESSETLEXERLANGUAGEperl

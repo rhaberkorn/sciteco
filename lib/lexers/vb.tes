@@ -1,15 +1,15 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.vb]{
-  :EN*.vbQ*U.r
-  Q.r"F :EN*.basQ*U.r '
-  Q.r"F :EN*.frmQ*U.r '
-  Q.r"F :EN*.clsQ*U.r '
-  Q.r"F :EN*.ctlQ*U.r '
-  Q.r"F :EN*.pagQ*U.r '
-  Q.r"F :EN*.dsrQ*U.r '
-  Q.r"F :EN*.dobQ*U.r '
-Q.r}
+  :EN*.vbQ*"S -1 '
+  :EN*.basQ*"S -1 '
+  :EN*.frmQ*"S -1 '
+  :EN*.clsQ*"S -1 '
+  :EN*.ctlQ*"S -1 '
+  :EN*.pagQ*"S -1 '
+  :EN*.dsrQ*"S -1 '
+  :EN*.dobQ*
+}
 
 @[lexer.set.vb]{
   ESSETLEXERLANGUAGEvb

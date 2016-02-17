@@ -1,9 +1,9 @@
 ! Patch/Diff Files !
 
 @[lexer.test.diff]{
-  :EN*.diffQ*U.r
-  Q.r"F :EN*.patchQ*U.r '
-Q.r}
+  :EN*.diffQ*"S -1 '
+  :EN*.patchQ*
+}
 
 @[lexer.set.diff]{
   ESSETLEXERLANGUAGEdiff

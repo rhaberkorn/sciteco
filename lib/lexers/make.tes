@@ -1,10 +1,10 @@
 ! Makefile Lexing !
 
 @[lexer.test.make]{
-  :EN*/MakefileQ*U.r
-  Q.r"F :EN*/makefileQ*U.r '
-  Q.r"F :EN*.makQ*U.r '
-Q.r}
+  :EN*/MakefileQ*"S -1 '
+  :EN*/makefileQ*"S -1 '
+  :EN*.makQ*
+}
 
 @[lexer.set.make]{
   ESSETLEXERLANGUAGEmakefile

@@ -1,22 +1,22 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.html]{
-  :EN*.htmlQ*U.r
-  Q.r"F :EN*.htmQ*U.r '
-  Q.r"F :EN*.aspQ*U.r '
-  Q.r"F :EN*.shtmlQ*U.r '
-  Q.r"F :EN*.htdQ*U.r '
-  Q.r"F :EN*.jspQ*U.r '
-  Q.r"F :EN*.xhtmlQ*U.r '
-  Q.r"F :EN*.php3Q*U.r '
-  Q.r"F :EN*.phtmlQ*U.r '
-  Q.r"F :EN*.phpQ*U.r '
-  Q.r"F :EN*.httQ*U.r '
-  Q.r"F :EN*.cfmQ*U.r '
-  Q.r"F :EN*.tplQ*U.r '
-  Q.r"F :EN*.dtdQ*U.r '
-  Q.r"F :EN*.htaQ*U.r '
-Q.r}
+  :EN*.htmlQ*"S -1 '
+  :EN*.htmQ*"S -1 '
+  :EN*.aspQ*"S -1 '
+  :EN*.shtmlQ*"S -1 '
+  :EN*.htdQ*"S -1 '
+  :EN*.jspQ*"S -1 '
+  :EN*.xhtmlQ*"S -1 '
+  :EN*.php3Q*"S -1 '
+  :EN*.phtmlQ*"S -1 '
+  :EN*.phpQ*"S -1 '
+  :EN*.httQ*"S -1 '
+  :EN*.cfmQ*"S -1 '
+  :EN*.tplQ*"S -1 '
+  :EN*.dtdQ*"S -1 '
+  :EN*.htaQ*
+}
 
 @[lexer.set.html]{
   ESSETLEXERLANGUAGEhypertext

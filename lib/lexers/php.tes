@@ -1,10 +1,10 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.php]{
-  :EN*.php3Q*U.r
-  Q.r"F :EN*.phtmlQ*U.r '
-  Q.r"F :EN*.phpQ*U.r '
-Q.r}
+  :EN*.php3Q*"S -1 '
+  :EN*.phtmlQ*"S -1 '
+  :EN*.phpQ*
+}
 
 @[lexer.set.php]{
   ESSETLEXERLANGUAGEhypertext

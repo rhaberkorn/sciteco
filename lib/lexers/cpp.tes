@@ -1,19 +1,19 @@
 ! C/C++ Lexing !
 
 @[lexer.test.cpp]{
-  :EN*.cQ*U.r
-  Q.r"F :EN*.ccQ*U.r '
-  Q.r"F :EN*.cppQ*U.r '
-  Q.r"F :EN*.cxxQ*U.r '
-  Q.r"F :EN*.hQ*U.r '
-  Q.r"F :EN*.hhQ*U.r '
-  Q.r"F :EN*.hppQ*U.r '
-  Q.r"F :EN*.hxxQ*U.r '
-  Q.r"F :EN*.ippQ*U.r '
-  Q.r"F :EN*.mQ*U.r '
-  Q.r"F :EN*.mmQ*U.r '
-  Q.r"F :EN*.smaQ*U.r '
-Q.r}
+  :EN*.cQ*"S -1 '
+  :EN*.ccQ*"S -1 '
+  :EN*.cppQ*"S -1 '
+  :EN*.cxxQ*"S -1 '
+  :EN*.hQ*"S -1 '
+  :EN*.hhQ*"S -1 '
+  :EN*.hppQ*"S -1 '
+  :EN*.hxxQ*"S -1 '
+  :EN*.ippQ*"S -1 '
+  :EN*.mQ*"S -1 '
+  :EN*.mmQ*"S -1 '
+  :EN*.smaQ*
+}
 
 @[lexer.set.cpp]{
   ESSETLEXERLANGUAGEcpp

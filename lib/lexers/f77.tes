@@ -1,9 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.f77]{
-  :EN*.fQ*U.r
-  Q.r"F :EN*.forQ*U.r '
-Q.r}
+  :EN*.fQ*"S -1 '
+  :EN*.forQ*
+}
 
 @[lexer.set.f77]{
   ESSETLEXERLANGUAGEf77

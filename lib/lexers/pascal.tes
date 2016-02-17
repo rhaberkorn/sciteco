@@ -1,12 +1,12 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.pascal]{
-  :EN*.dprQ*U.r
-  Q.r"F :EN*.pasQ*U.r '
-  Q.r"F :EN*.dfmQ*U.r '
-  Q.r"F :EN*.incQ*U.r '
-  Q.r"F :EN*.ppQ*U.r '
-Q.r}
+  :EN*.dprQ*"S -1 '
+  :EN*.pasQ*"S -1 '
+  :EN*.dfmQ*"S -1 '
+  :EN*.incQ*"S -1 '
+  :EN*.ppQ*
+}
 
 @[lexer.set.pascal]{
   ESSETLEXERLANGUAGEpascal

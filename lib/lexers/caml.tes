@@ -1,9 +1,9 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.caml]{
-  :EN*.mlQ*U.r
-  Q.r"F :EN*.mliQ*U.r '
-Q.r}
+  :EN*.mlQ*"S -1 '
+  :EN*.mliQ*
+}
 
 @[lexer.set.caml]{
   ESSETLEXERLANGUAGEcaml

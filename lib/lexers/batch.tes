@@ -1,10 +1,10 @@
 ! DOS, Windows, OS/2 Batch Files !
 
 @[lexer.test.batch]{
-  :EN*.batQ*U.r
-  Q.r"F :EN*.cmdQ*U.r '
-  Q.r"F :EN*.ntQ*U.r '
-Q.r}
+  :EN*.batQ*"S -1 '
+  :EN*.cmdQ*"S -1 '
+  :EN*.ntQ*
+}
 
 @[lexer.set.batch]{
   ESSETLEXERLANGUAGEbatch

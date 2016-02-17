@@ -1,17 +1,17 @@
 ! Lexing for XML and its applications !
 
 @[lexer.test.xml]{
-  :EN*.xmlQ*U.r
-  Q.r"F :EN*.xslQ*U.r '
-  Q.r"F :EN*.svgQ*U.r '
-  Q.r"F :EN*.xulQ*U.r '
-  Q.r"F :EN*.xsdQ*U.r '
-  Q.r"F :EN*.dtdQ*U.r '
-  Q.r"F :EN*.xsltQ*U.r '
-  Q.r"F :EN*.axlQ*U.r '
-  Q.r"F :EN*.xrcQ*U.r '
-  Q.r"F :EN*.rdfQ*U.r '
-Q.r}
+  :EN*.xmlQ*"S -1 '
+  :EN*.xslQ*"S -1 '
+  :EN*.svgQ*"S -1 '
+  :EN*.xulQ*"S -1 '
+  :EN*.xsdQ*"S -1 '
+  :EN*.dtdQ*"S -1 '
+  :EN*.xsltQ*"S -1 '
+  :EN*.axlQ*"S -1 '
+  :EN*.xrcQ*"S -1 '
+  :EN*.rdfQ*
+}
 
 @[lexer.set.xml]{
   ESSETLEXERLANGUAGExml

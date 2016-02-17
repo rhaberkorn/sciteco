@@ -1,10 +1,10 @@
 ! AUTO-GENERATED FROM SCITE PROPERTY SET !
 
 @[lexer.test.f95]{
-  :EN*.f90Q*U.r
-  Q.r"F :EN*.f95Q*U.r '
-  Q.r"F :EN*.f2kQ*U.r '
-Q.r}
+  :EN*.f90Q*"S -1 '
+  :EN*.f95Q*"S -1 '
+  :EN*.f2kQ*
+}
 
 @[lexer.set.f95]{
   ESSETLEXERLANGUAGEfortran
