@@ -49,6 +49,7 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/freebasic.tes \
                   lexers/xml.tes \
                   lexers/asl.tes \
+                  lexers/c.tes \
                   lexers/cpp.tes \
                   lexers/test.tes \
                   lexers/kix.tes \

@@ -1,0 +1,53 @@
+!*
+ * C/ObjectiveC Lexing: Supports all keywords of C11 and treats
+ * most standard library macros for underscore-keywords like normal
+ * keywords.
+ * Header files (*.h) are handled by the "cpp" configuration
+ * since C/C++/ObjectiveC headers cannot be discerned.
+ *!
+
+@[lexer.test.c]{
+  :EN*.cQ*"S -1 '
+  :EN*.mQ*"S -1 '
+  :EN*.mmQ*
+}
+
+!* Keywords used by all languages directly derived from C *!
+[lexer.c.basekeywords]
+  alignas alignof asm auto bool break case char complex const continue
+  default do double else enum extern false float for goto
+  if imaginary inline int long noreturn register restrict return
+  short signed sizeof static static_assert struct switch
+  true typedef union unsigned void volatile wchar_t while
+!* Doxygen keywords *!
+[lexer.c.doxygenkeywords]
+  a addindex addtogroup anchor arg attention author b brief bug c class code
+  date def defgroup deprecated dontinclude e em endcode endhtmlonly endif
+  endlatexonly endlink endverbatim enum example exception f$ f[ f] file fn hideinitializer
+  htmlinclude htmlonly if image include ingroup internal invariant interface latexonly li
+  line link mainpage name namespace nosubgrouping note overload p page par param
+  param[in] param[out] post pre ref relates remarks return retval sa section see
+  showinitializer since skip skipline struct subsection test throw throws todo typedef union
+  until var verbatim verbinclude version warning weakgroup $ @ \ & < > # { }
+
+@[lexer.set.c]{
+  ESSETLEXERLANGUAGEcpp
+  0ESSETKEYWORDS
+    Q[lexer.c.basekeywords] _Alignas _Alignof _Atomic
+    _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local
+    @class @defs @protocol @required @optional @end @interface
+    @public @package @protected @private @property @implementation @synthesize @dynamic
+    @throw @try @catch @finally @synchronized @autoreleasepool @selector @encode
+    @compatibility_alias
+  ! Doxygen keywords !
+  2ESSETKEYWORDSQ[lexer.c.doxygenkeywords]
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+}
