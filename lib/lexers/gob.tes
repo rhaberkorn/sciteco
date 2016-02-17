@@ -1,0 +1,36 @@
+!*
+ * GOB2 (GObject Builder) Lexing.
+ * Assumes plain C output.
+ *!
+
+@[lexer.test.gob]{
+  :EN*.gobQ*
+}
+
+@[lexer.set.gob]{
+  ESSETLEXERLANGUAGEcpp
+  0ESSETKEYWORDS
+    Q[lexer.c.basekeywords] _Alignas _Alignof _Atomic
+    _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local
+    abstract attr BonoboObject check class classwide defreturn destroy destroywith
+    error first flags from get GladeXML interface last link null onerror override
+    private property protected public requires set signal type unref unrefwith virtual
+    alltop ctop headertop privateheader
+  1ESSETKEYWORDS
+    __GOB_FUNCTION__ GET_NEW GET_NEW_VARG IS_SELF PARENT_HANDLER
+    SELF Self self selfp SELF_CLASS SelfClass SELF_CONST SELF_GET_CLASS TYPE_SELF VAR
+  !* GTK-Doc keywords *!
+  2ESSETKEYWORDS
+    Deprecated image include Returns SECTION section_id see_also short_description
+    Since stability title : @ < > ( ) % #
+  :M[color.comment],1M[color.set]
+  :M[color.comment],2M[color.set]
+  :M[color.comment],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.keyword],5M[color.set]
+  :M[color.string],6M[color.set]
+  :M[color.string],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.operator],10M[color.set]
+  :M[color.keyword],16M[color.set]
+}

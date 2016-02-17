@@ -51,6 +51,7 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/asl.tes \
                   lexers/c.tes \
                   lexers/cpp.tes \
+                  lexers/gob.tes \
                   lexers/test.tes \
                   lexers/kix.tes \
                   lexers/baan.tes \
