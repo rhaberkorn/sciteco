@@ -10,6 +10,7 @@ PACKAGE_URL_DEV=https://github.com/rhaberkorn/sciteco
 AC_SUBST(PACKAGE_URL_DEV)
 AC_DEFINE_UNQUOTED(PACKAGE_URL_DEV, ["$PACKAGE_URL_DEV"],
                    [Package development homepage.])
+AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE
 
@@ -267,10 +268,7 @@ gtk)
 		GTK_FLOW_BOX_FALLBACK=true
 	])
 
-	AC_CHECK_PROG(GOB2, gob2, gob2)
-	if [[ x$GOB2 = x ]]; then
-		AC_MSG_ERROR([Gob2 (GObject Builder) not found!])
-	fi
+	GOB2_CHECK(2.0.20)
 
 	AC_DEFINE(INTERFACE_GTK, , [Build with GTK+ 3.0 support])
 
