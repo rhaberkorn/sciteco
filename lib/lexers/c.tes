@@ -8,17 +8,23 @@
 
 @[lexer.test.c]{
   :EN*.cQ*"S -1 '
-  :EN*.mQ*"S -1 '
-  :EN*.mmQ*
+  :EN*.mQ*
 }
 
-!* Keywords used by all languages directly derived from C *!
+!*
+ * Keywords used by all languages directly derived from C.
+ * This includes the Objective C keywords used by Objective C++ as well
+ *!
 [lexer.c.basekeywords]
   alignas alignof asm auto bool break case char complex const continue
   default do double else enum extern false float for goto
   if imaginary inline int long noreturn register restrict return
   short signed sizeof static static_assert struct switch
-  true typedef union unsigned void volatile wchar_t while
+  true typedef union unsigned void volatile wchar_t while
+  @class @defs @protocol @required @optional @end @interface
+  @public @package @protected @private @property @implementation @synthesize @dynamic
+  @throw @try @catch @finally @synchronized @autoreleasepool @selector @encode
+  @compatibility_alias
 !* Doxygen keywords *!
 [lexer.c.doxygenkeywords]
   a addindex addtogroup anchor arg attention author b brief bug c class code
@@ -34,11 +40,7 @@
   ESSETLEXERLANGUAGEcpp
   0ESSETKEYWORDS
     Q[lexer.c.basekeywords] _Alignas _Alignof _Atomic
-    _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local
-    @class @defs @protocol @required @optional @end @interface
-    @public @package @protected @private @property @implementation @synthesize @dynamic
-    @throw @try @catch @finally @synchronized @autoreleasepool @selector @encode
-    @compatibility_alias
+    _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local
   ! Doxygen keywords !
   2ESSETKEYWORDSQ[lexer.c.doxygenkeywords]
   :M[color.comment],1M[color.set]

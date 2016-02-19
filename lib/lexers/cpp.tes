@@ -1,6 +1,6 @@
 !*
- * C++ Lexing: Also used for all *.h headers since
- * they cannot be distinguished.
+ * C++/Objective C++ Lexing: Also used for all *.h headers since
+ * they cannot be distinguished between C descendants.
  *!
 
 @[lexer.test.cpp]{
@@ -12,6 +12,7 @@
   :EN*.hppQ*"S -1 '
   :EN*.hxxQ*"S -1 '
   :EN*.ippQ*"S -1 '
+  :EN*.mmQ*"S -1 '
   :EN*.smaQ*
 }
 
