@@ -97,17 +97,24 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
 
 #ifdef G_OS_WIN32
 	if (!(Flags::ed & Flags::ED_SHELLEMU)) {
-		const gchar *argv_win32[] = {
-			"cmd.exe", "/q", "/c", cmdline, NULL
-		};
-		return g_strdupv((gchar **)argv_win32);
+		QRegister *reg = QRegisters::globals["$COMSPEC"];
+		argv = (gchar **)g_malloc(5*sizeof(gchar *));
+		argv[0] = reg->get_string();
+		argv[1] = g_strdup("/q");
+		argv[2] = g_strdup("/c");
+		argv[3] = g_strdup(cmdline);
+		argv[4] = NULL;
+		return argv;
 	}
 #elif defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 	if (!(Flags::ed & Flags::ED_SHELLEMU)) {
-		const gchar *argv_unix[] = {
-			"/bin/sh", "-c", cmdline, NULL
-		};
-		return g_strdupv((gchar **)argv_unix);
+		QRegister *reg = QRegisters::globals["$SHELL"];
+		argv = (gchar **)g_malloc(4*sizeof(gchar *));
+		argv[0] = reg->get_string();
+		argv[1] = g_strdup("-c");
+		argv[2] = g_strdup(cmdline);
+		argv[3] = NULL;
+		return argv;
 	}
 #endif
 
@@ -178,12 +185,16 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * specific process exit code.
  *
  * <command> execution is by default platform-dependent.
- * On Windows, <command> is passed to the default command
- * interpreter \(lqcmd.exe\(rq with the \(lq/c\(rq
- * command-line argument.
- * On Unix/Linux, <command> is passed to the \(lq/bin/sh\(rq
- * shell with the \(lq-c\(rq command-line argument.
- * Therefore operating system restrictions on the maximum
+ * On DOS-like systems like Windows, <command> is passed to
+ * the command interpreter specified in the \fB$COMSPEC\fP
+ * environment variable with the \(lq/q\(rq and \(lq/c\(rq
+ * command-line arguments.
+ * On UNIX-like systems, <command> is passed to the interpreter
+ * specified by the \fB$SHELL\fP environment variable
+ * with the \(lq-c\(rq command-line argument.
+ * Therefore the default shell can be configured using
+ * the corresponding environment registers.
+ * The operating system restrictions on the maximum
  * length of command-line arguments apply to <command> and
  * quoting of parameters within <command> is somewhat platform
  * dependent.
@@ -191,10 +202,10 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * <command> just as an UNIX98 \(lq/bin/sh\(rq would, but without
  * performing any expansions.
  * The program specified in <command> is searched for in
- * standard locations (according to the \(lqPATH\(rq environment
+ * standard locations (according to the \fB$PATH\fP environment
  * variable).
- * This mode of operation can also be enforced on Windows and
- * Unix by enabling bit 7 in the ED flag, e.g. by executing
+ * This mode of operation can also be enforced on all platforms
+ * by enabling bit 7 in the ED flag, e.g. by executing
  * \(lq0,128ED\(rq, and is recommended when writing cross-platform
  * macros using the EC command.
  *

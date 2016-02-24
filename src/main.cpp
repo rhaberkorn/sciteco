@@ -247,6 +247,12 @@ initialize_environment(const gchar *program)
 	g_setenv("HOME", abs_path, TRUE);
 	g_free(abs_path);
 
+#ifdef G_OS_WIN32
+	g_setenv("COMSPEC", "cmd.exe", FALSE);
+#elif defined(G_OS_UNIX) || defined(G_OS_HAIKU)
+	g_setenv("SHELL", "/bin/sh", FALSE);
+#endif
+
 	/*
 	 * Initialize $SCITECOCONFIG and $SCITECOPATH
 	 */

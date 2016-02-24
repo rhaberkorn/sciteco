@@ -208,6 +208,15 @@ Initialization of this variable ensures that the
 \(lq$HOME\(rq Q-Register is available even on Windows
 and the home directory can always be re-configured.
 .TP
+.BR SHELL " or " COMSPEC
+Path of the command interpreter used by \fBEG\fP and \fBEC\fP
+commands if UNIX98 shell emulation is \fIdisabled\fP.
+\fBSHELL\fP is used on UNIX-like systems, while \fBCOMSPEC\fP
+is used on DOS-like systems (like Windows).
+Both variables are usually already set in the process environment
+but are initialized to \(lq/bin/sh\(rq or \(lqcmd.exe\(rq
+should they nevertheless be unset.
+.TP
 .B SCITECOCONFIG
 Path where \*(ST looks for configuration files.
 For instance, this is the path of the default profile.
