@@ -30,7 +30,9 @@ SciTECO Build and Runtime Dependencies
  * When choosing the GTK interface:
    * GTK+ v3.10 or later: http://www.gtk.org/
    * GObject Builder v2.0.20 or later: http://www.jirka.org/gob.html
- * Groff (only when formatting HTML manuals)
+ * GNU roff (groff): https://www.gnu.org/software/groff/
+   Required at build-time, but it is already shipped on most
+   UNIX-like systems to format man pages.
  * Doxygen (only when generating developer documentation)
 
 These dependencies are bundled with the SciTECO Git repository

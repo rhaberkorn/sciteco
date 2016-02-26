@@ -40,6 +40,7 @@
 #include "search.h"
 #include "spawn.h"
 #include "glob.h"
+#include "help.h"
 #include "cmdline.h"
 #include "ioview.h"
 #include "error.h"
@@ -687,6 +688,7 @@ StateStart::StateStart() : State()
 	transitions['"'] = &States::condcommand;
 	transitions['E'] = &States::ecommand;
 	transitions['I'] = &States::insert_building;
+	transitions['?'] = &States::gethelp;
 	transitions['S'] = &States::search;
 	transitions['N'] = &States::searchall;
 

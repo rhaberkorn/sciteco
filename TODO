@@ -14,6 +14,8 @@ Known Bugs:
    reverse of STYLE_DEFAULT.
    Perhaps we must call init_color() before initializing color pairs
    (currently done by Scinterm).
+ * Scinterm: The underline attribute is not applied properly
+   even on Urxvt where it obviously works.
  * session.save should save and reset ^R. Perhaps ^R should be
    mapped to a Q-Reg to allow [^R. Currently, saving the buffer session
    fails if ^R != 10.
@@ -77,7 +79,23 @@ Features:
    commands. The current behaviour has few benefits.
    If a number is a regular command that stops parsing at the
    first invalid character in the current radix, we could write
-   hexadcimal constants like 16^R0BEEF^D (still clumsy...)
+   hexadcimal constants like 16^R0BEEF^D (still clumsy...).
+   (On the other hand, the radix is runtime state and parsing
+   must not depend on runtime state in SciTECO to ensure
+   parseability of the language.)
+   * Furthermore, this opens the possibility of floating point
+     numbers. The "." command does not take arguments, so it
+     could be part of the number syntax. This disallows constructs
+     like "23." to push 23 and Dot which have to be replaced by
+     "23,.".
+   * In the most simple case, all TECO numbers could be
+     floats/doubles with division/modulo having integer semantics.
+     A separate floating point division operator could be introduced
+     (e.g. ^/ with modulo being remapped to ^%).
+   * SciTECO could also be "dynamically" typed by using
+     integer and floating point types internally.
+     The operator decides how to interpret the arguments
+     and the return type.
  * Function key masking flag for the beginning of the command
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
@@ -114,6 +132,11 @@ Features:
    ED flags before everything else and --quiet.
    Command line arguments should then also be handled
    differently.
+ * For third-party macro authors, it is useful to know
+   the standard library path (e.g. to install new lexers).
+   There could be a --print-path option, or with the --quiet
+   and --stdout options, one could write:
+   sciteco -qoe 'G[$SCITECOPATH]'
  * The C/C++ lexer supports preprocessor evaluation.
    This is currently always enabled but there are no defines.
    Could be added as a global reg to set up defines easily.
@@ -255,33 +278,7 @@ Documentation:
  * Code docs (Doxygen). It's slowly getting better...
  * clean up/fix generate-docs.tes
    generate-docs.tes could be turned into a general purpose script to
-   extract command and macro documentation from C and SciTECO code.
+   extract command and macro documentation from C and SciTECO code
+   (tedoc?).
    It should then be installed so it may be used by third-party macro
    library authors as well.
- * An online help system based on manpages/Troff documents.
-   The internal commands and macro libraries are continued to be
-   documented using man-pages (perhaps generated via generate-docs.tes).
-   These troff documents can be augmented with SciTECO-specific tagging
-   troff macros which are invisible when processed by man/grotty.
-   Online documentation could be generated using a new dedicated
-   groff post-processor that generates SciTECO macros that fill a
-   buffer with the formatted text and style it. Let's call the roffed
-   documentation page a "womanpage" and the post-processor "womanizer".
-   While the source document will usually be man or mandoc, this would
-   allow writing online documentation using any troff macro package
-   and for simple documentations, the "womanpage" can be coded directly
-   in SciTECO.
-   SciTECO will support a new interactive-mode-only command (e.g. ^H)
-   that loads a "womanpage" by consulting a tag index, that is built
-   up when interactive mode boots and links a tag to a "womanpage" file
-   (allowing tab completion of course).
-   The "womanpage" macro not only builds up the formatted page when
-   executed but also a tag table that associates individual tags with
-   buffer positions. After the "womanpage" has been munged, SciTECO
-   consults this table to jump to the correct position.
-   The "womanizer" script is distributed as well, to allow third party
-   macro authors to properly document their macros by manpage and
-   only-help.
-   The nice thing about this scheme is that groff is not required
-   at run time since tagged womanpages are generated at build time.
-   Groff must be added as a build-time requirement, though.

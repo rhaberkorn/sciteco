@@ -1,0 +1,65 @@
+.\" sciteco.tmac
+.\"
+.\" grosciteco is similar to grotty, so we can
+.\" inherit its definitions:
+.nroff
+.do mso tty.tmac
+.
+.\"
+.\" Define topics at the current document position.
+.\" This is handled by grosciteco to create a topic index
+.\" at the top of the file which is in turn read by SciTECO
+.\" to build a global help topic index.
+.\"
+.\" NOTE: We let Troff handle the argument processing, since
+.\" parsing them in SciTECO would be tricky.
+.\"
+.de SCITECO_TOPIC
+.  while \\n(.$ \{\
+.    device sciteco_topic:\\$1
+.    shift 1
+.  \}
+..
+.
+.
+.\"
+.\" grosciteco does not handle font families right now
+.\" and probably will never do because of the limited
+.\" number of Scintilla styles available.
+.\" But even if we did, we sometimes have to enforce
+.\" a fixed-width font for drawings and tables, since
+.\" they can only be "typeset" with glyphs by Scintilla.
+.\"
+.de SCITECO_TT
+.  if \\n(.$ .ll \\$*
+.  device sciteco_tt
+..
+.
+.de SCITECO_TT_END
+.  if '\\$1'SP' .sp
+.  device sciteco_tt_end
+.  ll 65535n
+..
+.
+.\"
+.\" Effectively disable paragraph filling in man pages.
+.\" Word wrapping will be performed by Scintilla.
+.\"
+.ll 65535n
+.nr LT 90n
+.
+.\"
+.\" remove hyphenation
+.\"
+.nh
+.nr HY 0
+.
+.de hy
+..
+.de nh
+..
+.
+.\" avoid line breaks after hyphen-like characters.
+.cflags 0 -\[hy]\[em]\[en]
+.
+.\" end of file, make sure this is the last line

@@ -1,0 +1,283 @@
+#!/usr/bin/env sciteco -m
+!* grosciteco.tes <output-woman> <output-tec> <input> *!
+
+!* Process command-line options *!
+LR 0X[output-woman] 2LR 0X[output-tec] 2LR 0X[input] HK
+EBQ[input]
+
+! skip whitespace characters !
+@#sw{
+  <0A-^^ "N 1; ' :C;>
+}
+
+!* skip N (string) arguments beginning with current one *!
+@#sa{
+  "~1'<
+    <0A-^^ "= 1; ' 0A-10"= 1; ' :C;> :M#sw
+  >
+}
+
+!* get next integer argument, skipping it *!
+@#gi{
+  \ (0A-^^-"= :C ' <0A"D :C; | 1; '> :M#sw)
+}
+
+!* skip end of command *!
+@#sc{
+  0A-10"= :C '
+}
+
+0U[text.lines] 0U[pos.v] 0U[pos.h]
+
+!* move to (pos.h,pos.v) relative to origin, making space if necessary *!
+@[move]{ [.n
+  U.n J
+  Q[pos.v]-Q[text.lines]">
+    ZJ Q[pos.v]-Q[text.lines]<I^J>
+    Q[pos.v]U[text.lines]
+  |
+    Q[pos.v]L
+  '
+  Q[pos.h]<.-Z"= I  | 0A-10"= I  | C' '>
+  Q.n<.-Z"= 1; ' 0A-10"= 1; ' D>
+].n }
+
+@[style]{ [.l
+  U.l Q[font]-Q[default-style]"N
+    .-Q.lESSTARTSTYLING Q[font],Q.lESSETSTYLING
+  '
+].l }
+
+[topics]
+
+!*
+ * Special characters
+ * FIXME: Use UTF8 characters once available
+ *!
+[glyphs.**]*
+[glyphs.\-]-
+[glyphs.aa]'
+[glyphs.dq]"
+[glyphs.hy]-
+[glyphs.la]<
+[glyphs.ra]>
+[glyphs.lq]"
+[glyphs.rq]"
+[glyphs.rs]\
+[glyphs.+]+
+
+!* process formatter commands *!
+@[format]{ <
+  .-Z"= 1; '
+  0AU[cmd] C
+  Ocmd.U[cmd]
+
+  !cmd.x!
+    :M#sw
+    0AU[cmd] C
+    Ocmd.xU[cmd]
+
+    !cmd.xT!
+      2:M#sa :M#sc F<
+    !cmd.xr!
+      :M#sa :M#giU[res] :M#giU[res.h] :M#giU[res.v] :M#sc F<
+    !cmd.xi!
+      :M#sa :M#sc F<
+    !cmd.xF!
+      L F<
+    !cmd.xX!
+      :M#sw .(W).X.w
+      Ocmd.xXQ.w
+      !cmd.xXsciteco_topic!
+        !*
+         * FIXME: The buffer position of this topic might still
+         * change due to movement commands (esp. when formatting
+         * a table). Only the line+column should no longer change.
+         * Either store line+column or use markers.
+         *!
+        [* EB 0:M[move] .U.d ]*
+        :EU[topics]\.d:
+        C :X[topics]
+        L F<
+      !cmd.xXsciteco_tt!
+        [* EB 0:M[move] .U[ttstart] ]*
+        L F<
+      !cmd.xXsciteco_tt_end!
+        [* EB 0:M[move]
+          .-Q[ttstart]<
+            Q[ttstart]ESSTARTSTYLING Q[ttstart]ESGETSTYLEAT+16,1ESSETSTYLING
+          %[ttstart]>
+        ]*
+        L F<
+      !cmd.xXtty!
+      !cmd.xXdevtag!
+        L F<
+
+    !cmd.xf!
+      :M#sa :M#giU.n Q.n+16U.#nt .(:M#sa).X[font] :M#sc
+      :Q[fonts.\.n]"F F< ' -U[fonts.\.n]
+      @:EU[styles]{\.#ntESSTYLESETFONTCourier^J}
+      Ocmd.xfQ[font]
+      !cmd.xfR!
+        Q.nU[default-style]
+        @:EU[styles]{16ESSTYLESETFONTCourier^J}
+        F<
+      !cmd.xfB!
+        @:EU[styles]{1,\.nESSTYLESETBOLD 1,\.#ntESSTYLESETBOLD^J}
+        F<
+      !cmd.xfBI!
+        @:EU[styles]{1,\.nESSTYLESETBOLD 1,\.#ntESSTYLESETBOLD^J}
+      !cmd.xfI!
+        @:EU[styles]{1,\.nESSTYLESETITALIC 1,\.#ntESSTYLESETITALIC^J}
+        @:EU[styles]{0EJ-1"= 1,\.nESSTYLESETUNDERLINE 1,\.#ntESSTYLESETUNDERLINE '^J}
+        F<
+
+    !cmd.xt!
+      :M#sa :M#sc F<
+    !cmd.xs!
+      1;
+
+  !cmd.p!
+    :M#sw :M#gi Q[pos.v]U[origin.v] :M#sc F<
+
+  !cmd.f!
+    :M#sw :M#giU[font] :M#sc F<
+
+  !cmd.s!
+    :M#sw :M#gi :M#sc F<
+
+  !cmd.V!
+    :M#sw :M#gi/Q[res.v]-1+Q[origin.v]U[pos.v] :M#sc F<
+
+  !cmd.v!
+    :M#sw :M#gi/Q[res.v]%[pos.v] :M#sc F<
+
+  !cmd.H!
+    :M#sw :M#gi/Q[res.h]U[pos.h] :M#sc F<
+
+  !cmd.h!
+    :M#sw :M#gi/Q[res.h]%[pos.h] :M#sc F<
+
+  !cmd.m!
+    :M#sw
+    0AU[cmd] C
+    Ocmd.mU[cmd]
+
+    !cmd.md!
+      :M#sc F<
+
+  !cmd.D!
+    :M#sw
+    0AU[cmd] C
+    Ocmd.DU[cmd]
+
+    !cmd.DF!
+      :M#sw
+      0AU[cmd] C
+      Ocmd.DFU[cmd]
+
+        !cmd.DFd!
+          :M#sc F<
+
+    !cmd.Dl!
+      :M#sw :M#gi/Q[res.h]+Q[pos.h]U.[to.h] :M#gi/Q[res.v]+Q[pos.v]U.[to.v] :M#sc
+      [* EB
+      Q.[to.h]-Q[pos.h]"=
+        ! vertical line !
+        Q.[to.v]-Q[pos.v]"< Q[pos.v]U.v Q.[to.v]U[pos.v] | Q.[to.v]U.v '
+        1:M[move] I+ %[pos.v]
+        Q.v-Q[pos.v]<
+          1:M[move] I| %[pos.v]
+        >
+        1:M[move] I+
+        Q.[to.v]U[pos.v]
+      |
+        ! horizontal line !
+        Q.[to.h]-Q[pos.h]"< Q[pos.h]U.h Q.[to.h]U[pos.h] | Q.[to.h]U.h '
+        1:M[move] I+ %[pos.h]
+        Q.h-Q[pos.h]<
+          1:M[move] I- %[pos.h]
+        >
+        1:M[move] I+
+        Q.[to.h]U[pos.h]
+      '
+      ]* F<
+
+  !cmd.t!
+    :M#sw .(:M#sa).X.w
+    [* EB :Q.w:M[move]
+    G.w :Q.w:M[style] ]*
+    :Q.w%[pos.h] :M#sc F<
+
+  !cmd.C!
+    :M#sw .(:M#sa).X.w
+    [* EB 1:M[move]
+    G[glyphs.Q.w] 1:M[style] ]* :M#sc F<
+
+  !cmd.c!
+    :M#sw 0AU.w C
+    [* EB 1:M[move]
+    G[glyphs.U.w] 1:M[style] ]* :M#sc F<
+
+  !cmd.n!
+    :M#sw :M#gi :M#gi :M#sc F<
+
+  !cmd.w!
+    :M#sc F<
+> }
+
+!*
+ * Inline local macro invocations in [format]
+ * This speeds up runtime by 25%
+ *!
+EQ[format]
+  J<FR:M[move]Q[move];>
+  J<FR:M[style]Q[style];>
+  J<FR:M#saQ#sa;>
+  J<FR:M#giQ#gi;>
+  J<FR:M#swQ#sw;>
+  J<FR:M#scQ#sc;>
+  !*
+   * Compress whitespace, kind of dangerous:
+   * J<FRS ;>
+   *!
+Q*U*
+
+:M[format]
+
+!*
+ * Generate the styling instructions based on the styles
+ * of the womanpage buffer. The styles are configured according
+ * to their font positions (already in `styles`).
+ * Styles are NOT generated in `styles` immediately during
+ * formatting, since the buffer positions of text to style
+ * can still change with `move` operations that add whitespace.
+ * Also, here we can generate a minimal list of styling operations
+ * ending up with much smaller *.tec files.
+ * TODO: The size can still be improved by using SCI_SETSTYLINGEX
+ * if appropriate.
+ *!
+EB J 0U#cs 0U#cd
+<
+  .ESGETSTYLEATUs Qs"< Qs= '
+  .-Z"< Qs-Q#cs"= C F< ' '
+  Q#cs"N
+    .-Q#cd Ul
+    @:EU[styles]{\#cdESSTARTSTYLING \#cs,\lESSETSTYLING^J}
+  '
+  QsU#cs .U#cd
+:C;>
+
+!*
+ * Save the clear-text part of the document into <output-woman>
+ *!
+EWQ[output-woman]
+
+EQ[styles]
+
+!* Generate topic index *!
+J I!*Q[topics]*!^J
+
+EWQ[output-tec]
+
+-EX

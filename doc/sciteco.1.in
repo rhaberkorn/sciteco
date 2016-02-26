@@ -13,6 +13,7 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .
 .SH SYNOPSIS
 .
+.SCITECO_TOPIC "sciteco"
 .SY @PACKAGE@
 .OP "-h|--help"
 .OP "-e|--eval" macro
@@ -37,6 +38,7 @@ It is geared towards UNIX-like operating systems but also
 natively supports Microsoft Windows NT\*(Tm.
 .
 .LP
+.SCITECO_TOPIC mung
 When executed, \*(ST mungs (executes) the TECO macro stored in the file
 specified by the
 .B "--mung"
@@ -48,14 +50,20 @@ mode, allowing the user to write stand-alone TECO scripts.
 Only when munging files as opposed to other means of executing macros,
 the first line is ignored if it begins with \(lq#!\(rq.
 Therefore under UNIX-like operating systems, TECO macro files may be
-invoked as scripts by using a Hashbang line like
+invoked as scripts by using a Hash-Bang line like
+.\" FIXME: We'd like to include #! as a topic, but ! character are currently
+.\" not allowed since they are not escaped correctly.
+.SCITECO_TOPIC scripting
 .RS
+.SCITECO_TT
 .EX
 #!@bindir@/sciteco -m
 .EE
+.SCITECO_TT_END
 .RE
 .
 .LP
+.SCITECO_TOPIC argv arguments
 Upon startup \*(ST's buffer ring contains only one unnamed empty buffer.
 All command line arguments after the \*(ST options are passed as
 .I arguments
@@ -101,12 +109,14 @@ are prefixed with a string signifying the message's severity.
 In interactive mode, messages are also shown in a GUI-dependant
 manner.
 .IP \(bu
+.SCITECO_TOPIC batch
 In batch mode, any \*(ST command failure will terminate the program.
 A full stack trace of \*(ST macro invocations will be printed to
 \fIstderr\fP and the process' return code will signify failure.
 In interactive mode, \*(ST will \(lqrub out\(rq any character
 resulting in a command failure.
 .IP \(bu
+.SCITECO_TOPIC interactive
 The interactive mode enables character rub-out and thus undoing
 of command side-effects.
 Therefore code runs significantly slower in interactive mode
@@ -139,8 +149,10 @@ option.
 .SH OPTIONS
 .
 .IP "\fB-h\fR, \fB--help\fR"
+.SCITECO_TOPIC "-h" "--help"
 Display a short help text on the console. 
 .IP "\fB-e\fR, \fB--eval\fR \fImacro"
+.SCITECO_TOPIC "-e" "--eval"
 Evaluate (execute)
 .I macro
 specified as a command-line option.
@@ -149,10 +161,12 @@ If the option is specified, the
 .B \-\-mung
 option has no effect.
 .IP "\fB-m\fR, \fB--mung\fR \fIfile"
+.SCITECO_TOPIC "-m" "--mung"
 Mung \fIfile\fP.
 Default is
 .IR $SCITECOCONFIG/.teco_ini .
 .IP "\fB--no-profile\fP"
+.SCITECO_TOPIC "--no-profile"
 Do not mung any profile.
 This leaves the editor in interactive mode with default
 settings just as if no profile existed or like when
@@ -167,12 +181,14 @@ Execute \(lqsciteco --help\(rq for more details.
 .
 .
 .SH EXIT STATUS
+.SCITECO_TOPIC status
 .
 \*(ST will return a non-null exit code if an error occurred during
 batch mode processing.
 .
 .
 .SH ENVIRONMENT
+.SCITECO_TOPIC environment
 .
 Before \*(ST executes any macro, all of the variables in the process
 environment are inserted into the global Q-Register table.
@@ -196,6 +212,7 @@ these registers.
 The following environment variables and registers are initialized with
 default values by \*(ST if they are unset:
 .TP
+.SCITECO_TOPIC "$HOME" "HOME"
 .B HOME
 Home directory of the current user.
 This may be used e.g. by the \fBFG\fP command and for
@@ -208,6 +225,7 @@ Initialization of this variable ensures that the
 \(lq$HOME\(rq Q-Register is available even on Windows
 and the home directory can always be re-configured.
 .TP
+.SCITECO_TOPIC "$SHELL" "SHELL" "$COMSPEC" "COMSPEC"
 .BR SHELL " or " COMSPEC
 Path of the command interpreter used by \fBEG\fP and \fBEC\fP
 commands if UNIX98 shell emulation is \fIdisabled\fP.
@@ -217,6 +235,7 @@ Both variables are usually already set in the process environment
 but are initialized to \(lq/bin/sh\(rq or \(lqcmd.exe\(rq
 should they nevertheless be unset.
 .TP
+.SCITECO_TOPIC "$SCITECOCONFIG" "SCITECOCONFIG"
 .B SCITECOCONFIG
 Path where \*(ST looks for configuration files.
 For instance, this is the path of the default profile.
@@ -228,6 +247,7 @@ on Windows.
 On other platforms, this variable defaults to some other
 user-specific configuration directory.
 .TP
+.SCITECO_TOPIC "$SCITECOPATH" "SCITECOPATH"
 .B SCITECOPATH
 Standard library macro path.
 Macros can expect to find standard library macros in this
@@ -253,6 +273,7 @@ Additionally \*(ST may be influenced by the
 .UR https://developer.gnome.org/glib/stable/glib-running.html
 environment variables accessed by glib
 .UE .
+.SCITECO_TOPIC "$TERM" "TERM"
 On a Curses UI, there are other important environment variables
 like \fBTERM\fP, \fBLINES\fP, \fBCOLUMNS\fP and \fBESCDELAY\fP
 that may be accessed when \*(ST enters interactive mode.
@@ -269,6 +290,7 @@ can be modified in the profile macro.
 \*(ST currently reacts to the following signals or uses them
 internally:
 .TP
+.SCITECO_TOPIC "SIGINT"
 .B SIGINT
 Interrupts the currently running macro.
 The character resulting in the macro execution will fail
@@ -285,6 +307,7 @@ Note that this signal can usually also be generated when pressing
 This is useful for GUIs that do not yet support interruptions
 directly.
 .TP
+.SCITECO_TOPIC "SIGTERM"
 .B SIGTERM
 Try to gracefully shut down \*(ST.
 In batch mode this only interrupts the currently running macro
@@ -298,6 +321,7 @@ program termination or user-programmed behaviour.
 .SH FILES
 .
 .TP
+.SCITECO_TOPIC ".teco_ini" "profile"
 .B $SCITECOCONFIG/.teco_ini
 Default profile macro.
 .TP
@@ -309,6 +333,7 @@ and opening files specified on the command line.
 .B $SCITECOPATH/*.tes
 Standard library macros.
 .TP
+.SCITECO_TOPIC savepoint
 .BI .teco- n - filename ~
 Save point files created by \*(ST when saving files
 during interactive execution have this format.
@@ -316,6 +341,7 @@ On Windows, these files have the hidden attribute set.
 Savepoint files are temporary and should be ignored by version
 control systems, etc.
 .TP
+.SCITECO_TOPIC ".teco_session" session
 .B $SCITECOCONFIG/.teco_session
 Macro storing the default buffer session.
 This is not written by \*(ST itself, but by the
@@ -324,11 +350,13 @@ When the \(lqsession.vcs\(rq macro is used, these files
 will also be created in the roots of Git, Mercurial and
 Subversion repositories or working copies.
 .TP
+.SCITECO_TOPIC ".teco_css"
 .B $SCITECOCONFIG/.teco_css
 When using the Gtk UI, this will be the location of a
 CSS file that can be used to apply \*(ST color schemes
 to the entire UI and to do other style customizations.
 .TP
+.SCITECO_TOPIC "fallback.css"
 .B @pkgdatadir@/fallback.css
 When using the Gtk UI, this is a fallback stylesheet
 in case
@@ -343,6 +371,10 @@ It may also be used as a template for
 .TP
 Language reference:
 .BR sciteco (7)
+.TP
+The \fBtroff\fP post-processor for \*(ST, including
+information on how to write \(lqwomanpages\(rq:
+.BR grosciteco (1)
 .TP
 Homepage:
 .UR @PACKAGE_URL@

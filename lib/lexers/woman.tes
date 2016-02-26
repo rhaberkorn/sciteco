@@ -1,0 +1,20 @@
+!*
+ * Womanpage Lexing: These are internal or third-party
+ * on-line documentation files used by SciTECO.
+ * In contrast to normal lexers, Womanpages are styled
+ * using a SciTECO macro that ships with the woman-page
+ * document (.woman.tec).
+ *!
+
+@[lexer.test.woman]{
+  :EN*.womanQ*
+}
+
+@[lexer.set.woman]{
+  1ESSETWRAPMODE
+  1ESSETWRAPINDENTMODE
+  10,1#4ESSETYCARETPOLICY
+  32ESSTYLESETFONTTimes ESSTYLECLEARALL
+
+  1:EN*Q*.tec"S EMQ*.tec '
+}

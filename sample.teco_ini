@@ -18,9 +18,11 @@ EMQ[$SCITECOPATH]/session.tes
     M[lexer.auto]
 
     ! Set up margins !
-    33ESTEXTWIDTH9U.w
-    5*Q.w,0ESSETMARGINWIDTHN
-    Q.w,2ESSETMARGINWIDTHN
+    [_:M[lexer.test.woman]]_"F
+      33ESTEXTWIDTH9U.w
+      5*Q.w,0ESSETMARGINWIDTHN
+      Q.w,2ESSETMARGINWIDTHN
+    '
 
     0,32ED
     ! fall through !

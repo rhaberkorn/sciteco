@@ -1,0 +1,200 @@
+.ds ST \\fB@PACKAGE_NAME@\\fP
+.
+.
+.TH "grosciteco.tes" 1 \
+    "@DATE@" \
+    "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
+.
+.
+.SCITECO_TOPIC grosciteco grosciteco.tes
+.SH NAME
+grosciteco \-\-
+GNU roff post-processor for \*(ST
+.
+.
+.SH SYNOPSIS
+.
+.SY grosciteco.tes
+.I text_output
+.I tec_output
+.I input
+.YS
+.
+.
+.SH DESCRIPTION
+.
+\fBgrosciteco\fP is a post-processor for \fBGNU roff\fP which works
+similar to \fBgroff\fP's \fBgrotty\fP post-processor and driver.
+Similarily, \fBgrosciteco\fP is a plain-text formatter \(em but
+since it lays out the document itself and is written in the \*(ST
+language, it will generate an additional \*(ST macro that can be
+executed to style the plain-text document.
+.LP
+.SCITECO_TOPIC woman women womanpage
+The plain-text document will usually have the extension \(lqwoman\(rq
+and the accompanying \*(ST macro will have the extension \(lqwoman.tec\(rq.
+Both files combined are called \fIwomanpage\fP since they are commonly
+\*(ST-formatted man pages.
+.LP
+Furthermore, \fIwomanpages\fP can be indexed by search terms
+(called topics).
+A per-file topic index is generated as part of the \(lqwoman.tec\(rq
+output file.
+Users of \fBgrosciteco\fP can define topics in \fBtroff\fP
+markup using the \fBSCITECO_TOPIC\fP troff macro defined
+in the \(lqsciteco.tmac\(rq macro package.
+This macro package should always be loaded when processing
+\fBtroff\fP documents which are going to be post-processed by
+\fBgrosciteco\fP.
+.LP
+Preparing a \fIwomanpage\fP for display is usually performed
+automatically by \*(ST's \(lqwoman.tes\(rq lexer definition
+whenever you open a \(lq*.woman\(rq file in \*(ST.
+\fIwomanpages\fP are recommended to be installed into a special
+directory in \*(ST's standard library.
+The \*(ST command \fB?\fP provides an online help feature
+which gives fast access to properly-installed \fIwomanpages\fP.
+It builds a global topic index of all \fIwomanpages\fP installed
+in the \fB$SCITECOPATH/women\fP directory.
+\fBgrosciteco\fP is thus a central component in providing
+\*(ST's help system, in documenting internal commands, the
+\*(ST standard library macros and third-party macro packages.
+The generation of \fIwomanpages\fP at compile-time means
+that no \fBtroff\fP is required by end users to browse
+documentation within \*(ST.
+.
+.
+.SH OPTIONS
+.
+.IP "\fItext_output\fP
+The plain-text output file, e.g. \(lqgreat-macro.woman\(rq.
+.IP "\fItec_output\fP
+The \*(ST script that when executed after loading
+\fItext_output\fP into a Scintilla view, styles that document.
+It can be thought of as representing meta-information
+for \fItext_output\fP.
+In order to cooperate with the \(lqwoman\(rq lexer and
+\*(ST's \fB?\fP command, its file name should be
+\fItext_output\fP.tec, e.g. \(lqgreat-macro.woman.tec\(rq.
+.IP "\fIinput\fP"
+The \fIinput\fP file is in \fBtroff\fP's device-independant
+output format.
+.
+.
+.SH SPECIAL TROFF MACROS
+.
+.SCITECO_TOPIC sciteco.tmac tmac
+\fBtroff\fP documents should be processed with the
+\(lqsciteco.tmac\(rq macro package that also ships with
+\*(ST.
+It tweaks formatting for display in \*(ST (assuming
+that the lexer system for \fIwomanpages\fP is in place)
+and provides the following \fBtroff\fP macros that
+can be called by documentation authors:
+.
+.TP
+.TQ
+\fB.SCITECO_TOPIC \fItopics...\fR
+.SCITECO_TOPIC .SCITECO_TOPIC SCITECO_TOPIC
+Defines one or more topics in \*(ST's help system.
+Every topic must be in its own macro argument.
+A \fItopic\fP can be looked up in \*(ST using
+the \fB?\fItopic\fB$\fR command, but in case of
+topic collisions, \*(ST will modify the topic name
+to keep it unique.
+The \fB?\fP (question mark) command will jump to the position
+that corresponds to the macro call in \fBtroff\fP
+markup.
+Topics can and should only consist of printable characters,
+so escape characters should be written in their up-caret
+notation (e.g. \(lq^[\(rq instead of escape).
+\*(ST expands control characters to their printabel form
+when looking up terms.
+.TQ
+\fB.SCITECO_TT\fP [\fIline length\fP]
+.SCITECO_TOPIC .SCITECO_TT SCITECO_TT
+Marks the beginning of an area that must be formatted
+in a monospaced font.
+\fBgrosciteco\fP has only limited support for Troff font styles
+and the font family used depends on the \*(ST UI used to
+show the womanpage.
+Since line drawing commands assume a TTY-like output device,
+.B SCITECO_TT
+should precede those sections of text (including the \fBtbl\fP
+macro \fBTS\fP).
+An optional temporary \fIline length\fP may also be specified
+which is especially useful for tables.
+.TQ
+\fB.SCITECO_TT_END\fP [\fBSP\fP]
+.SCITECO_TOPIC .SCITECO_TT_END SCITECO_TT_END
+Marks the end of an area that must be formatted in a
+monospaced font.
+The optional \fBSP\fP keyword may be specified to skip one
+line vertically (via troff's \fB.sp\fP request).
+.
+.LP
+These public macros will be ignored if \(lqsciteco.tmac\(rq
+is not loaded, so it is safe to use them in man pages
+that are also installed into the system.
+.LP
+Note that \(lqsciteco.tmac\(rq is not installed into the
+standard \fBGNU roff\fP macro search directories, but into
+\*(ST data directory at \(lq@pkgdatadir@\(rq.
+It must thus be moved or linked manually into one of the
+search paths, or the data dir must be added to the search
+paths.
+Alternatively, you may also add it to the \fBgroff\fP
+command line with the \fB-M\fP option.
+.
+.
+.SH EXAMPLES
+.
+The following UNIX shell commands will generate the \fIwomanpage\fP for
+a \*(ST macro package with a man page called
+\fBgreat-macro.tes\fP(7sciteco):
+.
+.RS
+.EX
+.SCITECO_TT
+groff -Z -Tascii -man -M@pkgdatadir@ -msciteco \\
+      great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
+grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.woman.tec \\
+               great-macro.tes.7sciteco.intermediate
+.SCITECO_TT_END
+.EE
+.RE
+.LP
+The resulting files should be installed to
+.B "@scitecolibdir@/women"
+(or wherever \fB$SCITECOPATH\fP points to at runtime)
+to make the files accessible in \*(ST's online-help system.
+.
+.
+.SH BUGS
+.
+\fBgrosciteco\fP is quite slow, although this is a \*(ST issue.
+.
+.
+.SH SEE ALSO
+.
+.TP
+\*(ST invocation and help on its environment variables:
+.BR sciteco (1)
+.TP
+Language reference including additional information on the \fB?\fP command:
+.BR sciteco (7)
+.TP
+The \fBGNU roff\fP front end program:
+.BR groff (1)
+.TP
+The \fBGNU roff\fP \(lqman\(rq macros for writing man pages:
+.BR groff_man (7)
+.
+.
+.SH AUTHOR
+.
+This manpage and the \*(ST program was written by
+.MT robin.haberkorn@googlemail.com
+Robin Haberkorn
+.ME .
+\# EOF

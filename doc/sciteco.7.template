@@ -7,12 +7,14 @@
     "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
 .
 .
+.SCITECO_TOPIC language
 .SH NAME
 @PACKAGE@ \-\-
 Language reference for the \*(ST text editor and language
 .
 .
 .SH INTRODUCTION AND PHILOSOPHY
+.SCITECO_TOPIC philosophy
 .
 \*(ST is a powerful editor and interactive programming language
 following an unique paradigm of text editing.
@@ -38,6 +40,7 @@ operations, \*(ST supports undoing and redoing on a per-character,
 per-command or even user-configurable level undoing most of the
 side-effects on the overall editor state.
 .LP
+.SCITECO_TOPIC TECO
 \*(ST is a member of the TECO family of text editor languages,
 invented by Dan Murphy in the 1960s.
 TECO was initially a purely command-driven editor that evolved
@@ -47,6 +50,7 @@ Emacs later became an independent program that eventually
 dropped TECO as its scripting language in favour of Lisp.
 \*(ST is not the first attempt to devise a TECO-based interactive
 screen editor.
+.SCITECO_TOPIC "Video TECO"
 It is very similar to \fIVideo TECO\fP, a little known editor
 that pioneered the concept.
 When \fIVideo TECO\fP wanted to \(lqoutdo classic TECOs in every way\(rq,
@@ -94,6 +98,7 @@ Keys with a printable representation (letters, digits and special
 characters) are translated to their printable representation.
 Shift-combinations automatically result in upper-case letters.
 .IP 2.
+.SCITECO_TOPIC ctrl
 Control-combinations (e.g. CTRL+A) are translated to control
 codes, that is a code smaller than 32.
 The control code can be calculated by stripping the seventh bit
@@ -128,12 +133,15 @@ next subsection.
 .
 .SS Function Key Macros
 .
+.SCITECO_TOPIC "function key"
 By default function keys except Escape, Backspace and Return are
 ignored by \*(ST.
 By setting bit 6 of the \fBED\fP flag variable, function key handling
 is enabled:
 .EX
+.SCITECO_TT
 0,64ED
+.SCITECO_TT_END
 .EE
 This is usually performed in the editor profile.
 With certain interfaces (curses) after enabling function keys,
@@ -149,61 +157,83 @@ These are Q-Register strings inserted into the command stream
 keys (or combinations) are pressed.
 The following list of Function Key Macro registers are supported:
 .TP 9
+.SCITECO_TOPIC ^FDOWN
 .B ^FDOWN
 .TQ
+.SCITECO_TOPIC ^FUP
 .B ^FUP
 Inserted when the down/up cursor keys are pressed.
 .TP
+.SCITECO_TOPIC ^FLEFT
 .B ^FLEFT
 .TQ
+.SCITECO_TOPIC ^FSLEFT
 .B ^FSLEFT
 Inserted when the left or shift-left cursor keys are
 pressed.
 .TP
+.SCITECO_TOPIC ^FRIGHT
 .B ^FRIGHT
 .TQ
+.SCITECO_TOPIC ^FSRIGHT
 .B ^FSRIGHT
 Inserted when the right or shift-right cursor keys are
 pressed.
 .TP
+.SCITECO_TOPIC ^FHOME
 .B ^FHOME
 .TQ
+.SCITECO_TOPIC ^FSHOME
 .B ^FSHOME
 Inserted when the Home or shift-Home keys are pressed.
 .TP
+.SCITECO_TOPIC ^FF
 .BI ^FF x
 Inserted when the Fx-key is pressed
 .RI ( x
 is a number between 0 and 63).
 .TP
+.SCITECO_TOPIC ^FDC
 .B ^FDC
 .TQ
+.SCITECO_TOPIC ^FSDC
 .B ^FSDC
 Inserted when the Delete or shift-Delete key is pressed.
 .TP
+.SCITECO_TOPIC ^FIC
 .B ^FIC
 .TQ
+.SCITECO_TOPIC ^FSIC
 .B ^FSIC
 Inserted when the Insert or shift-Insert key is pressed.
 .TP
+.SCITECO_TOPIC ^FPPAGE
 .B ^FPPAGE
 .TQ
+.SCITECO_TOPIC ^FNPAGE
 .B ^FNPAGE
 Inserted when the Page-Up or Page-Down key is pressed.
 .TP
+.SCITECO_TOPIC ^FPRINT
 .B ^FPRINT
 .TQ
+.SCITECO_TOPIC ^FSPRINT
 .B ^FSPRINT
 Inserted when the Print or shift-Print key is pressed.
 .TP
+.SCITECO_TOPIC ^FA1
 .B ^FA1
 .TQ
+.SCITECO_TOPIC ^FA3
 .B ^FA3
 .TQ
+.SCITECO_TOPIC ^FB2
 .B ^FB2
 .TQ
+.SCITECO_TOPIC ^FC1
 .B ^FC1
 .TQ
+.SCITECO_TOPIC ^FC3
 .B ^FC3
 Inserted when the numeric key pad's upper left key (7),
 upper right key (9), central key (5), lower left key (1),
@@ -211,17 +241,23 @@ or lower right key (3) is pressed and num-lock is disabled.
 The key-pad's cursor keys are handled like the regular
 cursor keys.
 .TP
+.SCITECO_TOPIC ^FEND
 .B ^FEND
 .TQ
+.SCITECO_TOPIC ^FSEND
 .B ^FSEND
 Inserted when the End or shift-End key is pressed.
 .TP
+.SCITECO_TOPIC ^FHELP
 .B ^FHELP
 .TQ
+.SCITECO_TOPIC ^FSHELP
 .B ^FSHELP
 Inserted when the Help or shift-Help key is pressed.
 .TQ
+.SCITECO_TOPIC ^FCLOSE
 .B ^FCLOSE
+ISCITECO_TOPIC when the Close key has been pressed.
 Inserted when the Close key has been pressed.
 More importantly, this key is emulated in some GUIs
 (notably GTK+) when the user tries to close \*(ST's
@@ -274,7 +310,9 @@ states.
 For instance, to enable the \(lq^FRIGHT\(rq function key macro
 only in the \(lqstart\(rq state, you could set:
 .EX
+.SCITECO_TT
 1^_U[^FRIGHT]
+.SCITECO_TT_END
 .EE
 .LP
 A set of useful Function Key Macros are provided in the
@@ -298,6 +336,7 @@ are self-inserting, i.e. they insert themself into the command
 stream and may be processed as regular commands or part of them.
 .
 .SS Immediate Editing Commands
+.SCITECO_TOPIC immediate
 .
 In the following table, the Immediate Editing Commands are outlined.
 Some of them are ubiquitous and are not used used as regular
@@ -311,12 +350,14 @@ TECO implementations.
 Most of these commands are control codes, so their control code
 mnemonics are given as well.
 .
+.SCITECO_TT 90n
 .TS
 expand,allbox,tab(;);
 LB LB LB LB LBX
 L L L L L.
 Name;Code;Mnemonics;Context;Description
 T{
+.SCITECO_TOPIC ^G toggle
 Toggle modifier
 T};7;^G;T{
 Everywhere
@@ -330,6 +371,7 @@ effectively switches between undo and redo modes.
 The modifier also influences the behaviour of the TAB key.
 T}
 T{
+.SCITECO_TOPIC ^J enter LF CR
 Insert end of line sequence
 T};10;^J, Return, Enter;T{
 Everywhere
@@ -340,12 +382,14 @@ If automatic end of line sequence translation is disabled,
 the return key will insert the current buffer's end of line
 sequence (line feed; carriage return, line feed; or
 carriage return) according to the
+.SCITECO_TOPIC SCI_GETEOLMODE
 .B SCI_GETEOLMODE
 Scintilla message.
 In auto-EOL-translation mode, the return key will always
 insert a line feed.
 T}
 T{
+.SCITECO_TOPIC ^H backspace
 Rub out character
 T};8;^H, Backspace;T{
 Everywhere
@@ -365,6 +409,7 @@ Inserts the next character from the rubbed out part
 of the command line.
 T}
 T{
+.SCITECO_TOPIC ^W
 Rub out word/command
 T};23;^W;T{
 Non-empty file name arguments
@@ -382,6 +427,7 @@ Non-empty string arguments
 T};T{
 Rub out last word according to Scintilla's definition of a word
 as set by
+.SCITECO_TOPIC SCI_SETWORDCHARS
 .BR SCI_SETWORDCHARS .
 T}
 \^;\^;\^;T{
@@ -421,6 +467,7 @@ i.e. insert at least one character and repeat until
 a new command could begin.
 T}
 T{
+.SCITECO_TOPIC ^U
 Rub out string
 T};21;^U;T{
 String arguments
@@ -491,11 +538,13 @@ This takes Scintilla's indention policy into account
 and results in the same indention as the \fB^I\fP command.
 T}
 T{
+.SCITECO_TOPIC ^Z suspend
 Suspend process
 T};26;^Z;T{
 Everywhere
 T};T{
 Suspends process using
+.SCITECO_TOPIC SIGTSTP
 .BR SIGTSTP .
 This is only an immediate editing command on platforms supporting
 this signal (usually Unices).
@@ -507,6 +556,7 @@ work as an immediate editing command in the GUI or as a signal
 dispatched from an associated console or from another process.
 T}
 T{
+.SCITECO_TOPIC interrupt
 Interrupt
 T};3;^C;T{
 \*(ST is busy
@@ -527,6 +577,7 @@ is self-inserting and might be typed as part of regular commands.
 The \fB^C\fP command itself is disallowed in interactive mode, though.
 T}
 .TE
+.SCITECO_TT_END SP
 .
 .SS Undo and Redo
 .
@@ -535,6 +586,7 @@ effectively constitute \*(ST's undo and redo support.
 As all features implemented by the immediate editing commands,
 undo and redo is only possible when using \*(ST interactively.
 .LP
+.SCITECO_TOPIC rubout undo
 When a character is rubbed out, \*(ST reverses the side effects it
 had when it was typed.
 The rubbed out characters are not discarded immediately but kept
@@ -548,6 +600,7 @@ they can still be seen in the command line's rubbed out area.
 The rubbed out command line is not a part of the command-line macro,
 though.
 .LP
+.SCITECO_TOPIC rubin redo
 Changes can be redone by typing the characters at the command line
 cursor or using one of the re-insertion commands \(em therefore
 undo and redo looks like moving the command line cursor back and forth.
@@ -585,6 +638,7 @@ Global and local Q-Registers are not affected by command line termination.
 .
 .SS Auto Completion
 .
+.SCITECO_TOPIC autocomplete
 The immediate editing commands that perform auto-completions, do
 so in a manner similar to Posix shells.
 Upon first invocation they try to fully or partially complete the file
@@ -626,6 +680,7 @@ in the user's home directory.
 .
 .
 .SH USER INTERFACE
+.SCITECO_TOPIC UI "user interface"
 .
 \*(ST can be built with support for different textual and
 graphical user interfaces.
@@ -638,6 +693,7 @@ user-interface agnostic macros and profiles easier.
 The user interface will always be segmented into the following
 areas from top of the program window to bottom:
 .IP \(bu 2
+.SCITECO_TOPIC info
 The \fIinfo area\fP identifying the currently edited buffer or
 Q-Register.
 This area is currently sometimes omitted.
@@ -655,6 +711,7 @@ that occurred.
 This area will show errors, warnings, \(lquser messages\(rq
 and other notes and tries to highlight them appropriately.
 .IP \(bu
+.SCITECO_TOPIC popup
 The auto-completion \fIpopup area\fP which is only shown when
 presenting the user with a choice of auto-completions.
 This area will overlap the \fIScintilla\fP and \fImessage
@@ -666,6 +723,7 @@ This is currently a single line of text that is scrolled
 automatically.
 .
 .SS Colors and Theming
+.SCITECO_TOPIC colors theming
 .
 \*(ST supports customizing its look predominantly by setting
 up the current Scintilla view using Scintilla messages
@@ -674,6 +732,7 @@ Most visual properties of the Scintilla view can be set
 via its styles.
 This is also how syntax highlighting (lexing) is set up.
 .LP
+.SCITECO_TOPIC STYLE_DEFAULT
 The \fBSTYLE_DEFAULT\fP (32) style defines the default foreground,
 background color, font etc. and is initialized to white on
 black with some monospaced font by \*(ST.
@@ -690,6 +749,7 @@ The command line area on the other hand will be styled with
 the original colors of \fBSTYLE_DEFAULT\fP and should look
 similar to the current Scintilla view.
 .LP
+.SCITECO_TOPIC STYLE_CALLTIP
 The \fBSTYLE_CALLTIP\fP (38) style is also accessed by
 \*(ST to style the \fIpopup area\fP and is initialized
 to black on (light) blue by \*(ST.
@@ -704,6 +764,7 @@ macro or \fBED\fP hook (for syntax highlighting).
 and lexer configurations for a wide range of languages.
 .
 .SS Gtk CSS Styling
+.SCITECO_TOPIC CSS
 .
 While the tools mentioned above are sufficient for
 Curses UIs, the Gtk+ 3 UI has many more styling possibilities.
@@ -717,15 +778,19 @@ Therefore \*(ST automatically exports the following Gtk
 CSS variables that can be referred to by user-provided
 CSS files:
 .TP
+.SCITECO_TOPIC @sciteco_default_fg_color
 .B @sciteco_default_fg_color
 The foreground color of Scintilla's \fBSTYLE_DEFAULT\fP.
 .TP
+.SCITECO_TOPIC @sciteco_default_bg_color
 .B @sciteco_default_bg_color
 The background color of Scintilla's \fBSTYLE_DEFAULT\fP.
 .TP
+.SCITECO_TOPIC @sciteco_calltip_fg_color
 .B @sciteco_calltip_fg_color
 The foreground color of Scintilla's \fBSTYLE_CALLTIP\fP.
 .TP
+.SCITECO_TOPIC @sciteco_calltip_bg_color
 .B @sciteco_calltip_bg_color
 The background color of Scintilla's \fBSTYLE_CALLTIP\fP.
 .LP
@@ -748,6 +813,7 @@ CSS theming.
 .
 .
 .SH ARITHMETICS AND EXPRESSIONS
+.SCITECO_TOPIC arithmetics expressions
 .
 \*(ST abstracts classic TECO's scheme of commands accepting at most
 two prefix arguments and returning at most one value for the next command
@@ -784,52 +850,66 @@ binary (bit by bit) negation for instance using the
 command.
 .
 .SS Operators
+.SCITECO_TOPIC operators
 .
 The following binary operators are supported with descending
 precedence, whereas borders separate operators of the \fIsame\fP
 precedence:
+.SCITECO_TT 90n
 .TS
 expand,box,tab(;);
 L LX.
 \fIbase\fB ^* \fIpower\fR;T{
+.SCITECO_TOPIC ^* power
 Raise \fIbase\fP to \fIpower\fP.
 T}
 =
 \fIa\fB ^/ \fIb\fR;T{
+.SCITECO_TOPIC ^/ remainder modulo
 Remainder of \fIa\fP divided by \fIb\fP.
 It is actually a modulo operation conforming to the
 host C compiler's modulo semantics.
 T}
 \fIa\fB / \fIb\fR;T{
+.SCITECO_TOPIC / divide slash
 Divide \fIa\fP by \fIb\fP.
 Naturally it is a division without remainder.
 T}
 \fIa\fB * \fIb\fP;T{
+.SCITECO_TOPIC * multiply asterisk
 Multiply \fIa\fP by \fIb\fP.
 T}
 =
 \fIa\fB - \fIb\fP;T{
+.SCITECO_TOPIC - subtract minus
 Subtract \fIb\fP from \fIa\fP.
 T}
 \fIa\fB + \fIb\fP;T{
+.SCITECO_TOPIC + add plus
 Add \fIb\fP to \fIa\fP.
 T}
 =
 \fIa\fB & \fIb\fP;T{
+.SCITECO_TOPIC & and ampersand
 Binary AND.
 T}
 =
 \fIa\fB ^# \fIb\fP;T{
+.SCITECO_TOPIC ^# xor
 Binary exclusive OR (XOR).
 T}
 =
 \fIa\fB # \fIb\fP;T{
+.SCITECO_TOPIC # or hash
 Binary OR.
 T}
 .TE
+.SCITECO_TT_END SP
 .LP
+.SCITECO_TOPIC associativity
 All binary operators are \fIleft-associative\fP, ie. associate
 from left to right, in \*(ST.
+.SCITECO_TOPIC ( ) brackets
 Round brackets may be used for grouping expressions to override
 operator precedence and associativity.
 For instance, since \(lq\fB^/\fP\(rq, \(lq\fB/\fP\(rq and \(lq\fB*\fP\(rq
@@ -851,6 +931,7 @@ dealing with braces.
 As the current behaviour has probably little benefits, the rules
 governing braces might be made stricter in a future release of \*(ST.
 .LP
+.SCITECO_TOPIC , comma barrier
 Another construct that may be used as an argument barrier to explicitly
 separate arguments is the comma (\(lq,\(rq).
 It is obligatory when trying to push a sequence of number constants
@@ -867,6 +948,7 @@ commands are used).
 The only unary operator currently supported is
 .RB \(lq - \(rq.
 The minus-operator is special and has unique semantics.
+.SCITECO_TOPIC prefix
 It sets the so called \fBprefix sign\fP which is 1 by default
 to -1.
 This prefix sign may be evaluated by commands \(em most often it is the
@@ -881,6 +963,7 @@ numbers the result is a negative number.
 .
 .
 .SH BUFFER RING
+.SCITECO_TOPIC ring
 .
 \*(ST organizes files to edit in the so called buffer ring.
 The ring is a circular list of buffers.
@@ -930,6 +1013,7 @@ or inserting characters by code, the code may be an Unicode
 codepoint instead of byte-sized integer.
 Currently however, \*(ST will only handle ASCII files.
 .LP
+.SCITECO_TOPIC "EOL translation"
 To simplify working with files using different end of line
 sequences (combinations of carriage return and line feed),
 \*(ST implements an \fIautomatic EOL translation\fP
@@ -959,7 +1043,9 @@ The feature is enabled by default but is controlled by bit 4
 of the \fBED\fP flag setting.
 It can be turned off by executing:
 .EX
+.SCITECO_TT
 16,0ED
+.SCITECO_TT_END
 .EE
 This may be beneficial when working with very large files \(em
 as the EOL translation imposes a performance penalty \(em
@@ -972,6 +1058,7 @@ For more details, please refer to this manual's command
 reference.
 .
 .SS Buffer Editing Hooks
+.SCITECO_TOPIC hooks
 .
 When opening or editing a file with the \fBEB\fP command
 or when closing a file with the \fBEF\fP command, you
@@ -983,7 +1070,9 @@ editing operations.
 Hooks are by default disabled.
 To enable them, set bit 5 in the \fBED\fP flags:
 .EX
+.SCITECO_TT
 0,32ED
+.SCITECO_TT_END
 .EE
 \*(ST will now execute the macro in global Q-Register \(lqED\(rq
 whenever a relevant operation is performed.
@@ -1068,6 +1157,7 @@ hooks (see
 .
 .
 .SH COMMAND SYNTAX
+.SCITECO_TOPIC syntax
 .
 \*(ST's command syntax is quite flexible and diverse but may be
 categorized into some base command types.
@@ -1108,27 +1198,34 @@ has been completely specified and updates to the string arguments
 are handled interactively.
 .
 .SS Modifiers
+.SCITECO_TOPIC modifiers
 .
 A command's behaviour or syntax may be influenced by so called
 modifiers written in front of commands.
 When specifying more than one modifier their order is insignificant.
 .LP
+.SCITECO_TOPIC : colon
 The colon (\fB:\fP) modifier usually prevents a command from
 failing and instructs it to return a condition (success/failure)
 boolean instead.
 .EX
+.SCITECO_TT
 1000:C=
+.SCITECO_TT_END
 .EE
 For instance if \(lq1000C\(rq would fail, \(lq1000:C\(rq will
 return 0 instead.
 .LP
+.SCITECO_TOPIC @ at
 The at (\fB@\fP) modifier allows the string termination character
 to be changed for individual commands.
 The alternative termination character must be specified just before
 the first string argument.
 For instance:
 .EX
+.SCITECO_TT
 @FS/foo/bar/
+.SCITECO_TT_END
 .EE
 Any character may be used as an alternative termination character.
 There is one special case, though.
@@ -1140,12 +1237,15 @@ be chosen.
 This feature is especially useful for embedding TECO code in
 string arguments, as in:
 .EX
+.SCITECO_TT
 @^Um{
   @FS{foo}/bar/
 }
+.SCITECO_TT_END
 .EE
 .
 .SH Q-REGISTERS
+.SCITECO_TOPIC Q-Register
 .
 \*(ST may store data in so called Q-Registers.
 Each Q-Register cell has an integer and string part (can store
@@ -1187,6 +1287,7 @@ Some of the registers with special significance are initialized
 by \*(ST while others must be manually defined.
 The following list is an overview of all special global registers:
 .TP 2
+.SCITECO_TOPIC "search condition"
 .BR _ " (underscore)"
 Search string and search condition register.
 Also used by the globbing command \fBEN\fP, so it is also
@@ -1198,6 +1299,7 @@ Replacement string register.
 Its integer part is currently unused.
 It is initialized automatically on startup.
 .TP
+.SCITECO_TOPIC filename
 .BR * " (asterisk)"
 File name (string part) and id (numeric part) of current
 buffer in ring.
@@ -1221,10 +1323,13 @@ buffer with \(lq-%*\fB$\fP\(rq, changing to the next
 buffer with \(lq%*\fB$\fP\(rq and changing the current buffer
 temporarily:
 .EX
+.SCITECO_TT
 [* ! ...change current buffer... ! ]*
+.SCITECO_TT_END
 .EE
 The register is initialized automatically on startup.
 .TP
+.SCITECO_TOPIC "working directory"
 .BR $ " (dollar)"
 The process' current working directory (string part).
 Its numeric part is currently unused.
@@ -1237,7 +1342,9 @@ directory in a manner similar to the \fBFG\fP command.
 This allows you to change the current directory temporarily
 with the following idiom:
 .EX
+.SCITECO_TT
 [$ ! ...change current directory... ! ]$
+.SCITECO_TT_END
 .EE
 As with \fBFG\fP, relative directories may be specified
 but querying \(lq$\(rq will still return an absolute path.
@@ -1267,6 +1374,7 @@ Their numeric parts are currently unused.
 The mechanisms involved are documented more elaborately in
 .BR sciteco (1).
 .TP
+.SCITECO_TOPIC ~ clipboard
 .BI ~ clipboard
 These registers constitute \*(ST's support for system clipboards.
 Clipboard support is highly UI-specific, so different
@@ -1277,6 +1385,7 @@ every available clipboard either on startup or only when
 entering interactive mode.
 The register \(lq~\(rq refers to the default clipboard which
 will always exist if clipboards are supported.
+.SCITECO_TOPIC ~P ~S ~C
 Other commonly used clipboard registers are \(lq~P\(rq for the
 primary selection, \(lq~S\(rq for the secondary selection and
 \(lq~C\(rq for the clipboard selection.
@@ -1284,6 +1393,7 @@ The existence of a clipboard register can thus be checked
 in macros to determine whether getting and modifying that
 particular clipboard is supported natively.
 .br
+.SCITECO_TOPIC xterm
 \*(ST does \fBnot\fP generally support clipboards on ncurses,
 but has special support when used with a sufficiently recent version
 of \fBxterm\fP(1).
@@ -1293,6 +1403,7 @@ automatically, users will have to set the flag 256 of the
 the \fISetSelection\fP and \fIGetSelection\fP window operations.
 \*(ST will still check whether XTerm is actually used in
 a particular session.
+.SCITECO_TOPIC xclip
 If native clipboard support is unavailable, users may
 still fall back to using external tools like \fBxclip\fP(1)
 with the \fBEC\fP command.
@@ -1373,6 +1484,7 @@ For instance the specifications \(lqa\(rq and \(lqA\(rq
 are equivalent to \(lq[A]\(rq.
 .
 .SS Push-Down List
+.SCITECO_TOPIC "push down" stack
 .
 Another data structure supported by \*(ST is the Q-Register
 push-down list.
@@ -1387,11 +1499,14 @@ commands.
 For instance to search in a macro without overwriting the
 contents of the search register you could write:
 .EX
+.SCITECO_TT
 [_ Sfoo$ ]_
+.SCITECO_TT_END
 .EE
 .
 .
 .SH STRING-BUILDING CHARACTERS
+.SCITECO_TOPIC "string building"
 .
 As alluded to earlier \*(ST supports special characters in
 command string arguments and long Q-Register names.
@@ -1426,6 +1541,7 @@ character and their case is insignificant.
 In the following list of supported expressions, the caret-notation
 thus refers to the corresponding control code:
 .TP
+.SCITECO_TOPIC ^Qc ^Rc quote
 .BI ^Q c
 .TQ
 .BI ^R c
@@ -1433,6 +1549,7 @@ Escape character \fIc\fP.
 The character is not handled as a string building character,
 so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
 .TP
+.SCITECO_TOPIC ^V^V ^Vc lower
 .B ^V^V
 .TQ
 .BI ^V c
@@ -1440,11 +1557,13 @@ Translates all following characters into lower case.
 When \fB^V\fP is not followed by \fB^V\fP, a single character
 \fIc\fP is lower-cased.
 .TP
+.SCITECO_TOPIC ^W^W ^Wc
 .B ^W^W
 .TQ
 .BI ^W c
 Analogous to \fB^V\fP, but upper-cases characters.
 .TP
+.SCITECO_TOPIC ^E\\ ^E\\q
 .BI ^E\(rs q
 Expands to the formatted number stored in the
 numeric part of Q-Register \fIq\fP.
@@ -1455,16 +1574,19 @@ Currently, long Q-Register names have a separate independant
 level of string building character processing, allowing you
 to build Q-Register names whose content is then expanded.
 .TP
+.SCITECO_TOPIC ^EU ^EUq
 .BI ^EU q
 Expands to the character whose code is stored in the numeric
 part of Q-Register \fIq\fP.
 For instance if register \(lqA\(rq contains the code 66,
 \(lq^EUa\(rq expands to the character \(lqB\(rq.
 .TP
+.SCITECO_TOPIC ^EQ ^EQq
 .BI ^EQ q
 Expands to the string contents of the Q-Register specified by
 \fIq\fP.
 .TP
+.SCITECO_TOPIC ^E@ ^E@q
 .BI ^E@ q
 Expands to the shell-quoted string contents of the Q-Register
 specified by \fIq\fP.
@@ -1475,6 +1597,7 @@ This is useful when generating UNIX shell code or when passing
 registers with unknown contents as parameters to external
 commands using the \fBEC\fP command.
 .TP
+.SCITECO_TOPIC ^EN ^ENq
 .BI ^EN q
 Expands to the string contents of the Q-Register specified
 by \fIq\fP but with glob pattern wildcards escaped.
@@ -1491,6 +1614,7 @@ be escaped.
 .
 .
 .SH PATTERN MATCH CHARACTERS
+.SCITECO_TOPIC pattern
 .
 \*(ST's search and replace commands allow the use of wildcards
 for pattern matching.
@@ -1506,38 +1630,47 @@ The following pattern match constructs are supported for matching
 one character in different character classes
 (caret-notations refer to the corresponding control characters):
 .TP
+.SCITECO_TOPIC ^S ^EB
 .B ^S
 .TQ
 .B ^EB
 Matches all non-alpha-numeric characters.
 .TP
+.SCITECO_TOPIC ^EA
 .B ^EA
 Matches all alphabetic characters.
 .TP
+.SCITECO_TOPIC ^EC
 .B ^EC
 Matches all symbol constituents.
 These are currently defined as alpha-numeric characters,
 dot (.) and dollar ($) signs.
 .TP
+.SCITECO_TOPIC ^ED
 .B ^ED
 Matches all digits.
 .TP
+.SCITECO_TOPIC ^EG ^EGq
 .BI ^EG q
 Matches all characters in the string of the Q-Register
 specified by \fIq\fP, i.e. one of the characters in
 the register.
 .TP
+.SCITECO_TOPIC ^EL
 .B ^EL
 Matches all line break characters.
 These are defined as carriage return, line-feed, vertial tab and
 form feed.
 .TP
+.SCITECO_TOPIC ^ER
 .B ^ER
 Matches all alpha-numeric characters.
 .TP
+.SCITECO_TOPIC ^EV
 .B ^EV
 Matches all lower-case alphabetic characters.
 .TP
+.SCITECO_TOPIC ^EW
 .B ^EW
 Matches all upper-case alphabetic characters.
 .TP
@@ -1548,24 +1681,29 @@ contains only the character itself.
 The following additional pattern match constructs are supported
 (caret-notations refer to the corresponding control characters):
 .TP
+.SCITECO_TOPIC ^X ^EX
 .B ^X
 .TQ
 .B ^EX
 Matches any character.
 .TP
+.SCITECO_TOPIC ^N
 .BI ^N class
 Matches any character \fBnot\fP in \fIclass\fP.
 All constructs listed above for matching classes may be used.
 .TP
+.SCITECO_TOPIC ^EM
 .BI ^EM pattern
 Matches many occurrences (at least one) of \fIpattern\fP.
 Any pattern match construct and non-magic character may be used.
 .TP
+.SCITECO_TOPIC ^ES
 .B ^ES
 Matches any sequence of whitespace characters (at least one).
 Whitespace characters are defined as line-break characters,
 the space and horizontal tab characters.
 .TP
+.SCITECO_TOPIC ^E[
 .BI ^E[ pattern1 , pattern2 , ... ]
 Matches one in a list of patterns.
 Any pattern match construct may be used.
@@ -1639,6 +1777,7 @@ These are documented in the section
 .BR "COMMANDLINE EDITING" .
 .
 .SS Glob Patterns
+.SCITECO_TOPIC glob
 .
 Some commands accept glob patterns
 in their file name arguments to perform pattern matching
@@ -1685,6 +1824,7 @@ wildcards.
 .
 .
 .SH FLOW CONTROL
+.SCITECO_TOPIC flow
 .
 \*(ST is a structured imperative language.
 Commands are executed from left to right.
@@ -1718,6 +1858,7 @@ the program counter and influencing parsing, it is described in this
 document's command reference.
 \*(ST may do simple unconditional and computed gotos.
 .LP
+.SCITECO_TOPIC label
 Labels are symbolic and are defined with the following syntax:
 .br
 .BI ! label !
@@ -1731,10 +1872,12 @@ Therefore every macro invocation has its own label namespace and gotos
 to a label have constant complexity once a label has been parsed.
 Terminating a macro execution (or command line) fails if a label that
 is jumped to has not been defined.
+.SCITECO_TOPIC comment
 Labels also have another important role in \*(ST \(em they are used
 as comments.
 .
 .SS Loops
+.SCITECO_TOPIC < > loop
 .
 Gotos may be used for looping, but \*(ST also supports a dedicated
 structured looping construct.
@@ -1774,16 +1917,20 @@ infinite one.
 Additionally \*(ST supports special colon-modified forms
 of the loop start and end commands for processing the
 argument stack dynamically.
+.SCITECO_TOPIC :>
 The \fB:>\fP loop end command will \fInot\fP pop values left
 on the stack since the beginning of the loop and can be used
 to aggregate stack values.
 For instance, the following command will leave the numbers
 1 to 5 on the expression stack:
 .EX
+.SCITECO_TT
 0Ua 5<%a:>
+.SCITECO_TT_END
 .EE
 The command can be understood as an aggregated form of the
 expression \(lq(%a,%a,%a,%a,%a)\(rq.
+.SCITECO_TOPIC :<
 Consequently, the colon-modified loop start command will
 \fInot\fP represent an argument barrier and the corresponding
 loop end command will not discard any values which is useful
@@ -1791,7 +1938,9 @@ for looping over the contents of the stack.
 E.g. the following command will print the numbers 1 to 5
 (actually every additional number argument):
 .EX
+.SCITECO_TT
 1,2,3,4,5,-1:<"~1;'=>
+.SCITECO_TT_END
 .EE
 If the loop start is colon-modified, the colon in front
 of the loop end command is ignored if present.
@@ -1801,6 +1950,9 @@ may be used in loops like \fBF<\fP and \fBF>\fP.
 They are described in the reference section of this manual.
 .
 .SS Conditionals
+.\" NOTE: Two quoted double-quotes are necessary to escape
+.\" a single double quote in macro arguments
+.SCITECO_TOPIC """" conditional if then else
 .
 Last but not least, \*(ST supports so called conditionals.
 They correspond to structured IF-THEN-ELSE statements
@@ -1826,6 +1978,7 @@ The possible conditions are defined in the following list.
 Unless \fIn\fP is defined optional, the conditionals described
 below yield an error if \fIn\fP is omitted:
 .TP
+.SCITECO_TOPIC """~"
 \# [n]"~
 [\fIn\fP]\fB\(dq~\fP
 Applies if \fIn\fP is \fBnot\fP given (i.e. the argument
@@ -1837,23 +1990,29 @@ parameter values.
 For instance the following macro inserts \fIn\fP tab characters
 (one by default):
 .EX
+.SCITECO_TT
 @^Ut{
   "~1'<9@I//>
 }
+.SCITECO_TT_END
 .EE
 .TP
+.SCITECO_TOPIC """A"
 .IB n \(dqA
 Applies if \fIn\fP is the code of an alphabetic character.
 .TP
+.SCITECO_TOPIC """C"
 .IB n \(dqC
 Applies if \fIn\fP is the code of a symbol constituent.
 Like in pattern matching, a symbol constituent is defined
 as an alpha-numeric character, dot, dollar or underscore.
 .TP
+.SCITECO_TOPIC """D"
 .IB n \(dqD
 Applies if \fIn\fP is the code of a digit character (0 to 9).
 The current radix is insignificant.
 .TP
+.SCITECO_TOPIC """I"
 .IB n \(dqI
 Applies if \fIn\fP is the code of a directory separator
 (e.g. \(lq/\(rq on UNIX, \(lq\\\(rq or \(lq/\(rq on Windows).
@@ -1865,6 +2024,7 @@ in portable macros.
 This is not the case, for instance when working with environment
 registers.
 .TP
+.SCITECO_TOPIC """S" """T"
 .IB n \(dqS
 .TQ
 .IB n \(dqT
@@ -1873,6 +2033,7 @@ success (or truth).
 Therefore it is equivalent to a check for less than
 zero (negative).
 .TP
+.SCITECO_TOPIC """F" """U"
 .IB n \(dqF
 .TQ
 .IB n \(dqU
@@ -1881,6 +2042,7 @@ failure (or falsehood).
 Therefore it is equivalent to a check for greater than
 or equal to zero (non-negative).
 .TP
+.SCITECO_TOPIC """E" """="
 .IB n \(dqE
 .TQ
 .IB n \(dq=
@@ -1890,6 +2052,7 @@ To check two values \fIa\fP and \fIb\fP for equality you
 will commonly write:
 .IB a - b \(dq=
 .TP
+.SCITECO_TOPIC """G" """>"
 .IB n \(dqG
 .TQ
 .IB n \(dq>
@@ -1899,6 +2062,7 @@ To check if a value \fIa\fP is greater than a value \fIb\fP you
 will commonly write:
 .IB a - b \(dq>
 .TP
+.SCITECO_TOPIC """L" """<"
 .IB n \(dqL
 .TQ
 .IB n \(dq<
@@ -1908,6 +2072,7 @@ To check if a value \fIa\fP is less than a value \fIb\fP you
 will commonly write:
 .IB a - b \(dq<
 .TP
+.SCITECO_TOPIC """N"
 .IB n \(dqN
 Applies if \fIn\fP is not zero.
 .br
@@ -1915,13 +2080,16 @@ To check two values \fIa\fP and \fIb\fP for inequality you
 will commonly write:
 .IB a - b \(dqN
 .TP
+.SCITECO_TOPIC """R"
 .IB n \(dqR
 Applies if \fIn\fP is the code of an alpha-numeric character.
 .TP
+.SCITECO_TOPIC """V"
 .IB n \(dqV
 Applies if \fIn\fP is the code of a lower-case alphabetic
 character.
 .TP
+.SCITECO_TOPIC """W"
 .IB n \(dqW
 Applies if \fIn\fP is the code of a upper-case alphabetic
 character.
@@ -1934,6 +2102,7 @@ loops in conditional blocks.
 .
 .
 .SH COMMAND REFERENCE
+.SCITECO_TOPIC reference
 .
 This section documents all of the commands supported by
 \*(ST.

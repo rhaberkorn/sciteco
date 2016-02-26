@@ -56,6 +56,7 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_GREP
+AC_PROG_SED
 AC_PROG_INSTALL
 
 # Additionally required by the Scintilla build process:
@@ -82,8 +83,20 @@ if [[ x$DATE = x ]]; then
 	AC_MSG_ERROR([Required tool date not found!])
 fi
 
-# not necessarily required (depends on --enable-html-manual)
+# SciTECO's online help system is based on Troff.
+# Its `grosciteco` postprocessor practically only works with GNU roff.
+# There are other good Troff implementations like Heirloom Troff,
+# but the postprocessor relies on ditroff generating
+# intermediate output in TTY/nroff mode.
+# In the original UNIX Troff, nroff is a distinct implementation
+# that does not work with postprocessors.
+#
+# Groff may also be used to generate HTML versions of
+# sciteco(1) and sciteco(7).
 AC_CHECK_PROG(GROFF, groff, groff)
+if [[ x$GROFF = x ]]; then
+	AC_MSG_ERROR([GNU roff required!])
+fi
 
 # not necessarily required (depends on --enable-developer-doc)
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen)
@@ -295,10 +308,6 @@ AC_ARG_ENABLE(html-manual,
 	AS_HELP_STRING([--enable-html-manual],
 		       [Generate and install HTML manuals using Groff [default=no]]),
 	[html_man=$enableval], [html_man=no])
-if [[ $html_man = yes -a x$GROFF = x ]]; then
-        AC_MSG_ERROR([Enabled generating HTML manuals, but Groff cannot be found!
-		      Try --disable-html-manual.])
-fi
 AM_CONDITIONAL(BUILD_HTMLMAN, [test $html_man = yes])
 
 AC_ARG_ENABLE(developer-doc,

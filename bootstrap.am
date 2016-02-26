@@ -2,10 +2,20 @@
 # standard library library
 export SCITECOPATH=@top_srcdir@/lib
 
+# This provides two implementations of SciTECO running
+# on the host as build-time tools.
+# $(SCITECO_MINIMAL) can be used during the build-process
+# of the target SciTECO, but may have only limited support for
+# the ES command (no symbolic identifiers).
+# $(SCITECO_FULL) is a final version of SciTECO, but is only
+# available after the binary has been built in src/
+# (ie. in SUBDIRS after src/).
 if BOOTSTRAP
-BOOTSTRAP_SCITECO = @top_builddir@/src/sciteco-minimal$(EXEEXT)
+SCITECO_MINIMAL = @top_builddir@/src/sciteco-minimal$(EXEEXT)
+SCITECO_FULL    = @top_builddir@/src/sciteco$(EXEEXT)
 else
-BOOTSTRAP_SCITECO = @SCITECO@
+SCITECO_MINIMAL = @SCITECO@
+SCITECO_FULL    = @SCITECO@
 endif
 
 SUBST_MACRO = eb$<\e \
@@ -26,4 +36,4 @@ SUBST_MACRO = eb$<\e \
 %/config.h: ;
 
 % : %.in
-	$(BOOTSTRAP_SCITECO) -e $$'$(SUBST_MACRO)'
+	$(SCITECO_MINIMAL) -e $$'$(SUBST_MACRO)'

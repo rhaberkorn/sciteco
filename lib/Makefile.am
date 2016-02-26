@@ -11,9 +11,12 @@ colorschemedir = $(scitecolibdir)/colors
 dist_colorscheme_DATA = colors/terminal.tes \
                         colors/solarized.tes
 
+lexerdir = $(scitecolibdir)/lexers
+
+# Lexer configurations for language
+# syntax highlighting.
 # This list must be extended when adding
 # a new lexer configuration:
-lexerdir = $(scitecolibdir)/lexers
 dist_lexer_DATA = lexers/verilog.tes \
                   lexers/php.tes \
                   lexers/pascal.tes \
@@ -85,3 +88,8 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/rust.tes \
                   lexers/blitzbasic.tes \
                   lexers/caml.tes
+
+# This lexer is responsible for styling
+# womanpages and is thus useful even when omitting
+# the syntax highlighting lexers.
+dist_lexer_DATA += lexers/woman.tes

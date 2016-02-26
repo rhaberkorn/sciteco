@@ -43,6 +43,7 @@ libsciteco_base_la_SOURCES = main.cpp sciteco.h \
                              spawn.cpp spawn.h \
                              glob.cpp glob.h \
                              goto.cpp goto.h \
+                             help.cpp help.h \
                              rbtree.cpp rbtree.h \
                              symbols.cpp symbols.h \
                              interface.cpp interface.h
@@ -75,10 +76,10 @@ CLEANFILES = $(BUILT_SOURCES) \
 
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
 			symbols-extract.tes
-	$(BOOTSTRAP_SCITECO) -m @srcdir@/symbols-extract.tes \
-			     $< $@ "SCI_" scintilla
+	$(SCITECO_MINIMAL) -m @srcdir@/symbols-extract.tes \
+	                   $< $@ "SCI_" scintilla
 
 symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
 		       symbols-extract.tes
-	$(BOOTSTRAP_SCITECO) -m @srcdir@/symbols-extract.tes \
-			     $< $@ "SCLEX_,SCE_" scilexer
+	$(SCITECO_MINIMAL) -m @srcdir@/symbols-extract.tes \
+	                   $< $@ "SCLEX_,SCE_" scilexer

@@ -1,6 +1,6 @@
-#!/usr/bin/sciteco -m
-! ./htbl.tes <input> <output> !
-! Troff tbl "drop-in" replacement !
+#!/usr/bin/env sciteco -m
+!* htbl.tes <input> <output> *!
+!* Troff tbl "drop-in" replacement *!
 
 LR 0X#in 2LR 0X#ou EBQ#in EB -EF
 
