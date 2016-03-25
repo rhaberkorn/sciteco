@@ -1024,9 +1024,18 @@ StateStart::custom(gchar chr)
 					expressions.brace_close();
 				LoopStack::undo_push<loop_stack>(loop_stack.pop());
 			} else {
-				/* repeat loop */
+				/*
+				 * Repeat loop:
+				 * NOTE: One undo token per iteration could
+				 * be avoided by saving the original counter
+				 * in the LoopContext.
+				 * We do however optimize the case of infinite loops
+				 * because the loop counter does not have to be
+				 * updated.
+				 */
 				macro_pc = ctx.pc;
-				ctx.counter = MAX(ctx.counter - 1, -1);
+				if (ctx.counter >= 0)
+					undo.push_var(ctx.counter) = ctx.counter - 1;
 			}
 		}
 		break;
