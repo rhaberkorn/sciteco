@@ -5,18 +5,26 @@
   If empty or undefined, no session will be saved. !
 EU[session.path]Q[$SCITECOCONFIG]/.teco_session
 
+! Whether to restore the working directory with sessions.
+  It is a TECO boolean. !
+-1U[session.savedir]
+
 ! Save current session to the file specified by "session.path" !
 @[session.save]{
   :Q[session.path]-1"<  '
   Q*U.[curbuf]
+  ! Restore the working directory !
+  Q[session.savedir]"S
+    :@EU.[session]{3:EN*Q$"S FGQ$ '^J}
+  '
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
-    :@EU.[session]{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^M}
+    :@EU.[session]{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^J}
     :Q*"= -1U.u '
   >
   ! We always start with an unnamed file in the ring, so we may have to remove it: !
-  Q.u"F :@EU.[session]{EB -EF^M} '
-  :@EU.[session]{\.[curbuf]EB^M}
+  Q.u"F :@EU.[session]{EB -EF^J} '
+  :@EU.[session]{\.[curbuf]EB^J}
 
   E%.[session]Q[session.path]
   Q.[curbuf]EB
