@@ -209,6 +209,11 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
  * \(lq0,128ED\(rq, and is recommended when writing cross-platform
  * macros using the EC command.
  *
+ * When using an UNIX-compatible shell or the UNIX98 shell emulation,
+ * you might want to use the \fB^E@\fP string-building character
+ * to pass Q-Register contents reliably as single arguments to
+ * the spawned process.
+ *
  * The spawned process inherits both \*(ST's current working
  * directory and its environment variables.
  * More precisely, \*(ST uses its environment registers

@@ -1398,9 +1398,12 @@ When \fB^V\fP is not followed by \fB^V\fP, a single character
 .BI ^W c
 Analogous to \fB^V\fP, but upper-cases characters.
 .TP
-.BI ^EQ q
-Expands to the string contents of the Q-Register specified by
-\fIq\fP.
+.BI ^E\(rs q
+Expands to the formatted number stored in the
+numeric part of Q-Register \fIq\fP.
+The number is formatted according to the current
+radix and exactly the same as the backslash (\fB\(rs\fP)
+command would format it.
 Currently, long Q-Register names have a separate independant
 level of string building character processing, allowing you
 to build Q-Register names whose content is then expanded.
@@ -1411,12 +1414,19 @@ part of Q-Register \fIq\fP.
 For instance if register \(lqA\(rq contains the code 66,
 \(lq^EUa\(rq expands to the character \(lqB\(rq.
 .TP
-.BI ^E\(rs q
-Expands to the formatted number stored in the
-numeric part of Q-Register \fIq\fP.
-The number is formatted according to the current
-radix and exactly the same as the backslash (\fB\(rs\fP)
-command would format it.
+.BI ^EQ q
+Expands to the string contents of the Q-Register specified by
+\fIq\fP.
+.TP
+.BI ^E@ q
+Expands to the quoted string contents of the Q-Register
+specified by \fIq\fP.
+The quoting will be such that an UNIX98 \(lq/bin/sh\(rq will
+interpret the quoted string like the original contents of
+\fIq\fP.
+This is useful when generating UNIX shell code or when passing
+registers with unknown contents as parameters to external
+commands using the \fBEC\fP command.
 .TP
 .BI ^E c
 All remaining \fB^E\fP combinations are passed down

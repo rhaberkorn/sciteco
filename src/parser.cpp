@@ -388,6 +388,7 @@ bool
 StringBuildingMachine::input(gchar chr, gchar *&result)
 {
 	QRegister *reg;
+	gchar *str;
 
 	switch (mode) {
 	case MODE_UPPER:
@@ -450,13 +451,17 @@ StateCtlE:
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlENum);
 		break;
+	case 'U':
+		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
+		set(&&StateCtlEU);
+		break;
 	case 'Q':
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlEQ);
 		break;
-	case 'U':
+	case '@':
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
-		set(&&StateCtlEU);
+		set(&&StateCtlEQuote);
 		break;
 	default:
 		result = (gchar *)g_malloc(3);
@@ -495,6 +500,17 @@ StateCtlEQ:
 	undo.push_obj(qregspec_machine) = NULL;
 	set(StateStart);
 	result = reg->get_string();
+	return true;
+
+StateCtlEQuote:
+	if (!qregspec_machine->input(chr, reg))
+		return false;
+
+	undo.push_obj(qregspec_machine) = NULL;
+	set(StateStart);
+	str = reg->get_string();
+	result = g_shell_quote(str);
+	g_free(str);
 	return true;
 
 StateEscaped:
