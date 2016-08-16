@@ -2228,6 +2228,10 @@ StateECommand::custom(gchar chr)
 	 *   - 128: Enable/Disable enforcement of UNIX98
 	 *     \(lq/bin/sh\(rq emulation for operating system command
 	 *     executions
+	 *   - 256: Enable/Disable \fBxterm\fP(1) clipboard support.
+	 *     Should only be enabled if XTerm allows the
+	 *     \fIGetSelection\fP and \fISetSelection\fP window
+	 *     operations.
 	 *
 	 * The features controlled thus are discribed in other sections
 	 * of this manual.

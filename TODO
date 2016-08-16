@@ -29,6 +29,13 @@ Known Bugs:
    We should fall back silently to an (inefficient) memory copy or temporary
    file strategy if this is detected.
  * crashes on large files: S^EM^X$ (regexp: .*)
+   Happens because the Glib regex engine is based on a recursive
+   Perl regex library.
+   This is apparently impossible to fix as long as we do not
+   have control over the regex engine build. We should either use C++11
+   regex support, UNIX regex (unportable) or some other library.
+   Perhaps allowing us to interpret the SciTECO matching language
+   directly.
  * the glib allocators are fundamentally broken:
    throwing exceptions is unsafe from C-linkage callbacks.
    We should abandon the custom allocators and rely on
@@ -43,6 +50,13 @@ Known Bugs:
    savepoint restoration.
    On Windows we could work around this using
    MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT)
+ * Clipboard registers are prone to race conditions if the
+   contents change between get_size() and get_string() calls.
+   Also it's a common idiom to query a string and its size,
+   so the internal API must be changed.
+ * Setting window title is broken on ncurses/XTerm.
+   Perhaps do some XTerm magic here. We can also restore
+   window titles on exit using XTerm.
 
 Features:
  * :$ and :$$ to pop/return only single values
@@ -172,14 +186,6 @@ Features:
    Each Scintilla view could then be associated with at most
    one curses screen.
    GTK+ would simply manage a list of windows.
- * Add a command for manipulating the clipboard.
-   Can be done with ECxclip$ on Unix, but other platforms have
-   better methods (e.g. PDCurses has clipboard extensions, GTK+
-   has native clipboard support). On ncurses/UNIX we can fall back
-   to spawning xclip or copy xclip's functionality.
-   Unfortunately, not every UNIX has X11 (e.g. linux console,
-   OS X). What do we do on those systems?
-   This will also allow us to reverse clipboard modifications.
 
 Optimizations:
  * Add G_UNLIKELY to all error throws.

@@ -54,6 +54,7 @@
 #include "cmdline.h"
 #include "qregisters.h"
 #include "ring.h"
+#include "error.h"
 #include "interface.h"
 #include "interface-curses.h"
 #include "curses-utils.h"
@@ -158,6 +159,8 @@ console_ctrl_handler(DWORD type)
 
 } /* extern "C" */
 
+static gint xterm_version(void) G_GNUC_UNUSED;
+
 #define UNNAMED_FILE "(Unnamed)"
 
 /**
@@ -245,6 +248,46 @@ rgb2curses(guint32 rgb)
 	return COLOR_WHITE;
 }
 
+static gint
+xterm_version(void)
+{
+	static gint xterm_patch = -2;
+
+	const gchar *term = g_getenv("TERM");
+	const gchar *xterm_version;
+
+	/*
+	 * The XTerm patch level (version) is cached.
+	 */
+	if (xterm_patch != -2)
+		return xterm_patch;
+	xterm_patch = -1;
+
+	if (!term || !g_str_has_prefix(term, "xterm"))
+		/* no XTerm */
+		return -1;
+
+	/*
+	 * Terminal might claim to be XTerm-compatible,
+	 * but this only refers to the terminfo database.
+	 * XTERM_VERSION however should be sufficient to tell
+	 * whether we are running under a real XTerm.
+	 */
+	xterm_version = g_getenv("XTERM_VERSION");
+	if (!xterm_version)
+		/* no XTerm */
+		return -1;
+	xterm_patch = 0;
+
+	xterm_version = strrchr(xterm_version, '(');
+	if (!xterm_version)
+		/* Invalid XTERM_VERSION, assume some XTerm */
+		return 0;
+
+	xterm_patch = atoi(xterm_version+1);
+	return xterm_patch;
+}
+
 void
 ViewCurses::initialize_impl(void)
 {
@@ -286,6 +329,14 @@ InterfaceCurses::main_impl(int &argc, char **&argv)
 	 * even if info_update() is never called.
 	 */
 	info_current = g_strdup(PACKAGE_NAME);
+
+	/*
+	 * On all platforms except NCurses/XTerm, it's
+	 * safe to initialize the clipboards now.
+	 */
+#ifndef NCURSES_UNIX
+	init_clipboard();
+#endif
 }
 
 void
@@ -341,7 +392,7 @@ InterfaceCurses::restore_colors(void)
  * will return bogus "default" values and only for the first 8 colors.
  * It would do more damage to restore the palette returned by
  * color_content() than it helps.
- * xterm has the escape sequence "\e]104\x07" which restores
+ * xterm has the escape sequence "\e]104\a" which restores
  * the palette from Xdefaults but not all terminal emulators
  * claiming to be "xterm" via $TERM support this escape sequence.
  * lxterminal for instance will print gibberish instead.
@@ -359,15 +410,14 @@ InterfaceCurses::restore_colors(void)
 void
 InterfaceCurses::restore_colors(void)
 {
-	if (g_str_has_prefix(g_getenv("TERM") ? : "", "xterm") &&
-	    g_getenv("XTERM_VERSION")) {
-		/*
-		 * Looks like a real xterm. $TERM alone is not
-		 * sufficient to tell.
-		 */
-		fputs("\e]104\x07", screen_tty);
-		fflush(screen_tty);
-	}
+	if (xterm_version() < 0)
+		return;
+
+	/*
+	 * Looks like a real XTerm
+	 */
+	fputs("\e]104\a", screen_tty);
+	fflush(screen_tty);
 }
 
 #else /* !PDCURSES_WIN32 && !NCURSES_UNIX */
@@ -537,8 +587,6 @@ InterfaceCurses::init_interactive(void)
 
 	/*
 	 * Disable all magic function keys.
-	 * NOTE: This could also be used to assign
-	 * a "shutdown" key when program termination is requested.
 	 */
 	for (int i = 0; i < N_FUNCTION_KEYS; i++)
 		PDC_set_function_key(i, 0);
@@ -591,6 +639,16 @@ InterfaceCurses::init_interactive(void)
 				init_color_safe(i, (guint32)color_table[i]);
 		}
 	}
+
+	/*
+	 * Only now (in interactive mode), it's safe to initialize
+	 * the clipboard Q-Registers on ncurses with a compatible terminal
+	 * emulator since clipboard operations will no longer interfer
+	 * with stdout.
+	 */
+#ifdef NCURSES_UNIX
+	init_clipboard();
+#endif
 }
 
 void
@@ -982,6 +1040,288 @@ InterfaceCurses::draw_cmdline(void)
 	copywin(cmdline_pad, cmdline_window,
 	        0, disp_offset, 0, 1, 0, disp_len, FALSE);
 }
+
+#ifdef __PDCURSES__
+
+/*
+ * At least on PDCurses, a single clipboard
+ * can be supported. We register it as the
+ * default clipboard ("~") as we do not know whether
+ * it corresponds to the X11 PRIMARY, SECONDARY or
+ * CLIPBOARD selections.
+ */
+void
+InterfaceCurses::init_clipboard(void)
+{
+	char *contents;
+	long length;
+	int rc;
+
+	/*
+	 * Even on PDCurses, while the clipboard functions are
+	 * available, the clipboard might not actually be supported.
+	 * Since the existence of the QReg serves as an indication
+	 * of clipboard support in SciTECO, we must first probe the
+	 * usability of the clipboard.
+	 * This could be done at compile time, but this way is more
+	 * generic (albeit inefficient).
+	 */
+	rc = PDC_getclipboard(&contents, &length);
+	if (rc == PDC_CLIP_ACCESS_ERROR)
+		return;
+	if (rc == PDC_CLIP_SUCCESS)
+		PDC_freeclipboard(contents);
+
+	QRegisters::globals.insert(new QRegisterClipboard());
+}
+
+void
+InterfaceCurses::set_clipboard(const gchar *name, const gchar *str, gssize str_len)
+{
+	int rc;
+
+	if (str) {
+		if (str_len < 0)
+			str_len = strlen(str);
+
+		rc = PDC_setclipboard(str, str_len);
+	} else {
+		rc = PDC_clearclipboard();
+	}
+
+	if (rc != PDC_CLIP_SUCCESS)
+		throw Error("Error %d copying to clipboard", rc);
+}
+
+gchar *
+InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
+{
+	char *contents;
+	long length = 0;
+	int rc;
+	gchar *str;
+
+	/*
+	 * NOTE: It is undefined whether we can pass in NULL for length.
+	 */
+	rc = PDC_getclipboard(&contents, &length);
+	if (str_len)
+		*str_len = length;
+	if (rc == PDC_CLIP_EMPTY)
+		return NULL;
+	if (rc != PDC_CLIP_SUCCESS)
+		throw Error("Error %d retrieving clipboard", rc);
+
+	/*
+	 * PDCurses defines its own free function and there is no
+	 * way to find out which allocator was used.
+	 * We must therefore copy the memory to be on the safe side.
+	 * At least we can null-terminate the return string in the
+	 * process (PDCurses does not guarantee that either).
+	 */
+	str = g_malloc(length + 1);
+	memcpy(str, contents, length);
+	str[length] = '\0';
+
+	PDC_freeclipboard(contents);
+	return str;
+}
+
+#elif defined(NCURSES_UNIX)
+
+void
+InterfaceCurses::init_clipboard(void)
+{
+	/*
+	 * At least on XTerm, there are escape sequences
+	 * for modifying the clipboard (OSC-52).
+	 * This is not standardized in terminfo, so we add special
+	 * XTerm support here. Unfortunately, it is pretty hard to find out
+	 * whether clipboard operations will actually work.
+	 * XTerm must be at least at v203 and the corresponding window operations
+	 * must be enabled.
+	 * There is no way to find out if they are but we must
+	 * not register the clipboard registers if they aren't.
+	 * Therefore, a special XTerm clipboard ED flag an be set by the user.
+	 */
+	if (!(Flags::ed & Flags::ED_XTERM_CLIPBOARD) || xterm_version() < 203)
+		return;
+
+	QRegisters::globals.insert(new QRegisterClipboard());
+	QRegisters::globals.insert(new QRegisterClipboard("P"));
+	QRegisters::globals.insert(new QRegisterClipboard("S"));
+	QRegisters::globals.insert(new QRegisterClipboard("C"));
+}
+
+static inline gchar
+get_selection_by_name(const gchar *name)
+{
+	/*
+	 * Only the first letter of name is significant.
+	 * We allow to address the XTerm cut buffers as well
+	 * (everything gets passed down), but currently we
+	 * only register the three standard registers
+	 * "~", "~P", "~S" and "~C".
+	 */
+	return g_ascii_tolower(*name) ? : 'c';
+}
+
+void
+InterfaceCurses::set_clipboard(const gchar *name, const gchar *str, gssize str_len)
+{
+	/*
+	 * Enough space for 1024 Base64-encoded bytes.
+	 */
+	gchar buffer[(1024 / 3) * 4 + 4];
+	gsize out_len;
+
+	/* g_base64_encode_step() state: */
+	gint state = 0;
+	gint save = 0;
+
+	fputs("\e]52;", screen_tty);
+	fputc(get_selection_by_name(name), screen_tty);
+	fputc(';', screen_tty);
+
+	if (!str)
+		str_len = 0;
+	else if (str_len < 0)
+		str_len = strlen(str);
+
+	while (str_len > 0) {
+		gsize step_len = MIN(1024, str_len);
+
+		/*
+		 * This could be simplified using g_base64_encode().
+		 * However, doing it step-wise avoids an allocation.
+		 */
+		out_len = g_base64_encode_step((const guchar *)str,
+		                               step_len, FALSE,
+		                               buffer, &state, &save);
+		fwrite(buffer, 1, out_len, screen_tty);
+
+		str_len -= step_len;
+		str += step_len;
+	}
+
+	out_len = g_base64_encode_close(FALSE, buffer, &state, &save);
+	fwrite(buffer, 1, out_len, screen_tty);
+
+	fputc('\a', screen_tty);
+	fflush(screen_tty);
+}
+
+gchar *
+InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
+{
+	/*
+	 * Space for storing one group of decoded Base64 characters
+	 * and the OSC-52 response.
+	 */
+	gchar buffer[MAX(3, 7)];
+	GString *str_base64;
+
+	/* g_base64_decode_step() state: */
+	gint state = 0;
+	guint save = 0;
+
+	/*
+	 * Query the clipboard -- XTerm will reply with the
+	 * OSC-52 command that would set the current selection.
+	 */
+	fputs("\e]52;", screen_tty);
+	fputc(get_selection_by_name(name), screen_tty);
+	fputs(";?\a", screen_tty);
+	fflush(screen_tty);
+
+	/*
+	 * It is very well possible that the XTerm clipboard
+	 * is not working because it is disabled, so we
+	 * must be prepared for timeouts when reading.
+	 * That's why we're using the Curses API here, instead
+	 * of accessing screen_tty directly. It gives us a relatively
+	 * simple way to read with timeouts.
+	 * We restore all changed Curses settings before returning
+	 * to be on the safe side.
+	 */
+	halfdelay(1); /* 100ms timeout */
+	keypad(stdscr, FALSE);
+
+	/*
+	 * Skip "\e]52;x;" (7 characters).
+	 */
+	for (gint i = 0; i < 7; i++) {
+		if (getch() == ERR) {
+			/* timeout */
+			cbreak();
+			throw Error("Timed out reading XTerm clipboard");
+		}
+	}
+
+	str_base64 = g_string_new("");
+
+	for (;;) {
+		gchar c;
+		gsize out_len;
+
+		c = (gchar)getch();
+		if (c == ERR) {
+			/* timeout */
+			cbreak();
+			g_string_free(str_base64, TRUE);
+			throw Error("Timed out reading XTerm clipboard");
+		}
+		if (c == '\a')
+			break;
+
+		/*
+		 * This could be simplified using sscanf() and
+		 * g_base64_decode(), but we avoid one allocation
+		 * to get the entire Base64 string.
+		 * (Also to allow for timeouts, we must should
+		 * read character-wise using getch() anyway.)
+		 */
+		out_len = g_base64_decode_step(&c, sizeof(c),
+		                               (guchar *)buffer,
+		                               &state, &save);
+		g_string_append_len(str_base64, buffer, out_len);
+	}
+
+	cbreak();
+
+	if (str_len)
+		*str_len = str_base64->len;
+
+	/*
+	 * If the clipboard answer is empty, return NULL.
+	 */
+	return g_string_free(str_base64, str_base64->len == 0);
+}
+
+#else
+
+void
+InterfaceCurses::init_clipboard(void)
+{
+	/*
+	 * No native clipboard support, so no clipboard Q-Regs are
+	 * registered.
+	 */
+}
+
+void
+InterfaceCurses::set_clipboard(const gchar *name, const gchar *str, gssize str_len)
+{
+	throw Error("Setting clipboard unsupported");
+}
+
+gchar *
+InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
+{
+	throw Error("Getting clipboard unsupported");
+}
+
+#endif /* !__PDCURSES__ && !NCURSES_UNIX */
 
 void
 InterfaceCurses::popup_show_impl(void)

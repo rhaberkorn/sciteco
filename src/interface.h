@@ -26,6 +26,7 @@
 #include <Scintilla.h>
 
 #include "undo.h"
+#include "error.h"
 
 namespace SciTECO {
 
@@ -285,6 +286,21 @@ public:
 	cmdline_update(const Cmdline *cmdline)
 	{
 		impl().cmdline_update_impl(cmdline);
+	}
+
+	/* default implementation */
+	inline void
+	set_clipboard(const gchar *name,
+	              const gchar *str = NULL, gssize str_len = -1)
+	{
+		throw Error("Setting clipboard unsupported");
+	}
+
+	/* default implementation */
+	inline gchar *
+	get_clipboard(const gchar *name, gsize *str_len = NULL)
+	{
+		throw Error("Getting clipboard unsupported");
 	}
 
 	enum PopupEntryType {

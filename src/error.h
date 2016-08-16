@@ -47,10 +47,10 @@ public:
 };
 
 class Error {
-	gchar *description;
 	GSList *frames;
 
 public:
+	gchar *description;
 	gint pos;
 	gint line, column;
 

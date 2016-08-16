@@ -39,10 +39,11 @@ typedef tecoInt tecoBool;
 
 namespace Flags {
 	enum {
-		ED_AUTOEOL	= (1 << 4),
-		ED_HOOKS	= (1 << 5),
-		ED_FNKEYS	= (1 << 6),
-		ED_SHELLEMU	= (1 << 7)
+		ED_AUTOEOL		= (1 << 4),
+		ED_HOOKS		= (1 << 5),
+		ED_FNKEYS		= (1 << 6),
+		ED_SHELLEMU		= (1 << 7),
+		ED_XTERM_CLIPBOARD	= (1 << 8)
 	};
 
 	extern tecoInt ed;

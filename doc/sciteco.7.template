@@ -1267,6 +1267,53 @@ Their numeric parts are currently unused.
 The mechanisms involved are documented more elaborately in
 .BR sciteco (1).
 .TP
+.BI ~ clipboard
+These registers constitute \*(ST's support for system clipboards.
+Clipboard support is highly UI-specific, so different
+UIs might support different clipboards (or X11 selections)
+or no clipboard at all.
+\*(ST thus initializes registers beginning with \(lq~\(rq for
+every available clipboard either on startup or only when
+entering interactive mode.
+The register \(lq~\(rq refers to the default clipboard which
+will always exist if clipboards are supported.
+Other commonly used clipboard registers are \(lq~P\(rq for the
+primary selection, \(lq~S\(rq for the secondary selection and
+\(lq~C\(rq for the clipboard selection.
+The existence of a clipboard register can thus be checked
+in macros to determine whether getting and modifying that
+particular clipboard is supported natively.
+.br
+\*(ST does \fBnot\fP generally support clipboards on ncurses,
+but has special support when used with a sufficiently recent version
+of \fBxterm\fP(1).
+Since the operability of XTerm clipboards cannot be tested
+automatically, users will have to set the flag 256 of the
+\fBED\fP flags if and only if their XTerm is configured for allowing
+the \fISetSelection\fP and \fIGetSelection\fP window operations.
+\*(ST will still check whether XTerm is actually used in
+a particular session.
+If native clipboard support is unavailable, users may
+still fall back to using external tools like \fBxclip\fP(1)
+with the \fBEC\fP command.
+.br
+Setting the string part of a clipboard register will set that
+clipboard. \*(ST will perform automatic EOL-translation according
+to the EOL-mode of the Q-Register view, so e.g. on Windows
+clipboards will usually be set with the expected DOS linebreaks.
+Appending to clipboard registers is currently not supported.
+Furthermore, \*(ST will restore the contents of the clipboard
+at the time of the operation when an assignment is rubbed out in
+interactive mode.
+When retrieving a clipboard register, the contents of the
+clipboard at the time of the operation are returned.
+EOL normalization will take place (if enabled), so that pasting
+clipboards does not introduce unexpected EOL sequences.
+The Q-Register view's EOL mode will \fBnot\fP be guessed from
+the original clipboard contents, though.
+The numeric parts of the clipboard registers are currently
+not used by \*(ST.
+.TP
 .BI ^F key
 Function key registers as documented in section
 \fBKEY TRANSLATION\fP.

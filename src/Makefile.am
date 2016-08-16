@@ -34,6 +34,7 @@ libsciteco_base_la_SOURCES = main.cpp sciteco.h \
                              undo.cpp undo.h \
                              expressions.cpp expressions.h \
                              document.cpp document.h \
+                             eol.cpp eol.h \
                              ioview.cpp ioview.h \
                              qregisters.cpp qregisters.h \
                              ring.cpp ring.h \

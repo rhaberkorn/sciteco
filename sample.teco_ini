@@ -46,6 +46,9 @@ EMQ[$SCITECOPATH]/session.tes
 ! Uncomment to enable default keyboard macros and function keys !
 ! EMQ[$SCITECOPATH]/fnkeys.tes !
 
+! Uncomment if XTerm allows clipboard operations !
+! 0,256ED !
+
 ! Uncomment to tweak the undo stack memory limit !
 ! 500*1024*1024,2EJ !
 

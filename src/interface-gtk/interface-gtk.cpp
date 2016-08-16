@@ -211,6 +211,17 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	gtk_init(&argc, &argv);
 
 	/*
+	 * Register clipboard registers.
+	 * Unfortunately, we cannot find out which
+	 * clipboards/selections are supported on this system,
+	 * so we register only some default ones.
+	 */
+	QRegisters::globals.insert(new QRegisterClipboard());
+	QRegisters::globals.insert(new QRegisterClipboard("P"));
+	QRegisters::globals.insert(new QRegisterClipboard("S"));
+	QRegisters::globals.insert(new QRegisterClipboard("C"));
+
+	/*
 	 * The event queue is initialized now, so we can
 	 * pass it as user data to C-linkage callbacks.
 	 */
@@ -381,7 +392,7 @@ void
 InterfaceGtk::refresh_info(void)
 {
 	GtkStyleContext *style = gtk_widget_get_style_context(info_bar_widget);
-	const gchar *info_type_str;
+	const gchar *info_type_str = PACKAGE;
 	gchar *info_current_temp = g_strdup(info_current);
 	gchar *info_current_canon;
 	GIcon *icon;
@@ -521,6 +532,67 @@ InterfaceGtk::cmdline_update_impl(const Cmdline *cmdline)
 	gtk_editable_set_position(GTK_EDITABLE(cmdline_widget), cmdline_len);
 
 	gdk_threads_leave();
+}
+
+static GdkAtom
+get_selection_by_name(const gchar *name)
+{
+	/*
+	 * We can use gdk_atom_intern() to support arbitrary X11 selection
+	 * names. However, since we cannot find out which selections are
+	 * registered, we are only providing QRegisters for the three default
+	 * selections.
+	 * Checking them here avoids expensive X server roundtrips.
+	 */
+	switch (*name) {
+	case '\0': return GDK_NONE;
+	case 'P':  return GDK_SELECTION_PRIMARY;
+	case 'S':  return GDK_SELECTION_SECONDARY;
+	case 'C':  return GDK_SELECTION_CLIPBOARD;
+	default:   break;
+	}
+
+	return gdk_atom_intern(name, FALSE);
+}
+
+void
+InterfaceGtk::set_clipboard(const gchar *name, const gchar *str, gssize str_len)
+{
+	GtkClipboard *clipboard;
+
+	gdk_threads_enter();
+
+	clipboard = gtk_clipboard_get(get_selection_by_name(name));
+
+	/*
+	 * NOTE: function has compatible semantics for str_len < 0.
+	 */
+	gtk_clipboard_set_text(clipboard, str, str_len);
+
+	gdk_threads_leave();
+}
+
+gchar *
+InterfaceGtk::get_clipboard(const gchar *name, gsize *str_len)
+{
+	GtkClipboard *clipboard;
+	gchar *str;
+
+	gdk_threads_enter();
+
+	clipboard = gtk_clipboard_get(get_selection_by_name(name));
+	/*
+	 * Could return NULL for an empty clipboard.
+	 * NOTE: This converts to UTF8 and we loose the ability
+	 * to get clipboard with embedded nulls.
+	 */
+	str = gtk_clipboard_wait_for_text(clipboard);
+
+	gdk_threads_leave();
+
+	if (str_len)
+		*str_len = str ? strlen(str) : 0;
+	return str;
 }
 
 void

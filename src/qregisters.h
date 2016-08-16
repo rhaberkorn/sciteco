@@ -135,11 +135,18 @@ public:
 };
 
 class QRegister : public RBTree::RBEntry, public QRegisterData {
+protected:
+	/**
+	 * The default constructor for subclasses.
+	 * This leaves the name uninitialized.
+	 */
+	QRegister(void) : name(NULL) {}
+
 public:
 	gchar *name;
 
 	QRegister(const gchar *_name)
-		 : QRegisterData(), name(g_strdup(_name)) {}
+		 : name(g_strdup(_name)) {}
 	virtual
 	~QRegister()
 	{
@@ -213,6 +220,76 @@ public:
 	}
 	void undo_append_string(void) {}
 
+	gchar *get_string(void);
+	gsize get_string_size(void);
+	gint get_character(gint pos);
+
+	void edit(void);
+
+	void exchange_string(QRegisterData &reg);
+	void undo_exchange_string(QRegisterData &reg);
+};
+
+class QRegisterClipboard : public QRegister {
+	class UndoTokenSetClipboard : public UndoToken {
+		gchar *name;
+		gchar *str;
+		gsize str_len;
+
+	public:
+		/**
+		 * Construct undo token.
+		 *
+		 * This passes ownership of the clipboard content string
+		 * to the undo token object.
+		 */
+		UndoTokenSetClipboard(const gchar *_name, gchar *_str, gsize _str_len)
+		                     : name(g_strdup(_name)), str(_str), str_len(_str_len) {}
+		~UndoTokenSetClipboard()
+		{
+			g_free(str);
+			g_free(name);
+		}
+
+		void run(void);
+
+		gsize
+		get_size(void) const
+		{
+			return sizeof(*this) + strlen(name) + str_len;
+		}
+	};
+
+	/**
+	 * Gets the clipboard name.
+	 * Can be easily derived from the Q-Register name.
+	 */
+	inline const gchar *
+	get_clipboard_name(void) const
+	{
+		return name+1;
+	}
+
+public:
+	QRegisterClipboard(const gchar *_name = NULL)
+	{
+		name = g_strconcat("~", _name, NIL);
+	}
+
+	void set_string(const gchar *str, gsize len);
+	void undo_set_string(void);
+
+	/*
+	 * FIXME: We could support that.
+	 */
+	void
+	append_string(const gchar *str, gsize len)
+	{
+		throw QRegOpUnsupportedError(name);
+	}
+	void undo_append_string(void) {}
+
+	gchar *get_string(gsize *out_len);
 	gchar *get_string(void);
 	gsize get_string_size(void);
 	gint get_character(gint pos);

@@ -142,6 +142,12 @@ public:
 	/* implementation of Interface::cmdline_update() */
 	void cmdline_update_impl(const Cmdline *cmdline);
 
+	/* override of Interface::set_clipboard() */
+	void set_clipboard(const gchar *name,
+	                   const gchar *str = NULL, gssize str_len = -1);
+	/* override of Interface::get_clipboard() */
+	gchar *get_clipboard(const gchar *name, gsize *str_len = NULL);
+
 	/* implementation of Interface::popup_add() */
 	inline void
 	popup_add_impl(PopupEntryType type,
@@ -176,6 +182,8 @@ private:
 	void init_screen(void);
 	void init_interactive(void);
 	void restore_batch(void);
+
+	void init_clipboard(void);
 
 	void resize_all_windows(void);
 

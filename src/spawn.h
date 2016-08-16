@@ -23,6 +23,8 @@
 #include "sciteco.h"
 #include "parser.h"
 #include "qregisters.h"
+#include "error.h"
+#include "eol.h"
 
 namespace SciTECO {
 
@@ -42,10 +44,12 @@ public:
 		tecoInt from, to;
 		tecoInt start;
 		bool text_added;
-		gint stdin_state;
-		gint stdout_state;
-		gint eol_style;
-		GError *error;
+
+		EOLWriterGIO *stdin_writer;
+		EOLReaderGIO *stdout_reader;
+
+		Error *error;
+		tecoBool rc;
 	};
 
 private:

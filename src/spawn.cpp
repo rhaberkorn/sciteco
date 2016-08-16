@@ -26,7 +26,7 @@
 #include "undo.h"
 #include "expressions.h"
 #include "qregisters.h"
-#include "ioview.h"
+#include "eol.h"
 #include "ring.h"
 #include "parser.h"
 #include "error.h"
@@ -262,6 +262,8 @@ StateExecuteCommand::~StateExecuteCommand()
 	 */
 	g_main_context_unref(ctx.mainctx);
 #endif
+
+	delete ctx.error;
 }
 
 void
@@ -341,6 +343,7 @@ StateExecuteCommand::done(const gchar *str)
 		 */
 		return &States::start;
 
+	GError *error = NULL;
 	gchar **argv, **envp;
 	static const gint flags = G_SPAWN_DO_NOT_REAP_CHILD |
 	                          G_SPAWN_SEARCH_PATH |
@@ -350,16 +353,29 @@ StateExecuteCommand::done(const gchar *str)
 	gint stdin_fd, stdout_fd;
 	GIOChannel *stdin_chan, *stdout_chan;
 
-	ctx.text_added = false;
-	/* opaque state for IOView::save() */
-	ctx.stdin_state = 0;
-	/* opaque state for IOView::channel_read_with_eol() */
-	ctx.stdout_state = 0;
-	/* eol style guessed from the stdout stream */
-	ctx.eol_style = -1;
-	ctx.error = NULL;
+	/*
+	 * We always read from the current view,
+	 * so we use its EOL mode.
+	 *
+	 * NOTE: We do not declare the writer/reader objects as part of
+	 * StateExecuteCommand::Context so we do not have to
+	 * reset it. It's only required for the life time of this call
+	 * anyway.
+	 * I do not see a more elegant way out of this.
+	 */
+	EOLWriterGIO stdin_writer(interface.ssm(SCI_GETEOLMODE));
+	EOLReaderGIO stdout_reader;
 
-	argv = parse_shell_command_line(str, &ctx.error);
+	ctx.text_added = false;
+
+	ctx.stdin_writer = &stdin_writer;
+	ctx.stdout_reader = &stdout_reader;
+
+	delete ctx.error;
+	ctx.error = NULL;
+	ctx.rc = FAILURE;
+
+	argv = parse_shell_command_line(str, &error);
 	if (!argv)
 		goto gerror;
 
@@ -368,12 +384,12 @@ StateExecuteCommand::done(const gchar *str)
 	g_spawn_async_with_pipes(NULL, argv, envp, (GSpawnFlags)flags,
 	                         NULL, NULL, &pid,
 	                         &stdin_fd, &stdout_fd, NULL,
-	                         &ctx.error);
+	                         &error);
 
 	g_strfreev(envp);
 	g_strfreev(argv);
 
-	if (ctx.error)
+	if (error)
 		goto gerror;
 
 	ctx.child_src = g_child_watch_source_new(pid);
@@ -390,14 +406,17 @@ StateExecuteCommand::done(const gchar *str)
 #endif
 	g_io_channel_set_flags(stdin_chan, G_IO_FLAG_NONBLOCK, NULL);
 	g_io_channel_set_encoding(stdin_chan, NULL, NULL);
-	g_io_channel_set_buffered(stdin_chan, FALSE);
-	g_io_channel_set_flags(stdout_chan, G_IO_FLAG_NONBLOCK, NULL);
-	g_io_channel_set_encoding(stdout_chan, NULL, NULL);
 	/*
-	 * IOView::save() expects the channel to be buffered
+	 * EOLWriterGIO expects the channel to be buffered
 	 * for performance reasons
 	 */
-	g_io_channel_set_buffered(stdout_chan, TRUE);
+	g_io_channel_set_buffered(stdin_chan, TRUE);
+	g_io_channel_set_flags(stdout_chan, G_IO_FLAG_NONBLOCK, NULL);
+	g_io_channel_set_encoding(stdout_chan, NULL, NULL);
+	g_io_channel_set_buffered(stdout_chan, FALSE);
+
+	stdin_writer.set_channel(stdin_chan);
+	stdout_reader.set_channel(stdout_chan);
 
 	ctx.stdin_src = g_io_create_watch(stdin_chan,
 	                                  (GIOCondition)(G_IO_OUT | G_IO_ERR | G_IO_HUP));
@@ -425,9 +444,9 @@ StateExecuteCommand::done(const gchar *str)
 	interface.ssm(SCI_ENDUNDOACTION);
 
 	if (register_argument) {
-		if (ctx.eol_style >= 0) {
+		if (stdout_reader.eol_style >= 0) {
 			register_argument->undo_set_eol_mode();
-			register_argument->set_eol_mode(ctx.eol_style);
+			register_argument->set_eol_mode(stdout_reader.eol_style);
 		}
 	} else if (ctx.from != ctx.to || ctx.text_added) {
 		/* undo action is only effective if it changed anything */
@@ -448,8 +467,17 @@ StateExecuteCommand::done(const gchar *str)
 	g_source_unref(ctx.child_src);
 	g_spawn_close_pid(pid);
 
-	if (ctx.error)
-		goto gerror;
+	if (ctx.error) {
+		if (!eval_colon())
+			throw *ctx.error;
+
+		/*
+		 * This may contain the exit status
+		 * encoded as a tecoBool.
+		 */
+		expressions.push(ctx.rc);
+		goto cleanup;
+	}
 
 	if (interface.is_interrupted())
 		throw Error("Interrupted");
@@ -457,25 +485,17 @@ StateExecuteCommand::done(const gchar *str)
 	if (eval_colon())
 		expressions.push(SUCCESS);
 
-	undo.push_var(register_argument) = NULL;
-	return &States::start;
+	goto cleanup;
 
 gerror:
 	if (!eval_colon())
-		throw GlibError(ctx.error);
+		throw GlibError(error);
+	g_error_free(error);
 
-	/*
-	 * If possible, encode process exit code
-	 * in return boolean. It's guaranteed to be
-	 * a failure since it's non-negative.
-	 */
-	if (ctx.error->domain == G_SPAWN_EXIT_ERROR)
-		expressions.push(ABS(ctx.error->code));
-	else
-		expressions.push(FAILURE);
+	expressions.push(ctx.rc);
+
+cleanup:
 	undo.push_var(register_argument) = NULL;
-
-	g_error_free(ctx.error);
 	return &States::start;
 }
 
@@ -523,13 +543,17 @@ child_watch_cb(GPid pid, gint status, gpointer data)
 {
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
+	GError *error = NULL;
 
 	/*
 	 * Writing stdin or reading stdout might have already
 	 * failed. We preserve the earliest GError.
 	 */
-	if (!ctx.error)
-		g_spawn_check_exit_status(status, &ctx.error);
+	if (!ctx.error && !g_spawn_check_exit_status(status, &error)) {
+		ctx.rc = error->domain == G_SPAWN_EXIT_ERROR
+				? ABS(error->code) : FAILURE;
+		ctx.error = new GlibError(error);
+	}
 
 	if (g_source_is_destroyed(ctx.stdout_src))
 		g_main_loop_quit(ctx.mainloop);
@@ -541,28 +565,27 @@ stdin_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
 
-	/* we always read from the current view */
-	IOView *view = (IOView *)interface.get_current_view();
-
+	const gchar *buffer;
 	gsize bytes_written;
 
-	/*
-	 * IOView::save() cares about automatic EOL conversion
-	 */
-	switch (view->save(chan, ctx.from, ctx.to - ctx.start,
-	                   &bytes_written, ctx.stdin_state,
-	                   ctx.error ? NULL : &ctx.error)) {
-	case G_IO_STATUS_ERROR:
+	/* we always read from the current view */
+	buffer = (const gchar *)interface.ssm(SCI_GETRANGEPOINTER,
+	                                      ctx.from, (sptr_t)(ctx.to - ctx.start));
+
+	try {
+		/*
+		 * This cares about automatic EOL conversion
+		 */
+		bytes_written = ctx.stdin_writer->convert(buffer, ctx.to - ctx.start);
+	} catch (Error &e) {
+		ctx.error = new Error(e);
 		/* do not yet quit -- we still have to reap the child */
 		goto remove;
-	case G_IO_STATUS_NORMAL:
-		break;
-	case G_IO_STATUS_EOF:
-		/* process closed stdin preliminarily? */
-		goto remove;
-	case G_IO_STATUS_AGAIN:
-		return G_SOURCE_CONTINUE;
 	}
+
+	if (bytes_written == 0)
+		/* EOF: process closed stdin preliminarily? */
+		goto remove;
 
 	ctx.start += bytes_written;
 
@@ -590,55 +613,44 @@ stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
 
-	GIOStatus status;
-
-	gchar buffer[1024];
-	gsize read_len = 0;
-	guint offset = 0;
-	gsize block_len = 0;
-	/* we're not really interested in that: */
-	gboolean eol_style_inconsistent = FALSE;
-
 	for (;;) {
-		status = IOView::channel_read_with_eol(
-			chan, buffer, sizeof(buffer),
-			read_len, offset, block_len,
-			ctx.stdout_state, ctx.eol_style,
-			eol_style_inconsistent,
-			ctx.error ? NULL : &ctx.error
-		);
+		const gchar *buffer;
+		gsize data_len;
 
-		switch (status) {
-		case G_IO_STATUS_NORMAL:
-			break;
-		case G_IO_STATUS_ERROR:
-		case G_IO_STATUS_EOF:
-			if (g_source_is_destroyed(ctx.child_src))
-				g_main_loop_quit(ctx.mainloop);
-			return G_SOURCE_REMOVE;
-		case G_IO_STATUS_AGAIN:
-			return G_SOURCE_CONTINUE;
+		try {
+			buffer = ctx.stdout_reader->convert(data_len);
+		} catch (Error &e) {
+			ctx.error = new Error(e);
+			goto remove;
 		}
+		if (!buffer)
+			/* EOF */
+			goto remove;
 
-		if (!block_len)
-			continue;
+		if (!data_len)
+			return G_SOURCE_CONTINUE;
 
 		if (register_argument) {
 			if (ctx.text_added) {
 				register_argument->undo_append_string();
-				register_argument->append_string(buffer+offset, block_len);
+				register_argument->append_string(buffer, data_len);
 			} else {
 				register_argument->undo_set_string();
-				register_argument->set_string(buffer+offset, block_len);
+				register_argument->set_string(buffer, data_len);
 			}
 		} else {
-			interface.ssm(SCI_ADDTEXT, block_len, (sptr_t)(buffer+offset));
+			interface.ssm(SCI_ADDTEXT, data_len, (sptr_t)buffer);
 		}
 		ctx.text_added = true;
 	}
 
 	/* not reached */
 	return G_SOURCE_CONTINUE;
+
+remove:
+	if (g_source_is_destroyed(ctx.child_src))
+		g_main_loop_quit(ctx.mainloop);
+	return G_SOURCE_REMOVE;
 }
 
 } /* namespace SciTECO */

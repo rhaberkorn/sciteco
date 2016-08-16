@@ -37,6 +37,7 @@
 #include "document.h"
 #include "ring.h"
 #include "ioview.h"
+#include "eol.h"
 #include "error.h"
 #include "qregisters.h"
 
@@ -506,6 +507,192 @@ void
 QRegisterWorkingDir::undo_exchange_string(QRegisterData &reg)
 {
 	QRegisterWorkingDir::undo_set_string();
+	reg.undo_set_string();
+}
+
+void
+QRegisterClipboard::UndoTokenSetClipboard::run(void)
+{
+	interface.set_clipboard(name, str, str_len);
+}
+
+void
+QRegisterClipboard::set_string(const gchar *str, gsize len)
+{
+	if (Flags::ed & Flags::ED_AUTOEOL) {
+		GString *str_converted = g_string_sized_new(len);
+		/*
+		 * This will convert to the Q-Register view's EOL mode.
+		 */
+		EOLWriterMem writer(str_converted,
+		                    QRegisters::view.ssm(SCI_GETEOLMODE));
+		gsize bytes_written;
+
+		/*
+		 * NOTE: Shouldn't throw any error, ever.
+		 */
+		bytes_written = writer.convert(str, len);
+		g_assert(bytes_written == len);
+
+		interface.set_clipboard(get_clipboard_name(),
+		                        str_converted->str, str_converted->len);
+
+		g_string_free(str_converted, TRUE);
+	} else {
+		/*
+		 * No EOL conversion necessary. The EOLWriter can handle
+		 * this as well, but will result in unnecessary allocations.
+		 */
+		interface.set_clipboard(get_clipboard_name(), str, len);
+	}
+}
+
+void
+QRegisterClipboard::undo_set_string(void)
+{
+	gchar *str;
+	gsize str_len;
+
+	/*
+	 * Upon rubout, the current contents of the clipboard are
+	 * restored.
+	 * We are checking for undo.enabled instead of relying on
+	 * undo.push_own(), since getting the clipboard
+	 * is an expensive operation that we want to avoid.
+	 */
+	if (!undo.enabled)
+		return;
+
+	/*
+	 * Ownership of str (may be NULL) is passed to
+	 * the undo token. We do not need undo.push_own() since
+	 * we checked for undo.enabled before.
+	 * This avoids any EOL translation as that would be cumbersome
+	 * and could also modify the clipboard in unexpected ways.
+	 */
+	str = interface.get_clipboard(get_clipboard_name(), &str_len);
+	undo.push<UndoTokenSetClipboard>(get_clipboard_name(), str, str_len);
+}
+
+gchar *
+QRegisterClipboard::get_string(gsize *out_len)
+{
+	if (!(Flags::ed & Flags::ED_AUTOEOL)) {
+		/*
+		 * No auto-eol conversion - avoid unnecessary copying
+		 * and allocations.
+		 * NOTE: get_clipboard() already returns a null-terminated string.
+		 */
+		return interface.get_clipboard(get_clipboard_name(), out_len);
+	}
+
+	gsize str_len;
+	gchar *str = interface.get_clipboard(get_clipboard_name(), &str_len);
+	EOLReaderMem reader(str, str_len);
+	gchar *str_converted;
+
+	try {
+		str_converted = reader.convert_all(out_len);
+	} catch (...) {
+		g_free(str);
+		throw; /* forward */
+	}
+	g_free(str);
+
+	return str_converted;
+}
+
+gchar *
+QRegisterClipboard::get_string(void)
+{
+	return QRegisterClipboard::get_string(NULL);
+}
+
+gsize
+QRegisterClipboard::get_string_size(void)
+{
+	gsize str_len;
+	gchar *str = interface.get_clipboard(get_clipboard_name(), &str_len);
+	/*
+	 * Using the EOLReader does not hurt much if AutoEOL is disabled
+	 * since we use it only for counting the bytes.
+	 */
+	EOLReaderMem reader(str, str_len);
+	gsize data_len;
+	gsize converted_len = 0;
+
+	try {
+		while (reader.convert(data_len))
+			converted_len += data_len;
+	} catch (...) {
+		g_free(str);
+		throw; /* forward */
+	}
+	g_free(str);
+
+	return converted_len;
+}
+
+gint
+QRegisterClipboard::get_character(gint position)
+{
+	gsize str_len;
+	gchar *str = QRegisterClipboard::get_string(&str_len);
+	gint ret = -1;
+
+	/*
+	 * `str` may be NULL, but only if str_len == 0 as well.
+	 */
+	if (position >= 0 &&
+	    position < (gint)str_len)
+		ret = str[position];
+
+	g_free(str);
+	return ret;
+}
+
+void
+QRegisterClipboard::edit(void)
+{
+	gchar *str;
+	gsize str_len;
+
+	QRegister::edit();
+
+	QRegisters::view.ssm(SCI_BEGINUNDOACTION);
+	QRegisters::view.ssm(SCI_CLEARALL);
+	str = QRegisterClipboard::get_string(&str_len);
+	QRegisters::view.ssm(SCI_APPENDTEXT, str_len, (sptr_t)str);
+	g_free(str);
+	QRegisters::view.ssm(SCI_ENDUNDOACTION);
+
+	QRegisters::view.undo_ssm(SCI_UNDO);
+}
+
+void
+QRegisterClipboard::exchange_string(QRegisterData &reg)
+{
+	gchar *own_str;
+	gsize own_str_len;
+	gchar *other_str = reg.get_string();
+	gsize other_str_len = reg.get_string_size();
+
+	/*
+	 * FIXME: What if `reg` is a clipboard and it changes
+	 * between the two calls?
+	 * QRegister::get_string() should always return the length as well.
+	 */
+	QRegisterData::set_string(other_str, other_str_len);
+	g_free(other_str);
+	own_str = QRegisterClipboard::get_string(&own_str_len);
+	reg.set_string(own_str, own_str_len);
+	g_free(own_str);
+}
+
+void
+QRegisterClipboard::undo_exchange_string(QRegisterData &reg)
+{
+	QRegisterClipboard::undo_set_string();
 	reg.undo_set_string();
 }
 
