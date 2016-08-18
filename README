@@ -64,8 +64,22 @@ Features
   This makes it even harder to destroy work by accident than in most other
   editors.
   Rubbed out commands can be re-inserted.
-* Munging: Macros may be munged, that is executed in batch mode. By default, a profile
-  is munged.
+* Munging: Macros may be munged, that is executed in batch mode. In other words, SciTECO
+  can be used for scripting.
+  By default, a profile is munged.
+* Cross platform: Builds on a wide variety of platforms. While being focused on UNIX
+  and drawing some inspiration from it, other platforms (esp. Windows) are fully
+  supported. It is made sure that SciTECO integrates well into all supported
+  platforms even without an UNIX-like environment.
+* SciTECO is console and command-line friendly.
+  Besides running under Curses and being a scripting language, it is written
+  to be used interactively on system terminals, can be integrated into
+  UNIX pipelines and can be extended with external command-line tools
+  (see `EC` command).
+* Themeability and consistency: Color settings (or schemes) are applied consistenly
+  across all supported platforms. Gtk+ builds allow further customization using CSS.
+  The user interface is kept minimalistic and is consistent in spirit across the
+  different platforms.
 * Syntax highlighting, styles, line numbers, etc. thanks to Scintilla.
   Low-level Scintilla commands can also be accessed to extend SciTECO.
 * A growing standard library of macros with frameworks for color schemes, syntax highlighting
