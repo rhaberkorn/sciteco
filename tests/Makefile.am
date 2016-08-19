@@ -19,6 +19,9 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 EXTRA_DIST = testsuite.at $(srcdir)/package.m4 $(TESTSUITE) atlocal.in
 TESTSUITE = $(srcdir)/testsuite
 
+# Files used by test groups in testsuite.at:
+EXTRA_DIST += autoeol-input.txt autoeol-output.txt
+
 check-local: atconfig atlocal $(TESTSUITE)
 	$(SHELL) '$(TESTSUITE)' $(TESTSUITEFLAGS)
 

@@ -1,0 +1,3 @@
+# These files are used to check SciTECO's EOL normalization,
+# so we enforce that they are not normalized by Git:
+autoeol-*.txt -text
