@@ -59,6 +59,24 @@ Known Bugs:
    window titles on exit using XTerm.
 
 Features:
+ * Glob patterns: GPattern, currently used in glob.cpp is
+   not very powerful and does not allow character classes or
+   escaping of glob patterns.
+   Unfortunately glob(3) or fnmatch(3) are POSIX-only, so
+   using them is not an option and does not resolve the
+   escaping issue in general.
+   We'd either have to import fnmatch(3) via Libiberty on non-POSIX
+   platforms, OR convert glob patterns to regexps and use
+   GRegEx as the underlying matcher.
+   The latter has the advantage that we could also provide
+   brace "expansion" usually performed by POSIX shells.
+ * Document how to escape magic characters in glob patterns.
+   There should be a string building construct to escape
+   glob characters (e.g. ^EN)
+ * Auto-indention could be implemented via context-sensitive
+   immediate editing commands similar to tab-expansion.
+   Avoids having to make LF a magic character in insertion
+   commands.
  * :$ and :$$ to pop/return only single values
  * allow top-level macros to influence the proces return code.
    This can be used in macros to call $$ or ^C akin to exit(1).
@@ -83,6 +101,15 @@ Features:
    macro should be rubbed out. This means it would be OK to
    let commands in function key macros fail and would fix, e.g.
    ^FCLOSE.
+ * Function key macros could support special escape sequences
+   that allow us to modify the parser state reliably.
+   E.g. one construct could expand to the current string argument's
+   termination character (which may not be Escape).
+   In combination with a special function key macro state
+   effective only in the start state of the string building
+   state machine, perhaps only in insertion commands, this
+   could be used to make the cursor movement keys work in
+   insertion commands by automatically terminating the command.
  * Function key handling should always be enabled. This was
    configurable because of the way escape was handled in ncurses.
    Now that escape is always immediate, there is little benefit
@@ -223,6 +250,20 @@ Optimizations:
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
  * refactor match-char state machine using MicroStateMachine class
+ * The current C-like programming style of SciTECO causes
+   problems with C++'s RAII. Exceptions have to be caught
+   always in every stack frame that owns a heap object
+   (e.g. glib string). This is often hard to predict.
+   There are two solutions: Wrap
+   every such C pointer in a class that implements RAII,
+   e.g. using C++11 unique_ptr or by a custom class template.
+   The downside is meta-programming madness and lots of overloading
+   to make this convenient.
+   Alternatively, we could avoid C++ exceptions largely and
+   use a custom error reporting system similar to GError.
+   This makes error handling and forwarding explicit as in
+   plain C code. RTTI can be used to discern different
+   exception types.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
@@ -257,3 +298,4 @@ Documentation:
    only-help.
    The nice thing about this scheme is that groff is not required
    at run time since tagged womanpages are generated at build time.
+   Groff must be added as a build-time requirement, though.
