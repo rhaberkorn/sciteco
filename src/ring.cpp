@@ -320,7 +320,10 @@ StateEditFile::do_edit(tecoInt id)
  * <file> may also be a glob pattern, in which case
  * all regular files matching the pattern are opened/edited.
  * Globbing is performed exactly the same as the
- * EN command does.
+ * \fBEN\fP command does.
+ * Also refer to the section called
+ * .B Glob Patterns
+ * for more details.
  *
  * File names of buffers in the ring are normalized
  * by making them absolute.
@@ -379,7 +382,7 @@ StateEditFile::got_file(const gchar *filename)
 		return &States::start;
 	}
 
-	if (is_glob_pattern(filename)) {
+	if (Globber::is_pattern(filename)) {
 		Globber globber(filename, G_FILE_TEST_IS_REGULAR);
 		gchar *globbed_filename;
 

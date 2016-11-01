@@ -463,6 +463,10 @@ StateCtlE:
 		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
 		set(&&StateCtlEQuote);
 		break;
+	case 'N':
+		undo.push_obj(qregspec_machine) = new QRegSpecMachine;
+		set(&&StateCtlEN);
+		break;
 	default:
 		result = (gchar *)g_malloc(3);
 
@@ -510,6 +514,17 @@ StateCtlEQuote:
 	set(StateStart);
 	str = reg->get_string();
 	result = g_shell_quote(str);
+	g_free(str);
+	return true;
+
+StateCtlEN:
+	if (!qregspec_machine->input(chr, reg))
+		return false;
+
+	undo.push_obj(qregspec_machine) = NULL;
+	set(StateStart);
+	str = reg->get_string();
+	result = Globber::escape_pattern(str);
 	g_free(str);
 	return true;
 

@@ -1,12 +1,30 @@
 AT_INIT
 AT_COLOR_TESTS
 
+# NOTE: There is currently no way to influence the return
+# code of SciTECO, except to provoke an error.
+# Since errors cannot be yielded explicitly, we use the
+# idiom "(0/0)" to enforce a "Division by zero" error
+# whenever we want to fail.
+
 AT_SETUP([Closing loops at the correct macro level])
 AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])
-AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N/0' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt'"],
+AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N(0/0)' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt'"],
          0, ignore, ignore)
 AT_CHECK([cmp -b autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Glob patterns with character classes])
+# Also checks closing brackets as part of the character set.
+# NOTE: The worse-than-average escaping of the square brackets with
+# ^EU< and ^EU> is necessary here since it is the current M4
+# quotation character and must be balanced:
+AT_CHECK([$SCITECO -e "91U< 93U> :@EN/*.^EU<^EU>ch^EU>/foo.h/\"F(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Glob patterns with unclosed trailing brackets])
+AT_CHECK([$SCITECO -e "91U< :@EN/*.^EU<h/foo.^EU<h/\"F(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP

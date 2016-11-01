@@ -18,6 +18,8 @@
 #ifndef __GLOB_H
 #define __GLOB_H
 
+#include <string.h>
+
 #include <glib.h>
 #include <glib/gstdio.h>
 
@@ -26,29 +28,11 @@
 
 namespace SciTECO {
 
-/*
- * Auxiliary functions
- */
-static inline bool
-is_glob_pattern(const gchar *str)
-{
-	if (!str)
-		return false;
-
-	while (*str) {
-		if (*str == '*' || *str == '?')
-			return true;
-		str++;
-	}
-
-	return false;
-}
-
 class Globber {
 	GFileTest test;
 	gchar *dirname;
 	GDir *dir;
-	GPatternSpec *pattern;
+	GRegex *pattern;
 
 public:
 	Globber(const gchar *pattern,
@@ -56,6 +40,15 @@ public:
 	~Globber();
 
 	gchar *next(void);
+
+	static inline bool
+	is_pattern(const gchar *str)
+	{
+		return str && strpbrk(str, "*?[") != NULL;
+	}
+
+	static gchar *escape_pattern(const gchar *pattern);
+	static GRegex *compile_pattern(const gchar *pattern);
 };
 
 /*

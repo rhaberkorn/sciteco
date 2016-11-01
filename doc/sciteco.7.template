@@ -1466,7 +1466,7 @@ Expands to the string contents of the Q-Register specified by
 \fIq\fP.
 .TP
 .BI ^E@ q
-Expands to the quoted string contents of the Q-Register
+Expands to the shell-quoted string contents of the Q-Register
 specified by \fIq\fP.
 The quoting will be such that an UNIX98 \(lq/bin/sh\(rq will
 interpret the quoted string like the original contents of
@@ -1474,6 +1474,14 @@ interpret the quoted string like the original contents of
 This is useful when generating UNIX shell code or when passing
 registers with unknown contents as parameters to external
 commands using the \fBEC\fP command.
+.TP
+.BI ^EN q
+Expands to the string contents of the Q-Register specified
+by \fIq\fP but with glob pattern wildcards escaped.
+This is useful for commands accepting glob patterns to
+pass file names which will not be interpreted further
+(e.g. if the file name may contain \(lq*\(rq or other
+special characters).
 .TP
 .BI ^E c
 All remaining \fB^E\fP combinations are passed down
@@ -1624,14 +1632,56 @@ user's\fP home directory using the value of the
 \(lq$HOME\(rq environment register.
 Thus the \(lq~\fIusername\fP\(rq syntax is \fBnot\fP supported.
 .LP
-Last but not least, some commands accept glob patterns
-in their file name arguments to refer to multiple files at once
-(see \fBEN\fP command).
 There is special immediate editing command support for
 file and directory path arguments (e.g. tab-completions and
 specialized rub-out/rub-in commands).
 These are documented in the section
 .BR "COMMANDLINE EDITING" .
+.
+.SS Glob Patterns
+.
+Some commands accept glob patterns
+in their file name arguments to perform pattern matching
+on arbitrary strings or to work with multiple existing files
+(see \fBEN\fP and \fBEB\fP commands).
+\*(ST glob patterns mimic the POSIX
+.BR fnmatch (3)
+syntax, but work uniformly across all platforms.
+The following wildcard constructs are supported:
+.TP
+.B *
+Matches an arbitary number of characters or no character
+at all.
+.TP
+.B ?
+Matches a single arbitrary character.
+.TP
+.BI [ set ]
+Matches one character in the given character \fIset\fP.
+For instance \(lq[ch]\(rq matches both \(lqc\(rq and \(lqh\(rq.
+A hyphen may be used to specify character ranges as in
+\(lq[0-9]\(rq to match all decimal digits.
+Within a character class, the \(lq*\(rq and \(lq?\(rq wildcards
+have no special meanings and represent their corresponding
+characters.
+To include a hypen in the \fIset\fP, write it first or last.
+To include a closing bracket in the \fIset\fP, write it first,
+as in \(lq[]ch]\(rq.
+.TP
+.BI [^ set ]
+.TQ
+.BI [! set ]
+Matches one character which is \fBnot\fP in the given character
+\fIset\fP.
+Otherwise behaves exactly like \fB[\fIset\fB]\fR.
+.LP
+All other characters match themselves.
+Brackets can be used to escape wildcard characters.
+For instance, \(lq[*]\(rq may be used to match a literal asterisk.
+To facilitate passing filenames verbatim to commands
+accepting glob patterns, there is the \fB^EN\fIq\fR string
+building construct which automatically escapes glob pattern
+wildcards.
 .
 .
 .SH FLOW CONTROL

@@ -19,7 +19,7 @@ EU[session.path]Q[$SCITECOCONFIG]/.teco_session
   '
   EJ<
     %.bEB ESGETFIRSTVISIBLELINEU.[fvline] ESGETXOFFSETU.[xoff] .U.[dot]
-    :@EU.[session]{EBQ* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^J}
+    :@EU.[session]{EBN* \.[fvline]ESSETFIRSTVISIBLELINE \.[xoff]ESSETXOFFSET \.[dot]:J^J}
     :Q*"= -1U.u '
   >
   ! We always start with an unnamed file in the ring, so we may have to remove it: !

@@ -59,20 +59,6 @@ Known Bugs:
    window titles on exit using XTerm.
 
 Features:
- * Glob patterns: GPattern, currently used in glob.cpp is
-   not very powerful and does not allow character classes or
-   escaping of glob patterns.
-   Unfortunately glob(3) or fnmatch(3) are POSIX-only, so
-   using them is not an option and does not resolve the
-   escaping issue in general.
-   We'd either have to import fnmatch(3) via Libiberty on non-POSIX
-   platforms, OR convert glob patterns to regexps and use
-   GRegEx as the underlying matcher.
-   The latter has the advantage that we could also provide
-   brace "expansion" usually performed by POSIX shells.
- * Document how to escape magic characters in glob patterns.
-   There should be a string building construct to escape
-   glob characters (e.g. ^EN)
  * Auto-indention could be implemented via context-sensitive
    immediate editing commands similar to tab-expansion.
    Avoids having to make LF a magic character in insertion

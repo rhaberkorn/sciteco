@@ -61,7 +61,7 @@ Globber::Globber(const gchar *pattern, GFileTest _test)
 	dir = g_dir_open(*dirname ? dirname : ".", 0, NULL);
 	/* if dirname does not exist, dir may be NULL */
 
-	Globber::pattern = g_pattern_spec_new(pattern + dirname_len);
+	Globber::pattern = compile_pattern(pattern + dirname_len);
 }
 
 gchar *
@@ -75,7 +75,7 @@ Globber::next(void)
 	while ((basename = g_dir_read_name(dir))) {
 		gchar *filename;
 
-		if (!g_pattern_match_string(pattern, basename))
+		if (!g_regex_match(pattern, basename, (GRegexMatchFlags)0, NULL))
 			continue;
 
 		/*
@@ -100,10 +100,194 @@ Globber::next(void)
 Globber::~Globber()
 {
 	if (pattern)
-		g_pattern_spec_free(pattern);
+		g_regex_unref(pattern);
 	if (dir)
 		g_dir_close(dir);
 	g_free(dirname);
+}
+
+gchar *
+Globber::escape_pattern(const gchar *pattern)
+{
+	gsize escaped_len = 1;
+	gchar *escaped, *pout;
+
+	/*
+	 * NOTE: The exact size of the escaped string is easy to calculate
+	 * in O(n) just like strlen(pattern), so we can just as well
+	 * do that.
+	 */
+	for (const gchar *pin = pattern; *pin; pin++) {
+		switch (*pin) {
+		case '*':
+		case '?':
+		case '[':
+			escaped_len += 3;
+			break;
+		default:
+			escaped_len++;
+			break;
+		}
+	}
+	pout = escaped = (gchar *)g_malloc(escaped_len);
+
+	while (*pattern) {
+		switch (*pattern) {
+		case '*':
+		case '?':
+		case '[':
+			*pout++ = '[';
+			*pout++ = *pattern;
+			*pout++ = ']';
+			break;
+		default:
+			*pout++ = *pattern;
+			break;
+		}
+
+		pattern++;
+	}
+	*pout = '\0';
+
+	return escaped;
+}
+
+/**
+ * Compile a fnmatch(3)-compatible glob pattern to
+ * a PCRE regular expression.
+ *
+ * There is GPattern, but it only supports the
+ * "*" and "?" wildcards which most importantly
+ * do not allow escaping.
+ *
+ * @param pattern The pattern to compile.
+ * @return A new compiled regular expression object.
+ *         Always non-NULL. Unref after use.
+ */
+GRegex *
+Globber::compile_pattern(const gchar *pattern)
+{
+	gchar *pattern_regex, *pout;
+	GRegex *pattern_compiled;
+
+	enum {
+		STATE_WILDCARD,
+		STATE_CLASS_START,
+		STATE_CLASS_NEGATE,
+		STATE_CLASS
+	} state = STATE_WILDCARD;
+
+	/*
+	 * NOTE: The conversion to regex needs at most two
+	 * characters per input character and the regex pattern
+	 * is required only temporarily, so we use a fixed size
+	 * buffer avoiding reallocations but wasting a few bytes
+	 * (determining the exact required space would be tricky).
+	 * It is not allocated on the stack though since pattern
+	 * might be arbitrary user input and we must avoid
+	 * stack overflows at all costs.
+	 */
+	pout = pattern_regex = (gchar *)g_malloc(strlen(pattern)*2 + 1 + 1);
+
+	while (*pattern) {
+		if (state == STATE_WILDCARD) {
+			/*
+			 * Outside a character class/set.
+			 */
+			switch (*pattern) {
+			case '*':
+				*pout++ = '.';
+				*pout++ = '*';
+				break;
+			case '?':
+				*pout++ = '.';
+				break;
+			case '[':
+				/*
+				 * The special case of an unclosed character
+				 * class is allowed in fnmatch(3) but invalid
+				 * in PCRE, so we must check for it explicitly.
+				 * FIXME: This is sort of inefficient...
+				 */
+				if (strchr(pattern, ']')) {
+					state = STATE_CLASS_START;
+					*pout++ = '[';
+					break;
+				}
+				/* fall through */
+			default:
+				/*
+				 * For simplicity, all non-alphanumeric
+				 * characters are escaped since they could
+				 * be PCRE magic characters.
+				 * g_regex_escape_string() is inefficient.
+				 * character anyway.
+				 */
+				if (!g_ascii_isalnum(*pattern))
+					*pout++ = '\\';
+				*pout++ = *pattern;
+				break;
+			}
+		} else {
+			/*
+			 * Within a character class/set.
+			 */
+			switch (*pattern) {
+			case '!':
+				/*
+				 * fnmatch(3) allows ! instead of ^ immediately
+				 * after the opening bracket.
+				 */
+				if (state > STATE_CLASS_START) {
+					state = STATE_CLASS;
+					*pout++ = '!';
+					break;
+				}
+				/* fall through */
+			case '^':
+				state = state == STATE_CLASS_START
+					? STATE_CLASS_NEGATE : STATE_CLASS;
+				*pout++ = '^';
+				break;
+			case ']':
+				/*
+				 * fnmatch(3) allows the closing bracket as the
+				 * first character to include it in the set, while
+				 * PCRE requires it to be escaped.
+				 */
+				if (state == STATE_CLASS) {
+					state = STATE_WILDCARD;
+					*pout++ = ']';
+					break;
+				}
+				/* fall through */
+			default:
+				if (!g_ascii_isalnum(*pattern))
+					*pout++ = '\\';
+				/* fall through */
+			case '-':
+				state = STATE_CLASS;
+				*pout++ = *pattern;
+				break;
+			}
+		}
+
+		pattern++;
+	}
+	*pout++ = '$';
+	*pout = '\0';
+
+	pattern_compiled = g_regex_new(pattern_regex,
+	                               (GRegexCompileFlags)(G_REGEX_DOTALL | G_REGEX_ANCHORED),
+	                               (GRegexMatchFlags)0, NULL);
+	/*
+	 * Since the regex is generated from patterns that are
+	 * always valid, there must be no syntactic error.
+	 */
+	g_assert(pattern_compiled != NULL);
+
+	g_free(pattern_regex);
+	return pattern_compiled;
 }
 
 /*
@@ -116,10 +300,9 @@ Globber::~Globber()
  *
  * EN is a powerful command for performing various tasks
  * given a glob \fIpattern\fP.
- * A \fIpattern\fP is a file name with \(lq*\(rq and
- * \(lq?\(rq wildcards:
- * \(lq*\(rq matches an arbitrary, possibly empty, string.
- * \(lq?\(rq matches an arbitrary character.
+ * For a description of the glob pattern syntax, refer to the section
+ * .B Glob Patterns
+ * for details.
  *
  * \fIpattern\fP may be omitted, in which case it defaults
  * to the pattern saved in the search and glob register \(lq_\(rq.
@@ -291,7 +474,9 @@ StateGlob_filename::got_file(const gchar *filename)
 		/*
 		 * Match pattern against provided file name
 		 */
-		if (g_pattern_match_simple(pattern_str, filename) &&
+		GRegex *pattern = Globber::compile_pattern(pattern_str);
+
+		if (g_regex_match(pattern, filename, (GRegexMatchFlags)0, NULL) &&
 		    (!teco_test_mode || g_file_test(filename, file_flags))) {
 			if (!colon_modified) {
 				interface.ssm(SCI_BEGINUNDOACTION);
@@ -304,6 +489,8 @@ StateGlob_filename::got_file(const gchar *filename)
 
 			matching = true;
 		}
+
+		g_regex_unref(pattern);
 	} else if (colon_modified) {
 		/*
 		 * Match pattern against directory contents (globbing),

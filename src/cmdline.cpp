@@ -619,7 +619,7 @@ filename_complete(const gchar *filename, gchar completed,
 	gchar *insert = NULL;
 	gsize prefix_len = 0;
 
-	if (is_glob_pattern(filename))
+	if (Globber::is_pattern(filename))
 		return NULL;
 
 	filename_expanded = expand_path(filename);
