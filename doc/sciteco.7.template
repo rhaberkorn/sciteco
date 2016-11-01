@@ -1710,7 +1710,7 @@ Also \*(ST caches program counters in tables and dedicated stacks
 so that flow-control statements are generally faster than
 in classic TECOs.
 .
-.SS GOTOS AND LABELS
+.SS Gotos and Labels
 .
 The most basic flow control command in \*(ST is the Go-to command.
 Since it is really an ordinary command, exceptional only in setting
@@ -1734,7 +1734,7 @@ is jumped to has not been defined.
 Labels also have another important role in \*(ST \(em they are used
 as comments.
 .
-.SS LOOPS
+.SS Loops
 .
 Gotos may be used for looping, but \*(ST also supports a dedicated
 structured looping construct.
@@ -1800,7 +1800,7 @@ Furthermore there are a number of flow control commands that
 may be used in loops like \fBF<\fP and \fBF>\fP.
 They are described in the reference section of this manual.
 .
-.SS CONDITIONALS
+.SS Conditionals
 .
 Last but not least, \*(ST supports so called conditionals.
 They correspond to structured IF-THEN-ELSE statements
