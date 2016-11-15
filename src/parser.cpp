@@ -297,11 +297,17 @@ Execute::file(const gchar *filename, bool locals)
 
 	if (!g_file_get_contents(filename, &macro_str, NULL, &gerror))
 		throw GlibError(gerror);
+
 	/* only when executing files, ignore Hash-Bang line */
-	if (*macro_str == '#')
-		p = MAX(strchr(macro_str, '\r'), strchr(macro_str, '\n'))+1;
-	else
+	if (*macro_str == '#') {
+		p = strpbrk(macro_str, "\r\n");
+		if (G_UNLIKELY(!p))
+			/* empty script */
+			goto cleanup;
+		p++;
+	} else {
 		p = macro_str;
+	}
 
 	try {
 		macro(p, locals);
@@ -318,6 +324,7 @@ Execute::file(const gchar *filename, bool locals)
 		throw; /* forward */
 	}
 
+cleanup:
 	g_free(macro_str);
 }
 
