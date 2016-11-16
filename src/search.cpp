@@ -55,7 +55,7 @@ namespace States {
  * Command states
  */
 
-/*$
+/*$ S search pattern
  * S[pattern]$ -- Search for pattern
  * [n]S[pattern]$
  * -S[pattern]$
@@ -648,7 +648,7 @@ StateSearch::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ N
  * [n]N[pattern]$ -- Search over buffer-boundaries
  * -N[pattern]$
  * from,toN[pattern]$
@@ -740,7 +740,7 @@ StateSearchAll::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ FK
  * FK[pattern]$ -- Delete up to occurrence of pattern
  * [n]FK[pattern]$
  * -FK[pattern]$
@@ -799,7 +799,7 @@ StateSearchKill::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ FD
  * FD[pattern]$ -- Delete occurrence of pattern
  * [n]FD[pattern]$
  * -FD[pattern]$
@@ -834,7 +834,7 @@ StateSearchDelete::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ FS
  * FS[pattern]$[string]$ -- Search and replace
  * [n]FS[pattern]$[string]$
  * -FS[pattern]$[string]$
@@ -875,7 +875,7 @@ StateReplace_ignore::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ FR
  * FR[pattern]$[string]$ -- Search and replace with default
  * [n]FR[pattern]$[string]$
  * -FR[pattern]$[string]$

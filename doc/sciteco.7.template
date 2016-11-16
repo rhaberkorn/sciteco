@@ -2135,7 +2135,8 @@ by \*(ST.
 .LP
 The same conventions are used elsewhere in this manual.
 .
-.COMMANDS
+.\" Expanded with the command reference:
+.TEDOC
 .
 .
 .SH COMPATIBILITY

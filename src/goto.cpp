@@ -142,7 +142,7 @@ StateLabel::custom(gchar chr)
 	return this;
 }
 
-/*$
+/*$ O
  * Olabel$ -- Go to label
  * [n]Olabel1[,label2,...]$
  *

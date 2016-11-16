@@ -800,7 +800,7 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
  * Command states
  */
 
-/*$
+/*$ *q
  * *q -- Save last command line
  *
  * Only at the very beginning of a command-line, this command

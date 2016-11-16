@@ -844,7 +844,7 @@ StateStart::custom(gchar chr)
 	/*
 	 * arithmetics
 	 */
-	/*$
+	/*$ 0 1 2 3 4 5 6 7 8 9 digit number
 	 * [n]0|1|2|3|4|5|6|7|8|9 -> n*Radix+X -- Append digit
 	 *
 	 * Integer constants in \*(ST may be thought of and are
@@ -927,7 +927,7 @@ StateStart::custom(gchar chr)
 		expressions.push(Expressions::OP_NEW);
 		break;
 
-	/*$
+	/*$ "." dot
 	 * \&. -> dot -- Return buffer position
 	 *
 	 * \(lq.\(rq pushes onto the stack, the current
@@ -940,7 +940,7 @@ StateStart::custom(gchar chr)
 		expressions.push(interface.ssm(SCI_GETCURRENTPOS));
 		break;
 
-	/*$
+	/*$ Z size
 	 * Z -> size -- Return buffer size
 	 *
 	 * Pushes onto the stack, the size of the currently selected
@@ -954,7 +954,7 @@ StateStart::custom(gchar chr)
 		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
-	/*$
+	/*$ H
 	 * H -> 0,Z -- Return range for entire buffer
 	 *
 	 * Pushes onto the stack the integer 0 (position of buffer
@@ -969,7 +969,7 @@ StateStart::custom(gchar chr)
 		expressions.push(interface.ssm(SCI_GETLENGTH));
 		break;
 
-	/*$
+	/*$ "\\"
 	 * n\\ -- Insert or read ASCII numbers
 	 * \\ -> n
 	 *
@@ -1080,7 +1080,7 @@ StateStart::custom(gchar chr)
 		}
 		break;
 
-	/*$
+	/*$ ";" break
 	 * [bool]; -- Conditionally break from loop
 	 * [bool]:;
 	 *
@@ -1161,7 +1161,7 @@ StateStart::custom(gchar chr)
 	/*
 	 * Command-line editing
 	 */
-	/*$
+	/*$ "{" "}"
 	 * { -- Edit command line
 	 * }
 	 *
@@ -1273,7 +1273,7 @@ StateStart::custom(gchar chr)
 	/*
 	 * commands
 	 */
-	/*$
+	/*$ J jump
 	 * [position]J -- Go to position in buffer
 	 * [position]:J -> Success|Failure
 	 *
@@ -1305,7 +1305,7 @@ StateStart::custom(gchar chr)
 		}
 		break;
 
-	/*$
+	/*$ C move
 	 * [n]C -- Move dot <n> characters
 	 * -C
 	 * [n]:C -> Success|Failure
@@ -1324,7 +1324,7 @@ StateStart::custom(gchar chr)
 			throw MoveError("C");
 		break;
 
-	/*$
+	/*$ R reverse
 	 * [n]R -- Move dot <n> characters backwards
 	 * -R
 	 * [n]:R -> Success|Failure
@@ -1341,7 +1341,7 @@ StateStart::custom(gchar chr)
 			throw MoveError("R");
 		break;
 
-	/*$
+	/*$ L line
 	 * [n]L -- Move dot <n> lines forwards
 	 * -L
 	 * [n]:L -> Success|Failure
@@ -1368,7 +1368,7 @@ StateStart::custom(gchar chr)
 			throw MoveError("L");
 		break;
 
-	/*$
+	/*$ B backwards
 	 * [n]B -- Move dot <n> lines backwards
 	 * -B
 	 * [n]:B -> Success|Failure
@@ -1386,7 +1386,7 @@ StateStart::custom(gchar chr)
 			throw MoveError("B");
 		break;
 
-	/*$
+	/*$ W word
 	 * [n]W -- Move dot by words
 	 * -W
 	 * [n]:W -> Success|Failure
@@ -1444,7 +1444,7 @@ StateStart::custom(gchar chr)
 		break;
 	}
 
-	/*$
+	/*$ V
 	 * [n]V -- Delete words forward
 	 * -V
 	 * [n]:V -> Success|Failure
@@ -1474,7 +1474,7 @@ StateStart::custom(gchar chr)
 			throw Error("Not enough words to delete with <V>");
 		break;
 
-	/*$
+	/*$ Y
 	 * [n]Y -- Delete word backwards
 	 * -Y
 	 * [n]:Y -> Success|Failure
@@ -1491,7 +1491,7 @@ StateStart::custom(gchar chr)
 			throw Error("Not enough words to delete with <Y>");
 		break;
 
-	/*$
+	/*$ "=" print
 	 * <n>= -- Show value as message
 	 *
 	 * Shows integer <n> as a message in the message line and/or
@@ -1514,7 +1514,7 @@ StateStart::custom(gchar chr)
 			      expressions.pop_num_calc());
 		break;
 
-	/*$
+	/*$ K kill
 	 * [n]K -- Kill lines
 	 * -K
 	 * from,to K
@@ -1537,7 +1537,7 @@ StateStart::custom(gchar chr)
 	 * command is synonymous to <from>,<to>D.
 	 */
 	case 'K':
-	/*$
+	/*$ D delete
 	 * [n]D -- Delete characters
 	 * -D
 	 * from,to D
@@ -1610,7 +1610,7 @@ StateStart::custom(gchar chr)
 		break;
 	}
 
-	/*$
+	/*$ A
 	 * [n]A -> code -- Get character code from buffer
 	 * -A -> code
 	 *
@@ -1668,7 +1668,7 @@ StateFCommand::custom(gchar chr)
 	/*
 	 * loop flow control
 	 */
-	/*$
+	/*$ F<
 	 * F< -- Go to loop start or jump to beginning of macro
 	 *
 	 * Immediately jumps to the current loop's start.
@@ -1686,7 +1686,7 @@ StateFCommand::custom(gchar chr)
 					? loop_stack.peek().pc : -1;
 		break;
 
-	/*$
+	/*$ F> continue
 	 * F> -- Go to loop end
 	 * :F>
 	 *
@@ -1749,7 +1749,7 @@ StateFCommand::custom(gchar chr)
 	/*
 	 * conditional flow control
 	 */
-	/*$
+	/*$ "F'"
 	 * F\' -- Jump to end of conditional
 	 */
 	case '\'':
@@ -1761,7 +1761,7 @@ StateFCommand::custom(gchar chr)
 		skip_else = true;
 		break;
 
-	/*$
+	/*$ F|
 	 * F| -- Jump to else-part of conditional
 	 *
 	 * Jump to else-part of conditional or end of
@@ -1792,7 +1792,7 @@ UndoTokenChangeDir::run(void)
 	g_chdir(dir);
 }
 
-/*$
+/*$ FG cd change-dir folder-go
  * FG[directory]$ -- Change working directory
  *
  * Changes the process' current working directory
@@ -1964,7 +1964,7 @@ State *
 StateControl::custom(gchar chr)
 {
 	switch (String::toupper(chr)) {
-	/*$
+	/*$ ^C exit
 	 * ^C -- Exit program immediately
 	 *
 	 * Lets the top-level macro return immediately
@@ -1987,7 +1987,7 @@ StateControl::custom(gchar chr)
 		quit_requested = true;
 		throw Quit();
 
-	/*$
+	/*$ ^O octal
 	 * ^O -- Set radix to 8 (octal)
 	 */
 	case 'O':
@@ -1995,7 +1995,7 @@ StateControl::custom(gchar chr)
 		expressions.set_radix(8);
 		break;
 
-	/*$
+	/*$ ^D decimal
 	 * ^D -- Set radix to 10 (decimal)
 	 */
 	case 'D':
@@ -2003,7 +2003,7 @@ StateControl::custom(gchar chr)
 		expressions.set_radix(10);
 		break;
 
-	/*$
+	/*$ ^R radix
 	 * radix^R -- Set and get radix
 	 * ^R -> radix
 	 *
@@ -2023,7 +2023,7 @@ StateControl::custom(gchar chr)
 	/*
 	 * Additional numeric operations
 	 */
-	/*$
+	/*$ ^_ negate
 	 * n^_ -> ~n -- Binary negation
 	 *
 	 * Binary negates (complements) <n> and returns
@@ -2058,7 +2058,7 @@ StateControl::custom(gchar chr)
 	return &States::start;
 }
 
-/*$
+/*$ ^^ ^^c
  * ^^c -> n -- Get ASCII code of character
  *
  * Returns the ASCII code of the character <c>
@@ -2087,7 +2087,7 @@ StateASCII::custom(gchar chr)
 
 /*
  * The Escape state is special, as it implements
- * a kind of "lookahead" for the ^[ command (dicard all
+ * a kind of "lookahead" for the ^[ command (discard all
  * arguments).
  * It is not executed immediately as usual in SciTECO
  * but only if not followed by an escape character.
@@ -2106,7 +2106,7 @@ StateEscape::StateEscape()
 State *
 StateEscape::custom(gchar chr)
 {
-	/*$
+	/*$ ^[^[ terminate return
 	 * [a1,a2,...]$$ -- Terminate command line or return from macro
 	 * [a1,a2,...]^[$
 	 *
@@ -2149,7 +2149,7 @@ StateEscape::custom(gchar chr)
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>
 	 */
-	/*$
+	/*$ ^[ escape discard
 	 * $ -- Discard all arguments
 	 * ^[
 	 *
@@ -2191,7 +2191,7 @@ State *
 StateECommand::custom(gchar chr)
 {
 	switch (String::toupper(chr)) {
-	/*$
+	/*$ EF close
 	 * [bool]EF -- Remove buffer from ring
 	 * -EF
 	 *
@@ -2225,7 +2225,7 @@ StateECommand::custom(gchar chr)
 		ring.close();
 		break;
 
-	/*$
+	/*$ ED flags
 	 * flags ED -- Set and get ED-flags
 	 * [off,]on ED
 	 * ED -> flags
@@ -2277,7 +2277,7 @@ StateECommand::custom(gchar chr)
 		}
 		break;
 
-	/*$
+	/*$ EJ properties
 	 * [key]EJ -> value -- Get and set system properties
 	 * -EJ -> value
 	 * value,keyEJ
@@ -2430,7 +2430,7 @@ StateECommand::custom(gchar chr)
 		break;
 	}
 
-	/*$
+	/*$ EL eol
 	 * 0EL -- Set or get End of Line mode
 	 * 13,10:EL
 	 * 1EL
@@ -2519,7 +2519,7 @@ StateECommand::custom(gchar chr)
 		}
 		break;
 
-	/*$
+	/*$ EX exit
 	 * [bool]EX -- Exit program
 	 * -EX
 	 * :EX
@@ -2583,7 +2583,7 @@ static struct ScintillaMessage {
 	sptr_t		lParam;
 } scintilla_message = {0, 0, 0};
 
-/*$
+/*$ ES scintilla message
  * -- Send Scintilla message
  * [lParam[,wParam]]ESmessage[,wParam]$[lParam]$ -> result
  *
@@ -2712,7 +2712,7 @@ StateScintilla_lParam::done(const gchar *str)
  * beginning and end of strings must be determined
  * syntactically
  */
-/*$
+/*$ I insert
  * [c1,c2,...]I[text]$ -- Insert text with string building characters
  *
  * First inserts characters for all the values
@@ -2728,7 +2728,7 @@ StateScintilla_lParam::done(const gchar *str)
  * may be better, since it has string building characters
  * disabled.
  */
-/*$
+/*$ EI
  * [c1,c2,...]EI[text]$ -- Insert text without string building characters
  *
  * Inserts text at the current position in the current
@@ -2787,7 +2787,7 @@ StateInsert::done(const gchar *str)
 /*
  * Alternatives: ^i, ^I, <CTRL/I>, <TAB>
  */
-/*$
+/*$ ^I indent
  * [char,...]^I[text]$ -- Insert with leading indention
  *
  * ^I (usually typed using the Tab key), first inserts

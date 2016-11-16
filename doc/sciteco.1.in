@@ -402,7 +402,11 @@ Language reference:
 .TP
 The \fBtroff\fP post-processor for \*(ST, including
 information on how to write \(lqwomanpages\(rq:
-.BR grosciteco (1)
+.BR grosciteco.tes (1)
+.TP
+A \fBtroff\fP pre-processor commonly used to generate
+man-pages:
+.BR tedoc.tes (1)
 .TP
 Homepage:
 .UR @PACKAGE_URL@

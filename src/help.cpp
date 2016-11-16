@@ -205,7 +205,7 @@ HelpIndex::set(const gchar *name, const gchar *filename, tecoInt pos)
  * Command states
  */
 
-/*$
+/*$ "?" help
  * ?[topic]$ -- Get help for topic
  *
  * Look up <topic> in the help index, opening

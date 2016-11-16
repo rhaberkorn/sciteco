@@ -1097,7 +1097,7 @@ StateExpectQReg::custom(gchar chr)
 	return got_register(reg);
 }
 
-/*$
+/*$ "[" "[q" push
  * [q -- Save Q-Register
  *
  * Save Q-Register <q> contents on the global Q-Register push-down
@@ -1113,7 +1113,7 @@ StatePushQReg::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ "]" "]q" pop
  * ]q -- Restore Q-Register
  *
  * Restore Q-Register <q> by replacing its contents
@@ -1137,7 +1137,7 @@ StatePopQReg::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ EQ EQq
  * EQq$ -- Edit or load Q-Register
  * EQq[file]$
  *
@@ -1177,7 +1177,7 @@ StateLoadQReg::got_file(const gchar *filename)
 	return &States::start;
 }
 
-/*$
+/*$ E% E%q
  * E%q<file>$ -- Save Q-Register string to file
  *
  * Saves the string contents of Q-Register <q> to
@@ -1208,7 +1208,7 @@ StateSaveQReg::got_file(const gchar *filename)
 	return &States::start;
 }
 
-/*$
+/*$ Q Qq query
  * Qq -> n -- Query Q-Register existence, its integer or string characters
  * <position>Qq -> character
  * :Qq -> -1 | size
@@ -1298,7 +1298,7 @@ reset:
 	return &States::start;
 }
 
-/*$
+/*$ ^Uq
  * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string without string building
  * [c1,c2,...]:^Uq[string]$
  *
@@ -1332,7 +1332,7 @@ StateCtlUCommand::got_register(QRegister *reg)
 	return &States::setqregstring_nobuilding;
 }
 
-/*$
+/*$ EU EUq
  * [c1,c2,...]EUq[string]$ -- Set or append to Q-Register string with string building characters
  * [c1,c2,...]:EUq[string]$
  *
@@ -1402,7 +1402,7 @@ StateSetQRegString::done(const gchar *str)
 	return &States::start;
 }
 
-/*$
+/*$ G Gq get
  * Gq -- Insert Q-Register string
  *
  * Inserts the string of Q-Register <q> into the buffer
@@ -1431,7 +1431,7 @@ StateGetQRegString::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ U Uq
  * nUq -- Set Q-Register integer
  * -Uq
  * [n]:Uq -> Success|Failure
@@ -1468,7 +1468,7 @@ StateSetQRegInteger::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ % %q increment
  * [n]%q -> q+n -- Increase Q-Register integer
  *
  * Add <n> to the integer part of register <q>, returning
@@ -1489,7 +1489,7 @@ StateIncreaseQReg::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ M Mq eval
  * Mq -- Execute macro
  * :Mq
  *
@@ -1522,7 +1522,7 @@ StateMacro::got_register(QRegister *reg)
 	return &States::start;
 }
 
-/*$
+/*$ EM
  * EMfile$ -- Execute macro from file
  * :EMfile$
  *
@@ -1543,7 +1543,7 @@ StateMacroFile::got_file(const gchar *filename)
 	return &States::start;
 }
 
-/*$
+/*$ X Xq
  * [lines]Xq -- Copy into or append to Q-Register
  * -Xq
  * from,toXq

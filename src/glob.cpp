@@ -294,7 +294,7 @@ Globber::compile_pattern(const gchar *pattern)
  * Command States
  */
 
-/*$
+/*$ EN glob
  * [type]EN[pattern]$[filename]$ -- Glob files or match filename and check file type
  * [type]:EN[pattern]$[filename]$ -> Success|Failure
  *

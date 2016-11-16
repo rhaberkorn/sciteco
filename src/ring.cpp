@@ -299,7 +299,7 @@ StateEditFile::do_edit(tecoInt id)
 		throw Error("Invalid buffer id %" TECO_INTEGER_FORMAT, id);
 }
 
-/*$
+/*$ EB edit
  * [n]EB[file]$ -- Open or edit file
  * nEB$
  *
@@ -395,7 +395,7 @@ StateEditFile::got_file(const gchar *filename)
 	return &States::start;
 }
 
-/*$
+/*$ EW write save
  * EW$ -- Save current buffer or Q-Register
  * EWfile$
  *

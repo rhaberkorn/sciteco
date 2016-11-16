@@ -276,9 +276,3 @@ Optimizations:
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
- * clean up/fix generate-docs.tes
-   generate-docs.tes could be turned into a general purpose script to
-   extract command and macro documentation from C and SciTECO code
-   (tedoc?).
-   It should then be installed so it may be used by third-party macro
-   library authors as well.

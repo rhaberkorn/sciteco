@@ -186,6 +186,9 @@ to make the files accessible in \*(ST's online-help system.
 Language reference including additional information on the \fB?\fP command:
 .BR sciteco (7)
 .TP
+A documentation tool generating man-page markup:
+.BR tedoc.tes (1)
+.TP
 The \fBGNU roff\fP front end program:
 .BR groff (1)
 .TP

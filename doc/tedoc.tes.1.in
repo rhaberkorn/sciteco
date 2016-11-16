@@ -1,0 +1,130 @@
+.ds ST \\fB@PACKAGE_NAME@\\fP
+.
+.
+.TH "tedoc.tes" 1 \
+    "@DATE@" \
+    "@PACKAGE_NAME@ Version @PACKAGE_VERSION@"
+.
+.
+.SCITECO_TOPIC tedoc tedoc.tes
+.SH NAME
+tedoc \-\-
+Source code documentation tool for \*(ST
+.
+.
+.SH SYNOPSIS
+.
+.SY tedoc.tes
+.OP "-C"
+.OP "--"
+.I output
+.I template
+.I sources...
+.YS
+.
+.
+.SH DESCRIPTION
+.
+.
+\fBtedoc\fP is a tool for extracting documentation from \*(ST macros
+and C/C++ code.
+It is used to document \*(ST's internal commands as well as macro
+packages.
+.SCITECO_TOPIC .TEDOC
+It processes special \*(ST comment blocks from the \fIsources\fP,
+generating \fBtroff\fP man-page markup and inserts them into
+a man-page \fItemplate\fP at the position of the \fBTEDOC\fP
+pseudo-request.
+The result is written to an \fIoutput\fP file.
+\fBtedoc\fP can thus be understood as a \fBtroff\fP preprocessor.
+.
+.SH OPTIONS
+.
+.IP "\fB-C\fP"
+Instruct \fBtedoc\fP to extract C/C++ comments instead of
+\*(ST comments.
+The C comments begin with \(lq/*$\(rq and end with \(lq*/\(rq.
+The \*(ST comments in contrast begin with \(lq!*$\(rq and end
+with \(lq*!\(rq.
+.IP "\fIoutput\fP"
+The resulting man-page file.
+.IP "\fItemplate\fP"
+A man-page template, i.e. a man-page with the \fBTEDOC\fP
+request.
+.IP "\fIsources...\fP"
+An arbitrary number of source code files to scan through.
+The comments are extracted in document order, ie. from the
+first comment in the first source file to the last comment
+in the last source file specified.
+.
+.
+.SH TEDOC COMMENTS
+.\" FIXME: !*$ cannot be indexed since it terminates the
+.\" header comment in *.woman.tec files.
+.SCITECO_TOPIC "/*$"
+.
+The \fBtedoc\fP source code comments support a small but powerful
+semantic markup for documenting \*(ST commands and macros:
+.IP \(bu 4
+Comments start with \(lq!*$\(rq (or \(lq/*$\(rq in C/C++ mode).
+.IP \(bu
+The first line (immediately after the starting comment) may
+contain \fItopic\fP keywords for \*(ST's online help system that
+will point to the beginning of the section generated for this
+\fBtedoc\fP comment.
+This generates \fBSCITECO_TOPIC\fP macro calls defined
+in \fBsciteco.tmac\fP (see \fBgrosciteco.tes\fP(1).
+.IP \(bu
+All lines until first empty line are syntax descriptions.
+.IP \(bu
+Text followed by \(lq--\(rq is a short description.
+.IP \(bu
+Variable values and characters of syntactic significance should be
+detected automatically.
+.IP \(bu
+Alternatives are denoted by \(lq|\(rq.
+.IP \(bu
+Every line is an alternative (e.g. different calling forms of the
+same command or macro).
+.IP \(bu
+Return values may be specified after \(lq->\(rq.
+.IP \(bu
+The remaining text is the verbose command description.
+.RS
+.  IP \(bu
+\(lq<name>\(rq denotes a variable from the syntax description.
+.  IP \(bu
+Empty lines introduce paragraphs.
+.  IP \(bu
+Lines beginning with \(lq-\(rq are unordered lists.
+.  IP \(bu
+Lines beginning with numbers and dot (\(lq1.\(rq, \(lq2.\(rq, etc.) are
+ordered lists.
+.  IP \(bu
+These transformations are only preprocessing, so that
+\fBtroff\fP requests, macros and escapes may also be used freely.
+.RE
+.
+.
+.SH SEE ALSO
+.
+.TP
+\*(ST invocation and help on its environment variables:
+.BR sciteco (1)
+.TP
+A \fBGNU roff\fP post-processor for rendering \fBtroff\fP
+markup into \(lqwomanpages\(rq for \*(ST's online help system
+\(em also documents special \fBtroff\fP macros in \fBsciteco.tmac\fP:
+.BR grosciteco.tes (1)
+.TP
+The \fBGNU roff\fP \(lqman\(rq macros for writing man pages:
+.BR groff_man (7)
+.
+.
+.SH AUTHOR
+.
+This manpage and the \*(ST program was written by
+.MT robin.haberkorn@googlemail.com
+Robin Haberkorn
+.ME .
+\# EOF

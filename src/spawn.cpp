@@ -124,7 +124,7 @@ parse_shell_command_line(const gchar *cmdline, GError **error)
 	return argv;
 }
 
-/*$
+/*$ EC pipe filter
  * EC[command]$ -- Execute operating system command and filter buffer contents
  * linesEC[command]$
  * -EC[command]$
@@ -499,7 +499,7 @@ cleanup:
 	return &States::start;
 }
 
-/*$
+/*$ EG EGq
  * EGq[command]$ -- Set Q-Register to output of operating system command
  * linesEGq[command]$
  * -EGq[command]$
