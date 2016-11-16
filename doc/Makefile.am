@@ -40,8 +40,8 @@ CLEANFILES += $(women_DATA)
 # cannot currently read stdin, so the grosciteco postprocessor
 # has to be run on a separate file.
 %.woman %.woman.tec : %.intermediate grosciteco.tes
-	$(SCITECO_FULL) -m @srcdir@/grosciteco.tes \
-	                   $(basename $<).woman $(basename $<).woman.tec $<
+	$(SCITECO_FULL) -m -- @srcdir@/grosciteco.tes \
+	                $@ $<
 
 %.intermediate : % sciteco.tmac
 	@GROFF@ -Z -Tascii -t -man -M@srcdir@ -msciteco $< >$@

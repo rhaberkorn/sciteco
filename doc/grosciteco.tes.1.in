@@ -15,8 +15,9 @@ GNU roff post-processor for \*(ST
 .SH SYNOPSIS
 .
 .SY grosciteco.tes
+.OP "-t" tec_output
+.OP "--"
 .I text_output
-.I tec_output
 .I input
 .YS
 .
@@ -66,9 +67,7 @@ documentation within \*(ST.
 .
 .SH OPTIONS
 .
-.IP "\fItext_output\fP
-The plain-text output file, e.g. \(lqgreat-macro.woman\(rq.
-.IP "\fItec_output\fP
+.IP "\fB-t \fItec_output\fR"
 The \*(ST script that when executed after loading
 \fItext_output\fP into a Scintilla view, styles that document.
 It can be thought of as representing meta-information
@@ -76,6 +75,9 @@ for \fItext_output\fP.
 In order to cooperate with the \(lqwoman\(rq lexer and
 \*(ST's \fB?\fP command, its file name should be
 \fItext_output\fP.tec, e.g. \(lqgreat-macro.woman.tec\(rq.
+This is also the default when omitted.
+.IP "\fItext_output\fP
+The plain-text output file, e.g. \(lqgreat-macro.woman\(rq.
 .IP "\fIinput\fP"
 The \fIinput\fP file is in \fBtroff\fP's device-independant
 output format.

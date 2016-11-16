@@ -1,0 +1,52 @@
+!*$
+ * M[getopt] -> Success|Failure -- Parse options
+ *
+ * Parses command line options according to the string
+ * \(lqoptstring\(rq, similar to \fBgetopt\P(3).
+ * \(lqoptstring\(rq is a list of single character
+ * option names.
+ * If followed by a colon, the option takes an argument
+ * (which can be part of the same command line argument as in
+ * \(lq-Ofoo\(rq).
+ * If followed by two colons, the option argument is optional.
+ * For every detected option \fIX\fP, a register \fBgetopt.\fIX\fR is
+ * defined with -1 (true) in its integer part.
+ * If the option had an argument, it is stored in the register's
+ * string part.
+ *
+ * A condition boolean is returned to signify whether
+ * there was a parsing error.
+ *!
+[optstring]
+@[getopt]{
+  .U.d
+  <
+    .-Z"= 1; ' 0A-^^-"N :L; F< '
+
+    1A-^^-"= K 1; '
+
+    0U.i <
+      :Q[optstring]-Q.i"= Q.dJ 0 '
+      Q.iQ[optstring]U.c
+
+      0U.#ar <
+        %.i-:Q[optstring]"= 1; '
+        Q.iQ[optstring]-^^:"N 1; '
+      %.#ar>
+
+      1A-Q.c"=
+        -U[getopt.U.c]
+        Q.#ar">
+          2A-10"=
+            K Q.#ar-1"> 0A-^^-"= 0U.i F< ' '
+          |
+            2D
+          '
+          LR 0X[getopt.U.c] 0L
+        '
+        K 1;
+      '
+    >
+  >
+  Q.dJ
+-1}

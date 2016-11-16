@@ -23,8 +23,10 @@ endif
 
 BUILT_SOURCES =
 
-EXTRA_DIST = symbols-extract.tes \
-	     sciteco.html
+dist_noinst_SCRIPTS = symbols-extract.tes
+
+# Emscripten HTML page:
+EXTRA_DIST = sciteco.html
 
 noinst_LTLIBRARIES = libsciteco-base.la
 libsciteco_base_la_SOURCES = main.cpp sciteco.h \
@@ -77,12 +79,12 @@ CLEANFILES = $(BUILT_SOURCES) \
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
 			symbols-extract.tes
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
-	                   $< $@ "SCI_" scintilla
+	                   -p "SCI_" -n scintilla $@ $<
 
 symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
 		       symbols-extract.tes
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
-	                   $< $@ "SCLEX_,SCE_" scilexer
+	                   -p "SCLEX_,SCE_" -n scilexer $@ $<
 
 # This installs a wrapper script to libexecdir to be used as
 # the SciTECO interpreter in Hash-Bang lines.

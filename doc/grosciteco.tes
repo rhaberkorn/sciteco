@@ -1,9 +1,14 @@
 #!/usr/local/bin/sciteco -m
-!* grosciteco.tes <output-woman> <output-tec> <input> *!
+!* grosciteco.tes [-t <output-tec>] [--] <output-woman> <input> *!
+
+:EMQ[$SCITECOPATH]/getopt.tes
 
 !* Process command-line options *!
-LR 0X[output-woman] 2LR 0X[output-tec] 2LR 0X[input] HK
-EBQ[input]
+[optstring]t: M[getopt]"F (0/0) '
+LR 0X[output-woman] 2LR 0X[input] HK
+:Q[getopt.t]"< EU[getopt.t]Q[output-woman].tec '
+
+EBN[input]
 
 ! skip whitespace characters !
 @#sw{
@@ -278,6 +283,6 @@ EQ[styles]
 !* Generate topic index *!
 J I!*Q[topics]*!^J
 
-EWQ[output-tec]
+EWQ[getopt.t]
 
 -EX
