@@ -183,7 +183,12 @@ InterfaceGtk::get_options(void)
 		{NULL}
 	};
 
-	GOptionGroup *group = gtk_get_option_group(TRUE);
+	/*
+	 * Parsing the option context with the Gtk option group
+	 * will automatically initialize Gtk, so gtk_init()
+	 * does not have to be called.
+	 */
+	GOptionGroup *group = gtk_get_option_group(FALSE);
 
 	g_option_group_add_entries(group, entries);
 
@@ -191,7 +196,7 @@ InterfaceGtk::get_options(void)
 }
 
 void
-InterfaceGtk::main_impl(int &argc, char **&argv)
+InterfaceGtk::init(void)
 {
 	static const Cmdline empty_cmdline;
 
@@ -208,7 +213,6 @@ InterfaceGtk::main_impl(int &argc, char **&argv)
 	g_thread_init(NULL);
 #endif
 	gdk_threads_init();
-	gtk_init(&argc, &argv);
 
 	/*
 	 * Register clipboard registers.

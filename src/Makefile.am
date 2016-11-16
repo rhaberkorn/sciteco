@@ -76,10 +76,27 @@ CLEANFILES = $(BUILT_SOURCES) \
 
 symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
 			symbols-extract.tes
-	$(SCITECO_MINIMAL) -m @srcdir@/symbols-extract.tes \
+	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
 	                   $< $@ "SCI_" scintilla
 
 symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
 		       symbols-extract.tes
-	$(SCITECO_MINIMAL) -m @srcdir@/symbols-extract.tes \
+	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
 	                   $< $@ "SCLEX_,SCE_" scilexer
+
+# This installs a wrapper script to libexecdir to be used as
+# the SciTECO interpreter in Hash-Bang lines.
+# It makes sure that option parsing is disabled for all
+# script arguments which is necessary for builds against Glib < 2.44.
+# NOTE: When we raise the Glib requirement to 2.44, the sciteco-wrapper
+# workaround can be removed completely.
+libexec_SCRIPTS = sciteco-wrapper
+CLEANFILES += $(libexec_SCRIPTS)
+
+.PHONY: sciteco-wrapper
+sciteco-wrapper:
+	echo '#!/bin/sh' >$@
+	echo 'OPT=$$1;' \
+	     'shift;' \
+	     "exec $(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)" \
+	     '"$$OPT" -- $$@' >>$@

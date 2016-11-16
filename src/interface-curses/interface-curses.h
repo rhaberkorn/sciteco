@@ -121,8 +121,8 @@ public:
 	InterfaceCurses();
 	~InterfaceCurses();
 
-	/* implementation of Interface::main() */
-	void main_impl(int &argc, char **&argv);
+	/* override of Interface::init() */
+	void init(void);
 
 	/* override of Interface::init_color() */
 	void init_color(guint color, guint32 rgb);

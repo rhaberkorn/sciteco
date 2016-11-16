@@ -194,11 +194,8 @@ public:
 		return NULL;
 	}
 
-	inline void
-	main(int &argc, char **&argv)
-	{
-		impl().main_impl(argc, argv);
-	}
+	/* default implementation */
+	inline void init(void) {}
 
 	/* makes sense only on Curses */
 	inline void init_color(guint color, guint32 rgb) {}

@@ -1,4 +1,4 @@
-#!/usr/bin/env sciteco -m
+#!/usr/local/bin/sciteco -m
 !* htbl.tes <input> <output> *!
 !* Troff tbl "drop-in" replacement *!
 

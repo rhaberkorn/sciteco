@@ -113,8 +113,8 @@ public:
 	/* overrides Interface::get_options() */
 	GOptionGroup *get_options(void);
 
-	/* implementation of Interface::main() */
-	void main_impl(int &argc, char **&argv);
+	/* override of Interface::init() */
+	void init(void);
 
 	/* implementation of Interface::vmsg() */
 	void vmsg_impl(MessageType type, const gchar *fmt, va_list ap);

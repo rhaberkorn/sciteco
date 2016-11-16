@@ -1,4 +1,4 @@
-#!/usr/bin/env sciteco -m
+#!/usr/local/bin/sciteco -m
 !* grosciteco.tes <output-woman> <output-tec> <input> *!
 
 !* Process command-line options *!

@@ -312,7 +312,7 @@ InterfaceCurses::InterfaceCurses() : stdout_orig(-1), stderr_orig(-1),
 }
 
 void
-InterfaceCurses::main_impl(int &argc, char **&argv)
+InterfaceCurses::init(void)
 {
 	/*
 	 * We must register this handler to handle
@@ -518,12 +518,16 @@ InterfaceCurses::init_screen(void)
 	 * This sets the program name to "SciTECO"
 	 * which may then also be used as the X11 class name
 	 * for overwriting X11 resources in .Xdefaults
+	 *
 	 * FIXME: We could support passing in resource
 	 * overrides via the SciTECO command line.
 	 * But unfortunately, Xinitscr() is called too
-	 * late to modify argc/argv for command-line parsing.
+	 * late to modify argc/argv for command-line parsing
+	 * (and GOption needs to know about the additional
+	 * possible arguments since they are not passed through
+	 * transparently).
 	 * Therefore this could only be supported by
-	 * adding a special option like --resource.
+	 * adding a special option like --resource KEY=VAL.
 	 */
 	Xinitscr(1, (char **)argv);
 }

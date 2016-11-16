@@ -31,6 +31,7 @@ testsuite.dir
 # Binaries
 /src/sciteco
 /src/sciteco-minimal
+/src/sciteco-wrapper
 
 # Generated source files
 /src/interface-gtk/gtk-info-popup.[ch]

@@ -17,10 +17,11 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .SY @PACKAGE@
 .OP "-h|--help"
 .OP "-e|--eval" macro
-.OP "-m|--mung" file
+.OP "-m|--mung"
 .OP "--no-profile"
 .RI [ "UI option .\|.\|." ]
 .OP "--"
+.RI [ script ]
 .RI [ "argument .\|.\|." ]
 .YS
 .
@@ -40,26 +41,46 @@ natively supports Microsoft Windows NT\*(Tm.
 .LP
 .SCITECO_TOPIC mung
 When executed, \*(ST mungs (executes) the TECO macro stored in the file
-specified by the
+specified in the \fIscript\fP argument if
 .B "--mung"
-option or the macro specified via
+is given or the macro specified via
 .B "--eval"
 respectively.
 Munged files and macros are executed in non-interactive (\fIbatch\fP)
 mode, allowing the user to write stand-alone TECO scripts.
 Only when munging files as opposed to other means of executing macros,
-the first line is ignored if it begins with \(lq#!\(rq.
+the first line is ignored if it begins with a \(lq#\(rq (hash sign).
 Therefore under UNIX-like operating systems, TECO macro files may be
 invoked as scripts by using a Hash-Bang line like
 .\" FIXME: We'd like to include #! as a topic, but ! character are currently
 .\" not allowed since they are not escaped correctly.
 .SCITECO_TOPIC scripting
 .RS
-.SCITECO_TT
 .EX
+.SCITECO_TT
 #!@bindir@/sciteco -m
-.EE
 .SCITECO_TT_END
+.EE
+.RE
+.
+.LP
+Note that UNIX Hash-Bang lines will only pass a \fBsingle\fP argument to the
+interpreter before the script's file name, so all required \*(ST options must
+be mangled into a single argument with their single-letter names.
+Passing option-like arguments (beginning with a dash) to scripts may cause
+problems because \*(ST might try to interpret these options.
+Beginning with Glib 2.44, \*(ST thus stops parsing at the first non-option
+argument (which will always be the munged file name in a script invocation).
+For binaries linked against older versions of Glib, \*(ST works around this
+issue by providing a wrapper script that can be used in place of the main
+executable.
+A portable Hash-Bang line should thus look like:
+.RS
+.EX
+.SCITECO_TT
+#!@libexecdir@/sciteco-wrapper -m
+.SCITECO_TT_END
+.EE
 .RE
 .
 .LP
@@ -69,6 +90,8 @@ All command line arguments after the \*(ST options are passed as
 .I arguments
 to the munged macro by placing each argument on its own line in
 the buffer.
+The \fIscript\fP file name expected when \(lq--mung\(rq is given
+is currently \fBnot\fP considered a macro argument.
 In any case the current buffer position (called
 .IR dot )
 is left at the beginning of the buffer.
@@ -137,6 +160,8 @@ option is absent, \*(ST will mung
 On UNIX/Linux, the default profile is at
 .I ~/.teco_ini
 (see \fBENVIRONMENT\fP).
+It will consequently not expect a \fIscript\fP file name as
+the first non-option argument.
 The profile will usually set up various Scintilla and \*(ST options,
 configure syntax highlighting,
 define commonly used macros and open files specified as arguments to \*(ST.
@@ -160,9 +185,12 @@ Similar to munging but always exits afterwards.
 If the option is specified, the
 .B \-\-mung
 option has no effect.
-.IP "\fB-m\fR, \fB--mung\fR \fIfile"
+.IP "\fB-m\fR, \fB--mung\fR"
 .SCITECO_TOPIC "-m" "--mung"
-Mung \fIfile\fP.
+Mung \fIscript\fP.
+The script file name is expected as the first non-option
+argument, so it does not necessarily have to follow the
+\fB--mung\fP option.
 Default is
 .IR $SCITECOCONFIG/.teco_ini .
 .IP "\fB--no-profile\fP"

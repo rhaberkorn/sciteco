@@ -75,7 +75,7 @@ namespace Flags {
 }
 
 static gchar *eval_macro = NULL;
-static gchar *mung_file = NULL;
+static gboolean mung_file = FALSE;
 static gboolean mung_profile = TRUE;
 
 sig_atomic_t sigint_occurred = FALSE;
@@ -165,29 +165,31 @@ get_default_config_path(const gchar *program)
 
 #endif
 
-static inline void
+static inline gchar *
 process_options(int &argc, char **&argv)
 {
 	static const GOptionEntry option_entries[] = {
 		{"eval", 'e', 0, G_OPTION_ARG_STRING, &eval_macro,
 		 "Evaluate macro", "macro"},
-		{"mung", 'm', 0, G_OPTION_ARG_FILENAME, &mung_file,
-		 "Mung file instead of "
-		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE, "file"},
+		{"mung", 'm', 0, G_OPTION_ARG_NONE, &mung_file,
+		 "Mung script file (first non-option argument) instead of "
+		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE},
 		{"no-profile", 0, G_OPTION_FLAG_REVERSE,
 		 G_OPTION_ARG_NONE, &mung_profile,
 		 "Do not mung "
-		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE
-		 " even if it exists"},
+		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE " "
+		 "even if it exists"},
 		{NULL}
 	};
+
+	gchar *mung_filename = NULL;
 
 	GError *gerror = NULL;
 
 	GOptionContext	*options;
 	GOptionGroup	*interface_group = interface.get_options();
 
-	options = g_option_context_new("[--] [ARGUMENT...]");
+	options = g_option_context_new("[--] [SCRIPT] [ARGUMENT...]");
 
 	g_option_context_set_summary(
 		options,
@@ -203,6 +205,21 @@ process_options(int &argc, char **&argv)
 	if (interface_group)
 		g_option_context_add_group(options, interface_group);
 
+#if GLIB_CHECK_VERSION(2,44,0)
+	/*
+	 * If possible we parse in POSIX mode, which means that
+	 * the first non-option argument terminates option parsing.
+	 * SciTECO considers all non-option arguments to be script
+	 * arguments and it makes little sense to mix script arguments
+	 * with SciTECO options, so this lets the user avoid "--"
+	 * in many situations.
+	 * It is also strictly required to make hash-bang lines like
+	 * #!/usr/bin/sciteco -m
+	 * work (see sciteco(1)).
+	 */
+	g_option_context_set_strict_posix(options, TRUE);
+#endif
+
 	if (!g_option_context_parse(options, &argc, &argv, &gerror)) {
 		g_fprintf(stderr, "Option parsing failed: %s\n",
 			  gerror->message);
@@ -212,15 +229,41 @@ process_options(int &argc, char **&argv)
 
 	g_option_context_free(options);
 
-	if (mung_file) {
-		if (!g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
-			g_fprintf(stderr, "Cannot mung \"%s\". File does not exist!\n",
-				  mung_file);
-			exit(EXIT_FAILURE);
-		}
+	/*
+	 * GOption will NOT remove "--" if followed by an
+	 * option-argument, which may interfer with scripts
+	 * doing their own option handling and interpreting "--".
+	 *
+	 * NOTE: This is still true if we're parsing in GNU-mode
+	 * and "--" is not the first non-option argument as in
+	 * sciteco foo -- -C bar.
+	 */
+	if (argc >= 2 && !strcmp(argv[1], "--")) {
+		argv[1] = argv[0];
+		argv++;
+		argc--;
 	}
 
-	/* remaining arguments, are arguments to the interface */
+	if (mung_file) {
+		if (argc < 2) {
+			g_fprintf(stderr, "Script to mung expected!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		if (!g_file_test(argv[1], G_FILE_TEST_IS_REGULAR)) {
+			g_fprintf(stderr, "Cannot mung \"%s\". File does not exist!\n",
+				  argv[1]);
+			exit(EXIT_FAILURE);
+		}
+
+		mung_filename = g_strdup(argv[1]);
+
+		argv[1] = argv[0];
+		argv++;
+		argc--;
+	}
+
+	return mung_filename;
 }
 
 static inline void
@@ -369,6 +412,8 @@ main(int argc, char **argv)
 		realloc			/* try_realloc */
 	};
 
+	gchar *mung_filename;
+
 #ifdef DEBUG_PAUSE
 	/* Windows debugging hack (see above) */
 	system("pause");
@@ -379,9 +424,12 @@ main(int argc, char **argv)
 
 	g_mem_set_vtable(&vtable);
 
-	process_options(argc, argv);
-	interface.main(argc, argv);
-	/* remaining arguments are arguments to the munged file */
+	mung_filename = process_options(argc, argv);
+	/*
+	 * All remaining arguments in argv are arguments
+	 * to the macro or munged file.
+	 */
+	interface.init();
 
 	/*
 	 * QRegister view must be initialized only now
@@ -405,7 +453,7 @@ main(int argc, char **argv)
 	ring.edit((const gchar *)NULL);
 
 	/* add remaining arguments to unnamed buffer */
-	for (int i = 1; i < argc; i++) {
+	for (gint i = 1; i < argc; i++) {
 		/*
 		 * FIXME: arguments may contain line-feeds.
 		 * Once SciTECO is 8-byte clear, we can add the
@@ -435,15 +483,15 @@ main(int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		if (!mung_file && mung_profile)
+		if (!mung_filename && mung_profile)
 			/* NOTE: Still safe to use g_getenv() */
-			mung_file = g_build_filename(g_getenv("SCITECOCONFIG"),
-			                             INI_FILE, NIL);
+			mung_filename = g_build_filename(g_getenv("SCITECOCONFIG"),
+			                                 INI_FILE, NIL);
 
-		if (mung_file &&
-		    g_file_test(mung_file, G_FILE_TEST_IS_REGULAR)) {
+		if (mung_filename &&
+		    g_file_test(mung_filename, G_FILE_TEST_IS_REGULAR)) {
 			try {
-				Execute::file(mung_file, false);
+				Execute::file(mung_filename, false);
 			} catch (Quit) {
 				/*
 				 * ^C invoked, quit hook should still
@@ -456,7 +504,6 @@ main(int argc, char **argv)
 				exit(EXIT_SUCCESS);
 			}
 		}
-		g_free(mung_file);
 	} catch (Error &error) {
 		error.display_full();
 		exit(EXIT_FAILURE);
@@ -495,5 +542,6 @@ main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	g_free(mung_filename);
 	return 0;
 }

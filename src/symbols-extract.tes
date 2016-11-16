@@ -1,4 +1,4 @@
-#!./sciteco-minimal -m
+#!/usr/local/bin/sciteco -m
 ! ./symbols-extract.tes <input file> <output file> <prefix pattern list> <array name> !
 
 EMQ[$SCITECOPATH]/string.tes
