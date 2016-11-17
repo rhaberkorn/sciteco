@@ -41,8 +41,13 @@ testsuite.dir
 
 # Generated documentation
 /doc/sciteco.[17]
-/doc/sciteco.[17].html
 /doc/sciteco.7.in
-/doc/sciteco.7.htbl
+/doc/grosciteco.tes.1
+/doc/tedoc.tes.1
+/doc/*.intermediate
+/doc/*.woman*
+/doc/*.htbl
+/doc/*.html
+
 /doc/Doxyfile
 /doc/doxygen
