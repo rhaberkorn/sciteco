@@ -181,6 +181,9 @@ public:
 		RBEntryString entry((gchar *)str);
 		return RBTree<RBEntryString>::nfind(&entry);
 	}
+
+	gchar *auto_complete(const gchar *key, gchar completed = '\0',
+	                     gsize restrict_len = 0);
 };
 
 typedef RBTreeStringT<strcmp, strncmp> RBTreeString;

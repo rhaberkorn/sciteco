@@ -990,9 +990,16 @@ QRegSpecMachine::input(gchar chr, QRegister *&result)
 
 MICROSTATE_START;
 	switch (chr) {
-	case '.': undo.push_var(is_local) = true; break;
-	case '#': set(&&StateFirstChar); break;
-	case '[': set(&&StateString); break;
+	case '.':
+		undo.push_var(is_local) = true;
+		break;
+	case '#':
+		set(&&StateFirstChar);
+		break;
+	case '[':
+		set(&&StateString);
+		undo.push_var(nesting)++;
+		break;
 	default:
 		undo.push_str(name) = String::chrdup(String::toupper(chr));
 		goto done;
@@ -1003,6 +1010,7 @@ MICROSTATE_START;
 StateFirstChar:
 	undo.push_str(name) = (gchar *)g_malloc(3);
 	name[0] = String::toupper(chr);
+	name[1] = '\0';
 	set(&&StateSecondChar);
 	return false;
 
@@ -1017,9 +1025,9 @@ StateString:
 		undo.push_var(nesting)++;
 		break;
 	case ']':
+		undo.push_var(nesting)--;
 		if (!nesting)
 			goto done;
-		undo.push_var(nesting)--;
 		break;
 	}
 
@@ -1069,6 +1077,28 @@ done:
 	}
 
 	return true;
+}
+
+gchar *
+QRegSpecMachine::auto_complete(void)
+{
+	gsize restrict_len = 0;
+
+	if (string_machine.qregspec_machine)
+		/* nested Q-Reg definition */
+		return string_machine.qregspec_machine->auto_complete();
+
+	if (state == StateStart)
+		/* single-letter Q-Reg */
+		restrict_len = 1;
+	else if (!nesting)
+		/* two-letter Q-Reg */
+		restrict_len = 2;
+
+	QRegisterTable &table = is_local ? *QRegisters::locals
+	                                 : QRegisters::globals;
+	return table.auto_complete(name, nesting == 1 ? ']' : '\0',
+	                           restrict_len);
 }
 
 /*

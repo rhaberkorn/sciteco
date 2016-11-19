@@ -74,6 +74,17 @@ Known Bugs:
    window titles on exit using XTerm.
  * Glib (error) messages are not integrated with SciTECO's
    logging system.
+ * Auto-completions are prone to unexpected results when
+   the insertion contains string-building characters, braces
+   (for Q-Register auto-completions) or escape characters
+   (just consider autocompleting after @FG/...).
+   Insertions should thus be escaped.
+   A new string building command should consequently be
+   introduced to insert an ASCII character by digits,
+   e.g. ^E0XXX.
+   Also, auto-completions within string-building constructs
+   (except Q-Reg specs) should generally be disabled since
+   the result will be unpredictable.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -167,7 +178,6 @@ Features:
    * ER command: read file into current buffer at dot
    * nEW to save a buffer by id
    * ^A and stdio in general
- * autocompletion of long Q-Reg names
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
    end of the buffer list.
@@ -305,3 +315,7 @@ Optimizations:
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
+ * The ? command could be extended to support looking
+   up help terms at dot in the current document (e.g. if called ?$).
+   Furthermore, womanpages could contain "hypertext" links
+   to help topics using special Troff markup and grosciteco support.

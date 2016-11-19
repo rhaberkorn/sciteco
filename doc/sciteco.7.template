@@ -350,6 +350,10 @@ TECO implementations.
 Most of these commands are control codes, so their control code
 mnemonics are given as well.
 .
+.\" FIXME: The auto-completion immediate editing commands
+.\" should probably be broken out of this table to keep it
+.\" small and moved into their own table in the AUTO COMPLETIONS
+.\" section.
 .SCITECO_TT 90n
 .TS
 expand,allbox,tab(;);
@@ -488,6 +492,24 @@ rubbed-out part of the command line, stopping at the string's
 terminating character.
 T}
 T{
+Auto complete Q-Register name
+T};9;^I, Tab;T{
+Q-Register specifications
+T};T{
+In all Q-Register specifications \(em either after a command
+with a Q-Register argument like \fBM\fP or as part of a string building
+construct like \fB^EQ\fP (of course including string building
+constructs \fIwithin\fP Q-Register specifications) \(em
+auto complete the local or global register name beginning at
+the start of the specification.
+In the case of one or two-letter specifications (\fB#\fIxy\fR),
+only one or two-letter register names are considered for
+auto-completion.
+In the case of long specifications (\fB[\fIname\fB]\fR),
+fully completed names are terminated with a closing bracket,
+thus ending the specification.
+T}
+T{
 Auto complete filename
 T};9;^I, Tab;T{
 String arguments
@@ -526,6 +548,26 @@ In Scintilla Symbol arguments
 .RB ( ES
 commands), complete beginning with the symbol, terminating fully
 completed symbols with a comma.
+T}
+T{
+Auto complete Goto label
+T};9;^I, Tab;T{
+Goto command arguments
+T};T{
+In Goto label arguments (\fBO\fP command),
+complete beginning with the current label, terminating fully
+completed labels with a comma.
+T}
+T{
+Auto complete help topic
+T};9;^I, Tab;T{
+Help topic arguments
+T};T{
+In help topic arguments (\fB?\fP command),
+complete beginning at the start of the command.
+Fully completed topics terminate the string argument,
+effectively opening the corresponding \fIwomanpage\fP,
+except if the \(lq{\(rq terminator is used.
 T}
 T{
 Indent to next tab stop

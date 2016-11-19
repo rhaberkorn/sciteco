@@ -120,8 +120,6 @@ public:
 class QRegSpecMachine;
 
 class StringBuildingMachine : public MicroStateMachine<gchar *> {
-	QRegSpecMachine *qregspec_machine;
-
 	enum Mode {
 		MODE_NORMAL,
 		MODE_UPPER,
@@ -131,9 +129,11 @@ class StringBuildingMachine : public MicroStateMachine<gchar *> {
 	bool toctl;
 
 public:
+	QRegSpecMachine *qregspec_machine;
+
 	StringBuildingMachine() : MicroStateMachine<gchar *>(),
-				  qregspec_machine(NULL),
-				  mode(MODE_NORMAL), toctl(false) {}
+				  mode(MODE_NORMAL), toctl(false),
+				  qregspec_machine(NULL) {}
 	~StringBuildingMachine();
 
 	void reset(void);
@@ -147,7 +147,6 @@ public:
  * string building commands and accumulation into a string
  */
 class StateExpectString : public State {
-	StringBuildingMachine machine;
 	gsize insert_len;
 
 	gint nesting;
@@ -156,6 +155,13 @@ class StateExpectString : public State {
 	bool last;
 
 public:
+	/*
+	 * FIXME: Only public as long as cmdline.cpp
+	 * needs to access it.
+	 * Can be avoided one process_edit_cmd() is in State.
+	 */
+	StringBuildingMachine machine;
+
 	StateExpectString(bool _building = true, bool _last = true)
 			 : insert_len(0), nesting(1),
 			   string_building(_building), last(_last) {}

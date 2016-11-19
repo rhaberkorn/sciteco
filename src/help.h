@@ -53,6 +53,12 @@ public:
 
 	void set(const gchar *name, const gchar *filename,
 	         tecoInt pos = 0);
+
+	inline gchar *
+	auto_complete(const gchar *name, gchar completed = '\0')
+	{
+		return RBTreeStringCase::auto_complete(name, completed);
+	}
 };
 
 extern HelpIndex help_index;

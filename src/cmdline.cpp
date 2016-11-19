@@ -39,6 +39,7 @@
 #include "ring.h"
 #include "ioview.h"
 #include "goto.h"
+#include "help.h"
 #include "undo.h"
 #include "symbols.h"
 #include "spawn.h"
@@ -443,6 +444,34 @@ Cmdline::process_edit_cmd(gchar key)
 				interface.popup_clear();
 				insert(key);
 			}
+		} else if (States::is_qreg()) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				break;
+			}
+
+			QRegSpecMachine &machine = ((StateExpectQReg *)States::current)->machine;
+			gchar *new_chars = machine.auto_complete();
+
+			if (new_chars)
+				insert(new_chars);
+			g_free(new_chars);
+		} else if (States::is_string() &&
+		           ((StateExpectString *)States::current)->machine.qregspec_machine) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				break;
+			}
+
+			QRegSpecMachine *machine =
+				((StateExpectString *)States::current)->machine.qregspec_machine;
+			gchar *new_chars = machine->auto_complete();
+
+			if (new_chars)
+				insert(new_chars);
+			g_free(new_chars);
 		} else if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
 			interface.popup_clear();
 
@@ -510,6 +539,32 @@ Cmdline::process_edit_cmd(gchar key)
 						? Symbols::scintilla
 						: Symbols::scilexer;
 			gchar *new_chars = symbol_complete(list, symbol, ',');
+
+			if (new_chars)
+				insert(new_chars);
+			g_free(new_chars);
+		} else if (States::current == &States::gotocmd) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				break;
+			}
+
+			const gchar *label = last_occurrence(strings[0], ",");
+			gchar *new_chars = Goto::table->auto_complete(label);
+
+			if (new_chars)
+				insert(new_chars);
+			g_free(new_chars);
+		} else if (States::current == &States::gethelp) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				break;
+			}
+
+			gchar complete = escape_char == '{' ? '\0' : escape_char;
+			gchar *new_chars = help_index.auto_complete(strings[0], complete);
 
 			if (new_chars)
 				insert(new_chars);

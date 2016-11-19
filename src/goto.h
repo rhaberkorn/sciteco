@@ -94,6 +94,12 @@ public:
 		RBTreeString::clear();
 	}
 
+	inline gchar *
+	auto_complete(const gchar *name, gchar completed = ',')
+	{
+		return RBTreeString::auto_complete(name, completed);
+	}
+
 #ifdef DEBUG
 	void dump(void);
 #endif

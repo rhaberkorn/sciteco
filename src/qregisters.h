@@ -374,6 +374,12 @@ public:
 	void update_environ(void);
 
 	void clear(void);
+
+	inline gchar *
+	auto_complete(const gchar *name, gchar completed = '\0', gsize max_len = 0)
+	{
+		return RBTreeString::auto_complete(name, completed, max_len);
+	}
 };
 
 class QRegisterStack {
@@ -471,6 +477,8 @@ public:
 	{
 		throw InvalidQRegError(name, is_local);
 	}
+
+	gchar *auto_complete(void);
 };
 
 /*
@@ -482,14 +490,19 @@ public:
  */
 class StateExpectQReg : public State {
 public:
+	/*
+	 * FIXME: Only public, so we can access it from
+	 * cmdline.cpp. Will not be necessary if process_edit_cmd()
+	 * is a State method.
+	 */
+	QRegSpecMachine machine;
+
 	StateExpectQReg(QRegSpecType type = QREG_REQUIRED);
 
 private:
 	State *custom(gchar chr);
 
 protected:
-	QRegSpecMachine machine;
-
 	virtual State *got_register(QRegister *reg) = 0;
 };
 
@@ -624,6 +637,12 @@ namespace States {
 	extern StateMacro		macro;
 	extern StateMacroFile		macro_file;
 	extern StateCopyToQReg		copytoqreg;
+
+	static inline bool
+	is_qreg()
+	{
+		return dynamic_cast<StateExpectQReg *>(current);
+	}
 }
 
 namespace QRegisters {
