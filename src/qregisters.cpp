@@ -990,9 +990,6 @@ QRegSpecMachine::input(gchar chr, QRegister *&result)
 
 MICROSTATE_START;
 	switch (chr) {
-	case '.':
-		undo.push_var(is_local) = true;
-		break;
 	case '#':
 		set(&&StateFirstChar);
 		break;
@@ -1000,6 +997,12 @@ MICROSTATE_START;
 		set(&&StateString);
 		undo.push_var(nesting)++;
 		break;
+	case '.':
+		if (!is_local) {
+			undo.push_var(is_local) = true;
+			break;
+		}
+		/* fall through */
 	default:
 		undo.push_str(name) = String::chrdup(String::toupper(chr));
 		goto done;
