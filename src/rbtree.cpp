@@ -19,12 +19,14 @@
 #include "config.h"
 #endif
 
-#include <bsd/sys/tree.h>
+#include <glib.h>
+#include <glib/gprintf.h>
 
 #include "rbtree.h"
 
 namespace SciTECO {
 
-RB_GENERATE(RBTree::Tree, RBTree::RBEntry, nodes, RBTree::compare_entries);
+template class RBTreeStringT<strcmp, strncmp>;
+template class RBTreeStringT<g_ascii_strcasecmp, g_ascii_strncasecmp>;
 
 } /* namespace SciTECO */

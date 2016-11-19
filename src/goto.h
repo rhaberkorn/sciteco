@@ -30,7 +30,7 @@
 
 namespace SciTECO {
 
-class GotoTable : public RBTree {
+class GotoTable : private RBTreeString {
 	class UndoTokenSet : public UndoToken {
 		GotoTable *table;
 
@@ -38,7 +38,7 @@ class GotoTable : public RBTree {
 		gint	pc;
 
 	public:
-		UndoTokenSet(GotoTable *_table, gchar *_name, gint _pc = -1)
+		UndoTokenSet(GotoTable *_table, const gchar *_name, gint _pc = -1)
 			    : table(_table), name(g_strdup(_name)), pc(_pc) {}
 		~UndoTokenSet()
 		{
@@ -61,23 +61,12 @@ class GotoTable : public RBTree {
 		}
 	};
 
-	class Label : public RBTree::RBEntry {
+	class Label : public RBEntryOwnString {
 	public:
-		gchar	*name;
-		gint	pc;
+		gint pc;
 
-		Label(gchar *_name, gint _pc = -1)
-		     : name(g_strdup(_name)), pc(_pc) {}
-		~Label()
-		{
-			g_free(name);
-		}
-
-		int
-		operator <(RBEntry &l2)
-		{
-			return g_strcmp0(name, ((Label &)l2).name);
-		}
+		Label(const gchar *name, gint _pc = -1)
+		     : RBEntryOwnString(name), pc(_pc) {}
 	};
 
 	/*
@@ -86,17 +75,23 @@ class GotoTable : public RBTree {
 	bool must_undo;
 
 public:
-	GotoTable(bool _undo = true) : RBTree(), must_undo(_undo) {}
+	GotoTable(bool _undo = true) : must_undo(_undo) {}
 
-	gint remove(gchar *name);
-	gint find(gchar *name);
+	gint remove(const gchar *name);
+	gint find(const gchar *name);
 
-	gint set(gchar *name, gint pc);
+	gint set(const gchar *name, gint pc);
 	inline void
-	undo_set(gchar *name, gint pc = -1)
+	undo_set(const gchar *name, gint pc = -1)
 	{
 		if (must_undo)
 			undo.push<UndoTokenSet>(this, name, pc);
+	}
+
+	inline void
+	clear(void)
+	{
+		RBTreeString::clear();
 	}
 
 #ifdef DEBUG

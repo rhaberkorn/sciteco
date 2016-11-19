@@ -51,6 +51,10 @@ HelpIndex::load(void)
 	GDir *women_dir;
 	const gchar *basename;
 
+	if (G_UNLIKELY(min() != NULL))
+		/* already loaded */
+		return;
+
 	lib_path = QRegisters::globals["$SCITECOPATH"]->get_string();
 	women_path = g_build_filename(lib_path, "women", NIL);
 	g_free(lib_path);
@@ -157,10 +161,9 @@ HelpIndex::find(const gchar *name)
 	 */
 	gchar *term = String::canonicalize_ctl(name);
 
-	Topic topic(term);
-	ret = (Topic *)RBTree::find(&topic);
-	g_free(term);
+	ret = (Topic *)RBTreeStringCase::find(term);
 
+	g_free(term);
 	return ret;
 }
 
@@ -170,7 +173,7 @@ HelpIndex::set(const gchar *name, const gchar *filename, tecoInt pos)
 	Topic *topic = new Topic(name, filename, pos);
 	Topic *existing;
 
-	existing = (Topic *)RBTree::find(topic);
+	existing = (Topic *)RBTree<RBEntryString>::find(topic);
 	if (existing) {
 		gchar *basename;
 
@@ -279,8 +282,7 @@ StateGetHelp::initial(void)
 	 * not depend on the availability of the standard
 	 * library.
 	 */
-	if (G_UNLIKELY(!help_index.min()))
-		help_index.load();
+	help_index.load();
 }
 
 State *

@@ -18,29 +18,21 @@
 #ifndef __RBTREE_H
 #define __RBTREE_H
 
+#include <string.h>
+
 #include <bsd/sys/tree.h>
 
 #include <glib.h>
-
-#include "undo.h"
+#include <glib/gprintf.h>
 
 namespace SciTECO {
 
+template <class RBEntryType>
 class RBTree {
-public:
-	class RBEntry;
-
-private:
-	RB_HEAD(Tree, RBEntry) head;
-
-	RB_PROTOTYPE_INTERNAL(Tree, RBEntry, nodes, /* unused */, static);
-
 public:
 	class RBEntry {
 	public:
 		RB_ENTRY(RBEntry) nodes;
-
-		virtual ~RBEntry() {}
 
 		inline RBEntry *
 		next(void)
@@ -52,16 +44,22 @@ public:
 		{
 			return RBTree::Tree_RB_PREV(this);
 		}
-
-		virtual int operator <(RBEntry &entry) = 0;
 	};
 
 private:
+	RB_HEAD(Tree, RBEntry) head;
+
 	static inline int
 	compare_entries(RBEntry *e1, RBEntry *e2)
 	{
-		return *e1 < *e2;
+		return ((RBEntryType *)e1)->compare(*(RBEntryType *)e2);
 	}
+
+	/*
+	 * All generated functions are plain-C, so they can be
+	 * static methods.
+	 */
+	RB_GENERATE_INTERNAL(Tree, RBEntry, nodes, compare_entries, static);
 
 public:
 	RBTree()
@@ -74,42 +72,47 @@ public:
 		clear();
 	}
 
-	inline RBEntry *
-	insert(RBEntry *entry)
+	inline RBEntryType *
+	insert(RBEntryType *entry)
 	{
 		RB_INSERT(Tree, &head, entry);
 		return entry;
 	}
-	inline RBEntry *
-	remove(RBEntry *entry)
+	inline RBEntryType *
+	remove(RBEntryType *entry)
 	{
-		return RB_REMOVE(Tree, &head, entry);
+		return (RBEntryType *)RB_REMOVE(Tree, &head, entry);
 	}
-	inline RBEntry *
-	find(RBEntry *entry)
+	inline RBEntryType *
+	find(RBEntryType *entry)
 	{
-		return RB_FIND(Tree, &head, entry);
+		return (RBEntryType *)RB_FIND(Tree, &head, entry);
 	}
-	inline RBEntry *
-	nfind(RBEntry *entry)
+	inline RBEntryType *
+	operator [](RBEntryType *entry)
 	{
-		return RB_NFIND(Tree, &head, entry);
+		return find(entry);
 	}
-	inline RBEntry *
+	inline RBEntryType *
+	nfind(RBEntryType *entry)
+	{
+		return (RBEntryType *)RB_NFIND(Tree, &head, entry);
+	}
+	inline RBEntryType *
 	min(void)
 	{
-		return RB_MIN(Tree, &head);
+		return (RBEntryType *)RB_MIN(Tree, &head);
 	}
-	inline RBEntry *
+	inline RBEntryType *
 	max(void)
 	{
-		return RB_MAX(Tree, &head);
+		return (RBEntryType *)RB_MAX(Tree, &head);
 	}
 
 	inline void
 	clear(void)
 	{
-		RBEntry *cur;
+		RBEntryType *cur;
 
 		while ((cur = min())) {
 			remove(cur);
@@ -117,6 +120,79 @@ public:
 		}
 	}
 };
+
+typedef gint (*StringCmpFunc)(const gchar *str1, const gchar *str2);
+typedef gint (*StringNCmpFunc)(const gchar *str1, const gchar *str2, gsize n);
+
+template <StringCmpFunc StringCmp>
+class RBEntryStringT : public RBTree<RBEntryStringT<StringCmp>>::RBEntry {
+public:
+	/*
+	 * It is convenient to be able to access the string
+	 * key with various attribute names.
+	 */
+	union {
+		gchar *key;
+		gchar *name;
+	};
+
+	RBEntryStringT(gchar *_key) : key(_key) {}
+
+	virtual ~RBEntryStringT() {}
+
+	inline gint
+	compare(RBEntryStringT &other)
+	{
+		return StringCmp(key, other.key);
+	}
+};
+
+template <StringCmpFunc StringCmp, StringNCmpFunc StringNCmp>
+class RBTreeStringT : public RBTree<RBEntryStringT<StringCmp>> {
+public:
+	typedef RBEntryStringT<StringCmp> RBEntryString;
+
+	class RBEntryOwnString : public RBEntryString {
+	public:
+		RBEntryOwnString(const gchar *key = NULL)
+		                : RBEntryString(key ? g_strdup(key) : NULL) {}
+
+		~RBEntryOwnString()
+		{
+			g_free(RBEntryString::key);
+		}
+	};
+
+	inline RBEntryString *
+	find(const gchar *str)
+	{
+		RBEntryString entry((gchar *)str);
+		return RBTree<RBEntryString>::find(&entry);
+	}
+	inline RBEntryString *
+	operator [](const gchar *name)
+	{
+		return find(name);
+	}
+
+	inline RBEntryString *
+	nfind(const gchar *str)
+	{
+		RBEntryString entry((gchar *)str);
+		return RBTree<RBEntryString>::nfind(&entry);
+	}
+};
+
+typedef RBTreeStringT<strcmp, strncmp> RBTreeString;
+typedef RBTreeStringT<g_ascii_strcasecmp, g_ascii_strncasecmp> RBTreeStringCase;
+
+/*
+ * Only these two instantiations of RBTreeStringT are ever used,
+ * so it is more efficient to explicitly instantiate them.
+ * NOTE: The insane rules of C++ prevent using the typedefs here...
+ */
+extern template class RBTreeStringT<strcmp, strncmp>;
+extern template class RBTreeStringT<g_ascii_strcasecmp, g_ascii_strncasecmp>;
 
 } /* namespace SciTECO */
 

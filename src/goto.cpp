@@ -42,16 +42,15 @@ namespace Goto {
 }
 
 gint
-GotoTable::remove(gchar *name)
+GotoTable::remove(const gchar *name)
 {
 	gint existing_pc = -1;
 
-	Label label(name);
-	Label *existing = (Label *)RBTree::find(&label);
+	Label *existing = (Label *)RBTreeString::find(name);
 
 	if (existing) {
 		existing_pc = existing->pc;
-		RBTree::remove(existing);
+		RBTreeString::remove(existing);
 		delete existing;
 	}
 
@@ -59,35 +58,29 @@ GotoTable::remove(gchar *name)
 }
 
 gint
-GotoTable::find(gchar *name)
+GotoTable::find(const gchar *name)
 {
-	Label label(name);
-	Label *existing = (Label *)RBTree::find(&label);
+	Label *existing = (Label *)RBTreeString::find(name);
 
 	return existing ? existing->pc : -1;
 }
 
 gint
-GotoTable::set(gchar *name, gint pc)
+GotoTable::set(const gchar *name, gint pc)
 {
 	if (pc < 0)
 		return remove(name);
 
-	Label *label = new Label(name, pc);
-	Label *existing;
 	gint existing_pc = -1;
+	Label *existing = (Label *)RBTreeString::find(name);
 
-	existing = (Label *)RBTree::find(label);
 	if (existing) {
 		existing_pc = existing->pc;
 		g_free(existing->name);
-		existing->name = label->name;
-		existing->pc = label->pc;
-
-		label->name = NULL;
-		delete label;
+		existing->name = g_strdup(name);
+		existing->pc = pc;
 	} else {
-		RBTree::insert(label);
+		RBTree::insert(new Label(name, pc));
 	}
 
 #ifdef DEBUG
@@ -101,7 +94,7 @@ GotoTable::set(gchar *name, gint pc)
 void
 GotoTable::dump(void)
 {
-	for (Label *cur = (Label *)RBTree::min();
+	for (Label *cur = (Label *)min();
 	     cur != NULL;
 	     cur = (Label *)cur->next())
 		g_printf("table[\"%s\"] = %d\n", cur->name, cur->pc);

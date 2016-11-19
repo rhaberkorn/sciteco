@@ -134,30 +134,17 @@ public:
 	friend class QRegisterStack;
 };
 
-class QRegister : public RBTree::RBEntry, public QRegisterData {
+class QRegister : public RBTreeString::RBEntryOwnString, public QRegisterData {
 protected:
 	/**
 	 * The default constructor for subclasses.
 	 * This leaves the name uninitialized.
 	 */
-	QRegister(void) : name(NULL) {}
+	QRegister() {}
 
 public:
-	gchar *name;
-
-	QRegister(const gchar *_name)
-		 : name(g_strdup(_name)) {}
-	virtual
-	~QRegister()
-	{
-		g_free(name);
-	}
-
-	int
-	operator <(RBEntry &entry)
-	{
-		return g_strcmp0(name, ((QRegister &)entry).name);
-	}
+	QRegister(const gchar *name)
+		 : RBTreeString::RBEntryOwnString(name) {}
 
 	virtual void edit(void);
 	virtual void undo_edit(void);
@@ -300,7 +287,7 @@ public:
 	void undo_exchange_string(QRegisterData &reg);
 };
 
-class QRegisterTable : private RBTree {
+class QRegisterTable : private RBTreeString {
 	class UndoTokenRemove : public UndoTokenWithSize<UndoTokenRemove> {
 		QRegisterTable *table;
 		QRegister *reg;
@@ -332,11 +319,7 @@ public:
 	insert(QRegister *reg)
 	{
 		reg->must_undo = must_undo;
-		/* FIXME: Returns already existing regs with the same name.
-		   This could be used to optimize commands that initialize
-		   a register if it does not yet exist (saves one table
-		   lookup): */
-		RBTree::insert(reg);
+		RBTreeString::insert(reg);
 		return reg;
 	}
 	inline QRegister *
@@ -352,30 +335,33 @@ public:
 	}
 
 	inline QRegister *
+	find(const gchar *name)
+	{
+		return (QRegister *)RBTreeString::find(name);
+	}
+	inline QRegister *
 	operator [](const gchar *name)
 	{
-		QRegister reg(name);
-		return (QRegister *)find(&reg);
+		return find(name);
 	}
 	inline QRegister *
 	operator [](gchar chr)
 	{
 		gchar buf[] = {chr, '\0'};
-		return operator [](buf);
+		return find(buf);
 	}
 
 	inline QRegister *
 	nfind(const gchar *name)
 	{
-		QRegister reg(name);
-		return (QRegister *)RBTree::nfind(&reg);
+		return (QRegister *)RBTreeString::nfind(name);
 	}
 
 	void edit(QRegister *reg);
 	inline QRegister *
 	edit(const gchar *name)
 	{
-		QRegister *reg = operator [](name);
+		QRegister *reg = find(name);
 
 		if (!reg)
 			return NULL;

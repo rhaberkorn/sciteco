@@ -30,28 +30,20 @@
 
 namespace SciTECO {
 
-class HelpIndex : public RBTree {
+class HelpIndex : private RBTreeStringCase {
 public:
-	class Topic : public RBTree::RBEntry {
+	class Topic : public RBEntryOwnString {
 	public:
-		gchar	*name;
 		gchar	*filename;
 		tecoInt	pos;
 
-		Topic(const gchar *_name, const gchar *_filename = NULL, tecoInt _pos = 0)
-		     : name(g_strdup(_name)),
+		Topic(const gchar *name, const gchar *_filename = NULL, tecoInt _pos = 0)
+		     : RBEntryOwnString(name),
 		       filename(_filename ? g_strdup(_filename) : NULL),
 		       pos(_pos) {}
 		~Topic()
 		{
-			g_free(name);
 			g_free(filename);
-		}
-
-		int
-		operator <(RBEntry &l2)
-		{
-			return g_ascii_strcasecmp(name, ((Topic &)l2).name);
 		}
 	};
 
