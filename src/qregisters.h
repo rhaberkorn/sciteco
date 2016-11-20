@@ -301,7 +301,7 @@ class QRegisterTable : private RBTreeString {
 		void
 		run(void)
 		{
-			delete table->remove(reg);
+			delete (QRegister *)table->remove(reg);
 		}
 	};
 
