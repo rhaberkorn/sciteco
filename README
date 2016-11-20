@@ -40,33 +40,42 @@ master branch and between releases until version 1.0 is released.__
 Features
 ========
 
-* All of the basic Video TECO commands supported
+* Supports most of the Video TECO commands
 * Improved parser compared to classic TECOs, making SciTECO
   more similar to other imperative languages.
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
   by the user (commands may have more than two arguments)
-* Extended Q-Register namespace (arbitrary strings): can be used to build libraries and
-  can be abused as a data structure
+* Extended Q-Register namespace (arbitrary strings): Can be used to build libraries and
+  can be abused as a data structure.
 * Make use of your keyboard's function keys by assigning them to strings inserted into
   the command stream.
   This also enables navigating with function keys (e.g. cursor keys) as demonstrated
   by the standard library `fnkeys.tes`.
   Function key macros can be context-sensitive, too.
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
-  characters, exotic match characters
-* Interactivity: supports filename completion via immediate editing commands (e.g. `<TAB>` in
-  commands accepting filenames); immediate searching (similar to search-as-you-type);
+  characters, exotic match characters...
+* Interactivity: Immediate searching (similar to search-as-you-type) and
   context-sensitive immediate editing commands.
-  In fact almost everything is done immediately, giving immediate interactive feedback.
+  In fact almost everything is done on-the-fly, giving immediate interactive feedback.
+  This also means that commands can fail immediately and will not even be accepted into
+  the command line, making it harder to write incorrect interactive macros.
   Context-sensitive immediate editing commands also make it much harder to destroy a day's
   work by accident than in classic TECOs.
-* Command rubout: SciTECO can even undo file writes (`EW` command).
+  Also, SciTECO supports many types of context-sensitive auto-completions (ie. the Tab-key):
+  Q-Register names, file names, directories, goto labels, help topics...
+* Command rubout: SciTECO can undo almost every side effect, including file writes
+  (`EW` command).
   This makes it even harder to destroy work by accident than in most other
   editors.
-  Rubbed out commands can be re-inserted.
+  Rubbed out commands can be re-inserted (redo).
 * Munging: Macros may be munged, that is executed in batch mode. In other words, SciTECO
   can be used for scripting.
   By default, a profile is munged.
+* Self-documenting: An integrated indexed help system allows browsing formatted documentation
+  about commands, macros and concepts within SciTECO (`?` command).
+  Macro packages can be documented with the `tedoc` tool, generating man pages.
+  Man pages and [GNU troff](https://www.gnu.org/software/groff/) markup in general
+  can be compiled into documents loadable by SciTECO using the `grosciteco` post-processor.
 * Cross platform: Builds on a wide variety of platforms. While being focused on UNIX
   and drawing some inspiration from it, other platforms (esp. Windows) are fully
   supported. It is made sure that SciTECO integrates well into all supported
