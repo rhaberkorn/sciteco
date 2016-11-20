@@ -28,6 +28,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "error.h"
 #include "interface.h"
 #include "ioview.h"
@@ -47,7 +48,7 @@ namespace QRegisters {
  * Classes
  */
 
-class QRegisterData {
+class QRegisterData : public Object {
 protected:
 	tecoInt integer;
 
@@ -241,12 +242,6 @@ class QRegisterClipboard : public QRegister {
 		}
 
 		void run(void);
-
-		gsize
-		get_size(void) const
-		{
-			return sizeof(*this) + strlen(name) + str_len;
-		}
 	};
 
 	/**
@@ -289,8 +284,8 @@ public:
 	void undo_exchange_string(QRegisterData &reg);
 };
 
-class QRegisterTable : private RBTreeString {
-	class UndoTokenRemove : public UndoTokenWithSize<UndoTokenRemove> {
+class QRegisterTable : private RBTreeString, public Object {
+	class UndoTokenRemove : public UndoToken {
 		QRegisterTable *table;
 		QRegister *reg;
 
@@ -392,7 +387,7 @@ public:
 	}
 };
 
-class QRegisterStack {
+class QRegisterStack : public Object {
 	class Entry : public QRegisterData {
 	public:
 		SLIST_ENTRY(Entry) entries;
@@ -415,16 +410,9 @@ class QRegisterStack {
 		}
 
 		void run(void);
-
-		gsize
-		get_size(void) const
-		{
-			return entry ? sizeof(*this) + sizeof(*entry)
-			             : sizeof(*this);
-		}
 	};
 
-	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop> {
+	class UndoTokenPop : public UndoToken {
 		QRegisterStack *stack;
 
 	public:

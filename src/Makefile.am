@@ -30,6 +30,7 @@ EXTRA_DIST = sciteco.html
 
 noinst_LTLIBRARIES = libsciteco-base.la
 libsciteco_base_la_SOURCES = main.cpp sciteco.h \
+                             memory.cpp memory.h \
                              string-utils.cpp string-utils.h \
                              error.cpp error.h \
                              cmdline.cpp cmdline.h \

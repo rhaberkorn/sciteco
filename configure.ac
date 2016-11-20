@@ -124,9 +124,13 @@ AC_CHECK_HEADERS([bsd/sys/queue.h], [], [
 
 case $host in
 *-mingw*)
-	AC_CHECK_HEADERS([windows.h], , [
+	AC_CHECK_HEADERS([windows.h psapi.h], , [
 		AC_MSG_ERROR([Missing Windows headers!])
 	])
+
+	# Make sure we get GetProcessMemoryInfo():
+	AM_CPPFLAGS="$AM_CPPFLAGS -DPSAPI_VERSION=1"
+	LIBS="$LIBS -lpsapi"
 	;;
 esac
 
@@ -154,7 +158,7 @@ esac
 # Check for optional GNU libc features.
 # Will probably only be found on Linux.
 AC_CHECK_HEADERS([malloc.h])
-AC_CHECK_FUNCS([malloc_trim])
+AC_CHECK_FUNCS([malloc_trim mallinfo])
 
 #
 # Config options

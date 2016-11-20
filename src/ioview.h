@@ -115,12 +115,6 @@ class IOView : public ViewCurrent {
 		{
 			g_unlink(filename);
 		}
-
-		gsize
-		get_size(void) const
-		{
-			return sizeof(*this) + strlen(filename) + 1;
-		}
 	};
 
 public:

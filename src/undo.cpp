@@ -29,40 +29,13 @@
 
 #include "sciteco.h"
 #include "cmdline.h"
-#include "interface.h"
-#include "error.h"
 #include "undo.h"
-
-#define SIZE_TO_MB(SIZE) ((gdouble)(SIZE))/(1024*1024)
 
 namespace SciTECO {
 
 //#define DEBUG
 
 UndoStack undo;
-
-void
-UndoStack::set_memory_limit(gsize new_limit)
-{
-	if (new_limit) {
-		if (!memory_limit) {
-			/* memory_usage outdated - recalculate */
-			UndoToken *token;
-
-			memory_usage = 0;
-			SLIST_FOREACH(token, &head, tokens)
-				memory_usage += token->get_size();
-		}
-
-		if (memory_usage > new_limit)
-			throw Error("Cannot set undo memory limit (%gmb): "
-			            "Current stack too large (%gmb).",
-			            SIZE_TO_MB(new_limit),
-			            SIZE_TO_MB(memory_usage));
-	}
-
-	push_var(memory_limit) = new_limit;
-}
 
 void
 UndoStack::push(UndoToken *token)
@@ -73,19 +46,6 @@ UndoStack::push(UndoToken *token)
 	 * don't have to check `enabled` here.
 	 */
 	g_assert(enabled == true);
-
-	if (memory_limit) {
-		gsize token_size = token->get_size();
-
-		if (memory_usage + token_size > memory_limit) {
-			delete token;
-			throw Error("Undo stack memory limit (%gmb) exceeded. "
-			            "See <EJ> command.",
-			            SIZE_TO_MB(memory_limit));
-		}
-
-		memory_usage += token_size;
-	}
 
 #ifdef DEBUG
 	g_printf("UNDO PUSH %p\n", token);
@@ -103,9 +63,6 @@ UndoStack::pop(gint pc)
 		g_printf("UNDO POP %p\n", top);
 		fflush(stdout);
 #endif
-
-		if (memory_limit)
-			memory_usage -= top->get_size();
 		top->run();
 
 		SLIST_REMOVE_HEAD(&head, tokens);
@@ -122,8 +79,6 @@ UndoStack::clear(void)
 		SLIST_REMOVE_HEAD(&head, tokens);
 		delete cur;
 	}
-
-	memory_usage = 0;
 }
 
 UndoStack::~UndoStack()

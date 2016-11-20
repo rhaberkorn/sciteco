@@ -25,6 +25,7 @@
 
 #include <Scintilla.h>
 
+#include "memory.h"
 #include "undo.h"
 #include "error.h"
 
@@ -59,14 +60,14 @@ extern sig_atomic_t sigint_occurred;
  * base-class implementations to interface.cpp.
  */
 template <class ViewImpl>
-class View {
+class View : public Object {
 	inline ViewImpl &
 	impl(void)
 	{
 		return *(ViewImpl *)this;
 	}
 
-	class UndoTokenMessage : public UndoTokenWithSize<UndoTokenMessage> {
+	class UndoTokenMessage : public UndoToken {
 		ViewImpl &view;
 
 		unsigned int iMessage;
@@ -86,8 +87,7 @@ class View {
 		}
 	};
 
-	class UndoTokenSetRepresentations : public
-	      UndoTokenWithSize<UndoTokenSetRepresentations> {
+	class UndoTokenSetRepresentations : public UndoToken {
 		ViewImpl &view;
 
 	public:
@@ -153,14 +153,14 @@ protected:
  * user interface at runtime.
  */
 template <class InterfaceImpl, class ViewImpl>
-class Interface {
+class Interface : public Object {
 	inline InterfaceImpl &
 	impl(void)
 	{
 		return *(InterfaceImpl *)this;
 	}
 
-	class UndoTokenShowView : public UndoTokenWithSize<UndoTokenShowView> {
+	class UndoTokenShowView : public UndoToken {
 		ViewImpl *view;
 
 	public:
@@ -171,7 +171,7 @@ class Interface {
 	};
 
 	template <class Type>
-	class UndoTokenInfoUpdate : public UndoTokenWithSize< UndoTokenInfoUpdate<Type> > {
+	class UndoTokenInfoUpdate : public UndoToken {
 		const Type *obj;
 
 	public:

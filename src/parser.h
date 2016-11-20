@@ -23,6 +23,7 @@
 #include <glib.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "undo.h"
 #include "error.h"
 #include "expressions.h"
@@ -32,7 +33,7 @@ namespace SciTECO {
 /* TECO uses only lower 7 bits for commands */
 #define MAX_TRANSITIONS	127
 
-class State {
+class State : public Object {
 protected:
 	/* static transitions */
 	State *transitions[MAX_TRANSITIONS];
@@ -78,7 +79,7 @@ protected:
 };
 
 template <typename Type>
-class MicroStateMachine {
+class MicroStateMachine : public Object {
 protected:
 	/* label pointers */
 	typedef const void *MicroState;
@@ -259,13 +260,6 @@ public:
 	}
 
 	void run(void);
-
-	gsize
-	get_size(void) const
-	{
-		return dir ? sizeof(*this) + strlen(dir)
-		           : sizeof(*this);
-	}
 };
 
 class StateChangeDir : public StateExpectDir {

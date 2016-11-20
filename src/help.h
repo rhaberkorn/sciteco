@@ -24,13 +24,14 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "parser.h"
 #include "undo.h"
 #include "rbtree.h"
 
 namespace SciTECO {
 
-class HelpIndex : private RBTreeStringCase {
+class HelpIndex : private RBTreeStringCase, public Object {
 public:
 	class Topic : public RBEntryOwnString {
 	public:

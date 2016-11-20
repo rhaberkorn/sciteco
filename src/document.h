@@ -23,6 +23,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "interface.h"
 #include "undo.h"
 
@@ -32,7 +33,7 @@ namespace SciTECO {
  * Classes
  */
 
-class Document {
+class Document : public Object {
 	typedef const void *SciDoc;
 	SciDoc doc;
 

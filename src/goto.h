@@ -24,13 +24,14 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "parser.h"
 #include "undo.h"
 #include "rbtree.h"
 
 namespace SciTECO {
 
-class GotoTable : private RBTreeString {
+class GotoTable : private RBTreeString, public Object {
 	class UndoTokenSet : public UndoToken {
 		GotoTable *table;
 
@@ -52,12 +53,6 @@ class GotoTable : private RBTreeString {
 #ifdef DEBUG
 			table->dump();
 #endif
-		}
-
-		gsize
-		get_size(void) const
-		{
-			return sizeof(*this) + strlen(name) + 1;
 		}
 	};
 

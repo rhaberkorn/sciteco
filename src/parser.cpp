@@ -21,13 +21,13 @@
 
 #include <string.h>
 #include <exception>
-#include <new>
 
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "string-utils.h"
 #include "interface.h"
 #include "undo.h"
@@ -107,8 +107,11 @@ Execute::step(const gchar *macro, gint stop_pos)
 {
 	try {
 		/*
-		 * convert bad_alloc and other C++ standard
-		 * library exceptions
+		 * Convert bad_alloc and other C++ standard
+		 * library exceptions.
+		 * bad_alloc should no longer be thrown, though
+		 * since new/delete uses Glib allocations and we
+		 * uniformly terminate abnormally in case of OOM.
 		 */
 		try {
 			while (macro_pc < stop_pos) {
@@ -120,6 +123,8 @@ Execute::step(const gchar *macro, gint stop_pos)
 
 				if (interface.is_interrupted())
 					throw Error("Interrupted");
+
+				memlimit.check();
 
 				State::input(macro[macro_pc]);
 				macro_pc++;
@@ -2305,23 +2310,31 @@ StateECommand::custom(gchar chr)
 	 * of buffers in the ring.
 	 * (\fBread-only\fP)
 	 * .IP 2
-	 * The current undo stack memory limit in bytes.
+	 * The current memory limit in bytes.
 	 * This limit helps to prevent dangerous out-of-memory
 	 * conditions (e.g. resulting from infinite loops) by
-	 * approximating the memory used by \*(ST's undo stack and is only
-	 * effective in interactive mode.
-	 * Commands which would exceed that limit fail instead.
+	 * constantly sampling the memory requirements of \*(ST.
+	 * Note that not all platforms support precise measurements
+	 * of the current memory usage \(em \*(ST will fall back
+	 * to an approximation which might be less than the actual
+	 * usage on those platforms.
+	 * Memory limiting is effective in batch and interactive mode.
+	 * Commands which would exceed that limit will fail instead
+	 * allowing users to recover in interactive mode, e.g. by
+	 * terminating the command line.
 	 * When getting, a zero value indicates that memory limiting is
 	 * disabled.
 	 * Setting a value less than or equal to 0 as in
 	 * \(lq0,2EJ\(rq disables the limit.
 	 * \fBWarning:\fP Disabling memory limiting may provoke
-	 * uncontrollable out-of-memory errors in long running
-	 * or infinite loops.
-	 * Setting a new limit may fail if the current undo stack
-	 * is too large for the new limit \(em if this happens
-	 * you may have to clear your command-line first.
-	 * Undo stack memory limiting is enabled by default.
+	 * out-of-memory errors in long running or infinite loops
+	 * (interactive mode) that result in abnormal program
+	 * termination.
+	 * Setting a new limit may fail if the current memory
+	 * requirements are too large for the new limit \(em if
+	 * this happens you may have to clear your command-line
+	 * first.
+	 * Memory limiting is enabled by default.
 	 * .IP 3
 	 * This \fBwrite-only\fP property allows redefining the
 	 * first 16 entries of the terminal color palette \(em a
@@ -2370,7 +2383,7 @@ StateECommand::custom(gchar chr)
 		enum {
 			EJ_USER_INTERFACE = 0,
 			EJ_BUFFERS,
-			EJ_UNDO_MEMORY_LIMIT,
+			EJ_MEMORY_LIMIT,
 			EJ_INIT_COLOR
 		};
 		tecoInt property;
@@ -2382,8 +2395,8 @@ StateECommand::custom(gchar chr)
 			tecoInt value = expressions.pop_num_calc();
 
 			switch (property) {
-			case EJ_UNDO_MEMORY_LIMIT:
-				undo.set_memory_limit(MAX(0, value));
+			case EJ_MEMORY_LIMIT:
+				memlimit.set_limit(MAX(0, value));
 				break;
 
 			case EJ_INIT_COLOR:
@@ -2419,8 +2432,8 @@ StateECommand::custom(gchar chr)
 			expressions.push(ring.get_id(ring.last()));
 			break;
 
-		case EJ_UNDO_MEMORY_LIMIT:
-			expressions.push(undo.memory_limit);
+		case EJ_MEMORY_LIMIT:
+			expressions.push(memlimit.limit);
 			break;
 
 		default:

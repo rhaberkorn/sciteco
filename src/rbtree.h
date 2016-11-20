@@ -25,12 +25,19 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "memory.h"
+
 namespace SciTECO {
 
+/*
+ * NOTE: RBTree is not derived from Object,
+ * so we can derive from RBTree privately.
+ * Add Object to every RBTree subclass explicitly.
+ */
 template <class RBEntryType>
 class RBTree {
 public:
-	class RBEntry {
+	class RBEntry : public Object {
 	public:
 		RB_ENTRY(RBEntry) nodes;
 

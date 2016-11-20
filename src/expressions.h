@@ -20,20 +20,21 @@
 
 #include <glib.h>
 
+#include "memory.h"
 #include "undo.h"
 #include "error.h"
 
 namespace SciTECO {
 
 template <typename Type>
-class ValueStack {
+class ValueStack : public Object {
 	/*
 	 * NOTE: Since value stacks are usually singleton,
 	 * we pass them as a template parameter, saving space
 	 * in the undo token.
 	 */
 	template <ValueStack<Type> &stack>
-	class UndoTokenPush : public UndoTokenWithSize<UndoTokenPush<stack>> {
+	class UndoTokenPush : public UndoToken {
 		Type	value;
 		guint	index;
 
@@ -49,7 +50,7 @@ class ValueStack {
 	};
 
 	template <ValueStack<Type> &stack>
-	class UndoTokenPop : public UndoTokenWithSize<UndoTokenPop<stack>> {
+	class UndoTokenPop : public UndoToken {
 		guint index;
 
 	public:
@@ -158,7 +159,7 @@ public:
 /**
  * Arithmetic expression stacks
  */
-extern class Expressions {
+extern class Expressions : public Object {
 public:
 	/**
 	 * Operator type.

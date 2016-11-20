@@ -20,13 +20,14 @@
 
 #include <glib.h>
 
+#include "memory.h"
 #include "parser.h"
 #include "qregisters.h"
 #include "undo.h"
 
 namespace SciTECO {
 
-extern class Cmdline {
+extern class Cmdline : public Object {
 public:
 	/**
 	 * String containing the current command line.

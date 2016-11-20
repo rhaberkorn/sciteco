@@ -21,9 +21,11 @@
 #include <string.h>
 #include <glib.h>
 
+#include "memory.h"
+
 namespace SciTECO {
 
-class SymbolList {
+class SymbolList : public Object {
 public:
 	struct Entry {
 		const gchar	*name;

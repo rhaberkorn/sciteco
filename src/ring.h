@@ -25,6 +25,7 @@
 #include <Scintilla.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "interface.h"
 #include "undo.h"
 #include "qregisters.h"
@@ -40,7 +41,7 @@ namespace SciTECO {
 class Buffer : private IOView {
 	TAILQ_ENTRY(Buffer) buffers;
 
-	class UndoTokenClose : public UndoTokenWithSize<UndoTokenClose> {
+	class UndoTokenClose : public UndoToken {
 		Buffer *buffer;
 
 	public:
@@ -129,7 +130,7 @@ public:
 };
 
 /* object declared in main.cpp */
-extern class Ring {
+extern class Ring : public Object {
 	/*
 	 * Emitted after a buffer close
 	 * The pointer is the only remaining reference to the buffer!
@@ -147,13 +148,6 @@ extern class Ring {
 		}
 
 		void run(void);
-
-		gsize
-		get_size(void) const
-		{
-			return buffer ? sizeof(*this) + sizeof(*buffer)
-			              : sizeof(*this);
-		}
 	};
 
 	TAILQ_HEAD(Head, Buffer) head;

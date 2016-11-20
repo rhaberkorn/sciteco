@@ -23,10 +23,11 @@
 #include <glib.h>
 
 #include "sciteco.h"
+#include "memory.h"
 
 namespace SciTECO {
 
-class EOLReader {
+class EOLReader : public Object {
 	gchar *buffer;
 	gsize read_len;
 	guint offset;
@@ -91,7 +92,7 @@ public:
 	gchar *convert_all(gsize *out_len = NULL);
 };
 
-class EOLWriter {
+class EOLWriter : public Object {
 	enum {
 		STATE_START = 0,
 		STATE_WRITE_LF

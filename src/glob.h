@@ -24,11 +24,12 @@
 #include <glib/gstdio.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "parser.h"
 
 namespace SciTECO {
 
-class Globber {
+class Globber : public Object {
 	GFileTest test;
 	gchar *dirname;
 	GDir *dir;

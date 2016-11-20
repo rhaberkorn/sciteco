@@ -253,17 +253,6 @@ public:
 				      savepoint);
 		}
 	}
-
-	gsize
-	get_size(void) const
-	{
-		gsize ret = sizeof(*this) + strlen(filename) + 1;
-
-		if (savepoint)
-			ret += strlen(savepoint) + 1;
-
-		return ret;
-	}
 };
 
 static void

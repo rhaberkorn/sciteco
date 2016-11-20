@@ -22,9 +22,11 @@
 
 #include <curses.h>
 
+#include "memory.h"
+
 namespace SciTECO {
 
-class CursesInfoPopup {
+class CursesInfoPopup : public Object {
 public:
 	/**
 	 * @bug This is identical to the type defined in

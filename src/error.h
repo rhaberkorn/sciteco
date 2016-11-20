@@ -25,6 +25,7 @@
 #include <glib/gprintf.h>
 
 #include "sciteco.h"
+#include "memory.h"
 #include "string-utils.h"
 
 namespace SciTECO {
@@ -33,20 +34,20 @@ namespace SciTECO {
  * Thrown as exception to signify that program
  * should be terminated.
  */
-class Quit {};
+class Quit : public Object {};
 
 /**
  * Thrown as exception to cause a macro to
  * return or a command-line termination.
  */
-class Return {
+class Return : public Object {
 public:
 	guint args;
 
 	Return(guint _args = 0) : args(_args) {}
 };
 
-class Error {
+class Error : public Object {
 	GSList *frames;
 
 public:
@@ -54,7 +55,7 @@ public:
 	gint pos;
 	gint line, column;
 
-	class Frame {
+	class Frame : public Object {
 	public:
 		gint pos;
 		gint line, column;

@@ -25,18 +25,15 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 
+#include "memory.h"
+
 #ifdef DEBUG
 #include "parser.h"
 #endif
 
 namespace SciTECO {
 
-/**
- * Default undo stack memory limit (500mb).
- */
-#define UNDO_MEMORY_LIMIT_DEFAULT (500*1024*1024)
-
-class UndoToken {
+class UndoToken : public Object {
 public:
 	SLIST_ENTRY(UndoToken) tokens;
 
@@ -55,35 +52,10 @@ public:
 	virtual ~UndoToken() {}
 
 	virtual void run(void) = 0;
-
-	/**
-	 * Return approximated size of this object.
-	 * If possible it should take all heap objects
-	 * into account that are memory-managed by the undo
-	 * token.
-	 * For a simple implementation, you may derive
-	 * from UndoTokenWithSize.
-	 */
-	virtual gsize get_size(void) const = 0;
-};
-
-/**
- * UndoToken base class employing the CRTP idiom.
- * Deriving this class adds a size approximation based
- * on the shallow size of the template parameter.
- */
-template <class UndoTokenImpl>
-class UndoTokenWithSize : public UndoToken {
-public:
-	gsize
-	get_size(void) const
-	{
-		return sizeof(UndoTokenImpl);
-	}
 };
 
 template <typename Type>
-class UndoTokenVariable : public UndoTokenWithSize< UndoTokenVariable<Type> > {
+class UndoTokenVariable : public UndoToken {
 	Type *ptr;
 	Type value;
 
@@ -125,13 +97,6 @@ public:
 		*ptr = str;
 		str = NULL;
 	}
-
-	gsize
-	get_size(void) const
-	{
-		return str ? sizeof(*this) + strlen(str) + 1
-		           : sizeof(*this);
-	}
 };
 
 template <class Type>
@@ -155,46 +120,21 @@ public:
 		*ptr = obj;
 		obj = NULL;
 	}
-
-	gsize
-	get_size(void) const
-	{
-		return obj ? sizeof(*this) + sizeof(*obj)
-		           : sizeof(*this);
-	}
 };
 
-extern class UndoStack {
+extern class UndoStack : public Object {
 	SLIST_HEAD(Head, UndoToken) head;
-
-	/**
-	 * Current approx. memory usage of all
-	 * undo tokens in the stack.
-	 * It is only up to date if memory limiting
-	 * is enabled.
-	 */
-	gsize memory_usage;
 
 	void push(UndoToken *token);
 
 public:
 	bool enabled;
 
-	/**
-	 * Undo stack memory limit in bytes.
-	 * 0 means no limiting.
-	 */
-	gsize memory_limit;
-
-	UndoStack(bool _enabled = false)
-	         : memory_usage(0), enabled(_enabled),
-	           memory_limit(UNDO_MEMORY_LIMIT_DEFAULT)
+	UndoStack(bool _enabled = false) : enabled(_enabled)
 	{
 		SLIST_INIT(&head);
 	}
 	~UndoStack();
-
-	void set_memory_limit(gsize new_limit = 0);
 
 	/**
 	 * Allocate and push undo token.

@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <new>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -81,12 +80,10 @@ static gboolean mung_profile = TRUE;
 sig_atomic_t sigint_occurred = FALSE;
 
 extern "C" {
-static gpointer g_malloc_exception(gsize n_bytes);
-static gpointer g_calloc_exception(gsize n_blocks, gsize n_block_bytes);
-static gpointer g_realloc_exception(gpointer mem, gsize n_bytes);
 
 static void sigint_handler(int signal);
-}
+
+} /* extern "C" */
 
 #if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 
@@ -342,45 +339,6 @@ initialize_environment(const gchar *program)
  * Callbacks
  */
 
-class g_bad_alloc : public std::bad_alloc {
-public:
-	const char *
-	what() const throw()
-	{
-		return "glib allocation";
-	}
-};
-
-static gpointer
-g_malloc_exception(gsize n_bytes)
-{
-	gpointer p = malloc(n_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
-static gpointer
-g_calloc_exception(gsize n_blocks, gsize n_block_bytes)
-{
-	gpointer p = calloc(n_blocks, n_block_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
-static gpointer
-g_realloc_exception(gpointer mem, gsize n_bytes)
-{
-	gpointer p = realloc(mem, n_bytes);
-
-	if (!p)
-		throw g_bad_alloc();
-	return p;
-}
-
 static void
 sigint_handler(int signal)
 {
@@ -403,15 +361,6 @@ main(int argc, char **argv)
 	static GotoTable	cmdline_goto_table;
 	static QRegisterTable	local_qregs;
 
-	static GMemVTable vtable = {
-		g_malloc_exception,	/* malloc */
-		g_realloc_exception,	/* realloc */
-		free,			/* free */
-		g_calloc_exception,	/* calloc */
-		malloc,			/* try_malloc */
-		realloc			/* try_realloc */
-	};
-
 	gchar *mung_filename;
 
 #ifdef DEBUG_PAUSE
@@ -421,8 +370,6 @@ main(int argc, char **argv)
 
 	signal(SIGINT, sigint_handler);
 	signal(SIGTERM, sigint_handler);
-
-	g_mem_set_vtable(&vtable);
 
 	mung_filename = process_options(argc, argv);
 	/*
