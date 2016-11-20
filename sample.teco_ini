@@ -51,8 +51,8 @@ EMQ[$SCITECOPATH]/session.tes
 ! Uncomment if XTerm allows clipboard operations !
 ! 0,256ED !
 
-! Uncomment to tweak the undo stack memory limit !
-! 500*1024*1024,2EJ !
+! Uncomment to tweak the memory limit !
+! 500*1000*1000,2EJ !
 
 ! If files are given on the command-line, open them
   and disable session saving.
