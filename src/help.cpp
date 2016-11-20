@@ -51,7 +51,7 @@ HelpIndex::load(void)
 	GDir *women_dir;
 	const gchar *basename;
 
-	if (G_UNLIKELY(min() != NULL))
+	if (G_LIKELY(min() != NULL))
 		/* already loaded */
 		return;
 

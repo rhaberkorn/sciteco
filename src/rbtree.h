@@ -34,15 +34,15 @@ public:
 	public:
 		RB_ENTRY(RBEntry) nodes;
 
-		inline RBEntry *
+		inline RBEntryType *
 		next(void)
 		{
-			return RBTree::Tree_RB_NEXT(this);
+			return (RBEntryType *)RBTree::Tree_RB_NEXT(this);
 		}
-		inline RBEntry *
+		inline RBEntryType *
 		prev(void)
 		{
-			return RBTree::Tree_RB_PREV(this);
+			return (RBEntryType *)RBTree::Tree_RB_PREV(this);
 		}
 	};
 
@@ -66,10 +66,14 @@ public:
 	{
 		RB_INIT(&head);
 	}
-	virtual
 	~RBTree()
 	{
-		clear();
+		/*
+		 * Keeping the clean up out of this wrapper class
+		 * means we can avoid declaring EBEntry implementations
+		 * virtual.
+		 */
+		g_assert(min() == NULL);
 	}
 
 	inline RBEntryType *
@@ -108,17 +112,6 @@ public:
 	{
 		return (RBEntryType *)RB_MAX(Tree, &head);
 	}
-
-	inline void
-	clear(void)
-	{
-		RBEntryType *cur;
-
-		while ((cur = min())) {
-			remove(cur);
-			delete cur;
-		}
-	}
 };
 
 typedef gint (*StringCmpFunc)(const gchar *str1, const gchar *str2);
@@ -137,8 +130,6 @@ public:
 	};
 
 	RBEntryStringT(gchar *_key) : key(_key) {}
-
-	virtual ~RBEntryStringT() {}
 
 	inline gint
 	compare(RBEntryStringT &other)

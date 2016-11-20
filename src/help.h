@@ -47,6 +47,14 @@ public:
 		}
 	};
 
+	~HelpIndex()
+	{
+		Topic *cur;
+
+		while ((cur = (Topic *)min()))
+			delete (Topic *)remove(cur);
+	}
+
 	void load(void);
 
 	Topic *find(const gchar *name);

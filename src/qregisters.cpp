@@ -841,7 +841,7 @@ QRegisterTable::update_environ(void)
 /**
  * Free resources associated with table.
  *
- * This is similar to RBTree::clear() but
+ * This is similar to the destructor but
  * has the advantage that we can check whether some
  * register is currently edited.
  * Since this is not a destructor, we can throw
@@ -859,8 +859,7 @@ QRegisterTable::clear(void)
 			throw Error("Currently edited Q-Register \"%s\" "
 			            "cannot be discarded", cur->name);
 
-		remove(cur);
-		delete cur;
+		delete (QRegister *)remove(cur);
 	}
 }
 

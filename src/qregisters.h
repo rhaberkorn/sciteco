@@ -146,6 +146,8 @@ public:
 	QRegister(const gchar *name)
 		 : RBTreeString::RBEntryOwnString(name) {}
 
+	virtual ~QRegister() {}
+
 	virtual void edit(void);
 	virtual void undo_edit(void);
 
@@ -307,6 +309,14 @@ class QRegisterTable : private RBTreeString {
 
 public:
 	QRegisterTable(bool _undo = true);
+
+	~QRegisterTable()
+	{
+		QRegister *cur;
+
+		while ((cur = (QRegister *)min()))
+			delete (QRegister *)remove(cur);
+	}
 
 	inline void
 	undo_remove(QRegister *reg)

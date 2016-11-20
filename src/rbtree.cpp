@@ -48,7 +48,7 @@ auto_complete(const gchar *key, gchar completed, gsize restrict_len)
 
 	for (RBEntryString *cur = nfind(key);
 	     cur && !StringNCmp(cur->key, key, key_len);
-	     cur = (RBEntryString *)cur->next()) {
+	     cur = cur->next()) {
 		if (restrict_len && strlen(cur->key) != restrict_len)
 			continue;
 
@@ -68,7 +68,7 @@ auto_complete(const gchar *key, gchar completed, gsize restrict_len)
 	if (!insert && prefixed_entries > 1) {
 		for (RBEntryString *cur = first;
 		     cur && !StringNCmp(cur->key, key, key_len);
-		     cur = (RBEntryString *)cur->next()) {
+		     cur = cur->next()) {
 			if (restrict_len && strlen(cur->key) != restrict_len)
 				continue;
 

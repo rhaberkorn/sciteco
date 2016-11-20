@@ -77,6 +77,11 @@ class GotoTable : private RBTreeString {
 public:
 	GotoTable(bool _undo = true) : must_undo(_undo) {}
 
+	~GotoTable()
+	{
+		clear();
+	}
+
 	gint remove(const gchar *name);
 	gint find(const gchar *name);
 
@@ -91,7 +96,10 @@ public:
 	inline void
 	clear(void)
 	{
-		RBTreeString::clear();
+		Label *cur;
+
+		while ((cur = (Label *)min()))
+			delete (Label *)RBTreeString::remove(cur);
 	}
 
 	inline gchar *
