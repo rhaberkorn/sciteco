@@ -4,6 +4,8 @@
  *                       <output file> <input header>
  *!
 
+0,2EJ !* FIXME: Memory limiting is too slow *!
+
 :EMQ[$SCITECOPATH]/getopt.tes
 EMQ[$SCITECOPATH]/string.tes
 

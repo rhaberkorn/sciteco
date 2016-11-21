@@ -51,9 +51,12 @@ MemoryLimit::get_usage(void)
 	/*
 	 * NOTE: `uordblks` is an int and thus prone
 	 * to wrap-around issues.
+	 *
 	 * Unfortunately, the only other machine readable
 	 * alternative is malloc_info() which prints
-	 * into a FILE * stream [sic!]
+	 * into a FILE * stream [sic!] and is unspeakably
+	 * slow even if writing to an unbuffered fmemopen()ed
+	 * stream.
 	 */
 	return info.uordblks;
 }
@@ -72,7 +75,7 @@ MemoryLimit::get_usage(void)
 	 * happens, we can just as well terminate abnormally.
 	 */
 	if (G_UNLIKELY(!GetProcessMemoryInfo(GetCurrentProcess(),
-	                                     &info, sizeof(info))) {
+	                                     &info, sizeof(info)))) {
 		gchar *msg = g_win32_error_message(GetLastError());
 		g_error("Cannot get memory usage: %s", msg);
 		/* shouldn't be reached */
@@ -108,7 +111,7 @@ MemoryLimit::set_limit(gsize new_limit)
 
 		Error err("Cannot set undo memory limit (%s): "
 		          "Current usage too large (%s).",
-		          usage_str, limit_str);
+		          limit_str, usage_str);
 
 		g_free(limit_str);
 		g_free(usage_str);
@@ -136,32 +139,37 @@ void *
 Object::operator new(size_t size) noexcept
 {
 #ifdef USE_MEMORY_COUNTING
-	SciTECO::memory_usage += size;
+	memory_usage += size;
 #endif
 
-#ifdef HAVE_MALLOC_TRIM
 	/*
-	 * Using g_slice would render malloc_trim()
+	 * Since we've got the sized-delete operator
+	 * below, we could allocate via g_slice.
+	 *
+	 * Using g_slice however would render malloc_trim()
 	 * ineffective. Also, it has been shown to be
 	 * unnecessary on Linux/glibc.
+	 * Glib is guaranteed to use the system malloc(),
+	 * so g_malloc() cooperates with malloc_trim().
+	 *
+	 * On Windows (even Windows 2000), the slice allocator
+	 * did not show any significant performance boost
+	 * either. Also, since g_slice never seems to return
+	 * memory to the OS and we cannot force it to do so,
+	 * it will not cooperate with the Windows-specific
+	 * memory measurement and it is hard to recover
+	 * from memory limit exhaustions.
 	 */
 	return g_malloc(size);
-#else
-	return g_slice_alloc(size);
-#endif
 }
 
 void
 Object::operator delete(void *ptr, size_t size) noexcept
 {
-#ifdef HAVE_MALLOC_TRIM
 	g_free(ptr);
-#else
-	g_slice_free1(size, ptr);
-#endif
 
 #ifdef USE_MEMORY_COUNTING
-	SciTECO::memory_usage -= size;
+	memory_usage -= size;
 #endif
 }
 

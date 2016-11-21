@@ -1,6 +1,8 @@
 #!/usr/local/bin/sciteco -m
 !* grosciteco.tes [-t <output-tec>] [--] <output-woman> <input> *!
 
+0,2EJ !* FIXME: Memory limiting is too slow *!
+
 :EMQ[$SCITECOPATH]/getopt.tes
 
 !* Process command-line options *!

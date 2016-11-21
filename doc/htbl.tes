@@ -2,6 +2,8 @@
 !* htbl.tes <input> <output> *!
 !* Troff tbl "drop-in" replacement *!
 
+0,2EJ !* FIXME: Memory limiting is too slow *!
+
 LR 0X#in 2LR 0X#ou EBQ#in EB -EF
 
 <

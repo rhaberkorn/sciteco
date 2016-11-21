@@ -126,6 +126,8 @@ case $host in
 *-mingw*)
 	AC_CHECK_HEADERS([windows.h psapi.h], , [
 		AC_MSG_ERROR([Missing Windows headers!])
+	], [
+		#include <windows.h>
 	])
 
 	# Make sure we get GetProcessMemoryInfo():
