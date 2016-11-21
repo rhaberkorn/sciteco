@@ -1123,7 +1123,7 @@ InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
 	 * At least we can null-terminate the return string in the
 	 * process (PDCurses does not guarantee that either).
 	 */
-	str = g_malloc(length + 1);
+	str = (gchar *)g_malloc(length + 1);
 	memcpy(str, contents, length);
 	str[length] = '\0';
 
