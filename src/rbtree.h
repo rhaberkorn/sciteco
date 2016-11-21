@@ -80,9 +80,14 @@ public:
 		 * means we can avoid declaring EBEntry implementations
 		 * virtual.
 		 */
-		g_assert(min() == NULL);
+		g_assert(root() == NULL);
 	}
 
+	inline RBEntryType *
+	root(void)
+	{
+		return (RBEntryType *)RB_ROOT(&head);
+	}
 	inline RBEntryType *
 	insert(RBEntryType *entry)
 	{

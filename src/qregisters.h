@@ -309,7 +309,7 @@ public:
 	{
 		QRegister *cur;
 
-		while ((cur = (QRegister *)min()))
+		while ((cur = (QRegister *)root()))
 			delete (QRegister *)remove(cur);
 	}
 

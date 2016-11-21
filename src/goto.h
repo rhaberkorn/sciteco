@@ -93,7 +93,7 @@ public:
 	{
 		Label *cur;
 
-		while ((cur = (Label *)min()))
+		while ((cur = (Label *)root()))
 			delete (Label *)RBTreeString::remove(cur);
 	}
 

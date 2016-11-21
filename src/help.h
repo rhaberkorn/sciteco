@@ -52,7 +52,7 @@ public:
 	{
 		Topic *cur;
 
-		while ((cur = (Topic *)min()))
+		while ((cur = (Topic *)root()))
 			delete (Topic *)remove(cur);
 	}
 

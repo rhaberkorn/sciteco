@@ -854,7 +854,7 @@ QRegisterTable::clear(void)
 {
 	QRegister *cur;
 
-	while ((cur = (QRegister *)min())) {
+	while ((cur = (QRegister *)root())) {
 		if (cur == QRegisters::current)
 			throw Error("Currently edited Q-Register \"%s\" "
 			            "cannot be discarded", cur->name);
