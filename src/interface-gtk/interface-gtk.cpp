@@ -185,8 +185,8 @@ InterfaceGtk::get_options(void)
 
 	/*
 	 * Parsing the option context with the Gtk option group
-	 * will automatically initialize Gtk, so gtk_init()
-	 * does not have to be called.
+	 * will automatically initialize Gtk, but we do not yet
+	 * open the default display.
 	 */
 	GOptionGroup *group = gtk_get_option_group(FALSE);
 
@@ -213,6 +213,14 @@ InterfaceGtk::init(void)
 	g_thread_init(NULL);
 #endif
 	gdk_threads_init();
+
+	/*
+	 * gtk_init() is not necessary when using gtk_get_option_group(),
+	 * but this will open the default display.
+	 * FIXME: Perhaps it is possible to defer this until we initialize
+	 * interactive mode!?
+	 */
+	gtk_init(NULL, NULL);
 
 	/*
 	 * Register clipboard registers.
