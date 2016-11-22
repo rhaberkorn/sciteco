@@ -286,6 +286,12 @@ public:
 
 class QRegisterTable : private RBTreeString, public Object {
 	class UndoTokenRemove : public UndoToken {
+		/*
+		 * NOTE: Storing the table here is only necessary since
+		 * we may have to remove from a global or local Q-Reg
+		 * table. This could be avoided using a separate
+		 * subclass for local registers.
+		 */
 		QRegisterTable *table;
 		QRegister *reg;
 
@@ -303,7 +309,8 @@ class QRegisterTable : private RBTreeString, public Object {
 	bool must_undo;
 
 public:
-	QRegisterTable(bool _undo = true);
+	QRegisterTable(bool _must_undo = true)
+	              : must_undo(_must_undo) {}
 
 	~QRegisterTable()
 	{
@@ -338,6 +345,8 @@ public:
 		gchar buf[] = {name, '\0'};
 		return insert(buf);
 	}
+
+	void insert_defaults(void);
 
 	inline QRegister *
 	find(const gchar *name)

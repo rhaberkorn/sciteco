@@ -159,7 +159,23 @@ Execute::macro(const gchar *macro, bool locals)
 	GotoTable *parent_goto_table = Goto::table;
 	GotoTable macro_goto_table(false);
 
-	QRegisterTable *parent_locals = NULL;
+	QRegisterTable *parent_locals = QRegisters::locals;
+	/*
+	 * NOTE: A local QReg table is not required
+	 * for local macro calls (:M).
+	 * However allocating it on the stack on-demand is
+	 * tricky (VLAs are not in standard C++ and alloca()
+	 * is buggy on MSCVRT), so we always reserve a
+	 * local Q-Reg table.
+	 * This is OK since the table object itself is very
+	 * small and it's empty by default.
+	 * Best would be to let Execute::macro() be a wrapper
+	 * around something like Execute::local_macro() which
+	 * cares about local Q-Reg allocation, but the special
+	 * handling of currently-edited local Q-Regs below
+	 * prevents this.
+	 */
+	QRegisterTable macro_locals(false);
 
 	State *parent_state = States::current;
 	gint parent_pc = macro_pc;
@@ -177,17 +193,14 @@ Execute::macro(const gchar *macro, bool locals)
 	loop_stack_fp = loop_stack.items();
 
 	Goto::table = &macro_goto_table;
+
+	/*
+	 * Locals are only initialized when needed to
+	 * improve the speed of local macro calls.
+	 */
 	if (locals) {
-		/*
-		 * Locals are only allocated when needed to save
-		 * space on the call stack and to improve the speed
-		 * of local macro calls.
-		 * However since the QRegisterTable object is rather
-		 * small we can allocate it using alloca() on the stack.
-		 */
-		parent_locals = QRegisters::locals;
-		QRegisters::locals = g_newa(QRegisterTable, 1);
-		new (QRegisters::locals) QRegisterTable(false);
+		macro_locals.insert_defaults();
+		QRegisters::locals = &macro_locals;
 	}
 
 	try {
@@ -269,11 +282,7 @@ Execute::macro(const gchar *macro, bool locals)
 		g_free(Goto::skip_label);
 		Goto::skip_label = NULL;
 
-		if (locals) {
-			/* memory is reclaimed on return */
-			QRegisters::locals->~QRegisterTable();
-			QRegisters::locals = parent_locals;
-		}
+		QRegisters::locals = parent_locals;
 		Goto::table = parent_goto_table;
 
 		loop_stack_fp = parent_loop_fp;
@@ -283,11 +292,7 @@ Execute::macro(const gchar *macro, bool locals)
 		throw; /* forward */
 	}
 
-	if (locals) {
-		/* memory is reclaimed on return */
-		QRegisters::locals->~QRegisterTable();
-		QRegisters::locals = parent_locals;
-	}
+	QRegisters::locals = parent_locals;
 	Goto::table = parent_goto_table;
 
 	loop_stack_fp = parent_loop_fp;

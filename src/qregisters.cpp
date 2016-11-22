@@ -696,7 +696,8 @@ QRegisterClipboard::undo_exchange_string(QRegisterData &reg)
 	reg.undo_set_string();
 }
 
-QRegisterTable::QRegisterTable(bool _undo) : must_undo(_undo)
+void
+QRegisterTable::insert_defaults(void)
 {
 	/* general purpose registers */
 	for (gchar q = 'A'; q <= 'Z'; q++)

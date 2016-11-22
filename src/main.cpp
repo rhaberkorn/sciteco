@@ -384,6 +384,8 @@ main(int argc, char **argv)
 	 */
 	QRegisters::view.initialize();
 
+	/* the default registers (A-Z and 0-9) */
+	QRegisters::globals.insert_defaults();
 	/* search string and status register */
 	QRegisters::globals.insert("_");
 	/* replacement string register */
@@ -395,6 +397,8 @@ main(int argc, char **argv)
 	/* environment defaults and registers */
 	initialize_environment(argv[0]);
 
+	/* the default registers (A-Z and 0-9) */
+	local_qregs.insert_defaults();
 	QRegisters::locals = &local_qregs;
 
 	ring.edit((const gchar *)NULL);
