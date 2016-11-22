@@ -68,10 +68,13 @@ extern sig_atomic_t sigint_occurred;
 #define CTL_KEY(C)	((C) & ~0x40)
 /**
  * Control character of the escape key.
- * Equivalent to CTL_KEY('[')
+ * Equivalent to CTL_KEY('[') or '\e'.
  */
 #define CTL_KEY_ESC	27
-/** String containing the escape character */
+/**
+ * String containing the escape character.
+ * There is "\e", but it's not really standard C/C++.
+ */
 #define CTL_KEY_ESC_STR	"\x1B"
 
 #define SUCCESS		((tecoBool)-1)

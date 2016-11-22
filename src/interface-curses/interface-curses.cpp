@@ -416,7 +416,7 @@ InterfaceCurses::restore_colors(void)
 	/*
 	 * Looks like a real XTerm
 	 */
-	fputs("\e]104\a", screen_tty);
+	fputs(CTL_KEY_ESC_STR "]104\a", screen_tty);
 	fflush(screen_tty);
 }
 
@@ -1183,7 +1183,7 @@ InterfaceCurses::set_clipboard(const gchar *name, const gchar *str, gssize str_l
 	gint state = 0;
 	gint save = 0;
 
-	fputs("\e]52;", screen_tty);
+	fputs(CTL_KEY_ESC_STR "]52;", screen_tty);
 	fputc(get_selection_by_name(name), screen_tty);
 	fputc(';', screen_tty);
 
@@ -1233,7 +1233,7 @@ InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
 	 * Query the clipboard -- XTerm will reply with the
 	 * OSC-52 command that would set the current selection.
 	 */
-	fputs("\e]52;", screen_tty);
+	fputs(CTL_KEY_ESC_STR "]52;", screen_tty);
 	fputc(get_selection_by_name(name), screen_tty);
 	fputs(";?\a", screen_tty);
 	fflush(screen_tty);
