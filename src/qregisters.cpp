@@ -697,6 +697,39 @@ QRegisterClipboard::undo_exchange_string(QRegisterData &reg)
 }
 
 void
+QRegisterTable::UndoTokenRemoveGlobal::run(void)
+{
+	delete (QRegister *)QRegisters::globals.remove(reg);
+}
+
+void
+QRegisterTable::UndoTokenRemoveLocal::run(void)
+{
+	/*
+	 * NOTE: QRegisters::locals should point
+	 * to the correct table when the token is
+	 * executed.
+	 */
+	delete (QRegister *)QRegisters::locals->remove(reg);
+}
+
+void
+QRegisterTable::undo_remove(QRegister *reg)
+{
+	if (!must_undo)
+		return;
+
+	/*
+	 * NOTE: Could also be solved using a virtual
+	 * method and subclasses...
+	 */
+	if (this == &QRegisters::globals)
+		undo.push<UndoTokenRemoveGlobal>(reg);
+	else
+		undo.push<UndoTokenRemoveLocal>(reg);
+}
+
+void
 QRegisterTable::insert_defaults(void)
 {
 	/* general purpose registers */
