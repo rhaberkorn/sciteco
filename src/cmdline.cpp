@@ -239,6 +239,8 @@ Cmdline::keypress(gchar key)
 		 * The return "arguments" are currently
 		 * ignored.
 		 */
+		g_assert(States::current == &States::start);
+
 		interface.popup_clear();
 
 		if (quit_requested)

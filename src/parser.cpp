@@ -212,11 +212,8 @@ Execute::macro(const gchar *macro, bool locals)
 			 * end of macro, even though some checks
 			 * are unnecessary here.
 			 * macro_pc will still point to the return PC.
-			 * We are still in the "escape" state and must
-			 * reset it here, so it is not confused
-			 * with a trailing ^[ in macro.
 			 */
-			States::current = &States::start;
+			g_assert(States::current == &States::start);
 
 			/*
 			 * Discard all braces, except the current one.
@@ -252,8 +249,8 @@ Execute::macro(const gchar *macro, bool locals)
 				 * Due to the deferred nature of ^[,
 				 * it is valid to end in the "escape" state.
 				 * FIXME: This could be avoided by signalling
-				 * the state the end of macro but State::refresh()
-				 * cannot be used :-(.
+				 * the state the end of macro using a new
+				 * virtual method.
 				 */
 				expressions.discard_args();
 			} else if (G_UNLIKELY(States::current != &States::start)) {
@@ -2152,6 +2149,7 @@ StateEscape::custom(gchar chr)
 	 */
 	if (chr == CTL_KEY_ESC) {
 		BEGIN_EXEC(&States::start);
+		States::current = &States::start;
 		expressions.eval();
 		throw Return(expressions.args());
 	}
