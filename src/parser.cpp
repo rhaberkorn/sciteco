@@ -244,22 +244,11 @@ Execute::macro(const gchar *macro, bool locals)
 				throw Error("Label \"%s\" not found",
 				            Goto::skip_label);
 
-			if (States::current == &States::escape) {
-				/*
-				 * Due to the deferred nature of ^[,
-				 * it is valid to end in the "escape" state.
-				 * FIXME: This could be avoided by signalling
-				 * the state the end of macro using a new
-				 * virtual method.
-				 */
-				expressions.discard_args();
-			} else if (G_UNLIKELY(States::current != &States::start)) {
-				/*
-				 * can only happen if we returned because
-				 * of macro end
-				 */
-				throw Error("Unterminated command");
-			}
+			/*
+			 * Some states (esp. commands involving a
+			 * "lookahead") are valid at the end of a macro.
+			 */
+			States::current->end_of_macro();
 
 			/*
 			 * This handles the problem of Q-Registers
@@ -688,6 +677,7 @@ StateStart::StateStart() : State()
 	transitions['\0'] = this;
 	init(" \f\r\n\v");
 
+	transitions['$'] = &States::escape;
 	transitions['!'] = &States::label;
 	transitions['O'] = &States::gotocmd;
 	transitions['^'] = &States::control;
@@ -2113,7 +2103,7 @@ StateEscape::StateEscape()
 State *
 StateEscape::custom(gchar chr)
 {
-	/*$ ^[^[ terminate return
+	/*$ ^[^[ ^[$ $$ terminate return
 	 * [a1,a2,...]$$ -- Terminate command line or return from macro
 	 * [a1,a2,...]^[$
 	 *
@@ -2143,11 +2133,13 @@ StateEscape::custom(gchar chr)
 	 * when terminating a command line \(em the new command line
 	 * will always start with a clean expression stack.
 	 *
-	 * Only the first \fIescape\fP of \fB$$\fP may be typed
-	 * in up-arrow mode as \fB^[$\fP \(em the second character
-	 * must be a real escape character.
+	 * The first \fIescape\fP of \fB$$\fP may be typed either
+	 * as an escape character (ASCII 27), in up-arrow mode
+	 * (e.g. \fB^[$\fP) or as a dollar character \(em the
+	 * second character must be either a real escape character
+	 * or a dollar character.
 	 */
-	if (chr == CTL_KEY_ESC) {
+	if (chr == CTL_KEY_ESC || chr == '$') {
 		BEGIN_EXEC(&States::start);
 		States::current = &States::start;
 		expressions.eval();
@@ -2155,9 +2147,9 @@ StateEscape::custom(gchar chr)
 	}
 
 	/*
-	 * Alternatives: ^[, <CTRL/[>, <ESC>
+	 * Alternatives: ^[, <CTRL/[>, <ESC>, $ (dollar)
 	 */
-	/*$ ^[ escape discard
+	/*$ ^[ $ escape discard
 	 * $ -- Discard all arguments
 	 * ^[
 	 *
@@ -2173,10 +2165,22 @@ StateEscape::custom(gchar chr)
 	 * The up-arrow notation however is processed like any
 	 * ordinary command and only works at the begining of
 	 * a command.
+	 * Additionally, this command may be written as a single
+	 * dollar character.
 	 */
 	if (mode == MODE_NORMAL)
 		expressions.discard_args();
 	return States::start.get_next_state(chr);
+}
+
+void
+StateEscape::end_of_macro(void)
+{
+	/*
+	 * Due to the deferred nature of ^[,
+	 * it is valid to end in the "escape" state.
+	 */
+	expressions.discard_args();
 }
 
 StateECommand::StateECommand() : State()

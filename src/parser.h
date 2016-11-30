@@ -66,6 +66,17 @@ public:
 	 */
 	virtual void refresh(void) {}
 
+	/**
+	 * Called at the end of a macro.
+	 * Most states/commands are not allowed to end unterminated
+	 * at the end of a macro.
+	 */
+	virtual void
+	end_of_macro(void)
+	{
+		throw Error("Unterminated command");
+	}
+
 protected:
 	static bool eval_colon(void);
 
@@ -209,6 +220,8 @@ private:
 	tecoBool delete_words(tecoInt n);
 
 	State *custom(gchar chr);
+
+	void end_of_macro(void) {}
 };
 
 class StateControl : public State {
@@ -233,6 +246,8 @@ public:
 
 private:
 	State *custom(gchar chr);
+
+	void end_of_macro(void);
 };
 
 class StateFCommand : public State {

@@ -160,10 +160,20 @@ Features:
    between effective and rubbed out command line - without
    resetting it. This would add another alternative to { and }
    for fixing up a command line.
- * some missing useful VideoTECO/TECO-11 commands:
+ * some missing useful VideoTECO/TECO-11 commands and unnecessary
+   incompatibilities:
    * EF with buffer id
    * ER command: read file into current buffer at dot
    * nEW to save a buffer by id
+   * EI is used to open an indirect macro file in classic TECO.
+     EM should thus be renamed EI.
+     EM (position magtape in classic TECO) would be free again,
+     e.g. for execute macro with string argument or as a special version
+     of EI that considers $SCITECOPATH.
+     Current use of EI (insert without string building) will have
+     to move, e.g. to FI.
+   * ^S (-(length) of last referenced string), ^Y as .+^S,.
+   * ^Q convert line arg into character arg
    * ^A and stdio in general
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
