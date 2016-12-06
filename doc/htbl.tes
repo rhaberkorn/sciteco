@@ -4,24 +4,38 @@
 
 0,2EJ !* FIXME: Memory limiting is too slow *!
 
-LR 0X#in 2LR 0X#ou EBQ#in EB -EF
+LR 0X#in 2LR 0X#ou EBN#in EB -EF
 
 <
-! <table> will implicitly close <p>'s so we must recalculate the margin.
-  we do this using the same formula as <p> indentions are calculated by post-grohtml
-  except for the line-length which is apparently always 6.5i (the default)
-!
-fs.TS.nr tbl-margin ((\n[.in]+\n[.o])*100+(6.5i/2))/6.5i-((6.5i/2)/6.5i)
+!*
+ * <table> will implicitly close <p>'s so we must recalculate the margin.
+ * we do this using the same formula as <p> indentions are calculated by post-grohtml
+ * except for the line-length which is apparently always 6.5i (the default)
+ *!
+FS.TS.nr tbl-margin ((\n[.in]+\n[.o])*100+(6.5i/2))/6.5i-((6.5i/2)/6.5i)
 .nr tbl-width 100-\n[tbl-margin]
 .HTML <table class="tbl" style="margin-left:\n[tbl-margin]%";
-9u.[tab]
-l.u.fl.-1u.t i
-
-q.f,q.t:sbox"Sli border="1"' q.f,q.t:sallbox"Sli rules="all"' q.f,q.t:sexpand"Sli width="\n[tbl-width]%"' q.f,q.t:stab("s0au.[tab]' q.fjk-dlri> l
 
-1u.[row] 1u.[col] @.r{
+9U.[tab]
+L.U.f L.-1U.t I^J
+
+Q.f,Q.t:Sbox"S
+  L I border="1" frame="box"
+  Q.f,Q.t:Sallbox"S
+    L I rules="all"
+  |
+    I rules="none"
+  '
+'
+Q.f,Q.t:Sexpand"S L I width="\n[tbl-width]%" '
+Q.f,Q.t:Stab("S 0AU.[tab] '
+Q.fJ K-D LR I> L
+
+1u.[row] 1u.[col]
+@.r{
   .[format.\.[row].\.[col].align] 0U.[format.\.[row].\.[col].bold] 0U.[format.\.[row].\.[col].italic]
   1U.[format.\.[row].\.[col].rowspan] 1U.[format.\.[row].\.[col].colspan]
+  0U.[format.\.[row].hsep]
 } :M.r
 <
 0a-L"=.[format.\.[row].\.[col].align]left'
@@ -35,47 +49,67 @@ q.f,q.t:sbox"Sli border="1"' q.f,q.t:sallbox"Sli rules="all"' q.f,q.t:sexpan
 D>
 
 k q.[row]u.[frows] q.[col]u.[fcols] 1u.[row] 1u.[col] .u.#bd
-<Q.[row]-Q.[frows]">
-EQ.[format.\.[row].\.[col].align] G.[format.\.[frows].\.[col].align] 1EB
-Q.[format.\.[frows].\.[col].bold]U.[format.\.[row].\.[col].bold]
-Q.[format.\.[frows].\.[col].italic]U.[format.\.[row].\.[col].italic]
-Q.[format.\.[frows].\.[col].rowspan]U.[format.\.[row].\.[col].rowspan]
-Q.[format.\.[frows].\.[col].colspan]U.[format.\.[row].\.[col].colspan] '
-.,.+3:sT{
-"S .,s
-T}.-3X.[data.\.[row].\.[col]] C 1| .,.+2:s\^^"S
-0U.[format.\.[row].\.[col].rowspan]
-Q.[row]-1U.#cr <Q.[format.\.#cr.\.[col].rowspan]">1;' -%.#cr>
-%.[format.\.#cr.\.[col].rowspan] '
-.u.f s[U.[tab],
- q.f,.-1X.[data.\.[row].\.[col]] 0'u.[data.\.[row].\.[col].block]
--a-q.[tab]"= %.[col] | %.[row] 1u.[col] .,.+4:s.TE
-"S1;' '>
+<
+  Q.[row]-Q.[frows]">
+    EU.[format.\.[row].\.[col].align]Q.[format.\.[frows].\.[col].align]
+    Q.[format.\.[frows].\.[col].bold]U.[format.\.[row].\.[col].bold]
+    Q.[format.\.[frows].\.[col].italic]U.[format.\.[row].\.[col].italic]
+    Q.[format.\.[frows].\.[col].rowspan]U.[format.\.[row].\.[col].rowspan]
+    Q.[format.\.[frows].\.[col].colspan]U.[format.\.[row].\.[col].colspan]
+    :Q.[format.\.[row].hsep]"<
+      0U.[format.\.[row].hsep]
+    '
+  '
+
+  .-1,.+2:S^J=^J"S 1U.[format.\.[row].hsep] '
+
+  .,.+3:ST{^J"S
+    .,S^JT}.-3X.[data.\.[row].\.[col]] C 1
+  |
+    .,.+2:S\^^"S
+      0U.[format.\.[row].\.[col].rowspan]
+      Q.[row]-1U.#cr
+      <Q.[format.\.#cr.\.[col].rowspan]">1;' -%.#cr>
+      %.[format.\.#cr.\.[col].rowspan]
+    '
+    .U.f S[U.[tab],^J]
+    Q.f,.-1X.[data.\.[row].\.[col]] 0
+  '
+  U.[data.\.[row].\.[col].block]
+  -A-Q.[tab]"=
+    %.[col]
+  |
+    %.[row] 1U.[col] .,.+4:S.TE^J"S1;'
+  '
+>
 q.#bd,.D
 
 q.[row]-1u.[drows] 1u.[row]
-q.[drows]<I.HTML <tr>
-
-1u.[col]
-q.[fcols]<Q.[format.\.[row].\.[col].rowspan]">
-I.HTML <td rowspan="\.[format.\.[row].\.[col].rowspan]" colspan="\.[format.\.[row].\.[col].colspan]"
-q.[data.\.[row].\.[col].block]"= I align="Q.[format.\.[row].\.[col].align]">
-Q.[format.\.[row].\.[col].bold]"N I<b> '
-Q.[format.\.[row].\.[col].italic]"N I<i> '
-G.[data.\.[row].\.[col]]
-Q.[format.\.[row].\.[col].bold]"N I</b> '
-Q.[format.\.[row].\.[col].italic]"N I</i> '
-I</td>
- | I>
-Q.[data.\.[row].\.[col]]
-.HTML </td>
- ' '
-%.[col]>
-I.HTML </tr>
-
+q.[drows]<
+  I.HTML <tr>^J
+  1u.[col]
+  q.[fcols]<
+    Q.[format.\.[row].\.[col].rowspan]">
+      I.HTML <td rowspan="\.[format.\.[row].\.[col].rowspan]" colspan="\.[format.\.[row].\.[col].colspan]"
+      I style="border-top:\.[format.\.[row].hsep]px solid"
+      q.[data.\.[row].\.[col].block]"=
+        I align="Q.[format.\.[row].\.[col].align]">
+        Q.[format.\.[row].\.[col].bold]"N I<b> '
+        Q.[format.\.[row].\.[col].italic]"N I<i> '
+        G.[data.\.[row].\.[col]]
+        Q.[format.\.[row].\.[col].bold]"N I</b> '
+        Q.[format.\.[row].\.[col].italic]"N I</i> '
+        I</td>^J
+      |
+        I>^J
+        G.[data.\.[row].\.[col]]
+        I^J.HTML </td>^J
+      '
+    '
+  %.[col]>
+  I.HTML </tr>^J
 %.[row]>
-I.HTML </table>
-
+I.HTML </table>^J
 >
 
 EWQ#ou
