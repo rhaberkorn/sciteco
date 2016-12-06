@@ -113,8 +113,11 @@ For more details on building from source, please refer to `INSTALL`.
 Additional Documentation
 ========================
 
-* There is a manpage [__sciteco__(1)](http://sciteco.sf.net/manuals/sciteco.1.html)
-  describing program invocation and SciTECO's batch mode processing.
-* There is a manpage [__sciteco__(7)](http://sciteco.sf.net/manuals/sciteco.7.html)
-  describing SciTECO as a language.
+* Online manpages:
+  [__sciteco__(1)](http://sciteco.sf.net/manuals/sciteco.1.html),
+  [__sciteco__(7)](http://sciteco.sf.net/manuals/sciteco.7.html),
+  [__grosciteco.tes__(1)](http://sciteco.sf.net/manuals/grosciteco.tes.1.html),
+  [__tedoc.tes__(1)](http://sciteco.sf.net/manuals/tedoc.tes.1.html)
 * [Wiki at Github](https://github.com/rhaberkorn/sciteco/wiki)
+* A [short presentation](http://sciteco.sf.net/manuals/presentation.pdf)
+  (in German!) hold at [Netz39](http://www.netz39.de/).
