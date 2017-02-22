@@ -144,6 +144,9 @@ EBN[input]
     !cmd.xs!
       1;
 
+  !cmd.F!
+    L F<
+
   !cmd.p!
     :M#sw :M#gi Q[pos.v]U[origin.v] :M#sc F<
 
