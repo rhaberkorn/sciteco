@@ -5,6 +5,20 @@
 .nroff
 .do mso tty.tmac
 .
+.\" Groff only supports .device as of v1.20, while
+.\" much older versions are sometimes in use (especially
+.\" on OS X).
+.\" This is as close as I could get in reproducing it,
+.\" but there are still subtle differences...
+.if !ddevice \{\
+.de device
+.  if \\n(.z \
+.    nop \!\!x X \\^$
+.  el \
+.    nop \!x X \\^$
+..
+.\}
+.
 .\"
 .\" Define topics at the current document position.
 .\" This is handled by grosciteco to create a topic index
