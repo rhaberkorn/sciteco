@@ -60,7 +60,7 @@ CLEANFILES += $(women_DATA)
 	                $@ $<
 
 %.intermediate : % sciteco.tmac
-	@GROFF@ -Z -Tascii -t -man -M@srcdir@ -msciteco $< >$@
+	@GROFF@ -wall -Z -Tascii -t -man -M@srcdir@ -msciteco $< >$@
 
 man_MANS = grosciteco.tes.1
 EXTRA_DIST = grosciteco.tes.1.in
@@ -92,7 +92,7 @@ endif
 	$(SCITECO_FULL) -m -- @srcdir@/htbl.tes $< $@
 
 %.html : %.htbl
-	@GROFF@ -Thtml -man $< >$@
+	@GROFF@ -wall -Thtml -man $< >$@
 
 #
 # Doxygen processing (do not install or distribute)
