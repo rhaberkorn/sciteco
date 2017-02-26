@@ -357,7 +357,7 @@ mnemonics are given as well.
 .SCITECO_TT 90n
 .TS
 expand,allbox,tab(;);
-LB LB LB LB LBX
+LBW0 LBW0 LBW0 LBW0 LB
 L L L L L.
 Name;Code;Mnemonics;Context;Description
 T{
@@ -900,7 +900,7 @@ precedence:
 .SCITECO_TT 90n
 .TS
 expand,box,tab(;);
-L LX.
+LW0 L.
 \fIbase\fB ^* \fIpower\fR;T{
 .SCITECO_TOPIC ^* power
 Raise \fIbase\fP to \fIpower\fP.
