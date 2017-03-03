@@ -4,12 +4,12 @@ Upstream-Contact: robin.haberkorn@googlemail.com
 Source: https://sourceforge.net/projects/sciteco
 
 Files: debian/*
-Copyright: Copyright 2013-2016 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Copyright: Copyright 2013-2017 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
 Files: sciteco/*
-Copyright: Copyright 2012-2016 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Copyright: Copyright 2012-2017 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
