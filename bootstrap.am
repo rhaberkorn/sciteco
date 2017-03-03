@@ -18,6 +18,14 @@ SCITECO_MINIMAL = @SCITECO@
 SCITECO_FULL    = @SCITECO@
 endif
 
+# Path of installed `sciteco` and `sciteco-wrapper` binaries,
+# taking --program-prefix into account.
+# These variables MUST NOT be put in single-quotes.
+SCITECO_INSTALLED = \
+	$(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)
+SCITECO_WRAPPER_INSTALLED = \
+	$(libexecdir)/`echo sciteco-wrapper | @SED@ '$(transform)'`$(EXEEXT)
+
 SUBST_MACRO = eb$<\e \
 	      <fs@PACKAGE^Q@\e@PACKAGE@\e;>j \
 	      <fs@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>j \
@@ -33,8 +41,9 @@ SUBST_MACRO = eb$<\e \
 	      <fs@DATE^Q@\e^EQ.d\e; -D>j \
 	      ew$@\e
 
-# Don't try to generate config.h:
-%/config.h: ;
+# The SciTECO-based substitutor must not process config.h.in.
+@top_srcdir@/config.h: ;
 
-% : %.in
+SUFFIXES = .in
+.in:
 	$(SCITECO_MINIMAL) -e $$'$(SUBST_MACRO)'

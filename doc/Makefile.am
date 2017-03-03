@@ -1,5 +1,5 @@
-# Make sure that $BOOTSTRAP_SCITECO and the SciTECO-based
-# substitutor is available.
+# Make sure that $(SCITECO_FULL) and the SciTECO-based
+# substitutor for *.in is available.
 include $(top_srcdir)/bootstrap.am
 
 # tedoc is a code documentation tool for SciTECO commands
@@ -9,9 +9,9 @@ include $(top_srcdir)/bootstrap.am
 # preprocessor to manpage templates.
 dist_bin_SCRIPTS = tedoc.tes
 
-%.in : %.template tedoc.tes $(SOURCES)
+%.in : %.template tedoc.tes @top_srcdir@/src/*.cpp
 	$(SCITECO_FULL) -m -- @srcdir@/tedoc.tes \
-	                -C $@ $< $(SOURCES)
+	                -C $@ $< @top_srcdir@/src/*.cpp
 
 # grosciteco is a troff postprocessor similar to grotty
 # which can be used to produce SciTECO-friendly output
@@ -28,13 +28,13 @@ dist_bin_SCRIPTS += grosciteco.tes
 dist_pkgdata_DATA = sciteco.tmac
 
 # Fix up the hash-bang line of installed SciTECO scripts upon
-# installation to refer to the installed sciteco binary.
+# installation to refer to the installed sciteco binary,
+# or rather to the sciteco-wrapper script.
 # This takes --program-prefix into account.
 install-exec-hook:
-	for script in $(DESTDIR)$(bindir)/*.tes; do \
-		@SED@ -i "1s,#!.*sciteco,#!$(libexecdir)/`echo sciteco-wrapper | @SED@ '$(transform)'`$(EXEEXT)," \
-		      $$script; \
-	done
+	$(SCITECO_FULL) -e "@EB'$(DESTDIR)$(bindir)/*.tes' 1U* \
+	                    EJ-1<%*^[ 0,L.@FR'#!^EM^Xsciteco'#!$(SCITECO_WRAPPER_INSTALLED)'> \
+	                    :EX"
 
 womendir = $(scitecolibdir)/women
 
@@ -74,7 +74,6 @@ EXTRA_DIST += sciteco.1.in
 man_MANS += sciteco.7
 EXTRA_DIST += sciteco.7.template
 CLEANFILES += sciteco.7.in sciteco.7.htbl
-SOURCES = $(wildcard @top_srcdir@/src/*.cpp)
 
 CLEANFILES += $(man_MANS)
 
@@ -91,7 +90,8 @@ endif
 %.htbl : % htbl.tes
 	$(SCITECO_FULL) -m -- @srcdir@/htbl.tes $< $@
 
-%.html : %.htbl
+SUFFIXES += .htbl .html
+.htbl.html:
 	@GROFF@ -wall -Thtml -man $< >$@
 
 #

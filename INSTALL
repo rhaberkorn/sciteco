@@ -13,7 +13,10 @@ without warranty of any kind.
 SciTECO Build and Runtime Dependencies
 ======================================
 
- * Autotools, GNU C/C++ (v4.4 or later) or LLVM/gcc or LLVM/Clang
+ * Autotools and an UNIX-like environment
+ * GNU Make
+ * A C++11 compiler, e.g. GNU C/C++ (v4.4 or later) or
+   LLVM/gcc or LLVM/Clang
  * Glib 2 as a cross-platform runtime library
    (v2.28 or later on Unix, v2.34 or later for MinGW):
    https://developer.gnome.org/glib/

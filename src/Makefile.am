@@ -11,7 +11,7 @@ endif
 include $(top_srcdir)/bootstrap.am
 include $(top_srcdir)/scintilla.am
 
-AM_CXXFLAGS = -std=c++11 -Wall -Wno-char-subscripts
+AM_CXXFLAGS = -Wall -Wno-char-subscripts
 if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif
@@ -98,8 +98,5 @@ CLEANFILES += $(libexec_SCRIPTS)
 
 .PHONY: sciteco-wrapper
 sciteco-wrapper:
-	echo '#!/bin/sh' >$@
-	echo 'OPT=$$1;' \
-	     'shift;' \
-	     "exec $(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)" \
-	     '"$$OPT" -- $$@' >>$@
+	printf '#!/bin/sh\nOPT=$$1\nshift\nexec %s "$$OPT" -- $$@' \
+	       "$(SCITECO_INSTALLED)" >$@

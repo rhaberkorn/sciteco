@@ -53,11 +53,23 @@ canonicalize() {
 # Checks for programs.
 LT_INIT
 AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_PROG_CC
 AC_PROG_CC_C99
-AC_PROG_GREP
 AC_PROG_SED
 AC_PROG_INSTALL
+
+# Mainly because of Scintilla, which depends on
+# GNU Make.
+# The main build system could be made POSIX-Make
+# compliant, but that would complicate it and
+# seems unnecessary.
+# We prevent the main build system from being
+# invoked with another Make by generating GNUmakefiles.
+AX_CHECK_GNU_MAKE
+if [[ x$ax_cv_gnu_make_command = x ]]; then
+	AC_MSG_ERROR([GNU Make required!])
+fi
 
 # Additionally required by the Scintilla build process:
 AC_CHECK_TOOL(AR, ar)
@@ -352,9 +364,11 @@ AC_ARG_ENABLE(static-executables,
 	[static_executables=$enableval], [static_executables=no])
 AM_CONDITIONAL(STATIC_EXECUTABLES, [test x$static_executables = xyes])
 
-AC_CONFIG_FILES([Makefile distribute.mk])
-AC_CONFIG_FILES([src/Makefile src/interface-gtk/Makefile src/interface-curses/Makefile])
-AC_CONFIG_FILES([lib/Makefile])
-AC_CONFIG_FILES([doc/Makefile doc/Doxyfile])
-AC_CONFIG_FILES([tests/Makefile tests/atlocal])
+AC_CONFIG_FILES([GNUmakefile:Makefile.in src/GNUmakefile:src/Makefile.in]
+                [src/interface-gtk/GNUmakefile:src/interface-gtk/Makefile.in]
+                [src/interface-curses/GNUmakefile:src/interface-curses/Makefile.in]
+                [lib/GNUmakefile:lib/Makefile.in]
+                [doc/GNUmakefile:doc/Makefile.in doc/Doxyfile]
+                [tests/GNUmakefile:tests/Makefile.in tests/atlocal])
+AC_CONFIG_FILES([distribute.mk], [chmod +x distribute.mk])
 AC_OUTPUT

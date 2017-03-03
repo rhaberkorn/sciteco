@@ -1,3 +1,7 @@
+# Required in addition to AC_CONFIG_MACRO_DIR() to
+# silence libtoolize:
+ACLOCAL_AMFLAGS = -I m4
+
 SUBDIRS = lib src doc tests
 
 dist_pkgdata_DATA = sample.teco_ini

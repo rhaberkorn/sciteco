@@ -15,6 +15,7 @@
 *.a
 *.o
 *.exe
+GNUmakefile
 Makefile
 Makefile.in
 stamp-*
