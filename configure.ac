@@ -166,6 +166,9 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 # glib defines G_OS_UNIX||G_OS_HAIKU instead...
 case $host in
 *-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
+	AC_SEARCH_LIBS([dlsym], [dl], , [
+		AC_MSG_ERROR([Required function dlsym() not found!])
+	])
 	AC_CHECK_FUNCS([realpath fchown dup dup2 dlsym], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
