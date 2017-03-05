@@ -47,11 +47,23 @@ Known Bugs:
    Unfortunately, both the Windows and Linux ways of deleting files
    on close cannot be used here since that would disallow cheap
    savepoint restoration.
-   On Windows we could work around this using
-   MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT)
-   This should only happen on abnormal program termination
-   since SciTECO's destructors should clean up everything
-   (test whether this holds true for assertions...).
+   * On UNIX, it's possible to open() and unlink() a file,
+     avoiding any savepoint links.
+     On abnormal program termination, the inodes are reclaimed
+     automatically.
+     Unfortunately, neither Linux, nor FreeBSD allow the re-linking
+     based on file descriptors. On Linux this fails because the
+     file's link count will be 0; on BSD, /dev/fd/X is on a different
+     volume and cannot be linked to its old path.
+     Thus, we'd have to copy the file.
+   * Windows NT has hard links as well, but they don't work with
+     file handles either.
+     However, it could be possible to call
+     CreateFile(FILE_FLAG_DELETE_ON_CLOSE) on the savepoint file,
+     ensuring cleanup even on abnormal program termination.
+     There is also MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT).
+   * Windows has file system forks, but they can be orphaned just
+     like ordinary files but are harder to locate and clean up manually.
  * Clipboard registers are prone to race conditions if the
    contents change between get_size() and get_string() calls.
    Also it's a common idiom to query a string and its size,
@@ -220,13 +232,6 @@ Features:
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
- * At least on Windows we could implement file restoration via
-   filesystem forks (called Alternate Data Streams) and fall back
-   to the generic savepoint file solution if this is not possible
-   (e.g. on a FAT32 drive).
-   On the other hand, just like leftover savepoints, there could
-   be leftover forks. And they wouldn't be as easy to find as the
-   current files.
  * Instead of implementing split screens, it is better to leave
    tiling to programs dedicated to it (tmux, window manager).
    SciTECO could create pseudo-terminals (see pty(7)), set up
@@ -259,6 +264,11 @@ Optimizations:
    Perhaps Linux should simply use the fallback limiting as well
    (or support this via a configure option).
    On Windows (2000), the overhead is approx. the same.
+   * Another Linux/glibc-specific workaround may be to hook into
+     all malloc(), realloc() and free() calls and count the
+     "usable" size of each heap object, thus avoiding mallinfo().
+     Malloc hooks are deprecated, but the symbols are weak and
+     can be overwritten.
  * Add G_UNLIKELY to all error throws.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
