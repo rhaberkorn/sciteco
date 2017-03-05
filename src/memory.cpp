@@ -81,7 +81,8 @@ malloc(size_t size)
 		libc_malloc = (malloc_cb)dlsym(RTLD_NEXT, "malloc");
 
 	ret = libc_malloc(size);
-	memory_usage += malloc_usable_size(ret);
+	if (G_LIKELY(ret))
+		memory_usage += malloc_usable_size(ret);
 
 	return ret;
 }
@@ -98,7 +99,8 @@ realloc(void *ptr, size_t size)
 	if (ptr)
 		memory_usage -= malloc_usable_size(ptr);
 	ptr = libc_realloc(ptr, size);
-	memory_usage += malloc_usable_size(ptr);
+	if (G_LIKELY(ptr))
+		memory_usage += malloc_usable_size(ptr);
 
 	return ptr;
 }
