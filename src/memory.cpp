@@ -19,8 +19,15 @@
 #include "config.h"
 #endif
 
+#include <stdlib.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
+#ifdef HAVE_MALLOC_NP_H
+#include <malloc_np.h>
+#endif
+#ifdef HAVE_DLSYM
+#include <dlfcn.h>
 #endif
 
 #include <glib.h>
@@ -41,27 +48,87 @@ namespace SciTECO {
 
 MemoryLimit memlimit;
 
-#ifdef HAVE_MALLINFO
+#if defined(HAVE_DLSYM) && defined(HAVE_MALLOC_USABLE_SIZE)
+/*
+ * This should work on most UNIXoid systems.
+ *
+ * We "hook" into the malloc-functions and count the
+ * "usable" size of each memory block (which may be
+ * more than what has been requested).
+ * This effectively counts all allocations by malloc(),
+ * g_malloc() and any C++ new() everywhere, has minimal overhead and
+ * is much faster than the Linux-specific mallinfo().
+ */
+
+static gsize memory_usage = 0;
 
 gsize
 MemoryLimit::get_usage(void)
 {
-	struct mallinfo info = mallinfo();
-
-	/*
-	 * NOTE: `uordblks` is an int and thus prone
-	 * to wrap-around issues.
-	 *
-	 * Unfortunately, the only other machine readable
-	 * alternative is malloc_info() which prints
-	 * into a FILE * stream [sic!] and is unspeakably
-	 * slow even if writing to an unbuffered fmemopen()ed
-	 * stream.
-	 */
-	return info.uordblks;
+	return memory_usage;
 }
 
+extern "C" {
+
+void *
+malloc(size_t size)
+{
+	typedef void *(*malloc_cb)(size_t);
+	static malloc_cb libc_malloc = NULL;
+	void *ret;
+
+	if (G_UNLIKELY(!libc_malloc))
+		libc_malloc = (malloc_cb)dlsym(RTLD_NEXT, "malloc");
+
+	ret = libc_malloc(size);
+	memory_usage += malloc_usable_size(ret);
+
+	return ret;
+}
+
+void *
+realloc(void *ptr, size_t size)
+{
+	typedef void *(*realloc_cb)(void *, size_t);
+	static realloc_cb libc_realloc = NULL;
+
+	if (G_UNLIKELY(!libc_realloc))
+		libc_realloc = (realloc_cb)dlsym(RTLD_NEXT, "realloc");
+
+	if (ptr)
+		memory_usage -= malloc_usable_size(ptr);
+	ptr = libc_realloc(ptr, size);
+	memory_usage += malloc_usable_size(ptr);
+
+	return ptr;
+}
+
+void
+free(void *ptr)
+{
+	typedef void (*free_cb)(void *);
+	static free_cb libc_free = NULL;
+
+	if (G_UNLIKELY(!libc_free))
+		libc_free = (free_cb)dlsym(RTLD_NEXT, "free");
+
+	if (ptr)
+		memory_usage -= malloc_usable_size(ptr);
+	libc_free(ptr);
+}
+
+} /* extern "C" */
+
 #elif defined(G_OS_WIN32)
+/*
+ * Uses the Windows-specific GetProcessMemoryInfo(),
+ * so the entire process heap is measured.
+ *
+ * FIXME: Unfortunately, this is much slower than the portable
+ * fallback implementation.
+ * We should try and benchmark a similar approach to the
+ * UNIX implementation above using MSVCRT-specific APIs (_minfo()).
+ */
 
 gsize
 MemoryLimit::get_usage(void)
@@ -87,8 +154,14 @@ MemoryLimit::get_usage(void)
 }
 
 #else
+/*
+ * Portable fallback-implementation relying on C++11 sized allocators.
+ *
+ * Unfortunately, this will only measure the heap used by C++ objects
+ * in SciTECO's sources; not even Scintilla, nor all g_malloc() calls.
+ */
 
-#define USE_MEMORY_COUNTING
+#define MEMORY_USAGE_FALLBACK
 
 static gsize memory_usage = 0;
 
@@ -98,7 +171,7 @@ MemoryLimit::get_usage(void)
 	return memory_usage;
 }
 
-#endif /* !HAVE_MALLINFO && !G_OS_WIN32 */
+#endif /* (!HAVE_DLSYM || !HAVE_MALLOC_USABLE_SIZE) && !G_OS_WIN32 */
 
 void
 MemoryLimit::set_limit(gsize new_limit)
@@ -138,7 +211,7 @@ MemoryLimit::check(void)
 void *
 Object::operator new(size_t size) noexcept
 {
-#ifdef USE_MEMORY_COUNTING
+#ifdef MEMORY_USAGE_FALLBACK
 	memory_usage += size;
 #endif
 
@@ -168,7 +241,7 @@ Object::operator delete(void *ptr, size_t size) noexcept
 {
 	g_free(ptr);
 
-#ifdef USE_MEMORY_COUNTING
+#ifdef MEMORY_USAGE_FALLBACK
 	memory_usage -= size;
 #endif
 }

@@ -159,20 +159,23 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 	AC_MSG_ERROR([Missing libc function])
 ])
 
-# Library functions that should exist on UNIX/Linux
-# and UNIXoid systems
+# Library functions that we assume exist on UNIX/Linux
+# and UNIXoid systems, so that G_OS_UNIX is sufficient
+# to test for them.
+# FIXME: Perhaps it would be more elegant to check whether
+# glib defines G_OS_UNIX||G_OS_HAIKU instead...
 case $host in
-*-*-darwin* | *-*-linux* | *-*-cygwin* | *-*-haiku*)
-	AC_CHECK_FUNCS([realpath fchown dup dup2], , [
+*-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
+	AC_CHECK_FUNCS([realpath fchown dup dup2 dlsym], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
 	;;
 esac
 
-# Check for optional GNU libc features.
-# Will probably only be found on Linux.
-AC_CHECK_HEADERS([malloc.h])
-AC_CHECK_FUNCS([malloc_trim mallinfo])
+# Check for optional libc features.
+# Will probably only be found on Linux/glibc or BSD.
+AC_CHECK_HEADERS([malloc.h malloc_np.h])
+AC_CHECK_FUNCS([malloc_trim malloc_usable_size])
 
 #
 # Config options

@@ -249,26 +249,11 @@ Features:
    Macros may retrieve the code and string of the last error.
 
 Optimizations:
- * The Linux-specific memory limiting using mallinfo() is
-   very slow (50% to 150% slower than the fallback implementation
-   measured in batch mode).
-   The fallback implementation does not come with much of a
-   runtime penalty.
-   Still I've found no faster way of measuring the process heap.
-   A soft resource limit would be ideal but unfortunately,
-   it lets malloc() return NULL and we're not in control of all
-   the mallocs, so glib could abort before we have a chance to
-   react on it.
-   Since the slow-down affects interactive mode as well, disabling
-   limiting in batch mode is merely a workaround.
-   Perhaps Linux should simply use the fallback limiting as well
-   (or support this via a configure option).
-   On Windows (2000), the overhead is approx. the same.
-   * Another Linux/glibc-specific workaround may be to hook into
-     all malloc(), realloc() and free() calls and count the
-     "usable" size of each heap object, thus avoiding mallinfo().
-     Malloc hooks are deprecated, but the symbols are weak and
-     can be overwritten.
+ * The Windows-specific memory limiting using GetProcessMemoryInfo()
+   is very slow. Perhaps a similar approach to the generic UNIX
+   malloc() hooking can be implemented and memory_usage counted
+   with _msize() from MSVCRT.
+   This must be benchmarked.
  * Add G_UNLIKELY to all error throws.
  * Instead of using RTTI to implement the immediate editing command
    behaviours in Cmdline::process_edit_cmd() depending on the current
