@@ -264,9 +264,9 @@ Cmdline::keypress(gchar key)
 		 * Glibc/Linux-only optimization: Undo stacks can grow very
 		 * large - sometimes large enough to make the system
 		 * swap and become unresponsive.
-		 * This will often reduce the amount of memory previously
-		 * freed that's still allocated to the program immediately
-		 * when the command-line is terminated:
+		 * This shrink the program break after lots of memory has
+		 * been freed, reducing the virtual memory size and aiding
+		 * in recovering from swapping issues.
 		 */
 		malloc_trim(0);
 #endif

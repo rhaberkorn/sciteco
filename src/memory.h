@@ -76,7 +76,7 @@ public:
 
 	MemoryLimit() : limit(MEMORY_LIMIT_DEFAULT) {}
 
-	gsize get_usage(void);
+	static gsize get_usage(void);
 
 	void set_limit(gsize new_limit = 0);
 

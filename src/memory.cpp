@@ -19,15 +19,13 @@
 #include "config.h"
 #endif
 
-#include <stdlib.h>
+#include <stdint.h>
+
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
 #ifdef HAVE_MALLOC_NP_H
 #include <malloc_np.h>
-#endif
-#ifdef HAVE_DLSYM
-#include <dlfcn.h>
 #endif
 
 #include <glib.h>
@@ -48,78 +46,132 @@ namespace SciTECO {
 
 MemoryLimit memlimit;
 
-#if defined(HAVE_DLSYM) && defined(HAVE_MALLOC_USABLE_SIZE)
 /*
- * This should work on most UNIXoid systems.
+ * A discussion of memory measurement techniques on Linux
+ * and UNIXoid operating systems is in order, since this
+ * problem turned out to be rather tricky.
  *
- * We "hook" into the malloc-functions and count the
- * "usable" size of each memory block (which may be
- * more than what has been requested).
- * This effectively counts all allocations by malloc(),
- * g_malloc() and any C++ new() everywhere, has minimal overhead and
- * is much faster than the Linux-specific mallinfo().
+ * - UNIX has resource limits, which could be used to enforce
+ *   the memory limit, but in case they are hit, malloc()
+ *   will return NULL, so g_malloc() would abort().
+ *   Wrapping malloc() to work around that has the same
+ *   problems described below.
+ * - glibc has malloc hooks, but they are non-portable and
+ *   deprecated.
+ * - It is possible to effectively wrap malloc() by overriding
+ *   the libc's implementation, which will even work when
+ *   statically linking in libc since malloc() is usually
+ *   delcared `weak`.
+ * - When wrapping malloc(), malloc_usable_size() could be
+ *   used to count the memory consumption.
+ *   This is libc-specific, but available at least in
+ *   glibc and jemalloc (FreeBSD).
+ * - glibc exports symbols for the original malloc() implementation
+ *   like __libc_malloc() that could be used for wrapping.
+ *   This is undocumented and libc-specific, though.
+ * - The GNU ld --wrap option allows us to intercept calls,
+ *   but obviously won't work for shared libraries.
+ * - The portable dlsym() could be used to look up the original
+ *   library symbol, but it may and does call malloc functions,
+ *   eg. calloc() on glibc.
+ *   In other words, there is no way to portably and reliably
+ *   wrap malloc() and friends when linking dynamically.
+ * - Another difficulty is that, when free() is overridden, every
+ *   function that can __independently__ allocate memory that
+ *   can be passed to free() must also be overridden.
+ *   Otherwise the measurement is not precise and there can even
+ *   be underruns. Thus we'd have to guard against underruns.
+ * - malloc() and friends are MT-safe, so any replacement function
+ *   would have to be MT-safe as well to avoid memory corruption.
+ *   E.g. even in single-threaded builds, glib might use
+ *   threads internally.
+ * - There is also the old-school technique of calculating the size
+ *   of the program break, ie. the effective size of the DATA segment.
+ *   This works under the assumption that all allocations are
+ *   performed by extending the program break, as is __traditionally__
+ *   done by malloc() and friends.
+ * - Unfortunately, modern malloc() implementations sometimes
+ *   mmap() memory, especially for large allocations.
+ *   SciTECO mostly allocates small chunks.
+ *   Unfortunately, some malloc implementations like jemalloc
+ *   only claim memory using mmap(), thus rendering sbrk(0)
+ *   useless.
+ * - Furthermore, some malloc-implementations like glibc will
+ *   only shrink the program break when told so explicitly
+ *   using malloc_trim(0).
+ * - The sbrk(0) method thus depends on implementation details
+ *   of the libc.
+ * - For these reasons, we rather stick to non-portable,
+ *   libc-specific, perhaps slow, but stable techniques to measure
+ *   memory usage.
+ *   Implementations for yet unsupported UNIXoid systems might
+ *   still want to pick up any of the ideas above, if they can be
+ *   proven to work well on those platforms.
  */
 
-static gsize memory_usage = 0;
+#ifdef HAVE_MALLINFO
+/*
+ * Linux/glibc-specific implementation.
+ * Unfortunately, this slows things down when called frequently.
+ */
 
 gsize
 MemoryLimit::get_usage(void)
 {
-	return memory_usage;
+	struct mallinfo info = mallinfo();
+
+	/*
+	 * NOTE: `uordblks` is an int and thus prone
+	 * to wrap-around issues.
+	 *
+	 * Unfortunately, the only other machine readable
+	 * alternative is malloc_info() which prints
+	 * into a FILE * stream [sic!] and is unspeakably
+	 * slow even if writing to an unbuffered fmemopen()ed
+	 * stream.
+	 */
+	return info.uordblks;
 }
 
-extern "C" {
+#elif defined(HAVE_MALLCTLNAMETOMIB) && defined(HAVE_MALLCTLBYMIB)
+/*
+ * FreeBSD/jemalloc-specific implementation.
+ * Unfortunately, this slows things down when called frequently.
+ */
 
-void *
-malloc(size_t size)
+gsize
+MemoryLimit::get_usage(void)
 {
-	typedef void *(*malloc_cb)(size_t);
-	static malloc_cb libc_malloc = NULL;
-	void *ret;
+	static size_t epoch_mib[1] = {0};
+	static size_t stats_allocated_mib[2] = {0};
 
-	if (G_UNLIKELY(!libc_malloc))
-		libc_malloc = (malloc_cb)dlsym(RTLD_NEXT, "malloc");
+	uint64_t epoch = 1;
+	size_t stats_allocated;
+	size_t stats_allocated_len = sizeof(stats_allocated);
 
-	ret = libc_malloc(size);
-	if (G_LIKELY(ret))
-		memory_usage += malloc_usable_size(ret);
+	if (G_UNLIKELY(!epoch_mib[0])) {
+		size_t len;
+		int rc;
 
-	return ret;
+		len = G_N_ELEMENTS(epoch_mib);
+		rc = mallctlnametomib("epoch", epoch_mib, &len);
+		g_assert(rc == 0 && len == G_N_ELEMENTS(epoch_mib));
+
+		len = G_N_ELEMENTS(stats_allocated_mib);
+		rc = mallctlnametomib("stats.allocated",
+		                      stats_allocated_mib, &len);
+		g_assert(rc == 0 && len == G_N_ELEMENTS(stats_allocated_mib));
+	}
+
+	/* refresh statistics */
+	mallctlbymib(epoch_mib, G_N_ELEMENTS(epoch_mib),
+	             NULL, NULL, &epoch, sizeof(epoch));
+	/* query the total number of allocated bytes */
+	mallctlbymib(stats_allocated_mib, G_N_ELEMENTS(stats_allocated_mib),
+	             &stats_allocated, &stats_allocated_len, NULL, 0);
+
+	return stats_allocated;
 }
-
-void *
-realloc(void *ptr, size_t size)
-{
-	typedef void *(*realloc_cb)(void *, size_t);
-	static realloc_cb libc_realloc = NULL;
-
-	if (G_UNLIKELY(!libc_realloc))
-		libc_realloc = (realloc_cb)dlsym(RTLD_NEXT, "realloc");
-
-	if (ptr)
-		memory_usage -= malloc_usable_size(ptr);
-	ptr = libc_realloc(ptr, size);
-	if (G_LIKELY(ptr))
-		memory_usage += malloc_usable_size(ptr);
-
-	return ptr;
-}
-
-void
-free(void *ptr)
-{
-	typedef void (*free_cb)(void *);
-	static free_cb libc_free = NULL;
-
-	if (G_UNLIKELY(!libc_free))
-		libc_free = (free_cb)dlsym(RTLD_NEXT, "free");
-
-	if (ptr)
-		memory_usage -= malloc_usable_size(ptr);
-	libc_free(ptr);
-}
-
-} /* extern "C" */
 
 #elif defined(G_OS_WIN32)
 /*
@@ -128,8 +180,10 @@ free(void *ptr)
  *
  * FIXME: Unfortunately, this is much slower than the portable
  * fallback implementation.
- * We should try and benchmark a similar approach to the
- * UNIX implementation above using MSVCRT-specific APIs (_minfo()).
+ * It may be possible to overwrite malloc() and friends,
+ * counting the chunks with the MSVCRT-specific _minfo().
+ * Since we will always run against MSVCRT, the disadvantages
+ * discussed above for the UNIX-case may not be important.
  */
 
 gsize
@@ -173,7 +227,7 @@ MemoryLimit::get_usage(void)
 	return memory_usage;
 }
 
-#endif /* (!HAVE_DLSYM || !HAVE_MALLOC_USABLE_SIZE) && !G_OS_WIN32 */
+#endif /* MEMORY_USAGE_FALLBACK */
 
 void
 MemoryLimit::set_limit(gsize new_limit)

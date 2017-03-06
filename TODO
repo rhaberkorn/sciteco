@@ -250,9 +250,8 @@ Features:
 
 Optimizations:
  * The Windows-specific memory limiting using GetProcessMemoryInfo()
-   is very slow. Perhaps a similar approach to the generic UNIX
-   malloc() hooking can be implemented and memory_usage counted
-   with _msize() from MSVCRT.
+   is very slow. Perhaps malloc() hooking can be implemented there,
+   using _msize() to measure the memory required by individual chunks.
    This must be benchmarked.
  * Add G_UNLIKELY to all error throws.
  * Instead of using RTTI to implement the immediate editing command

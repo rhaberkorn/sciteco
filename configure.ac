@@ -163,22 +163,24 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
 # and UNIXoid systems, so that G_OS_UNIX is sufficient
 # to test for them.
 # FIXME: Perhaps it would be more elegant to check whether
-# glib defines G_OS_UNIX||G_OS_HAIKU instead...
+# glib defines G_OS_UNIX || G_OS_HAIKU instead...
 case $host in
 *-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
-	AC_SEARCH_LIBS([dlsym], [dl], , [
-		AC_MSG_ERROR([Required function dlsym() not found!])
-	])
-	AC_CHECK_FUNCS([realpath fchown dup dup2 dlsym], , [
+	AC_CHECK_FUNCS([realpath fchown dup dup2], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
 	;;
 esac
 
-# Check for optional libc features.
-# Will probably only be found on Linux/glibc or BSD.
-AC_CHECK_HEADERS([malloc.h malloc_np.h])
-AC_CHECK_FUNCS([malloc_trim malloc_usable_size])
+# Check for optional glibc features.
+# Will probably only be found on Linux/glibc.
+AC_CHECK_HEADERS([malloc.h])
+AC_CHECK_FUNCS([malloc_trim mallinfo])
+
+# jemalloc-specific functions.
+# Will probably only be foudn on FreeBSD.
+AC_CHECK_HEADERS([malloc_np.h])
+AC_CHECK_FUNCS([mallctlnametomib mallctlbymib])
 
 #
 # Config options
