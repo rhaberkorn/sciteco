@@ -489,14 +489,9 @@ public:
  * Super class for states accepting Q-Register specifications
  */
 class StateExpectQReg : public State {
-public:
-	/*
-	 * FIXME: Only public, so we can access it from
-	 * cmdline.cpp. Will not be necessary if process_edit_cmd()
-	 * is a State method.
-	 */
 	QRegSpecMachine machine;
 
+public:
 	StateExpectQReg(QRegSpecType type = QREG_REQUIRED);
 
 private:
@@ -504,6 +499,9 @@ private:
 
 protected:
 	virtual State *got_register(QRegister *reg) = 0;
+
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StatePushQReg : public StateExpectQReg {
@@ -637,12 +635,6 @@ namespace States {
 	extern StateMacro		macro;
 	extern StateMacroFile		macro_file;
 	extern StateCopyToQReg		copytoqreg;
-
-	static inline bool
-	is_qreg()
-	{
-		return dynamic_cast<StateExpectQReg *>(current);
-	}
 }
 
 namespace QRegisters {

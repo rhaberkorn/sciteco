@@ -231,7 +231,7 @@ Cmdline::keypress(gchar key)
 	 * characters as necessary into the command line.
 	 */
 	try {
-		process_edit_cmd(key);
+		States::current->process_edit_cmd(key);
 	} catch (Return) {
 		/*
 		 * Return from top-level macro, results
@@ -295,318 +295,10 @@ Cmdline::keypress(gchar key)
 }
 
 void
-Cmdline::process_edit_cmd(gchar key)
-{
-	switch (key) {
-	case '\n': /* insert EOL sequence */
-		interface.popup_clear();
-
-		if (Flags::ed & Flags::ED_AUTOEOL)
-			insert("\n");
-		else
-			insert(get_eol_seq(interface.ssm(SCI_GETEOLMODE)));
-		break;
-
-	case CTL_KEY('G'): /* toggle immediate editing modifier */
-		interface.popup_clear();
-
-		modifier_enabled = !modifier_enabled;
-		interface.msg(InterfaceCurrent::MSG_INFO,
-			      "Immediate editing modifier is now %s.",
-			      modifier_enabled ? "enabled" : "disabled");
-		break;
-
-	case CTL_KEY('H'): /* rubout/reinsert character */
-		interface.popup_clear();
-
-		if (modifier_enabled)
-			/* re-insert character */
-			insert();
-		else
-			/* rubout character */
-			rubout();
-		break;
-
-	case CTL_KEY('W'): /* rubout/reinsert word/command */
-		interface.popup_clear();
-
-		if (States::is_file()) {
-			/* File names, including directories */
-			if (modifier_enabled) {
-				/* reinsert one level of file name */
-				while (States::is_file() && rubout_len &&
-				       !G_IS_DIR_SEPARATOR(str[len]))
-					insert();
-
-				/* reinsert final directory separator */
-				if (States::is_file() && rubout_len &&
-				    G_IS_DIR_SEPARATOR(str[len]))
-					insert();
-			} else if (strings[0] && *strings[0]) {
-				/* rubout directory separator */
-				if (strings[0] && *strings[0] &&
-				    G_IS_DIR_SEPARATOR(str[len-1]))
-					rubout();
-
-				/* rubout one level of file name */
-				while (strings[0] && *strings[0] &&
-				       !G_IS_DIR_SEPARATOR(str[len-1]))
-					rubout();
-			} else {
-				/*
-				 * Rub out entire command instead of
-				 * rubbing out nothing.
-				 */
-				rubout_command();
-			}
-		} else if (States::is_string()) {
-			gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
-			interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
-
-			if (modifier_enabled) {
-				/* reinsert word chars */
-				while (States::is_string() && rubout_len &&
-				       strchr(wchars, str[len]))
-					insert();
-
-				/* reinsert non-word chars */
-				while (States::is_string() && rubout_len &&
-				       !strchr(wchars, str[len]))
-					insert();
-			} else if (strings[0] && *strings[0]) {
-				/* rubout non-word chars */
-				while (strings[0] && *strings[0] &&
-				       !strchr(wchars, str[len-1]))
-					rubout();
-
-				/* rubout word chars */
-				while (strings[0] && *strings[0] &&
-				       strchr(wchars, str[len-1]))
-					rubout();
-			} else {
-				/*
-				 * Rub out entire command instead of
-				 * rubbing out nothing.
-				 */
-				rubout_command();
-			}
-		} else if (modifier_enabled) {
-			/* reinsert command */
-			do
-				insert();
-			while (!States::is_start() && rubout_len);
-		} else {
-			/* rubout command */
-			rubout_command();
-		}
-		break;
-
-	case CTL_KEY('U'): /* rubout/reinsert string */
-		interface.popup_clear();
-
-		if (States::is_string()) {
-			if (modifier_enabled) {
-				/* reinsert string */
-				while (States::is_string() && rubout_len)
-					insert();
-			} else {
-				/* rubout string */
-				while (strings[0] && *strings[0])
-					rubout();
-			}
-		} else {
-			insert(key);
-		}
-		break;
-
-	case '\t': /* autocomplete symbol or file name */
-		if (modifier_enabled) {
-			/*
-			 * TODO: In insertion commands, we can autocomplete
-			 * the string at the buffer cursor.
-			 */
-			if (States::is_string()) {
-				/* autocomplete filename using string argument */
-				if (interface.popup_is_shown()) {
-					/* cycle through popup pages */
-					interface.popup_show();
-					break;
-				}
-
-				const gchar *filename = last_occurrence(strings[0]);
-				gchar *new_chars = filename_complete(filename);
-
-				if (new_chars)
-					insert(new_chars);
-				g_free(new_chars);
-
-				/* may be reset if there was a rubbed out command line */
-				modifier_enabled = true;
-			} else {
-				interface.popup_clear();
-				insert(key);
-			}
-		} else if (States::is_qreg()) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			QRegSpecMachine &machine = ((StateExpectQReg *)States::current)->machine;
-			gchar *new_chars = machine.auto_complete();
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::is_string() &&
-		           ((StateExpectString *)States::current)->machine.qregspec_machine) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			QRegSpecMachine *machine =
-				((StateExpectString *)States::current)->machine.qregspec_machine;
-			gchar *new_chars = machine->auto_complete();
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::is_insertion() && !interface.ssm(SCI_GETUSETABS)) {
-			interface.popup_clear();
-
-			/* insert soft tabs */
-			gint spaces = interface.ssm(SCI_GETTABWIDTH);
-
-			spaces -= interface.ssm(SCI_GETCOLUMN,
-			                        interface.ssm(SCI_GETCURRENTPOS)) % spaces;
-
-			while (spaces--)
-				insert(' ');
-		} else if (States::is_dir()) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			gchar *new_chars = filename_complete(strings[0], '\0',
-			                                     G_FILE_TEST_IS_DIR);
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::is_file()) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			gchar complete = escape_char == '{' ? '\0' : escape_char;
-			gchar *new_chars = filename_complete(strings[0], complete);
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::current == &States::executecommand) {
-			/*
-			 * In the EC command, <TAB> completes files just like ^T
-			 * TODO: Implement shell-command completion by iterating
-			 * executables in $PATH
-			 */
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			const gchar *filename = last_occurrence(strings[0]);
-			gchar *new_chars = filename_complete(filename);
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::current == &States::scintilla_symbols) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			const gchar *symbol = last_occurrence(strings[0], ",");
-			SymbolList &list = symbol == strings[0]
-						? Symbols::scintilla
-						: Symbols::scilexer;
-			gchar *new_chars = symbol_complete(list, symbol, ',');
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::current == &States::gotocmd) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			const gchar *label = last_occurrence(strings[0], ",");
-			gchar *new_chars = Goto::table->auto_complete(label);
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else if (States::current == &States::gethelp) {
-			if (interface.popup_is_shown()) {
-				/* cycle through popup pages */
-				interface.popup_show();
-				break;
-			}
-
-			gchar complete = escape_char == '{' ? '\0' : escape_char;
-			gchar *new_chars = help_index.auto_complete(strings[0], complete);
-
-			if (new_chars)
-				insert(new_chars);
-			g_free(new_chars);
-		} else {
-			interface.popup_clear();
-			insert(key);
-		}
-		break;
-
-#ifdef SIGTSTP
-	case CTL_KEY('Z'):
-		/*
-		 * <CTL/Z> does not raise signal if handling of
-		 * special characters temporarily disabled in terminal
-		 * (Curses), or command-line is detached from
-		 * terminal (GTK+).
-		 * This does NOT change the state of the popup window.
-		 */
-		raise(SIGTSTP);
-		break;
-#endif
-
-	default:
-		interface.popup_clear();
-		insert(key);
-	}
-}
-
-void
 Cmdline::fnmacro(const gchar *name)
 {
-	enum {
-		FNMACRO_MASK_START =	(1 << 0),
-		FNMACRO_MASK_STRING =	(1 << 1)
-	};
-
 	gchar macro_name[1 + strlen(name) + 1];
 	QRegister *reg;
-	tecoInt mask;
 	gchar *macro;
 
 	if (!(Flags::ed & Flags::ED_FNKEYS))
@@ -621,17 +313,8 @@ Cmdline::fnmacro(const gchar *name)
 		/* macro undefined */
 		goto default_action;
 
-	mask = reg->get_integer();
-	if (States::is_start()) {
-		if (mask & FNMACRO_MASK_START)
-			return;
-	} else if (States::is_string()) {
-		if (mask & FNMACRO_MASK_STRING)
-			return;
-	} else if (mask & ~(tecoInt)(FNMACRO_MASK_START | FNMACRO_MASK_STRING)) {
-		/* all other bits refer to any other state */
+	if (reg->get_integer() & States::current->get_fnmacro_mask())
 		return;
-	}
 
 	macro = reg->get_string();
 	try {
@@ -851,6 +534,440 @@ symbol_complete(SymbolList &list, const gchar *symbol, gchar completed)
 	g_list_free(glist);
 
 	return insert;
+}
+
+/*
+ * Commandline key processing.
+ *
+ * These are all the implementations of State::process_edit_cmd().
+ * It makes sense to use virtual methods for key processing, as it is
+ * largely state-dependant; but it defines interactive-mode-only
+ * behaviour which can be kept isolated from the rest of the states'
+ * implementation.
+ */
+
+void
+State::process_edit_cmd(gchar key)
+{
+	switch (key) {
+	case '\n': /* insert EOL sequence */
+		interface.popup_clear();
+
+		if (Flags::ed & Flags::ED_AUTOEOL)
+			cmdline.insert("\n");
+		else
+			cmdline.insert(get_eol_seq(interface.ssm(SCI_GETEOLMODE)));
+		return;
+
+	case CTL_KEY('G'): /* toggle immediate editing modifier */
+		interface.popup_clear();
+
+		modifier_enabled = !modifier_enabled;
+		interface.msg(InterfaceCurrent::MSG_INFO,
+			      "Immediate editing modifier is now %s.",
+			      modifier_enabled ? "enabled" : "disabled");
+		return;
+
+	case CTL_KEY('H'): /* rubout/reinsert character */
+		interface.popup_clear();
+
+		if (modifier_enabled)
+			/* re-insert character */
+			cmdline.insert();
+		else
+			/* rubout character */
+			cmdline.rubout();
+		return;
+
+	case CTL_KEY('W'): /* rubout/reinsert command */
+		interface.popup_clear();
+
+		if (modifier_enabled) {
+			/* reinsert command */
+			do
+				cmdline.insert();
+			while (States::current != &States::start && cmdline.rubout_len);
+		} else {
+			/* rubout command */
+			do
+				cmdline.rubout();
+			while (States::current != &States::start);
+		}
+		return;
+
+#ifdef SIGTSTP
+	case CTL_KEY('Z'):
+		/*
+		 * <CTL/Z> does not raise signal if handling of
+		 * special characters temporarily disabled in terminal
+		 * (Curses), or command-line is detached from
+		 * terminal (GTK+).
+		 * This does NOT change the state of the popup window.
+		 */
+		raise(SIGTSTP);
+		return;
+#endif
+	}
+
+	interface.popup_clear();
+	cmdline.insert(key);
+}
+
+void
+StateExpectString::process_edit_cmd(gchar key)
+{
+	switch (key) {
+	case CTL_KEY('W'): { /* rubout/reinsert word */
+		interface.popup_clear();
+
+		gchar wchars[interface.ssm(SCI_GETWORDCHARS)];
+		interface.ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
+
+		if (modifier_enabled) {
+			/* reinsert word chars */
+			while (States::current == this && cmdline.rubout_len &&
+			       strchr(wchars, cmdline.str[cmdline.len]))
+				cmdline.insert();
+
+			/* reinsert non-word chars */
+			while (States::current == this && cmdline.rubout_len &&
+			       !strchr(wchars, cmdline.str[cmdline.len]))
+				cmdline.insert();
+			return;
+		}
+
+		if (strings[0] && *strings[0]) {
+			/* rubout non-word chars */
+			while (strings[0] && *strings[0] &&
+			       !strchr(wchars, cmdline.str[cmdline.len-1]))
+				cmdline.rubout();
+
+			/* rubout word chars */
+			while (strings[0] && *strings[0] &&
+			       strchr(wchars, cmdline.str[cmdline.len-1]))
+				cmdline.rubout();
+			return;
+		}
+
+		/*
+		 * Otherwise, the entire command string will
+		 * be rubbed out.
+		 */
+		break;
+	}
+
+	case CTL_KEY('U'): /* rubout/reinsert string */
+		interface.popup_clear();
+
+		if (modifier_enabled) {
+			/* reinsert string */
+			while (States::current == this && cmdline.rubout_len)
+				cmdline.insert();
+		} else {
+			/* rubout string */
+			while (strings[0] && *strings[0])
+				cmdline.rubout();
+		}
+		return;
+
+	case '\t': /* autocomplete file name */
+		if (modifier_enabled) {
+			/*
+			 * TODO: In insertion commands, we can autocomplete
+			 * the string at the buffer cursor.
+			 */
+			/* autocomplete filename using string argument */
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				return;
+			}
+
+			const gchar *filename = last_occurrence(strings[0]);
+			gchar *new_chars = filename_complete(filename);
+
+			if (new_chars)
+				cmdline.insert(new_chars);
+			g_free(new_chars);
+
+			/* may be reset if there was a rubbed out command line */
+			modifier_enabled = true;
+			return;
+		}
+
+		if (machine.qregspec_machine) {
+			if (interface.popup_is_shown()) {
+				/* cycle through popup pages */
+				interface.popup_show();
+				return;
+			}
+
+			gchar *new_chars = machine.qregspec_machine->auto_complete();
+
+			if (new_chars)
+				cmdline.insert(new_chars);
+			g_free(new_chars);
+			return;
+		}
+		break;
+	}
+
+	State::process_edit_cmd(key);
+}
+
+void
+StateInsert::process_edit_cmd(gchar key)
+{
+	gint spaces;
+
+	switch (key) {
+	case '\t': /* insert <TAB> indention */
+		if (modifier_enabled || interface.ssm(SCI_GETUSETABS))
+			break;
+
+		interface.popup_clear();
+
+		/* insert soft tabs */
+		spaces = interface.ssm(SCI_GETTABWIDTH);
+		spaces -= interface.ssm(SCI_GETCOLUMN,
+		                        interface.ssm(SCI_GETCURRENTPOS)) % spaces;
+
+		while (spaces--)
+			cmdline.insert(' ');
+		return;
+	}
+
+	StateExpectString::process_edit_cmd(key);
+}
+
+void
+StateExpectFile::process_edit_cmd(gchar key)
+{
+	gchar *new_chars;
+
+	switch (key) {
+	case CTL_KEY('W'): /* rubout/reinsert file names including directories */
+		interface.popup_clear();
+
+		if (modifier_enabled) {
+			/* reinsert one level of file name */
+			while (States::current == this && cmdline.rubout_len &&
+			       !G_IS_DIR_SEPARATOR(cmdline.str[cmdline.len]))
+				cmdline.insert();
+
+			/* reinsert final directory separator */
+			if (States::current == this && cmdline.rubout_len &&
+			    G_IS_DIR_SEPARATOR(cmdline.str[cmdline.len]))
+				cmdline.insert();
+			return;
+		}
+
+		if (strings[0] && *strings[0]) {
+			/* rubout directory separator */
+			if (strings[0] && *strings[0] &&
+			    G_IS_DIR_SEPARATOR(cmdline.str[cmdline.len-1]))
+				cmdline.rubout();
+
+			/* rubout one level of file name */
+			while (strings[0] && *strings[0] &&
+			       !G_IS_DIR_SEPARATOR(cmdline.str[cmdline.len-1]))
+				cmdline.rubout();
+			return;
+		}
+
+		/*
+		 * Rub out entire command instead of
+		 * rubbing out nothing.
+		 */
+		break;
+
+	case '\t': /* autocomplete file name */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		new_chars = filename_complete(strings[0],
+		                              escape_char == '{' ? '\0' : escape_char);
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+
+	StateExpectString::process_edit_cmd(key);
+}
+
+void
+StateExpectDir::process_edit_cmd(gchar key)
+{
+	gchar *new_chars;
+
+	switch (key) {
+	case '\t': /* autocomplete directory */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		new_chars = filename_complete(strings[0], '\0',
+		                              G_FILE_TEST_IS_DIR);
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+
+	StateExpectFile::process_edit_cmd(key);
+}
+
+void
+StateExpectQReg::process_edit_cmd(gchar key)
+{
+	gchar *new_chars;
+
+	switch (key) {
+	case '\t': /* autocomplete Q-Register name */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		new_chars = machine.auto_complete();
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+
+	State::process_edit_cmd(key);
+}
+
+void
+StateExecuteCommand::process_edit_cmd(gchar key)
+{
+	gchar *new_chars;
+
+	switch (key) {
+	case '\t': /* autocomplete symbol or file name */
+		if (modifier_enabled)
+			break;
+
+		/*
+		 * In the EC command, <TAB> completes files just like ^T
+		 * TODO: Implement shell-command completion by iterating
+		 * executables in $PATH
+		 */
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		new_chars = filename_complete(last_occurrence(strings[0]));
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+
+	StateExpectString::process_edit_cmd(key);
+}
+
+void
+StateScintilla_symbols::process_edit_cmd(gchar key)
+{
+	switch (key) {
+	case '\t': { /* autocomplete Scintilla symbol */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		const gchar *symbol = last_occurrence(strings[0], ",");
+		SymbolList &list = symbol == strings[0]
+					? Symbols::scintilla
+					: Symbols::scilexer;
+		gchar *new_chars = symbol_complete(list, symbol, ',');
+
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+	}
+
+	StateExpectString::process_edit_cmd(key);
+}
+
+void
+StateGotoCmd::process_edit_cmd(gchar key)
+{
+	switch (key) {
+	case '\t': { /* autocomplete goto label */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		const gchar *label = last_occurrence(strings[0], ",");
+		gchar *new_chars = Goto::table->auto_complete(label);
+
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+	}
+
+	StateExpectString::process_edit_cmd(key);
+}
+
+void
+StateGetHelp::process_edit_cmd(gchar key)
+{
+	switch (key) {
+	case '\t': { /* autocomplete help term */
+		if (modifier_enabled)
+			break;
+
+		if (interface.popup_is_shown()) {
+			/* cycle through popup pages */
+			interface.popup_show();
+			return;
+		}
+
+		gchar complete = escape_char == '{' ? '\0' : escape_char;
+		gchar *new_chars = help_index.auto_complete(strings[0], complete);
+
+		if (new_chars)
+			cmdline.insert(new_chars);
+		g_free(new_chars);
+		return;
+	}
+	}
+
+	StateExpectString::process_edit_cmd(key);
 }
 
 /*

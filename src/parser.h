@@ -87,6 +87,41 @@ protected:
 		throw SyntaxError(chr);
 		return NULL;
 	}
+
+public:
+	/**
+	 * Process editing command (or key press).
+	 *
+	 * This is part of command line handling in interactive
+	 * mode and allows the definition of state-specific
+	 * editing commands (behaviour on key press).
+	 *
+	 * By implementing this method, sub-states can either
+	 * handle a key and return or chain to the
+	 * parent's process_edit_cmd() implementation.
+	 *
+	 * All implementations of this method are defined in
+	 * cmdline.cpp.
+	 */
+	virtual void process_edit_cmd(gchar key);
+
+	enum fnmacroMask {
+		FNMACRO_MASK_START =	(1 << 0),
+		FNMACRO_MASK_STRING =	(1 << 1),
+		FNMACRO_MASK_DEFAULT =	~((1 << 2)-1)
+	};
+
+	/**
+	 * Get the function key macro mask this
+	 * state refers to.
+	 *
+	 * Could also be modelled as a State member.
+	 */
+	virtual fnmacroMask
+	get_fnmacro_mask(void) const
+	{
+		return FNMACRO_MASK_DEFAULT;
+	}
 };
 
 template <typename Type>
@@ -166,14 +201,9 @@ class StateExpectString : public State {
 	bool string_building;
 	bool last;
 
-public:
-	/*
-	 * FIXME: Only public as long as cmdline.cpp
-	 * needs to access it.
-	 * Can be avoided one process_edit_cmd() is in State.
-	 */
 	StringBuildingMachine machine;
 
+public:
 	StateExpectString(bool _building = true, bool _last = true)
 			 : insert_len(0), nesting(1),
 			   string_building(_building), last(_last) {}
@@ -182,10 +212,19 @@ private:
 	State *custom(gchar chr);
 	void refresh(void);
 
+	virtual fnmacroMask
+	get_fnmacro_mask(void) const
+	{
+		return FNMACRO_MASK_STRING;
+	}
+
 protected:
 	virtual void initial(void) {}
 	virtual void process(const gchar *str, gint new_chars) {}
 	virtual State *done(const gchar *str) = 0;
+
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateExpectFile : public StateExpectString {
@@ -198,12 +237,19 @@ private:
 
 protected:
 	virtual State *got_file(const gchar *filename) = 0;
+
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateExpectDir : public StateExpectFile {
 public:
 	StateExpectDir(bool _building = true, bool _last = true)
 		      : StateExpectFile(_building, _last) {}
+
+protected:
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateStart : public State {
@@ -222,6 +268,12 @@ private:
 	State *custom(gchar chr);
 
 	void end_of_macro(void) {}
+
+	fnmacroMask
+	get_fnmacro_mask(void) const
+	{
+		return FNMACRO_MASK_START;
+	}
 };
 
 class StateControl : public State {
@@ -304,6 +356,10 @@ public:
 
 private:
 	State *done(const gchar *str);
+
+protected:
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateScintilla_lParam : public StateExpectString {
@@ -323,6 +379,9 @@ protected:
 	void initial(void);
 	void process(const gchar *str, gint new_chars);
 	State *done(const gchar *str);
+
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateInsertIndent : public StateInsert {
@@ -346,41 +405,6 @@ namespace States {
 	extern StateInsertIndent	insert_indent;
 
 	extern State *current;
-
-	static inline bool
-	is_start()
-	{
-		/*
-		 * The "escape" state exists only as a hack,
-		 * to support $$. Otherwise it should behave
-		 * like the start state.
-		 */
-		return current == &start || current == &escape;
-	}
-
-	static inline bool
-	is_string()
-	{
-		return dynamic_cast<StateExpectString *>(current);
-	}
-
-	static inline bool
-	is_insertion()
-	{
-		return dynamic_cast<StateInsert *>(current);
-	}
-
-	static inline bool
-	is_file()
-	{
-		return dynamic_cast<StateExpectFile *>(current);
-	}
-
-	static inline bool
-	is_dir()
-	{
-		return dynamic_cast<StateExpectDir *>(current);
-	}
 }
 
 extern enum Mode {

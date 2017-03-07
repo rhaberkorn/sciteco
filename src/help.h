@@ -83,6 +83,10 @@ public:
 private:
 	void initial(void);
 	State *done(const gchar *str);
+
+protected:
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 namespace States {

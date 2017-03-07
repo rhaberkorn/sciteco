@@ -254,15 +254,6 @@ Optimizations:
    using _msize() to measure the memory required by individual chunks.
    This must be benchmarked.
  * Add G_UNLIKELY to all error throws.
- * Instead of using RTTI to implement the immediate editing command
-   behaviours in Cmdline::process_edit_cmd() depending on the current
-   state, this could be modelled via virtual methods in State.
-   This would almost eradicate Cmdline::process_edit_cmd() and the
-   huge switch-case statement, would be more efficient (but who cares
-   in this case?) and would allow us to -fno-rtti saving a few bytes.
-   However, this would mean to make some more Cmdline methods public.
-   The implementations of the States' commandline editing handlers
-   could all be concentrated in cmdline.cpp.
  * String::append() could be optimized by ORing a padding
    into the realloc() size (e.g. 0xFF).
    However, this has not proven effective on Linux/glibc
@@ -294,6 +285,10 @@ Optimizations:
    exception types. By adding an error code to the error object
    (which we will need anyway for supporting error handling in SciTECO
    macros), we may even avoid RTTI.
+   Should also allow us to completely disable exceptions via -fno-exceptions.
+ * RTTI could be disabled (-fno-rtti). It's only still required
+   because of StdError() for handling arbitrary C++ exceptions.
+   This is probably not required.
  * The position can be eliminated from UndoTokens by
    rewriting the UndoStack into a stack of UndoToken lists.
    Should be a significant memory reduction in interactive mode.

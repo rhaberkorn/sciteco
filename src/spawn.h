@@ -57,6 +57,10 @@ private:
 
 	void initial(void);
 	State *done(const gchar *str);
+
+protected:
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
 };
 
 class StateEGCommand : public StateExpectQReg {

@@ -27,6 +27,13 @@
 
 namespace SciTECO {
 
+/*
+ * NOTE: Some of the members (esp. insert() and rubout())
+ * have to be public, so that State::process_edit_cmd()
+ * implementations can access it.
+ * Otherwise, we'd have to list all implementations as
+ * friend methods, which is inelegant.
+ */
 extern class Cmdline : public Object {
 public:
 	/**
@@ -68,9 +75,6 @@ public:
 
 	void replace(void) G_GNUC_NORETURN;
 
-private:
-	void process_edit_cmd(gchar key);
-
 	inline void
 	rubout(void)
 	{
@@ -78,14 +82,6 @@ private:
 			undo.pop(--len);
 			rubout_len++;
 		}
-	}
-
-	inline void
-	rubout_command(void)
-	{
-		do
-			rubout();
-		while (States::current != &States::start);
 	}
 
 	void insert(const gchar *src = NULL);
