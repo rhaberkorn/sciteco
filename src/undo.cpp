@@ -50,43 +50,55 @@ UndoStack::push(UndoToken *token)
 #ifdef DEBUG
 	g_printf("UNDO PUSH %p\n", token);
 #endif
-	token->pc = cmdline.pc;
-	SLIST_INSERT_HEAD(&head, token, tokens);
+
+	/*
+	 * There can very well be 0 undo tokens
+	 * per input character (e.g. NOPs like space).
+	 */
+	while (heads->len <= cmdline.pc)
+		g_ptr_array_add(heads, NULL);
+	g_assert(heads->len == cmdline.pc+1);
+
+	SLIST_NEXT(token, tokens) =
+		(UndoToken *)g_ptr_array_index(heads, heads->len-1);
+	g_ptr_array_index(heads, heads->len-1) = token;
 }
 
 void
 UndoStack::pop(gint pc)
 {
-	while (!SLIST_EMPTY(&head) && SLIST_FIRST(&head)->pc >= pc) {
-		UndoToken *top = SLIST_FIRST(&head);
-#ifdef DEBUG
-		g_printf("UNDO POP %p\n", top);
-		fflush(stdout);
-#endif
-		top->run();
+	while ((gint)heads->len > pc) {
+		UndoToken *top =
+			(UndoToken *)g_ptr_array_remove_index(heads, heads->len-1);
 
-		SLIST_REMOVE_HEAD(&head, tokens);
-		delete top;
+		while (top) {
+			UndoToken *next = SLIST_NEXT(top, tokens);
+
+#ifdef DEBUG
+			g_printf("UNDO POP %p\n", top);
+			fflush(stdout);
+#endif
+			top->run();
+
+			delete top;
+			top = next;
+		}
 	}
 }
 
 void
 UndoStack::clear(void)
 {
-	UndoToken *cur;
+	while (heads->len) {
+		UndoToken *top =
+			(UndoToken *)g_ptr_array_remove_index(heads, heads->len-1);
 
-	while ((cur = SLIST_FIRST(&head))) {
-		SLIST_REMOVE_HEAD(&head, tokens);
-		delete cur;
+		while (top) {
+			UndoToken *next = SLIST_NEXT(top, tokens);
+			delete top;
+			top = next;
+		}
 	}
-}
-
-UndoStack::~UndoStack()
-{
-	UndoToken *token, *next;
-
-	SLIST_FOREACH_SAFE(token, &head, tokens, next)
-		delete token;
 }
 
 } /* namespace SciTECO */

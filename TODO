@@ -84,6 +84,8 @@ Known Bugs:
    Also, auto-completions within string-building constructs
    (except Q-Reg specs) should generally be disabled since
    the result will be unpredictable.
+ * Shutdown seems to hang after generating lots of undo tokens:
+   500000<%A>EX$$
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -289,9 +291,6 @@ Optimizations:
  * RTTI could be disabled (-fno-rtti). It's only still required
    because of StdError() for handling arbitrary C++ exceptions.
    This is probably not required.
- * The position can be eliminated from UndoTokens by
-   rewriting the UndoStack into a stack of UndoToken lists.
-   Should be a significant memory reduction in interactive mode.
  * RBTrees define an entry field for storing node color.
    This can be avoided on most
    platforms where G_MEM_ALIGN > 1 by encoding the color in the
