@@ -172,15 +172,35 @@ case $host in
 	;;
 esac
 
-# Check for optional glibc features.
-# Will probably only be found on Linux/glibc.
-AC_CHECK_HEADERS([malloc.h])
-AC_CHECK_FUNCS([malloc_trim mallinfo])
+# Check for optional libc features.
+# Some of this will only be found on glibc,
+# others on FreeBSD/jemalloc.
+AC_CHECK_HEADERS([malloc.h malloc_np.h])
+AC_CHECK_FUNCS([malloc_trim malloc_usable_size])
 
-# jemalloc-specific functions.
-# Will probably only be foudn on FreeBSD.
-AC_CHECK_HEADERS([malloc_np.h])
-AC_CHECK_FUNCS([mallctlnametomib mallctlbymib])
+# Check whether compiler supports global sized deallocations.
+# If yes, this will improve the memory limiting fallback
+# implementation.
+# Once we can depend on C++14, this check is no longer necessary.
+AC_CACHE_CHECK([if C++ compiler supports -fsized-deallocation],
+               [sciteco_cv_sized_deallocation_result], [
+	AC_LANG_PUSH(C++)
+	OLD_CXXFLAGS="$CXXFLAGS"
+	CXXFLAGS="$CXXFLAGS -fsized-deallocation"
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+		[[#include <new>]],
+		[[(::operator delete)(0, 256)]]
+	)], sciteco_cv_sized_deallocation_result=yes,
+	    sciteco_cv_sized_deallocation_result=no)
+	CXXFLAGS="$OLD_CXXFLAGS"
+	AC_LANG_POP(C++)
+])
+if [[ x$sciteco_cv_sized_deallocation_result = xyes ]]; then
+	AC_DEFINE(HAVE_SIZED_DEALLOCATION, 1,
+	          [C++ compiler supports -fsized-deallocation])
+fi
+AM_CONDITIONAL(HAVE_SIZED_DEALLOCATION,
+               test "$sciteco_cv_sized_deallocation_result" = yes)
 
 #
 # Config options

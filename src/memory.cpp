@@ -19,14 +19,15 @@
 #include "config.h"
 #endif
 
-#include <stdint.h>
-
+/* for malloc_usable_size() */
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
 #ifdef HAVE_MALLOC_NP_H
 #include <malloc_np.h>
 #endif
+
+#include <new>
 
 #include <glib.h>
 
@@ -101,79 +102,30 @@ MemoryLimit memlimit;
  *   using malloc_trim(0).
  * - The sbrk(0) method thus depends on implementation details
  *   of the libc.
- * - For these reasons, we rather stick to non-portable,
- *   libc-specific, perhaps slow, but stable techniques to measure
- *   memory usage.
- *   Implementations for yet unsupported UNIXoid systems might
- *   still want to pick up any of the ideas above, if they can be
- *   proven to work well on those platforms.
+ * - glibc and some other platforms have mallinfo().
+ *   But at least on glibc it can get unbearably slow on programs
+ *   with a lot of (virtual/resident) memory.
+ *   Besides, mallinfo's API is broken on 64-bit systems, effectively
+ *   limiting the enforcable memory limit to 4GB.
+ *   Other glibc-specific introspection functions like malloc_info()
+ *   can be even slower because of the syscalls required.
+ * - Linux has /proc/self/stat and /proc/self/statm but polling them
+ *   is very inefficient.
+ * - FreeBSD/jemalloc has mallctl("stats.allocated") which even when
+ *   optimized is significantly slower than the fallback but generally
+ *   acceptable.
+ * - On all other platforms we (have to) rely on the fallback
+ *   implementation based on C++ allocators/deallocators.
+ *   They have been improved significantly to count as much memory
+ *   as possible, even using libc-specific APIs like malloc_usable_size().
+ *   Since this has been proven to work sufficiently well even on FreeBSD,
+ *   there is no longer any UNIX-specific implementation.
+ *   Even the malloc_usable_size() workaround for old or non-GNU
+ *   compilers is still faster than mallctl() on FreeBSD.
+ *   This might need to change in the future.
  */
 
-#ifdef HAVE_MALLINFO
-/*
- * Linux/glibc-specific implementation.
- * Unfortunately, this slows things down when called frequently.
- */
-
-gsize
-MemoryLimit::get_usage(void)
-{
-	struct mallinfo info = mallinfo();
-
-	/*
-	 * NOTE: `uordblks` is an int and thus prone
-	 * to wrap-around issues.
-	 *
-	 * Unfortunately, the only other machine readable
-	 * alternative is malloc_info() which prints
-	 * into a FILE * stream [sic!] and is unspeakably
-	 * slow even if writing to an unbuffered fmemopen()ed
-	 * stream.
-	 */
-	return info.uordblks;
-}
-
-#elif defined(HAVE_MALLCTLNAMETOMIB) && defined(HAVE_MALLCTLBYMIB)
-/*
- * FreeBSD/jemalloc-specific implementation.
- * Unfortunately, this slows things down when called frequently.
- */
-
-gsize
-MemoryLimit::get_usage(void)
-{
-	static size_t epoch_mib[1] = {0};
-	static size_t stats_allocated_mib[2] = {0};
-
-	uint64_t epoch = 1;
-	size_t stats_allocated;
-	size_t stats_allocated_len = sizeof(stats_allocated);
-
-	if (G_UNLIKELY(!epoch_mib[0])) {
-		size_t len;
-		int rc;
-
-		len = G_N_ELEMENTS(epoch_mib);
-		rc = mallctlnametomib("epoch", epoch_mib, &len);
-		g_assert(rc == 0 && len == G_N_ELEMENTS(epoch_mib));
-
-		len = G_N_ELEMENTS(stats_allocated_mib);
-		rc = mallctlnametomib("stats.allocated",
-		                      stats_allocated_mib, &len);
-		g_assert(rc == 0 && len == G_N_ELEMENTS(stats_allocated_mib));
-	}
-
-	/* refresh statistics */
-	mallctlbymib(epoch_mib, G_N_ELEMENTS(epoch_mib),
-	             NULL, NULL, &epoch, sizeof(epoch));
-	/* query the total number of allocated bytes */
-	mallctlbymib(stats_allocated_mib, G_N_ELEMENTS(stats_allocated_mib),
-	             &stats_allocated, &stats_allocated_len, NULL, 0);
-
-	return stats_allocated;
-}
-
-#elif defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 /*
  * Uses the Windows-specific GetProcessMemoryInfo(),
  * so the entire process heap is measured.
@@ -184,6 +136,8 @@ MemoryLimit::get_usage(void)
  * counting the chunks with the MSVCRT-specific _minfo().
  * Since we will always run against MSVCRT, the disadvantages
  * discussed above for the UNIX-case may not be important.
+ * We might also just use the fallback implementation with some
+ * additional support for _msize().
  */
 
 gsize
@@ -213,8 +167,11 @@ MemoryLimit::get_usage(void)
 /*
  * Portable fallback-implementation relying on C++11 sized allocators.
  *
- * Unfortunately, this will only measure the heap used by C++ objects
- * in SciTECO's sources; not even Scintilla, nor all g_malloc() calls.
+ * Unfortunately, in the worst case, this will only measure the heap used
+ * by C++ objects in SciTECO's sources; not even Scintilla, nor all
+ * g_malloc() calls.
+ * Usually, we will be able to use global sized deallocators or
+ * libc-specific support to get more accurate results, though.
  */
 
 #define MEMORY_USAGE_FALLBACK
@@ -264,6 +221,13 @@ MemoryLimit::check(void)
 	}
 }
 
+/*
+ * The object-specific sized deallocators allow memory
+ * counting portably, even in strict C++11 mode.
+ * Once we depend on C++14, they and the entire `Object`
+ * class hack can be avoided.
+ */
+
 void *
 Object::operator new(size_t size) noexcept
 {
@@ -303,3 +267,72 @@ Object::operator delete(void *ptr, size_t size) noexcept
 }
 
 } /* namespace SciTECO */
+
+#ifdef HAVE_SIZED_DEALLOCATION
+/*
+ * Global sized deallocators must be defined in the
+ * root namespace.
+ * Since we only depend on C++11, we cannot just always
+ * define them (they are a C++14 feature).
+ * They will effectively measure all C++ allocations,
+ * including the ones in Scintilla which can make a huge
+ * difference.
+ * Due to the poor platform support for memory measurement,
+ * it's still worth to support them optionally.
+ */
+
+void *
+operator new(size_t size)
+{
+#ifdef MEMORY_USAGE_FALLBACK
+	SciTECO::memory_usage += size;
+#endif
+
+	return g_malloc(size);
+}
+
+void
+operator delete(void *ptr, size_t size) noexcept
+{
+	g_free(ptr);
+
+#ifdef MEMORY_USAGE_FALLBACK
+	SciTECO::memory_usage -= size;
+#endif
+}
+
+#else
+/*
+ * In strict C++11, we can still use global non-sized
+ * deallocators.
+ * On their own, they bring little benefit, but with
+ * some libc-specific functionality, they can be used
+ * to improve the fallback memory measurements to include
+ * all allocations (including Scintilla).
+ * This comes with a moderate runtime penalty.
+ */
+
+void *
+operator new(size_t size)
+{
+	void *ptr = g_malloc(size);
+
+#if defined(MEMORY_USAGE_FALLBACK) && defined(HAVE_MALLOC_USABLE_SIZE)
+	/* NOTE: g_malloc() should always use the system malloc(). */
+	SciTECO::memory_usage += malloc_usable_size(ptr);
+#endif
+
+	return ptr;
+}
+
+void
+operator delete(void *ptr) noexcept
+{
+#if defined(MEMORY_USAGE_FALLBACK) && defined(HAVE_MALLOC_USABLE_SIZE)
+	if (ptr)
+		SciTECO::memory_usage -= malloc_usable_size(ptr);
+#endif
+	g_free(ptr);
+}
+
+#endif /* !HAVE_SIZED_DEALLOCATION */

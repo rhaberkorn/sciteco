@@ -5,6 +5,9 @@ AM_CXXFLAGS = -std=c++11 -Wall -Wno-char-subscripts
 if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif
+if HAVE_SIZED_DEALLOCATION
+AM_CXXFLAGS += -fsized-deallocation
+endif
 
 EXTRA_DIST = gtk-info-popup.gob \
              gtk-canonicalized-label.gob

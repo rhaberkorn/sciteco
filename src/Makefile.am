@@ -15,6 +15,9 @@ AM_CXXFLAGS = -Wall -Wno-char-subscripts
 if CLANG
 AM_CXXFLAGS += -Wno-mismatched-tags
 endif
+if HAVE_SIZED_DEALLOCATION
+AM_CXXFLAGS += -fsized-deallocation
+endif
 
 if STATIC_EXECUTABLES
 # AM_LDFLAGS are libtool flags, NOT compiler/linker flags
