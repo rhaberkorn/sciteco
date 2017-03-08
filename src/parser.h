@@ -300,6 +300,16 @@ private:
 	State *custom(gchar chr);
 
 	void end_of_macro(void);
+
+	/*
+	 * The state should behave like StateStart
+	 * when it comes to function key macro masking.
+	 */
+	fnmacroMask
+	get_fnmacro_mask(void) const
+	{
+		return FNMACRO_MASK_START;
+	}
 };
 
 class StateFCommand : public State {
@@ -405,6 +415,15 @@ namespace States {
 	extern StateInsertIndent	insert_indent;
 
 	extern State *current;
+
+	static inline bool
+	is_start(void)
+	{
+		/*
+		 * StateEscape should behave very much like StateStart.
+		 */
+		return current == &start || current == &escape;
+	}
 }
 
 extern enum Mode {

@@ -586,12 +586,12 @@ State::process_edit_cmd(gchar key)
 			/* reinsert command */
 			do
 				cmdline.insert();
-			while (States::current != &States::start && cmdline.rubout_len);
+			while (!States::is_start() && cmdline.rubout_len);
 		} else {
 			/* rubout command */
 			do
 				cmdline.rubout();
-			while (States::current != &States::start);
+			while (!States::is_start());
 		}
 		return;
 
