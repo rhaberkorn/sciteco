@@ -106,6 +106,14 @@
 #endif
 #endif
 
+#if defined(NCURSES_UNIX) || defined(NETBSD_CURSES)
+/**
+ * Whether Curses works on a real or pseudo TTY
+ * (ie. classic use with terminal emulators on Unix)
+ */
+#define CURSES_TTY
+#endif
+
 namespace SciTECO {
 
 extern "C" {
@@ -331,10 +339,10 @@ InterfaceCurses::init(void)
 	info_current = g_strdup(PACKAGE_NAME);
 
 	/*
-	 * On all platforms except NCurses/XTerm, it's
+	 * On all platforms except Curses/XTerm, it's
 	 * safe to initialize the clipboards now.
 	 */
-#ifndef NCURSES_UNIX
+#ifndef CURSES_TTY
 	init_clipboard();
 #endif
 }
@@ -381,7 +389,7 @@ InterfaceCurses::restore_colors(void)
 	}
 }
 
-#elif defined(NCURSES_UNIX)
+#elif defined(CURSES_TTY)
 
 /*
  * FIXME: On UNIX/ncurses init_color_safe() __may__ change the
@@ -420,7 +428,7 @@ InterfaceCurses::restore_colors(void)
 	fflush(screen_tty);
 }
 
-#else /* !PDCURSES_WIN32 && !NCURSES_UNIX */
+#else /* !PDCURSES_WIN32 && !CURSES_TTY */
 
 void
 InterfaceCurses::restore_colors(void)
@@ -469,7 +477,7 @@ InterfaceCurses::init_color(guint color, guint32 rgb)
 	}
 }
 
-#ifdef NCURSES_UNIX
+#ifdef CURSES_TTY
 
 void
 InterfaceCurses::init_screen(void)
@@ -568,8 +576,10 @@ InterfaceCurses::init_interactive(void)
 	 * NOTE: The only terminal emulator I'm aware of that lets
 	 * us send an escape sequence for the escape key is Mintty
 	 * (see "\e[?7727h").
+	 *
+	 * FIXME: This appears to be ineffective for netbsd-curses.
 	 */
-#ifdef NCURSES_UNIX
+#ifdef CURSES_TTY
 	if (!g_getenv("ESCDELAY"))
 		set_escdelay(25);
 #endif
@@ -650,7 +660,7 @@ InterfaceCurses::init_interactive(void)
 	 * emulator since clipboard operations will no longer interfer
 	 * with stdout.
 	 */
-#ifdef NCURSES_UNIX
+#ifdef CURSES_TTY
 	init_clipboard();
 #endif
 }
@@ -665,7 +675,7 @@ InterfaceCurses::restore_batch(void)
 	 * FIXME: See set_window_title() why this
 	 * is necessary.
 	 */
-#if defined(NCURSES_UNIX) && defined(HAVE_TIGETSTR)
+#if defined(CURSES_TTY) && defined(HAVE_TIGETSTR)
 	set_window_title(g_getenv("TERM") ? : "");
 #endif
 
@@ -680,7 +690,7 @@ InterfaceCurses::restore_batch(void)
 	 * Restore stdout and stderr, so output goes to
 	 * the terminal again in case we "muted" them.
 	 */
-#ifdef NCURSES_UNIX
+#ifdef CURSES_TTY
 	if (stdout_orig >= 0) {
 		int fd = dup2(stdout_orig, 1);
 		g_assert(fd == 1);
@@ -737,7 +747,7 @@ InterfaceCurses::vmsg_impl(MessageType type, const gchar *fmt, va_list ap)
 	 * even in interactive mode.
 	 */
 #if defined(XCURSES) || defined(PDCURSES_WIN32A) || \
-    defined(NCURSES_UNIX) || defined(NCURSES_WIN32)
+    defined(CURSES_TTY) || defined(NCURSES_WIN32)
 	va_list aq;
 	va_copy(aq, ap);
 	stdio_vmsg(type, fmt, aq);
@@ -830,7 +840,7 @@ InterfaceCurses::set_window_title(const gchar *title)
 	last_title = g_strdup(title);
 }
 
-#elif defined(NCURSES_UNIX) && defined(HAVE_TIGETSTR)
+#elif defined(CURSES_TTY) && defined(HAVE_TIGETSTR)
 
 void
 InterfaceCurses::set_window_title(const gchar *title)
@@ -1131,7 +1141,7 @@ InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
 	return str;
 }
 
-#elif defined(NCURSES_UNIX)
+#elif defined(CURSES_TTY)
 
 void
 InterfaceCurses::init_clipboard(void)
@@ -1325,7 +1335,7 @@ InterfaceCurses::get_clipboard(const gchar *name, gsize *str_len)
 	throw Error("Getting clipboard unsupported");
 }
 
-#endif /* !__PDCURSES__ && !NCURSES_UNIX */
+#endif /* !__PDCURSES__ && !CURSES_TTY */
 
 void
 InterfaceCurses::popup_show_impl(void)
@@ -1401,6 +1411,10 @@ event_loop_iter()
 	 * involved.
 	 * On some Curses variants (XCurses) however, keypad
 	 * must always be TRUE so we receive KEY_RESIZE.
+	 *
+	 * FIXME: NetBSD's curses could be handled like ncurses,
+	 * but gets into an undefined state when SciTECO processes
+	 * escape sequences.
 	 */
 #ifdef NCURSES_UNIX
 	keypad(interface.cmdline_window, Flags::ed & Flags::ED_FNKEYS);

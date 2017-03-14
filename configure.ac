@@ -222,14 +222,14 @@ SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(interface,
-	AS_HELP_STRING([--with-interface=ncurses|xcurses|pdcurses|gtk],
+	AS_HELP_STRING([--with-interface=ncurses|netbsd-curses|xcurses|pdcurses|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
 case $INTERFACE in
 *curses)
 	case $INTERFACE in
-	ncurses)
+	ncurses | netbsd-curses)
 		PKG_CHECK_MODULES(NCURSES, [ncurses], [
 			CFLAGS="$CFLAGS $NCURSES_CFLAGS"
 			CXXFLAGS="$CXXFLAGS $NCURSES_CFLAGS"
@@ -240,6 +240,14 @@ case $INTERFACE in
 			])
 		])
 		AC_CHECK_FUNCS([tigetstr])
+
+		if [[ x$INTERFACE = xnetbsd-curses ]]; then
+			# NetBSD's curses can act as a ncurses
+			# drop-in replacement and ships with a ncurses
+			# pkg-config file. Still we define a symbol since
+			# it's hard to detect at build-time.
+			AC_DEFINE(NETBSD_CURSES, 1, [Building against netbsd-curses])
+		fi
 		;;
 
 	xcurses)
@@ -271,7 +279,7 @@ case $INTERFACE in
 		LIBS="$LIBS $XCURSES_LIBS"
 
 		# This is also used by the curses.h itself:
-		AC_DEFINE(XCURSES, , [Enable PDCurses/XCurses extensions])
+		AC_DEFINE(XCURSES, 1, [Enable PDCurses/XCurses extensions])
 		;;
 
 	pdcurses)
@@ -298,7 +306,7 @@ case $INTERFACE in
 		fi
 
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
-			AC_DEFINE(PDCURSES_WIN32A, , [PDCurses supports Win32a extensions])
+			AC_DEFINE(PDCURSES_WIN32A, 1, [PDCurses supports Win32a extensions])
 		])
 		;;
 	esac
@@ -306,7 +314,7 @@ case $INTERFACE in
 	AC_CHECK_HEADERS([curses.h], , [
 		AC_MSG_ERROR([Curses header missing!])
 	])
-	AC_DEFINE(INTERFACE_CURSES, , [Build with curses support])
+	AC_DEFINE(INTERFACE_CURSES, 1, [Build with curses support])
 
 	# For Scintilla/Scinterm:
 	CPPFLAGS="$CPPFLAGS -DCURSES -I$SCINTERM_PATH"
@@ -329,7 +337,7 @@ gtk)
 
 	GOB2_CHECK(2.0.20)
 
-	AC_DEFINE(INTERFACE_GTK, , [Build with GTK+ 3.0 support])
+	AC_DEFINE(INTERFACE_GTK, 1, [Build with GTK+ 3.0 support])
 
 	# For Scintilla:
 	CPPFLAGS="$CPPFLAGS -DGTK"
