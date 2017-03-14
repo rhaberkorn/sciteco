@@ -184,9 +184,28 @@ Features:
      of EI that considers $SCITECOPATH.
      Current use of EI (insert without string building) will have
      to move, e.g. to FI.
+   * ::S for string "comparisons" (anchored search)
    * ^S (-(length) of last referenced string), ^Y as .+^S,.
    * ^Q convert line arg into character arg
-   * ^A and stdio in general
+   * ^A, T and stdio in general
+ * Search for beginning of string; i.e. a version of S that
+   leaves dot before the search string, similar to FK
+   (request of N.M.). Could be called _ (a global-search variant
+   in classic TECO).
+ * Shortcut for cutting into Q-Register. Typing 10Xq10K is very
+   annoying to type. We could use the @ modifier 10@Xq or
+   define a new command, like ^X (search-mode flag in classic
+   TECO). On the other hand, a search mode setting would be
+   useful in SciTECO as well!
+ * For symmetry, there should be a command for -W,
+   eg. P. Macros and modifiers are obviously not a solution here
+   since they're too long.
+ * Visual selections via `...'.
+   Allows them to be used recursively (eg. as a tool in macros).
+   Returns the buffer range.
+ * Perhaps there should be a built-in command for joining
+   lines as has been requested by users.
+   ^J (caret+J) would still be free.
  * Buffer ids should be "circular", i.e. interpreted modulo the
    number of buffers in the ring. This allows "%*" to wrap at the
    end of the buffer list.
