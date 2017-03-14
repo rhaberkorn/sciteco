@@ -18,12 +18,13 @@ SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and sup
 GTK+ 3 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
 
 The Curses frontend is verified to work with [ncurses](https://www.gnu.org/software/ncurses/),
+[NetBSD Curses](https://github.com/sabotage-linux/netbsd-curses),
 [PDCurses/XCurses](http://pdcurses.sourceforge.net/), the
 [PDCurses win32a port](http://www.projectpluto.com/win32a.htm) and
 [EMCurses](https://github.com/rhaberkorn/emcurses).
 Others might work as well.
 
-Linux, Windows (MinGW 32/64) and
+Linux, FreeBSD, Windows (MinGW 32/64) and
 [Haiku](https://www.haiku-os.org/) (gcc4) are tested and supported.
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms,
