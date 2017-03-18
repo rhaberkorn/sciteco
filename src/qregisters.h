@@ -485,10 +485,11 @@ public:
  * Command states
  */
 
-/*
+/**
  * Super class for states accepting Q-Register specifications
  */
 class StateExpectQReg : public State {
+protected:
 	QRegSpecMachine machine;
 
 public:
@@ -498,6 +499,16 @@ private:
 	State *custom(gchar chr);
 
 protected:
+	/**
+	 * Called when a register specification has been
+	 * successfully parsed.
+	 * The QRegSpecMachine is not reset automatically.
+	 *
+	 * @param reg Register of the parsed Q-Reg
+	 *            specification. May be NULL in
+	 *            parse-only mode or with QREG_OPTIONAL.
+	 * @returns Next parser state.
+	 */
 	virtual State *got_register(QRegister *reg) = 0;
 
 	/* in cmdline.cpp */
@@ -540,14 +551,12 @@ private:
 	State *got_file(const gchar *filename);
 };
 
-class StateQueryQReg : public State {
-	QRegSpecMachine machine;
-
+class StateQueryQReg : public StateExpectQReg {
 public:
-	StateQueryQReg();
+	StateQueryQReg() : StateExpectQReg(QREG_OPTIONAL) {}
 
 private:
-	State *custom(gchar chr);
+	State *got_register(QRegister *reg);
 };
 
 class StateCtlUCommand : public StateExpectQReg {

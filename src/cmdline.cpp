@@ -984,11 +984,11 @@ StateGetHelp::process_edit_cmd(gchar key)
 State *
 StateSaveCmdline::got_register(QRegister *reg)
 {
-	BEGIN_EXEC(&States::start);
+	machine.reset();
 
+	BEGIN_EXEC(&States::start);
 	reg->undo_set_string();
 	reg->set_string(last_cmdline.str, last_cmdline.len);
-
 	return &States::start;
 }
 

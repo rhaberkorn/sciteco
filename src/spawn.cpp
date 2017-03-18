@@ -529,6 +529,8 @@ cleanup:
 State *
 StateEGCommand::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::executecommand);
 	undo.push_var(register_argument) = reg;
 	return &States::executecommand;

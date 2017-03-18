@@ -1154,12 +1154,6 @@ StateExpectQReg::custom(gchar chr)
 	if (!machine.input(chr, reg))
 		return this;
 
-	/*
-	 * NOTE: We must reset the Q-Reg machine
-	 * now, since we have commands like <M>
-	 * that indirectly call their state recursively.
-	 */
-	machine.reset();
 	return got_register(reg);
 }
 
@@ -1172,10 +1166,10 @@ StateExpectQReg::custom(gchar chr)
 State *
 StatePushQReg::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::start);
-
 	QRegisters::stack.push(*reg);
-
 	return &States::start;
 }
 
@@ -1195,6 +1189,8 @@ StatePushQReg::got_register(QRegister *reg)
 State *
 StatePopQReg::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::start);
 
 	if (!QRegisters::stack.pop(*reg))
@@ -1221,6 +1217,8 @@ StatePopQReg::got_register(QRegister *reg)
 State *
 StateEQCommand::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::loadqreg);
 	undo.push_var(register_argument) = reg;
 	return &States::loadqreg;
@@ -1261,6 +1259,8 @@ StateLoadQReg::got_file(const gchar *filename)
 State *
 StateEPctCommand::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::saveqreg);
 	undo.push_var(register_argument) = reg;
 	return &States::saveqreg;
@@ -1308,19 +1308,9 @@ StateSaveQReg::got_file(const gchar *filename)
  * If <q> is undefined, it returns \fIsuccess\fP, else a \fIfailure\fP
  * boolean.
  */
-StateQueryQReg::StateQueryQReg() : machine(QREG_OPTIONAL)
-{
-	transitions['\0'] = this;
-}
-
 State *
-StateQueryQReg::custom(gchar chr)
+StateQueryQReg::got_register(QRegister *reg)
 {
-	QRegister *reg;
-
-	if (!machine.input(chr, reg))
-		return this;
-
 	/* like BEGIN_EXEC(&States::start), but resets machine */
 	if (mode > MODE_NORMAL)
 		goto reset;
@@ -1341,9 +1331,6 @@ StateQueryQReg::custom(gchar chr)
 	 * we cannot currently let parsing depend on the colon-modifier.
 	 * That's why we have to declare the Q-Reg machine as QREG_OPTIONAL
 	 * and care about exception throwing on our own.
-	 * Since we need the machine's state to throw a reasonable error
-	 * we cannot derive from StateExpectQReg since it has to reset the
-	 * machine before calling got_register().
 	 */
 	if (!reg)
 		machine.fail();
@@ -1393,6 +1380,8 @@ reset:
 State *
 StateCtlUCommand::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::setqregstring_nobuilding);
 	undo.push_var(register_argument) = reg;
 	return &States::setqregstring_nobuilding;
@@ -1411,6 +1400,8 @@ StateCtlUCommand::got_register(QRegister *reg)
 State *
 StateEUCommand::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::setqregstring_building);
 	undo.push_var(register_argument) = reg;
 	return &States::setqregstring_building;
@@ -1480,6 +1471,8 @@ StateGetQRegString::got_register(QRegister *reg)
 {
 	gchar *str;
 
+	machine.reset();
+
 	BEGIN_EXEC(&States::start);
 
 	str = reg->get_string();
@@ -1516,6 +1509,8 @@ StateGetQRegString::got_register(QRegister *reg)
 State *
 StateSetQRegInteger::got_register(QRegister *reg)
 {
+	machine.reset();
+
 	BEGIN_EXEC(&States::start);
 
 	expressions.eval();
@@ -1545,6 +1540,8 @@ State *
 StateIncreaseQReg::got_register(QRegister *reg)
 {
 	tecoInt res;
+
+	machine.reset();
 
 	BEGIN_EXEC(&States::start);
 
@@ -1580,11 +1577,11 @@ StateIncreaseQReg::got_register(QRegister *reg)
 State *
 StateMacro::got_register(QRegister *reg)
 {
-	BEGIN_EXEC(&States::start);
+	machine.reset();
 
+	BEGIN_EXEC(&States::start);
 	/* don't create new local Q-Registers if colon modifier is given */
 	reg->execute(!eval_colon());
-
 	return &States::start;
 }
 
@@ -1602,10 +1599,8 @@ State *
 StateMacroFile::got_file(const gchar *filename)
 {
 	BEGIN_EXEC(&States::start);
-
 	/* don't create new local Q-Registers if colon modifier is given */
 	Execute::file(filename, !eval_colon());
-
 	return &States::start;
 }
 
@@ -1635,6 +1630,8 @@ StateCopyToQReg::got_register(QRegister *reg)
 {
 	tecoInt from, len;
 	Sci_TextRange tr;
+
+	machine.reset();
 
 	BEGIN_EXEC(&States::start);
 	expressions.eval();
