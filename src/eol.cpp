@@ -249,8 +249,7 @@ EOLReaderMem::convert_all(gsize *out_len)
  *
  * @param buffer The buffer to convert.
  * @parem buffer_len The length of the data in buffer.
- * @return The number of bytes written to the data sink,
- *         i.e. the size of the EOL-normalized data written.
+ * @return The number of bytes consumed/converted from buffer.
  */
 gsize
 EOLWriter::convert(const gchar *buffer, gsize buffer_len)

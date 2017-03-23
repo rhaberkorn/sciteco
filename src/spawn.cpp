@@ -326,11 +326,6 @@ StateExecuteCommand::initial(void)
 	}
 }
 
-/*
- * FIXME: `xclip -selection clipboard -in` hangs -- the
- * stdout watcher is never activated!
- * Workaround is to pipe to /dev/null
- */
 State *
 StateExecuteCommand::done(const gchar *str)
 {
@@ -567,27 +562,36 @@ stdin_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 	StateExecuteCommand::Context &ctx =
 			*(StateExecuteCommand::Context *)data;
 
+	sptr_t gap;
+	gsize convert_len;
 	const gchar *buffer;
 	gsize bytes_written;
 
+	if (!(condition & G_IO_OUT))
+		/* stdin might be closed prematurely */
+		goto remove;
+
 	/* we always read from the current view */
+	gap = interface.ssm(SCI_GETGAPPOSITION);
+	convert_len = ctx.start < gap && gap < ctx.to
+			? gap - ctx.start : ctx.to - ctx.start;
 	buffer = (const gchar *)interface.ssm(SCI_GETRANGEPOINTER,
-	                                      ctx.from, (sptr_t)(ctx.to - ctx.start));
+	                                      ctx.start, convert_len);
 
 	try {
 		/*
-		 * This cares about automatic EOL conversion
+		 * This cares about automatic EOL conversion and
+		 * returns the number of consumed bytes.
+		 * If it can only write a part of the EOL sequence (ie. CR of CRLF)
+		 * it may return a short byte count (possibly 0) which ensures that
+		 * we do not yet remove the source.
 		 */
-		bytes_written = ctx.stdin_writer->convert(buffer, ctx.to - ctx.start);
+		bytes_written = ctx.stdin_writer->convert(buffer, convert_len);
 	} catch (Error &e) {
 		ctx.error = new Error(e);
 		/* do not yet quit -- we still have to reap the child */
 		goto remove;
 	}
-
-	if (bytes_written == 0)
-		/* EOF: process closed stdin preliminarily? */
-		goto remove;
 
 	ctx.start += bytes_written;
 
