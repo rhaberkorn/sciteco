@@ -1,3 +1,4 @@
+Tasks:
  * submit patch for libglib (initialization when
    linking statically with win32 threads - see glib/glib-init.c).
    Also gspawn helpers should probably link with -all-static when compiling
@@ -7,8 +8,16 @@
    Also mention how to use the "lexer.test..." macros in the
    "edit" hook.
  * OS X port (macports and/or homebrew)
+ * Scinterm: implement wattrget() for netbsd-curses
 
 Known Bugs:
+ * ECxclip -selection clipboard -in$ hangs. The stdout-watcher is
+   never activated.
+ * ECcat /dev/zero$ can easily exceed the memory limit.
+   Perhaps we should add a check to stdout_watcher_cb.
+ * fnkeys.tes: Cursor movements will swallow all preceding braced
+   expressions - there should be more checks.
+ * rubout of EB does not always restore the view to an edited Q-Register.
  * Colors are still wrong in Linux console even if TERM=linux-16color
    when using Solarized. Affects e.g. the message line which uses the
    reverse of STYLE_DEFAULT.
@@ -184,7 +193,13 @@ Features:
      of EI that considers $SCITECOPATH.
      Current use of EI (insert without string building) will have
      to move, e.g. to FI.
-   * ::S for string "comparisons" (anchored search)
+   * ::S for string "comparisons" (anchored search).
+     This is supposed to be an alias for .,.:FB which would be
+     .,.:S in SciTECO. Apparanetly, the bounded search is still
+     incompatible in SciTECO, as it is allowed to match beyond
+     the bounds. Either the semantics of m,n:S should be changed
+     or an FB command with classic TECO semantics should be
+     introduced..
    * ^S (-(length) of last referenced string), ^Y as .+^S,.
    * ^Q convert line arg into character arg
    * ^A, T and stdio in general
@@ -240,8 +255,12 @@ Features:
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
    dot on the QReg stack
- * :EL command could also be used to convert all EOLs in the current
+ * EL command could also be used to convert all EOLs in the current
    buffer.
+ * nEL should perhaps dirtify the buffer, at least when automatic
+   EOL translation is active, or always (see above).
+   The dirty flag exists to remind users to save their buffers and
+   nEL changes the result of a Save.
  * exclusive access to all opened files/buffers (locking):
    SciTECO will never be able to notice when a file has been
    changed externally. Also reversing a file write will overwrite
@@ -266,6 +285,9 @@ Features:
    Errors could be catched using a structured try-catch-like construct
    or by defining an error handling label.
    Macros may retrieve the code and string of the last error.
+ * Adding a secret command line option to process immediate editing
+   commands in batch mode with undo would allow us to add some
+   test cases that otherwise only occur in interactive mode.
 
 Optimizations:
  * The Windows-specific memory limiting using GetProcessMemoryInfo()
@@ -323,3 +345,8 @@ Documentation:
    up help terms at dot in the current document (e.g. if called ?$).
    Furthermore, womanpages could contain "hypertext" links
    to help topics using special Troff markup and grosciteco support.
+ * The command reference should include an overview.
+ * Write a cheat sheet. Either on www.cheatography.com, or
+   using Groff and include with SciTECO.
+ * Write some tutorials for the Wiki, e.g. about paragraph
+   reflowing.
