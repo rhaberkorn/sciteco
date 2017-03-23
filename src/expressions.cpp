@@ -124,11 +124,11 @@ Expressions::calc(void)
 	Operator op;
 	tecoInt vleft;
 
-	if (operators.peek() != OP_NUMBER)
+	if (!operators.items() || operators.peek() != OP_NUMBER)
 		throw Error("Missing right operand");
 	vright = pop_num();
 	op = pop_op();
-	if (operators.peek() != OP_NUMBER)
+	if (!operators.items() || operators.peek() != OP_NUMBER)
 		throw Error("Missing left operand");
 	vleft = pop_num();
 

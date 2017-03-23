@@ -7,6 +7,10 @@ AT_COLOR_TESTS
 # idiom "(0/0)" to enforce a "Division by zero" error
 # whenever we want to fail.
 
+AT_SETUP([Missing left operand])
+AT_CHECK([$SCITECO -e '+23='], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Closing loops at the correct macro level])
 AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
 AT_CLEANUP
