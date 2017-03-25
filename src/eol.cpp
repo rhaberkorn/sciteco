@@ -248,7 +248,7 @@ EOLReaderMem::convert_all(gsize *out_len)
  * well-formed with regard to EOL sequences.
  *
  * @param buffer The buffer to convert.
- * @parem buffer_len The length of the data in buffer.
+ * @param buffer_len The length of the data in buffer.
  * @return The number of bytes consumed/converted from buffer.
  */
 gsize

@@ -33,7 +33,7 @@ namespace SciTECO {
 
 class HelpIndex : private RBTreeStringCase, public Object {
 public:
-	class Topic : public RBEntryOwnString {
+	class Topic : public RBTreeStringCase::RBEntryOwnString {
 	public:
 		gchar	*filename;
 		tecoInt	pos;

@@ -56,7 +56,7 @@ class GotoTable : private RBTreeString, public Object {
 		}
 	};
 
-	class Label : public RBEntryOwnString {
+	class Label : public RBTreeString::RBEntryOwnString {
 	public:
 		gint pc;
 

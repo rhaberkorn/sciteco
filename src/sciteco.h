@@ -69,7 +69,8 @@ extern sig_atomic_t sigint_occurred;
 #define CTL_KEY(C)	((C) & ~0x40)
 /**
  * Control character of the escape key.
- * Equivalent to CTL_KEY('[') or '\e'.
+ * Equivalent to CTL_KEY('[') or '\\e',
+ * but more portable.
  */
 #define CTL_KEY_ESC	27
 /**
