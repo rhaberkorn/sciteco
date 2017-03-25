@@ -124,6 +124,18 @@ public:
 	}
 };
 
+/**
+ * Base class of states with case-insenstive input.
+ *
+ * This is meant for states accepting command characters
+ * that can possibly be case-folded.
+ */
+class StateCaseInsensitive : public State {
+protected:
+	/* in cmdline.cpp */
+	void process_edit_cmd(gchar key);
+};
+
 template <typename Type>
 class MicroStateMachine : public Object {
 protected:
@@ -252,7 +264,7 @@ protected:
 	void process_edit_cmd(gchar key);
 };
 
-class StateStart : public State {
+class StateStart : public StateCaseInsensitive {
 public:
 	StateStart();
 
@@ -276,7 +288,7 @@ private:
 	}
 };
 
-class StateControl : public State {
+class StateControl : public StateCaseInsensitive {
 public:
 	StateControl();
 
@@ -292,7 +304,7 @@ private:
 	State *custom(gchar chr);
 };
 
-class StateEscape : public State {
+class StateEscape : public StateCaseInsensitive {
 public:
 	StateEscape();
 
@@ -312,7 +324,7 @@ private:
 	}
 };
 
-class StateFCommand : public State {
+class StateFCommand : public StateCaseInsensitive {
 public:
 	StateFCommand();
 
@@ -344,7 +356,7 @@ private:
 	State *got_file(const gchar *filename);
 };
 
-class StateCondCommand : public State {
+class StateCondCommand : public StateCaseInsensitive {
 public:
 	StateCondCommand();
 
@@ -352,7 +364,7 @@ private:
 	State *custom(gchar chr);
 };
 
-class StateECommand : public State {
+class StateECommand : public StateCaseInsensitive {
 public:
 	StateECommand();
 

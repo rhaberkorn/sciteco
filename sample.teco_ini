@@ -41,6 +41,9 @@ EMQ[$SCITECOPATH]/session.tes
 }
 0,32ED
 
+! Uncomment to enable automatic case folding !
+! 0,8ED !
+
 ! Tweak the default font name and size.
   The size unit is 1pt/100 !
 ! [lexer.font]Monospace 1300U[lexer.font] !

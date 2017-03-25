@@ -614,6 +614,17 @@ State::process_edit_cmd(gchar key)
 }
 
 void
+StateCaseInsensitive::process_edit_cmd(gchar key)
+{
+	if (Flags::ed & Flags::ED_AUTOCASEFOLD)
+		/* will not modify non-letter keys */
+		key = g_ascii_islower(key) ? g_ascii_toupper(key)
+		                           : g_ascii_tolower(key);
+
+	State::process_edit_cmd(key);
+}
+
+void
 StateExpectString::process_edit_cmd(gchar key)
 {
 	switch (key) {

@@ -39,6 +39,7 @@ typedef tecoInt tecoBool;
 
 namespace Flags {
 	enum {
+		ED_AUTOCASEFOLD		= (1 << 3),
 		ED_AUTOEOL		= (1 << 4),
 		ED_HOOKS		= (1 << 5),
 		ED_FNKEYS		= (1 << 6),

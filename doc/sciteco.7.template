@@ -375,6 +375,23 @@ effectively switches between undo and redo modes.
 The modifier also influences the behaviour of the TAB key.
 T}
 T{
+Case insensitive command character
+T};\(em;Any letter;T{
+Beginning of case-insensitive commands
+.br
+(automatic case folding enabled)
+T};T{
+At the beginning of case-insensitive commands,
+the case of letters is inverted.
+One or two letter commands will thus typically
+be inserted in upper case.
+This only happens if bit 3 of the \fBED\fP flags
+is set, e.g. by executing:
+.EX
+0,8ED
+.EE
+T}
+T{
 .SCITECO_TOPIC ^J enter LF CR
 Insert end of line sequence
 T};10;^J, Return, Enter;T{

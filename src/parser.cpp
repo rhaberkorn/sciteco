@@ -672,7 +672,7 @@ StateExpectFile::done(const gchar *str)
 	return next;
 }
 
-StateStart::StateStart() : State()
+StateStart::StateStart()
 {
 	transitions['\0'] = this;
 	init(" \f\r\n\v");
@@ -1648,7 +1648,7 @@ StateStart::custom(gchar chr)
 	return this;
 }
 
-StateFCommand::StateFCommand() : State()
+StateFCommand::StateFCommand()
 {
 	transitions['\0'] = this;
 	transitions['K'] = &States::searchkill;
@@ -1842,7 +1842,7 @@ StateChangeDir::got_file(const gchar *filename)
 	return &States::start;
 }
 
-StateCondCommand::StateCondCommand() : State()
+StateCondCommand::StateCondCommand()
 {
 	transitions['\0'] = this;
 }
@@ -1948,7 +1948,7 @@ StateCondCommand::custom(gchar chr)
 	return &States::start;
 }
 
-StateControl::StateControl() : State()
+StateControl::StateControl()
 {
 	transitions['\0'] = this;
 	transitions['I'] = &States::insert_indent;
@@ -2183,7 +2183,7 @@ StateEscape::end_of_macro(void)
 	expressions.discard_args();
 }
 
-StateECommand::StateECommand() : State()
+StateECommand::StateECommand()
 {
 	transitions['\0'] = this;
 	transitions['%'] = &States::epctcommand;
@@ -2256,6 +2256,15 @@ StateECommand::custom(gchar chr)
 	 * Without any argument ED returns the current flags.
 	 *
 	 * Currently, the following flags are used by \*(ST:
+	 *   - 8: Enable/disable automatic folding of case-insensitive
+	 *     command characters during interactive key translation.
+	 *     The case of letter keys is inverted, so one or two
+	 *     character commands will typically be inserted upper-case,
+	 *     but you can still press Shift to insert lower-case letters.
+	 *     Case-insensitive Q-Register specifications are not
+	 *     case folded.
+	 *     This is thought to improve the readability of the command
+	 *     line macro.
 	 *   - 16: Enable/disable automatic translation of end of
 	 *     line sequences to and from line feed.
 	 *   - 32: Enable/Disable buffer editing hooks
