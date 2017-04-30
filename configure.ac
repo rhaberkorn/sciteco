@@ -57,6 +57,7 @@ AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_SED
+AC_PROG_GREP
 AC_PROG_INSTALL
 
 # Mainly because of Scintilla, which depends on
@@ -87,8 +88,10 @@ case $host in
 	;;
 esac
 
-# Emscripten uses Clang as well
-AM_CONDITIONAL(CLANG, [$CXX --version | $GREP -E "clang|Emscripten" >/dev/null])
+# Detect Clang. Emscripten is based on Clang as well.
+if $CXX --version | $GREP -E "clang|Emscripten" >/dev/null; then
+	CXXFLAGS="$CXXFLAGS -Wno-mismatched-tags"
+fi
 
 AC_CHECK_PROG(DATE, date, date)
 if [[ x$DATE = x ]]; then
@@ -198,9 +201,8 @@ AC_CACHE_CHECK([if C++ compiler supports -fsized-deallocation],
 if [[ x$sciteco_cv_sized_deallocation_result = xyes ]]; then
 	AC_DEFINE(HAVE_SIZED_DEALLOCATION, 1,
 	          [C++ compiler supports -fsized-deallocation])
+	CXXFLAGS="$CXXFLAGS -fsized-deallocation"
 fi
-AM_CONDITIONAL(HAVE_SIZED_DEALLOCATION,
-               test "$sciteco_cv_sized_deallocation_result" = yes)
 
 #
 # Config options

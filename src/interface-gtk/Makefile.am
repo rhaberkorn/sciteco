@@ -1,13 +1,7 @@
 AM_CPPFLAGS += -I$(top_srcdir)/src
 
-AM_CFLAGS = -std=c99 -Wall
-AM_CXXFLAGS = -std=c++11 -Wall -Wno-char-subscripts
-if CLANG
-AM_CXXFLAGS += -Wno-mismatched-tags
-endif
-if HAVE_SIZED_DEALLOCATION
-AM_CXXFLAGS += -fsized-deallocation
-endif
+AM_CFLAGS = -Wall
+AM_CXXFLAGS = -Wall -Wno-char-subscripts
 
 EXTRA_DIST = gtk-info-popup.gob \
              gtk-canonicalized-label.gob
