@@ -40,9 +40,11 @@ namespace SciTECO {
  * scalars (e.g. new char[5]).
  *
  * C++14 (supported by GCC >= 5) has global sized delete
- * replacements which would be effective in the entire application
- * but we're still using the base-class approach since
- * we must support the older compilers anyway.
+ * replacements which would be effective in the entire application.
+ * We're using them too if support is detected and there is
+ * also a fallback using malloc_usable_size().
+ * Another fallback with a size field would be possible
+ * but is probably not worth the trouble.
  */
 class Object {
 public:

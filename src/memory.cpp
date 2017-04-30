@@ -45,6 +45,15 @@
 
 namespace SciTECO {
 
+/*
+ * Define this to prefix each heap object allocated
+ * by the custom allocators with a magic value.
+ * This helps to detect non-matching calls to the
+ * overridden new/delete operators which can cause
+ * underruns of the memory counter.
+ */
+//#define DEBUG_MAGIC ((guintptr)0xDEAD15DE5E1BEAF0)
+
 MemoryLimit memlimit;
 
 /*
@@ -235,6 +244,11 @@ Object::operator new(size_t size) noexcept
 	memory_usage += size;
 #endif
 
+#ifdef DEBUG_MAGIC
+	guintptr *ptr = (guintptr *)g_malloc(sizeof(guintptr) + size);
+	*ptr = DEBUG_MAGIC;
+	return ptr + 1;
+#else
 	/*
 	 * Since we've got the sized-delete operator
 	 * below, we could allocate via g_slice.
@@ -254,11 +268,19 @@ Object::operator new(size_t size) noexcept
 	 * from memory limit exhaustions.
 	 */
 	return g_malloc(size);
+#endif
 }
 
 void
 Object::operator delete(void *ptr, size_t size) noexcept
 {
+#ifdef DEBUG_MAGIC
+	if (ptr) {
+		ptr = (guintptr *)ptr - 1;
+		g_assert(*(guintptr *)ptr == DEBUG_MAGIC);
+	}
+#endif
+
 	g_free(ptr);
 
 #ifdef MEMORY_USAGE_FALLBACK
@@ -284,22 +306,24 @@ Object::operator delete(void *ptr, size_t size) noexcept
 void *
 operator new(size_t size)
 {
-#ifdef MEMORY_USAGE_FALLBACK
-	SciTECO::memory_usage += size;
-#endif
-
-	return g_malloc(size);
+	return SciTECO::Object::operator new(size);
 }
 
 void
 operator delete(void *ptr, size_t size) noexcept
 {
-	g_free(ptr);
-
-#ifdef MEMORY_USAGE_FALLBACK
-	SciTECO::memory_usage -= size;
-#endif
+	SciTECO::Object::operator delete(ptr, size);
 }
+
+/*
+ * FIXME: I'm a bit puzzled of why this is necessary.
+ * Apparently, G++ sometimes calls the non-sized,
+ * FOLLOWED BY the sized deallocator even when
+ * building Scintilla with -fsized-deallocation.
+ * It is still uncertain whether the compiler may
+ * call the non-sized WITHOUT the sized variant.
+ */
+void operator delete(void *ptr) noexcept {}
 
 #else
 /*
