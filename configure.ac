@@ -181,29 +181,6 @@ esac
 AC_CHECK_HEADERS([malloc.h malloc_np.h])
 AC_CHECK_FUNCS([malloc_trim malloc_usable_size])
 
-# Check whether compiler supports global sized deallocations.
-# If yes, this will improve the memory limiting fallback
-# implementation.
-# Once we can depend on C++14, this check is no longer necessary.
-AC_CACHE_CHECK([if C++ compiler supports -fsized-deallocation],
-               [sciteco_cv_sized_deallocation_result], [
-	AC_LANG_PUSH(C++)
-	OLD_CXXFLAGS="$CXXFLAGS"
-	CXXFLAGS="$CXXFLAGS -fsized-deallocation"
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-		[[#include <new>]],
-		[[(::operator delete)(0, 256)]]
-	)], sciteco_cv_sized_deallocation_result=yes,
-	    sciteco_cv_sized_deallocation_result=no)
-	CXXFLAGS="$OLD_CXXFLAGS"
-	AC_LANG_POP(C++)
-])
-if [[ x$sciteco_cv_sized_deallocation_result = xyes ]]; then
-	AC_DEFINE(HAVE_SIZED_DEALLOCATION, 1,
-	          [C++ compiler supports -fsized-deallocation])
-	CXXFLAGS="$CXXFLAGS -fsized-deallocation"
-fi
-
 #
 # Config options
 #

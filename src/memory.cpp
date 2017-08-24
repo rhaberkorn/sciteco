@@ -132,6 +132,18 @@ MemoryLimit memlimit;
  *   Even the malloc_usable_size() workaround for old or non-GNU
  *   compilers is still faster than mallctl() on FreeBSD.
  *   This might need to change in the future.
+ * - Beginning with C++14 (or earlier with -fsized-deallocation),
+ *   it is possible to globally replace sized allocation/deallocation
+ *   functions, which could be used to avoid the malloc_usable_size()
+ *   workaround. Unfortunately, this may not be used for arrays,
+ *   since the compiler may have to call non-sized variants if the
+ *   original allocation size is unknown - and there is no way to detect
+ *   that when the new[] call is made.
+ *   What's worse is that at least G++ STL is broken seriously and
+ *   some versions will call the non-sized delete() even when sized-deallocation
+ *   is available. Again, this cannot be detected at new() time.
+ *   Therefore, I had to remove the sized-deallocation based
+ *   optimization.
  */
 
 #ifdef G_OS_WIN32
@@ -179,12 +191,19 @@ MemoryLimit::get_usage(void)
  * Unfortunately, in the worst case, this will only measure the heap used
  * by C++ objects in SciTECO's sources; not even Scintilla, nor all
  * g_malloc() calls.
- * Usually, we will be able to use global sized deallocators or
+ * Usually, we will be able to use global non-sized deallocators with
  * libc-specific support to get more accurate results, though.
  */
 
 #define MEMORY_USAGE_FALLBACK
 
+/**
+ * Current memory usage in bytes.
+ *
+ * @bug This only works in single-threaded applications.
+ *      Should SciTECO or Scintilla ever use multiple threads,
+ *      it will be necessary to use atomic operations.
+ */
 static gsize memory_usage = 0;
 
 gsize
@@ -234,7 +253,9 @@ MemoryLimit::check(void)
  * The object-specific sized deallocators allow memory
  * counting portably, even in strict C++11 mode.
  * Once we depend on C++14, they and the entire `Object`
- * class hack can be avoided.
+ * class hack may be avoided.
+ * But see above - due to broken STLs, this may not actually
+ * be safe!
  */
 
 void *
@@ -290,50 +311,19 @@ Object::operator delete(void *ptr, size_t size) noexcept
 
 } /* namespace SciTECO */
 
-#ifdef HAVE_SIZED_DEALLOCATION
-/*
- * Global sized deallocators must be defined in the
- * root namespace.
- * Since we only depend on C++11, we cannot just always
- * define them (they are a C++14 feature).
- * They will effectively measure all C++ allocations,
- * including the ones in Scintilla which can make a huge
- * difference.
- * Due to the poor platform support for memory measurement,
- * it's still worth to support them optionally.
- */
-
-void *
-operator new(size_t size)
-{
-	return SciTECO::Object::operator new(size);
-}
-
-void
-operator delete(void *ptr, size_t size) noexcept
-{
-	SciTECO::Object::operator delete(ptr, size);
-}
-
-/*
- * FIXME: I'm a bit puzzled of why this is necessary.
- * Apparently, G++ sometimes calls the non-sized,
- * FOLLOWED BY the sized deallocator even when
- * building Scintilla with -fsized-deallocation.
- * It is still uncertain whether the compiler may
- * call the non-sized WITHOUT the sized variant.
- */
-void operator delete(void *ptr) noexcept {}
-
-#else
 /*
  * In strict C++11, we can still use global non-sized
  * deallocators.
+ *
  * On their own, they bring little benefit, but with
  * some libc-specific functionality, they can be used
  * to improve the fallback memory measurements to include
  * all allocations (including Scintilla).
  * This comes with a moderate runtime penalty.
+ *
+ * Unfortunately, even in C++14, defining replacement
+ * sized deallocators may be very dangerous, so this
+ * seems to be as best as we can get (see above).
  */
 
 void *
@@ -358,5 +348,3 @@ operator delete(void *ptr) noexcept
 #endif
 	g_free(ptr);
 }
-
-#endif /* !HAVE_SIZED_DEALLOCATION */
