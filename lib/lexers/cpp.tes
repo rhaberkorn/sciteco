@@ -13,7 +13,8 @@
   :EN*.hxxQ*"S -1 '
   :EN*.ippQ*"S -1 '
   :EN*.mmQ*"S -1 '
-  :EN*.smaQ*
+  :EN*.smaQ*"S -1 '
+  :EN*.inoQ*
 }
 
 @[lexer.set.cpp]{
