@@ -47,6 +47,12 @@
 #include "error.h"
 #include "cmdline.h"
 
+extern "C" {
+#if defined(HAVE_MALLOC_TRIM) && !HAVE_DECL_MALLOC_TRIM
+int malloc_trim(size_t pad);
+#endif
+}
+
 namespace SciTECO {
 
 static gchar *filename_complete(const gchar *filename, gchar completed = ' ',

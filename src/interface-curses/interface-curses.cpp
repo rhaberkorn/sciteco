@@ -89,6 +89,15 @@
 #define A_UNDERLINE 0
 #endif
 
+/**
+ * Whether we're on EMCurses.
+ * Could be replaced with a configure-time check for
+ * PDC_emscripten_set_handler().
+ */
+#if defined(__PDCURSES__) && defined(EMSCRIPTEN)
+#define EMCURSES
+#endif
+
 #ifdef NCURSES_VERSION
 #if defined(G_OS_UNIX) || defined(G_OS_HAIKU)
 /**
@@ -630,7 +639,7 @@ InterfaceCurses::init_interactive(void)
 	cmdline_window = newwin(0, 0, LINES - 1, 0);
 	keypad(cmdline_window, TRUE);
 
-#ifdef EMSCRIPTEN
+#ifdef EMCURSES
         nodelay(cmdline_window, TRUE);
 #endif
 
@@ -1533,7 +1542,7 @@ InterfaceCurses::event_loop_impl(void)
 	wnoutrefresh(cmdline_window);
 	doupdate();
 
-#ifdef EMSCRIPTEN
+#ifdef EMCURSES
 	PDC_emscripten_set_handler(event_loop_iter, TRUE);
 	/*
 	 * We must not block emscripten's main loop,

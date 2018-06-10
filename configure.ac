@@ -57,7 +57,6 @@ AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_PROG_CC
 AC_PROG_CC_C99
 AC_PROG_SED
-AC_PROG_GREP
 AC_PROG_INSTALL
 
 # Mainly because of Scintilla, which depends on
@@ -88,10 +87,18 @@ case $host in
 	;;
 esac
 
-# Detect Clang. Emscripten is based on Clang as well.
-if $CXX --version | $GREP -E "clang|Emscripten" >/dev/null; then
+# Detect Clang (including Emscripten).
+# A particular warning does not cooperate well with our use
+# of the BSD data structures.
+AC_CHECK_DECL(__clang__, [
 	CXXFLAGS="$CXXFLAGS -Wno-mismatched-tags"
-fi
+])
+
+# Changing the EXEEXT on emscripten ensures that we don't
+# need a special Makefile rule to generate Javascript files.
+AC_CHECK_DECL(EMSCRIPTEN, [
+	EXEEXT=.js
+])
 
 AC_CHECK_PROG(DATE, date, date)
 if [[ x$DATE = x ]]; then
@@ -179,7 +186,10 @@ esac
 # Some of this will only be found on glibc,
 # others on FreeBSD/jemalloc.
 AC_CHECK_HEADERS([malloc.h malloc_np.h])
-AC_CHECK_FUNCS([malloc_trim malloc_usable_size])
+AC_CHECK_FUNCS([malloc_trim malloc_usable_size], [
+	# Sometimes the declaration is missing.
+	AC_CHECK_DECLS([malloc_trim])
+])
 
 #
 # Config options
