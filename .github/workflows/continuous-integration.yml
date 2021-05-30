@@ -41,15 +41,15 @@ jobs:
 
     # NOTE: xvfb-run emulates an XServer and is required when building
     # Gtk versions (since SciTECO calls itself during the build).
-    - run: xvfb-run make
-    - run: sudo xvfb-run make install
+    - run: xvfb-run -a make
+    - run: sudo xvfb-run -a make install
     - name: Run Test Suite
-      run: xvfb-run make check
+      run: xvfb-run -a make check
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     # FIXME: Will try to perform an out-of-tree build which will not
     # work without manual intervention due to Scintilla.
-#   - run: xvfb-run make distcheck
+#   - run: xvfb-run -a make distcheck
     - name: Build Source Tarball
       run: make dist
 
