@@ -56,6 +56,7 @@ AC_PROG_CC
 # FIXME: We want -std=gnu11
 AC_PROG_CC_C99
 AC_PROG_SED
+AC_PROG_GREP
 AC_PROG_INSTALL
 
 # Mainly because of Scintilla, which depends on
@@ -74,6 +75,9 @@ fi
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_CHECK_TOOL(AR, ar)
+
+# Whether $CC is Clang
+AM_CONDITIONAL(CLANG, [$CC --version | $GREP -i clang >/dev/null])
 
 # Check for Windows resource compiler and define
 # WIN32 conditional

@@ -14,8 +14,9 @@ AM_CPPFLAGS = -DINSECURE='defined(NDEBUG)' -DNO_MALLINFO=1 -DNO_MALLOC_STATS=1 \
 # FIXME: This optimization is still broken as of GCC v9.3.0.
 # This is a known GCC bug, triggered by memset() in calloc().
 # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93213
-# FIXME: This must not be passed on Clang
+if !CLANG
 AM_CFLAGS = -fno-optimize-strlen
+endif
 
 noinst_LTLIBRARIES = libdlmalloc.la
 if REPLACE_MALLOC
