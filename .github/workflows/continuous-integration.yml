@@ -18,9 +18,10 @@ jobs:
         submodules: recursive
     - name: Install all build dependencies
       run: >
-        sudo apt-get install build-essential autoconf automake libtool
-                             libglib2.0-dev libncurses-dev
-                             groff doxygen
+        sudo apt-get install -y
+        build-essential autoconf automake libtool
+        libglib2.0-dev libncurses-dev
+        groff doxygen
     - name: Generate ./configure
       run: autoreconf -i
     - run: ./configure --with-interface=ncurses --enable-html-manual
