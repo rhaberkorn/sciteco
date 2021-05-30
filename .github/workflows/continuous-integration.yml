@@ -24,6 +24,8 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Update Repositories
+      run: sudo apt-get update
     - name: Install Build Dependencies
       run: >
         sudo apt-get install -y
