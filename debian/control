@@ -3,7 +3,7 @@ Section: editors
 Priority: optional
 Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
 Build-Depends: debhelper (>= 7.4), g++ (>= 4:4.4),
- libglib2.0-dev (>= 2.28), ncurses-base, ncurses-term, libncurses5-dev,
+ libglib2.0-dev (>= 2.44), ncurses-base, ncurses-term, libncurses5-dev,
  groff-base
 Standards-Version: 3.9.2
 Homepage: http://sciteco.sf.net/
