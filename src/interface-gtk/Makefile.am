@@ -1,22 +1,18 @@
-AM_CPPFLAGS += -I$(top_srcdir)/src
+AM_CPPFLAGS += -I$(top_srcdir)/contrib/rb3ptr \
+               -I$(top_srcdir)/src
 
-AM_CFLAGS = -Wall
-AM_CXXFLAGS = -Wall -Wno-char-subscripts
+AM_CFLAGS = -std=gnu11 -Wall -Wno-initializer-overrides -Wno-unused-value
 
-EXTRA_DIST = gtk-info-popup.gob \
-             gtk-canonicalized-label.gob
-BUILT_SOURCES = gtk-info-popup.c \
-                gtk-info-popup.h gtk-info-popup-private.h \
-                gtk-canonicalized-label.c \
-                gtk-canonicalized-label.h
+EXTRA_DIST = teco-gtk-info-popup.gob \
+             teco-gtk-label.gob
+BUILT_SOURCES = teco-gtk-info-popup.c teco-gtk-info-popup.h \
+                teco-gtk-info-popup-private.h \
+                teco-gtk-label.c teco-gtk-label.h
 
 noinst_LTLIBRARIES = libsciteco-interface.la
-libsciteco_interface_la_SOURCES = interface-gtk.cpp interface-gtk.h
-if GTK_FLOW_BOX_FALLBACK
-libsciteco_interface_la_SOURCES += gtkflowbox.c gtkflowbox.h
-endif
-nodist_libsciteco_interface_la_SOURCES = gtk-info-popup.c \
-                                         gtk-canonicalized-label.c
+libsciteco_interface_la_SOURCES = interface.c
+nodist_libsciteco_interface_la_SOURCES = teco-gtk-info-popup.c \
+                                         teco-gtk-label.c
 
 dist_pkgdata_DATA = fallback.css
 

@@ -6,6 +6,13 @@
  * This may cause problems with your current Gtk theme.
  * You can copy this file to $SCITECOCONFIG/.teco_css
  * to fix it up or add other style customizations.
+ * You could of course also import it using
+ * @import "/usr/share/sciteco/fallback.css";
+ *
+ * NOTE: Avoid using CSS element names like GtkLabel
+ * since Gtk switched from type names to custom names
+ * in Gtk+ v3.20 and it is impossible/cumbersome to
+ * write a CSS compatible with both.
  */
 
 /*
@@ -17,14 +24,12 @@
  *   - type-label: The label showing the current document type
  *   - name-label: THe label showing the current document name
  */
-.info-qregister,
-.info-buffer {
+.info-buffer, .info-qregister {
 	background-color: @sciteco_default_fg_color;
 	background-image: none;
 }
 
-.info-qregister GtkLabel,
-.info-buffer GtkLabel {
+.info-buffer *, .info-qregister * {
 	color: @sciteco_default_bg_color;
 	text-shadow: none;
 }
@@ -39,11 +44,6 @@
 }
 
 /*
- * Scintilla views
- */
-ScintillaObject {}
-
-/*
  * The message bar (#sciteco-message-bar).
  *
  * The "question" class refers to G_MESSAGE_QUESTION.
@@ -51,25 +51,32 @@ ScintillaObject {}
  * reason that there is no class for G_MESSAGE_OTHER that
  * we could use for styling.
  */
-#sciteco-message-bar.question {
-	background-color: @sciteco_default_fg_color;
+#sciteco-message-bar .label {
+	color: @sciteco_default_bg_color;
+	text-shadow: none;
+}
+
+#sciteco-message-bar {
 	background-image: none;
 }
 
-#sciteco-message-bar.question GtkLabel {
-	color: @sciteco_default_bg_color;
-	text-shadow: none;
+#sciteco-message-bar.question {
+	background-color: @sciteco_default_fg_color;
+}
+#sciteco-message-bar.info {
+	background-color: green;
+}
+#sciteco-message-bar.error {
+	background-color: yellow;
+}
+#sciteco-message-bar.error {
+	background-color: red;
 }
 
 /*
  * The command line area (#sciteco-cmdline)
  */
-#sciteco-cmdline {
-	color: @sciteco_default_fg_color;
-	text-shadow: none;
-	background-color: @sciteco_default_bg_color;
-	background-image: none;
-}
+#sciteco-cmdline {}
 
 /*
  * The autocompletion popup (#sciteco-info-popup).
@@ -81,11 +88,11 @@ ScintillaObject {}
 	background-image: none;
 }
 
-#sciteco-info-popup GtkLabel {
+#sciteco-info-popup .label {
 	color: @sciteco_calltip_fg_color;
 	text-shadow: none;
 }
 
-#sciteco-info-popup .highlight GtkLabel {
+#sciteco-info-popup .highlight .label {
 	font-weight: bold;
 }

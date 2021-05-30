@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,300 +14,149 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __EXPRESSIONS_H
-#define __EXPRESSIONS_H
+#pragma once
 
 #include <glib.h>
 
-#include "memory.h"
+#include "sciteco.h"
 #include "undo.h"
-#include "error.h"
-
-namespace SciTECO {
-
-template <typename Type>
-class ValueStack : public Object {
-	/*
-	 * NOTE: Since value stacks are usually singleton,
-	 * we pass them as a template parameter, saving space
-	 * in the undo token.
-	 */
-	template <ValueStack<Type> &stack>
-	class UndoTokenPush : public UndoToken {
-		Type	value;
-		guint	index;
-
-	public:
-		UndoTokenPush(Type _value, guint _index = 0)
-			     : value(_value), index(_index) {}
-
-		void
-		run(void)
-		{
-			stack.push(value, index);
-		}
-	};
-
-	template <ValueStack<Type> &stack>
-	class UndoTokenPop : public UndoToken {
-		guint index;
-
-	public:
-		UndoTokenPop(guint _index = 0)
-			    : index(_index) {}
-
-		void
-		run(void)
-		{
-			stack.pop(index);
-		}
-	};
-
-	/** Beginning of stack area */
-	Type *stack;
-	/** End of stack area */
-	Type *stack_top;
-
-	/** Pointer to top element on stack */
-	Type *sp;
-
-public:
-	ValueStack(gsize size = 1024)
-	{
-		stack = new Type[size];
-		/* stack grows to smaller addresses */
-		sp = stack_top = stack+size;
-	}
-
-	~ValueStack()
-	{
-		delete[] stack;
-	}
-
-	inline guint
-	items(void)
-	{
-		return stack_top - sp;
-	}
-
-	inline Type &
-	push(Type value, guint index = 0)
-	{
-		if (G_UNLIKELY(sp == stack))
-			throw Error("Stack overflow");
-
-		/* reserve space for new element */
-		sp--;
-		g_assert(items() > index);
-
-		/* move away elements after index (index > 0) */
-		for (guint i = 0; i < index; i++)
-			sp[i] = sp[i+1];
-
-		return sp[index] = value;
-	}
-
-	template <ValueStack<Type> &stack>
-	static inline void
-	undo_push(Type value, guint index = 0)
-	{
-		undo.push<UndoTokenPush<stack>>(value, index);
-	}
-
-	inline Type
-	pop(guint index = 0)
-	{
-		/* peek() already asserts */
-		Type v = peek(index);
-
-		/* elements after index are moved to index (index > 0) */
-		while (index--)
-			sp[index+1] = sp[index];
-
-		/* free space of element to pop */
-		sp++;
-
-		return v;
-	}
-
-	template <ValueStack<Type> &stack>
-	static inline void
-	undo_pop(guint index = 0)
-	{
-		undo.push<UndoTokenPop<stack>>(index);
-	}
-
-	inline Type &
-	peek(guint index = 0)
-	{
-		g_assert(items() > index);
-
-		return sp[index];
-	}
-
-	/** Clear all but `keep_items` items. */
-	inline void
-	clear(guint keep_items = 0)
-	{
-		g_assert(keep_items <= items());
-
-		sp = stack_top - keep_items;
-	}
-};
 
 /**
- * Arithmetic expression stacks
+ * Defines a function undo__insert_val__ARRAY() to insert a value into
+ * a fixed GArray.
+ *
+ * @note
+ * This optimizes undo token memory consumption under the assumption
+ * that ARRAY is a global object that does not have to be stored in
+ * the undo tokens.
+ * Otherwise, you could simply undo__g_array_insert_val(...).
+ *
+ * @fixme
+ * If we only ever use INDEX == ARRAY->len, we might simplify this
+ * to undo__append_val__ARRAY().
  */
-extern class Expressions : public Object {
-public:
-	/**
-	 * Operator type.
-	 * The enumeration value divided by 16 represents
-	 * its precedence (small values mean low precedence).
-	 * In other words, the value's lower nibble is
-	 * reserved for enumerating operators of the
-	 * same precedence.
-	 */
-	enum Operator {
-		/*
-		 * Pseudo operators
-		 */
-		OP_NIL	= 0x00,
-		OP_NEW,
-		OP_BRACE,
-		OP_NUMBER,
-		/*
-		 * Real operators
-		 */
-		OP_POW	= 0x60,	// ^*
-		OP_MOD	= 0x50,	// ^/
-		OP_DIV,		// /
-		OP_MUL,		// *
-		OP_SUB	= 0x40,	// -
-		OP_ADD,		// +
-		OP_AND	= 0x30,	// &
-		OP_XOR	= 0x20,	// ^#
-		OP_OR	= 0x10	// #
-	};
+#define TECO_DEFINE_ARRAY_UNDO_INSERT_VAL(ARRAY, TYPE) \
+	static inline void \
+	insert_val__##ARRAY(guint index, TYPE value) \
+	{ \
+		g_array_insert_val(ARRAY, index, value); \
+	} \
+	TECO_DEFINE_UNDO_CALL(insert_val__##ARRAY, guint, TYPE)
 
-private:
-	/** Get operator precedence */
-	inline gint
-	precedence(Operator op)
-	{
-		return op >> 4;
-	}
+/**
+ * Defines a function undo__remove_index__ARRAY() to remove a value from
+ * a fixed GArray.
+ *
+ * @note
+ * See TECO_DEFINE_ARRAY_UNDO_INSERT_VAL().
+ * undo__g_array_remove_index(...) would also be possible.
+ *
+ * @fixme
+ * If we only ever use INDEX == ARRAY->len-1, we might simplify this
+ * to undo__pop__ARRAY().
+ */
+#define TECO_DEFINE_ARRAY_UNDO_REMOVE_INDEX(ARRAY) \
+	static inline void \
+	remove_index__##ARRAY(guint index) \
+	{ \
+		g_array_remove_index(ARRAY, index); \
+	} \
+	TECO_DEFINE_UNDO_CALL(remove_index__##ARRAY, guint)
 
+/**
+ * Operator type.
+ * The enumeration value divided by 16 represents
+ * its precedence (small values mean low precedence).
+ * In other words, the value's lower nibble is
+ * reserved for enumerating operators of the
+ * same precedence.
+ */
+typedef enum {
 	/*
-	 * Number and operator stacks are static, so
-	 * they can be passed to the undo token constructors.
-	 * This is OK since Expression is singleton.
+	 * Pseudo operators
 	 */
-	typedef ValueStack<tecoInt> NumberStack;
-	static NumberStack numbers;
-
-	typedef ValueStack<Operator> OperatorStack;
-	static OperatorStack operators;
-
-public:
-	Expressions() : num_sign(1), radix(10), brace_level(0) {}
-
-	gint num_sign;
-	inline void
-	set_num_sign(gint sign)
-	{
-		undo.push_var(num_sign) = sign;
-	}
-
-	gint radix;
-	inline void
-	set_radix(gint r)
-	{
-		undo.push_var(radix) = r;
-	}
-
-	tecoInt push(tecoInt number);
-
-	/**
-	 * Push characters of a C-string.
-	 * Could be overloaded on push(tecoInt)
-	 * but this confuses GCC.
+	TECO_OP_NIL	= 0x00,
+	TECO_OP_NEW,
+	TECO_OP_BRACE,
+	TECO_OP_NUMBER,
+	/*
+	 * Real operators
 	 */
-	inline void
-	push_str(const gchar *str)
-	{
-		while (*str)
-			push(*str++);
-	}
+	TECO_OP_POW	= 0x60,	// ^*
+	TECO_OP_MOD	= 0x50,	// ^/
+	TECO_OP_DIV,		// /
+	TECO_OP_MUL,		// *
+	TECO_OP_SUB	= 0x40,	// -
+	TECO_OP_ADD,		// +
+	TECO_OP_AND	= 0x30,	// &
+	TECO_OP_XOR	= 0x20,	// ^#
+	TECO_OP_OR	= 0x10	// #
+} teco_operator_t;
 
-	inline tecoInt
-	peek_num(guint index = 0)
-	{
-		return numbers.peek(index);
-	}
-	tecoInt pop_num(guint index = 0);
-	tecoInt pop_num_calc(guint index, tecoInt imply);
-	inline tecoInt
-	pop_num_calc(guint index = 0)
-	{
-		return pop_num_calc(index, num_sign);
-	}
+extern gint teco_num_sign;
 
-	tecoInt add_digit(gchar digit);
+static inline void
+teco_set_num_sign(gint sign)
+{
+	teco_undo_gint(teco_num_sign) = sign;
+}
 
-	Operator push(Operator op);
-	Operator push_calc(Operator op);
-	inline Operator
-	peek_op(guint index = 0)
-	{
-		return operators.peek(index);
-	}
-	Operator pop_op(guint index = 0);
+extern gint teco_radix;
 
-	void eval(bool pop_brace = false);
+static inline void
+teco_set_radix(gint r)
+{
+	teco_undo_gint(teco_radix) = r;
+}
 
-	guint args(void);
+void teco_expressions_push_int(teco_int_t number);
 
-	void discard_args(void);
+/** Push characters of a C-string. */
+static inline void
+teco_expressions_push_str(const gchar *str)
+{
+	while (*str)
+		teco_expressions_push_int(*str++);
+}
 
-	/** The nesting level of braces */
-	guint brace_level;
+teco_int_t teco_expressions_peek_num(guint index);
+teco_int_t teco_expressions_pop_num(guint index);
+gboolean teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error);
 
-	inline void
-	brace_open(void)
-	{
-		push(OP_BRACE);
-		undo.push_var(brace_level)++;
-	}
+void teco_expressions_add_digit(gchar digit);
 
-	void brace_return(guint keep_braces, guint args = 0);
+void teco_expressions_push_op(teco_operator_t op);
+gboolean teco_expressions_push_calc(teco_operator_t op, GError **error);
 
-	inline void
-	brace_close(void)
-	{
-		if (!brace_level)
-			throw Error("Missing opening brace");
-		undo.push_var(brace_level)--;
-		eval(true);
-	}
+/*
+ * FIXME: Does not work for TECO_OP_* constants as they are treated like int.
+ */
+#define teco_expressions_push(X) \
+	(_Generic((X), default      : teco_expressions_push_int, \
+	               char *       : teco_expressions_push_str, \
+	               const char * : teco_expressions_push_str)(X))
 
-	inline void
-	clear(void)
-	{
-		numbers.clear();
-		operators.clear();
-		brace_level = 0;
-	}
+teco_operator_t teco_expressions_peek_op(guint index);
+teco_operator_t teco_expressions_pop_op(guint index);
 
-	const gchar *format(tecoInt number);
+gboolean teco_expressions_eval(gboolean pop_brace, GError **error);
 
-private:
-	void calc(void);
+guint teco_expressions_args(void);
 
-	gint first_op(void);
-} expressions;
+gint teco_expressions_first_op(void);
 
-} /* namespace SciTECO */
+gboolean teco_expressions_discard_args(GError **error);
 
-#endif
+extern guint teco_brace_level;
+
+void teco_expressions_brace_open(void);
+gboolean teco_expressions_brace_return(guint keep_braces, guint args, GError **error);
+gboolean teco_expressions_brace_close(GError **error);
+
+void teco_expressions_clear(void);
+
+/** Maximum size required to format a number if teco_radix == 2 */
+#define TECO_EXPRESSIONS_FORMAT_LEN \
+        (1 + sizeof(teco_int_t)*8 + 1)
+
+gchar *teco_expressions_format(gchar *buffer, teco_int_t number);

@@ -18,13 +18,11 @@ SCITECO_MINIMAL = @SCITECO@
 SCITECO_FULL    = @SCITECO@
 endif
 
-# Path of installed `sciteco` and `sciteco-wrapper` binaries,
+# Path of installed `sciteco` binary,
 # taking --program-prefix into account.
-# These variables MUST NOT be put in single-quotes.
+# This variables MUST NOT be put in single-quotes.
 SCITECO_INSTALLED = \
 	$(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)
-SCITECO_WRAPPER_INSTALLED = \
-	$(libexecdir)/`echo sciteco-wrapper | @SED@ '$(transform)'`$(EXEEXT)
 
 SUBST_MACRO = eb$<\e \
 	      <fs@PACKAGE^Q@\e@PACKAGE@\e;>j \

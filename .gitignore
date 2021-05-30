@@ -32,13 +32,12 @@ testsuite.dir
 # Binaries
 /src/sciteco
 /src/sciteco-minimal
-/src/sciteco-wrapper
 
 # Generated source files
-/src/interface-gtk/gtk-info-popup.[ch]
-/src/interface-gtk/gtk-canonicalized-label.[ch]
-/src/symbols-scintilla.cpp
-/src/symbols-scilexer.cpp
+/src/interface-gtk/teco-gtk-info-popup.[ch]
+/src/interface-gtk/teco-gtk-label.[ch]
+/src/symbols-scintilla.c
+/src/symbols-scilexer.c
 
 # Generated documentation
 /doc/sciteco.[17]

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,131 +14,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __GOTO_H
-#define __GOTO_H
-
-#include <string.h>
+#pragma once
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "sciteco.h"
-#include "memory.h"
-#include "parser.h"
-#include "undo.h"
-#include "rbtree.h"
+#include "string-utils.h"
+#include "rb3str.h"
 
-namespace SciTECO {
+/** @extends teco_rb3str_tree_t */
+typedef struct {
+	teco_rb3str_tree_t tree;
 
-class GotoTable : private RBTreeString, public Object {
-	class UndoTokenSet : public UndoToken {
-		GotoTable *table;
-
-		gchar	*name;
-		gint	pc;
-
-	public:
-		UndoTokenSet(GotoTable *_table, const gchar *_name, gint _pc = -1)
-			    : table(_table), name(g_strdup(_name)), pc(_pc) {}
-		~UndoTokenSet()
-		{
-			g_free(name);
-		}
-
-		void
-		run(void)
-		{
-			table->set(name, pc);
-#ifdef DEBUG
-			table->dump();
-#endif
-		}
-	};
-
-	class Label : public RBTreeString::RBEntryOwnString {
-	public:
-		gint pc;
-
-		Label(const gchar *name, gint _pc = -1)
-		     : RBEntryOwnString(name), pc(_pc) {}
-	};
-
-	/*
-	 * whether to generate UndoTokens (unnecessary in macro invocations)
+	/**
+	 * Whether to generate undo tokens (unnecessary in macro invocations)
 	 */
-	bool must_undo;
+	gboolean must_undo;
+} teco_goto_table_t;
 
-public:
-	GotoTable(bool _undo = true) : must_undo(_undo) {}
-
-	~GotoTable()
-	{
-		clear();
-	}
-
-	gint remove(const gchar *name);
-	gint find(const gchar *name);
-
-	gint set(const gchar *name, gint pc);
-	inline void
-	undo_set(const gchar *name, gint pc = -1)
-	{
-		if (must_undo)
-			undo.push<UndoTokenSet>(this, name, pc);
-	}
-
-	inline void
-	clear(void)
-	{
-		Label *cur;
-
-		while ((cur = (Label *)root()))
-			delete (Label *)RBTreeString::remove(cur);
-	}
-
-	inline gchar *
-	auto_complete(const gchar *name, gchar completed = ',')
-	{
-		return RBTreeString::auto_complete(name, completed);
-	}
-
-#ifdef DEBUG
-	void dump(void);
-#endif
-};
-
-namespace Goto {
-	extern GotoTable *table;
-	extern gchar *skip_label;
+/** @memberof teco_goto_table_t */
+static inline void
+teco_goto_table_init(teco_goto_table_t *ctx, gboolean must_undo)
+{
+	rb3_reset_tree(&ctx->tree);
+	ctx->must_undo = must_undo;
 }
 
-/*
- * Command states
- */
+gint teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len);
 
-class StateLabel : public State {
-public:
-	StateLabel();
+gint teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len);
 
-private:
-	State *custom(gchar chr);
-};
+gint teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc);
+void teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc);
 
-class StateGotoCmd : public StateExpectString {
-private:
-	State *done(const gchar *str);
-
-protected:
-	/* in cmdline.cpp */
-	void process_edit_cmd(gchar key);
-};
-
-namespace States {
-	extern StateLabel	label;
-	extern StateGotoCmd	gotocmd;
+/** @memberof teco_goto_table_t */
+static inline gboolean
+teco_goto_table_auto_complete(teco_goto_table_t *ctx, const gchar *str, gsize len,
+                              teco_string_t *insert)
+{
+	return teco_rb3str_auto_complete(&ctx->tree, TRUE, str, len, 0, insert);
 }
 
-} /* namespace SciTECO */
-
-#endif
+void teco_goto_table_clear(teco_goto_table_t *ctx);

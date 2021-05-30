@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,66 +14,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __GLOB_H
-#define __GLOB_H
+#pragma once
 
 #include <string.h>
 
 #include <glib.h>
-#include <glib/gstdio.h>
 
 #include "sciteco.h"
-#include "memory.h"
 #include "parser.h"
 
-namespace SciTECO {
-
-class Globber : public Object {
+typedef struct {
 	GFileTest test;
 	gchar *dirname;
 	GDir *dir;
 	GRegex *pattern;
+} teco_globber_t;
 
-public:
-	Globber(const gchar *pattern,
-	        GFileTest test = G_FILE_TEST_EXISTS);
-	~Globber();
+void teco_globber_init(teco_globber_t *ctx, const gchar *pattern, GFileTest test);
+gchar *teco_globber_next(teco_globber_t *ctx);
+void teco_globber_clear(teco_globber_t *ctx);
 
-	gchar *next(void);
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(teco_globber_t, teco_globber_clear);
 
-	static inline bool
-	is_pattern(const gchar *str)
-	{
-		return str && strpbrk(str, "*?[") != NULL;
-	}
+/** @static @memberof teco_globber_t */
+static inline gboolean
+teco_globber_is_pattern(const gchar *str)
+{
+	return str && strpbrk(str, "*?[") != NULL;
+}
 
-	static gchar *escape_pattern(const gchar *pattern);
-	static GRegex *compile_pattern(const gchar *pattern);
-};
+gchar *teco_globber_escape_pattern(const gchar *pattern);
+GRegex *teco_globber_compile_pattern(const gchar *pattern);
 
 /*
  * Command states
  */
 
-class StateGlob_pattern : public StateExpectFile {
-public:
-	StateGlob_pattern() : StateExpectFile(true, false) {}
-
-private:
-	State *got_file(const gchar *filename);
-};
-
-class StateGlob_filename : public StateExpectFile {
-private:
-	State *got_file(const gchar *filename);
-};
-
-namespace States {
-	extern StateGlob_pattern	glob_pattern;
-	extern StateGlob_filename	glob_filename;
-}
-
-} /* namespace SciTECO */
-
-#endif
+TECO_DECLARE_STATE(teco_state_glob_pattern);

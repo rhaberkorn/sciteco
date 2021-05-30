@@ -2,13 +2,9 @@
 # silence libtoolize:
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = lib src doc tests
+SUBDIRS = lib contrib/dlmalloc contrib/rb3ptr src doc tests
 
 dist_pkgdata_DATA = sample.teco_ini
-
-noinst_HEADERS = compat/bsd/sys/cdefs.h \
-		 compat/bsd/sys/queue.h \
-		 compat/bsd/sys/tree.h
 
 EXTRA_DIST = README TODO
 

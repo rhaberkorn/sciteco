@@ -3,15 +3,15 @@
 include $(top_srcdir)/bootstrap.am
 
 # tedoc is a code documentation tool for SciTECO commands
-# and macros, extracting comments from SciTECO and C/C++
+# and macros, extracting comments from SciTECO and C
 # code.
 # It generates Troff manpage markup and acts as a Troff
 # preprocessor to manpage templates.
 dist_bin_SCRIPTS = tedoc.tes
 
-%.in : %.template tedoc.tes @top_srcdir@/src/*.cpp
+%.in : %.template tedoc.tes @top_srcdir@/src/*.c
 	$(SCITECO_FULL) -m -- @srcdir@/tedoc.tes \
-	                -C $@ $< @top_srcdir@/src/*.cpp
+	                -C $@ $< @top_srcdir@/src/*.c
 
 # grosciteco is a troff postprocessor similar to grotty
 # which can be used to produce SciTECO-friendly output
@@ -28,12 +28,13 @@ dist_bin_SCRIPTS += grosciteco.tes
 dist_pkgdata_DATA = sciteco.tmac
 
 # Fix up the hash-bang line of installed SciTECO scripts upon
-# installation to refer to the installed sciteco binary,
-# or rather to the sciteco-wrapper script.
+# installation to refer to the installed sciteco binary.
 # This takes --program-prefix into account.
+#
+# FIXME: This will patch the hash-bang line repeatedly.
 install-exec-hook:
 	$(SCITECO_FULL) -e "@EB'$(DESTDIR)$(bindir)/*.tes' 1U* \
-	                    EJ-1<%*^[ 0,L.@FR'#!^EM^Xsciteco'#!$(SCITECO_WRAPPER_INSTALLED)'> \
+	                    EJ-1<%*^[ 0,L.@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
 	                    :EX"
 
 womendir = $(scitecolibdir)/women
@@ -97,9 +98,7 @@ SUFFIXES += .htbl .html
 #
 # Doxygen processing (do not install or distribute)
 #
-if BUILD_DEVDOC
-noinst_DATA = doxygen/
-endif
+devdoc : doxygen/
 
 .PHONY: doxygen/
 doxygen/ : Doxyfile

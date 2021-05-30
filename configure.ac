@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([SciTECO], [0.6.4],
+AC_INIT([SciTECO], [2.0.0],
 	[robin.haberkorn@googlemail.com],
 	[sciteco],
 	[http://sciteco.sf.net/])
@@ -15,7 +15,7 @@ AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE
 
 AC_CONFIG_TESTDIR([tests])
-AC_CONFIG_SRCDIR([src/main.cpp])
+AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CANONICAL_BUILD
@@ -52,9 +52,8 @@ canonicalize() {
 
 # Checks for programs.
 LT_INIT
-AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_PROG_CC
+# FIXME: We want -std=gnu11
 AC_PROG_CC_C99
 AC_PROG_SED
 AC_PROG_INSTALL
@@ -72,8 +71,9 @@ if [[ x$ax_cv_gnu_make_command = x ]]; then
 fi
 
 # Additionally required by the Scintilla build process:
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
 AC_CHECK_TOOL(AR, ar)
-AC_PROG_RANLIB
 
 # Check for Windows resource compiler and define
 # WIN32 conditional
@@ -86,13 +86,6 @@ case $host in
 	AM_CONDITIONAL(WIN32, [false])
 	;;
 esac
-
-# Detect Clang (including Emscripten).
-# A particular warning does not cooperate well with our use
-# of the BSD data structures.
-AC_CHECK_DECL(__clang__, [
-	CXXFLAGS="$CXXFLAGS -Wno-mismatched-tags"
-])
 
 # Changing the EXEEXT on emscripten ensures that we don't
 # need a special Makefile rule to generate Javascript files.
@@ -120,7 +113,8 @@ if [[ x$GROFF = x ]]; then
 	AC_MSG_ERROR([GNU roff required!])
 fi
 
-# not necessarily required (depends on --enable-developer-doc)
+# Doxygen is not necessarily required as long as
+# you do not run `make devdoc`.
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen)
 AC_CHECK_PROG(DOT, dot, dot)
 DOXYGEN_HAVE_DOT=YES
@@ -131,7 +125,7 @@ AC_SUBST(DOXYGEN_HAVE_DOT)
 AC_CHECK_PROG(SCITECO, sciteco, sciteco)
 
 # Checks for libraries.
-PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.28], [
+PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.44], [
 	CFLAGS="$CFLAGS $LIBGLIB_CFLAGS"
 	CXXFLAGS="$CXXFLAGS $LIBGLIB_CFLAGS"
 	LIBS="$LIBS $LIBGLIB_LIBS"
@@ -140,21 +134,11 @@ PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.28], [
 # Checks for header files.
 AC_HEADER_STDC
 
-AC_CHECK_HEADERS([bsd/sys/queue.h], [], [
-	AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/compat"
-])
-
 case $host in
 *-mingw*)
-	AC_CHECK_HEADERS([windows.h psapi.h], , [
+	AC_CHECK_HEADERS([windows.h], , [
 		AC_MSG_ERROR([Missing Windows headers!])
-	], [
-		#include <windows.h>
 	])
-
-	# Make sure we get GetProcessMemoryInfo():
-	AM_CPPFLAGS="$AM_CPPFLAGS -DPSAPI_VERSION=1"
-	LIBS="$LIBS -lpsapi"
 	;;
 esac
 
@@ -165,35 +149,30 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 # They must exist on every target system.
-AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat], , [
+AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat sscanf], , [
 	AC_MSG_ERROR([Missing libc function])
 ])
 
 # Library functions that we assume exist on UNIX/Linux
 # and UNIXoid systems, so that G_OS_UNIX is sufficient
 # to test for them.
+#
+# NOTE: mmap() is currently only used by dlmalloc().
+#
 # FIXME: Perhaps it would be more elegant to check whether
-# glib defines G_OS_UNIX || G_OS_HAIKU instead...
+# glib defines G_OS_UNIX instead...
 case $host in
 *-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
-	AC_CHECK_FUNCS([realpath fchown dup dup2], , [
+	AC_CHECK_FUNCS([realpath fchown dup dup2 getpid open read mmap], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
 	;;
 esac
 
-# Check for optional libc features.
-# Some of this will only be found on glibc,
-# others on FreeBSD/jemalloc.
-AC_CHECK_HEADERS([malloc.h malloc_np.h])
-AC_CHECK_FUNCS([malloc_trim malloc_usable_size], [
-	# Sometimes the declaration is missing.
-	AC_CHECK_DECLS([malloc_trim])
-])
-
 #
 # Config options
 #
+
 AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
 		       [Specify Scintilla's path [default=./scintilla]]),
@@ -310,18 +289,11 @@ case $INTERFACE in
 	;;
 
 gtk)
-	# NOTE: Ubuntu 14.04 only has Gtk+ 3.10, so we have to support it.
-	# This version lacks GtkFlowBox.
 	# gmodule is required by Scintilla.
-	PKG_CHECK_MODULES(LIBGTK, [gtk+-3.0 >= 3.10 gmodule-2.0], [
+	PKG_CHECK_MODULES(LIBGTK, [gtk+-3.0 >= 3.12 gmodule-2.0], [
 		CFLAGS="$CFLAGS $LIBGTK_CFLAGS"
 		CXXFLAGS="$CXXFLAGS $LIBGTK_CFLAGS"
 		LIBS="$LIBS $LIBGTK_LIBS"
-	])
-
-	# Should be available since v3.12
-	AC_CHECK_FUNCS(gtk_flow_box_new, [], [
-		GTK_FLOW_BOX_FALLBACK=true
 	])
 
 	GOB2_CHECK(2.0.20)
@@ -353,17 +325,6 @@ AC_ARG_ENABLE(html-manual,
 	[html_man=$enableval], [html_man=no])
 AM_CONDITIONAL(BUILD_HTMLMAN, [test $html_man = yes])
 
-AC_ARG_ENABLE(developer-doc,
-	AS_HELP_STRING([--enable-developer-doc],
-		       [Generate developer documentation using Doxygen [default=no]]),
-	[dev_doc=$enableval], [dev_doc=no])
-if [[ $dev_doc = yes -a x$DOXYGEN = x ]]; then
-        AC_MSG_ERROR([Enabled generating developer documentation,
-		      but Doxygen cannot be found!
-		      Try --disable-developer-doc.])
-fi
-AM_CONDITIONAL(BUILD_DEVDOC, [test $dev_doc = yes])
-
 AC_ARG_ENABLE(bootstrap,
 	AS_HELP_STRING([--disable-bootstrap],
 		       [Bootstrap using sciteco-minimal,
@@ -374,6 +335,67 @@ if [[ $bootstrap = no -a x$SCITECO = x ]]; then
 	              Try --enable-bootstrap.])
 fi
 AM_CONDITIONAL(BOOTSTRAP, [test x$bootstrap = xyes])
+
+AC_ARG_ENABLE(malloc-replacement,
+	AS_HELP_STRING([--enable-malloc-replacement],
+	               [Replace the libc malloc() [default=check]]),
+	[malloc_replacement=$enableval], [malloc_replacement=check])
+if [[ $malloc_replacement = check ]]; then
+	# We currently do not support dlmalloc on Windows.
+	case $host in
+	*-mingw*) malloc_replacement=no;;
+	*)        malloc_replacement=yes;;
+	esac
+fi
+AM_CONDITIONAL(REPLACE_MALLOC, [test $malloc_replacement = yes])
+if [[ $malloc_replacement = yes ]]; then
+	AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/contrib/dlmalloc"
+	AC_DEFINE(REPLACE_MALLOC, 1, [Define to 1 if the system malloc() is replaced.])
+	AC_DEFINE(HAVE_MALLOC_H, 1, [Define to 1 if you have the <malloc.h> header file.])
+	AC_DEFINE(HAVE_MALLOC_TRIM, 1, [Define to 1 if you have the `malloc_trim' function.])
+else
+	# NOTE: We don't check for malloc_footprint() since even if existing,
+	# it cannot be guaranteed to work (eg. as in dlmalloc with HAVE_MORECORE=1).
+	AC_CHECK_HEADERS([malloc.h malloc_np.h])
+	AC_CHECK_FUNCS([malloc_trim], [
+		AC_CHECK_DECLS([malloc_trim], , , [
+			#include <malloc.h>
+		])
+	])
+
+	case $host in
+	*-mingw*)
+		AC_CHECK_HEADERS([psapi.h], , [
+			AC_MSG_ERROR([Missing Windows headers!])
+		], [
+			#include <windows.h>
+		])
+
+		# Make sure we get GetProcessMemoryInfo():
+		AM_CPPFLAGS="$AM_CPPFLAGS -DPSAPI_VERSION=1"
+		LIBS="$LIBS -lpsapi"
+		;;
+	*-*-linux*)
+		AC_CHECK_HEADERS([sys/time.h sys/resource.h])
+		AC_CHECK_FUNCS([sysconf])
+
+		# FIXME: procfs might be available on other UNIXoid platforms.
+		# Perhaps add a --with-procfs?
+		# However, we currently also depend on sysconf().
+		# Also, it should generally not be necessary to
+		# --disable-malloc-replacement on UNIX.
+		AC_DEFINE(HAVE_PROCFS, 1, [Whether procfs (/proc) is supported])
+		;;
+	*-*-*bsd*)
+		AC_CHECK_HEADERS([sys/types.h sys/sysctl.h])
+		AC_CHECK_FUNCS([sysctl])
+		;;
+	*-*-darwin*)
+		AC_CHECK_HEADERS([mach/mach.h mach/message.h mach/kern_return.h mach/task_info.h])
+		AC_CHECK_FUNCS([task_info mach_task_self])
+		;;
+	esac
+fi
 
 # This cannot be done with --enable-static as it only controls
 # which kind of libraries libtool builds.
@@ -392,6 +414,8 @@ AM_CONDITIONAL(STATIC_EXECUTABLES, [test x$static_executables = xyes])
 AC_CONFIG_FILES([GNUmakefile:Makefile.in src/GNUmakefile:src/Makefile.in]
                 [src/interface-gtk/GNUmakefile:src/interface-gtk/Makefile.in]
                 [src/interface-curses/GNUmakefile:src/interface-curses/Makefile.in]
+                [contrib/dlmalloc/GNUmakefile:contrib/dlmalloc/Makefile.in]
+                [contrib/rb3ptr/GNUmakefile:contrib/rb3ptr/Makefile.in]
                 [lib/GNUmakefile:lib/Makefile.in]
                 [doc/GNUmakefile:doc/Makefile.in doc/Doxyfile]
                 [tests/GNUmakefile:tests/Makefile.in tests/atlocal])

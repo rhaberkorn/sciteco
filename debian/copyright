@@ -3,27 +3,33 @@ Upstream-Name: SciTECO
 Upstream-Contact: robin.haberkorn@googlemail.com
 Source: https://sourceforge.net/projects/sciteco
 
-Files: debian/*
-Copyright: Copyright 2013-2017 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Files: debian/* src/* */Makefile.am lib/*
+Copyright: Copyright 2013-2021 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
-Files: sciteco/*
-Copyright: Copyright 2012-2017 Robin Haberkorn <robin.haberkorn@googlemail.com>
-License: GPL-3+
- /usr/share/common-licenses/GPL-3
+Files: contrib/dlmalloc/*.c contrib/dlmalloc/*.h
+License: CC0
 
-Files: sciteco/gtkflowbox.c sciteco/gtkflowbox.h
-Copyright:
- Copyright 2007-2010 Openismus GmbH
- Copyright 2013 Red Hat, Inc.
-License: LGPL-2+
- /usr/share/common-licenses/LGPL-2
-
-Files: compat/bsd/*
-Copyright: Copyright 1991, 1993 The Regents of the University of California
-License: BSD
- /usr/share/common-licenses/BSD
+Files: contrib/rb3ptr/*.c contrib/rb3ptr/*.h
+Copyright: Copyright 2019 Jens Stimpfle
+License:
+ Permission is hereby granted, free of charge, to any person obtaining a copy of
+ this software and associated documentation files (the "Software"), to deal in
+ the Software without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ the Software, and to permit persons to whom the Software is furnished to do so,
+ subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 Files: scintilla/*
 Copyright: Copyright 1998-2003 Neil Hodgson <neilh@scintilla.org>
@@ -50,11 +56,11 @@ License:
  OR PERFORMANCE OF THIS SOFTWARE.
 
 Files: scintilla/scinterm/*
-Copyright: Copyright 2012-2015 Mitchell <mitchell.att.foicica.com>
+Copyright: Copyright 2012-2016 Mitchell <mitchell.att.foicica.com>
 License:
  The MIT License
  .
- Copyright (c) 2012-2015 Mitchell
+ Copyright (c) 2012-2016 Mitchell
  .
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal

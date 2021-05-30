@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,103 +14,84 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __CMDLINE_H
-#define __CMDLINE_H
+#pragma once
 
 #include <glib.h>
 
-#include "memory.h"
+#include "sciteco.h"
+#include "string-utils.h"
 #include "parser.h"
-#include "qregisters.h"
 #include "undo.h"
 
-namespace SciTECO {
-
-/*
- * NOTE: Some of the members (esp. insert() and rubout())
- * have to be public, so that State::process_edit_cmd()
- * implementations can access it.
- * Otherwise, we'd have to list all implementations as
- * friend methods, which is inelegant.
- */
-extern class Cmdline : public Object {
-public:
+typedef struct {
 	/**
-	 * String containing the current command line.
-	 * It is not null-terminated and contains the effective
-	 * command-line up to cmdline_len followed by the recently rubbed-out
-	 * command-line of length cmdline_rubout_len.
+	 * State machine used for interactive mode (commandline macro).
+	 * It is initialized on-demand in main.c.
+	 * This is a global variable instead of being passed down the call stack
+	 * since some process_edit_cmd_cb will be for nested state machines
+	 * but we must "step" only the toplevel state machine.
 	 */
-	gchar *str;
-	/** Effective command line length */
-	gsize len;
-	/** Length of the rubbed out command line */
-	gsize rubout_len;
+	teco_machine_main_t machine;
+
+	/**
+	 * String containing the current command line
+	 * (both effective and rubbed out).
+	 */
+	teco_string_t str;
+	/**
+	 * Effective command line length.
+	 * The length of the rubbed out part of the command line
+	 * is (teco_cmdline.str.len - teco_cmdline.effective_len).
+	 */
+	gsize effective_len;
+
 	/** Program counter within the command-line macro */
 	guint pc;
 
-	Cmdline() : str(NULL), len(0), rubout_len(0), pc(0) {}
-	inline
-	~Cmdline()
-	{
-		g_free(str);
-	}
+	/**
+	 * Specifies whether the immediate editing modifier
+	 * is enabled/disabled.
+	 * It can be toggled with the ^G immediate editing command
+	 * and influences the undo/redo direction and function of the
+	 * TAB key.
+	 */
+	gboolean modifier_enabled;
+} teco_cmdline_t;
 
-	inline gchar
-	operator [](guint i) const
-	{
-		return str[i];
-	}
+extern teco_cmdline_t teco_cmdline;
 
-	void keypress(gchar key);
-	inline void
-	keypress(const gchar *keys)
-	{
-		while (*keys)
-			keypress(*keys++);
-	}
+gboolean teco_cmdline_insert(const gchar *data, gsize len, GError **error);
 
-	void fnmacro(const gchar *name);
+static inline gboolean
+teco_cmdline_rubin(GError **error)
+{
+	return teco_cmdline_insert(NULL, 0, error);
+}
 
-	void replace(void) G_GNUC_NORETURN;
+gboolean teco_cmdline_keypress_c(gchar key, GError **error);
 
-	inline void
-	rubout(void)
-	{
-		if (len) {
-			undo.pop(--len);
-			rubout_len++;
-		}
-	}
+static inline gboolean
+teco_cmdline_keypress(const gchar *str, gsize len, GError **error)
+{
+	for (guint i = 0; i < len; i++)
+		if (!teco_cmdline_keypress_c(str[i], error))
+			return FALSE;
+	return TRUE;
+}
 
-	void insert(const gchar *src = NULL);
-	inline void
-	insert(gchar key)
-	{
-		gchar src[] = {key, '\0'};
-		insert(src);
-	}
-} cmdline;
+gboolean teco_cmdline_fnmacro(const gchar *name, GError **error);
 
-extern bool quit_requested;
+static inline void
+teco_cmdline_rubout(void)
+{
+	if (teco_cmdline.effective_len)
+		teco_undo_pop(--teco_cmdline.effective_len);
+}
+
+extern gboolean teco_quit_requested;
 
 /*
  * Command states
  */
 
-class StateSaveCmdline : public StateExpectQReg {
-public:
-	StateSaveCmdline() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
-
-private:
-	State *got_register(QRegister *reg);
-};
-
-namespace States {
-	extern StateSaveCmdline save_cmdline;
-}
-
-} /* namespace SciTECO */
-
-#endif
+TECO_DECLARE_STATE(teco_state_save_cmdline);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,241 +14,115 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __RING_H
-#define __RING_H
-
-#include <bsd/sys/queue.h>
+#pragma once
 
 #include <glib.h>
 
-#include <Scintilla.h>
-
 #include "sciteco.h"
-#include "memory.h"
-#include "interface.h"
 #include "undo.h"
-#include "qregisters.h"
+#include "qreg.h"
+#include "view.h"
 #include "parser.h"
-#include "ioview.h"
+#include "list.h"
 
-namespace SciTECO {
+typedef struct teco_buffer_t {
+	teco_tailq_entry_t entry;
 
-/*
- * Classes
- */
+	teco_view_t *view;
 
-class Buffer : private IOView {
-	TAILQ_ENTRY(Buffer) buffers;
-
-	class UndoTokenClose : public UndoToken {
-		Buffer *buffer;
-
-	public:
-		UndoTokenClose(Buffer *_buffer)
-			      : buffer(_buffer) {}
-
-		void run(void);
-	};
-
-	inline void
-	undo_close(void)
-	{
-		undo.push<UndoTokenClose>(this);
-	}
-
-public:
 	gchar *filename;
-	bool dirty;
+	gboolean dirty;
+} teco_buffer_t;
 
-	Buffer() : filename(NULL), dirty(false)
-	{
-		initialize();
-		/* only have to do this once: */
-		set_representations();
-	}
+/** @memberof teco_buffer_t */
+static inline teco_buffer_t *
+teco_buffer_next(teco_buffer_t *ctx)
+{
+	return (teco_buffer_t *)ctx->entry.next;
+}
 
-	~Buffer()
-	{
-		g_free(filename);
-	}
+/** @memberof teco_buffer_t */
+static inline teco_buffer_t *
+teco_buffer_prev(teco_buffer_t *ctx)
+{
+	return (teco_buffer_t *)ctx->entry.prev->prev->next;
+}
 
-	inline Buffer *&
-	next(void)
-	{
-		return TAILQ_NEXT(this, buffers);
-	}
-	inline Buffer *&
-	prev(void)
-	{
-		TAILQ_HEAD(Head, Buffer);
+void teco_buffer_edit(teco_buffer_t *ctx);
+void teco_buffer_undo_edit(teco_buffer_t *ctx);
 
-		return TAILQ_PREV(this, Head, buffers);
-	}
+extern teco_buffer_t *teco_ring_current;
 
-	inline void
-	set_filename(const gchar *filename)
-	{
-		gchar *resolved = get_absolute_path(filename);
-		g_free(Buffer::filename);
-		Buffer::filename = resolved;
-		interface.info_update(this);
-	}
+teco_buffer_t *teco_ring_first(void);
+teco_buffer_t *teco_ring_last(void);
 
-	inline void
-	edit(void)
-	{
-		interface.show_view(this);
-		interface.info_update(this);
-	}
-	inline void
-	undo_edit(void)
-	{
-		interface.undo_info_update(this);
-		interface.undo_show_view(this);
-	}
+teco_int_t teco_ring_get_id(teco_buffer_t *buffer);
 
-	inline void
-	load(const gchar *filename)
-	{
-		IOView::load(filename);
+teco_buffer_t *teco_ring_find_by_name(const gchar *filename);
+teco_buffer_t *teco_ring_find_by_id(teco_int_t id);
 
-#if 0		/* NOTE: currently buffer cannot be dirty */
-		interface.undo_info_update(this);
-		undo.push_var(dirty) = false;
-#endif
+#define teco_ring_find(X) \
+	(_Generic((X), gchar *       : teco_ring_find_by_name, \
+	               const gchar * : teco_ring_find_by_name, \
+	               teco_int_t    : teco_ring_find_by_id)(X))
 
-		set_filename(filename);
-	}
-	void save(const gchar *filename = NULL);
+void teco_ring_dirtify(void);
+gboolean teco_ring_is_any_dirty(void);
+gboolean teco_ring_save_all_dirty_buffers(GError **error);
 
-	/*
-	 * Ring manages the buffer list and has privileged
-	 * access.
-	 */
-	friend class Ring;
-};
+gboolean teco_ring_edit_by_name(const gchar *filename, GError **error);
+gboolean teco_ring_edit_by_id(teco_int_t id, GError **error);
 
-/* object declared in main.cpp */
-extern class Ring : public Object {
-	/*
-	 * Emitted after a buffer close
-	 * The pointer is the only remaining reference to the buffer!
-	 */
-	class UndoTokenEdit : public UndoToken {
-		Ring	*ring;
-		Buffer	*buffer;
+#define teco_ring_edit(X, ERROR) \
+	(_Generic((X), gchar *       : teco_ring_edit_by_name, \
+	               const gchar * : teco_ring_edit_by_name, \
+	               teco_int_t    : teco_ring_edit_by_id)((X), (ERROR)))
 
-	public:
-		UndoTokenEdit(Ring *_ring, Buffer *_buffer)
-			     : UndoToken(), ring(_ring), buffer(_buffer) {}
-		~UndoTokenEdit()
-		{
-			delete buffer;
-		}
+static inline void
+teco_ring_undo_edit(void)
+{
+	teco_undo_ptr(teco_qreg_current);
+	teco_undo_ptr(teco_ring_current);
+	teco_buffer_undo_edit(teco_ring_current);
+}
 
-		void run(void);
-	};
+gboolean teco_ring_close(GError **error);
+void teco_ring_undo_close(void);
 
-	TAILQ_HEAD(Head, Buffer) head;
+void teco_ring_set_scintilla_undo(gboolean state);
 
-public:
-	Buffer *current;
-
-	Ring() : current(NULL)
-	{
-		TAILQ_INIT(&head);
-	}
-	~Ring();
-
-	inline Buffer *
-	first(void)
-	{
-		return TAILQ_FIRST(&head);
-	}
-	inline Buffer *
-	last(void)
-	{
-		return TAILQ_LAST(&head, Head);
-	}
-
-	tecoInt get_id(Buffer *buffer);
-	inline tecoInt
-	get_id(void)
-	{
-		return get_id(current);
-	}
-
-	Buffer *find(const gchar *filename);
-	Buffer *find(tecoInt id);
-
-	void dirtify(void);
-	bool is_any_dirty(void);
-	void save_all_dirty_buffers(void);
-
-	bool edit(tecoInt id);
-	void edit(const gchar *filename);
-	inline void
-	undo_edit(void)
-	{
-		undo.push_var(QRegisters::current);
-		undo.push_var(current)->undo_edit();
-	}
-
-	void close(Buffer *buffer);
-	void close(void);
-	inline void
-	undo_close(void)
-	{
-		current->undo_close();
-	}
-
-	void set_scintilla_undo(bool state);
-} ring;
+void teco_ring_cleanup(void);
 
 /*
  * Command states
  */
 
-class StateEditFile : public StateExpectFile {
-private:
-	bool allowFilename;
-
-	void do_edit(const gchar *filename);
-	void do_edit(tecoInt id);
-
-	void initial(void);
-	State *got_file(const gchar *filename);
-};
-
-class StateSaveFile : public StateExpectFile {
-private:
-	State *got_file(const gchar *filename);
-};
-
-namespace States {
-	extern StateEditFile	editfile;
-	extern StateSaveFile	savefile;
-}
+TECO_DECLARE_STATE(teco_state_edit_file);
+TECO_DECLARE_STATE(teco_state_save_file);
 
 /*
  * Helper functions applying to any current
  * document (whether a buffer or QRegister).
  * There's currently no better place to put them.
  */
-void current_doc_undo_edit(void);
+static inline gboolean
+teco_current_doc_undo_edit(GError **error)
+{
+	if (!teco_qreg_current) {
+		teco_ring_undo_edit();
+		return TRUE;
+	}
 
-static inline bool
-current_doc_must_undo(void)
+	teco_undo_ptr(teco_qreg_current);
+	return teco_qreg_current->vtable->undo_edit(teco_qreg_current, error);
+}
+
+static inline gboolean
+teco_current_doc_must_undo(void)
 {
 	/*
 	 * If there's no currently edited Q-Register
 	 * we must be editing the current buffer
 	 */
-	return !QRegisters::current ||
-	       QRegisters::current->must_undo;
+	return !teco_qreg_current || teco_qreg_current->must_undo;
 }
-
-} /* namespace SciTECO */
-
-#endif

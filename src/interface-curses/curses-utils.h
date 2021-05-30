@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,26 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __CURSES_UTILS_H
-#define __CURSES_UTILS_H
+#pragma once
 
 #include <glib.h>
 
 #include <curses.h>
 
-namespace SciTECO {
+gsize teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width);
 
-namespace Curses {
-
-gsize format_str(WINDOW *win, const gchar *str,
-                 gssize len = -1, gint max_width = -1);
-
-gsize format_filename(WINDOW *win, const gchar *filename,
-                      gint max_width = -1);
-
-} /* namespace Curses */
-
-} /* namespace SciTECO */
-
-#endif
+gsize teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width);

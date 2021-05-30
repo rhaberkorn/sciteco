@@ -11,11 +11,17 @@ endif
 include $(top_srcdir)/bootstrap.am
 include $(top_srcdir)/scintilla.am
 
-AM_CXXFLAGS = -Wall -Wno-char-subscripts
+# FIXME: Common flags should be in configure.ac
+AM_CFLAGS = -std=gnu11 -Wall -Wno-initializer-overrides -Wno-unused-value
+AM_CPPFLAGS += -I$(top_srcdir)/contrib/rb3ptr
+
+# NOTE: This may be necessary to ensure that malloc() overriding
+# works. It may prevent elimination of unused functions, though.
+AM_LDFLAGS = -rdynamic
 
 if STATIC_EXECUTABLES
 # AM_LDFLAGS are libtool flags, NOT compiler/linker flags
-AM_LDFLAGS = -all-static
+AM_LDFLAGS += -all-static
 endif
 
 BUILT_SOURCES =
@@ -26,43 +32,55 @@ dist_noinst_SCRIPTS = symbols-extract.tes
 EXTRA_DIST = sciteco.html
 
 noinst_LTLIBRARIES = libsciteco-base.la
-libsciteco_base_la_SOURCES = main.cpp sciteco.h \
-                             memory.cpp memory.h \
-                             string-utils.cpp string-utils.h \
-                             error.cpp error.h \
-                             cmdline.cpp cmdline.h \
-                             undo.cpp undo.h \
-                             expressions.cpp expressions.h \
-                             document.cpp document.h \
-                             eol.cpp eol.h \
-                             ioview.cpp ioview.h \
-                             qregisters.cpp qregisters.h \
-                             ring.cpp ring.h \
-                             parser.cpp parser.h \
-                             search.cpp search.h \
-                             spawn.cpp spawn.h \
-                             glob.cpp glob.h \
-                             goto.cpp goto.h \
-                             help.cpp help.h \
-                             rbtree.cpp rbtree.h \
-                             symbols.cpp symbols.h \
-                             interface.cpp interface.h
+libsciteco_base_la_SOURCES = main.c sciteco.h list.h \
+                             memory.c memory.h \
+                             string-utils.c string-utils.h \
+                             file-utils.c file-utils.h \
+                             error.c error.h \
+                             cmdline.c cmdline.h \
+                             undo.c undo.h \
+                             expressions.c expressions.h \
+                             doc.c doc.h \
+                             eol.c eol.h \
+                             qreg.c qreg.h \
+                             qreg-commands.c qreg-commands.h \
+                             ring.c ring.h \
+                             parser.c parser.h \
+                             core-commands.c core-commands.h \
+                             search.c search.h \
+                             spawn.c spawn.h \
+                             glob.c glob.h \
+                             goto.c goto.h \
+                             goto-commands.c goto-commands.h \
+                             help.c help.h \
+                             rb3str.c rb3str.h \
+                             scintilla.c scintilla.h \
+                             view.c view.h \
+                             interface.c interface.h
 # NOTE: We cannot link in Scintilla (static library) into
 # a libtool convenience library
-libsciteco_base_la_LIBADD = $(LIBSCITECO_INTERFACE)
+libsciteco_base_la_LIBADD = $(LIBSCITECO_INTERFACE) \
+                            $(top_builddir)/contrib/dlmalloc/libdlmalloc.la \
+                            $(top_builddir)/contrib/rb3ptr/librb3ptr.la
 
 if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
-symbols-scintilla.cpp symbols-scilexer.cpp : sciteco-minimal$(EXEEXT)
+sciteco_minimal_SOURCES =
+symbols-scintilla.c symbols-scilexer.c : sciteco-minimal$(EXEEXT)
 endif
-sciteco_minimal_SOURCES = symbols-minimal.cpp
 sciteco_minimal_LDADD = libsciteco-base.la \
                         @SCINTILLA_PATH@/bin/scintilla.a
+# Scintilla is unfortunately still written in C++, so we must force
+# Automake to use the C++ linker when linking the binaries.
+# The following hack is actually advocated in the Automake manual.
+nodist_EXTRA_sciteco_minimal_SOURCES = fuck-this-shit.cpp
 
 bin_PROGRAMS = sciteco
 sciteco_SOURCES =
-nodist_sciteco_SOURCES = symbols-scintilla.cpp symbols-scilexer.cpp
+nodist_sciteco_SOURCES = symbols-scintilla.c symbols-scilexer.c
 sciteco_LDADD = $(sciteco_minimal_LDADD)
+# see above
+nodist_EXTRA_sciteco_SOURCES = fuck-this-shit.cpp
 
 # For MinGW: Compile in resource (contains the icon)
 if WIN32
@@ -72,28 +90,14 @@ sciteco_SOURCES += sciteco.rc
 endif
 
 CLEANFILES = $(BUILT_SOURCES) \
-	     symbols-scintilla.cpp symbols-scilexer.cpp
+	     symbols-scintilla.c symbols-scilexer.c
 
-symbols-scintilla.cpp : @SCINTILLA_PATH@/include/Scintilla.h \
-			symbols-extract.tes
+symbols-scintilla.c : @SCINTILLA_PATH@/include/Scintilla.h \
+                      symbols-extract.tes
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
-	                   -p "SCI_" -n scintilla $@ $<
+	                   -p "SCI_" -n teco_symbol_list_scintilla $@ $<
 
-symbols-scilexer.cpp : @SCINTILLA_PATH@/include/SciLexer.h \
-		       symbols-extract.tes
+symbols-scilexer.c : @SCINTILLA_PATH@/include/SciLexer.h \
+                     symbols-extract.tes
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
-	                   -p "SCLEX_,SCE_" -n scilexer $@ $<
-
-# This installs a wrapper script to libexecdir to be used as
-# the SciTECO interpreter in Hash-Bang lines.
-# It makes sure that option parsing is disabled for all
-# script arguments which is necessary for builds against Glib < 2.44.
-# NOTE: When we raise the Glib requirement to 2.44, the sciteco-wrapper
-# workaround can be removed completely.
-libexec_SCRIPTS = sciteco-wrapper
-CLEANFILES += $(libexec_SCRIPTS)
-
-.PHONY: sciteco-wrapper
-sciteco-wrapper:
-	printf '#!/bin/sh\nOPT=$$1\nshift\nexec %s "$$OPT" -- $$@' \
-	       "$(SCITECO_INSTALLED)" >$@
+	                   -p "SCLEX_,SCE_" -n teco_symbol_list_scilexer $@ $<

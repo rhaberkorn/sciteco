@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,85 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __HELP_H
-#define __HELP_H
-
-#include <string.h>
+#pragma once
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
-#include "sciteco.h"
-#include "memory.h"
+#include "string-utils.h"
 #include "parser.h"
-#include "undo.h"
-#include "rbtree.h"
 
-namespace SciTECO {
-
-class HelpIndex : private RBTreeStringCase, public Object {
-public:
-	class Topic : public RBTreeStringCase::RBEntryOwnString {
-	public:
-		gchar	*filename;
-		tecoInt	pos;
-
-		Topic(const gchar *name, const gchar *_filename = NULL, tecoInt _pos = 0)
-		     : RBEntryOwnString(name),
-		       filename(_filename ? g_strdup(_filename) : NULL),
-		       pos(_pos) {}
-		~Topic()
-		{
-			g_free(filename);
-		}
-	};
-
-	~HelpIndex()
-	{
-		Topic *cur;
-
-		while ((cur = (Topic *)root()))
-			delete (Topic *)remove(cur);
-	}
-
-	void load(void);
-
-	Topic *find(const gchar *name);
-
-	void set(const gchar *name, const gchar *filename,
-	         tecoInt pos = 0);
-
-	inline gchar *
-	auto_complete(const gchar *name, gchar completed = '\0')
-	{
-		return RBTreeStringCase::auto_complete(name, completed);
-	}
-};
-
-extern HelpIndex help_index;
+gboolean teco_help_auto_complete(const gchar *topic_name, teco_string_t *insert);
 
 /*
  * Command states
  */
 
-class StateGetHelp : public StateExpectString {
-public:
-	StateGetHelp() : StateExpectString(false) {}
-
-private:
-	void initial(void);
-	State *done(const gchar *str);
-
-protected:
-	/* in cmdline.cpp */
-	void process_edit_cmd(gchar key);
-};
-
-namespace States {
-	extern StateGetHelp gethelp;
-}
-
-} /* namespace SciTECO */
-
-#endif
+TECO_DECLARE_STATE(teco_state_help);

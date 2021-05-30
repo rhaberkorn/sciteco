@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,77 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __MEMORY_H
-#define __MEMORY_H
+#pragma once
 
 #include <glib.h>
 
-/**
- * Default memory limit (500mb, assuming SI units).
- */
-#define MEMORY_LIMIT_DEFAULT (500*1000*1000)
+extern gsize teco_memory_limit;
 
-namespace SciTECO {
+void teco_memory_start_limiting(void);
+void teco_memory_stop_limiting(void);
 
-/**
- * Common base class for all objects in SciTECO.
- * This is currently only used to provide custom new/delete
- * replacements in order to support unified allocation via
- * Glib (g_malloc and g_slice) and as a memory usage
- * counting fallback.
- *
- * This approach has certain drawbacks, e.g. you cannot
- * derive from Object privately; nor is it possible to
- * influence allocations in other libraries or even of
- * scalars (e.g. new char[5]).
- *
- * C++14 (supported by GCC >= 5) has global sized delete
- * replacements which would be effective in the entire application.
- * We're using them too if support is detected and there is
- * also a fallback using malloc_usable_size().
- * Another fallback with a size field would be possible
- * but is probably not worth the trouble.
- */
-class Object {
-public:
-	static void *operator new(size_t size) noexcept;
-	static inline void *
-	operator new[](size_t size) noexcept
-	{
-		return operator new(size);
-	}
-	static inline void *
-	operator new(size_t size, void *ptr) noexcept
-	{
-		return ptr;
-	}
+gboolean teco_memory_set_limit(gsize new_limit, GError **error);
 
-	static void operator delete(void *ptr, size_t size) noexcept;
-	static inline void
-	operator delete[](void *ptr, size_t size) noexcept
-	{
-		operator delete(ptr, size);
-	}
-};
-
-extern class MemoryLimit : public Object {
-public:
-	/**
-	 * Undo stack memory limit in bytes.
-	 * 0 means no limiting.
-	 */
-	gsize limit;
-
-	MemoryLimit() : limit(MEMORY_LIMIT_DEFAULT) {}
-
-	static gsize get_usage(void);
-
-	void set_limit(gsize new_limit = 0);
-
-	void check(void);
-} memlimit;
-
-} /* namespace SciTECO */
-
-#endif
+gboolean teco_memory_check(GError **error);

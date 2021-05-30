@@ -33,20 +33,28 @@ I/*
 
 #include "Q#in"
 #include "sciteco.h"
-#include "symbols.h"
+#include "scintilla.h"
 
-namespace SciTECO {
-
-static const SymbolList::Entry entries[] = {^J
+static const teco_symbol_entry_t entries[] = {^J
 <
   .,W.Xa 0KK
   I#ifdef Qa^J^I{"Qa", Qa},^J#endif^J
 .-Z;>
 I};
 
-SymbolList Symbols::Q[getopt.n](entries, G_N_ELEMENTS(entries));
+static void __attribute__((constructor))
+teco_symbols_init(void)
+{
+	teco_symbol_list_init(&Q[getopt.n], entries, G_N_ELEMENTS(entries), FALSE);
+}
 
-} /* namespace SciTECO */^J
+#ifndef NDEBUG
+static void __attribute__((destructor))
+teco_cmdline_cleanup(void)
+{
+	teco_symbol_list_clear(&Q[getopt.n]);
+}
+#endif^J
 
 !* write output file *!
 EWQ#ou

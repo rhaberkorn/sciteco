@@ -2,7 +2,7 @@ Overview
 ========
 
 <img align="left" alt="SciTECO" src="ico/sciteco-48.png"/>
-SciTECO is an interactive TECO dialect, similar to [Video TECO](http://www.copters.com/teco.html).
+SciTECO is an interactive TECO dialect, similar to Video TECO.
 It also adds features from classic TECO-11, as well as unique new ideas.
 
 The basic approach to text editing is both radically different and surprisingly similar to popular
@@ -24,8 +24,8 @@ The Curses frontend is verified to work with [ncurses](https://www.gnu.org/softw
 [EMCurses](https://github.com/rhaberkorn/emcurses).
 Others might work as well.
 
-Linux, FreeBSD, Windows (MinGW 32/64) and
-[Haiku](https://www.haiku-os.org/) (gcc4) are tested and supported.
+Linux, FreeBSD, Windows (MinGW 32/64) ~~and
+[Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms,
 like Mac OS X - however I cannot test it regularily and there is currently no
@@ -36,12 +36,12 @@ some implementation of Curses, it should be easy to port to even more exotic pla
 
 __Warning: The SciTECO language is work in progress and has not yet fully stabilized.
 It may change drastically and in backwards-incompatible ways in the repository's
-master branch and between releases until version 1.0 is released.__
+master branch and between releases until version 3.0 is released.__
 
 Features
 ========
 
-* Supports most of the Video TECO commands
+* Supports most of the [Video TECO](http://www.copters.com/teco.html) commands
 * Improved parser compared to classic TECOs, making SciTECO
   more similar to other imperative languages.
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
@@ -72,6 +72,8 @@ Features
 * Munging: Macros may be munged, that is executed in batch mode. In other words, SciTECO
   can be used for scripting.
   By default, a profile is munged.
+* 8-bit clean: SciTECO can be used to edit binary files if automatic EOL conversion
+  is turned off (`16,0ED`).
 * Self-documenting: An integrated indexed help system allows browsing formatted documentation
   about commands, macros and concepts within SciTECO (`?` command).
   Macro packages can be documented with the `tedoc` tool, generating man pages.

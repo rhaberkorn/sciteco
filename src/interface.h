@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __INTERFACE_H
-#define __INTERFACE_H
+#pragma once
 
 #include <stdarg.h>
 #include <signal.h>
@@ -25,349 +23,151 @@
 
 #include <Scintilla.h>
 
-#include "memory.h"
-#include "undo.h"
-#include "error.h"
-
-namespace SciTECO {
-
-/* avoid include dependency conflict */
-class QRegister;
-class Buffer;
-class Cmdline;
-extern sig_atomic_t sigint_occurred;
+#include "sciteco.h"
+#include "qreg.h"
+#include "ring.h"
+#include "cmdline.h"
+#include "view.h"
 
 /**
- * Base class for all SciTECO views. This is a minimal
- * abstraction where the implementor only has to provide
- * a method for dispatching Scintilla messages.
- * Everything else is handled by other SciTECO classes.
+ * @file
+ * Abstract user interface.
  *
- * This interface employs the Curiously Recurring Template
- * Pattern (CRTP). To implement it, one must derive from
- * View<DerivedClass>. The methods to implement actually
- * have an "_impl" suffix so as to avoid infinite recursion
- * if an implementation is missing.
- * Externally however, the methods as given in this interface
- * may be called.
+ * Interface of all SciTECO user interfaces (e.g. Curses or GTK+).
+ * All functions that must be provided are marked with the \@pure tag.
  *
- * The CRTP has a runtime overhead at low optimization levels
- * (additional non-inlined calls), but should provide a
- * significant performance boost when inlining is enabled.
- *
- * Note that not all methods have to be defined in the
- * class. Explicit template instantiation is used to outsource
- * base-class implementations to interface.cpp.
+ * @note
+ * We do not provide default implementations for any of the interface
+ * functions by declaring them "weak" since this is a non-portable linker
+ * feature.
  */
-template <class ViewImpl>
-class View : public Object {
-	inline ViewImpl &
-	impl(void)
-	{
-		return *(ViewImpl *)this;
-	}
 
-	class UndoTokenMessage : public UndoToken {
-		ViewImpl &view;
+/** @protected */
+extern teco_view_t *teco_interface_current_view;
 
-		unsigned int iMessage;
-		uptr_t wParam;
-		sptr_t lParam;
+/** @pure */
+void teco_interface_init(void);
 
-	public:
-		UndoTokenMessage(ViewImpl &_view, unsigned int _iMessage,
-				 uptr_t _wParam = 0, sptr_t _lParam = 0)
-				: view(_view), iMessage(_iMessage),
-				  wParam(_wParam), lParam(_lParam) {}
+/** @pure */
+GOptionGroup *teco_interface_get_options(void);
 
-		void
-		run(void)
-		{
-			view.ssm(iMessage, wParam, lParam);
-		}
-	};
+/** @pure makes sense only on Curses */
+void teco_interface_init_color(guint color, guint32 rgb);
 
-	class UndoTokenSetRepresentations : public UndoToken {
-		ViewImpl &view;
+typedef enum {
+	TECO_MSG_USER,
+	TECO_MSG_INFO,
+	TECO_MSG_WARNING,
+	TECO_MSG_ERROR
+} teco_msg_t;
 
-	public:
-		UndoTokenSetRepresentations(ViewImpl &_view)
-		                           : view(_view) {}
+/** @pure */
+void teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap);
 
-		void
-		run(void)
-		{
-			view.set_representations();
-		}
-	};
+static inline void G_GNUC_PRINTF(2, 3)
+teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
+{
+	va_list ap;
 
-public:
-	/*
-	 * called after Interface initialization.
-	 * Should call setup()
-	 */
-	inline void
-	initialize(void)
-	{
-		impl().initialize_impl();
-	}
+	va_start(ap, fmt);
+	teco_interface_vmsg(type, fmt, ap);
+	va_end(ap);
+}
 
-	inline sptr_t
-	ssm(unsigned int iMessage,
-	    uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		return impl().ssm_impl(iMessage, wParam, lParam);
-	}
+/** @pure */
+void teco_interface_msg_clear(void);
 
-	inline void
-	undo_ssm(unsigned int iMessage,
-		 uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		undo.push<UndoTokenMessage>(impl(), iMessage, wParam, lParam);
-	}
+/** @pure */
+void teco_interface_show_view(teco_view_t *view);
+void undo__teco_interface_show_view(teco_view_t *);
 
-	void set_representations(void);
-	inline void
-	undo_set_representations(void)
-	{
-		undo.push<UndoTokenSetRepresentations>(impl());
-	}
+static inline sptr_t
+teco_interface_ssm(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
+{
+	return teco_view_ssm(teco_interface_current_view, iMessage, wParam, lParam);
+}
 
-	inline void
-	set_scintilla_undo(bool state)
-	{
-		ssm(SCI_EMPTYUNDOBUFFER);
-		ssm(SCI_SETUNDOCOLLECTION, state);
-	}
+/*
+ * NOTE: You could simply call undo__teco_view_ssm(teco_interface_current_view, ...).
+ * undo__teco_interface_ssm(...) exists for brevity and aestethics.
+ */
+void undo__teco_interface_ssm(unsigned int, uptr_t, sptr_t);
 
-protected:
-	void setup(void);
-};
+/** @pure */
+void teco_interface_info_update_qreg(const teco_qreg_t *reg);
+/** @pure */
+void teco_interface_info_update_buffer(const teco_buffer_t *buffer);
 
+#define teco_interface_info_update(X) \
+	(_Generic((X), teco_qreg_t *         : teco_interface_info_update_qreg, \
+	               const teco_qreg_t *   : teco_interface_info_update_qreg, \
+	               teco_buffer_t *       : teco_interface_info_update_buffer, \
+	               const teco_buffer_t * : teco_interface_info_update_buffer)(X))
+
+void undo__teco_interface_info_update_qreg(const teco_qreg_t *);
+void undo__teco_interface_info_update_buffer(const teco_buffer_t *);
+
+/** @pure */
+void teco_interface_cmdline_update(const teco_cmdline_t *cmdline);
+
+/** @pure */
+gboolean teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
+                                      GError **error);
+void teco_interface_undo_set_clipboard(const gchar *name, gchar *str, gsize len);
 /**
- * Base class and interface of all SciTECO user interfaces
- * (e.g. Curses or GTK+).
+ * Semantics are compatible with teco_qreg_vtable_t::get_string() since that is the
+ * main user of this function.
  *
- * This uses the same Curiously Recurring Template Pattern (CRTP)
- * as the View interface above, as there is only one type of
- * user interface at runtime.
+ * @pure
  */
-template <class InterfaceImpl, class ViewImpl>
-class Interface : public Object {
-	inline InterfaceImpl &
-	impl(void)
-	{
-		return *(InterfaceImpl *)this;
-	}
+gboolean teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError **error);
 
-	class UndoTokenShowView : public UndoToken {
-		ViewImpl *view;
+typedef enum {
+	TECO_POPUP_PLAIN,
+	TECO_POPUP_FILE,
+	TECO_POPUP_DIRECTORY
+} teco_popup_entry_type_t;
 
-	public:
-		UndoTokenShowView(ViewImpl *_view)
-		                 : view(_view) {}
+/** @pure */
+void teco_interface_popup_add(teco_popup_entry_type_t type,
+                              const gchar *name, gsize name_len, gboolean highlight);
+/** @pure */
+void teco_interface_popup_show(void);
+/** @pure */
+gboolean teco_interface_popup_is_shown(void);
+/** @pure */
+void teco_interface_popup_clear(void);
 
-		void run(void);
-	};
+/** @pure */
+gboolean teco_interface_is_interrupted(void);
 
-	template <class Type>
-	class UndoTokenInfoUpdate : public UndoToken {
-		const Type *obj;
+/** @pure main entry point */
+gboolean teco_interface_event_loop(GError **error);
 
-	public:
-		UndoTokenInfoUpdate(const Type *_obj)
-				   : obj(_obj) {}
+/*
+ * Interfacing to the external SciTECO world
+ */
+/** @protected */
+void teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap);
+void teco_interface_process_notify(struct SCNotification *notify);
 
-		void run(void);
-	};
+/** @pure */
+void teco_interface_cleanup(void);
 
-protected:
-	ViewImpl *current_view;
+/*
+ * The following functions are here for lack of a better place.
+ * They could also be in sciteco.h, but only if declared as non-inline
+ * since sciteco.h should not depend on interface.h.
+ */
 
-public:
-	Interface() : current_view(NULL) {}
+static inline gboolean
+teco_validate_pos(teco_int_t n)
+{
+	return 0 <= n && n <= teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+}
 
-	/* default implementation */
-	inline GOptionGroup *
-	get_options(void)
-	{
-		return NULL;
-	}
-
-	/* default implementation */
-	inline void init(void) {}
-
-	/* makes sense only on Curses */
-	inline void init_color(guint color, guint32 rgb) {}
-
-	enum MessageType {
-		MSG_USER,
-		MSG_INFO,
-		MSG_WARNING,
-		MSG_ERROR
-	};
-	inline void
-	vmsg(MessageType type, const gchar *fmt, va_list ap)
-	{
-		impl().vmsg_impl(type, fmt, ap);
-	}
-	inline void
-	msg(MessageType type, const gchar *fmt, ...) G_GNUC_PRINTF(3, 4)
-	{
-		va_list ap;
-
-		va_start(ap, fmt);
-		vmsg(type, fmt, ap);
-		va_end(ap);
-	}
-	/* default implementation */
-	inline void msg_clear(void) {}
-
-	inline void
-	show_view(ViewImpl *view)
-	{
-		impl().show_view_impl(view);
-	}
-	inline void
-	undo_show_view(ViewImpl *view)
-	{
-		undo.push<UndoTokenShowView>(view);
-	}
-
-	inline ViewImpl *
-	get_current_view(void)
-	{
-		return current_view;
-	}
-
-	inline sptr_t
-	ssm(unsigned int iMessage, uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		return current_view->ssm(iMessage, wParam, lParam);
-	}
-	inline void
-	undo_ssm(unsigned int iMessage,
-	         uptr_t wParam = 0, sptr_t lParam = 0)
-	{
-		current_view->undo_ssm(iMessage, wParam, lParam);
-	}
-
-	/*
-	 * NOTE: could be rolled into a template, but
-	 * this way it is explicit what must be implemented
-	 * by the deriving class.
-	 */
-	inline void
-	info_update(const QRegister *reg)
-	{
-		impl().info_update_impl(reg);
-	}
-	inline void
-	info_update(const Buffer *buffer)
-	{
-		impl().info_update_impl(buffer);
-	}
-
-	inline void
-	undo_info_update(const QRegister *reg)
-	{
-		undo.push<UndoTokenInfoUpdate<QRegister>>(reg);
-	}
-	inline void
-	undo_info_update(const Buffer *buffer)
-	{
-		undo.push<UndoTokenInfoUpdate<Buffer>>(buffer);
-	}
-
-	inline void
-	cmdline_update(const Cmdline *cmdline)
-	{
-		impl().cmdline_update_impl(cmdline);
-	}
-
-	/* default implementation */
-	inline void
-	set_clipboard(const gchar *name,
-	              const gchar *str = NULL, gssize str_len = -1)
-	{
-		throw Error("Setting clipboard unsupported");
-	}
-
-	/* default implementation */
-	inline gchar *
-	get_clipboard(const gchar *name, gsize *str_len = NULL)
-	{
-		throw Error("Getting clipboard unsupported");
-	}
-
-	enum PopupEntryType {
-		POPUP_PLAIN,
-		POPUP_FILE,
-		POPUP_DIRECTORY
-	};
-	inline void
-	popup_add(PopupEntryType type,
-	          const gchar *name, bool highlight = false)
-	{
-		impl().popup_add_impl(type, name, highlight);
-	}
-	inline void
-	popup_show(void)
-	{
-		impl().popup_show_impl();
-	}
-	inline bool
-	popup_is_shown(void)
-	{
-		return impl().popup_is_shown_impl();
-	}
-	inline void
-	popup_clear(void)
-	{
-		impl().popup_clear_impl();
-	}
-
-	/* default implementation */
-	inline bool
-	is_interrupted(void)
-	{
-		return sigint_occurred != FALSE;
-	}
-
-	/* main entry point */
-	inline void
-	event_loop(void)
-	{
-		impl().event_loop_impl();
-	}
-
-	/*
-	 * Interfacing to the external SciTECO world
-	 */
-protected:
-	void stdio_vmsg(MessageType type, const gchar *fmt, va_list ap);
-public:
-	void process_notify(SCNotification *notify);
-};
-
-} /* namespace SciTECO */
-
-#ifdef INTERFACE_GTK
-#include "interface-gtk/interface-gtk.h"
-#elif defined(INTERFACE_CURSES)
-#include "interface-curses/interface-curses.h"
-#else
-#error No interface selected!
-#endif
-
-namespace SciTECO {
-
-/* object defined in main.cpp */
-extern InterfaceCurrent interface;
-
-extern template class View<ViewCurrent>;
-extern template class Interface<InterfaceCurrent, ViewCurrent>;
-
-} /* namespace SciTECO */
-
-#endif
+static inline gboolean
+teco_validate_line(teco_int_t n)
+{
+	return 0 <= n && n < teco_interface_ssm(SCI_GETLINECOUNT, 0, 0);
+}

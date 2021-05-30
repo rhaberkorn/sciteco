@@ -7,3 +7,7 @@ SCITECO=@abs_top_builddir@/src/sciteco
 # Make sure that the standard library from the source package
 # is used.
 SCITECOPATH=@abs_top_srcdir@/lib
+
+# Glib debug options
+G_SLICE=debug-blocks
+G_ENABLE_DIAGNOSTIC=1

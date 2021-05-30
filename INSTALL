@@ -3,7 +3,7 @@ Installation Instructions
 
 Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005,
 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
-Copyright (C) 2013-2017 Robin Haberkorn
+Copyright (C) 2013-2021 Robin Haberkorn
 
    Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -15,15 +15,17 @@ SciTECO Build and Runtime Dependencies
 
  * Autotools and an UNIX-like environment
  * GNU Make
- * A C++11 compiler, e.g. GNU C/C++ (v4.4 or later) or
-   LLVM/gcc or LLVM/Clang
- * Glib 2 as a cross-platform runtime library
-   (v2.28 or later on Unix, v2.34 or later for MinGW):
+ * A GCC-compatible C11 and C++11 compiler, e.g. GNU C/C++
+   (v4.4 or later) or LLVM/gcc or LLVM/Clang.
+   SciTECO itself does not require C++, but Scintilla does.
+ * Glib 2 as a cross-platform runtime library (v2.44 or later):
    https://developer.gnome.org/glib/
  * When choosing the Curses interface, you need one of:
    * NCurses (http://www.gnu.org/software/ncurses/).
      If you plan to use the ncurses MinGW port,
      I recommend ncurses 6.0 or later.
+   * NetBSD Curses (https://github.com/sabotage-linux/netbsd-curses).
+     This is the default on NetBSD.
    * PDCurses/XCurses (http://pdcurses.sourceforge.net/).
      Note that XCurses v3.4 appears to be broken, you should
      build from PDCurses Git instead.
@@ -31,7 +33,7 @@ SciTECO Build and Runtime Dependencies
    * PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses).
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
-   * GTK+ v3.10 or later: http://www.gtk.org/
+   * GTK+ v3.12 or later: http://www.gtk.org/
    * GObject Builder v2.0.20 or later: http://www.jirka.org/gob.html
  * GNU roff (groff): https://www.gnu.org/software/groff/
    Required at build-time, but it is already shipped on most
@@ -47,6 +49,13 @@ installed by the user manually:
  * When choosing the Curses interface:
    * Scinterm (v1.7 or later):
      http://foicica.com/scinterm/
+
+On Ubuntu, you can install all dependencies you could possibly need
+as follows:
+
+  $ sudo apt-get install git build-essential autoconf automake libtool \
+                         libglib2.0-dev libncurses-dev libgtk-3-dev gob2 \
+                         groff doxygen
 
 Building from Source Tar Ball or Repository
 ===========================================

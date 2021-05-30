@@ -7,6 +7,8 @@ AT_COLOR_TESTS
 # idiom "(0/0)" to enforce a "Division by zero" error
 # whenever we want to fail.
 
+AT_BANNER([Features])
+
 AT_SETUP([Missing left operand])
 AT_CHECK([$SCITECO -e '+23='], 1, ignore, ignore)
 AT_CLEANUP
@@ -15,11 +17,37 @@ AT_SETUP([Closing loops at the correct macro level])
 AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([String arguments])
+AT_CHECK([$SCITECO -e $'Ifoo^Q\e(0/0)\e'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '@I"foo^Q"(0/0)"'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '@I{foo{bar}foo^Q{(0/0)}'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '@Ia^EQa(0/0)a'], 0, ignore, ignore)
+# TODO: String building characters
+AT_CLEANUP
+
+AT_SETUP([Q-Register definitions])
+AT_CHECK([$SCITECO -e '0Ua'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U.a'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U#ab'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U.#ab'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U[[AB]]'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U.[[AB]]'], 0, ignore, ignore)
+# TODO: String building in Q-Register definitions
+# TODO: Escaping of braces.
+# Unfortunately, braces are significant for M4. Perhaps use $'...'.
+AT_CLEANUP
+
+AT_SETUP([8-bit cleanlyness])
+AT_CHECK([$SCITECO -e "0:@EUa/f^@^@/ :Qa-4\"N(0/0)' GaZ-4\"N(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Automatic EOL normalization])
 AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N(0/0)' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt'"],
          0, ignore, ignore)
 AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, ignore)
 AT_CLEANUP
+
+AT_BANNER([Regression Tests])
 
 AT_SETUP([Glob patterns with character classes])
 # Also checks closing brackets as part of the character set.
@@ -31,4 +59,35 @@ AT_CLEANUP
 
 AT_SETUP([Glob patterns with unclosed trailing brackets])
 AT_CHECK([$SCITECO -e "91U< :@EN/*.^EU<h/foo.^EU<h/\"F(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Searching with large counts])
+# Even though the search will be unsuccessful, it will not be considered
+# a proper error, so the process return code is still 0.
+AT_CHECK([$SCITECO -e "2147483647@S/foo/"], 0, ignore, ignore)
+# NOTE: In case of crashes, the return code should be >= 128 (at least on Linux).
+AT_CHECK([$SCITECO -e "-2147483648@S/foo/"], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Memory limiting during spawning])
+# This might result in an OOM if memory limiting is not working
+AT_CHECK([$SCITECO -e "50*1000*1000,2EJ @EC'cat /dev/zero'"], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_BANNER([Known Bugs])
+
+AT_SETUP([Pattern matching overflow])
+# Should no longer dump core.
+# It could fail because the memory limit is exceeed,
+# but not in this case since the match string isn't too large.
+AT_CHECK([$SCITECO -e '100000<@I"X">J @S"^EM^X"'], 0, ignore, ignore)
+AT_XFAIL_IF([/bin/true])
+AT_CLEANUP
+
+AT_SETUP([Recursion overflow])
+# Should no longer dump core.
+# It could fail because the memory limit is exceeed,
+# but not in this case since we limit the recursion.
+AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
+AT_XFAIL_IF([/bin/true])
 AT_CLEANUP

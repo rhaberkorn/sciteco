@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,78 +14,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef __CURSES_INFO_POPUP_H
-#define __CURSES_INFO_POPUP_H
+#include <string.h>
 
 #include <glib.h>
 
 #include <curses.h>
 
-#include "memory.h"
+#include "list.h"
+#include "interface.h"
 
-namespace SciTECO {
+typedef struct {
+	WINDOW *window;			/**! window showing part of pad */
+	WINDOW *pad;			/**! full-height entry list */
 
-class CursesInfoPopup : public Object {
-public:
-	/**
-	 * @bug This is identical to the type defined in
-	 *      interface.h. But for the sake of abstraction
-	 *      we cannot access it here (or in gtk-info-popup
-	 *      for that matter).
-	 */
-	enum PopupEntryType {
-		POPUP_PLAIN,
-		POPUP_FILE,
-		POPUP_DIRECTORY
-        };
+	teco_stailq_head_t list;	/**! list of popup entries */
+	gint longest;			/**! size of longest entry */
+	gint length;			/**! total number of popup entries */
 
-private:
-	WINDOW *window;		/**! window showing part of pad */
-	WINDOW *pad;		/**! full-height entry list */
+	gint pad_first_line;		/**! first line in pad to show */
 
-	struct Entry {
-		PopupEntryType type;
-		bool highlight;
-		gchar name[];
-	};
+	GStringChunk *chunk;		/**! string chunk for all popup entry names */
+} teco_curses_info_popup_t;
 
-	GSList *list;		/**! list of popup entries */
-	gint longest;		/**! size of longest entry */
-	gint length;		/**! total number of popup entries */
+static inline void
+teco_curses_info_popup_init(teco_curses_info_popup_t *ctx)
+{
+	memset(ctx, 0, sizeof(*ctx));
+	ctx->list = TECO_STAILQ_HEAD_INITIALIZER(&ctx->list);
+}
 
-	gint pad_first_line;	/**! first line in pad to show */
+void teco_curses_info_popup_add(teco_curses_info_popup_t *ctx, teco_popup_entry_type_t type,
+                                const gchar *name, gsize name_len, gboolean highlight);
 
-public:
-	CursesInfoPopup() : window(NULL), pad(NULL),
-	                    list(NULL), longest(0), length(0),
-	                    pad_first_line(0) {}
+void teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr);
+static inline bool
+teco_curses_info_popup_is_shown(teco_curses_info_popup_t *ctx)
+{
+	return ctx->window != NULL;
+}
 
-	void add(PopupEntryType type,
-		 const gchar *name, bool highlight = false);
+static inline void
+teco_curses_info_popup_noutrefresh(teco_curses_info_popup_t *ctx)
+{
+	if (ctx->window)
+		wnoutrefresh(ctx->window);
+}
 
-	void show(attr_t attr);
-	inline bool
-	is_shown(void)
-	{
-		return window != NULL;
-	}
-
-	void clear(void);
-
-	inline void
-	noutrefresh(void)
-	{
-		if (window)
-			wnoutrefresh(window);
-	}
-
-	~CursesInfoPopup();
-
-private:
-	void init_pad(attr_t attr);
-};
-
-} /* namespace SciTECO */
-
-#endif
+void teco_curses_info_popup_clear(teco_curses_info_popup_t *ctx);

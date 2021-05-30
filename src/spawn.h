@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,68 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#pragma once
 
-#ifndef __SPAWN_H
-#define __SPAWN_H
-
-#include <glib.h>
-
-#include "sciteco.h"
 #include "parser.h"
-#include "qregisters.h"
-#include "error.h"
-#include "eol.h"
 
-namespace SciTECO {
-
-gchar **parse_shell_command_line(const gchar *cmdline, GError **error);
-
-class StateExecuteCommand : public StateExpectString {
-public:
-	StateExecuteCommand();
-	~StateExecuteCommand();
-
-	struct Context {
-		GMainContext *mainctx;
-		GMainLoop *mainloop;
-		GSource *child_src;
-		GSource *stdin_src, *stdout_src;
-
-		tecoInt from, to;
-		tecoInt start;
-		bool text_added;
-
-		EOLWriterGIO *stdin_writer;
-		EOLReaderGIO *stdout_reader;
-
-		Error *error;
-		tecoBool rc;
-	};
-
-private:
-	Context ctx;
-
-	void initial(void);
-	State *done(const gchar *str);
-
-protected:
-	/* in cmdline.cpp */
-	void process_edit_cmd(gchar key);
-};
-
-class StateEGCommand : public StateExpectQReg {
-public:
-	StateEGCommand() : StateExpectQReg(QREG_OPTIONAL_INIT) {}
-
-private:
-	State *got_register(QRegister *reg);
-};
-
-namespace States {
-	extern StateExecuteCommand	executecommand;
-	extern StateEGCommand		egcommand;
-}
-
-} /* namespace SciTECO */
-
-#endif
+TECO_DECLARE_STATE(teco_state_execute);
+TECO_DECLARE_STATE(teco_state_egcommand);

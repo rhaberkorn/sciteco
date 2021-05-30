@@ -734,8 +734,11 @@ This is useful for writing cross-platform \*(ST macros (see
 .LP
 Note that completions take place after string building and
 tilde-expansion is also performed by file name completions,
-so for instance \(lq~/foo\(rq will complete a file
-in the user's home directory.
+so for instance both \(lq~/foo\(rq and \(lq^EQ[$HOME]/foo\(rq
+will complete a file in the user's home directory.
+Auto-completion also takes care of \fIquoting\fP string termination
+and string building characters, which might be relevant especially
+when autocompleting Q-Register names.
 .
 .
 .SH USER INTERFACE
@@ -1249,8 +1252,10 @@ A command identifier (and Q-Register specification) may be followed
 by one or more string arguments.
 String arguments are terminated by Escape characters (27) by default,
 but this may be changed using modifiers.
-All string arguments may contain special string building characters
-for instance to embed other strings.
+If enabled, string arguments may contain special string building characters
+for instance to embed other strings or to quote the argument terminator.
+The detection of the end of a string is aware of string building characters,
+ie. string building constructs may contain the current terminator.
 String building may be enabled or disabled by default for a command.
 In interactive mode the command is often executed as soon as it
 has been completely specified and updates to the string arguments
@@ -1302,6 +1307,10 @@ string arguments, as in:
 }
 .SCITECO_TT_END
 .EE
+The termination character can be \fIquoted\fP if you want to handle
+it like any regular character.
+For instance, you could write \(lqS^Q\fB$$\fP\(rq to search for the
+escape character itself.
 .
 .SH Q-REGISTERS
 .SCITECO_TOPIC Q-Register
@@ -1605,8 +1614,8 @@ thus refers to the corresponding control code:
 .TQ
 .BI ^R c
 Escape character \fIc\fP.
-The character is not handled as a string building character,
-so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
+The character is not handled as a string building or string termination
+character, so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
 .TP
 .SCITECO_TOPIC ^V^V ^Vc lower
 .B ^V^V

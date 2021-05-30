@@ -69,19 +69,8 @@ interpreter before the script's file name, so all required \*(ST options must
 be mangled into a single argument with their single-letter names.
 Passing option-like arguments (beginning with a dash) to scripts may cause
 problems because \*(ST might try to interpret these options.
-Beginning with Glib 2.44, \*(ST thus stops parsing at the first non-option
+\*(ST thus stops parsing at the first non-option
 argument (which will always be the munged file name in a script invocation).
-For binaries linked against older versions of Glib, \*(ST works around this
-issue by providing a wrapper script that can be used in place of the main
-executable.
-A portable Hash-Bang line should thus look like:
-.RS
-.EX
-.SCITECO_TT
-#!@libexecdir@/sciteco-wrapper -m
-.SCITECO_TT_END
-.EE
-.RE
 .
 .LP
 .SCITECO_TOPIC argv arguments
@@ -144,7 +133,7 @@ The interactive mode enables character rub-out and thus undoing
 of command side-effects.
 Therefore code runs significantly slower in interactive mode
 and all algorithms have non-constant memory requirements
-as they will constantly accumulate \(lqundo tokens\(rqP.
+as they will constantly accumulate \(lqundo tokens\(rq.
 Batch mode does not have these restrictions.
 .IP \(bu
 A few commands that modify the command line are only available
@@ -175,7 +164,7 @@ option.
 .
 .IP "\fB-h\fR, \fB--help\fR"
 .SCITECO_TOPIC "-h" "--help"
-Display a short help text on the console. 
+Display a short help text on the console.
 .IP "\fB-e\fR, \fB--eval\fR \fImacro"
 .SCITECO_TOPIC "-e" "--eval"
 Evaluate (execute)
@@ -253,11 +242,11 @@ Initialization of this variable ensures that the
 \(lq$HOME\(rq Q-Register is available even on Windows
 and the home directory can always be re-configured.
 .TP
-.SCITECO_TOPIC "$SHELL" "SHELL" "$COMSPEC" "COMSPEC"
-.BR SHELL " or " COMSPEC
+.SCITECO_TOPIC "$SHELL" "SHELL" "$ComSpec" "ComSpec"
+.BR SHELL " or " ComSpec
 Path of the command interpreter used by \fBEG\fP and \fBEC\fP
 commands if UNIX98 shell emulation is \fIdisabled\fP.
-\fBSHELL\fP is used on UNIX-like systems, while \fBCOMSPEC\fP
+\fBSHELL\fP is used on UNIX-like systems, while \fBComSpec\fP
 is used on DOS-like systems (like Windows).
 Both variables are usually already set in the process environment
 but are initialized to \(lq/bin/sh\(rq or \(lqcmd.exe\(rq

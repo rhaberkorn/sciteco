@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2017 Robin Haberkorn
+ * Copyright (C) 2012-2021 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,148 +14,106 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef __EOL_H
-#define __EOL_H
-
-#include <string.h>
+#pragma once
 
 #include <glib.h>
 
 #include "sciteco.h"
-#include "memory.h"
 
-namespace SciTECO {
+const gchar *teco_eol_get_seq(gint eol_mode);
 
-class EOLReader : public Object {
-	gchar *buffer;
+typedef struct teco_eol_reader_t teco_eol_reader_t;
+
+struct teco_eol_reader_t {
 	gsize read_len;
 	guint offset;
 	gsize block_len;
 	gint last_char;
 
-public:
 	gint eol_style;
 	gboolean eol_style_inconsistent;
 
-	EOLReader(gchar *_buffer)
-	         : buffer(_buffer),
-	           read_len(0), offset(0), block_len(0),
-	           last_char(0), eol_style(-1),
-	           eol_style_inconsistent(FALSE) {}
-	virtual ~EOLReader() {}
+	GIOStatus (*read_cb)(teco_eol_reader_t *ctx, gsize *read_len, GError **error);
 
-	const gchar *convert(gsize &data_len);
+	/*
+	 * NOTE: This wastes some bytes for "memory" readers,
+	 * but avoids inheritance.
+	 */
+	union {
+		struct {
+			gchar buffer[1024];
+			GIOChannel *channel;
+		} gio;
 
-protected:
-	virtual bool read(gchar *buffer, gsize &read_len) = 0;
+		struct {
+			gchar *buffer;
+			gsize len;
+		} mem;
+	};
 };
 
-class EOLReaderGIO : public EOLReader {
-	gchar buffer[1024];
-	GIOChannel *channel;
+void teco_eol_reader_init_gio(teco_eol_reader_t *ctx, GIOChannel *channel);
+void teco_eol_reader_init_mem(teco_eol_reader_t *ctx, gchar *buffer, gsize len);
 
-	bool read(gchar *buffer, gsize &read_len);
+/** @memberof teco_eol_reader_t */
+static inline void
+teco_eol_reader_set_channel(teco_eol_reader_t *ctx, GIOChannel *channel)
+{
+	if (ctx->gio.channel)
+		g_io_channel_unref(ctx->gio.channel);
+	ctx->gio.channel = channel;
+	if (ctx->gio.channel)
+		g_io_channel_ref(ctx->gio.channel);
+}
 
-public:
-	EOLReaderGIO(GIOChannel *_channel = NULL)
-	            : EOLReader(buffer), channel(NULL)
-	{
-		set_channel(_channel);
-	}
+GIOStatus teco_eol_reader_convert(teco_eol_reader_t *ctx, gchar **ret, gsize *data_len, GError **error);
+GIOStatus teco_eol_reader_convert_all(teco_eol_reader_t *ctx, gchar **ret, gsize *out_len, GError **error);
 
-	inline void
-	set_channel(GIOChannel *_channel = NULL)
-	{
-		if (channel)
-			g_io_channel_unref(channel);
-		channel = _channel;
-		if (channel)
-			g_io_channel_ref(channel);
-	}
+void teco_eol_reader_clear(teco_eol_reader_t *ctx);
 
-	~EOLReaderGIO()
-	{
-		set_channel();
-	}
-};
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(teco_eol_reader_t, teco_eol_reader_clear);
 
-class EOLReaderMem : public EOLReader {
-	gsize buffer_len;
+typedef struct teco_eol_writer_t teco_eol_writer_t;
 
-	bool read(gchar *buffer, gsize &read_len);
-
-public:
-	EOLReaderMem(gchar *buffer, gsize _buffer_len)
-	            : EOLReader(buffer), buffer_len(_buffer_len) {}
-
-	gchar *convert_all(gsize *out_len = NULL);
-};
-
-class EOLWriter : public Object {
+struct teco_eol_writer_t {
 	enum {
-		STATE_START = 0,
-		STATE_WRITE_LF
+		TECO_EOL_STATE_START = 0,
+		TECO_EOL_STATE_WRITE_LF
 	} state;
 	gchar last_c;
 	const gchar *eol_seq;
 	gsize eol_seq_len;
 
-public:
-	EOLWriter(gint eol_mode) : state(STATE_START), last_c('\0')
-	{
-		eol_seq = get_eol_seq(eol_mode);
-		eol_seq_len = strlen(eol_seq);
-	}
-	virtual ~EOLWriter() {}
+	gssize (*write_cb)(teco_eol_writer_t *ctx, const gchar *buffer, gsize buffer_len, GError **error);
 
-	gsize convert(const gchar *buffer, gsize buffer_len);
+	union {
+		struct {
+			GIOChannel *channel;
+		} gio;
 
-protected:
-	virtual gsize write(const gchar *buffer, gsize buffer_len) = 0;
+		struct {
+			GString *str;
+		} mem;
+	};
 };
 
-class EOLWriterGIO : public EOLWriter {
-	GIOChannel *channel;
+void teco_eol_writer_init_gio(teco_eol_writer_t *ctx, gint eol_mode, GIOChannel *channel);
+void teco_eol_writer_init_mem(teco_eol_writer_t *ctx, gint eol_mode, GString *str);
 
-	gsize write(const gchar *buffer, gsize buffer_len);
+/** @memberof teco_eol_writer_t */
+static inline void
+teco_eol_writer_set_channel(teco_eol_writer_t *ctx, GIOChannel *channel)
+{
+	if (ctx->gio.channel)
+		g_io_channel_unref(ctx->gio.channel);
+	ctx->gio.channel = channel;
+	if (ctx->gio.channel)
+		g_io_channel_ref(ctx->gio.channel);
+}
 
-public:
-	EOLWriterGIO(gint eol_mode)
-	            : EOLWriter(eol_mode), channel(NULL) {}
+gssize teco_eol_writer_convert(teco_eol_writer_t *ctx, const gchar *buffer,
+                               gsize buffer_len, GError **error);
 
-	EOLWriterGIO(GIOChannel *_channel, gint eol_mode)
-	            : EOLWriter(eol_mode), channel(NULL)
-	{
-		set_channel(_channel);
-	}
+void teco_eol_writer_clear(teco_eol_writer_t *ctx);
 
-	inline void
-	set_channel(GIOChannel *_channel = NULL)
-	{
-		if (channel)
-			g_io_channel_unref(channel);
-		channel = _channel;
-		if (channel)
-			g_io_channel_ref(channel);
-	}
-
-	~EOLWriterGIO()
-	{
-		set_channel();
-	}
-};
-
-class EOLWriterMem : public EOLWriter {
-	GString *str;
-
-	gsize write(const gchar *buffer, gsize buffer_len);
-
-public:
-	EOLWriterMem(GString *_str, gint eol_mode)
-	            : EOLWriter(eol_mode), str(_str) {}
-};
-
-} /* namespace SciTECO */
-
-#endif
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(teco_eol_writer_t, teco_eol_writer_clear);

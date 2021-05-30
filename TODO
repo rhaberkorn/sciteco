@@ -1,23 +1,32 @@
 Tasks:
- * submit patch for libglib (initialization when
-   linking statically with win32 threads - see glib/glib-init.c).
-   Also gspawn helpers should probably link with -all-static when compiling
-   a static glib. Why would be build a static glib but have the programs
-   depend on other libraries?
  * Wiki page about creating and maintaining lexer configurations.
    Also mention how to use the "lexer.test..." macros in the
    "edit" hook.
- * OS X port (macports and/or homebrew)
- * Scinterm: implement wattrget() for netbsd-curses
+ * Use Travis CI for Continuous Integration and perhaps even for providing
+   nightly builds on Gitlab. This would solve the problem of releases
+   lagging behind and esp. the satisfy Windows users who continuously
+   ask for prebuilt binaries.
+ * OS X port (macports and/or homebrew).
+   Maybe Travis CI can help as well.
+ * Scinterm: implement wattrget() for netbsd-curses.
+   May already be fixed in newer versions.
 
 Known Bugs:
- * ECxclip -selection clipboard -in$ hangs. The stdout-watcher is
-   never activated.
- * ECcat /dev/zero$ can easily exceed the memory limit.
-   Perhaps we should add a check to stdout_watcher_cb.
+ * Characters are not correctly drawn in the GTK backend (especially underscores).
+   This may be a regression due to ever changing GTK APIs and
+   upgrading Scintilla may already help.
+ * Rubbing out <LF> via ^W will rub out more than expected.
+ * After commands like ECcat /dev/zero$ result in OOM,
+   we do not correctly recover, even though malloc_trim() is called.
+   This could be because of Scintilla's undo token.
+   Perhaps it would be best to disable any undo handling by Scintilla
+   via SCI_SETUNDOCOLLECTION. This would also save memory.
+ * S<LF>^ES^N<$ does not find the first line that does not begin with "<"
+   ^ES is apparently not greedy.
  * fnkeys.tes: Cursor movements will swallow all preceding braced
    expressions - there should be more checks.
  * rubout of EB does not always restore the view to an edited Q-Register.
+   (Is this still relevant after the Great Ceification event?)
  * Colors are still wrong in Linux console even if TERM=linux-16color
    when using Solarized. Affects e.g. the message line which uses the
    reverse of STYLE_DEFAULT.
@@ -33,8 +42,8 @@ Known Bugs:
    old radix. Perhaps it's better to make the radix a property of the
    current macro invocation frame and guarantee ^R == 10 at the beginning
    of macros.
- * Null-byte in strings not always handled transparently
-   (SciTECO is not 8-bit clean.)
+   Since :M should probably inherit the radix, having a ^R register would
+   still be useful.
  * Saving another user's file will only preserve the user when run as root.
    Generally, it is hard to ensure that a) save point files can be created
    and b) the file mode and ownership of re-created files can be preserved.
@@ -44,13 +53,15 @@ Known Bugs:
    Happens because the Glib regex engine is based on a recursive
    Perl regex library.
    This is apparently impossible to fix as long as we do not
-   have control over the regex engine build. We should either use C++11
-   regex support, UNIX regex (unportable) or some other library.
-   Perhaps allowing us to interpret the SciTECO matching language
-   directly.
+   have control over the regex engine build.
+   We should therefore switch the underlying Regex engine.
+   Oniguruma looks promising and is also packed for Ubuntu (libonig2).
+   It would also directly allow globbing by tweaking the syntax.
+   TRE also looks promising and is smaller than Oniguruma.
+   GRegEx (PCRE) could still be supported as a fallback.
  * It is still possible to crash SciTECO using recursive functions,
-   since they map to the C++ program's call stack.
-   It is perhaps best to use another ValueStack as a stack of
+   since they map to the C program's call stack.
+   It is perhaps best to use another stack of
    macro strings and implement our own function calling.
  * SciTECO crashes can leave orphaned savepoint files lying around.
    Unfortunately, both the Windows and Linux ways of deleting files
@@ -73,26 +84,11 @@ Known Bugs:
      There is also MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT).
    * Windows has file system forks, but they can be orphaned just
      like ordinary files but are harder to locate and clean up manually.
- * Clipboard registers are prone to race conditions if the
-   contents change between get_size() and get_string() calls.
-   Also it's a common idiom to query a string and its size,
-   so the internal API must be changed.
  * Setting window title is broken on ncurses/XTerm.
    Perhaps do some XTerm magic here. We can also restore
    window titles on exit using XTerm.
  * Glib (error) messages are not integrated with SciTECO's
    logging system.
- * Auto-completions are prone to unexpected results when
-   the insertion contains string-building characters, braces
-   (for Q-Register auto-completions) or escape characters
-   (just consider autocompleting after @FG/...).
-   Insertions should thus be escaped.
-   A new string building command should consequently be
-   introduced to insert an ASCII character by digits,
-   e.g. ^E0XXX.
-   Also, auto-completions within string-building constructs
-   (except Q-Reg specs) should generally be disabled since
-   the result will be unpredictable.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -109,6 +105,25 @@ Features:
    Macros could be special QRegs that are not backed by a
    Scintilla document but a normal string. This would immensely
    speed up macro calls.
+   Perhaps more generically, we should add a number of alternative
+   balanced string terminators (<> [] () {}) and assign one
+   to parse SciTECO code. "' is not really an option here, since
+   we want to be able to write @I"..." etc.
+   Since ] and } can occur as stand-alone commands, we would have to
+   use <> and/or () for SciTECO code parsing.
+   The advantage would be that we save introducing a special
+   assignment command and can use the same escape with @I<> for
+   editing macro files while still getting immediate interactive
+   syntax feedback.
+   Plus: Once we have a parser-based terminator, there would
+   be no more real need for command variants with disabled
+   string building (as string building will naturally always
+   be disabled in parser-terminator-mode).
+   Instead, a special string building character for disabling
+   string building character processing can be introduced,
+   and all the command variants like EI and EU can be repurposed.
+   Q-Reg specs should support alternative balanced escapes as well
+   for symmetry.
  * Numbers could be separate states instead of stack operating
    commands. The current behaviour has few benefits.
    If a number is a regular command that stops parsing at the
@@ -130,10 +145,17 @@ Features:
      integer and floating point types internally.
      The operator decides how to interpret the arguments
      and the return type.
+   * Having a separate number parser state will simplify
+     number syntax highlighting.
  * Function key masking flag for the beginning of the command
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
    cannot be rubbed out properly).
+ * fnkeys.tec could preserve the column more reliably when
+   moving up and down by encoding a character offset into the
+   command line. E.g. (100-3C) would tell us that we have to add
+   3 to the real column when moving up/down because the current
+   line is too short.
  * Function key macros should behave more like regular macros:
    If inserting a character results in an error, the entire
    macro should be rubbed out. This means it would be OK to
@@ -148,6 +170,8 @@ Features:
    state machine, perhaps only in insertion commands, this
    could be used to make the cursor movement keys work in
    insertion commands by automatically terminating the command.
+   Even more simple, the function key flag could be effective
+   only when the termination character is $.
  * Function key handling should always be enabled. This was
    configurable because of the way escape was handled in ncurses.
    Now that escape is always immediate, there is little benefit
@@ -164,7 +188,7 @@ Features:
    This will make it easy to write command line filters,
    We will need flags like --8-bit-clean and --quiet with
    single-letter forms to make it possible to write hash-bang
-   lines like #!...sciteco-wrapper -q8iom
+   lines like #!...sciteco -q8iom
    Command line arguments should then also be handled
    differently, passing them in an array or single string
    register, so they no longer affect the unnamed buffer.
@@ -181,6 +205,12 @@ Features:
    between effective and rubbed out command line - without
    resetting it. This would add another alternative to { and }
    for fixing up a command line.
+ * Instead of discarding a rubbed out command line once the user
+   presses a non-matching key, a redo-tree could be built instead.
+   When you rub out to a character where the tree branches,
+   the next character typed always determines whether and which
+   existing redo branch will be activated (ie become the new
+   rubbed out command line).
  * some missing useful VideoTECO/TECO-11 commands and unnecessary
    incompatibilities:
    * EF with buffer id
@@ -192,7 +222,8 @@ Features:
      e.g. for execute macro with string argument or as a special version
      of EI that considers $SCITECOPATH.
      Current use of EI (insert without string building) will have
-     to move, e.g. to FI.
+     to move, but it might vanish anyway once we can disable string building
+     with a special character.
    * ::S for string "comparisons" (anchored search).
      This is supposed to be an alias for .,.:FB which would be
      .,.:S in SciTECO. Apparanetly, the bounded search is still
@@ -205,13 +236,18 @@ Features:
    * ^A, T and stdio in general
  * Search for beginning of string; i.e. a version of S that
    leaves dot before the search string, similar to FK
-   (request of N.M.). Could be called _ (a global-search variant
-   in classic TECO).
+   (request of N.M.).
+   Could be called <_> (a global-search variant in classic TECO).
  * Shortcut for cutting into Q-Register. Typing 10Xq10K is very
    annoying to type. We could use the @ modifier 10@Xq or
    define a new command, like ^X (search-mode flag in classic
    TECO). On the other hand, a search mode setting would be
    useful in SciTECO as well!
+   FX would be available as well, but is perhaps best reserved
+   for some mmenonics.
+   An elegant alternative might be to introduce single-character
+   stack operating commands for duplicating the last AND the last two
+   arguments. However, this will not help for cutting a number of lines.
  * For symmetry, there should be a command for -W,
    eg. P. Macros and modifiers are obviously not a solution here
    since they're too long.
@@ -236,25 +272,22 @@ Features:
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.
- * TECO syntax highlighting
+ * TECO syntax highlighting.
+   This should now be relatively easy to implement by reusing
+   the parser.
  * multiline commandline
    * perhaps use Scintilla view as mini buffer.
      This means patching Scintilla, so it does not break lines
      on new line characters.
    * A Scintilla view will allow syntax highlighting
- * improve GTK interface
-   * proper command-line widget (best would be a Scintilla view, s.a.)
-   * speed improvements
+ * improve speed of GTK interface
  * command line could highlight dead branches (e.g. gray them out)
- * backup files, or even better Journal files:
-   could write a Macro file for each modified file containing
-   only basic commands (no loops etc.). it is removed when the file is
-   saved. in case of an abnormal program termination the
-   journal file can be replayed. This could be done automatically
-   in the profile.
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
-   dot on the QReg stack
+   dot on the QReg stack.
+   Since [. is currently not valid and [[.] is cumbersome, there should be
+   a special syntactic workaround to allow [.. or perhaps we'll simply call
+   it :, so you can write [:
  * EL command could also be used to convert all EOLs in the current
    buffer.
  * nEL should perhaps dirtify the buffer, at least when automatic
@@ -267,17 +300,25 @@ Features:
    any changes another process could have done on the file.
    Therefore open buffers should be locked using the flock(), fcntl()
    or lockf() interfaces. On Windows we can even enforce mandatory locks.
+   A generic fallback could use lock files -- this would guard against
+   concurrent SciTECO instances at least.
+ * Multi-window support is probably never going to realize.
+   Perhaps we could add a Gtk-frontend option like -X for opening
+   all filenames with the same options in separate processes.
+   For the Curses version, you will need a shell wrapper, or we could
+   add an environment variable like $SCITECO_LAUNCH that can be set
+   to a command for launching a new terminal.
+   For multi-window SciTECO to work properly, file locking is probably
+   a must as it is otherwise too easy to confuse SciTECO if multiple
+   instances open the same file.
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
- * Instead of implementing split screens, it is better to leave
-   tiling to programs dedicated to it (tmux, window manager).
-   SciTECO could create pseudo-terminals (see pty(7)), set up
-   one curses screen as the master of that PTY and spawn
-   a process accessing it as a slave (e.g. urxvt -pty-fd).
-   Each Scintilla view could then be associated with at most
-   one curses screen.
-   GTK+ would simply manage a list of windows.
+ * There should really be a backup mechanism. It would be relatively
+   easy to implement portably, by using timeout() on Curses.
+   The Gtk version can simply use a glib timer.
+   Backup files should NOT be hidden and the timeout should be
+   configurable (EJ?).
  * Error handling in SciTECO macros: Allow throwing errors with
    e.g. [n]EE<description>$ where n is an error code, defaulting
    to 0 and description is the error string - there could be code-specific
@@ -285,17 +326,36 @@ Features:
    Errors could be catched using a structured try-catch-like construct
    or by defining an error handling label.
    Macros may retrieve the code and string of the last error.
+ * Once we have our own function call stack,
+   it will be possible, although not trivial, to add support for
+   user-definable macros that accept string arguments, eg.
+   EMq<param>$
+   This will have to switch back and forth between the macro and
+   the invoking frame supplying the macro (similar to a coroutine).
+   In the most simple case, a special command returns the next character
+   produced by the callers string building machine including rubout and
+   the user will have to implement rubout-support manually.
+   For a lot of common cases, we could also allow a string building
+   construct that symbolizes the string parameter supplied by the
+   caller. This could activate interactive processing in the macro's
+   current command, allowing you to easily "wrap" interactive commands in
+   macros. The same construct would also be useful with
+   non-interactive commands as a way to store the supplied parameter
+   using EU for instance.
  * Adding a secret command line option to process immediate editing
    commands in batch mode with undo would allow us to add some
    test cases that otherwise only occur in interactive mode.
+ * Emscripten nodejs port.
+   This may be a viable way to run SciTECO "cross"-platform, at least
+   for evaluation... on UNIX-like systems in absence of prebuilt binaries.
+   I already got netbsd-curses to build against
+   Emscripten/nodejs using some UNIX shell wrapper calls, so practically
+   all of SciTECO can be run against nodejs as a runtime.
+   I'm not aware of any (working) alternatives, like cross-compiling
+   for the JVM.
 
 Optimizations:
- * The Windows-specific memory limiting using GetProcessMemoryInfo()
-   is very slow. Perhaps malloc() hooking can be implemented there,
-   using _msize() to measure the memory required by individual chunks.
-   This must be benchmarked.
- * Add G_UNLIKELY to all error throws.
- * String::append() could be optimized by ORing a padding
+ * teco_string_append() could be optimized by ORing a padding
    into the realloc() size (e.g. 0xFF).
    However, this has not proven effective on Linux/glibc
    probably because it will already allocate in blocks of
@@ -309,34 +369,6 @@ Optimizations:
  * commonly used (special) Q-Registers could be cached,
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
- * refactor match-char state machine using MicroStateMachine class
- * The current C-like programming style of SciTECO causes
-   problems with C++'s RAII. Exceptions have to be caught
-   always in every stack frame that owns a heap object
-   (e.g. glib string). This is often hard to predict.
-   There are two solutions: Wrap
-   every such C pointer in a class that implements RAII,
-   e.g. using C++11 unique_ptr or by a custom class template.
-   The downside is meta-programming madness and lots of overloading
-   to make this convenient.
-   Alternatively, we could avoid C++ exceptions largely and
-   use a custom error reporting system similar to GError.
-   This makes error handling and forwarding explicit as in
-   plain C code. RTTI can be used to discern different
-   exception types. By adding an error code to the error object
-   (which we will need anyway for supporting error handling in SciTECO
-   macros), we may even avoid RTTI.
-   Should also allow us to completely disable exceptions via -fno-exceptions.
- * RTTI could be disabled (-fno-rtti). It's only still required
-   because of StdError() for handling arbitrary C++ exceptions.
-   This is probably not required.
- * RBTrees define an entry field for storing node color.
-   This can be avoided on most
-   platforms where G_MEM_ALIGN > 1 by encoding the color in the
-   lowest bit of one of the pointers.
-   The parent pointer is not required for RBTrees in general,
-   but we do use the PREV/NEXT ops to iterate prefixes which requires
-   the parent pointer to be maintained.
  * Add a configure-switch for LTO (--enable-lto).
 
 Documentation:
@@ -349,4 +381,5 @@ Documentation:
  * Write a cheat sheet. Either on www.cheatography.com, or
    using Groff and include with SciTECO.
  * Write some tutorials for the Wiki, e.g. about paragraph
-   reflowing.
+   reflowing...
+   Object-oriented SciTECO ideoms etc. ;-)
