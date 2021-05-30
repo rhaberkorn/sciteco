@@ -12,24 +12,50 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
     - name: Recursive Git clone
       uses: actions/checkout@v2
       with:
         submodules: recursive
-    - name: Install all build dependencies
+
+    - name: Install build dependencies
       run: >
         sudo apt-get install -y
-        build-essential autoconf automake libtool
+        devscripts build-essential lintian
+        autoconf automake libtool
         libglib2.0-dev libncurses-dev
         groff doxygen
-    - name: Generate ./configure
-      run: autoreconf -i
-    - run: ./configure --with-interface=ncurses --enable-html-manual
+
+    - name: Configure build
+      run: |
+        autoreconf -i
+        ./configure --with-interface=ncurses --enable-html-manual
+
     - run: make
+    - run: sudo make install
     - name: Run test suite
       run: make check
     - name: Build developer documentation
       run: cd doc && make devdoc
 # FIXME: Will try to perform an out-of-tree build which will not
 # work without manual intervention due to Scintilla.
-#    - run: make distcheck
+#   - run: make distcheck
+    - name: Build source tarball
+      run: make dist
+
+# NOTE: distribute.mk currently requires an installed SciTECO.
+# Packages are left in debian-temp/.
+# It would be sufficient to build debian-binary, but we want to
+# test building source packages as well.
+    - name: Build Debian package
+      run: ./distribute.mk debian
+# FIXME: For doing Windows builds, we need a few manually built packages
+# (PDCurses, Glib...).
+# Perhaps they can be uploaded to Sourceforge and simply downloaded here.
+#   - name: Build Windows bundle
+#     run: ./distribute.mk mingw-binary
+
+    - name: Archive build artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        path: debian-temp/*.deb
