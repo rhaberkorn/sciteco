@@ -41,15 +41,18 @@ jobs:
 
     # NOTE: xvfb-run emulates an XServer and is required when building
     # Gtk versions (since SciTECO calls itself during the build).
-    - run: xvfb-run -a make
-    - run: sudo xvfb-run -a make install
+    - name: make
+      run: xvfb-run -a make
+    - name: make install
+      run: sudo xvfb-run -a make install
     - name: Run Test Suite
       run: xvfb-run -a make check
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     # FIXME: Will try to perform an out-of-tree build which will not
     # work without manual intervention due to Scintilla.
-#   - run: xvfb-run -a make distcheck
+#   - name: make distcheck
+#     run: xvfb-run -a make distcheck
     - name: Build Source Tarball
       run: make dist
 
@@ -96,12 +99,9 @@ jobs:
 #   - name: Build Windows Bundle
 #     run: ./distribute.mk mingw-binary
 
-    # FIXME: We need to upload a single file without a wildcard since
-    # it will otherwise be put into a ZIP.
-    # Best let distribute.mk create a symlink so we don't have to include
-    # the version here.
+    # NOTE: There is no way to prevent Github zipping the artifact.
     - name: Archive Debian Package (ncurses)
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.os }} package (ncurses)
-        path: debian-temp/sciteco-curses_2.0.0-0_amd64.deb
+        path: debian-temp/*.deb

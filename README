@@ -1,4 +1,4 @@
-![Continuous Integration](https://github.com/rhaberkorn/sciteco/actions/workflows/continuous-integration.yml/badge.svg)
+[![Continuous Integration](https://github.com/rhaberkorn/sciteco/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/rhaberkorn/sciteco/actions/workflows/continuous-integration.yml)
 
 Overview
 ========
@@ -104,6 +104,7 @@ Download
 ========
 
 There are prebuilt binary packages and source bundles for your convenience:
+
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
@@ -113,7 +114,12 @@ There are prebuilt binary packages and source bundles for your convenience:
   [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
-For more details on building from source, please refer to `INSTALL`.
+These releases may be quite outdated, so you may also give a try to the
+[nightly Ubuntu packages](https://nightly.link/rhaberkorn/sciteco/workflows/continuous-integration/master) -
+they represent the repository's HEAD commit but may well be instable.
+
+If everything fails, you can try building from source.
+See [`INSTALL`](INSTALL) for more details.
 
 Additional Documentation
 ========================
