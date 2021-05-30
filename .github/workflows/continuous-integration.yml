@@ -21,7 +21,7 @@ jobs:
     - name: Install build dependencies
       run: >
         sudo apt-get install -y
-        devscripts build-essential lintian
+        devscripts build-essential lintian debhelper
         autoconf automake libtool
         libglib2.0-dev libncurses-dev
         groff doxygen
