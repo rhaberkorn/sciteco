@@ -1,0 +1,16 @@
+#!/usr/bin/dh-exec
+usr/bin/gsciteco
+# Theoretically, these scripts could be in sciteco-common,
+# but they need an interpreter and the name depends on the version installed.
+usr/bin/ggrosciteco.tes
+usr/bin/gtedoc.tes
+
+usr/share/sciteco/*.css
+
+ico/sciteco-16.png	=> usr/share/icons/hicolor/16x16/apps/sciteco.png
+ico/sciteco-32.png	=> usr/share/icons/hicolor/32x32/apps/sciteco.png
+ico/sciteco-48.png	=> usr/share/icons/hicolor/48x48/apps/sciteco.png
+ico/sciteco-256.png	=> usr/share/icons/hicolor/256x256/apps/sciteco.png
+
+# Not currently part of source tree:
+debian/sciteco.desktop	usr/share/applications

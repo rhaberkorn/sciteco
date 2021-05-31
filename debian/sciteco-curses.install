@@ -1,0 +1,5 @@
+usr/bin/sciteco
+# Theoretically, these scripts could be in sciteco-common,
+# but they need an interpreter and the name depends on the version installed.
+usr/bin/grosciteco.tes
+usr/bin/tedoc.tes

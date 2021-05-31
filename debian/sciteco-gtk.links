@@ -1,0 +1,9 @@
+usr/share/man/man1/sciteco.1.gz				usr/share/man/man1/gsciteco.1.gz
+usr/share/man/man1/grosciteco.tes.1.gz			usr/share/man/man1/ggrosciteco.tes.1.gz
+usr/share/man/man1/tedoc.tes.1.gz			usr/share/man/man1/gtedoc.tes.1.gz
+
+# FIXME: The Gtk UI currently expects the icons in /usr/share/sciteco.
+# Perhaps they should be installed into usr/share/icons/hicolor in the first place.
+usr/share/icons/hicolor/16x16/apps/sciteco.png		usr/share/sciteco/sciteco-16.png
+usr/share/icons/hicolor/32x32/apps/sciteco.png		usr/share/sciteco/sciteco-32.png
+usr/share/icons/hicolor/48x48/apps/sciteco.png		usr/share/sciteco/sciteco-48.png

@@ -1,0 +1,11 @@
+# Explicitly does not contain fallback.css, which goes into sciteco-gtk.
+usr/share/sciteco/lib
+usr/share/sciteco/*.teco_ini
+usr/share/sciteco/*.tmac
+
+# FIXME: Including the manpages here provokes lintian warnings.
+# Perhaps sciteco-curses and sciteco-gtk should just ship their own versions.
+usr/share/man/man1/sciteco.1
+usr/share/man/man1/grosciteco.tes.1
+usr/share/man/man1/tedoc.tes.1
+usr/share/man/man7/sciteco.7

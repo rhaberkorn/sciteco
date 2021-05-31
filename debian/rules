@@ -13,23 +13,58 @@
 export TERM=
 
 # Build with link-time-optimizations
+# FIXME: This is not passed down to Scintilla.
+# Once we support an --enable-lto site-config-option, we should rather use that.
 export DEB_CFLAGS_MAINT_APPEND=-flto
 export DEB_CXXFLAGS_MAINT_APPEND=-flto
 export DEB_LDFLAGS_MAINT_APPEND=-flto
 
+# Since we override a few `dh` commands, it cannot care about
+# parallel builds.
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+MAKEFLAGS += -j$(NUMJOBS)
+endif
+
 %:
 	dh $@
 
-build:
+build build-arch build-indep: build-curses-stamp build-gtk-stamp
 	dh_testdir
-	dh_auto_configure -- \
-			  --enable-bootstrap \
-			  --with-interface=ncurses \
-	                  $(shell dpkg-buildflags --export=configure)
-	dh_auto_build
+
+build-curses-stamp:
+	dh_testdir
+	rm -rf build-curses
+	mkdir build-curses
+	cp -r scintilla build-curses/
+	dh_auto_configure -Bbuild-curses -- \
+	                  --with-interface=ncurses
+	dh_auto_build -Bbuild-curses
+	dh_auto_test -Bbuild-curses
 	touch $@
 
-clean:
+# NOTE: This does not depend on install-curses-stamp and uses
+# --disable-bootstrap to speed up builds since that would prevent parallel builds.
+build-gtk-stamp:
 	dh_testdir
-	dh_auto_clean
-	dh_clean
+	rm -rf build-gtk
+	mkdir build-gtk
+	cp -r scintilla build-gtk/
+	dh_auto_configure -Bbuild-gtk -- \
+	                  --program-prefix=g \
+	                  --with-interface=gtk
+# NOTE: Since the Gtk+ version of SciTECO is called during the build,
+# we need an XServer which may be missing on the build server.
+# That's why we use xvfb.
+	xvfb-run -a dh_auto_build -Bbuild-gtk
+# FIXME: The test suite can be ridiculously lengthy with Gtk binaries.
+#	xvfb-run -a dh_auto_test -Bbuild-gtk
+	touch $@
+
+install:
+	xvfb-run -a dh install -Bbuild-gtk -psciteco-gtk
+	dh install -Bbuild-curses -psciteco-curses -psciteco-common
+
+clean:
+	dh clean -Bbuild-gtk
+	dh clean -Bbuild-curses

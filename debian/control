@@ -2,8 +2,9 @@ Source: sciteco
 Section: editors
 Priority: optional
 Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
-Build-Depends: debhelper (>= 7.4), g++ (>= 4:4.4),
- libglib2.0-dev (>= 2.44), ncurses-base, ncurses-term, libncurses5-dev,
+Build-Depends: debhelper (>= 10), dh-exec, g++ (>= 4:4.4), libglib2.0-dev (>= 2.44),
+ ncurses-base, ncurses-term, libncurses5-dev,
+ libgtk-3-dev (>= 3.12), gob2 (>= 2.0.20), xvfb,
  groff-base
 Standards-Version: 3.9.2
 Homepage: http://sciteco.sf.net/
@@ -12,12 +13,36 @@ Vcs-Git: git://github.com/rhaberkorn/sciteco.git
 
 Package: sciteco-curses
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Scintilla-based Text Editor and Corrector
+Depends: ${shlibs:Depends}, ${misc:Depends}, sciteco-common (= ${binary:Version})
+Description: Scintilla-based Text Editor and Corrector (curses)
  SciTECO is an interactive TECO dialect, similar to Video TECO.
  It also adds features from classic Standard TECO-11,
  and incorporates many unique new ideas.
  It is geared towards UNIX-like operating systems but also
  natively supports Microsoft Windows NT.
  .
- This package contains the ncurses version of SciTECO.
+ This package contains the curses (terminal) version of SciTECO.
+
+Package: sciteco-gtk
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, sciteco-common (= ${binary:Version})
+Description: Scintilla-based Text Editor and Corrector (GTK+)
+ SciTECO is an interactive TECO dialect, similar to Video TECO.
+ It also adds features from classic Standard TECO-11,
+ and incorporates many unique new ideas.
+ It is geared towards UNIX-like operating systems but also
+ natively supports Microsoft Windows NT.
+ .
+ This package contains the GTK+ 3 (graphical) version of SciTECO.
+
+Package: sciteco-common
+Architecture: all
+Description: Scintilla-based Text Editor and Corrector (common files)
+ SciTECO is an interactive TECO dialect, similar to Video TECO.
+ It also adds features from classic Standard TECO-11,
+ and incorporates many unique new ideas.
+ It is geared towards UNIX-like operating systems but also
+ natively supports Microsoft Windows NT.
+ .
+ This package contains architecture-independant files
+ and the SciTECO standard library.
