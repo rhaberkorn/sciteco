@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-test:
+  build:
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
@@ -55,53 +55,3 @@ jobs:
 #     run: xvfb-run -a make distcheck
     - name: Build Source Tarball
       run: make dist
-
-  # This is a separate job since we don't need to build Debian packages
-  # using Clang and there is no need to run "make all".
-  debian-packages:
-    strategy:
-      matrix:
-        os: [ubuntu-18.04, ubuntu-20.04]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-
-    - name: Recursive Git Clone
-      uses: actions/checkout@v2
-      with:
-        submodules: recursive
-
-    - name: Update Repositories
-      run: sudo apt-get update
-    - name: Install Build Dependencies
-      run: >
-        sudo apt-get install -y
-        devscripts build-essential lintian debhelper
-        autoconf automake libtool
-        libglib2.0-dev libncurses-dev
-        groff-base
-
-    # NOTE: We need to configure the build directory only to generate distribute.mk.
-    - name: Configure Build
-      run: |
-        autoreconf -i
-        ./configure
-
-    # NOTE: Packages are left in debian-temp/.
-    - name: Build Debian Package
-      run: ./distribute.mk debian-binary
-    # FIXME: For doing Windows builds, we need a few manually built packages
-    # (PDCurses, Glib...).
-    # Perhaps they can be uploaded to Sourceforge and simply downloaded here.
-    # Alternatively, we could manually prepare a Docker container image or
-    # even build them from scratch here.
-#   - name: Build Windows Bundle
-#     run: ./distribute.mk mingw-binary
-
-    # NOTE: There is no way to prevent Github zipping the artifact.
-    - name: Archive Debian Package (ncurses)
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.os }} package (ncurses)
-        path: debian-temp/*.deb

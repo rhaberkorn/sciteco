@@ -1,0 +1,58 @@
+name: Nightly Builds
+
+on:
+  schedule:
+    # Daily at 3:14
+    - cron: '14 3 * * *'
+
+jobs:
+  debian-packages:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+
+    - name: Recursive Git Clone
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Update Repositories
+      run: sudo apt-get update
+    - name: Install Build Dependencies
+      run: >
+        sudo apt-get install -y
+        devscripts build-essential lintian debhelper dh-exec
+        autoconf automake libtool
+        libglib2.0-dev libncurses-dev libgtk-3-dev gob2 xvfb
+        groff-base
+
+    # NOTE: We need to configure the build directory only to generate distribute.mk.
+    - name: Configure Build
+      run: |
+        autoreconf -i
+        ./configure
+
+    # NOTE: The debian package build rules already use xvfb-run to emulate an XServer
+    # when necessary since the PPA build servers might also be headless.
+    # NOTE: Packages are left in debian-temp/.
+    - name: Build Debian/Ubuntu Packages
+      run: ./distribute.mk debian-binary
+
+    # FIXME: For doing Windows builds, we need a few manually built packages
+    # (PDCurses, Glib...).
+    # Perhaps they can be uploaded to Sourceforge and simply downloaded here.
+    # Alternatively, we could manually prepare a Docker container image or
+    # even build them from scratch here.
+#   - name: Build Windows Bundle
+#     run: ./distribute.mk mingw-binary
+
+    # NOTE: There is no way to prevent Github from zipping the artifact.
+    - name: Archive Debian/Ubuntu Packages
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.os }} packages (ncurses and GTK+ 3)
+        path: debian-temp/*.deb
