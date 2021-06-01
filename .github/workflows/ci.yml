@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  ubuntu:
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
@@ -53,5 +53,39 @@ jobs:
     # work without manual intervention due to Scintilla.
 #   - name: make distcheck
 #     run: xvfb-run -a make distcheck
+    - name: Build Source Tarball
+      run: make dist
+
+  macos:
+    runs-on: macos-latest
+
+    steps:
+
+    - name: Recursive Git Clone
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Install Build Dependencies
+      run: >
+        brew install
+        autoconf automake libtool
+        glib ncurses
+        groff doxygen
+    - name: Configure Build
+      run: |
+        autoreconf -i
+        ./configure --with-interface=ncurses --enable-html-manual
+
+    - run: make
+    - run: make install
+    - name: Run Test Suite
+      run: make check
+    - name: Build Developer Documentation
+      run: cd doc && make devdoc
+    # FIXME: Will try to perform an out-of-tree build which will not
+    # work without manual intervention due to Scintilla.
+#   - name: make distcheck
+#     run: make distcheck
     - name: Build Source Tarball
       run: make dist
