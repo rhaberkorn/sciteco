@@ -47,7 +47,7 @@
 #include "goto.h"
 #include "help.h"
 #include "undo.h"
-#include "scintilla.h"
+#include "symbols.h"
 #include "spawn.h"
 #include "eol.h"
 #include "error.h"

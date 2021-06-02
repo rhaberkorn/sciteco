@@ -31,7 +31,7 @@
 #include "expressions.h"
 #include "ring.h"
 #include "parser.h"
-#include "scintilla.h"
+#include "symbols.h"
 #include "search.h"
 #include "spawn.h"
 #include "glob.h"

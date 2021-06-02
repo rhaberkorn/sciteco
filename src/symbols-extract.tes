@@ -33,7 +33,7 @@ I/*
 
 #include "Q#in"
 #include "sciteco.h"
-#include "scintilla.h"
+#include "symbols.h"
 
 static const teco_symbol_entry_t entries[] = {^J
 <

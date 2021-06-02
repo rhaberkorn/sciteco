@@ -32,7 +32,7 @@
 #include "undo.h"
 #include "expressions.h"
 #include "interface.h"
-#include "scintilla.h"
+#include "symbols.h"
 
 teco_symbol_list_t teco_symbol_list_scintilla = {NULL, 0};
 teco_symbol_list_t teco_symbol_list_scilexer = {NULL, 0};

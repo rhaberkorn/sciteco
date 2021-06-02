@@ -54,7 +54,7 @@ libsciteco_base_la_SOURCES = main.c sciteco.h list.h \
                              goto-commands.c goto-commands.h \
                              help.c help.h \
                              rb3str.c rb3str.h \
-                             scintilla.c scintilla.h \
+                             symbols.c symbols.h \
                              view.c view.h \
                              interface.c interface.h
 # NOTE: We cannot link in Scintilla (static library) into
