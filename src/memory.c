@@ -342,7 +342,11 @@ memalign(size_t alignment, size_t size)
 	return ptr;
 }
 
-void *aligned_alloc(size_t, size_t) __attribute__((used, alias("memalign")));
+void * __attribute__((used))
+aligned_alloc(size_t alignment, size_t size)
+{
+	return memalign(alignment, size);
+}
 
 int __attribute__((used))
 posix_memalign(void **memptr, size_t alignment, size_t size)
