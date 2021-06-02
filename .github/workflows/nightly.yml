@@ -51,9 +51,12 @@ jobs:
 #   - name: Build Windows Bundle
 #     run: ./distribute.mk mingw-binary
 
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
     # NOTE: There is no way to prevent Github from zipping the artifact.
     - name: Archive Debian/Ubuntu Packages
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.os }} packages (ncurses and GTK+ 3)
+        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (${{ matrix.os }}, ncurses and GTK+ 3)
         path: debian-temp/*.deb

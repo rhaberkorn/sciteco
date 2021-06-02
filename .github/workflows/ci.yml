@@ -66,12 +66,10 @@ jobs:
       with:
         submodules: recursive
 
+    # NOTE: macOS already ships with ncurses and
+    # XCode already comes with the autotools.
     - name: Install Build Dependencies
-      run: >
-        brew install
-        autoconf automake libtool
-        glib ncurses
-        groff doxygen
+      run: brew install glib groff doxygen
     - name: Configure Build
       run: |
         autoreconf -i
@@ -85,7 +83,6 @@ jobs:
       run: cd doc && make devdoc
     # FIXME: Will try to perform an out-of-tree build which will not
     # work without manual intervention due to Scintilla.
-#   - name: make distcheck
-#     run: make distcheck
+#   - run: make distcheck
     - name: Build Source Tarball
       run: make dist
