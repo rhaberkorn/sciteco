@@ -25,4 +25,4 @@ void teco_memory_stop_limiting(void);
 
 gboolean teco_memory_set_limit(gsize new_limit, GError **error);
 
-gboolean teco_memory_check(GError **error);
+gboolean teco_memory_check(gsize request, GError **error);

@@ -28,6 +28,7 @@
 #include "string-utils.h"
 #include "expressions.h"
 #include "interface.h"
+#include "memory.h"
 #include "undo.h"
 #include "qreg.h"
 #include "ring.h"
@@ -492,17 +493,18 @@ teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
 			gint from, to;
 		} teco_range_t;
 
+		gsize matched_size = sizeof(teco_range_t) * -*count;
+
 		/*
-		 * NOTE: It's theoretically possible that this single allocation
-		 * causes an OOM if (-count) is large enough and memory limiting won't help.
-		 * That's why we exceptionally have to check for allocation success.
+		 * NOTE: It's theoretically possible that the allocation of the `matched`
+		 * array causes an OOM if (-count) is large enough and regular
+		 * memory limiting in teco_machine_main_step() wouldn't help.
+		 * That's why we exceptionally have to check before allocating.
 		 */
-		g_autofree teco_range_t *matched = g_try_new(teco_range_t, -*count);
-		if (!matched) {
-			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Search count too small (%d)", *count);
+		if (!teco_memory_check(matched_size, error))
 			return FALSE;
-		}
+
+		g_autofree teco_range_t *matched = g_malloc(matched_size);
 
 		gint matched_total = 0, i = 0;
 

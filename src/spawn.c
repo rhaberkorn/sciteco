@@ -640,10 +640,11 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 		teco_spawn_ctx.text_added = TRUE;
 
 		/*
-		 * NOTE: Since this reads from an external process, we could insert
+		 * NOTE: Since this reads from an external process and regular memory
+		 * limiting in teco_machine_main_step() is not performed, we could insert
 		 * indefinitely (eg. cat /dev/zero).
 		 */
-		if (!teco_memory_check(&teco_spawn_ctx.error))
+		if (!teco_memory_check(0, &teco_spawn_ctx.error))
 			goto error;
 	}
 

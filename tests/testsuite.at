@@ -65,7 +65,7 @@ AT_SETUP([Searching with large counts])
 # Even though the search will be unsuccessful, it will not be considered
 # a proper error, so the process return code is still 0.
 AT_CHECK([$SCITECO -e "2147483647@S/foo/"], 0, ignore, ignore)
-# NOTE: In case of crashes, the return code should be >= 128 (at least on Linux).
+# Will always break the memory limit which is considered an error.
 AT_CHECK([$SCITECO -e "-2147483648@S/foo/"], 1, ignore, ignore)
 AT_CLEANUP
 

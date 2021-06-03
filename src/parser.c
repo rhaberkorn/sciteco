@@ -105,7 +105,11 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gint stop_p
 			goto error_attach;
 		}
 
-		if (!teco_memory_check(error))
+		/*
+		 * Most allocations are small or of limited size,
+		 * so it is (almost) sufficient to check the memory limit regularily.
+		 */
+		if (!teco_memory_check(0, error))
 			goto error_attach;
 
 		if (!teco_machine_input(&ctx->parent, macro[ctx->macro_pc], error))

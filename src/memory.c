@@ -658,10 +658,17 @@ teco_memory_set_limit(gsize new_limit, GError **error)
 	return TRUE;
 }
 
+/**
+ * Check whether the memory limit is exceeded or would be
+ * exceeded by an allocation.
+ *
+ * @param request Size of the requested allocation or 0 if
+ *                you want to check the current memory usage.
+ */
 gboolean
-teco_memory_check(GError **error)
+teco_memory_check(gsize request, GError **error)
 {
-	gsize memory_usage = g_atomic_int_get(&teco_memory_usage);
+	gsize memory_usage = g_atomic_int_get(&teco_memory_usage) + request;
 
 	if (G_UNLIKELY(teco_memory_limit && memory_usage > teco_memory_limit)) {
 		g_autofree gchar *limit_str = g_format_size(memory_usage);
