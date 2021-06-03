@@ -45,8 +45,10 @@ jobs:
       run: xvfb-run -a make
     - name: make install
       run: sudo xvfb-run -a make install
+    # NOTE: The test suite must be run in verbose mode because if it fails
+    # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: xvfb-run -a make check
+      run: xvfb-run -a make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     # FIXME: Will try to perform an out-of-tree build which will not
@@ -77,8 +79,10 @@ jobs:
 
     - run: make
     - run: make install
+    # NOTE: The test suite must be run in verbose mode because if it fails
+    # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check
+      run: make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     # FIXME: Will try to perform an out-of-tree build which will not
