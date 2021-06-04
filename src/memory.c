@@ -273,7 +273,7 @@
  * malloc_trim().
  * Malloc overriding can be disabled at compile time to aid in memory
  * debugging.
- * On Windows, we never even try to link in dlmalloc.
+ * On Windows and Mac OS, we never even try to link in dlmalloc.
  * If disabled, we try to directly measure memory consumption using
  * OS APIs.
  * Polling of the RSS takes place in a dedicated thread that is started
@@ -434,7 +434,15 @@ teco_memory_get_usage(void)
  *
  * FIXME: Benchmark whether polling in a thread really
  * improves performances as much as on Linux.
- * Is this even critical or can we link in dlmalloc?
+ * FIXME: There is no malloc_trim() natively on Mac OS - can
+ * we recover from OOMs?
+ * FIXME: We cannot simply overwrite weak malloc() functions
+ * like on Linux since this does not affect shared libraries
+ * unless $DYLD_FORCE_FLAT_NAMESPACE is set.
+ * It should be possible to change the default malloc zone, though.
+ * First experiments have been unsuccessful.
+ * But see https://github.com/gperftools/gperftools/blob/master/src/libc_override_osx.h
+ * https://chromium.googlesource.com/chromium/src/base/+/refs/heads/main/allocator/allocator_interception_mac.mm
  */
 static gsize
 teco_memory_get_usage(void)
@@ -444,7 +452,7 @@ teco_memory_get_usage(void)
 
 	if (G_UNLIKELY(task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
 	                         (task_info_t)&info, &info_count) != KERN_SUCCESS))
-		return 0; // FIXME
+		return 0;
 
 	return info.resident_size;
 }

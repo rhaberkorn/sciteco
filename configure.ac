@@ -79,17 +79,14 @@ AC_CHECK_TOOL(AR, ar)
 # Whether $CC is Clang
 AM_CONDITIONAL(CLANG, [$CC --version | $GREP -i clang >/dev/null])
 
-# Check for Windows resource compiler and define
-# WIN32 conditional
+# Platform-specific tools and conditionals
 case $host in
 *-mingw*)
 	LT_LANG([Windows Resource])
-	AM_CONDITIONAL(WIN32, [true])
-	;;
-*)
-	AM_CONDITIONAL(WIN32, [false])
+	HOST_WIN32=yes
 	;;
 esac
+AM_CONDITIONAL(WIN32, [test x$HOST_WIN32 = xyes])
 
 # Changing the EXEEXT on emscripten ensures that we don't
 # need a special Makefile rule to generate Javascript files.
@@ -314,7 +311,6 @@ gtk)
 esac
 
 AM_CONDITIONAL(INTERFACE_GTK, [test x$INTERFACE = xgtk])
-AM_CONDITIONAL(GTK_FLOW_BOX_FALLBACK, [test x$GTK_FLOW_BOX_FALLBACK = xtrue])
 
 AC_ARG_WITH(teco-integer,
 	AS_HELP_STRING([--with-teco-integer=SIZE],
@@ -345,10 +341,10 @@ AC_ARG_ENABLE(malloc-replacement,
 	               [Replace the libc malloc() [default=check]]),
 	[malloc_replacement=$enableval], [malloc_replacement=check])
 if [[ $malloc_replacement = check ]]; then
-	# We currently do not support dlmalloc on Windows.
+	# We currently do not support dlmalloc on Windows and Mac OS.
 	case $host in
-	*-mingw*) malloc_replacement=no;;
-	*)        malloc_replacement=yes;;
+	*-*-darwin* | *-mingw*) malloc_replacement=no;;
+	*) malloc_replacement=yes;;
 	esac
 fi
 AM_CONDITIONAL(REPLACE_MALLOC, [test $malloc_replacement = yes])

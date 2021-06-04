@@ -28,10 +28,11 @@ Others might work as well.
 
 Linux, FreeBSD, Windows (MinGW 32/64) ~~and
 [Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
+Mac OS X is built during Continuous Integration but is otherwise untested
+and packages also cannot be provided.
+(I am looking for a Mac OS X maintainer!)
 SciTECO compiles with both GCC and Clang.
-SciTECO should compile just fine on other UNIX-compatible platforms,
-like Mac OS X - however I cannot test it regularily and there is currently no
-Mac OS X maintainer.
+SciTECO should compile just fine on other UNIX-compatible platforms.
 However UNIX-compatibility is not strictly required:
 Since SciTECO primarily depends on [glib](https://developer.gnome.org/glib/) and
 some implementation of Curses, it should be easy to port to even more exotic platforms.
