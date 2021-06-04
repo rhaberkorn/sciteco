@@ -2,7 +2,10 @@
 # silence libtoolize:
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = lib contrib/dlmalloc contrib/rb3ptr src doc tests
+if REPLACE_MALLOC
+MAYBE_DLMALLOC = contrib/dlmalloc
+endif
+SUBDIRS = lib $(MAYBE_DLMALLOC) contrib/rb3ptr src doc tests
 
 dist_pkgdata_DATA = sample.teco_ini
 

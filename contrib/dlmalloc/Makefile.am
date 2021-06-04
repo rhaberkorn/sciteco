@@ -19,6 +19,4 @@ AM_CFLAGS = -fno-optimize-strlen
 endif
 
 noinst_LTLIBRARIES = libdlmalloc.la
-if REPLACE_MALLOC
 libdlmalloc_la_SOURCES = malloc.c malloc.h
-endif

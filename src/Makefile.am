@@ -60,8 +60,10 @@ libsciteco_base_la_SOURCES = main.c sciteco.h list.h \
 # NOTE: We cannot link in Scintilla (static library) into
 # a libtool convenience library
 libsciteco_base_la_LIBADD = $(LIBSCITECO_INTERFACE) \
-                            $(top_builddir)/contrib/dlmalloc/libdlmalloc.la \
                             $(top_builddir)/contrib/rb3ptr/librb3ptr.la
+if REPLACE_MALLOC
+libsciteco_base_la_LIBADD += $(top_builddir)/contrib/dlmalloc/libdlmalloc.la
+endif
 
 if BOOTSTRAP
 noinst_PROGRAMS = sciteco-minimal
