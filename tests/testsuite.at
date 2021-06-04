@@ -81,7 +81,7 @@ AT_SETUP([Pattern matching overflow])
 # It could fail because the memory limit is exceeed,
 # but not in this case since the match string isn't too large.
 AT_CHECK([$SCITECO -e '100000<@I"X">J @S"^EM^X"'], 0, ignore, ignore)
-AT_XFAIL_IF([/bin/true])
+AT_XFAIL_IF(true)
 AT_CLEANUP
 
 AT_SETUP([Recursion overflow])
@@ -89,5 +89,6 @@ AT_SETUP([Recursion overflow])
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.
 AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
-AT_XFAIL_IF([/bin/true])
+# On Mac OS we cannot provoke a stack overflow.
+AT_XFAIL_IF([case $host in *-*-darwin*) false;; esac])
 AT_CLEANUP

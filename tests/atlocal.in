@@ -1,3 +1,5 @@
+host=@host@
+
 # `tests` is after `src`, so the target SciTECO is already
 # built.
 # Using the $BOOTSTRAP_SCITECO wouldn't make sense
