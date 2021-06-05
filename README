@@ -28,9 +28,8 @@ Others might work as well.
 
 Linux, FreeBSD, Windows (MinGW 32/64) ~~and
 [Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
-Mac OS X is built during Continuous Integration but is otherwise untested
-and packages also cannot be provided.
-(I am looking for a Mac OS X maintainer!)
+[Mac OS X is built during Continuous Integration but is otherwise untested
+and packages currently cannot be provided.](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support)
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms.
 However UNIX-compatibility is not strictly required:
@@ -113,6 +112,8 @@ There are prebuilt binary packages and source bundles for your convenience:
   [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
 * Yocto/OpenEmbedded users should try the
   [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
+* [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
+  for Windows users.
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
 These releases may be quite outdated, so you may also give a try to the
