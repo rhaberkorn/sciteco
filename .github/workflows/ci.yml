@@ -90,3 +90,52 @@ jobs:
 #   - run: make distcheck
     - name: Build Source Tarball
       run: make dist
+
+#  win32:
+#    runs-on: windows-latest
+#
+#    defaults:
+#      run:
+#        shell: bash.exe --login -eo pipefail "{0}"
+#    env:
+#      MSYSTEM: MINGW32
+#      CHERE_INVOKING: 1
+#
+#    steps:
+#
+#    - name: Recursive Git Clone
+#      uses: actions/checkout@v2
+#      with:
+#        submodules: recursive
+#
+#    - name: Set Up Shell
+#      run: echo C:\msys64\usr\bin\ | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+#      shell: pwsh
+#
+#    - name: Install Build Dependencies
+#      run: >
+#        pacman -S --noconfirm --needed
+#        base-devel mingw-w64-i686-toolchain
+#        mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
+#        groff mingw-w64-i686-doxygen
+#
+#    - name: Configure Build
+#      env:
+#        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+#      run: |
+#        autoreconf -i
+#        ./configure --with-interface=pdcurses --enable-html-manual
+#
+#    - run: make
+#    - run: make install
+#    # NOTE: The test suite must be run in verbose mode because if it fails
+#    # we won't be able to analyze testsuite.log.
+#    - name: Run Test Suite
+#      run: make check TESTSUITEFLAGS="--verbose"
+#    - name: Build Developer Documentation
+#      run: cd doc && make devdoc
+#    # FIXME: Will try to perform an out-of-tree build which will not
+#    # work without manual intervention due to Scintilla.
+##   - run: make distcheck
+#    - name: Build Source Tarball
+#      run: make dist
