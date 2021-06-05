@@ -83,7 +83,7 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 
 #ifdef G_OS_WIN32
 	if (!(teco_ed & TECO_ED_SHELLEMU)) {
-		teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, "$ComSpec", 8);
+		teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, "$COMSPEC", 8);
 		g_assert(reg != NULL);
 		teco_string_t comspec;
 		if (!reg->vtable->get_string(reg, &comspec.data, &comspec.len, error))
@@ -91,7 +91,7 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 
 		argv = g_new(gchar *, 5);
 		/*
-		 * FIXME: What if $ComSpec contains null-bytes?
+		 * FIXME: What if $COMSPEC contains null-bytes?
 		 */
 		argv[0] = comspec.data;
 		argv[1] = g_strdup("/q");
@@ -414,7 +414,7 @@ gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_mach
  *
  * <command> execution is by default platform-dependent.
  * On DOS-like systems like Windows, <command> is passed to
- * the command interpreter specified in the \fB$ComSpec\fP
+ * the command interpreter specified in the \fB$COMSPEC\fP
  * environment variable with the \(lq/q\(rq and \(lq/c\(rq
  * command-line arguments.
  * On UNIX-like systems, <command> is passed to the interpreter

@@ -242,15 +242,19 @@ Initialization of this variable ensures that the
 \(lq$HOME\(rq Q-Register is available even on Windows
 and the home directory can always be re-configured.
 .TP
-.SCITECO_TOPIC "$SHELL" "SHELL" "$ComSpec" "ComSpec"
-.BR SHELL " or " ComSpec
+.SCITECO_TOPIC "$SHELL" "SHELL" "$COMSPEC" "COMSPEC"
+.BR SHELL " or " COMSPEC
 Path of the command interpreter used by \fBEG\fP and \fBEC\fP
 commands if UNIX98 shell emulation is \fIdisabled\fP.
-\fBSHELL\fP is used on UNIX-like systems, while \fBComSpec\fP
+\fBSHELL\fP is used on UNIX-like systems, while \fBCOMSPEC\fP
 is used on DOS-like systems (like Windows).
 Both variables are usually already set in the process environment
 but are initialized to \(lq/bin/sh\(rq or \(lqcmd.exe\(rq
 should they nevertheless be unset.
+Since environment variables are case-insensitive on
+DOS-like systems and different spellings exist for \fBCOMSPEC\fP,
+the name of the variable is always normalized to all-upper-case
+by \*(ST.
 .TP
 .SCITECO_TOPIC "$SCITECOCONFIG" "SCITECOCONFIG"
 .B SCITECOCONFIG

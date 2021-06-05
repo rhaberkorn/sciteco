@@ -245,7 +245,16 @@ teco_initialize_environment(const gchar *program)
 	g_free(abs_path);
 
 #ifdef G_OS_WIN32
-	g_setenv("ComSpec", "cmd.exe", FALSE);
+	/*
+	 * NOTE: Environment variables are case-insensitive on Windows
+	 * and there may be either a $COMSPEC or $ComSpec variable.
+	 * By unsetting and resetting $COMSPEC, we make sure that
+	 * it exists with defined case in the environment and therefore
+	 * as a Q-Register.
+	 */
+	g_autofree gchar *comspec = g_strdup(g_getenv("COMSPEC") ? : "cmd.exe");
+	g_unsetenv("COMSPEC");
+	g_setenv("COMSPEC", comspec, TRUE);
 #elif defined(G_OS_UNIX)
 	g_setenv("SHELL", "/bin/sh", FALSE);
 #endif

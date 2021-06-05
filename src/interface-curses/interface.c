@@ -30,6 +30,11 @@
 #ifdef HAVE_WINDOWS_H
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+/*
+ * Some macros in wincon.h interfere with our code.
+ */
+#undef MOUSE_MOVED
 #endif
 
 #ifdef EMSCRIPTEN
