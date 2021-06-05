@@ -678,7 +678,15 @@ teco_memory_check(gsize request, GError **error)
 {
 	gsize memory_usage = g_atomic_int_get(&teco_memory_usage) + request;
 
-	if (G_UNLIKELY(teco_memory_limit && memory_usage > teco_memory_limit)) {
+	/*
+	 * Check for overflows.
+	 * NOTE: Glib 2.48 has g_size_checked_add().
+	 */
+	if (G_UNLIKELY(memory_usage < request))
+		/* guaranteed to fail if memory limiting is enabled */
+		memory_usage = G_MAXSIZE;
+
+	if (G_UNLIKELY(teco_memory_limit && memory_usage >= teco_memory_limit)) {
 		g_autofree gchar *limit_str = g_format_size(memory_usage);
 
 		g_set_error(error, TECO_ERROR, TECO_ERROR_MEMLIMIT,

@@ -496,6 +496,15 @@ teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
 		gsize matched_size = sizeof(teco_range_t) * -*count;
 
 		/*
+		 * matched_size could overflow.
+		 * NOTE: Glib 2.48 has g_size_checked_mul() which uses
+		 * compiler intrinsics.
+		 */
+		if (matched_size / sizeof(teco_range_t) != -*count)
+			/* guaranteed to fail either teco_memory_check() or g_malloc() */
+			matched_size = G_MAXSIZE;
+
+		/*
 		 * NOTE: It's theoretically possible that the allocation of the `matched`
 		 * array causes an OOM if (-count) is large enough and regular
 		 * memory limiting in teco_machine_main_step() wouldn't help.
