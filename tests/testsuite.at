@@ -47,6 +47,16 @@ AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N(0/0)' 2LR 13@I''
 AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Memory limiting])
+# NOTE: We cannot escape [, so we have to balance it.
+AT_CHECK([$SCITECO -e "50*1000*1000,2EJ <[[a> !]]!"], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Execute external command])
+AT_CHECK([$SCITECO -e "@EC'echo -n 0123456789' Z-10\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "0,128ED @EC'echo -n 0123456789' Z-10\"N(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Regression Tests])
 
 AT_SETUP([Glob patterns with character classes])
@@ -71,7 +81,7 @@ AT_CLEANUP
 
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
-AT_CHECK([$SCITECO -e "50*1000*1000,2EJ @EC'cat /dev/zero'"], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'cat /dev/zero'"], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Known Bugs])

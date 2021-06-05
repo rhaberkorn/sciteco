@@ -403,6 +403,11 @@ malloc_trim(size_t pad)
  *
  * NOTE: At least on Windows 2000, we run twice as fast than
  * when polling from a dedicated thread.
+ *
+ * NOTE: On Wine, we cannot recover from hitting the memory
+ * limit, but this is probably because malloc() is actually
+ * forwarded to the glibc which needs malloc_trim().
+ * This should not be a problem on real Windows.
  */
 static gsize
 teco_memory_get_usage(void)
