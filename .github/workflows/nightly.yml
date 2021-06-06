@@ -60,3 +60,76 @@ jobs:
       with:
         name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (${{ matrix.os }}, ncurses and GTK+ 3)
         path: debian-temp/*.deb
+
+  win32-curses:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash.exe --login -eo pipefail "{0}"
+    env:
+      MSYSTEM: MINGW32
+      CHERE_INVOKING: 1
+
+    steps:
+
+    - name: Recursive Git Clone
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Set Up Shell
+      run: echo C:\msys64\usr\bin\ | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: pwsh
+
+    - name: Install Build Dependencies
+      run: >
+        pacman -S --noconfirm --needed
+        base-devel mingw-w64-i686-toolchain
+        mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
+        groff
+
+    - name: Configure Build
+      env:
+        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+        # The additional Windows libraries are for Win32a:
+        PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
+        LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32
+        # FIXME: Once there is an --enable-lto, we should use that.
+        CFLAGS: -g -O3 -flto -DGLIB_STATIC_COMPILATION
+        CXXFLAGS: -g -O3 -flto
+        LDFLAGS: -flto
+      run: |
+        autoreconf -i
+        ./configure --with-interface=pdcurses --enable-html-manual --enable-static-executables
+
+    - name: make
+      run: make -j 2
+    - run: make install-strip
+    # NOTE: The test suite must be run in verbose mode because if it fails
+    # we won't be able to analyze testsuite.log.
+#   - name: Run Test Suite
+#     run: make check TESTSUITEFLAGS="--verbose"
+
+    - name: Prepare Distribution Directory
+      run: |
+        mkdir temp-bin/
+        cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
+        cp -r /mingw32/share/sciteco/{lib,*.teco_ini,*.tmac} temp-bin/
+        cp /mingw32/share/sciteco/sample.teco_ini temp-bin/.teco_ini
+        cp -r /mingw32/share/doc/sciteco/* temp-bin/
+        cp COPYING ChangeLog temp-bin/
+        cp /mingw32/bin/gspawn-win32-helper-console.exe temp-bin/
+        # FIXME: Even though MSYS provides working statically-linked
+        # Glib libraries, the g_spawn() helpers still depend on the DLL.
+        # This could perhaps be avoided by downloading our own self-built
+        # executable from somewhere.
+        cp /mingw32/bin/libglib-2.0-0.dll temp-bin/
+    - name: Get Current Date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Archive Windows Distribution (PDCurses)
+      uses: actions/upload-artifact@v2
+      with:
+        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (win32, PDCurses)
+        path: temp-bin/*
