@@ -195,8 +195,13 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 static teco_state_t *
 teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
+	/*
+	 * NOTE: With G_SPAWN_LEAVE_DESCRIPTORS_OPEN and without G_SPAWN_SEARCH_PATH_FROM_ENVP,
+	 * Glib offers an "optimized codepath" on UNIX.
+	 * G_SPAWN_SEARCH_PATH_FROM_ENVP does not appear to work on Windows, anyway.
+	 */
 	static const GSpawnFlags flags = G_SPAWN_DO_NOT_REAP_CHILD |
-	                                 G_SPAWN_SEARCH_PATH |
+	                                 G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN |
 	                                 G_SPAWN_STDERR_TO_DEV_NULL;
 
 	if (ctx->mode > TECO_MODE_NORMAL)
