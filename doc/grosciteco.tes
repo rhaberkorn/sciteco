@@ -281,13 +281,13 @@ EB J 0U#cs 0U#cd
 !*
  * Save the clear-text part of the document into <output-woman>
  *!
-EWQ[output-woman]
+2EL EWQ[output-woman]
 
 EQ[styles]
 
 !* Generate topic index *!
 J I!*Q[topics]*!^J
 
-EWQ[getopt.t]
+2EL EWQ[getopt.t]
 
 -EX

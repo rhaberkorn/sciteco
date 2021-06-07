@@ -57,6 +57,6 @@ teco_cmdline_cleanup(void)
 #endif^J
 
 !* write output file *!
-EWQ#ou
+2EL EWQ#ou
 
 EX

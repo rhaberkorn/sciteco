@@ -24,19 +24,19 @@ endif
 SCITECO_INSTALLED = \
 	$(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)
 
-SUBST_MACRO = eb$<\e \
-	      <fs@PACKAGE^Q@\e@PACKAGE@\e;>j \
-	      <fs@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>j \
-	      <fs@PACKAGE_VERSION^Q@\e@PACKAGE_VERSION@\e;>j \
-	      <fs@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>j \
-	      <fs@PACKAGE_URL_DEV^Q@\e@PACKAGE_URL_DEV@\e;>j \
-	      <fs@bindir^Q@\e$(bindir)\e;>j \
-	      <fs@libexecdir^Q@\e$(libexecdir)\e;>j \
-	      <fs@pkgdatadir^Q@\e$(pkgdatadir)\e;>j \
-	      <fs@scitecolibdir^Q@\e$(scitecolibdir)\e;>j \
-	      <fs@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>j \
-	      <fs@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e; -D>j \
-	      ew$@\e
+SUBST_MACRO = EB$<\e \
+              <FS@PACKAGE^Q@\e@PACKAGE@\e;>J \
+              <FS@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>J \
+              <FS@PACKAGE_VERSION^Q@\e@PACKAGE_VERSION@\e;>J \
+              <FS@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>J \
+              <FS@PACKAGE_URL_DEV^Q@\e@PACKAGE_URL_DEV@\e;>J \
+              <FS@bindir^Q@\e$(bindir)\e;>J \
+              <FS@libexecdir^Q@\e$(libexecdir)\e;>J \
+              <FS@pkgdatadir^Q@\e$(pkgdatadir)\e;>J \
+              <FS@scitecolibdir^Q@\e$(scitecolibdir)\e;>J \
+              <FS@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>J \
+              <FS@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e; -D>J \
+              EW$@\e
 
 # The SciTECO-based substitutor must not process config.h.in.
 @top_srcdir@/config.h: ;
