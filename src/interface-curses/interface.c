@@ -71,27 +71,9 @@
 #include "memory.h"
 #include "interface.h"
 
-/**
- * Whether we have PDCurses-only routines:
- * Could be 0, even on PDCurses
- */
-#ifndef PDCURSES
-#define PDCURSES 0
-#endif
-
-/**
- * Whether we're on PDCurses/win32
- */
 #if defined(__PDCURSES__) && defined(G_OS_WIN32) && \
-    !defined(PDCURSES_WIN32A)
-#define PDCURSES_WIN32
-
-/*
- * A_UNDERLINE is not supported by PDCurses/win32
- * and causes weird colors, so we simply disable it globally.
- */
-#undef  A_UNDERLINE
-#define A_UNDERLINE 0
+    !defined(PDCURSES_GUI)
+#define PDCURSES_WINCON
 #endif
 
 /**
@@ -121,27 +103,7 @@
 #define CURSES_TTY
 #endif
 
-/*
- * PDCurses/win32a by default assigns functions to certain
- * keys like CTRL+V, CTRL++, CTRL+- and CTRL+=.
- * This conflicts with SciTECO that must remain in control
- * of keyboard processing.
- * Unfortunately, the default mapping can only be disabled
- * or changed via the internal PDC_set_function_key() in
- * pdcwin.h. Therefore we declare it manually here.
- */
-#ifdef PDCURSES_WIN32A
-int PDC_set_function_key(const unsigned function, const int new_key);
-
-#define N_FUNCTION_KEYS			5
-#define FUNCTION_KEY_SHUT_DOWN		0
-#define FUNCTION_KEY_PASTE		1
-#define FUNCTION_KEY_ENLARGE_FONT	2
-#define FUNCTION_KEY_SHRINK_FONT	3
-#define FUNCTION_KEY_CHOOSE_FONT	4
-#endif
-
-#if defined(PDCURSES_WIN32) || defined(NCURSES_WIN32)
+#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 
 /**
  * This handler is the Windows-analogue of a signal
@@ -414,7 +376,7 @@ teco_interface_init(void)
 	 * reliably. The signal handler we already
 	 * have won't do.
 	 */
-#if defined(PDCURSES_WIN32) || defined(NCURSES_WIN32)
+#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 	SetConsoleCtrlHandler(teco_console_ctrl_handler, TRUE);
 #endif
 
@@ -442,7 +404,7 @@ teco_interface_get_options(void)
 static void
 teco_interface_init_color_safe(guint color, guint32 rgb)
 {
-#ifdef PDCURSES_WIN32
+#if defined(__PDCURSES__) && !defined(PDCURSES_GUI)
 	if (teco_interface.orig_color_table[color].r < 0) {
 		color_content((short)color,
 		              &teco_interface.orig_color_table[color].r,
@@ -456,10 +418,10 @@ teco_interface_init_color_safe(guint color, guint32 rgb)
 	init_color((short)color, r, g, b);
 }
 
-#ifdef PDCURSES_WIN32
+#if defined(__PDCURSES__) && !defined(PDCURSES_GUI)
 
 /*
- * On PDCurses/win32, color_content() will actually return
+ * On PDCurses/WinCon, color_content() will actually return
  * the real console color palette - or at least the default
  * palette when the console started.
  */
@@ -519,7 +481,7 @@ teco_interface_restore_colors(void)
 	fflush(teco_interface.screen_tty);
 }
 
-#else /* !PDCURSES_WIN32 && !CURSES_TTY */
+#else /* (!__PDCURSES__ || PDCURSES_GUI) && !CURSES_TTY */
 
 static void
 teco_interface_restore_colors(void)
@@ -683,16 +645,16 @@ teco_interface_init_interactive(GError **error)
 	g_setenv("TERM", "#win32con", TRUE);
 #endif
 
-#ifdef PDCURSES_WIN32A
+#ifdef PDCURSES_MOD
 	/*
-	 * Necessary to enable window resizing in Win32a port
+	 * Necessary to enable window resizing in WinGUI port
 	 */
 	PDC_set_resize_limits(25, 0xFFFF, 80, 0xFFFF);
 
 	/*
 	 * Disable all magic function keys.
 	 */
-	for (int i = 0; i < N_FUNCTION_KEYS; i++)
+	for (int i = 0; i < PDC_MAX_FUNCTION_KEYS; i++)
 		PDC_set_function_key(i, 0);
 
 	/*
@@ -836,8 +798,7 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 	 * On most platforms we can write to stdout/stderr
 	 * even in interactive mode.
 	 */
-#if defined(XCURSES) || defined(PDCURSES_WIN32A) || \
-    defined(CURSES_TTY) || defined(NCURSES_WIN32)
+#if defined(PDCURSES_GUI) || defined(CURSES_TTY) || defined(NCURSES_WIN32)
 	va_list aq;
 	va_copy(aq, ap);
 	teco_interface_stdio_vmsg(type, fmt, aq);
@@ -967,7 +928,7 @@ teco_interface_set_window_title(const gchar *title)
 	fflush(teco_interface.screen_tty);
 }
 
-#else
+#else /* !PDCURSES && (!CURSES_TTY || !HAVE_TIGETSTR) */
 
 static void
 teco_interface_set_window_title(const gchar *title)
@@ -1149,7 +1110,7 @@ teco_interface_draw_cmdline(void)
 	        0, disp_offset, 0, 1, 0, disp_len, FALSE);
 }
 
-#ifdef __PDCURSES__
+#if PDCURSES
 
 /*
  * At least on PDCurses, a single clipboard
@@ -1396,7 +1357,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	return TRUE;
 }
 
-#else
+#else /* !PDCURSES && !CURSES_TTY */
 
 static void
 teco_interface_init_clipboard(void)
@@ -1424,7 +1385,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	return FALSE;
 }
 
-#endif /* !__PDCURSES__ && !CURSES_TTY */
+#endif
 
 void
 teco_interface_popup_add(teco_popup_entry_type_t type, const gchar *name, gsize name_len,
@@ -1497,14 +1458,14 @@ void
 teco_interface_event_loop_iter(void)
 {
 	/*
-	 * On PDCurses/win32, raw() and cbreak() does
+	 * On PDCurses/WinCon, raw() and cbreak() does
 	 * not disable and enable CTRL+C handling properly.
 	 * Since I don't want to patch PDCurses/win32,
 	 * we do this manually here.
 	 * NOTE: This exploits the fact that PDCurses uses
 	 * STD_INPUT_HANDLE internally!
 	 */
-#ifdef PDCURSES_WIN32
+#ifdef PDCURSES_WINCON
 	HANDLE console_hnd = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD console_mode;
 	GetConsoleMode(console_hnd, &console_mode);
@@ -1528,7 +1489,7 @@ teco_interface_event_loop_iter(void)
 
 	/* no special <CTRL/C> handling */
 	raw();
-#ifdef PDCURSES_WIN32
+#ifdef PDCURSES_WINCON
 	SetConsoleMode(console_hnd, console_mode & ~ENABLE_PROCESSED_INPUT);
 #endif
 	/*
@@ -1542,7 +1503,7 @@ teco_interface_event_loop_iter(void)
 	teco_sigint_occurred = FALSE;
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
-#ifdef PDCURSES_WIN32
+#ifdef PDCURSES_WINCON
 	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
 #endif
 	if (key == ERR)
@@ -1551,7 +1512,7 @@ teco_interface_event_loop_iter(void)
 	switch (key) {
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
-#if PDCURSES
+#ifdef __PDCURSES__
 		resize_term(0, 0);
 #endif
 		teco_interface_resize_all_windows();
@@ -1707,7 +1668,7 @@ teco_interface_cleanup(void)
 		delwin(teco_interface.msg_window);
 
 	/*
-	 * PDCurses (win32) crashes if initscr() wasn't called.
+	 * PDCurses/WinCon crashes if initscr() wasn't called.
 	 * Others (XCurses) crash if we try to use isendwin() here.
 	 * Perhaps Curses cleanup should be in restore_batch()
 	 * instead.

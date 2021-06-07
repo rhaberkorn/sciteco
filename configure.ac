@@ -191,12 +191,12 @@ SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(interface,
-	AS_HELP_STRING([--with-interface=ncurses|netbsd-curses|xcurses|pdcurses|gtk],
+	AS_HELP_STRING([--with-interface=ncurses|netbsd-curses|xcurses|pdcurses|pdcurses-gui|gtk],
 		       [Specify user interface [default=ncurses]]),
 	[INTERFACE=$withval], [INTERFACE=ncurses])
 
 case $INTERFACE in
-*curses)
+*curses*)
 	case $INTERFACE in
 	ncurses | netbsd-curses)
 		PKG_CHECK_MODULES(NCURSES, [ncurses], [
@@ -249,9 +249,11 @@ case $INTERFACE in
 
 		# This is also used by the curses.h itself:
 		AC_DEFINE(XCURSES, 1, [Enable PDCurses/XCurses extensions])
+
+		AC_DEFINE(PDCURSES_GUI, 1, [PDCurses with GUI window])
 		;;
 
-	pdcurses)
+	pdcurses*)
 		AC_ARG_VAR(PDCURSES_CFLAGS, [
 			C compiler flags for PDCurses,
 		        overriding the autoconf check
@@ -275,8 +277,15 @@ case $INTERFACE in
 		fi
 
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
-			AC_DEFINE(PDCURSES_WIN32A, 1, [PDCurses supports Win32a extensions])
+			AC_DEFINE(PDCURSES_MOD, 1, [PDCursesMod extensions])
 		])
+
+		# This is detectable at runtime on PDCursesMod using PDC_get_version().
+		# "Classic" PDCurses does not allow runtime or compile-time checks for
+		# discerning eg. WinCon from SDL.
+		if [[ $INTERFACE = pdcurses-gui ]]; then
+			AC_DEFINE(PDCURSES_GUI, 1, [PDCurses with GUI window])
+		fi
 		;;
 	esac
 

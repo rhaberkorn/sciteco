@@ -124,7 +124,7 @@ jobs:
 #        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
 #      run: |
 #        autoreconf -i
-#        ./configure --with-interface=pdcurses --enable-html-manual
+#        ./configure --with-interface=pdcurses-gui --enable-html-manual
 #
 #    - run: make
 #    - run: make install

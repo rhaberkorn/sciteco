@@ -84,7 +84,7 @@ jobs:
     - name: Configure Build
       env:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
-        # The additional Windows libraries are for Win32a:
+        # The additional Windows libraries are for PDCursesMod/WinGUI:
         PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
         LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32
         # FIXME: Once there is an --enable-lto, we should use that.
@@ -93,7 +93,7 @@ jobs:
         LDFLAGS: -flto
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses --enable-html-manual --enable-static-executables
+        ./configure --with-interface=pdcurses-gui --enable-html-manual --enable-static-executables
 
     - name: make
       run: make -j 2
