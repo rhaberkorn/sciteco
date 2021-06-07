@@ -34,8 +34,6 @@ testsuite.dir
 /src/sciteco-minimal
 
 # Generated source files
-/src/interface-gtk/teco-gtk-info-popup.[ch]
-/src/interface-gtk/teco-gtk-label.[ch]
 /src/symbols-scintilla.c
 /src/symbols-scilexer.c
 

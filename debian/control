@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
 Build-Depends: debhelper (>= 10), dh-exec, g++ (>= 4:4.4), libglib2.0-dev (>= 2.44),
  ncurses-base, ncurses-term, libncurses5-dev,
- libgtk-3-dev (>= 3.12), gob2 (>= 2.0.20), xvfb,
+ libgtk-3-dev (>= 3.12), xvfb,
  groff-base
 Standards-Version: 3.9.2
 Homepage: http://sciteco.sf.net/

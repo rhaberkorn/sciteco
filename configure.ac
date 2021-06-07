@@ -297,8 +297,6 @@ gtk)
 		LIBS="$LIBS $LIBGTK_LIBS"
 	])
 
-	GOB2_CHECK(2.0.20)
-
 	AC_DEFINE(INTERFACE_GTK, 1, [Build with GTK+ 3.0 support])
 
 	# For Scintilla:

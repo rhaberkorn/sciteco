@@ -41,8 +41,8 @@
 #include <Scintilla.h>
 #include <ScintillaWidget.h>
 
-#include "teco-gtk-info-popup.h"
-#include "teco-gtk-label.h"
+#include "gtk-info-popup.h"
+#include "gtk-label.h"
 
 #include "sciteco.h"
 #include "error.h"

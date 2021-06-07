@@ -30,7 +30,7 @@
 #include "curses-info-popup.h"
 
 /*
- * FIXME: This is redundant with teco-gtk-info-popup.gob.
+ * FIXME: This is redundant with gtk-info-popup.c.
  */
 typedef struct {
 	teco_stailq_entry_t entry;

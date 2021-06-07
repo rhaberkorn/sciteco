@@ -34,7 +34,6 @@ SciTECO Build and Runtime Dependencies
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
    * GTK+ v3.12 or later: http://www.gtk.org/
-   * GObject Builder v2.0.20 or later: http://www.jirka.org/gob.html
  * GNU roff (groff): https://www.gnu.org/software/groff/
    Required at build-time, but it is already shipped on most
    UNIX-like systems to format man pages.
@@ -54,7 +53,7 @@ On Ubuntu, you can install all dependencies you could possibly need
 as follows:
 
   $ sudo apt-get install git build-essential autoconf automake libtool \
-                         libglib2.0-dev libncurses-dev libgtk-3-dev gob2 \
+                         libglib2.0-dev libncurses-dev libgtk-3-dev \
                          groff doxygen
 
 Building from Source Tar Ball or Repository
