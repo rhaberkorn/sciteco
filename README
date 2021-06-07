@@ -116,10 +116,10 @@ There are prebuilt binary packages and source bundles for your convenience:
   for Windows users.
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
-These releases may be quite outdated, so you may also give a try to the
-[nightly Ubuntu packages](https://nightly.link/rhaberkorn/sciteco/workflows/nightly/master) -
+These releases may be quite outdated, so you may also try out the
+[nightly builds](https://nightly.link/rhaberkorn/sciteco/workflows/nightly/master) -
 they represent the repository's HEAD commit but may well be instable.
-Both ncurses and Gtk+ packages are provided.
+Both ncurses and Gtk+ packages are provided both for Ubuntu and Windows.
 
 If everything fails, you can try building from source.
 See [`INSTALL`](INSTALL) for more details.

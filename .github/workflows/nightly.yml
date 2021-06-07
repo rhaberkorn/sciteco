@@ -43,14 +43,6 @@ jobs:
     - name: Build Debian/Ubuntu Packages
       run: ./distribute.mk debian-binary
 
-    # FIXME: For doing Windows builds, we need a few manually built packages
-    # (PDCurses, Glib...).
-    # Perhaps they can be uploaded to Sourceforge and simply downloaded here.
-    # Alternatively, we could manually prepare a Docker container image or
-    # even build them from scratch here.
-#   - name: Build Windows Bundle
-#     run: ./distribute.mk mingw-binary
-
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
@@ -115,21 +107,113 @@ jobs:
       run: |
         mkdir temp-bin/
         cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
-        cp -r /mingw32/share/sciteco/{lib,*.teco_ini,*.tmac} temp-bin/
+        cp -r /mingw32/share/sciteco/{lib,*.tmac} temp-bin/
         cp /mingw32/share/sciteco/sample.teco_ini temp-bin/.teco_ini
         cp -r /mingw32/share/doc/sciteco/* temp-bin/
         cp COPYING ChangeLog temp-bin/
-        cp /mingw32/bin/gspawn-win32-helper-console.exe temp-bin/
+        cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/
         # FIXME: Even though MSYS provides working statically-linked
         # Glib libraries, the g_spawn() helpers still depend on the DLL.
         # This could perhaps be avoided by downloading our own self-built
         # executable from somewhere.
-        cp /mingw32/bin/libglib-2.0-0.dll temp-bin/
+        # Else, there is little sense in linking the Curses builds statically
+        # as only libstdc++-6.dll is missing.
+        cp /mingw32/bin/{libglib-2.0-0,libpcre-1,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
     - name: Get Current Date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
     - name: Archive Windows Distribution (PDCurses)
       uses: actions/upload-artifact@v2
       with:
-        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (win32, PDCurses)
+        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (Win32, PDCurses)
+        path: temp-bin/*
+
+  # NOTE: There is a lot of redundancy with win32-curses.
+  # However we link the Curses version statically, while Gtk+3 cannot be
+  # linked statically on Windows (at least MSYS does not provide
+  # static libraries) and would draw in libglib, libintl, libiconv etc. anyway.
+  # On the other hand we currently have to package all sorts of libraries only
+  # for gspawn-win32-helper-console.exe - if this situation persists, we can
+  # just as well unify the two jobs.
+  win32-gtk:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: bash.exe --login -eo pipefail "{0}"
+    env:
+      MSYSTEM: MINGW32
+      CHERE_INVOKING: 1
+
+    steps:
+
+    - name: Recursive Git Clone
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Set Up Shell
+      run: echo C:\msys64\usr\bin\ | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: pwsh
+
+    - name: Install Build Dependencies
+      run: >
+        pacman -S --noconfirm --needed
+        base-devel mingw-w64-i686-toolchain
+        mingw-w64-i686-glib2 mingw-w64-i686-gtk3
+        groff
+
+    - name: Configure Build
+      env:
+        # FIXME: Once there is an --enable-lto, we should use that.
+        CFLAGS: -g -O3 -flto
+        CXXFLAGS: -g -O3 -flto
+        LDFLAGS: -flto
+      run: |
+        autoreconf -i
+        ./configure --with-interface=gtk --enable-html-manual
+
+    - name: make
+      run: make -j 2
+    - run: make install-strip
+    # NOTE: The test suite must be run in verbose mode because if it fails
+    # we won't be able to analyze testsuite.log.
+#   - name: Run Test Suite
+#     run: make check TESTSUITEFLAGS="--verbose"
+
+    - name: Prepare Distribution Directory
+      run: |
+        mkdir -p temp-bin/bin
+        cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/bin/
+        cp -r /mingw32/share/sciteco/{lib,*.tmac,*.png} temp-bin/bin/
+        cp /mingw32/share/sciteco/sample.teco_ini temp-bin/bin/.teco_ini
+        cp /mingw32/share/sciteco/fallback.css temp-bin/bin/.teco_css
+        mkdir -p temp-bin/doc
+        cp -r /mingw32/share/doc/sciteco/* temp-bin/doc/
+        cp COPYING ChangeLog temp-bin/doc/
+        cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/bin/
+        cp /mingw32/bin/{libglib-2.0-0,libpcre-1,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/bin/
+        cp /mingw32/bin/{libgtk-3-0,libgdk-3-0,libgdk_pixbuf-2.0-0,libatk-1.0-0}.dll temp-bin/bin/
+        cp /mingw32/bin/{libgobject-2.0-0,libgmodule-2.0-0,libgio-2.0-0,libffi-7}.dll temp-bin/bin/
+        cp /mingw32/bin/{libpango-1.0-0,libpangocairo-1.0-0,libpangowin32-1.0-0,libpangoft2-1.0-0}.dll temp-bin/bin/
+        cp /mingw32/bin/{libthai-0,libdatrie-1,libharfbuzz-0,libgraphite2,libfribidi-0,libepoxy-0}.dll temp-bin/bin/
+        cp /mingw32/bin/{libfontconfig-1,libexpat-1}.dll temp-bin/bin/
+        cp /mingw32/bin/{libfreetype-6,libpng16-16,libbrotlidec,libbrotlicommon,libbz2-1,zlib1}.dll temp-bin/bin/
+        cp /mingw32/bin/{libcairo-2,libcairo-gobject-2,libpixman-1-0,libstdc++-6}.dll temp-bin/bin/
+        #mkdir -p temp-bin/share
+        #cp /mingw32/share/loader.cache temp-bin/share/
+        #glib-compile-schemas /mingw32/share/glib-2.0/schemas
+        #mkdir -p temp-bin/share/glib-2.0
+        #cp /mingw32/share/glib-2.0/gschemas.compiled temp-bin/share/glib-2.0/
+        mkdir -p temp-bin/share/icons/Adwaita
+        cp -r /mingw32/share/icons/Adwaita/{scalable,icon-theme.cache,index.theme} temp-bin/share/icons/Adwaita/
+        mkdir -p temp-bin/lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{libpixbufloader-svg.dll,libpixbufloader-png.dll} temp-bin/lib/gdk-pixbuf-2.0/2.10.0/loaders/
+    - name: Get Current Date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Archive Windows Distribution (GTK+ 3)
+      uses: actions/upload-artifact@v2
+      with:
+        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (Win32, GTK+ 3)
         path: temp-bin/*
