@@ -919,23 +919,35 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 gboolean
 teco_interface_event_loop(GError **error)
 {
-	static const gchar *icon_files[] = {
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png",
-		NULL
-	};
+	teco_qreg_t *scitecoconfig_reg = teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECOCONFIG", 14);
+	g_assert(scitecoconfig_reg != NULL);
+	g_auto(teco_string_t) scitecoconfig = {NULL, 0};
+	if (!scitecoconfig_reg->vtable->get_string(scitecoconfig_reg,
+	                                           &scitecoconfig.data, &scitecoconfig.len, error))
+		return FALSE;
+	if (teco_string_contains(&scitecoconfig, '\0')) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "Null-character not allowed in filenames");
+		return FALSE;
+	}
 
-	/*
-	 * Assign an icon to the window.
-	 *
-	 * FIXME: On Windows, it may be better to load the icon compiled
-	 * as a resource into the binary.
-	 */
+	static const gchar *icon_files[] = {"sciteco-48.png", "sciteco-32.png", "sciteco-16.png"};
 	GList *icon_list = NULL;
 
-	for (const gchar **file = icon_files; *file; file++) {
-		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(*file, NULL);
+	for (gint i = 0; i < G_N_ELEMENTS(icon_files); i++) {
+		/*
+		 * FIXME: Looking for icon files in $SCITECOCONFIG on Windows makes
+		 * sure they are usually found in the installation directory.
+		 * Theoretically, $SCITECOCONFIG could be changed, though.
+		 * Perhaps it would be cleaner to have a global variable pointing
+		 * to the absolute directory of the binary.
+		 */
+#ifdef G_OS_WIN32
+		g_autofree gchar *icon_path = g_build_filename(scitecoconfig.data, icon_files[i], NULL);
+#else
+		g_autofree gchar *icon_path = g_build_filename(SCITECODATADIR, icon_files[i], NULL);
+#endif
+		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
 
 		/* fail silently if there's a problem with one of the icons */
 		if (icon_pixbuf)
@@ -961,18 +973,19 @@ teco_interface_event_loop(GError **error)
 	                                          GTK_STYLE_PROVIDER(teco_interface.css_var_provider),
 	                                          GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-	/* get path of $SCITECOCONFIG/.teco_css */
-	teco_qreg_t *config_path_reg = teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECOCONFIG", 14);
-	g_assert(config_path_reg != NULL);
-	g_auto(teco_string_t) config_path = {NULL, 0};
-	if (!config_path_reg->vtable->get_string(config_path_reg, &config_path.data, &config_path.len, error))
-		return FALSE;
-	if (teco_string_contains(&config_path, '\0')) {
-		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-		                    "Null-character not allowed in filenames");
-		return FALSE;
+	g_autofree gchar *user_css_file = g_build_filename(scitecoconfig.data, USER_CSS_FILE, NULL);
+	if (!g_file_test(user_css_file, G_FILE_TEST_IS_REGULAR)) {
+		/* use fallback CSS */
+		g_free(user_css_file);
+		/*
+		 * FIXME: See above for icons.
+		 */
+#ifdef G_OS_WIN32
+		user_css_file = g_build_filename(scitecoconfig.data, "fallback.css", NULL);
+#else
+		user_css_file = g_build_filename(SCITECODATADIR, "fallback.css", NULL);
+#endif
 	}
-	g_autofree gchar *user_css_file = g_build_filename(config_path.data, USER_CSS_FILE, NULL);
 
 	GtkCssProvider *user_css_provider = gtk_css_provider_new();
 	/*
@@ -981,14 +994,7 @@ teco_interface_event_loop(GError **error)
 	 * For the time being we just silently ignore parsing errors.
 	 * They will be printed to stderr by Gtk anyway.
 	 */
-	if (g_file_test(user_css_file, G_FILE_TEST_IS_REGULAR))
-		/* open user CSS */
-		gtk_css_provider_load_from_path(user_css_provider, user_css_file, NULL);
-	else
-		/* use fallback CSS */
-		gtk_css_provider_load_from_path(user_css_provider,
-		                                SCITECODATADIR G_DIR_SEPARATOR_S "fallback.css",
-		                                NULL);
+	gtk_css_provider_load_from_path(user_css_provider, user_css_file, NULL);
 	gtk_style_context_add_provider_for_screen(default_screen,
 	                                          GTK_STYLE_PROVIDER(user_css_provider),
 	                                          GTK_STYLE_PROVIDER_PRIORITY_USER);
