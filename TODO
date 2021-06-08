@@ -2,12 +2,6 @@ Tasks:
  * Wiki page about creating and maintaining lexer configurations.
    Also mention how to use the "lexer.test..." macros in the
    "edit" hook.
- * Use Travis CI for Continuous Integration and perhaps even for providing
-   nightly builds on Gitlab. This would solve the problem of releases
-   lagging behind and esp. the satisfy Windows users who continuously
-   ask for prebuilt binaries.
- * OS X port (macports and/or homebrew).
-   Maybe Travis CI can help as well.
  * Scinterm: implement wattrget() for netbsd-curses.
    May already be fixed in newer versions.
 
@@ -353,6 +347,13 @@ Features:
    all of SciTECO can be run against nodejs as a runtime.
    I'm not aware of any (working) alternatives, like cross-compiling
    for the JVM.
+ * Windows supports virtual terminals now. See:
+   https://docs.microsoft.com/en-us/windows/console/classic-vs-vt
+   Perhaps we should transition from PDCurses to something using
+   terminal escape sequences like ncurses for Windows.
+ * Currently, you cannot pass UTF-8 parameters to SciTECO macros.
+   This is not critical since we don't support Unicode anyway.
+   Sooner or later however we should use g_win32_get_command_line().
 
 Optimizations:
  * teco_string_append() could be optimized by ORing a padding
