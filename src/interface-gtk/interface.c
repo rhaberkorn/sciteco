@@ -931,23 +931,34 @@ teco_interface_event_loop(GError **error)
 		return FALSE;
 	}
 
-	static const gchar *icon_files[] = {"sciteco-48.png", "sciteco-32.png", "sciteco-16.png"};
+#ifdef G_OS_WIN32
+	/*
+	 * FIXME: This is necessary so that the icon themes are found in the same
+	 * directory as sciteco.exe.
+	 * This fails of course when $SCITECOCONFIG is changed.
+	 * We should perhaps always use the absolute path of sciteco.exe.
+	 * If you want to install SciTECO differently, you can still set
+	 * $XDG_DATA_DIRS.
+	 *
+	 * FIXME FIXME FIXME: This is also currently broken.
+	 */
+	//g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
+	//gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
+#else
+	/*
+	 * Load icons for the GTK window.
+	 * This is not necessary on Windows since the icon included
+	 * as a resource will be used by default.
+	 */
+	static const gchar *icon_files[] = {
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png"
+	};
 	GList *icon_list = NULL;
 
 	for (gint i = 0; i < G_N_ELEMENTS(icon_files); i++) {
-		/*
-		 * FIXME: Looking for icon files in $SCITECOCONFIG on Windows makes
-		 * sure they are usually found in the installation directory.
-		 * Theoretically, $SCITECOCONFIG could be changed, though.
-		 * Perhaps it would be cleaner to have a global variable pointing
-		 * to the absolute directory of the binary.
-		 */
-#ifdef G_OS_WIN32
-		g_autofree gchar *icon_path = g_build_filename(scitecoconfig.data, icon_files[i], NULL);
-#else
-		g_autofree gchar *icon_path = g_build_filename(SCITECODATADIR, icon_files[i], NULL);
-#endif
-		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_path, NULL);
+		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_files[i], NULL);
 
 		/* fail silently if there's a problem with one of the icons */
 		if (icon_pixbuf)
@@ -957,6 +968,7 @@ teco_interface_event_loop(GError **error)
 	gtk_window_set_default_icon_list(icon_list);
 
 	g_list_free_full(icon_list, g_object_unref);
+#endif
 
 	teco_interface_refresh_info();
 
@@ -1082,11 +1094,8 @@ static void
 teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                         GdkRectangle *allocation, gpointer user_data)
 {
-	/*
-	 * The GDK lock is already held, so we avoid using teco_view_ssm().
-	 */
-	scintilla_send_message(SCINTILLA(widget), SCI_SETXCARETPOLICY,
-	                       CARET_SLOP, allocation->width/2);
+	teco_view_ssm(teco_interface.cmdline_view,
+	              SCI_SETXCARETPOLICY, CARET_SLOP, allocation->width/2);
 }
 
 static gboolean

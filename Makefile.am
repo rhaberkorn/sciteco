@@ -18,6 +18,8 @@ dist_pkgdata_DATA += ico/sciteco-16.png ico/sciteco-32.png \
                      ico/sciteco-48.png
 EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
+EXTRA_DIST += win32/loaders.cache
+
 # Distribute entire scintilla directory and
 # do some manual cleanup
 dist-hook:
