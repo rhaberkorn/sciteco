@@ -1092,11 +1092,8 @@ static void
 teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                         GdkRectangle *allocation, gpointer user_data)
 {
-	/*
-	 * The GDK lock is already held, so we avoid using teco_view_ssm().
-	 */
-	scintilla_send_message(SCINTILLA(widget), SCI_SETXCARETPOLICY,
-	                       CARET_SLOP, allocation->width/2);
+	teco_view_ssm(teco_interface.cmdline_view,
+	              SCI_SETXCARETPOLICY, CARET_SLOP, allocation->width/2);
 }
 
 static gboolean
@@ -1157,7 +1154,6 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 	 * `#pragma GCC diagnostic ignored`.
 	 */
 	//gdk_window_freeze_updates(top_window);
-	gdk_window_freeze_toplevel_updates_libgtk_only(top_window);
 
 	/*
 	 * The event queue might be filled when pressing keys when SciTECO
@@ -1166,9 +1162,13 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 	do {
 		g_autoptr(GdkEvent) event = g_queue_pop_head(teco_interface.event_queue);
 
+		gdk_window_freeze_toplevel_updates_libgtk_only(top_window);
+
 		teco_sigint_occurred = FALSE;
 		teco_interface_handle_key_press(event->key.keyval, event->key.state, &error);
 		teco_sigint_occurred = FALSE;
+
+		gdk_window_thaw_toplevel_updates_libgtk_only(top_window);
 
 		if (g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
 			gtk_main_quit();
@@ -1176,7 +1176,6 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		}
 	} while (!g_queue_is_empty(teco_interface.event_queue));
 
-	gdk_window_thaw_toplevel_updates_libgtk_only(top_window);
 	//gdk_window_thaw_updates(top_window);
 
 	return TRUE;
