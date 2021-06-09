@@ -1,10 +1,6 @@
 name: Continuous Integration
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
   ubuntu:
@@ -79,6 +75,10 @@ jobs:
 
     - run: make
     - run: make install
+    - run: |
+        echo -n 0123456789 | wc -c
+        sciteco -e "@EC'echo -n 0123456789' Z="
+        sciteco -e "0,128ED @EC'echo -n 0123456789' Z="
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
