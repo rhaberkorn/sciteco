@@ -38,7 +38,7 @@ AT_CHECK([$SCITECO -e '0U.[[AB]]'], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([8-bit cleanlyness])
-AT_CHECK([$SCITECO -e "0:@EUa/f^@^@/ :Qa-4\"N(0/0)' GaZ-4\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z= Z-4\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])
@@ -53,8 +53,11 @@ AT_CHECK([$SCITECO -e "50*1000*1000,2EJ <[[a> !]]!"], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Execute external command])
-AT_CHECK([$SCITECO -e "@EC'echo -n 0123456789' Z-10\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "0,128ED @EC'echo -n 0123456789' Z-10\"N(0/0)'"], 0, ignore, ignore)
+# TODO: It would be a better test to generate a random number of bytes.
+# Unfortunately, neither $RANDOM, shuf nor jot are portable.
+# So we have to wait until SciTECO supports a random number generator.
+AT_CHECK([$SCITECO -e "@EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "0,128ED @EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Regression Tests])
@@ -81,7 +84,7 @@ AT_CLEANUP
 
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
-AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'cat /dev/zero'"], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Known Bugs])
