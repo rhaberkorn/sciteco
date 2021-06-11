@@ -6,6 +6,13 @@ AT_COLOR_TESTS
 # Since errors cannot be yielded explicitly, we use the
 # idiom "(0/0)" to enforce a "Division by zero" error
 # whenever we want to fail.
+#
+# NOTE: Square brackets are significant for M4 but
+# often required in TECO code as well.
+# We therefore use double brackets [[ ... ]]
+# (translated to [ ... ]) in simple cases where balanced
+# brackets are required in TECO code as well and
+# quadrigraphs (@<:@ and @:>@) in all other cases.
 
 AT_BANNER([Features])
 
@@ -32,9 +39,8 @@ AT_CHECK([$SCITECO -e '0U#ab'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '0U.#ab'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '0U[[AB]]'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '0U.[[AB]]'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '0U[[AB^Q@:>@(0/0)]]'], 0, ignore, ignore)
 # TODO: String building in Q-Register definitions
-# TODO: Escaping of braces.
-# Unfortunately, braces are significant for M4. Perhaps use $'...'.
 AT_CLEANUP
 
 AT_SETUP([8-bit cleanlyness])
@@ -48,8 +54,7 @@ AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, igno
 AT_CLEANUP
 
 AT_SETUP([Memory limiting])
-# NOTE: We cannot escape [, so we have to balance it.
-AT_CHECK([$SCITECO -e "50*1000*1000,2EJ <[[a> !]]!"], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e "50*1000*1000,2EJ <@<:@a>"], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Execute external command])
@@ -64,14 +69,11 @@ AT_BANNER([Regression Tests])
 
 AT_SETUP([Glob patterns with character classes])
 # Also checks closing brackets as part of the character set.
-# NOTE: The worse-than-average escaping of the square brackets with
-# ^EU< and ^EU> is necessary here since it is the current M4
-# quotation character and must be balanced:
-AT_CHECK([$SCITECO -e "91U< 93U> :@EN/*.^EU<^EU>ch^EU>/foo.h/\"F(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e ":@EN/*.[[@:>@ch]]/foo.h/\"F(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Glob patterns with unclosed trailing brackets])
-AT_CHECK([$SCITECO -e "91U< :@EN/*.^EU<h/foo.^EU<h/\"F(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e ":@EN/*.@<:@h/foo.@<:@h/\"F(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searching with large counts])
