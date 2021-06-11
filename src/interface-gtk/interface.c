@@ -941,6 +941,7 @@ teco_interface_event_loop(GError **error)
 	 * $XDG_DATA_DIRS.
 	 */
 	g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
+	g_assert(gtk_icon_theme_get_default() != NULL);
 	gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
 #else
 	/*
