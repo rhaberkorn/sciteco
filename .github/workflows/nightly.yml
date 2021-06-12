@@ -207,9 +207,9 @@ jobs:
         #cp /mingw32/share/glib-2.0/gschemas.compiled temp-bin/share/glib-2.0/
         mkdir -p temp-bin/icons/Adwaita
         cp -r /mingw32/share/icons/Adwaita/{scalable*,index.theme} temp-bin/icons/Adwaita/
-        gtk-update-icon-cache temp-bin/icons/Adwaita/
+        gtk-update-icon-cache-3.0 temp-bin/icons/Adwaita/
         #cp -r /mingw32/share/icons/hicolor temp-bin/icons/
-        #gtk-update-icon-cache temp-bin/icons/hicolor
+        #gtk-update-icon-cache-3.0 temp-bin/icons/hicolor
         # FIXME: It's possible to change the location of loaders.cache via $GDK_PIXBUF_MODULE_FILE.
         # If we did that, we could avoid "reusing" the lib/ directory.
         # This is important when somebody changes $SCITECOPATH.
