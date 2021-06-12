@@ -932,6 +932,13 @@ teco_interface_event_loop(GError **error)
 	}
 
 #ifdef G_OS_WIN32
+        gchar **paths;
+	gint n_elements;
+	gtk_icon_theme_get_search_path(gtk_icon_theme_get_default(), &paths, &n_elements);
+	for (int i = 0; i < n_elements; i++)
+		g_printf("icon search path: %s\n", paths[i]);
+	g_strfreev(paths);
+
 	/*
 	 * FIXME: This is necessary so that the icon themes are found in the same
 	 * directory as sciteco.exe.
@@ -940,8 +947,13 @@ teco_interface_event_loop(GError **error)
 	 * If you want to install SciTECO differently, you can still set
 	 * $XDG_DATA_DIRS.
 	 */
-//	g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
-//	gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
+	g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
+	gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
+
+	gtk_icon_theme_get_search_path(gtk_icon_theme_get_default(), &paths, &n_elements);
+	for (int i = 0; i < n_elements; i++)
+		g_printf("icon search path: %s\n", paths[i]);
+	g_strfreev(paths);
 #else
 	/*
 	 * Load icons for the GTK window.
