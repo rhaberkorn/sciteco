@@ -86,7 +86,7 @@ jobs:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
         # The additional Windows libraries are for PDCursesMod/WinGUI:
         PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
-        LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32
+        LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32 -luuid
         # FIXME: Once there is an --enable-lto, we should use that.
         CFLAGS: -g -O3 -flto -DGLIB_STATIC_COMPILATION
         CXXFLAGS: -g -O3 -flto
