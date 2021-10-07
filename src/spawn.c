@@ -35,6 +35,17 @@
 #include "error.h"
 #include "spawn.h"
 
+/*
+ * Glib v2.70 deprecates g_spawn_check_exit_status(),
+ * renaming it to g_spawn_check_wait_status().
+ * This leaves no way to work on both new and old versions without warnings.
+ */
+#if GLIB_CHECK_VERSION(2,70,0)
+#define teco_spawn_check_wait_status g_spawn_check_wait_status
+#else
+#define teco_spawn_check_wait_status g_spawn_check_exit_status
+#endif
+
 static void teco_spawn_child_watch_cb(GPid pid, gint status, gpointer data);
 static gboolean teco_spawn_stdin_watch_cb(GIOChannel *chan,
                                           GIOCondition condition, gpointer data);
@@ -538,9 +549,9 @@ teco_spawn_child_watch_cb(GPid pid, gint status, gpointer data)
 	/*
 	 * teco_spawn_stdout_watch_cb() might have set the error.
 	 */
-	if (!teco_spawn_ctx.error && !g_spawn_check_exit_status(status, &teco_spawn_ctx.error))
-		teco_spawn_ctx.rc = teco_spawn_ctx.error->domain == G_SPAWN_EXIT_ERROR
-					? ABS(teco_spawn_ctx.error->code) : TECO_FAILURE;
+	if (!teco_spawn_ctx.error && !teco_spawn_check_wait_status(status, &teco_spawn_ctx.error))
+			teco_spawn_ctx.rc = teco_spawn_ctx.error->domain == G_SPAWN_EXIT_ERROR
+						? ABS(teco_spawn_ctx.error->code) : TECO_FAILURE;
 
 	g_main_loop_quit(teco_spawn_ctx.mainloop);
 }
