@@ -52,9 +52,8 @@ canonicalize() {
 
 # Checks for programs.
 LT_INIT
+# FIXME: Check for -std=gnu11?
 AC_PROG_CC
-# FIXME: We want -std=gnu11
-AC_PROG_CC_C99
 AC_PROG_SED
 AC_PROG_GREP
 AC_PROG_INSTALL
@@ -131,9 +130,6 @@ PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.44], [
 	CXXFLAGS="$CXXFLAGS $LIBGLIB_CFLAGS"
 	LIBS="$LIBS $LIBGLIB_LIBS"
 ])
-
-# Checks for header files.
-AC_HEADER_STDC
 
 case $host in
 *-mingw*)
