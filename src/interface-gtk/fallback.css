@@ -46,9 +46,9 @@
 /*
  * The message bar (#sciteco-message-bar).
  *
- * The "question" class refers to G_MESSAGE_QUESTION.
+ * The "question" class refers to GTK_MESSAGE_QUESTION.
  * This is used for showing user-level messages for the sole
- * reason that there is no class for G_MESSAGE_OTHER that
+ * reason that there is no class for GTK_MESSAGE_OTHER that
  * we could use for styling.
  */
 #sciteco-message-bar .label {
@@ -56,20 +56,20 @@
 	text-shadow: none;
 }
 
-#sciteco-message-bar {
+#sciteco-message-bar * {
 	background-image: none;
 }
 
-#sciteco-message-bar.question {
+#sciteco-message-bar.question * {
 	background-color: @sciteco_default_fg_color;
 }
-#sciteco-message-bar.info {
+#sciteco-message-bar.info * {
 	background-color: green;
 }
-#sciteco-message-bar.error {
+#sciteco-message-bar.warning * {
 	background-color: yellow;
 }
-#sciteco-message-bar.error {
+#sciteco-message-bar.error * {
 	background-color: red;
 }
 
