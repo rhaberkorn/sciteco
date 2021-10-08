@@ -247,7 +247,7 @@ case $INTERFACE in
 		AC_MSG_RESULT([$XCURSES_LIBS])
 		LIBS="$LIBS $XCURSES_LIBS"
 
-		# This is also used by the curses.h itself:
+		# It is crucial to define XCURSES before including curses.h.
 		AC_DEFINE(XCURSES, 1, [Enable PDCurses/XCurses extensions])
 
 		AC_DEFINE(PDCURSES_GUI, 1, [PDCurses with GUI window])
@@ -278,6 +278,11 @@ case $INTERFACE in
 
 		AC_CHECK_FUNC([PDC_set_resize_limits], [
 			AC_DEFINE(PDCURSES_MOD, 1, [PDCursesMod extensions])
+		])
+
+		# It is crucial to define PDC_WIDE before including curses.h.
+		AC_CHECK_FUNC([add_wch], [
+			AC_DEFINE(PDC_WIDE, 1, [Built with wide-character support])
 		])
 
 		# This is detectable at runtime on PDCursesMod using PDC_get_version().
