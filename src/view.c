@@ -290,7 +290,8 @@ teco_undo_restore_savepoint_push(gchar *savepoint, const gchar *filename)
 		strcpy(ctx->filename, filename);
 
 #ifdef G_OS_WIN32
-		ctx->orig_attrs = teco_file_get_attributes(filename);
+		/* NOTE: `filename` might no longer exist on disk */
+		ctx->orig_attrs = teco_file_get_attributes(savepoint);
 		if (ctx->orig_attrs != TECO_FILE_INVALID_ATTRIBUTES)
 			teco_file_set_attributes(savepoint,
 			                         ctx->orig_attrs | FILE_ATTRIBUTE_HIDDEN);
