@@ -2,13 +2,8 @@ Tasks:
  * Wiki page about creating and maintaining lexer configurations.
    Also mention how to use the "lexer.test..." macros in the
    "edit" hook.
- * Scinterm: implement wattrget() for netbsd-curses.
-   May already be fixed in newer versions.
 
 Known Bugs:
- * Characters are not correctly drawn in the GTK backend (especially underscores).
-   This may be a regression due to ever changing GTK APIs and
-   upgrading Scintilla may already help.
  * Rubbing out <LF> via ^W will rub out more than expected.
  * After commands like ECcat /dev/zero$ result in OOM,
    we do not correctly recover, even though malloc_trim() is called.
@@ -83,6 +78,8 @@ Known Bugs:
    window titles on exit using XTerm.
  * Glib (error) messages are not integrated with SciTECO's
    logging system.
+ * Out-of-tree builds are broken.
+   See contrib/scintilla.am.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -274,7 +271,6 @@ Features:
      This means patching Scintilla, so it does not break lines
      on new line characters.
    * A Scintilla view will allow syntax highlighting
- * improve speed of GTK interface
  * command line could highlight dead branches (e.g. gray them out)
  * Add special Q-Register for dot:
    Would simplify inserting dot with string building and saving/restoring
@@ -351,22 +347,31 @@ Features:
    https://docs.microsoft.com/en-us/windows/console/classic-vs-vt
    Perhaps we should transition from PDCurses to something using
    terminal escape sequences like ncurses for Windows.
+ * Improve the message line so it can log multiple messages.
+   Especially important on GUI platforms and Win32 so we can get
+   rid of the attached console window.
+ * On Unix/X11, it may be possible to draw the Gtk+ UI into the
+   same window as the current terminal.
+   Urxvt has $WINDOWID for instance which could be automatically
+   passed into sciteco by wrapping it in a shell function/alias.
  * Currently, you cannot pass UTF-8 parameters to SciTECO macros.
    This is not critical since we don't support Unicode anyway.
    Sooner or later however we should use g_win32_get_command_line().
+ * Some platforms like MinGW and some Linux flavours have
+   native Scintilla packages.
+   Perhaps it makes sense to be able to build against them
+   using --with-scintilla.
+ * Update the lexer library based on a SciTE that corresponds
+   to our current Scintilla version.
 
 Optimizations:
+ * There is should be a common error code for null-byte tests.
  * teco_string_append() could be optimized by ORing a padding
    into the realloc() size (e.g. 0xFF).
    However, this has not proven effective on Linux/glibc
    probably because it will already allocate in blocks of
    roughly the same size.
    Should be tested on Windows, though.
- * Scintilla: SETDOCPOINTER resets representations, so we
-   have to set SciTECO representations up again often when
-   working with Q-Registers. Has been benchmarked to be a
-   major slow-down.
-   This should be patched in Scintilla.
  * commonly used (special) Q-Registers could be cached,
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
