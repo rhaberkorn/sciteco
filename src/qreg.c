@@ -1140,14 +1140,12 @@ teco_qreg_stack_pop(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+void
 teco_qreg_stack_clear(void)
 {
 	g_array_set_clear_func(teco_qreg_stack, (GDestroyNotify)teco_qreg_stack_entry_clear);
 	g_array_free(teco_qreg_stack, TRUE);
 }
-#endif
 
 gboolean
 teco_ed_hook(teco_ed_hook_t type, GError **error)

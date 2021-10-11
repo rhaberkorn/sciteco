@@ -179,6 +179,7 @@ extern teco_qreg_table_t teco_qreg_table_globals;
 
 gboolean teco_qreg_stack_push(teco_qreg_t *qreg, GError **error);
 gboolean teco_qreg_stack_pop(teco_qreg_t *qreg, GError **error);
+void teco_qreg_stack_clear(void);
 
 typedef enum {
 	TECO_ED_HOOK_ADD = 1,

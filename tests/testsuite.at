@@ -89,6 +89,10 @@ AT_SETUP([Memory limiting during spawning])
 AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Q-Register stack cleanup])
+AT_CHECK([$SCITECO -e '@<:@a'], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Pattern matching overflow])

@@ -457,6 +457,7 @@ cleanup:
 	teco_ring_cleanup();
 	teco_qreg_table_clear(&local_qregs);
 	teco_qreg_table_clear(&teco_qreg_table_globals);
+	teco_qreg_stack_clear();
 	teco_view_free(teco_qreg_view);
 #endif
 	teco_interface_cleanup();
