@@ -45,9 +45,6 @@ void undo__teco_view_ssm(teco_view_t *, unsigned int, uptr_t, sptr_t);
 void teco_view_set_representations(teco_view_t *ctx);
 
 /** @memberof teco_view_t */
-void undo__teco_view_set_representations(teco_view_t *);
-
-/** @memberof teco_view_t */
 static inline void
 teco_view_set_scintilla_undo(teco_view_t *ctx, gboolean state)
 {

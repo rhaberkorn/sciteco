@@ -107,6 +107,14 @@ teco_view_setup(teco_view_t *ctx)
 	 */
 	teco_view_ssm(ctx, SCI_STYLESETFORE, STYLE_CALLTIP, 0x000000);
 	teco_view_ssm(ctx, SCI_STYLESETBACK, STYLE_CALLTIP, 0xFFFFFF);
+
+	/*
+	 * Since we have patched out Scintilla's original SetRepresentations(),
+	 * it no longer resets them on SCI_SETDOCPOINTER.
+	 * Therefore it is sufficient for all kinds of views to initialize
+	 * the representations only once.
+	 */
+	teco_view_set_representations(ctx);
 }
 
 TECO_DEFINE_UNDO_CALL(teco_view_ssm, teco_view_t *, unsigned int, uptr_t, sptr_t);
@@ -127,8 +135,6 @@ teco_view_set_representations(teco_view_t *ctx)
 		teco_view_ssm(ctx, SCI_SETREPRESENTATION, (uptr_t)buf, (sptr_t)reps[cc]);
 	}
 }
-
-TECO_DEFINE_UNDO_CALL(teco_view_set_representations, teco_view_t *);
 
 /**
  * Loads the view's document by reading all data from

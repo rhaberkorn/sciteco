@@ -45,8 +45,6 @@ teco_buffer_new(void)
 	teco_buffer_t *ctx = g_new0(teco_buffer_t, 1);
 	ctx->view = teco_view_new();
 	teco_view_setup(ctx->view);
-	/* only have to do this once: */
-	teco_view_set_representations(ctx->view);
 	return ctx;
 }
 

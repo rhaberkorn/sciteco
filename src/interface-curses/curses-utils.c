@@ -43,7 +43,7 @@ teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 	while (len > 0) {
 		/*
 		 * NOTE: This mapping is similar to
-		 * View::set_representations()
+		 * teco_view_set_representations().
 		 */
 		switch (*str) {
 		case '\e':

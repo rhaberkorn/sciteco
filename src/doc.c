@@ -41,19 +41,6 @@ teco_doc_get_scintilla(teco_doc_t *ctx)
 void
 teco_doc_edit(teco_doc_t *ctx)
 {
-	/*
-	 * FIXME: SCI_SETREPRESENTATION does not redraw
-	 * the screen - also that would be very slow.
-	 * Since SCI_SETDOCPOINTER resets the representation
-	 * (this should probably be fixed in Scintilla),
-	 * the screen is garbled since the layout cache
-	 * is calculated with the default representations.
-	 * We work around this by temporarily disabling the
-	 * layout cache.
-	 */
-	gint old_mode = teco_view_ssm(teco_qreg_view, SCI_GETLAYOUTCACHE, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_SETLAYOUTCACHE, SC_CACHE_NONE, 0);
-
 	teco_view_ssm(teco_qreg_view, SCI_SETDOCPOINTER, 0,
 	              (sptr_t)teco_doc_get_scintilla(ctx));
 	teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
@@ -61,12 +48,11 @@ teco_doc_edit(teco_doc_t *ctx)
 	teco_view_ssm(teco_qreg_view, SCI_SETSEL, ctx->anchor, (sptr_t)ctx->dot);
 
 	/*
-	 * Default TECO-style character representations.
-	 * They are reset on EVERY SETDOCPOINTER call by Scintilla.
+	 * NOTE: Thanks to a custom Scintilla patch, se representations
+	 * do not get reset after SCI_SETDOCPOINTER, so they have to be
+	 * initialized only once.
 	 */
-	teco_view_set_representations(teco_qreg_view);
-
-	teco_view_ssm(teco_qreg_view, SCI_SETLAYOUTCACHE, old_mode, 0);
+	//teco_view_set_representations(teco_qreg_view);
 }
 
 /** @memberof teco_doc_t */
@@ -74,20 +60,15 @@ void
 teco_doc_undo_edit(teco_doc_t *ctx)
 {
 	/*
-	 * FIXME: see above in teco_doc_edit()
+	 * NOTE: see above in teco_doc_edit()
 	 */
-	undo__teco_view_ssm(teco_qreg_view, SCI_SETLAYOUTCACHE,
-	                    teco_view_ssm(teco_qreg_view, SCI_GETLAYOUTCACHE, 0, 0), 0);
-
-	undo__teco_view_set_representations(teco_qreg_view);
+	//undo__teco_view_set_representations(teco_qreg_view);
 
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETSEL, ctx->anchor, (sptr_t)ctx->dot);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETXOFFSET, ctx->xoffset, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETDOCPOINTER, 0,
 	               (sptr_t)teco_doc_get_scintilla(ctx));
-
-	undo__teco_view_ssm(teco_qreg_view, SCI_SETLAYOUTCACHE, SC_CACHE_NONE, 0);
 }
 
 /** @memberof teco_doc_t */
