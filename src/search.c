@@ -541,9 +541,11 @@ teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
 		}
 	}
 
-	if (matched_from >= 0 && matched_to >= 0)
+	if (matched_from >= 0 && matched_to >= 0) {
 		/* match success */
-		teco_interface_ssm(SCI_SETSEL, matched_from, matched_to);
+		teco_interface_ssm(SCI_SETSELECTIONSTART, matched_from, 0);
+		teco_interface_ssm(SCI_SETSELECTIONEND, matched_to, 0);
+	}
 
 	return TRUE;
 }
@@ -554,10 +556,12 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	static const GRegexCompileFlags flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
 	                                        G_REGEX_DOTALL | G_REGEX_RAW;
 
-	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_SETSEL,
-		                         teco_interface_ssm(SCI_GETANCHOR, 0, 0),
-		                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0));
+	if (teco_current_doc_must_undo()) {
+		undo__teco_interface_ssm(SCI_SETSELECTIONEND,
+		                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
+		undo__teco_interface_ssm(SCI_SETSELECTIONSTART,
+		                         teco_interface_ssm(SCI_GETANCHOR, 0, 0), 0);
+	}
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
 	g_assert(search_reg != NULL);
@@ -648,7 +652,7 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 		return TRUE;
 
 failure:
-	teco_interface_ssm(SCI_GOTOPOS, teco_search_parameters.dot, 0);
+	teco_interface_ssm(SCI_SETEMPTYSELECTION, teco_search_parameters.dot, 0);
 	return TRUE;
 }
 
@@ -898,8 +902,8 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 		gint anchor = teco_interface_ssm(SCI_GETANCHOR, 0, 0);
 
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_GOTOPOS, dot, 0);
-		teco_interface_ssm(SCI_GOTOPOS, anchor, 0);
+			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, dot, 0);
+		teco_interface_ssm(SCI_SETEMPTYSELECTION, anchor, 0);
 
 		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot,
 		                   anchor - teco_search_parameters.dot);

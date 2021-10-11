@@ -880,6 +880,16 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 	}
 
 	/*
+	 * We avoid Scintilla messages that scroll the caret during macro
+	 * execution since it has been benchmarked to be very a very costly operation.
+	 * Instead we do it only once after every keypress.
+	 *
+	 * FIXME: This could be in teco_cmdline_keypress() since it is common among
+	 * all interface implementations.
+	 */
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
+
+	/*
 	 * The styles configured via Scintilla might change
 	 * with every keypress.
 	 */

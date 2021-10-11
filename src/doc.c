@@ -45,7 +45,8 @@ teco_doc_edit(teco_doc_t *ctx)
 	              (sptr_t)teco_doc_get_scintilla(ctx));
 	teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
 	teco_view_ssm(teco_qreg_view, SCI_SETXOFFSET, ctx->xoffset, 0);
-	teco_view_ssm(teco_qreg_view, SCI_SETSEL, ctx->anchor, (sptr_t)ctx->dot);
+	teco_view_ssm(teco_qreg_view, SCI_SETSELECTIONSTART, ctx->anchor, 0);
+	teco_view_ssm(teco_qreg_view, SCI_SETSELECTIONEND, ctx->dot, 0);
 
 	/*
 	 * NOTE: Thanks to a custom Scintilla patch, se representations
@@ -64,7 +65,8 @@ teco_doc_undo_edit(teco_doc_t *ctx)
 	 */
 	//undo__teco_view_set_representations(teco_qreg_view);
 
-	undo__teco_view_ssm(teco_qreg_view, SCI_SETSEL, ctx->anchor, (sptr_t)ctx->dot);
+	undo__teco_view_ssm(teco_qreg_view, SCI_SETSELECTIONEND, ctx->dot, 0);
+	undo__teco_view_ssm(teco_qreg_view, SCI_SETSELECTIONSTART, ctx->anchor, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETXOFFSET, ctx->xoffset, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETDOCPOINTER, 0,

@@ -196,7 +196,6 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 		gchar *str = teco_expressions_format(buffer, value);
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 		teco_interface_ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
-		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 		teco_ring_dirtify();
 
@@ -459,7 +458,6 @@ teco_state_start_cmdline_push(teco_machine_main_t *ctx, GError **error)
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_interface_ssm(SCI_CLEARALL, 0, 0);
 	teco_interface_ssm(SCI_ADDTEXT, teco_cmdline.pc, (sptr_t)teco_cmdline.str.data);
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 
 	/* must always support undo on global register */
@@ -510,9 +508,9 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 
 	if (teco_validate_pos(v)) {
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_GOTOPOS,
+			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION,
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
-		teco_interface_ssm(SCI_GOTOPOS, v, 0);
+		teco_interface_ssm(SCI_SETEMPTYSELECTION, v, 0);
 
 		if (teco_machine_main_eval_colon(ctx))
 			teco_expressions_push(TECO_SUCCESS);
@@ -532,9 +530,9 @@ teco_move_chars(teco_int_t n)
 	if (!teco_validate_pos(pos + n))
 		return TECO_FAILURE;
 
-	teco_interface_ssm(SCI_GOTOPOS, pos + n, 0);
+	teco_interface_ssm(SCI_SETEMPTYSELECTION, pos + n, 0);
 	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 
 	return TECO_SUCCESS;
 }
@@ -600,9 +598,11 @@ teco_move_lines(teco_int_t n)
 	if (!teco_validate_line(line))
 		return TECO_FAILURE;
 
-	teco_interface_ssm(SCI_GOTOLINE, line, 0);
+	/* avoids scrolling caret (expensive operation) */
+	teco_interface_ssm(SCI_SETEMPTYSELECTION,
+	                   teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0), 0);
 	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 
 	return TECO_SUCCESS;
 }
@@ -714,11 +714,11 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 	}
 	if (v < 0) {
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 		if (teco_machine_main_eval_colon(ctx))
 			teco_expressions_push(TECO_SUCCESS);
 	} else {
-		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 		if (!teco_machine_main_eval_colon(ctx)) {
 			teco_error_move_set(error, "W");
 			return;
@@ -766,12 +766,12 @@ teco_delete_words(teco_int_t n)
 	if (n >= 0) {
 		if (size != teco_interface_ssm(SCI_GETLENGTH, 0, 0)) {
 			teco_interface_ssm(SCI_UNDO, 0, 0);
-			teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+			teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 		}
 		return TECO_FAILURE;
 	}
 
-	undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+	undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	teco_ring_dirtify();
@@ -917,7 +917,7 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 
 	if (teco_current_doc_must_undo()) {
 		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 
@@ -2368,7 +2368,6 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	for (int i = args; i > 0; i--)
 		if (!teco_expressions_pop_num_calc(NULL, 0, error))
 			return FALSE;
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
 
@@ -2385,7 +2384,6 @@ teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_interface_ssm(SCI_ADDTEXT, new_chars,
 	                   (sptr_t)(str->data + str->len - new_chars));
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
 
@@ -2455,7 +2453,6 @@ teco_state_insert_indent_initial(teco_machine_main_t *ctx, GError **error)
 		memset(spaces, ' ', sizeof(spaces));
 		teco_interface_ssm(SCI_ADDTEXT, sizeof(spaces), (sptr_t)spaces);
 	}
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
 

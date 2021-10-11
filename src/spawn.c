@@ -296,9 +296,9 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 
 	if (!teco_spawn_ctx.register_argument) {
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_GOTOPOS,
+			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION,
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
-		teco_interface_ssm(SCI_GOTOPOS, teco_spawn_ctx.to, 0);
+		teco_interface_ssm(SCI_SETEMPTYSELECTION, teco_spawn_ctx.to, 0);
 	}
 
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
@@ -319,7 +319,6 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 		/* undo action is only effective if it changed anything */
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
-		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 		teco_ring_dirtify();
 	}
 

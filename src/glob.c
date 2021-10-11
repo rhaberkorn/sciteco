@@ -509,7 +509,6 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 				teco_interface_ssm(SCI_ADDTEXT, strlen(filename),
 				                   (sptr_t)filename);
 				teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)"\n");
-				teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 				teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 			}
 
@@ -550,7 +549,6 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 			matching = TRUE;
 		}
 
-		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	}
 
