@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.inno]{
-  ESSETLEXERLANGUAGEinno
+  ESSETILEXERinno
   0ESSETKEYWORDS
     code components custommessages dirs files icons ini installdelete
     langoptions languages messages registry run setup types tasks uninstalldelete

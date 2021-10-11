@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.lout]{
-  ESSETLEXERLANGUAGElout
+  ESSETILEXERlout
   0ESSETKEYWORDS
     @OptGall @FontDef @Family @Face @Name @Metrics @ExtraMetrics @Mapping
     @Recode @Filter @FilterIn @FilterOut @FilterErr @Common @Rump @Meld @Insert @OneOf

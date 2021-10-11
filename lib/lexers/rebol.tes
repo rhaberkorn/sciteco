@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.rebol]{
-  ESSETLEXERLANGUAGErebol
+  ESSETILEXERrebol
   0ESSETKEYWORDS
     about abs absolute add alert alias all alter and any any-block?
     any-function? any-string? any-type? any-word? append arccosine arcsine arctangent array

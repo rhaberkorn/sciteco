@@ -31,12 +31,12 @@ License:
  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Files: scintilla/*
-Copyright: Copyright 1998-2003 Neil Hodgson <neilh@scintilla.org>
+Files: contrib/scintilla/* contrib/lexilla/*
+Copyright: Copyright 1998-2021 Neil Hodgson <neilh@scintilla.org>
 License:
- License for Scintilla and SciTE
+ License for Lexilla, Scintilla, and SciTE
  .
- Copyright 1998-2003 by Neil Hodgson <neilh@scintilla.org>
+ Copyright 1998-2021 by Neil Hodgson <neilh@scintilla.org>
  .
  All Rights Reserved 
  .
@@ -55,12 +55,12 @@ License:
  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE 
  OR PERFORMANCE OF THIS SOFTWARE.
 
-Files: scintilla/scinterm/*
-Copyright: Copyright 2012-2016 Mitchell <mitchell.att.foicica.com>
+Files: contrib/scinterm/*
+Copyright: Copyright 2012-2020 Mitchell <mitchell.att.foicica.com>
 License:
  The MIT License
  .
- Copyright (c) 2012-2016 Mitchell
+ Copyright (c) 2012-2020 Mitchell
  .
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal

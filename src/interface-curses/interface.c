@@ -57,7 +57,7 @@
 #endif
 
 #include <Scintilla.h>
-#include <ScintillaTerm.h>
+#include <ScintillaCurses.h>
 
 #include "sciteco.h"
 #include "string-utils.h"
@@ -262,7 +262,7 @@ teco_xterm_version(void)
  */
 
 static void
-teco_view_scintilla_notify(Scintilla *sci, int idFrom, void *notify, void *user_data)
+teco_view_scintilla_notify(void *sci, int iMessage, SCNotification *notify, void *user_data)
 {
 	teco_interface_process_notify(notify);
 }
@@ -270,31 +270,31 @@ teco_view_scintilla_notify(Scintilla *sci, int idFrom, void *notify, void *user_
 teco_view_t *
 teco_view_new(void)
 {
-	return (teco_view_t *)scintilla_new(teco_view_scintilla_notify);
+	return (teco_view_t *)scintilla_new(teco_view_scintilla_notify, NULL);
 }
 
 static inline void
 teco_view_noutrefresh(teco_view_t *ctx)
 {
-	scintilla_noutrefresh((Scintilla *)ctx);
+	scintilla_noutrefresh(ctx);
 }
 
 static inline WINDOW *
 teco_view_get_window(teco_view_t *ctx)
 {
-	return scintilla_get_window((Scintilla *)ctx);
+	return scintilla_get_window(ctx);
 }
 
 sptr_t
 teco_view_ssm(teco_view_t *ctx, unsigned int iMessage, uptr_t wParam, sptr_t lParam)
 {
-	return scintilla_send_message((Scintilla *)ctx, iMessage, wParam, lParam);
+	return scintilla_send_message(ctx, iMessage, wParam, lParam);
 }
 
 void
 teco_view_free(teco_view_t *ctx)
 {
-	scintilla_delete((Scintilla *)ctx);
+	scintilla_delete(ctx);
 }
 
 static struct {

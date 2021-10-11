@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.octave]{
-  ESSETLEXERLANGUAGEoctave
+  ESSETILEXERoctave
   0ESSETKEYWORDS
     __FILE__ __LINE__ break case catch classdef continue do else elseif end
     end_try_catch end_unwind_protect endclassdef endenumeration endevents endfor endif

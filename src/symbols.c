@@ -24,6 +24,9 @@
 
 #include <glib.h>
 
+#include <Scintilla.h>
+#include <Lexilla.h>
+
 #include "sciteco.h"
 #include "string-utils.h"
 #include "error.h"
@@ -194,24 +197,11 @@ teco_scintilla_parse_symbols(teco_machine_scintilla_t *scintilla, const teco_str
 		gint v = teco_symbol_list_lookup(&teco_symbol_list_scilexer, symbols[1], "");
 		if (v < 0) {
 			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Unknown Scintilla Lexer symbol \"%s\"",
+			            "Unknown Lexilla style symbol \"%s\"",
 				    symbols[1]);
 			return FALSE;
 		}
 		scintilla->wParam = v;
-	}
-
-	if (!symbols[2])
-		return TRUE;
-	if (*symbols[2]) {
-		gint v = teco_symbol_list_lookup(&teco_symbol_list_scilexer, symbols[2], "");
-		if (v < 0) {
-			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Unknown Scintilla Lexer symbol \"%s\"",
-				    symbols[2]);
-			return FALSE;
-		}
-		scintilla->lParam = v;
 	}
 
 	return TRUE;
@@ -263,34 +253,39 @@ gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx,
 
 /*$ ES scintilla message
  * -- Send Scintilla message
- * [lParam[,wParam]]ESmessage[,wParam[,lParam]]$[lParam]$ -> result
+ * [lParam,][wParam,][message]ES[message][,wParam]$[lParam]$ -> result
  *
- * Send Scintilla message with code specified by symbolic
- * name <message>, <wParam> and <lParam>.
- * <wParam> may be symbolic when specified as part of the
- * first string argument.
- * If not it is popped from the stack.
+ * Send Scintilla message with code specified by
+ * <message>, <wParam> and <lParam>.
+ * <message> and <wParam> may be a symbolic names when specified as
+ * part of the first string argument.
+ * If not, they are popped from the stack.
  * <lParam> may be specified as a constant string whose
  * pointer is passed to Scintilla if specified as the second
  * string argument.
+ * It is automatically null-terminated.
  * If the second string argument is empty, <lParam> is popped
  * from the stack instead.
  * Parameters popped from the stack may be omitted, in which
  * case 0 is implied.
  * The message's return value is pushed onto the stack.
  *
- * All messages defined by Scintilla (as C macros) can be
- * used by passing their name as a string to ES
+ * All messages defined by Scintilla (as C macros in Scintilla.h)
+ * can be used by passing their name as a string to ES
  * (e.g. ESSCI_LINESONSCREEN...).
  * The \(lqSCI_\(rq prefix may be omitted and message symbols
  * are case-insensitive.
- * Only the Scintilla lexer symbols (SCLEX_..., SCE_...)
- * may be used symbolically with the ES command as <wParam>,
- * other values must be passed as integers on the stack.
+ * Only the Lexilla style names (SCE_...)
+ * may be used symbolically with the ES command as <wParam>.
  * In interactive mode, symbols may be auto-completed by
  * pressing Tab.
  * String-building characters are by default interpreted
  * in the string arguments.
+ *
+ * As a special exception, you can and must specify a
+ * Lexilla lexer name as a string argument for the \fBSCI_SETILEXER\fP
+ * message, ie. in order to load a Lexilla lexer
+ * (this works similar to the old \fBSCI_SETLEXERLANGUAGE\fP message).
  *
  * .BR Warning :
  * Almost all Scintilla messages may be dispatched using
@@ -322,26 +317,36 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
-	if (teco_string_contains(str, '\0')) {
-		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-		                    "Scintilla lParam string must not contain null-byte.");
-		return NULL;
-	}
+	sptr_t lParam = 0;
 
-	if (!ctx->scintilla.lParam) {
-		if (str->len > 0) {
-			ctx->scintilla.lParam = (sptr_t)str->data;
-		} else {
-			teco_int_t v;
-			if (!teco_expressions_pop_num_calc(&v, 0, error))
-				return NULL;
-			ctx->scintilla.lParam = v;
+	if (ctx->scintilla.iMessage == SCI_SETILEXER) {
+		if (teco_string_contains(str, '\0')) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			                    "Lexer name must not contain null-byte.");
+			return NULL;
 		}
+
+		lParam = (sptr_t)CreateLexer(str->data);
+		if (!lParam) {
+			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+			            "Lexilla lexer \"%s\" not found.", str->data);
+			return NULL;
+		}
+	} else if (str->len > 0) {
+		/*
+		 * NOTE: There may even be messages that read strings
+		 * with embedded nulls.
+		 */
+		lParam = (sptr_t)str->data;
+	} else {
+		teco_int_t v;
+		if (!teco_expressions_pop_num_calc(&v, 0, error))
+			return NULL;
+		lParam = v;
 	}
 
 	teco_expressions_push(teco_interface_ssm(ctx->scintilla.iMessage,
-	                                         ctx->scintilla.wParam,
-	                                         ctx->scintilla.lParam));
+	                                         ctx->scintilla.wParam, lParam));
 
 	return &teco_state_start;
 }

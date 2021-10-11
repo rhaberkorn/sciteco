@@ -15,10 +15,10 @@ jobs:
 
     steps:
 
-    - name: Recursive Git Clone
+    - name: Git Clone
       uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
 
     - name: Update Repositories
       run: sudo apt-get update
@@ -59,10 +59,10 @@ jobs:
 
     steps:
 
-    - name: Recursive Git Clone
+    - name: Git Clone
       uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
 
     # NOTE: macOS already ships with ncurses and
     # XCode already comes with the autotools.
@@ -99,10 +99,10 @@ jobs:
 
     steps:
 
-    - name: Recursive Git Clone
+    - name: Git Clone
       uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
 
     - name: Set Up Shell
       run: echo C:\msys64\usr\bin\ | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append

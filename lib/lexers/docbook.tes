@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.docbook]{
-  ESSETLEXERLANGUAGEhypertext
+  ESSETILEXERhypertext
   0ESSETKEYWORDS
     abbrev abstract accel ackno acronym action address affiliation alt anchor
     answer appendix appendixinfo application area areaset areaspec arg article

@@ -1,0 +1,73 @@
+# We use the existing Scintilla/Lexilla Makefile build system to
+# avoid redundancies and maintainance overhead.
+# These build systems produce static libraries (*.a).
+# This however has two diadvantages:
+# 1.) Out-of-tree builds are not straight forward and require
+#     manually cloning the submodules into the build system.
+#     `make distcheck` is consequently also broken.
+# 2.) We cannot add plain static libraries to libtool convenience
+#     libraries using LIBADD.
+#     Therefore, we cannot wrap Scintilla and Lexilla into a convenience
+#     library.
+#     That's why this file must instead be included everywhere where
+#     scintilla.a and liblexilla.a are referenced and they must be added
+#     to programs using LDADD.
+
+if INTERFACE_GTK
+MAKE_SCINTILLA = $(MAKE) -C @SCINTILLA_PATH@/gtk \
+                 GTK3=yes CONFIGFLAGS='@LIBGTK_CFLAGS@' \
+                 CXXFLAGS='@SCINTILLA_CXXFLAGS@'
+else
+# NOTE: The VPATH hack allows us to keep Scinterm separate from
+# the Scintilla repo and avoid using recursive submodules.
+#
+# FIXME: There is currently no way to override the standard optimization
+# flags of Scinterm, so we pass them in CURSES_FLAGS.
+MAKE_SCINTILLA = $(MAKE) -C @SCINTILLA_PATH@/bin -f @SCINTERM_PATH@/Makefile \
+                 VPATH=@SCINTERM_PATH@ \
+                 CURSES_FLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @NCURSES_CFLAGS@ @SCINTILLA_CXXFLAGS@'
+endif
+
+# Pass toolchain configuration to Scintilla.
+# This is what allows cross compilation
+MAKE_SCINTILLA += CC='@CC@' CXX='@CXX@' \
+                  AR='@AR@' RANLIB='@RANLIB@'
+
+# Build as phony target - we do not know
+# scintilla.a's dependencies.
+# If it's up to date, the additional recursive
+# make call does not hurt.
+.PHONY: make-scintilla
+make-scintilla:
+	$(MAKE_SCINTILLA)
+
+# scintilla.a itself is not phony.
+# This avoids unnecessary relinking if it is
+# up to date.
+# Also note the ; which defines this recipe as
+# empty.
+@SCINTILLA_PATH@/bin/scintilla.a : make-scintilla;
+
+.PHONY: clean-local-scintilla
+clean-local-scintilla:
+	$(MAKE_SCINTILLA) clean
+
+MAKE_LEXILLA = $(MAKE) -C @LEXILLA_PATH@/src \
+               CXXFLAGS='@SCINTILLA_CXXFLAGS@' \
+               CC='@CC@' CXX='@CXX@' \
+               AR='@AR@' RANLIB='@RANLIB@'
+
+.PHONY: make-lexilla
+make-lexilla:
+	$(MAKE_LEXILLA)
+
+@LEXILLA_PATH@/bin/liblexilla.a : make-lexilla;
+
+.PHONY: clean-local-lexilla
+clean-local-lexilla:
+	$(MAKE_LEXILLA) clean
+
+# NOTE: using a separate `clean-local-scintilla`
+# target allows us to add more custom rules to the
+# including Automake file
+clean-local: clean-local-scintilla clean-local-lexilla

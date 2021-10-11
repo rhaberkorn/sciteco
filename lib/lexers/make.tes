@@ -7,7 +7,7 @@
 }
 
 @[lexer.set.make]{
-  ESSETLEXERLANGUAGEmakefile
+  ESSETILEXERmakefile
   :M[color.comment],1M[color.set]
   :M[color.preproc],2M[color.set]
   :M[color.variable],3M[color.set]

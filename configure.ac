@@ -72,7 +72,7 @@ fi
 
 # Additionally required by the Scintilla build process:
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX(11, noext, mandatory)
+AX_CXX_COMPILE_STDCXX(17, noext, mandatory)
 AC_CHECK_TOOL(AR, ar)
 
 # Whether $CC is Clang
@@ -170,21 +170,33 @@ esac
 # Config options
 #
 
+# FIXME: It does not really make sense to have this configurable.
+# It would make more sense to allow linking against an externally-provided
+# Scintilla (some platforms ship with it).
 AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
-		       [Specify Scintilla's path [default=./scintilla]]),
-	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=./scintilla])
+		       [Specify Scintilla's path [default=./contrib/scintilla]]),
+	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=./contrib/scintilla])
 SCINTILLA_PATH=`canonicalize $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
-CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include -DSCI_LEXER"
+CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include"
 
 AC_ARG_WITH(scinterm,
 	AS_HELP_STRING([--with-scinterm=PATH],
-		       [Specify Scinterm's path [default=SCINTILLA_PATH/scinterm]]),
-	[SCINTERM_PATH=$withval], [SCINTERM_PATH=$SCINTILLA_PATH/scinterm])
+		       [Specify Scinterm's path [default=./contrib/scinterm]]),
+	[SCINTERM_PATH=$withval], [SCINTERM_PATH=./contrib/scinterm])
 SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
+
+AC_ARG_WITH(lexilla,
+	AS_HELP_STRING([--with-lexilla=PATH],
+		       [Specify Lexilla's path [default=./contrib/lexilla]]),
+	[LEXILLA_PATH=$withval], [LEXILLA_PATH=./contrib/lexilla])
+LEXILLA_PATH=`canonicalize $LEXILLA_PATH`
+AC_SUBST(LEXILLA_PATH)
+
+CPPFLAGS="$CPPFLAGS -I$LEXILLA_PATH/include"
 
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|netbsd-curses|xcurses|pdcurses|pdcurses-gui|gtk],

@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.eiffel]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETILEXERcpp
   0ESSETKEYWORDS
     struct unit integer real bool int long uint nibble byte bits bytes bit time
     string var instance event verilog vhdl on compute start expect check that routine

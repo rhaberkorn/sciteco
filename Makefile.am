@@ -20,11 +20,10 @@ EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
 EXTRA_DIST += win32/loaders.cache
 
-# Distribute entire scintilla directory and
-# do some manual cleanup
+# Distribute entire Scintilla/Scinterm/Lexilla directory and
+# do some manual cleanup.
 dist-hook:
-	cp -r $(srcdir)/scintilla $(distdir)
-	rm -rf `find $(distdir)/scintilla -name *.o` \
-	       $(distdir)/scintilla/bin/scintilla.a
-	rm -rf `find $(distdir)/scintilla -name ".git*"` \
-	       `find $(distdir)/scintilla -name ".hg*"`
+	cp -r $(srcdir)/contrib/{scintilla,scinterm,lexilla} $(distdir)/contrib
+	rm -rf `find $(distdir)/contrib -name *.$(OBJEXT)` \
+	       `find $(distdir)/contrib -name ".git*"` \
+	       $(distdir)/contrib/{scintilla,lexilla}/bin/*

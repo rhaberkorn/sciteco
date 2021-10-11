@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.systemverilog]{
-  ESSETLEXERLANGUAGEverilog
+  ESSETILEXERverilog
   0ESSETKEYWORDS
     alias always always_comb always_ff always_latch and assert assign assume
     automatic before begin bind bins binsof bit break buf bufif0 bufif1 byte case casex

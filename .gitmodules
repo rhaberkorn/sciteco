@@ -1,4 +1,10 @@
 [submodule "scintilla"]
-	path = scintilla
+	path = contrib/scintilla
 	url = https://github.com/rhaberkorn/scintilla-mirror.git
 	ignore = untracked
+[submodule "scinterm"]
+	path = contrib/scinterm
+	url = https://github.com/orbitalquark/scinterm.git
+[submodule "lexilla"]
+	path = contrib/lexilla
+	url = https://github.com/ScintillaOrg/lexilla.git

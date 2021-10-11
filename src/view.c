@@ -77,12 +77,14 @@ teco_view_setup(teco_view_t *ctx)
 	 * a consistent look across UIs if no profile
 	 * is used. This makes writing UI-agnostic profiles
 	 * and color schemes easier.
+	 *
 	 * FIXME: Some settings like fonts should probably
 	 * be set per UI (i.e. Scinterm doesn't use it,
 	 * GTK might try to use a system-wide default
 	 * monospaced font).
 	 */
-	teco_view_ssm(ctx, SCI_SETCARETSTYLE, CARETSTYLE_BLOCK, 0);
+	teco_view_ssm(ctx, SCI_SETCARETSTYLE,
+	              CARETSTYLE_BLOCK | CARETSTYLE_OVERSTRIKE_BLOCK | CARETSTYLE_BLOCK_AFTER, 0);
 	teco_view_ssm(ctx, SCI_SETCARETPERIOD, 0, 0);
 	teco_view_ssm(ctx, SCI_SETCARETFORE, 0xFFFFFF, 0);
 

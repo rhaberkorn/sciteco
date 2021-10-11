@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.kix]{
-  ESSETLEXERLANGUAGEkix
+  ESSETILEXERkix
   0ESSETKEYWORDS
     ? and beep big break call cd cls color cookie1 copy debug del dim display do
     until exit flushkb for each next function endfunction get gets global go gosub

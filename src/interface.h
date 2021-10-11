@@ -149,7 +149,7 @@ gboolean teco_interface_event_loop(GError **error);
  */
 /** @protected */
 void teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap);
-void teco_interface_process_notify(struct SCNotification *notify);
+void teco_interface_process_notify(SCNotification *notify);
 
 /** @pure */
 void teco_interface_cleanup(void);

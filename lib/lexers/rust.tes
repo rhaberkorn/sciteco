@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.rust]{
-  ESSETLEXERLANGUAGErust
+  ESSETILEXERrust
   0ESSETKEYWORDS
     if else repeat while function for in next break TRUE FALSE NULL NA Inf NaN
   1ESSETKEYWORDS

@@ -923,10 +923,11 @@ teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_mac
 						: &teco_symbol_list_scilexer;
 		g_auto(teco_string_t) new_chars, new_chars_escaped;
 		gboolean unambiguous = teco_symbol_list_auto_complete(list, symbol, &new_chars);
-		/*
-		 * FIXME: Does not escape `,`. Also, <^Q,> is not allowed currently?
-		 */
+
 		teco_machine_stringbuilding_escape(stringbuilding_ctx, new_chars.data, new_chars.len, &new_chars_escaped);
+		/*
+		 * FIXME: Does not escape `,`.
+		 */
 		if (unambiguous)
 			teco_string_append_c(&new_chars_escaped, ',');
 

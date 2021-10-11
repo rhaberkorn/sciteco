@@ -15,8 +15,8 @@ SciTECO Build and Runtime Dependencies
 
  * Autotools and an UNIX-like environment
  * GNU Make
- * A GCC-compatible C11 and C++11 compiler, e.g. GNU C/C++
-   (v4.4 or later) or LLVM/gcc or LLVM/Clang.
+ * A GCC-compatible C11 and C++17 compiler, e.g. GNU C/C++
+   (v5.0 or later) or LLVM/gcc or LLVM/Clang.
    SciTECO itself does not require C++, but Scintilla does.
  * Glib 2 as a cross-platform runtime library (v2.44 or later):
    https://developer.gnome.org/glib/
@@ -43,11 +43,13 @@ These dependencies are bundled with the SciTECO Git repository
 and with source tar balls, so they usually do not have to be
 installed by the user manually:
 
- * Scintilla (v3.6.3 or later):
+ * Scintilla (v5.0.0 or later):
    http://www.scintilla.org/
  * When choosing the Curses interface:
-   * Scinterm (v1.7 or later):
+   * Scinterm (v3.1 or later):
      http://foicica.com/scinterm/
+ * Lexilla (v5.0.0 or later):
+   https://www.scintilla.org/Lexilla.html
 
 On Ubuntu, you can install all dependencies you could possibly need
 as follows:
@@ -79,13 +81,13 @@ Just make sure you have cloned your repository as follows:
 
   $ git clone https://github.com/rhaberkorn/sciteco.git
   $ cd sciteco/
-  $ git submodule update --init --recursive
+  $ git submodule update --init
 
 If you already have a Git clone of the SciTECO repository and
 want to update it, you should issue the following commands:
 
   $ git pull
-  $ git submodule update --recursive
+  $ git submodule update
 
 When building from Git, you must first generate the ./configure
 script using Autoconf/Automake:
@@ -139,28 +141,22 @@ Out of Tree Builds
 Like any Autoconf/Automake-based project, SciTECO can generally
 be built out-of-tree (in a different directory than its sources).
 This is often useful, especially when cross-compiling.
-Unfortunately, the Scintilla build-system does not support
-out-of-tree builds, so even though Scintilla has been tied
+Unfortunately, the Scintilla (and related libraries') build-system
+does not support out-of-tree builds, so even though Scintilla has been tied
 into SciTECO's build system for convenience, out-of-tree builds
 cannot be performed directly as Scintilla would still be built
 in SciTECO's source directory by default.
 
-Fortunately, SciTECO allows you to overwrite the Scintilla
-source and build path via the ./configure --with-scintilla option.
-This may be used to clone a copy of Scintilla into SciTECO's
-build directory, initialize its Scinterm submodule and direct
-SciTECO's build system to this copy.
+However, you may copy Scintilla, Scinterm and Lexilla into
+SciTECO's build directory.
 An out-of-tree build of SciTECO can thus be achieved using the
 following steps (supposing that the build directory will be
 a subdirectory of the Git repository called `build-dir`):
 
-  $ mkdir build-dir
+  $ mkdir -p build-dir/contrib
+  $ cp -r contrib/{scintilla,scinterm,lexilla} build-dir/contrib/
   $ cd build-dir
-  $ git clone ../scintilla
-  $ cd scintilla
-  $ git submodule update --init
-  $ cd ..
-  $ ../configure --with-scintilla=scintilla
+  $ ../configure
   $ make
   ...
 

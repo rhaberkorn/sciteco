@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.awk]{
-  ESSETLEXERLANGUAGEperl
+  ESSETILEXERperl
   0ESSETKEYWORDS
     BEGIN END if else while do for in break continue delete exit function return
     print printf sprintf system close getline next nextfile fflush atan2 cos exp int

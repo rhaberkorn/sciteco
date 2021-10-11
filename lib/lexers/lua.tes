@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.lua]{
-  ESSETLEXERLANGUAGElua
+  ESSETILEXERlua
   0ESSETKEYWORDS
     and break do else elseif end for function if in local nil not or repeat
     return then until while false true goto

@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.flagship]{
-  ESSETLEXERLANGUAGEflagship
+  ESSETILEXERflagship
   0ESSETKEYWORDS
     ? @ accept access all alternate announce ansi any append as assign autolock
     average begin bell bitmap blank box call cancel case century charset checkbox clear

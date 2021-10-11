@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.asl]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETILEXERcpp
   0ESSETKEYWORDS
     AccessAs Acquire Add Alias And Arg0 Arg1 Arg2 Arg3 Arg4 Arg5 Arg6 BankField
     Break BreakPoint Buffer Case Concatenate ConcatenateResTemplate CondRefOf

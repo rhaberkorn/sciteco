@@ -18,7 +18,7 @@
 }
 
 @[lexer.set.cpp]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETILEXERcpp
   0ESSETKEYWORDS
     Q[lexer.c.basekeywords]
     and and_eq bitand bitor catch class compl const_cast constexpr delete dynamic_cast

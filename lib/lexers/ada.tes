@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.ada]{
-  ESSETLEXERLANGUAGEada
+  ESSETILEXERada
   0ESSETKEYWORDS
     abort abstract accept access aliased all array at begin body case constant
     declare delay delta digits do else elsif end entry exception exit for function

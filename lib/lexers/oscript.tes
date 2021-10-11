@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.oscript]{
-  ESSETLEXERLANGUAGEoscript
+  ESSETILEXERoscript
   0ESSETKEYWORDS
     break breakif by case continue continueif default downto else elseif end for
     goto if in repeat switch to until while function return void dll inbyref inout

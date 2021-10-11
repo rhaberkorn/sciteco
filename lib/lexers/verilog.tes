@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.verilog]{
-  ESSETLEXERLANGUAGEverilog
+  ESSETILEXERverilog
   0ESSETKEYWORDS
     always and assign automatic begin buf bufif0 bufif1 case casex casez cell
     cmos config deassign default defparam design disable edge else end endcase

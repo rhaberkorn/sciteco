@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.f77]{
-  ESSETLEXERLANGUAGEf77
+  ESSETILEXERf77
   0ESSETKEYWORDS
     access action advance allocatable allocate apostrophe assign assignment
     associate asynchronous backspace bind blank blockdata call case character class close

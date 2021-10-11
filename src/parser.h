@@ -405,7 +405,6 @@ typedef struct {
 typedef struct {
 	unsigned int iMessage;
 	uptr_t wParam;
-	sptr_t lParam;
 } teco_machine_scintilla_t;
 
 typedef enum {

@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.spice]{
-  ESSETLEXERLANGUAGEspice
+  ESSETILEXERspice
   0ESSETKEYWORDS
     ac alias alter alterparam append askvalues assertvalid autoscale break
     compose copy copytodoc dc delete destroy destroyvec diff display disto dowhile echo

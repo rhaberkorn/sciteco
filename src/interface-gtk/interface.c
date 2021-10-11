@@ -92,8 +92,8 @@ teco_bgr2rgb(guint32 bgr)
  */
 
 static void
-teco_view_scintilla_notify(ScintillaObject *sci, gint id,
-                           struct SCNotification *notify, gpointer user_data)
+teco_view_scintilla_notify(ScintillaObject *sci, gint iMessage,
+                           SCNotification *notify, gpointer user_data)
 {
 	teco_interface_process_notify(notify);
 }

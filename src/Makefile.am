@@ -9,7 +9,7 @@ LIBSCITECO_INTERFACE = interface-curses/libsciteco-interface.la
 endif
 
 include $(top_srcdir)/bootstrap.am
-include $(top_srcdir)/scintilla.am
+include $(top_srcdir)/contrib/scintilla.am
 
 # FIXME: Common flags should be in configure.ac
 AM_CFLAGS = -std=gnu11 -Wall -Wno-initializer-overrides -Wno-unused-value
@@ -74,7 +74,8 @@ sciteco_minimal_SOURCES =
 symbols-scintilla.c symbols-scilexer.c : sciteco-minimal$(EXEEXT)
 endif
 sciteco_minimal_LDADD = libsciteco-base.la \
-                        @SCINTILLA_PATH@/bin/scintilla.a
+                        @SCINTILLA_PATH@/bin/scintilla.a \
+                        @LEXILLA_PATH@/bin/liblexilla.a
 # Scintilla is unfortunately still written in C++, so we must force
 # Automake to use the C++ linker when linking the binaries.
 # The following hack is actually advocated in the Automake manual.
@@ -102,7 +103,7 @@ symbols-scintilla.c : @SCINTILLA_PATH@/include/Scintilla.h \
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
 	                   -p "SCI_" -n teco_symbol_list_scintilla $@ $<
 
-symbols-scilexer.c : @SCINTILLA_PATH@/include/SciLexer.h \
+symbols-scilexer.c : @LEXILLA_PATH@/include/SciLexer.h \
                      symbols-extract.tes
 	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
-	                   -p "SCLEX_,SCE_" -n teco_symbol_list_scilexer $@ $<
+	                   -p "SCE_" -n teco_symbol_list_scilexer $@ $<

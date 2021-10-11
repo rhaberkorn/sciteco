@@ -7,7 +7,7 @@
 }
 
 @[lexer.set.f95]{
-  ESSETLEXERLANGUAGEfortran
+  ESSETILEXERfortran
   0ESSETKEYWORDS
     access action advance allocatable allocate apostrophe assign assignment
     associate asynchronous backspace bind blank blockdata call case character class close

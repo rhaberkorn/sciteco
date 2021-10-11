@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.baan]{
-  ESSETLEXERLANGUAGEbaan
+  ESSETILEXERbaan
   :M[color.comment],1M[color.set]
   :M[color.comment],2M[color.set]
   :M[color.number],3M[color.set]

@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.avs]{
-  ESSETLEXERLANGUAGEavs
+  ESSETILEXERavs
   0ESSETKEYWORDS
     true false return global
   1ESSETKEYWORDS

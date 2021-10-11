@@ -27,9 +27,9 @@
 #include <glib/gstdio.h>
 
 #include <Scintilla.h>
-#include <SciLexer.h>
 
 #include "sciteco.h"
+#include "string-utils.h"
 #include "undo.h"
 #include "view.h"
 #include "interface.h"
@@ -112,7 +112,7 @@ teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 }
 
 void
-teco_interface_process_notify(struct SCNotification *notify)
+teco_interface_process_notify(SCNotification *notify)
 {
 #ifdef DEBUG
 	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);

@@ -5,7 +5,7 @@
 }
 
 @[lexer.set.tal]{
-  ESSETLEXERLANGUAGETAL
+  ESSETILEXERTAL
   0ESSETKEYWORDS
     and assert baddr begin by call callable case cbaddr code cwaddr define do
     downto drop else end entry external fixed for forward goto if int interrupt label

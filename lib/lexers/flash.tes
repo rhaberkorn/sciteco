@@ -7,7 +7,7 @@
 }
 
 @[lexer.set.flash]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETILEXERcpp
   0ESSETKEYWORDS
     add and break case catch class continue default delete do dynamic else eq
     extends false finally for function ge get gt if implements import in instanceof

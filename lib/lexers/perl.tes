@@ -8,7 +8,7 @@
 }
 
 @[lexer.set.perl]{
-  ESSETLEXERLANGUAGEperl
+  ESSETILEXERperl
   0ESSETKEYWORDS
     NULL __FILE__ __LINE__ __PACKAGE__ __DATA__ __END__ AUTOLOAD BEGIN CORE
     DESTROY END EQ GE GT INIT LE LT NE CHECK abs accept alarm and atan2 bind binmode

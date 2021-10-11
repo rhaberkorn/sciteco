@@ -9,7 +9,7 @@
 }
 
 @[lexer.set.pascal]{
-  ESSETLEXERLANGUAGEpascal
+  ESSETILEXERpascal
   0ESSETKEYWORDS
     absolute abstract and array as asm assembler automated begin case cdecl
     class const constructor delayed deprecated destructor dispid dispinterface div do

@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.idl]{
-  ESSETLEXERLANGUAGEcpp
+  ESSETILEXERcpp
   0ESSETKEYWORDS
     aggregatable allocate appobject arrays async async_uuid auto_handle bindable
     boolean broadcast byte byte_count call_as callback char coclass code comm_status

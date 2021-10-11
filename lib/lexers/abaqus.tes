@@ -7,7 +7,7 @@
 }
 
 @[lexer.set.abaqus]{
-  ESSETLEXERLANGUAGEabaqus
+  ESSETILEXERabaqus
   1ESSETKEYWORDS
     *amplitude *assembly *beam *boundary *buckle *bulk *cload *conditions
     *conductivity *contact *damping *density *dload *dsflux *dsload *dynamic *el *elastic

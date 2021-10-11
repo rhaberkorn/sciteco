@@ -6,7 +6,7 @@
 }
 
 @[lexer.set.vhdl]{
-  ESSETLEXERLANGUAGEvhdl
+  ESSETILEXERvhdl
   0ESSETKEYWORDS
     access after alias all architecture array assert attribute begin block body
     buffer bus case component configuration constant disconnect downto else elsif end
