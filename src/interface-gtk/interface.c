@@ -1109,6 +1109,39 @@ teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
 }
 
 static gboolean
+teco_interface_pop_key_idle_cb(gpointer user_data)
+{
+	g_autoptr(GError) error = NULL;
+
+	/*
+	 * Avoid redraws of the current view by freezing updates
+	 * on the view's GDK window (we're running in parallel
+	 * to the main loop so there could be frequent redraws).
+	 * By freezing updates, the behaviour is similar to
+	 * the Curses UI.
+	 */
+	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
+	gdk_window_freeze_updates(top_window);
+
+	/*
+	 * The event queue might be filled when pressing keys when SciTECO
+	 * is busy executing code.
+	 */
+	g_autoptr(GdkEvent) event = g_queue_pop_head(teco_interface.event_queue);
+
+	teco_sigint_occurred = FALSE;
+	teco_interface_handle_key_press(event->key.keyval, event->key.state, &error);
+	teco_sigint_occurred = FALSE;
+
+	if (g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT))
+		gtk_main_quit();
+
+	gdk_window_thaw_updates(top_window);
+
+	return !g_queue_is_empty(teco_interface.event_queue);
+}
+
+static gboolean
 teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	g_autoptr(GError) error = NULL;
@@ -1149,44 +1182,12 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 	g_queue_push_tail(teco_interface.event_queue, gdk_event_copy((GdkEvent *)event));
 
 	/*
-	 * Avoid redraws of the current view by freezing updates
-	 * on the view's GDK window (we're running in parallel
-	 * to the main loop so there could be frequent redraws).
-	 * By freezing updates, the behaviour is similar to
-	 * the Curses UI.
+	 * This should give the UI a chance to update after every keypress.
+	 * If we would empty the event_queue in a tight loop, then keeping
+	 * a key pressed could result in the UI beeing frozen until the
+	 * key is eventually released.
 	 */
-	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
-	/*
-	 * FIXME: A simple freeze will not suffice to prevent updates in code like <Sx$;>.
-	 * gdk_window_freeze_toplevel_updates_libgtk_only() is deprecated, though.
-	 * Perhaps this hack is no longer required after upgrading Scintilla.
-	 *
-	 * For the time being, we just live with the expected deprecation warnings,
-	 * although they could theoretically be suppressed using
-	 * `#pragma GCC diagnostic ignored`.
-	 */
-	//gdk_window_freeze_updates(top_window);
-	gdk_window_freeze_toplevel_updates_libgtk_only(top_window);
-
-	/*
-	 * The event queue might be filled when pressing keys when SciTECO
-	 * is busy executing code.
-	 */
-	do {
-		g_autoptr(GdkEvent) event = g_queue_pop_head(teco_interface.event_queue);
-
-		teco_sigint_occurred = FALSE;
-		teco_interface_handle_key_press(event->key.keyval, event->key.state, &error);
-		teco_sigint_occurred = FALSE;
-
-		if (g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
-			gtk_main_quit();
-			break;
-		}
-	} while (!g_queue_is_empty(teco_interface.event_queue));
-
-	gdk_window_thaw_toplevel_updates_libgtk_only(top_window);
-	//gdk_window_thaw_updates(top_window);
+	g_idle_add_full(G_PRIORITY_LOW, teco_interface_pop_key_idle_cb, NULL, NULL);
 
 	return TRUE;
 }
