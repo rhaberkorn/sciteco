@@ -57,6 +57,12 @@ MAKE_LEXILLA = $(MAKE) -C @LEXILLA_PATH@/src \
                CC='@CC@' CXX='@CXX@' \
                AR='@AR@' RANLIB='@RANLIB@'
 
+# FIXME: Makes sure that -arch arm64 -arch x86_64
+# will not be used on Mac OS as it is not supported
+# by all SDKs.
+# The remaining BASE_FLAGS should not be important.
+MAKE_LEXILLA += BASE_FLAGS=''
+
 .PHONY: make-lexilla
 make-lexilla:
 	$(MAKE_LEXILLA) ../bin/liblexilla.a
