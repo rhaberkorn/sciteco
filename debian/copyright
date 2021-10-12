@@ -3,12 +3,13 @@ Upstream-Name: SciTECO
 Upstream-Contact: robin.haberkorn@googlemail.com
 Source: https://sourceforge.net/projects/sciteco
 
-Files: debian/* src/* */Makefile.am lib/*
+Files: debian/* src/* lib/* doc/* tests/* ico/* win32/* *.ac *.am *.teco_ini
 Copyright: Copyright 2013-2021 Robin Haberkorn <robin.haberkorn@googlemail.com>
 License: GPL-3+
  /usr/share/common-licenses/GPL-3
 
 Files: contrib/dlmalloc/*.c contrib/dlmalloc/*.h
+Copyright: Public Domain
 License: CC0
 
 Files: contrib/rb3ptr/*.c contrib/rb3ptr/*.h

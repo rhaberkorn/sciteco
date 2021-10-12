@@ -23,7 +23,10 @@ EXTRA_DIST += win32/loaders.cache
 # Distribute entire Scintilla/Scinterm/Lexilla directory and
 # do some manual cleanup.
 dist-hook:
-	cp -r $(srcdir)/contrib/{scintilla,scinterm,lexilla} $(distdir)/contrib
+	cp -r $(srcdir)/contrib/scintilla $(distdir)/contrib
+	cp -r $(srcdir)/contrib/scinterm $(distdir)/contrib
+	cp -r $(srcdir)/contrib/lexilla $(distdir)/contrib
 	rm -rf `find $(distdir)/contrib -name *.$(OBJEXT)` \
 	       `find $(distdir)/contrib -name ".git*"` \
-	       $(distdir)/contrib/{scintilla,lexilla}/bin/*
+	       $(distdir)/contrib/scintilla/bin/* \
+	       $(distdir)/contrib/lexilla/bin/*
