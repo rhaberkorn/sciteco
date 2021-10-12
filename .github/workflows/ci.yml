@@ -69,6 +69,10 @@ jobs:
     - name: Install Build Dependencies
       run: brew install autoconf automake libtool glib groff doxygen
     - name: Configure Build
+      env:
+        # Make sure we don't pick up GCC by accident.
+        CC: clang
+        CXX: clang++
       run: |
         autoreconf -i
         ./configure --with-interface=ncurses --enable-html-manual
