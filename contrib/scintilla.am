@@ -39,7 +39,7 @@ MAKE_SCINTILLA += CC='@CC@' CXX='@CXX@' \
 # make call does not hurt.
 .PHONY: make-scintilla
 make-scintilla:
-	$(MAKE_SCINTILLA)
+	$(MAKE_SCINTILLA) ../bin/scintilla.a
 
 # scintilla.a itself is not phony.
 # This avoids unnecessary relinking if it is
@@ -59,7 +59,7 @@ MAKE_LEXILLA = $(MAKE) -C @LEXILLA_PATH@/src \
 
 .PHONY: make-lexilla
 make-lexilla:
-	$(MAKE_LEXILLA)
+	$(MAKE_LEXILLA) ../bin/liblexilla.a
 
 @LEXILLA_PATH@/bin/liblexilla.a : make-lexilla;
 
