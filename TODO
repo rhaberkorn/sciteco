@@ -352,8 +352,10 @@ Features:
    rid of the attached console window.
  * On Unix/X11, it may be possible to draw the Gtk+ UI into the
    same window as the current terminal.
-   Urxvt has $WINDOWID for instance which could be automatically
-   passed into sciteco by wrapping it in a shell function/alias.
+   SciTECO now supports Xembed via the --xembed option.
+   Urxvt and many other terminal emulators have $WINDOWID.
+   But the two won't work together. Urxvt and XTerm are apparently
+   not real Xembed hosts.
  * Currently, you cannot pass UTF-8 parameters to SciTECO macros.
    This is not critical since we don't support Unicode anyway.
    Sooner or later however we should use g_win32_get_command_line().

@@ -36,6 +36,10 @@
 
 #include <gtk/gtk.h>
 
+#ifdef GDK_WINDOWING_X11
+#include <gtk/gtkx.h>
+#endif
+
 #include <gio/gio.h>
 
 #include <Scintilla.h>
@@ -173,6 +177,8 @@ static struct {
 	teco_string_t info_current;
 
 	gboolean no_csd;
+	gint xembed_id;
+
 	GtkWidget *info_bar_widget;
 	GtkWidget *info_image;
 	GtkWidget *info_type_widget;
@@ -217,7 +223,13 @@ teco_interface_init(void)
 
 	teco_interface.event_queue = g_queue_new();
 
+#ifdef GDK_WINDOWING_X11
+	teco_interface.window = teco_interface.xembed_id ? gtk_plug_new(teco_interface.xembed_id)
+	                                                 : gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#else
 	teco_interface.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#endif
+
 	g_signal_connect(teco_interface.window, "delete-event",
 			 G_CALLBACK(teco_interface_window_delete_cb), NULL);
 
@@ -262,7 +274,7 @@ teco_interface_init(void)
 	                            "type-label");
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(teco_interface.info_bar_widget),
 	                          teco_interface.info_type_widget);
-	if (teco_interface.no_csd) {
+	if (teco_interface.xembed_id || teco_interface.no_csd) {
 		/* fall back to adding the info bar as an ordinary widget */
 		gtk_box_pack_start(GTK_BOX(vbox), teco_interface.info_bar_widget,
 		                   FALSE, FALSE, 0);
@@ -369,6 +381,11 @@ teco_interface_get_options(void)
 		{"no-csd", 0, G_OPTION_FLAG_IN_MAIN,
 		 G_OPTION_ARG_NONE, &teco_interface.no_csd,
 		 "Disable client-side decorations.", NULL},
+#ifdef GDK_WINDOWING_X11
+		{"xembed", 0, G_OPTION_FLAG_IN_MAIN,
+		 G_OPTION_ARG_INT, &teco_interface.xembed_id,
+		 "Embed into an existing X11 Window.", "ID"},
+#endif
 		{NULL}
 	};
 
