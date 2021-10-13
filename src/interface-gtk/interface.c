@@ -146,31 +146,18 @@ teco_view_ssm(teco_view_t *ctx, unsigned int iMessage, uptr_t wParam, sptr_t lPa
 	return scintilla_send_message(SCINTILLA(ctx), iMessage, wParam, lParam);
 }
 
-static gboolean
-teco_view_free_idle_cb(gpointer user_data)
-{
-	/*
-	 * This does NOT destroy the Scintilla object
-	 * and GTK widget, if it is the current view
-	 * (and therefore added to the vbox).
-	 */
-	g_object_unref(user_data);
-	return G_SOURCE_REMOVE;
-}
-
 void
 teco_view_free(teco_view_t *ctx)
 {
 	/*
-	 * FIXME: The widget is unreffed only in an idle watcher because
-	 * Scintilla may have idle callbacks activated (see ScintillaGTK.cxx)
-	 * and we must prevent use-after-frees.
-	 * A simple g_idle_remove_by_data() does not suffice for some strange reason
-	 * (perhaps it does not prevent the invocation of already activated watchers).
-	 * This is a bug should better be fixed by reference counting in
-	 * ScintillaGTK.cxx itself.
+	 * FIXME: It's not entirely clear why g_object_unref() won't do here.
+	 * This results in crashes later on because something is still referencing
+	 * the widget/GObject.
+	 * However, currently displayed views (ctx == teco_interface.current_view_widget)
+	 * should have a reference count of 2 and unreffing them should not actually
+	 * touch the object until is is removed from the view.
 	 */
-	g_idle_add_full(G_PRIORITY_LOW, teco_view_free_idle_cb, SCINTILLA(ctx), NULL);
+	gtk_widget_destroy(teco_view_get_widget(ctx));
 }
 
 static struct {
