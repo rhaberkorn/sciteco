@@ -2,7 +2,9 @@
 [color.default]    0,Q[color.black],Q[color.white] 
 [color.linenumber] 0,Q[color.black],Q[color.white] 
 Q[color.black]U[color.caretline]
-Q[color.white]U[color.caretfore]
+Q[color.lwhite]U[color.caretfore]
+Q[color.black]U[color.selfore]
+Q[color.white]U[color.selback]
 
 [color.calltip]  0,Q[color.lwhite],Q[color.black]   
 

@@ -1063,7 +1063,10 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 		teco_curses_format_str(teco_interface.cmdline_pad, cmdline->str.data + cmdline->effective_len,
 		                       cmdline->str.len - cmdline->effective_len, -1);
 
-	/* highlight cursor after effective command line */
+	/*
+	 * Highlight cursor after effective command line
+	 * FIXME: This should use SCI_GETCARETFORE().
+	 */
 	if (teco_interface.cmdline_rubout_len) {
 		attr_t attr = 0;
 		short pair = 0;

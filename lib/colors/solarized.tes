@@ -59,10 +59,12 @@
   [color.linenumber] 0,Q[color.base2],Q[color.base00] 
   Q[color.base2]U[color.caretline]
   Q[color.base01]U[color.caretfore]
+  Q[color.base3]U[color.selfore]
+  Q[color.base00]U[color.selback]
 
   [color.calltip]  0,Q[color.base01],Q[color.base2]   
 
-  [color.comment]  2,Q[color.base3],Q[color.base01]   
+  [color.comment]  2,Q[color.base3],Q[color.base1]    
   [color.number]   0,Q[color.base3],Q[color.cyan]     
   [color.keyword]  0,Q[color.base3],Q[color.green]    
   [color.string]   0,Q[color.base3],Q[color.cyan]     
@@ -90,6 +92,8 @@
   [color.linenumber] 0,Q[color.base02],Q[color.base0] 
   Q[color.base02]U[color.caretline]
   Q[color.base1]U[color.caretfore]
+  Q[color.base03]U[color.selfore]
+  Q[color.base0]U[color.selback]
 
   [color.calltip]  0,Q[color.base1],Q[color.base02]   
 

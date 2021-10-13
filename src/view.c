@@ -88,6 +88,9 @@ teco_view_setup(teco_view_t *ctx)
 	teco_view_ssm(ctx, SCI_SETCARETPERIOD, 0, 0);
 	teco_view_ssm(ctx, SCI_SETCARETFORE, 0xFFFFFF, 0);
 
+	teco_view_ssm(ctx, SCI_SETSELFORE, TRUE, 0x000000);
+	teco_view_ssm(ctx, SCI_SETSELBACK, TRUE, 0xFFFFFF);
+
 	teco_view_ssm(ctx, SCI_STYLESETFORE, STYLE_DEFAULT, 0xFFFFFF);
 	teco_view_ssm(ctx, SCI_STYLESETBACK, STYLE_DEFAULT, 0x000000);
 	teco_view_ssm(ctx, SCI_STYLESETFONT, STYLE_DEFAULT, (sptr_t)"Courier");

@@ -42,6 +42,8 @@
   Q[color.caretfore]ESSETCARETFORE
   Q[color.caretline]ESSETCARETLINEBACK
   1ESSETCARETLINEVISIBLE
+  Q[color.selfore],1ESSETSELFORE
+  Q[color.selback],1ESSETSELBACK
   ! Calltips and popup windows !
   :M[color.calltip],38M[color.set]
   ! Set up brace lightning !

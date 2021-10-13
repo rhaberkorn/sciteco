@@ -735,7 +735,8 @@ teco_interface_set_css_variables(teco_view_t *view)
 	teco_view_ssm(teco_interface.cmdline_view, SCI_STYLECLEARALL, 0, 0);
 	teco_view_ssm(teco_interface.cmdline_view, SCI_STYLESETFORE, STYLE_CALLTIP, calltip_fg_color);
 	teco_view_ssm(teco_interface.cmdline_view, SCI_STYLESETBACK, STYLE_CALLTIP, calltip_bg_color);
-	teco_view_ssm(teco_interface.cmdline_view, SCI_SETCARETFORE, default_fg_color, 0);
+	teco_view_ssm(teco_interface.cmdline_view, SCI_SETCARETFORE,
+	              teco_view_ssm(view, SCI_GETCARETFORE, 0, 0), 0);
 	/* used for the asterisk at the beginning of the command line */
 	teco_view_ssm(teco_interface.cmdline_view, SCI_STYLESETBOLD, STYLE_ASTERISK, TRUE);
 	/* used for character representations */
