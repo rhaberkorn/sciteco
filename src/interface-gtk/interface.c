@@ -1187,7 +1187,8 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 	 * a key pressed could result in the UI beeing frozen until the
 	 * key is eventually released.
 	 */
-	g_idle_add_full(G_PRIORITY_LOW, teco_interface_pop_key_idle_cb, NULL, NULL);
+	if (teco_interface_pop_key_idle_cb(NULL) == G_SOURCE_CONTINUE)
+		g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, teco_interface_pop_key_idle_cb, NULL, NULL);
 
 	return TRUE;
 }
