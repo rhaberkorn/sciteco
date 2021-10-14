@@ -1116,6 +1116,7 @@ teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
 static gboolean
 teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
+	static gboolean recursed = FALSE;
 	g_autoptr(GError) error = NULL;
 
 #ifdef DEBUG
@@ -1124,7 +1125,7 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
 #endif
 
-	if (teco_cmdline.pc < teco_cmdline.effective_len) {
+	if (recursed) {
 		/*
 		 * We're already executing, so this event is processed
 		 * from gtk_main_iteration_do().
@@ -1150,6 +1151,8 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 
 		return TRUE;
 	}
+
+	recursed = TRUE;
 
 	g_queue_push_tail(teco_interface.event_queue, gdk_event_copy((GdkEvent *)event));
 
@@ -1189,6 +1192,7 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		gtk_main_iteration_do(FALSE);
 	} while (!g_queue_is_empty(teco_interface.event_queue));
 
+	recursed = FALSE;
 	return TRUE;
 }
 
