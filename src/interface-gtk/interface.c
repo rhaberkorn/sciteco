@@ -1189,7 +1189,8 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		 * This should give the UI a chance to update after every keypress.
 		 * Would also be possible but tricky to implement with an idle watcher.
 		 */
-		gtk_main_iteration_do(FALSE);
+		while (gtk_events_pending())
+			gtk_main_iteration_do(FALSE);
 	} while (!g_queue_is_empty(teco_interface.event_queue));
 
 	recursed = FALSE;
