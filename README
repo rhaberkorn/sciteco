@@ -26,10 +26,8 @@ The Curses frontend is verified to work with [ncurses](https://www.gnu.org/softw
 [EMCurses](https://github.com/rhaberkorn/emcurses).
 Others might work as well.
 
-Linux, FreeBSD, Windows (MinGW 32/64) ~~and
-[Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
-[Mac OS X is built during Continuous Integration but is otherwise untested
-and packages currently cannot be provided.](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support)
+Linux, FreeBSD, [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
+Windows (MinGW 32/64) ~~and [Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms.
 However UNIX-compatibility is not strictly required:
@@ -120,6 +118,8 @@ These releases may be quite outdated, so you may also try out the
 [nightly builds](https://nightly.link/rhaberkorn/sciteco/workflows/nightly/master) -
 they represent the repository's HEAD commit but may well be instable.
 Both ncurses and Gtk+ packages are provided both for Ubuntu and Windows.
+For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
+we currently only provide ncurses builds.
 
 If everything fails, you can try building from source.
 See [`INSTALL`](INSTALL) for more details.

@@ -50,11 +50,80 @@ jobs:
     - name: Archive Debian/Ubuntu Packages
       uses: actions/upload-artifact@v2
       with:
-        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (${{ matrix.os }}, ncurses and GTK+ 3)
+        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (${{ matrix.os }}, x86_64, ncurses and GTK+ 3)
         path: debian-temp/*.deb
 
+  macos:
+    runs-on: macos-10.15
+
+    steps:
+
+    - name: Git Clone
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    # NOTE: macOS already ships with ncurses and groff.
+    # The system libncurses has turned out to be buggy, though (keypad() does not work).
+    # However, it does work on real Mac OS systems, I was told.
+    # Linking in our own ncurses should also be more portable in case
+    # the system libncurses ABI breaks.
+    # However, Homebrew installs ncurses as a keg and it will refer to a
+    # non-standard $TERMINFO. This could be worked around.
+    - name: Install Build Dependencies
+      run: brew install autoconf automake libtool glib dylibbundler
+    # FIXME: It would be nice to build universal arm64/x86_64 binaries,
+    # this apparently requires two separate build runs and a following merge
+    # using `lipo -create`. In this case we could just as well build two
+    # separate packages.
+    - name: Configure Build
+      env:
+        # Make sure we don't pick up GCC by accident.
+        CC: clang
+        CXX: clang++
+        # FIXME: Once there is an --enable-lto, we should use that.
+        CFLAGS: -O3 -flto
+        CXXFLAGS: -O3 -flto
+        LDFLAGS: -flto
+        # Uncomment if you want to build against the Homebrew-installed libncurses.
+        #PKG_CONFIG_PATH: /usr/local/opt/ncurses/lib/pkgconfig
+      # NOTE: This will not result in a fully statically-linked binary,
+      # but the more we get rid off, the better.
+      run: |
+        autoreconf -i
+        ./configure --with-interface=ncurses --enable-static-executables
+
+    - name: make
+      run: make -j 2
+    # NOTE: The test suite must be run in verbose mode because if it fails
+    # we won't be able to analyze testsuite.log.
+    - name: Run Test Suite
+      run: make check TESTSUITEFLAGS="--verbose"
+
+    - name: Package
+      run: |
+        make install-strip DESTDIR=`pwd`/temp-install
+        # There are libraries we cannot link against statically.
+        # We ship them in /usr/local/lib/sciteco so as not to cause collisions with system
+        # libraries or libraries installed via Homebrew.
+        # System libraries  are considered to have stable ABIs and
+        # are not currently bundled.
+        # FIXME: Is this really true for libc++?
+        dylibbundler -b -x temp-install/usr/local/bin/sciteco \
+                     -cd -d temp-install/usr/local/lib/sciteco -p @executable_path/../lib/sciteco
+        tar -C temp-install -cf sciteco.tar .
+
+    - name: Get Current Date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: Archive Mac OS Distribution (ncurses)
+      uses: actions/upload-artifact@v2
+      with:
+        name: SciTECO nightly build on ${{ steps.date.outputs.date }} (Mac OS, x86_64, ncurses)
+        path: sciteco.tar
+
   win32-curses:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     defaults:
       run:
@@ -132,14 +201,11 @@ jobs:
         path: temp-bin/*
 
   # NOTE: There is a lot of redundancy with win32-curses.
-  # However we link the Curses version statically, while Gtk+3 cannot be
+  # However the Curses version may be linked statically, while Gtk+3 cannot be
   # linked statically on Windows (at least MSYS does not provide
   # static libraries) and would draw in libglib, libintl, libiconv etc. anyway.
-  # On the other hand we currently have to package all sorts of libraries only
-  # for gspawn-win32-helper-console.exe - if this situation persists, we can
-  # just as well unify the two jobs.
   win32-gtk:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     defaults:
       run:

@@ -437,10 +437,9 @@ teco_memory_get_usage(void)
 /*
  * Practically only for Mac OS X.
  *
- * FIXME: Benchmark whether polling in a thread really
- * improves performances as much as on Linux.
- * FIXME: There is no malloc_trim() natively on Mac OS - can
- * we recover from OOMs?
+ * NOTE: Running in a dedicated polling thread does indeed
+ * improve our performance significantly.
+ *
  * FIXME: We cannot simply overwrite weak malloc() functions
  * like on Linux since this does not affect shared libraries
  * unless $DYLD_FORCE_FLAT_NAMESPACE is set.
