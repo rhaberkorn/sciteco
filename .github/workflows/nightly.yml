@@ -84,24 +84,30 @@ jobs:
     - name: Configure Build
       env:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+        # FIXME: glib on MinGW supports static linking but the gspawn
+        # helper binaries are still linked dynamically, forcing us to ship
+        # all DLLs anyway. Therefore it makes little sense to link SciTECO
+        # itself statically - it only wastes a few MB.
+        # You will also have to add --enable-static-executables.
         # The additional Windows libraries are for PDCursesMod/WinGUI:
-        PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
-        LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32 -luuid
+#       PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
+#       LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32 -luuid
         # FIXME: Once there is an --enable-lto, we should use that.
-        CFLAGS: -g -O3 -flto -DGLIB_STATIC_COMPILATION
-        CXXFLAGS: -g -O3 -flto
+#       CFLAGS: -O3 -flto -DGLIB_STATIC_COMPILATION
+        CFLAGS: -O3 -flto
+        CXXFLAGS: -O3 -flto
         LDFLAGS: -flto
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses-gui --enable-html-manual --enable-static-executables
+        ./configure --with-interface=pdcurses-gui --enable-html-manual
 
     - name: make
       run: make -j 2
     - run: make install-strip
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
-#   - name: Run Test Suite
-#     run: make check TESTSUITEFLAGS="--verbose"
+    - name: Run Test Suite
+      run: make check TESTSUITEFLAGS="--verbose"
 
     - name: Prepare Distribution Directory
       run: |
@@ -112,13 +118,10 @@ jobs:
         cp -r /mingw32/share/doc/sciteco/* temp-bin/
         cp COPYING ChangeLog temp-bin/
         cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/
-        # FIXME: Even though MSYS provides working statically-linked
-        # Glib libraries, the g_spawn() helpers still depend on the DLL.
-        # This could perhaps be avoided by downloading our own self-built
-        # executable from somewhere.
-        # Else, there is little sense in linking the Curses builds statically
-        # as only libstdc++-6.dll is missing.
+        # FIXME: See above. We currently link dynamically.
         cp /mingw32/bin/{libglib-2.0-0,libpcre-1,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
+        cp /mingw32/bin/libstdc++-6.dll temp-bin/
+        cp /mingw32/bin/libpdcurses.dll temp-bin/
     - name: Get Current Date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
@@ -166,8 +169,8 @@ jobs:
     - name: Configure Build
       env:
         # FIXME: Once there is an --enable-lto, we should use that.
-        CFLAGS: -g -O3 -flto
-        CXXFLAGS: -g -O3 -flto
+        CFLAGS: -O3 -flto
+        CXXFLAGS: -O3 -flto
         LDFLAGS: -flto
       run: |
         autoreconf -i
@@ -178,8 +181,8 @@ jobs:
     - run: make install-strip
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
-#   - name: Run Test Suite
-#     run: make check TESTSUITEFLAGS="--verbose"
+    - name: Run Test Suite
+      run: make check TESTSUITEFLAGS="--verbose"
 
     - name: Prepare Distribution Directory
       run: |
