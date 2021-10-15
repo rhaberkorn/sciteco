@@ -398,13 +398,12 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gch
 		}
 		return TRUE;
 
-#ifdef SIGTSTP
+#if !defined(INTERFACE_GTK) && defined(SIGTSTP)
 	case TECO_CTL_KEY('Z'):
 		/*
-		 * <CTL/Z> does not raise signal if handling of
+		 * <CTL/Z> does not automatically raise signal if handling of
 		 * special characters temporarily disabled in terminal
-		 * (Curses), or command-line is detached from
-		 * terminal (GTK+).
+		 * (Curses), or the actual input is detached from terminal (GTK+).
 		 * This does NOT change the state of the popup window.
 		 */
 		raise(SIGTSTP);

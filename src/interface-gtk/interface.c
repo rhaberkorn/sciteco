@@ -1052,15 +1052,6 @@ teco_interface_event_loop(GError **error)
 	 * closing the window if supported by this version of glib.
 	 * Note that this replaces SciTECO's default SIGTERM handler
 	 * so it will additionally raise(SIGINT).
-	 *
-	 * FIXME: On ^Z, we do not suspend properly. The window is still shown.
-	 * Perhaps we should try to catch SIGTSTP?
-	 * This does not work with g_unix_signal_add(), though, so any
-	 * workaround would be tricky.
-	 * We could create a pipe via g_unix_open_pipe() which we
-	 * write to using write() in a normal signal handler.
-	 * We can then add a watcher using g_unix_fd_add() which will
-	 * hide the main window.
 	 */
 #ifdef G_OS_UNIX
 	g_unix_signal_add(SIGTERM, teco_interface_sigterm_handler, NULL);

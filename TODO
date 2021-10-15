@@ -80,6 +80,21 @@ Known Bugs:
    logging system.
  * Out-of-tree builds are broken.
    See contrib/scintilla.am.
+ * Gtk on Unix: On ^Z, we do not suspend properly. The window is still shown.
+   Perhaps we should try to catch SIGTSTP?
+   This does not work with g_unix_signal_add(), though, so any
+   workaround would be tricky.
+   We could create a pipe via g_unix_open_pipe() which we
+   write to using write() in a normal signal handler.
+   We can then add a watcher using g_unix_fd_add() which will
+   hide the main window.
+   Unfortunately, it is also not trivial to get notified when
+   the window has really been hidden/unrealized.
+   Even if everything worked, it might well be annoying if
+   you accidentally suspend your instance while not being
+   connected to a terminal.
+   Suspension from the command-line has therefore been disabled
+   on Gtk for the time being.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
