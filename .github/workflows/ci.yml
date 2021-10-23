@@ -33,7 +33,8 @@ jobs:
     - name: Configure Build
       run: |
         autoreconf -i
-        ./configure --with-interface=${{ matrix.interface }} --enable-html-manual ${{ matrix.compiler }}
+        ./configure --with-interface=${{ matrix.interface }} --enable-debug --enable-html-manual \
+                    ${{ matrix.compiler }}
 
     # NOTE: xvfb-run emulates an XServer and is required when building
     # Gtk versions (since SciTECO calls itself during the build).
@@ -75,7 +76,7 @@ jobs:
         CXX: clang++
       run: |
         autoreconf -i
-        ./configure --with-interface=ncurses --enable-html-manual
+        ./configure --with-interface=ncurses --enable-debug --enable-html-manual
 
     - run: make
     - run: make install
@@ -124,7 +125,7 @@ jobs:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses-gui --enable-html-manual
+        ./configure --with-interface=pdcurses-gui --enable-debug --enable-html-manual
 
     - run: make
     - run: make install

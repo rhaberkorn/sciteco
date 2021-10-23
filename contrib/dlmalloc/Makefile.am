@@ -8,8 +8,10 @@
 # for increased portability. There is also AC_LIBOBJ, but it's usually for defining sources of
 # replacement libraries.
 
-AM_CPPFLAGS = -DINSECURE='defined(NDEBUG)' -DNO_MALLINFO=1 -DNO_MALLOC_STATS=1 \
-              -DUSE_LOCKS=1 -DUSE_DL_PREFIX
+AM_CPPFLAGS = -DNO_MALLINFO=1 -DNO_MALLOC_STATS=1 -DUSE_LOCKS=1 -DUSE_DL_PREFIX
+if !DEBUG
+AM_CPPFLAGS += -DINSECURE=1
+endif
 
 # FIXME: This optimization is still broken as of GCC v9.3.0.
 # This is a known GCC bug, triggered by memset() in calloc().

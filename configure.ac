@@ -21,6 +21,9 @@ AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
+AX_CHECK_ENABLE_DEBUG
+AM_CONDITIONAL(DEBUG, [test x$ax_enable_debug != xno])
+
 # Use the user provided CXXFLAGS for Scintilla as well.
 # This makes sure that the same optimizations are applied
 # to SciTECO and Scintilla.
