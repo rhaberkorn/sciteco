@@ -518,7 +518,7 @@ teco_state_setqreginteger_got_register(teco_machine_main_t *ctx, teco_qreg_t *qr
 		return NULL;
 	if (teco_expressions_args() || teco_num_sign < 0) {
 		teco_int_t v;
-		if (!teco_expressions_pop_num_calc(&v, 0, error) ||
+		if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error) ||
 		    !qreg->vtable->undo_set_integer(qreg, error) ||
 		    !qreg->vtable->set_integer(qreg, v, error))
 			return NULL;
