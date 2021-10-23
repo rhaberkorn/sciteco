@@ -104,10 +104,11 @@ AT_XFAIL_IF(true)
 AT_CLEANUP
 
 AT_SETUP([Recursion overflow])
+# On Mac OS we cannot always reliably provoke a stack overflow.
+AT_SKIP_IF([case $host in *-*-darwin*) true;; *) false;; esac])
 # Should no longer dump core.
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.
 AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
-# On Mac OS we cannot provoke a stack overflow.
-AT_XFAIL_IF([case $host in *-*-darwin*) false;; esac])
+AT_XFAIL_IF(true)
 AT_CLEANUP
