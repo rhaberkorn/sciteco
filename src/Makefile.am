@@ -16,12 +16,6 @@ AM_CFLAGS = -std=gnu11 -Wall -Wno-initializer-overrides -Wno-unused-value
 AM_CPPFLAGS += -I$(top_srcdir)/contrib/rb3ptr
 AM_LDFLAGS =
 
-if REPLACE_MALLOC
-# NOTE: This may be necessary to ensure that malloc() overriding
-# works. It may prevent elimination of unused functions, though.
-AM_LDFLAGS += -rdynamic
-endif
-
 if STATIC_EXECUTABLES
 # AM_LDFLAGS are libtool flags, NOT compiler/linker flags
 AM_LDFLAGS += -all-static
