@@ -67,7 +67,8 @@ static inline void
 teco_string_init(teco_string_t *target, const gchar *str, gsize len)
 {
 	target->data = g_malloc(len + 1);
-	memcpy(target->data, str, len);
+	if (str)
+		memcpy(target->data, str, len);
 	target->len = len;
 	target->data[target->len] = '\0';
 }
@@ -98,7 +99,8 @@ static inline void
 teco_string_append(teco_string_t *target, const gchar *str, gsize len)
 {
 	target->data = g_realloc(target->data, target->len + len + 1);
-	memcpy(target->data + target->len, str, len);
+	if (str)
+		memcpy(target->data + target->len, str, len);
 	target->len += len;
 	target->data[target->len] = '\0';
 }
@@ -147,10 +149,17 @@ gint teco_string_casecmp(const teco_string_t *a, const gchar *b, gsize b_len);
 static inline gboolean
 teco_string_contains(const teco_string_t *str, gchar chr)
 {
-	return memchr(str->data, chr, str->len) != NULL;
+	return str->data && memchr(str->data, chr, str->len);
 }
 
-/** @memberof teco_string_t */
+/**
+ * Get index of character in string.
+ *
+ * @return Index of character in string. 0 refers to the first character.
+ *         In case of search failure, a negative value is returned.
+ *
+ * @memberof teco_string_t
+ */
 static inline gint
 teco_string_rindex(const teco_string_t *str, gchar chr)
 {

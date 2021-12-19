@@ -1187,6 +1187,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	 * (PDCurses does not guarantee that either).
 	 */
 	if (str) {
+		g_assert(contents != NULL);
 		*str = memcpy(g_malloc(length + 1), contents, length);
 		(*str)[length] = '\0';
 	}

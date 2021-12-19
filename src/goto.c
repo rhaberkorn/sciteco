@@ -165,7 +165,8 @@ teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, g
 		token->table = ctx;
 		token->pc = pc;
 		token->len = len;
-		memcpy(token->name, name, len);
+		if (name)
+			memcpy(token->name, name, len);
 	}
 }
 

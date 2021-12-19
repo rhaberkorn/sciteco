@@ -109,7 +109,7 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 	teco_string_t label = {NULL, 0};
 	while (value > 0) {
 		label.data = label.data ? label.data+label.len+1 : str->data;
-		const gchar *p = memchr(label.data, ',', str->len - (label.data - str->data));
+		const gchar *p = label.data ? memchr(label.data, ',', str->len - (label.data - str->data)) : NULL;
 		label.len = p ? p - label.data : str->len - (label.data - str->data);
 
 		value--;

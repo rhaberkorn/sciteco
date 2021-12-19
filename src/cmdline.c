@@ -279,6 +279,8 @@ teco_cmdline_keypress_c(gchar key, GError **error)
 gboolean
 teco_cmdline_fnmacro(const gchar *name, GError **error)
 {
+	g_assert(name != NULL);
+
 	/*
 	 * NOTE: It should be safe to allocate on the stack since
 	 * there are only a limited number of possible function key macros.

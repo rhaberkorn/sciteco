@@ -93,6 +93,10 @@ AT_SETUP([Q-Register stack cleanup])
 AT_CHECK([$SCITECO -e '@<:@a'], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Empty search])
+AT_CHECK([$SCITECO -e '@S//'], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Pattern matching overflow])
