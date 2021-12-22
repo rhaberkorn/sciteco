@@ -591,7 +591,7 @@ teco_interface_init_screen(void)
 	Xinitscr(1, (char **)argv);
 }
 
-#else
+#else /* !CURSES_TTY && !XCURSES */
 
 static void
 teco_interface_init_screen(void)
@@ -672,6 +672,7 @@ teco_interface_init_interactive(GError **error)
 
 	cbreak();
 	noecho();
+	nodelay(teco_interface.cmdline_window, TRUE);
 	/* Scintilla draws its own cursor */
 	curs_set(0);
 
@@ -756,12 +757,11 @@ teco_interface_restore_batch(void)
 #endif
 
 	/*
-	 * See teco_interface_vmsg(): It looks at msg_window to determine
-	 * whether we're in batch mode.
+	 * cmdline_window determines whether we're in batch mode.
 	 */
-	if (teco_interface.msg_window) {
-		delwin(teco_interface.msg_window);
-		teco_interface.msg_window = NULL;
+	if (teco_interface.cmdline_window) {
+		delwin(teco_interface.cmdline_window);
+		teco_interface.cmdline_window = NULL;
 	}
 }
 
@@ -789,7 +789,7 @@ teco_interface_resize_all_windows(void)
 void
 teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 {
-	if (!teco_interface.msg_window) { /* batch mode */
+	if (!teco_interface.cmdline_window) { /* batch mode */
 		teco_interface_stdio_vmsg(type, fmt, ap);
 		return;
 	}
@@ -835,7 +835,7 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 void
 teco_interface_msg_clear(void)
 {
-	if (!teco_interface.msg_window) /* batch mode */
+	if (!teco_interface.cmdline_window) /* batch mode */
 		return;
 
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
@@ -1442,11 +1442,46 @@ teco_interface_popup_clear(void)
 	teco_curses_info_popup_init(&teco_interface.popup);
 }
 
+#if defined(CURSES_TTY) || defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
+
+/*
+ * For UNIX Curses we can rely on signal handlers to detect interruptions via CTRL+C.
+ * On Win32 console builds, there is teco_console_ctrl_handler().
+ */
 gboolean
 teco_interface_is_interrupted(void)
 {
 	return teco_sigint_occurred != FALSE;
 }
+
+#else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 */
+
+/*
+ * This function is called repeatedly, so we can poll the keyboard input queue,
+ * filtering out CTRL+C.
+ * This is naturally very inefficient.
+ * It's currently necessary as a fallback e.g. for PDCURSES_GUI or XCurses.
+ */
+gboolean
+teco_interface_is_interrupted(void)
+{
+	if (teco_interface.cmdline_window) { /* interactive mode */
+		int key;
+
+		/*
+		 * NOTE: getch() is configured to be nonblocking.
+		 */
+		while ((key = wgetch(teco_interface.cmdline_window)) != ERR)
+			if (G_UNLIKELY(key == TECO_CTL_KEY('C')))
+				teco_sigint_occurred |= TRUE;
+			else
+				ungetch(key);
+	}
+
+	return teco_sigint_occurred != FALSE;
+}
+
+#endif
 
 /**
  * One iteration of the event loop.
@@ -1493,6 +1528,7 @@ teco_interface_event_loop_iter(void)
 
 	/* no special <CTRL/C> handling */
 	raw();
+	nodelay(teco_interface.cmdline_window, FALSE);
 #ifdef PDCURSES_WINCON
 	SetConsoleMode(console_hnd, console_mode & ~ENABLE_PROCESSED_INPUT);
 #endif
@@ -1505,15 +1541,17 @@ teco_interface_event_loop_iter(void)
 	teco_memory_start_limiting();
 	/* allow asynchronous interruptions on <CTRL/C> */
 	teco_sigint_occurred = FALSE;
+	nodelay(teco_interface.cmdline_window, TRUE);
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
 #ifdef PDCURSES_WINCON
 	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
 #endif
-	if (key == ERR)
-		return;
 
 	switch (key) {
+	case ERR:
+		/* shouldn't really happen */
+		return;
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
 #ifdef __PDCURSES__

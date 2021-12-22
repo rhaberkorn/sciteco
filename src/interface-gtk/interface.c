@@ -713,6 +713,12 @@ teco_interface_popup_clear(void)
  * system call overhead.
  * But the GDK lock that would be necessary for synchronization
  * has been deprecated.
+ *
+ * @todo It would be great to have platform-specific optimizations,
+ * so we can detect interruptions without having to drive the Glib
+ * event loop (e.g. using libX11 or Win32 APIs).
+ * On the downside, such solutions will probably freeze the window
+ * while SciTECO is busy.
  */
 gboolean
 teco_interface_is_interrupted(void)
@@ -1095,6 +1101,10 @@ teco_interface_cleanup(void)
  * Called when the commandline widget is resized.
  * This should ensure that the caret jumps to the middle of the command line,
  * imitating the behaviour of the current Curses command line.
+ *
+ * @bug This no longer works when the command-line gets very long
+ * and the caret will eventually be stuck at the right edge.
+ * There seems to be an internal limit.
  */
 static void
 teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
