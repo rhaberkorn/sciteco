@@ -334,6 +334,8 @@ static struct {
 	WINDOW *cmdline_window, *cmdline_pad;
 	gsize cmdline_len, cmdline_rubout_len;
 
+	GQueue *input_queue;
+
 	teco_curses_info_popup_t popup;
 
 	/**
@@ -672,7 +674,6 @@ teco_interface_init_interactive(GError **error)
 
 	cbreak();
 	noecho();
-	nodelay(teco_interface.cmdline_window, TRUE);
 	/* Scintilla draws its own cursor */
 	curs_set(0);
 
@@ -682,10 +683,9 @@ teco_interface_init_interactive(GError **error)
 
 	teco_interface.cmdline_window = newwin(0, 0, LINES - 1, 0);
 	keypad(teco_interface.cmdline_window, TRUE);
+	nodelay(teco_interface.cmdline_window, TRUE);
 
-#ifdef EMCURSES
-        nodelay(teco_interface.cmdline_window, TRUE);
-#endif
+	teco_interface.input_queue = g_queue_new();
 
 	/*
 	 * Will also initialize Scinterm, Curses color pairs
@@ -1466,16 +1466,17 @@ gboolean
 teco_interface_is_interrupted(void)
 {
 	if (teco_interface.cmdline_window) { /* interactive mode */
-		int key;
+		gint key;
 
 		/*
 		 * NOTE: getch() is configured to be nonblocking.
 		 */
-		while ((key = wgetch(teco_interface.cmdline_window)) != ERR)
+		while ((key = wgetch(teco_interface.cmdline_window)) != ERR) {
 			if (G_UNLIKELY(key == TECO_CTL_KEY('C')))
-				teco_sigint_occurred |= TRUE;
-			else
-				ungetch(key);
+				return TRUE;
+			g_queue_push_tail(teco_interface.input_queue,
+			                  GINT_TO_POINTER(key));
+		}
 	}
 
 	return teco_sigint_occurred != FALSE;
@@ -1483,18 +1484,8 @@ teco_interface_is_interrupted(void)
 
 #endif
 
-/**
- * One iteration of the event loop.
- *
- * This is a global function, so it may be used as an asynchronous Emscripten callback.
- * While this function cannot directly throw GErrors,
- * it can set teco_interface.event_loop_error.
- *
- * @fixme Thrown errors should be somehow caught when building for EMScripten as well.
- * Perhaps in a goto-block.
- */
-void
-teco_interface_event_loop_iter(void)
+static gint
+teco_interface_blocking_getch(void)
 {
 	/*
 	 * On PDCurses/WinCon, raw() and cbreak() does
@@ -1537,7 +1528,7 @@ teco_interface_event_loop_iter(void)
 	 * constantly place 100% load on the CPU.
 	 */
 	teco_memory_stop_limiting();
-	int key = wgetch(teco_interface.cmdline_window);
+	gint key = wgetch(teco_interface.cmdline_window);
 	teco_memory_start_limiting();
 	/* allow asynchronous interruptions on <CTRL/C> */
 	teco_sigint_occurred = FALSE;
@@ -1547,6 +1538,26 @@ teco_interface_event_loop_iter(void)
 #ifdef PDCURSES_WINCON
 	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
 #endif
+
+	return key;
+}
+
+/**
+ * One iteration of the event loop.
+ *
+ * This is a global function, so it may be used as an asynchronous Emscripten callback.
+ * While this function cannot directly throw GErrors,
+ * it can set teco_interface.event_loop_error.
+ *
+ * @fixme Thrown errors should be somehow caught when building for EMScripten as well.
+ * Perhaps in a goto-block.
+ */
+void
+teco_interface_event_loop_iter(void)
+{
+	gint key = g_queue_is_empty(teco_interface.input_queue)
+			? teco_interface_blocking_getch()
+			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
 
 	switch (key) {
 	case ERR:
@@ -1712,6 +1723,8 @@ teco_interface_cleanup(void)
 	if (teco_interface.info_window)
 		delwin(teco_interface.info_window);
 	teco_string_clear(&teco_interface.info_current);
+	if (teco_interface.input_queue)
+		g_queue_free(teco_interface.input_queue);
 	if (teco_interface.cmdline_window)
 		delwin(teco_interface.cmdline_window);
 	if (teco_interface.cmdline_pad)
