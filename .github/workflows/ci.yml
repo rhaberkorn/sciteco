@@ -116,7 +116,7 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel mingw-w64-i686-toolchain
+        base-devel autotools mingw-w64-i686-toolchain
         mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
         groff mingw-w64-i686-doxygen
 
