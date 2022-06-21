@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2021 Robin Haberkorn
+ * Copyright (C) 2012-2022 Robin Haberkorn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

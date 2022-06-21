@@ -4,6 +4,7 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
+ * <'> should result in an error outside of IF-statements.
  * Rubbing out <LF> via ^W will rub out more than expected.
  * After commands like ECcat /dev/zero$ result in OOM,
    we do not correctly recover, even though malloc_trim() is called.
@@ -380,6 +381,7 @@ Features:
    using --with-scintilla.
  * Update the lexer library based on a SciTE that corresponds
    to our current Scintilla version.
+   Add a Python lexer and one for Linux device trees.
 
 Optimizations:
  * There is should be a common error code for null-byte tests.
@@ -393,6 +395,8 @@ Optimizations:
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
  * Add a configure-switch for LTO (--enable-lto).
+ * undo__teco_interface_ssm() could always include the check for
+   teco_current_doc_must_undo().
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
@@ -406,3 +410,4 @@ Documentation:
  * Write some tutorials for the Wiki, e.g. about paragraph
    reflowing...
    Object-oriented SciTECO ideoms etc. ;-)
+ * Record a "video" on https://asciinema.org/
