@@ -159,7 +159,6 @@ jobs:
         # itself statically - it only wastes a few MB.
         # You will also have to add --enable-static-executables.
         # The additional Windows libraries are for PDCursesMod/WinGUI:
-#       PDCURSES_LIBS: -lpdcurses -lgdi32 -lcomdlg32
 #       LIBGLIB_LIBS: -lglib-2.0 -lintl -liconv -lpcre -lole32 -lws2_32 -luuid
         # FIXME: Once there is an --enable-lto, we should use that.
 #       CFLAGS: -O3 -flto -DGLIB_STATIC_COMPILATION
@@ -168,20 +167,35 @@ jobs:
         LDFLAGS: -flto
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses-gui --enable-html-manual
+        mkdir build-wingui build-wincon
+        cp -r contrib/{scintilla,lexilla,scinterm} build-wingui/contrib
+        cp -r contrib/{scintilla,lexilla,scinterm} build-wincon/contrib
+        (cd build-wingui
+         ../configure --with-interface=pdcurses-gui --enable-html-manual --program-prefix=g \
+                      PDCURSES_LIBS="-lpdcurses_wingui -lgdi32 -lcomdlg32 -lwinmm")
+        (cd build-wincon
+         ../configure --with-interface=pdcurses --enable-html-manual \
+                      PDCURSES_LIBS="-lpdcurses_wincon -lgdi32 -lwinmm")
 
     - name: make
-      run: make -j 2
-    - run: make install-strip
+      run: |
+        make -C build-wingui -j 2
+        make -C build-wincon -j 2
+    - name: make install
+      run: |
+        make -C build-wingui install-strip
+        make -C build-wincon install-strip
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose"
+      run: |
+        make -C build-wingui check TESTSUITEFLAGS="--verbose"
+        make -C build-wincon check TESTSUITEFLAGS="--verbose"
 
     - name: Prepare Distribution Directory
       run: |
         mkdir temp-bin/
-        cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
+        cp /mingw32/bin/{gsciteco.exe,sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
         cp -r /mingw32/share/sciteco/{lib,*.tmac} temp-bin/
         cp /mingw32/share/sciteco/sample.teco_ini temp-bin/.teco_ini
         cp -r /mingw32/share/doc/sciteco/* temp-bin/
@@ -190,7 +204,6 @@ jobs:
         # FIXME: See above. We currently link dynamically.
         cp /mingw32/bin/{libglib-2.0-0,libpcre-1,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
         cp /mingw32/bin/libstdc++-6.dll temp-bin/
-        cp /mingw32/bin/libpdcurses.dll temp-bin/
     - name: Get Current Date
       id: date
       run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
