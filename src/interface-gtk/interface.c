@@ -718,6 +718,7 @@ teco_interface_popup_clear(void)
  * @todo It would be great to have platform-specific optimizations,
  * so we can detect interruptions without having to drive the Glib
  * event loop (e.g. using libX11 or Win32 APIs).
+ * There already is a keyboard hook for Win32 in interface-curses.
  * On the downside, such solutions will probably freeze the window
  * while SciTECO is busy.
  */
@@ -883,7 +884,11 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 		g_unichar_to_utf8(u, &key);
 		if (key > 0x7F)
 			break;
-		if (state & GDK_CONTROL_MASK)
+		/*
+		 * NOTE: Alt-Gr key-combinations are sometimes reported as
+		 * Ctrl+Alt, so we filter those out.
+		 */
+		if ((state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK)
 			key = TECO_CTL_KEY(g_ascii_toupper(key));
 
 		if (!teco_cmdline_keypress_c(key, error))
