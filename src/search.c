@@ -914,7 +914,9 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
 
-	if (teco_current_doc_must_undo())
+	/* NOTE: An undo action is not always created. */
+	if (teco_current_doc_must_undo() &&
+	    teco_search_parameters.dot != dot)
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 
 	return &teco_state_start;
@@ -1065,7 +1067,7 @@ teco_state_replace_default_insert_done_overwrite(teco_machine_main_t *ctx, const
 	} else {
 		g_auto(teco_string_t) replace_str = {NULL, 0};
 		if (!replace_reg->vtable->get_string(replace_reg, &replace_str.data, &replace_str.len, error) ||
-		    !teco_state_insert_process(ctx, &replace_str, replace_str.len, error))
+		    (replace_str.len > 0 && !teco_state_insert_process(ctx, &replace_str, replace_str.len, error)))
 			return NULL;
 	}
 

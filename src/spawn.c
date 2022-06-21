@@ -316,7 +316,7 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 			                       teco_spawn_ctx.stdout_reader.eol_style);
 		}
 	} else if (teco_spawn_ctx.from != teco_spawn_ctx.to || teco_spawn_ctx.text_added) {
-		/* undo action is only effective if it changed anything */
+		/* undo action has only been created if it changed anything */
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 		teco_ring_dirtify();

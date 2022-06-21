@@ -194,6 +194,8 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 
 		gchar buffer[TECO_EXPRESSIONS_FORMAT_LEN];
 		gchar *str = teco_expressions_format(buffer, value);
+		g_assert(*str != '\0');
+
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 		teco_interface_ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
@@ -460,7 +462,10 @@ teco_state_start_cmdline_push(teco_machine_main_t *ctx, GError **error)
 	teco_interface_ssm(SCI_ADDTEXT, teco_cmdline.pc, (sptr_t)teco_cmdline.str.data);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 
-	/* must always support undo on global register */
+	/*
+	 * Must always support undo on global register.
+	 * A undo action should always have been generated.
+	 */
 	undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 }
 
@@ -770,6 +775,7 @@ teco_delete_words(teco_int_t n)
 		}
 		return TECO_FAILURE;
 	}
+	g_assert(size != teco_interface_ssm(SCI_GETLENGTH, 0, 0));
 
 	undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 	if (teco_current_doc_must_undo())
@@ -921,6 +927,9 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 
+	/*
+	 * Should always generate an undo action.
+	 */
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_interface_ssm(SCI_DELETERANGE, from, len);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
@@ -2381,6 +2390,8 @@ gboolean
 teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
                           gsize new_chars, GError **error)
 {
+	g_assert(new_chars > 0);
+
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_interface_ssm(SCI_ADDTEXT, new_chars,
 	                   (sptr_t)(str->data + str->len - new_chars));
