@@ -54,6 +54,7 @@
 #include "cmdline.h"
 #include "qreg.h"
 #include "ring.h"
+#include "memory.h"
 #include "interface.h"
 
 //#define DEBUG
@@ -1063,6 +1064,9 @@ teco_interface_event_loop(GError **error)
 	g_unix_signal_add(SIGTERM, teco_interface_sigterm_handler, NULL);
 #endif
 
+	/* don't limit while waiting for input as this might be a busy operation */
+	teco_memory_stop_limiting();
+
 	gtk_main();
 
 	/*
@@ -1155,6 +1159,8 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 
 	recursed = TRUE;
 
+	teco_memory_start_limiting();
+
 	g_queue_push_tail(teco_interface.event_queue, gdk_event_copy((GdkEvent *)event));
 
 	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
@@ -1193,6 +1199,8 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		while (gtk_events_pending())
 			gtk_main_iteration_do(FALSE);
 	} while (!g_queue_is_empty(teco_interface.event_queue));
+
+	teco_memory_stop_limiting();
 
 	recursed = FALSE;
 	return TRUE;
