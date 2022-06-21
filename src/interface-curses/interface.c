@@ -110,6 +110,7 @@
  * handler. MinGW provides signal(), but it's not
  * reliable.
  * This may also be used to handle CTRL_CLOSE_EVENTs.
+ *
  * NOTE: Unlike signal handlers, this is executed in a
  * separate thread.
  */
@@ -123,6 +124,55 @@ teco_console_ctrl_handler(DWORD type)
 	}
 
 	return FALSE;
+}
+
+#endif
+
+#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
+
+/**
+ * Hooks into the key processing to catch CTRL+C.
+ *
+ * FIXME: This might be used as the default way to catch CTRL+C on
+ * all Windows ports, even including Gtk+.
+ */
+static LRESULT CALLBACK
+teco_keyboard_hook(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
+	static gboolean ctrl_pressed = FALSE;
+
+	if (nCode == HC_ACTION) {
+		switch (wParam) {
+		case WM_KEYDOWN:
+			switch (p->vkCode) {
+			case VK_LCONTROL:
+			case VK_RCONTROL:
+			case VK_CONTROL:
+				ctrl_pressed = TRUE;
+				break;
+			case 0x43: /* C */
+				if (ctrl_pressed) {
+					teco_sigint_occurred = TRUE;
+					return 1;
+				}
+				break;
+			}
+			break;
+
+		case WM_KEYUP:
+			switch (p->vkCode) {
+			case VK_LCONTROL:
+			case VK_RCONTROL:
+			case VK_CONTROL:
+				ctrl_pressed = FALSE;
+				break;
+			}
+			break;
+		}
+	}
+
+	return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 #endif
@@ -371,16 +421,6 @@ teco_interface_init(void)
 	teco_interface.stdout_orig = teco_interface.stderr_orig = -1;
 
 	teco_curses_info_popup_init(&teco_interface.popup);	
-
-	/*
-	 * We must register this handler to handle
-	 * asynchronous interruptions via CTRL+C
-	 * reliably. The signal handler we already
-	 * have won't do.
-	 */
-#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
-	SetConsoleCtrlHandler(teco_console_ctrl_handler, TRUE);
-#endif
 
 	/*
 	 * Make sure we have a string for the info line
@@ -671,6 +711,18 @@ teco_interface_init_interactive(GError **error)
 	setlocale(LC_CTYPE, "");
 
 	teco_interface_init_screen();
+
+	/*
+	 * We must register this handler for
+	 * asynchronous interruptions via CTRL+C
+	 * reliably. The signal handler we already
+	 * have won't do.
+	 * Doing this here ensures that we have a higher
+	 * precedence than the handler installed by PDCursesMod.
+	 */
+#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
+	SetConsoleCtrlHandler(teco_console_ctrl_handler, TRUE);
+#endif
 
 	cbreak();
 	noecho();
@@ -1454,7 +1506,21 @@ teco_interface_is_interrupted(void)
 	return teco_sigint_occurred != FALSE;
 }
 
-#else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 */
+#elif defined(PDCURSES_GUI) && defined(G_OS_WIN32)
+
+gboolean
+teco_interface_is_interrupted(void)
+{
+	/*
+	 * NOTE: The teco_keyboard_hook() is only called from event loops.
+	 */
+	MSG msg;
+	PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE);
+
+	return teco_sigint_occurred != FALSE;
+}
+
+#else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 && (!PDCURSES_GUI || !G_OS_WIN32) */
 
 /*
  * This function is called repeatedly, so we can poll the keyboard input queue,
@@ -1487,18 +1553,11 @@ teco_interface_is_interrupted(void)
 static gint
 teco_interface_blocking_getch(void)
 {
-	/*
-	 * On PDCurses/WinCon, raw() and cbreak() does
-	 * not disable and enable CTRL+C handling properly.
-	 * Since I don't want to patch PDCurses/win32,
-	 * we do this manually here.
-	 * NOTE: This exploits the fact that PDCurses uses
-	 * STD_INPUT_HANDLE internally!
-	 */
-#ifdef PDCURSES_WINCON
-	HANDLE console_hnd = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD console_mode;
-	GetConsoleMode(console_hnd, &console_mode);
+#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
+	static HHOOK keyboard_hook = NULL;
+
+	if (G_LIKELY(keyboard_hook != NULL))
+		UnhookWindowsHookEx(keyboard_hook);
 #endif
 
 	/*
@@ -1520,9 +1579,6 @@ teco_interface_blocking_getch(void)
 	/* no special <CTRL/C> handling */
 	raw();
 	nodelay(teco_interface.cmdline_window, FALSE);
-#ifdef PDCURSES_WINCON
-	SetConsoleMode(console_hnd, console_mode & ~ENABLE_PROCESSED_INPUT);
-#endif
 	/*
 	 * Memory limiting is stopped temporarily, since it might otherwise
 	 * constantly place 100% load on the CPU.
@@ -1533,10 +1589,13 @@ teco_interface_blocking_getch(void)
 	/* allow asynchronous interruptions on <CTRL/C> */
 	teco_sigint_occurred = FALSE;
 	nodelay(teco_interface.cmdline_window, TRUE);
+#if defined(CURSES_TTY) || defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
-#ifdef PDCURSES_WINCON
-	SetConsoleMode(console_hnd, console_mode | ENABLE_PROCESSED_INPUT);
+#endif
+
+#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
+	keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, teco_keyboard_hook, NULL, 0);
 #endif
 
 	return key;
