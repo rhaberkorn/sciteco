@@ -167,7 +167,7 @@ jobs:
         LDFLAGS: -flto
       run: |
         autoreconf -i
-        mkdir build-wingui build-wincon
+        mkdir -p build-wingui/contrib build-wincon/contrib
         cp -r contrib/{scintilla,lexilla,scinterm} build-wingui/contrib
         cp -r contrib/{scintilla,lexilla,scinterm} build-wincon/contrib
         (cd build-wingui
