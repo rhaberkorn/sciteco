@@ -277,7 +277,7 @@ case $INTERFACE in
 		        overriding the autoconf check
 		])
 		if [[ "x$PDCURSES_LIBS" = "x" ]]; then
-			AC_CHECK_LIB(pdcurses, initscr, , [
+			AC_CHECK_LIB(pdcurses, PDC_get_version, , [
 				AC_MSG_ERROR([libpdcurses missing!
 				              Perhaps it is not named correctly or has wrong permissions.])
 			])
@@ -287,17 +287,19 @@ case $INTERFACE in
 			LIBS="$LIBS $PDCURSES_LIBS"
 		fi
 
-		AC_CHECK_FUNC([PDC_set_resize_limits], [
-			AC_DEFINE(PDCURSES_MOD, 1, [PDCursesMod extensions])
-		])
-
 		# It is crucial to define PDC_WIDE before including curses.h.
+		# FIXME: MinGW has a pdcurses.h that already defines all necessary macros,
+		# but it's not in upstream PDCurses/PDCursesMod.
 		AC_CHECK_FUNC([add_wch], [
-			AC_DEFINE(PDC_WIDE, 1, [Built with wide-character support])
+			AC_DEFINE(PDC_WIDE, 1, [PDCurses built with wide-character support])
+			# FIXME: It would be better to check for PDC_FORCE_UTF8.
+			# Theoretically, we could check for endwin_u[32|64]_4302,
+			# but I'm not sure this will work reliably in the future.
+			AC_DEFINE(PDC_FORCE_UTF8, 1, [PDCursesMod forces use of UTF8])
 		])
 
 		# This is detectable at runtime on PDCursesMod using PDC_get_version().
-		# "Classic" PDCurses does not allow runtime or compile-time checks for
+		# "Classic" PDCurses however does not allow runtime or compile-time checks for
 		# discerning eg. WinCon from SDL.
 		if [[ $INTERFACE = pdcurses-gui ]]; then
 			AC_DEFINE(PDCURSES_GUI, 1, [PDCurses with GUI window])

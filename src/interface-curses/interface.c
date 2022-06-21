@@ -691,7 +691,7 @@ teco_interface_init_interactive(GError **error)
 	g_setenv("TERM", "#win32con", TRUE);
 #endif
 
-#ifdef PDCURSES_MOD
+#ifdef __PDCURSESMOD__
 	/*
 	 * Necessary to enable window resizing in WinGUI port
 	 */
@@ -1629,6 +1629,7 @@ teco_interface_event_loop_iter(void)
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
 #ifdef __PDCURSES__
+		/* NOTE: No longer necessary since PDCursesMod v4.3.3. */
 		resize_term(0, 0);
 #endif
 		teco_interface_resize_all_windows();
