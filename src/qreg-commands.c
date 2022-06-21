@@ -490,7 +490,8 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 		teco_ring_dirtify();
 
-		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+		if (teco_current_doc_must_undo())
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 
 	return &teco_state_start;

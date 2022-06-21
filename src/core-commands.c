@@ -777,9 +777,10 @@ teco_delete_words(teco_int_t n)
 	}
 	g_assert(size != teco_interface_ssm(SCI_GETLENGTH, 0, 0));
 
-	undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
-	if (teco_current_doc_must_undo())
+	if (teco_current_doc_must_undo()) {
+		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+	}
 	teco_ring_dirtify();
 
 	return TECO_SUCCESS;
@@ -2249,8 +2250,9 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 			}
 		}
 
-		undo__teco_interface_ssm(SCI_SETEOLMODE,
-		                         teco_interface_ssm(SCI_GETEOLMODE, 0, 0), 0);
+		if (teco_current_doc_must_undo())
+			undo__teco_interface_ssm(SCI_SETEOLMODE,
+			                         teco_interface_ssm(SCI_GETEOLMODE, 0, 0), 0);
 		teco_interface_ssm(SCI_SETEOLMODE, eol_mode, 0);
 	} else if (teco_machine_main_eval_colon(ctx)) {
 		const gchar *eol_seq = teco_eol_get_seq(teco_interface_ssm(SCI_GETEOLMODE, 0, 0));
