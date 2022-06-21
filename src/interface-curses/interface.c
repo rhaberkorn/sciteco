@@ -415,6 +415,10 @@ teco_interface_init(void)
 {
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.color_table); i++)
 		teco_interface.color_table[i] = -1;
+#ifdef PDCURSES_GUI
+	/* NOTE: Fixed and no longer necessary in PDCursesMod v4.3.3. */
+	teco_interface.color_table[8] = 0x808080;
+#endif
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.orig_color_table); i++)
 		teco_interface.orig_color_table[i].r = -1;
 
