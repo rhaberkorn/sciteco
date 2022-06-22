@@ -128,55 +128,6 @@ teco_console_ctrl_handler(DWORD type)
 
 #endif
 
-#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
-
-/**
- * Hooks into the key processing to catch CTRL+C.
- *
- * FIXME: This might be used as the default way to catch CTRL+C on
- * all Windows ports, even including Gtk+.
- */
-static LRESULT CALLBACK
-teco_keyboard_hook(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
-	static gboolean ctrl_pressed = FALSE;
-
-	if (nCode == HC_ACTION) {
-		switch (wParam) {
-		case WM_KEYDOWN:
-			switch (p->vkCode) {
-			case VK_LCONTROL:
-			case VK_RCONTROL:
-			case VK_CONTROL:
-				ctrl_pressed = TRUE;
-				break;
-			case 0x43: /* C */
-				if (ctrl_pressed) {
-					teco_sigint_occurred = TRUE;
-					return 1;
-				}
-				break;
-			}
-			break;
-
-		case WM_KEYUP:
-			switch (p->vkCode) {
-			case VK_LCONTROL:
-			case VK_RCONTROL:
-			case VK_CONTROL:
-				ctrl_pressed = FALSE;
-				break;
-			}
-			break;
-		}
-	}
-
-	return CallNextHookEx(NULL, nCode, wParam, lParam);
-}
-
-#endif
-
 static gint teco_xterm_version(void) G_GNUC_UNUSED;
 
 #define UNNAMED_FILE "(Unnamed)"
@@ -415,7 +366,7 @@ teco_interface_init(void)
 {
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.color_table); i++)
 		teco_interface.color_table[i] = -1;
-#ifdef PDCURSES_GUI
+#if defined(__PDCURSESMOD__) && defined(PDCURSES_GUI)
 	/* NOTE: Fixed and no longer necessary in PDCursesMod v4.3.3. */
 	teco_interface.color_table[8] = 0x808080;
 #endif
@@ -1510,21 +1461,7 @@ teco_interface_is_interrupted(void)
 	return teco_sigint_occurred != FALSE;
 }
 
-#elif defined(PDCURSES_GUI) && defined(G_OS_WIN32)
-
-gboolean
-teco_interface_is_interrupted(void)
-{
-	/*
-	 * NOTE: The teco_keyboard_hook() is only called from event loops.
-	 */
-	MSG msg;
-	PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE);
-
-	return teco_sigint_occurred != FALSE;
-}
-
-#else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 && (!PDCURSES_GUI || !G_OS_WIN32) */
+#else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 */
 
 /*
  * This function is called repeatedly, so we can poll the keyboard input queue,
@@ -1537,6 +1474,18 @@ teco_interface_is_interrupted(void)
 {
 	if (teco_interface.cmdline_window) { /* interactive mode */
 		gint key;
+
+		/*
+		 * This is a workaround for PDCursesMod/WinGUI that will
+		 * likely be fixed in versions newer than v4.3.3.
+		 * See also https://github.com/Bill-Gray/PDCursesMod/issues/197
+		 */
+#if defined(HAVE_PDC_CS) && PDC_BUILD <= 4303
+		extern CRITICAL_SECTION PDC_cs;
+		LeaveCriticalSection(&PDC_cs);
+		SwitchToThread();
+		EnterCriticalSection(&PDC_cs);
+#endif
 
 		/*
 		 * NOTE: getch() is configured to be nonblocking.
@@ -1557,13 +1506,6 @@ teco_interface_is_interrupted(void)
 static gint
 teco_interface_blocking_getch(void)
 {
-#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
-	static HHOOK keyboard_hook = NULL;
-
-	if (G_LIKELY(keyboard_hook != NULL))
-		UnhookWindowsHookEx(keyboard_hook);
-#endif
-
 	/*
 	 * Setting function key processing is important
 	 * on Unix Curses, as ESCAPE is handled as the beginning
@@ -1596,10 +1538,6 @@ teco_interface_blocking_getch(void)
 #if defined(CURSES_TTY) || defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
-#endif
-
-#if defined(PDCURSES_GUI) && defined(G_OS_WIN32)
-	keyboard_hook = SetWindowsHookEx(WH_KEYBOARD_LL, teco_keyboard_hook, NULL, 0);
 #endif
 
 	return key;

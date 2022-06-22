@@ -298,6 +298,13 @@ case $INTERFACE in
 			AC_DEFINE(PDC_FORCE_UTF8, 1, [PDCursesMod forces use of UTF8])
 		])
 
+		# This is actually a symbol (CRITICAL_SECTION) used by PDCursesMod/WinGUI
+		# for synchronization. We use this as a workaround to gain responsiveness
+		# while polling for keypresses.
+		# NOTE: Can currently only be detected when linking against the static
+		# libpdcurses_wingui.a.
+		AC_CHECK_FUNCS([PDC_cs])
+
 		# This is detectable at runtime on PDCursesMod using PDC_get_version().
 		# "Classic" PDCurses however does not allow runtime or compile-time checks for
 		# discerning eg. WinCon from SDL.
