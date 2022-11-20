@@ -99,13 +99,15 @@ AT_CLEANUP
 
 AT_BANNER([Known Bugs])
 
-AT_SETUP([Pattern matching overflow])
-# Should no longer dump core.
-# It could fail because the memory limit is exceeed,
-# but not in this case since the match string isn't too large.
-AT_CHECK([$SCITECO -e '100000<@I"X">J @S"^EM^X"'], 0, ignore, ignore)
-AT_XFAIL_IF(true)
-AT_CLEANUP
+# NOTE: This bug depends on specific build options of Glib's
+# PCRE which is not predictable.
+#AT_SETUP([Pattern matching overflow])
+## Should no longer dump core.
+## It could fail because the memory limit is exceeed,
+## but not in this case since the match string isn't too large.
+#AT_CHECK([$SCITECO -e '100000<@I"X">J @S"^EM^X"'], 0, ignore, ignore)
+#AT_XFAIL_IF(true)
+#AT_CLEANUP
 
 AT_SETUP([Recursion overflow])
 # On Mac OS we cannot always reliably provoke a stack overflow.
