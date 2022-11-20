@@ -1,0 +1,4 @@
+# Disable automatic line ending changes on checkout.
+# For instance on *.tmac files, this causes a lot of bogus warnings.
+# Instead use the exact same line endings committed into the repo.
+* -text
