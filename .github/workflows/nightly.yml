@@ -277,7 +277,7 @@ jobs:
         cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/
         cp /mingw32/bin/{libglib-2.0-0,libpcre2-8-0,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
         cp /mingw32/bin/{libgtk-3-0,libgdk-3-0,libgdk_pixbuf-2.0-0,libatk-1.0-0}.dll temp-bin/
-        cp /mingw32/bin/{libgobject-2.0-0,libgmodule-2.0-0,libgio-2.0-0,libffi-7}.dll temp-bin/
+        cp /mingw32/bin/{libgobject-2.0-0,libgmodule-2.0-0,libgio-2.0-0,libffi-8}.dll temp-bin/
         cp /mingw32/bin/{libpango-1.0-0,libpangocairo-1.0-0,libpangowin32-1.0-0,libpangoft2-1.0-0}.dll temp-bin/
         cp /mingw32/bin/{libthai-0,libdatrie-1,libharfbuzz-0,libgraphite2,libfribidi-0,libepoxy-0}.dll temp-bin/
         cp /mingw32/bin/{libfontconfig-1,libexpat-1}.dll temp-bin/
