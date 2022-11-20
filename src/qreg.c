@@ -897,8 +897,6 @@ teco_qreg_table_edit_name(teco_qreg_table_t *table, const gchar *name, gsize len
  * Import process environment into table
  * by setting environment registers for every
  * environment variable.
- * It is assumed that the table does not yet
- * contain any environment register.
  *
  * In general this method is only safe to call
  * at startup.
@@ -908,13 +906,13 @@ teco_qreg_table_edit_name(teco_qreg_table_t *table, const gchar *name, gsize len
 gboolean
 teco_qreg_table_set_environ(teco_qreg_table_t *table, GError **error)
 {
-	/*
-	 * NOTE: Using g_get_environ() would be more efficient,
-	 * but it appears to be broken, at least on Windows 2000.
-	 */
-	g_auto(GStrv) env = g_listenv();
+	g_auto(GStrv) env = g_get_environ();
 
 	for (gchar **key = env; *key; key++) {
+		gchar *value = strchr(*key, '=');
+		assert(value != NULL);
+		*value++ = '\0';
+
 		g_autofree gchar *name = g_strconcat("$", *key, NULL);
 
 		/*
@@ -928,8 +926,6 @@ teco_qreg_table_set_environ(teco_qreg_table_t *table, GError **error)
 			qreg = found;
 		}
 
-		const gchar *value = g_getenv(*key);
-		g_assert(value != NULL);
 		if (!qreg->vtable->set_string(qreg, value, strlen(value), error))
 			return FALSE;
 	}
