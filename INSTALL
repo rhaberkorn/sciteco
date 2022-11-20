@@ -26,12 +26,12 @@ SciTECO Build and Runtime Dependencies
      I recommend ncurses 6.0 or later.
    * NetBSD Curses (https://github.com/sabotage-linux/netbsd-curses).
      This is the default on NetBSD.
+   * PDCursesMod v4.3.4 or later (https://github.com/Bill-Gray/PDCursesMod.git).
+     This is the recommended flavor of PDCurses to use.
+   * PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses).
    * PDCurses/XCurses (http://pdcurses.sourceforge.net/).
      Note that XCurses v3.4 appears to be broken, you may have to
      build from PDCurses Git instead.
-   * PDCursesMod (https://github.com/Bill-Gray/PDCursesMod.git).
-     I recommend v4.3.2 or later.
-   * PDCurses/EMCurses (https://github.com/rhaberkorn/emcurses).
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
    * GTK+ v3.12 or later: http://www.gtk.org/

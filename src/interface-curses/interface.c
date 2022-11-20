@@ -366,10 +366,6 @@ teco_interface_init(void)
 {
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.color_table); i++)
 		teco_interface.color_table[i] = -1;
-#if defined(__PDCURSESMOD__) && defined(PDCURSES_GUI)
-	/* NOTE: Fixed and no longer necessary in PDCursesMod v4.3.3. */
-	teco_interface.color_table[8] = 0x808080;
-#endif
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.orig_color_table); i++)
 		teco_interface.orig_color_table[i].r = -1;
 
@@ -1474,18 +1470,6 @@ teco_interface_is_interrupted(void)
 {
 	if (teco_interface.cmdline_window) { /* interactive mode */
 		gint key;
-
-		/*
-		 * This is a workaround for PDCursesMod/WinGUI that will
-		 * likely be fixed in versions newer than v4.3.3.
-		 * See also https://github.com/Bill-Gray/PDCursesMod/issues/197
-		 */
-#if defined(HAVE_PDC_CS) && PDC_BUILD <= 4303
-		extern CRITICAL_SECTION PDC_cs;
-		LeaveCriticalSection(&PDC_cs);
-		SwitchToThread();
-		EnterCriticalSection(&PDC_cs);
-#endif
 
 		/*
 		 * NOTE: getch() is configured to be nonblocking.
