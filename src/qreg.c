@@ -909,7 +909,19 @@ teco_qreg_table_set_environ(teco_qreg_table_t *table, GError **error)
 	g_auto(GStrv) env = g_get_environ();
 
 	for (gchar **key = env; *key; key++) {
-		gchar *value = strchr(*key, '=');
+		const gchar *p = *key;
+
+		/*
+		 * FIXME: On Win32, the key sometimes starts with `=`
+		 * which shouldn't be possible and in reality it is a `!`.
+		 * For instance `=C:=C:\msys64`.
+		 */
+#ifdef G_OS_WIN32
+		if (G_UNLIKELY(*p == '='))
+			p++;
+#endif
+
+		gchar *value = strchr(p, '=');
 		assert(value != NULL);
 		*value++ = '\0';
 
