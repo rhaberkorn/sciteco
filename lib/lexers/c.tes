@@ -49,7 +49,10 @@
   :M[color.number],4M[color.set]
   :M[color.keyword],5M[color.set]
   :M[color.string],6M[color.set]
-  :M[color.string],7M[color.set]
+  :M[color.string2],7M[color.set]
   :M[color.preproc],9M[color.set]
   :M[color.operator],10M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.comment],23M[color.set]
+  :M[color.comment],24M[color.set]
 }
