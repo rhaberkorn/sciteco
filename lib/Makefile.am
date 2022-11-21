@@ -55,6 +55,7 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/c.tes \
                   lexers/cpp.tes \
                   lexers/gob.tes \
+                  lexers/devicetree.tes \
                   lexers/test.tes \
                   lexers/kix.tes \
                   lexers/baan.tes \
@@ -87,7 +88,8 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/pov.tes \
                   lexers/rust.tes \
                   lexers/blitzbasic.tes \
-                  lexers/caml.tes
+                  lexers/caml.tes \
+                  lexers/python.tes
 
 # This lexer is responsible for styling
 # womanpages and is thus useful even when omitting
