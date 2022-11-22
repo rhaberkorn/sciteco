@@ -68,6 +68,20 @@ function load_properties(filename)
 	file:close()
 end
 
+-- redistribute (left-adjust) words (separated by spaces),
+-- so that lines break around 80 characters
+function reflow(str, indent)
+	local col
+	for word in str:gmatch("%g+") do
+		if not col or col > 80 then
+			io.write("\n", string.rep(" ", indent-1))
+			col = indent-1
+		end
+		col = col + 1 + #word
+		io.write(" ", word)
+	end
+end
+
 if #arg ~= 2 then
 	io.stderr:write("Usage: ./scite2co.lua <language> <property file>\n\n"..
 	                "Auto-generates a SciTECO lexer configuration from a SciTE\n"..
@@ -85,7 +99,7 @@ for _, filename in ipairs(arg) do
 	load_properties(filename)
 end
 
-io.write("! AUTO-GENERATED FROM SCITE PROPERTY SET !\n\n")
+io.write("!* AUTO-GENERATED FROM SCITE PROPERTY SET *!\n\n")
 
 -- print [lexer.test...] macro
 local shbang = expand(props["shbang."..language])
@@ -118,25 +132,19 @@ io.write([=[
 @[lexer.set.]=]..language:lower()..[=[]{
   ESSETILEXER]=]..lexer..[=[
 ]=])
+
 -- print keyword definitions with word wrapping
 for i = 1, 9 do
 	local keyword_prefix = "keywords"..(i == 1 and "" or i).."."
 	local value = expand(get_property_by_pattern(keyword_prefix, file_patterns))
 
 	if value and #value > 0 then
-		io.write("  "..(i-1).."ESSETKEYWORDS\n   ")
-		local col = 3
-		for word in value:gmatch("%g+") do
-			col = col + 1 + #word
-			if col > 80 then
-				io.write("\n   ")
-				col = 3
-			end
-			io.write(" "..word)
-		end
+		io.write("  "..(i-1).."ESSETKEYWORDS")
+		reflow(value, 4)
 		io.write("\n")
 	end
 end
+
 -- print styles
 -- SciTE has a single list of styles per Scintilla lexer which
 -- is used by multiple languages - we output these definitions
@@ -156,18 +164,39 @@ local style_mapping = {
 	["colour.operator"]		= "color.operator",
 	["colour.error"]		= "color.error"
 }
-for i = 0, 255 do
-	local value = props["style."..lexer.."."..i]
+function emit_style(prop, i)
+	local value = props[prop]
+	if not value then return end
 
-	if value then
-		for p in value:gmatch("$(%b())") do
-			local sciteco_color = style_mapping[p:sub(2, -2)]
+	for p in value:gmatch("$(%b())") do
+		local sciteco_color = style_mapping[p:sub(2, -2)]
 
-			if sciteco_color then
-				io.write("  :M["..sciteco_color.."],"..i.."M[color.set]\n")
-				break
-			end
+		if sciteco_color then
+			io.write("  :M["..sciteco_color.."],"..i.."M[color.set]\n")
+			break
 		end
 	end
+end
+
+for i = 0, 255 do
+	local substyles = props["substyles."..lexer.."."..i]
+	if substyles then
+		io.write("  "..substyles..","..i.."ESALLOCATESUBSTYLESU.s\n")
+		for substyle = 1, substyles do
+			local id_prefix = "substylewords."..i.."."..substyle.."."
+			local value = expand(get_property_by_pattern(id_prefix, file_patterns))
+
+			if value and #value > 0 then
+				io.write("  Q.s+"..(substyle-1).."ESSETIDENTIFIERS")
+				reflow(value, 4)
+				io.write("\n")
+			end
+
+			emit_style("style."..lexer.."."..i.."."..substyle,
+			           "Q.s+"..(substyle-1))
+		end
+	end
+
+	emit_style("style."..lexer.."."..i, i)
 end
 io.write("}\n")
