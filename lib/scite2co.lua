@@ -105,16 +105,16 @@ io.write("!* AUTO-GENERATED FROM SCITE PROPERTY SET *!\n\n")
 local shbang = expand(props["shbang."..language])
 local file_patterns = expand(props["file.patterns."..language])
 io.write([=[
-@[lexer.test.]=]..language:lower()..[=[]{
+@[lexer.test.]=], language:lower(), [=[]{
 ]=])
-if shbang then io.write([=[  _#!M]=]..shbang..[=[M[lexer.checkheader]"S -1 '
+if shbang then io.write([=[  _#!M]=], shbang, [=[M[lexer.checkheader]"S -1 '
 ]=]) end
 local patterns = {}
 for pattern in file_patterns:gmatch("[^;]+") do
 	table.insert(patterns, pattern)
 end
 for i, pattern in ipairs(patterns) do
-	io.write([=[  :EN]=]..pattern..[=[Q*]=])
+	io.write([=[  :EN]=], pattern, [=[Q*]=])
 	if i ~= #patterns then io.write([=["S -1 ']=]) end
 	io.write("\n")
 end
@@ -129,8 +129,8 @@ io.write([=[}
 -- Therefore we must emit SCI_SETILEXER calls here.
 local lexer = expand(get_property_by_pattern("lexer.", file_patterns))
 io.write([=[
-@[lexer.set.]=]..language:lower()..[=[]{
-  ESSETILEXER]=]..lexer..[=[
+@[lexer.set.]=], language:lower(), [=[]{
+  ESSETILEXER]=], lexer, [=[
 ]=])
 
 -- print keyword definitions with word wrapping
@@ -139,7 +139,7 @@ for i = 1, 9 do
 	local value = expand(get_property_by_pattern(keyword_prefix, file_patterns))
 
 	if value and #value > 0 then
-		io.write("  "..(i-1).."ESSETKEYWORDS")
+		io.write("  ", i-1, "ESSETKEYWORDS")
 		reflow(value, 4)
 		io.write("\n")
 	end
@@ -172,7 +172,7 @@ function emit_style(prop, i)
 		local sciteco_color = style_mapping[p:sub(2, -2)]
 
 		if sciteco_color then
-			io.write("  :M["..sciteco_color.."],"..i.."M[color.set]\n")
+			io.write("  :M[", sciteco_color, "],", i, "M[color.set]\n")
 			break
 		end
 	end
@@ -181,13 +181,13 @@ end
 for i = 0, 255 do
 	local substyles = props["substyles."..lexer.."."..i]
 	if substyles then
-		io.write("  "..substyles..","..i.."ESALLOCATESUBSTYLESU.s\n")
+		io.write("  ", substyles, ",", i, "ESALLOCATESUBSTYLESU.s\n")
 		for substyle = 1, substyles do
 			local id_prefix = "substylewords."..i.."."..substyle.."."
 			local value = expand(get_property_by_pattern(id_prefix, file_patterns))
 
 			if value and #value > 0 then
-				io.write("  Q.s+"..(substyle-1).."ESSETIDENTIFIERS")
+				io.write("  Q.s+", substyle-1, "ESSETIDENTIFIERS")
 				reflow(value, 4)
 				io.write("\n")
 			end
