@@ -1,4 +1,5 @@
-[![Continuous Integration](https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml/badge.svg)](https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml) [![Nightly Builds](https://github.com/rhaberkorn/sciteco/actions/workflows/nightly.yml/badge.svg)](https://github.com/rhaberkorn/sciteco/actions/workflows/nightly.yml)
+[![Continuous Integration](https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml/badge.svg)](https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml)
+[![Nightly Builds](https://github.com/rhaberkorn/sciteco/actions/workflows/nightly.yml/badge.svg)](https://github.com/rhaberkorn/sciteco/releases/tag/nightly)
 
 Overview
 ========
@@ -115,11 +116,11 @@ There are prebuilt binary packages and source bundles for your convenience:
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
 These releases may be quite outdated, so you may also try out the
-[nightly builds](https://nightly.link/rhaberkorn/sciteco/workflows/nightly/master) -
-they represent the repository's HEAD commit but may well be instable.
+[nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
+they represent the repository's HEAD commit but may well be unstable.
 Both ncurses and Gtk+ packages are provided both for Ubuntu and Windows.
 For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
-we currently only provide ncurses builds.
+we currently only provide *experimental* ncurses builds.
 
 If everything fails, you can try building from source.
 See [`INSTALL`](INSTALL) for more details.

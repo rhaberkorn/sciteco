@@ -41,17 +41,18 @@ jobs:
     # when necessary since the PPA build servers might also be headless.
     # NOTE: Packages are left in debian-temp/.
     - name: Build Debian/Ubuntu Packages
-      run: ./distribute.mk debian-binary
+      run: |
+        ./distribute.mk debian-binary
+        cp debian-temp/sciteco-curses_*.deb sciteco-curses_nightly_${{matrix.os}}_amd64.deb
+        cp debian-temp/sciteco-gtk_*.deb sciteco-gtk_nightly_${{matrix.os}}_amd64.deb
+        cp debian-temp/sciteco-common_*.deb sciteco-common_nightly_${{matrix.os}}_all.deb
 
-    - name: Get current date
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
-    # NOTE: There is no way to prevent Github from zipping the artifact.
     - name: Archive Debian/Ubuntu Packages
-      uses: actions/upload-artifact@v2
+      uses: pyTooling/Actions/releaser/composite@v0.4.5
       with:
-        name: SciTECO nightly packages on ${{ steps.date.outputs.date }} (${{ matrix.os }}, x86_64, ncurses and GTK+ 3)
-        path: debian-temp/*.deb
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly
+        files: ./*.deb
 
   macos:
     runs-on: macos-11
@@ -72,6 +73,11 @@ jobs:
     # non-standard $TERMINFO. This could be worked around.
     - name: Install Build Dependencies
       run: brew install autoconf automake libtool glib dylibbundler
+    # Required by pyTooling/Actions/releaser
+    - name: Set up Python
+      uses: actions/setup-python@v4.3.0
+      with:
+        python-version: '3.10'
     # FIXME: It would be nice to build universal arm64/x86_64 binaries,
     # this apparently requires two separate build runs and a following merge
     # using `lipo -create`. In this case we could just as well build two
@@ -111,16 +117,13 @@ jobs:
         # FIXME: Is this really true for libc++?
         dylibbundler -b -x temp-install/usr/local/bin/sciteco \
                      -cd -d temp-install/usr/local/lib/sciteco -p @executable_path/../lib/sciteco
-        tar -C temp-install -cf sciteco.tar .
-
-    - name: Get Current Date
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        GZIP="-9" tar -C temp-install -czf sciteco-curses_nightly_macos_x86_64.tar.gz .
     - name: Archive Mac OS Distribution (ncurses)
-      uses: actions/upload-artifact@v2
+      uses: pyTooling/Actions/releaser/composite@v0.4.5
       with:
-        name: SciTECO nightly build on ${{ steps.date.outputs.date }} (Mac OS, x86_64, ncurses)
-        path: sciteco.tar
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly
+        files: ./*.tar.gz
 
   win32-curses:
     runs-on: windows-2019
@@ -195,23 +198,23 @@ jobs:
     - name: Prepare Distribution Directory
       run: |
         mkdir temp-bin/
-        cp /mingw32/bin/{gsciteco.exe,sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
-        cp -r /mingw32/share/sciteco/{lib,*.tmac} temp-bin/
-        cp /mingw32/share/sciteco/sample.teco_ini temp-bin/.teco_ini
-        cp -r /mingw32/share/doc/sciteco/* temp-bin/
-        cp COPYING ChangeLog temp-bin/
-        cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/
+        cd temp-bin/
+        cp /mingw32/bin/{gsciteco.exe,sciteco.exe,grosciteco.tes,tedoc.tes} ./
+        cp -r /mingw32/share/sciteco/{lib,*.tmac} ./
+        cp /mingw32/share/sciteco/sample.teco_ini .teco_ini
+        cp -r /mingw32/share/doc/sciteco/* ./
+        cp ../COPYING ../ChangeLog ./
+        cp /mingw32/bin/gspawn-win32-helper*.exe ./
         # FIXME: See above. We currently link dynamically.
-        cp /mingw32/bin/{libglib-2.0-0,libpcre2-8-0,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
-        cp /mingw32/bin/libstdc++-6.dll temp-bin/
-    - name: Get Current Date
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        cp /mingw32/bin/{libglib-2.0-0,libpcre2-8-0,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll ./
+        cp /mingw32/bin/libstdc++-6.dll ./
+        zip -9 -r ../sciteco-pdcurses_nightly_win32.zip .
     - name: Archive Windows Distribution (PDCurses)
-      uses: actions/upload-artifact@v2
+      uses: pyTooling/Actions/releaser/composite@v0.4.5
       with:
-        name: SciTECO nightly build on ${{ steps.date.outputs.date }} (Win32, PDCurses)
-        path: temp-bin/*
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly
+        files: ./*.zip
 
   # NOTE: There is a lot of redundancy with win32-curses.
   # However the Curses version may be linked statically, while Gtk+3 cannot be
@@ -265,49 +268,49 @@ jobs:
 
     - name: Prepare Distribution Directory
       run: |
-        mkdir -p temp-bin
-        cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} temp-bin/
-        cp -r /mingw32/share/sciteco/{lib,*.tmac} temp-bin/
+        mkdir temp-bin
+        cd temp-bin
+        cp /mingw32/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} ./
+        cp -r /mingw32/share/sciteco/{lib,*.tmac} ./
         # FIXME: Maybe there should be a separate win32/.teco_ini with
         # a few pre-enabled settings?
-        cp /mingw32/share/sciteco/sample.teco_ini temp-bin/.teco_ini
-        cp /mingw32/share/sciteco/fallback.css temp-bin/.teco_css
-        cp -r /mingw32/share/doc/sciteco/* temp-bin/
-        cp COPYING ChangeLog temp-bin/
-        cp /mingw32/bin/gspawn-win32-helper*.exe temp-bin/
-        cp /mingw32/bin/{libglib-2.0-0,libpcre2-8-0,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll temp-bin/
-        cp /mingw32/bin/{libgtk-3-0,libgdk-3-0,libgdk_pixbuf-2.0-0,libatk-1.0-0}.dll temp-bin/
-        cp /mingw32/bin/{libgobject-2.0-0,libgmodule-2.0-0,libgio-2.0-0,libffi-8}.dll temp-bin/
-        cp /mingw32/bin/{libpango-1.0-0,libpangocairo-1.0-0,libpangowin32-1.0-0,libpangoft2-1.0-0}.dll temp-bin/
-        cp /mingw32/bin/{libthai-0,libdatrie-1,libharfbuzz-0,libgraphite2,libfribidi-0,libepoxy-0}.dll temp-bin/
-        cp /mingw32/bin/{libfontconfig-1,libexpat-1}.dll temp-bin/
-        cp /mingw32/bin/{libfreetype-6,libbrotlidec,libbrotlicommon,libbz2-1,zlib1}.dll temp-bin/
-        cp /mingw32/bin/{libcairo-2,libcairo-gobject-2,libpixman-1-0,libstdc++-6}.dll temp-bin/
-        cp /mingw32/bin/{libpng16-16,librsvg-2-2,libxml2-2}.dll temp-bin/
-        #mkdir -p temp-bin/share
-        #cp /mingw32/share/loader.cache temp-bin/share/
+        cp /mingw32/share/sciteco/sample.teco_ini .teco_ini
+        cp /mingw32/share/sciteco/fallback.css .teco_css
+        cp -r /mingw32/share/doc/sciteco/* ./
+        cp ../COPYING ../ChangeLog ./
+        cp /mingw32/bin/gspawn-win32-helper*.exe ./
+        cp /mingw32/bin/{libglib-2.0-0,libpcre2-8-0,libintl-8,libiconv-2,libwinpthread-1,libgcc_s_dw2-1}.dll ./
+        cp /mingw32/bin/{libgtk-3-0,libgdk-3-0,libgdk_pixbuf-2.0-0,libatk-1.0-0}.dll ./
+        cp /mingw32/bin/{libgobject-2.0-0,libgmodule-2.0-0,libgio-2.0-0,libffi-8}.dll ./
+        cp /mingw32/bin/{libpango-1.0-0,libpangocairo-1.0-0,libpangowin32-1.0-0,libpangoft2-1.0-0}.dll ./
+        cp /mingw32/bin/{libthai-0,libdatrie-1,libharfbuzz-0,libgraphite2,libfribidi-0,libepoxy-0}.dll ./
+        cp /mingw32/bin/{libfontconfig-1,libexpat-1}.dll ./
+        cp /mingw32/bin/{libfreetype-6,libbrotlidec,libbrotlicommon,libbz2-1,zlib1}.dll ./
+        cp /mingw32/bin/{libcairo-2,libcairo-gobject-2,libpixman-1-0,libstdc++-6}.dll ./
+        cp /mingw32/bin/{libpng16-16,librsvg-2-2,libxml2-2}.dll ./
+        #mkdir share
+        #cp /mingw32/share/loader.cache share/
         #glib-compile-schemas /mingw32/share/glib-2.0/schemas
-        #mkdir -p temp-bin/share/glib-2.0
-        #cp /mingw32/share/glib-2.0/gschemas.compiled temp-bin/share/glib-2.0/
-        mkdir -p temp-bin/share/icons/Adwaita
+        #mkdir -p share/glib-2.0
+        #cp /mingw32/share/glib-2.0/gschemas.compiled share/glib-2.0/
+        mkdir -p share/icons/Adwaita
         # FIXME: It should be sufficient to package the SVG icons,
         # but I cannot get it to work. Perhaps index.theme would have to be tweaked.
         # We could also try to include a pure scalable icon theme.
-        #cp -r /mingw32/share/icons/Adwaita/{scalable*,index.theme} temp-bin/share/icons/Adwaita/
-        cp -r /mingw32/share/icons/Adwaita/* temp-bin/share/icons/Adwaita/
-        gtk-update-icon-cache-3.0 temp-bin/share/icons/Adwaita/
+        #cp -r /mingw32/share/icons/Adwaita/{scalable*,index.theme} share/icons/Adwaita/
+        cp -r /mingw32/share/icons/Adwaita/* share/icons/Adwaita/
+        gtk-update-icon-cache-3.0 share/icons/Adwaita/
         # FIXME: It's possible to change the location of loaders.cache via $GDK_PIXBUF_MODULE_FILE.
         # If we did that, we could avoid "reusing" the lib/ directory.
         # This is important when somebody changes $SCITECOPATH.
-        mkdir -p temp-bin/lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        mkdir -p lib/gdk-pixbuf-2.0/2.10.0/loaders/
         cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{libpixbufloader-svg.dll,libpixbufloader-png.dll} \
-           temp-bin/lib/gdk-pixbuf-2.0/2.10.0/loaders/
-        cp win32/loaders.cache temp-bin/lib/gdk-pixbuf-2.0/2.10.0/
-    - name: Get Current Date
-      id: date
-      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+           lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        cp ../win32/loaders.cache lib/gdk-pixbuf-2.0/2.10.0/
+        zip -9 -r ../sciteco-gtk3_nightly_win32.zip .
     - name: Archive Windows Distribution (GTK+ 3)
-      uses: actions/upload-artifact@v2
+      uses: pyTooling/Actions/releaser/composite@v0.4.5
       with:
-        name: SciTECO nightly build on ${{ steps.date.outputs.date }} (Win32, GTK+ 3)
-        path: temp-bin/*
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag: nightly
+        files: ./*.zip
