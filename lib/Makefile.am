@@ -89,7 +89,9 @@ dist_lexer_DATA = lexers/verilog.tes \
                   lexers/rust.tes \
                   lexers/blitzbasic.tes \
                   lexers/caml.tes \
-                  lexers/python.tes
+                  lexers/python.tes \
+                  lexers/yaml.tes \
+                  lexers/markdown.tes
 
 # This lexer is responsible for styling
 # womanpages and is thus useful even when omitting

@@ -1,0 +1,24 @@
+!* YAML files *!
+
+@[lexer.test.yaml]{
+  :EN*.yamlQ*"S -1 '
+  :EN*.ymlQ*"S -1 '
+  :EN*.clang-formatQ*"S -1 '
+  :EN*.clang-tidyQ*"S -1 '
+  :EN*.mirQ*"S -1 '
+  :EN*.apinotesQ*"S -1 '
+  :EN*.ifsQ*
+}
+
+@[lexer.set.yaml]{
+  ESSETILEXERyaml
+  0ESSETKEYWORDStrue false yes no
+  :M[color.comment],1M[color.set]
+  :M[color.target],2M[color.set]
+  :M[color.keyword],3M[color.set]
+  :M[color.number],4M[color.set]
+  :M[color.variable],5M[color.set]
+  :M[color.preproc],6M[color.set]
+  :M[color.error],8M[color.set]
+  :M[color.operator],9M[color.set]
+}

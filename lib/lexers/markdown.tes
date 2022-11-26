@@ -1,0 +1,26 @@
+!* Markdown *!
+
+@[lexer.test.markdown]{
+  :EN*.mdQ*"S -1 '
+  :EN*.markdownQ*
+}
+
+@[lexer.set.markdown]{
+  ESSETILEXERmarkdown
+  1,2ESSTYLESETBOLD
+  1,3ESSTYLESETBOLD
+  1,4ESSTYLESETITALIC
+  1,5ESSTYLESETITALIC
+  !* FIXME: We probably need separate color codes *!
+  :M[color.preproc],6M[color.set]
+  6U.i 5<:M[color.preproc2],%.iM[color.set]>
+  :M[color.keyword],13M[color.set]
+  :M[color.keyword],14M[color.set]
+  :M[color.comment],15M[color.set]
+  :M[color.deletion],16M[color.set]
+  :M[color.keyword],17M[color.set]
+  :M[color.variable],18M[color.set]
+  :M[color.string],19M[color.set]
+  :M[color.string],20M[color.set]
+  :M[color.string2],21M[color.set]
+}
