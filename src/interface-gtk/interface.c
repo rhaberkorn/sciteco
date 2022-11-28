@@ -957,6 +957,7 @@ teco_interface_event_loop(GError **error)
 		                    "Null-character not allowed in filenames");
 		return FALSE;
 	}
+	g_assert(scitecoconfig.data != NULL);
 
 #ifdef G_OS_WIN32
 	/*

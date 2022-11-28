@@ -283,10 +283,11 @@ teco_state_help_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 		                    "Help topic must not contain null-byte");
 		return NULL;
 	}
-	teco_help_topic_t *topic = teco_help_find(str->data);
+	const gchar *topic_name = str->data ? : "";
+	teco_help_topic_t *topic = teco_help_find(topic_name);
 	if (!topic) {
 		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Topic \"%s\" not found", str->data);
+		            "Topic \"%s\" not found", topic_name);
 		return NULL;
 	}
 

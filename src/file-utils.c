@@ -207,6 +207,7 @@ teco_file_expand_path(const gchar *path)
 	if (!qreg->vtable->get_string(qreg, &home.data, &home.len, NULL) ||
 	    teco_string_contains(&home, '\0'))
 		return g_strdup(path);
+	g_assert(home.data != NULL);
 
 	return g_build_filename(home.data, path+1, NULL);
 }

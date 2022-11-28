@@ -326,10 +326,11 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 			return NULL;
 		}
 
-		lParam = (sptr_t)CreateLexer(str->data);
+		const gchar *lexer = str->data ? : "";
+		lParam = (sptr_t)CreateLexer(lexer);
 		if (!lParam) {
 			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Lexilla lexer \"%s\" not found.", str->data);
+			            "Lexilla lexer \"%s\" not found.", lexer);
 			return NULL;
 		}
 	} else if (str->len > 0) {

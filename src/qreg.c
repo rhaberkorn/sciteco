@@ -490,6 +490,7 @@ teco_qreg_workingdir_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, 
 		                    "Directory contains null-character");
 		return FALSE;
 	}
+	g_assert(dir.data != NULL);
 
 	int ret = g_chdir(dir.data);
 	if (ret) {

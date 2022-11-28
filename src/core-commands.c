@@ -1418,6 +1418,7 @@ teco_state_changedir_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 			                    "Null-character not allowed in filenames");
 			return NULL;
 		}
+		g_assert(home.data != NULL);
 
 		g_free(dir);
 		dir = home.data;

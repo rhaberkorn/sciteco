@@ -93,8 +93,22 @@ AT_SETUP([Q-Register stack cleanup])
 AT_CHECK([$SCITECO -e '@<:@a'], 0, ignore, ignore)
 AT_CLEANUP
 
-AT_SETUP([Empty search])
-AT_CHECK([$SCITECO -e '@S//'], 0, ignore, ignore)
+AT_SETUP([Uninitialized "_"-register])
+AT_CHECK([$SCITECO -e ":@S//\"S(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e ":@EN///\"S(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Uninitialized Q-Register in string building])
+AT_CHECK([$SCITECO -e '@I/^E@a/'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '@I/^ENa/'], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Empty help topic])
+AT_CHECK([$SCITECO -e '@?//'], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Empty lexer name])
+AT_CHECK([$SCITECO -e '@ES/SETILEXER//'], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Known Bugs])

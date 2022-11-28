@@ -46,6 +46,9 @@ TECO_DECLARE_STATE(teco_state_glob_filename);
 void
 teco_globber_init(teco_globber_t *ctx, const gchar *pattern, GFileTest test)
 {
+	if (!pattern)
+		pattern = "";
+
 	memset(ctx, 0, sizeof(*ctx));
 	ctx->test = test;
 
@@ -114,6 +117,9 @@ teco_globber_clear(teco_globber_t *ctx)
 gchar *
 teco_globber_escape_pattern(const gchar *pattern)
 {
+	if (!pattern)
+		return g_strdup("");
+
 	gsize escaped_len = 1;
 	gchar *escaped, *pout;
 

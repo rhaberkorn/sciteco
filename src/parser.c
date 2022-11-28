@@ -657,7 +657,7 @@ teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, g
 		                                table != &teco_qreg_table_globals);
 		return NULL;
 	}
-	g_autofree gchar *str_quoted = g_shell_quote(str.data);
+	g_autofree gchar *str_quoted = g_shell_quote(str.data ? : "");
 	teco_string_append(ctx->result, str_quoted, strlen(str_quoted));
 
 	return &teco_state_stringbuilding_start;

@@ -236,6 +236,7 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 		            "Command line must not contain null-bytes");
 		goto gerror;
 	}
+	g_assert(str->data != NULL);
 
 	argv = teco_parse_shell_command_line(str->data, error);
 	if (!argv)
