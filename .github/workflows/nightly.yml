@@ -117,13 +117,18 @@ jobs:
         # FIXME: Is this really true for libc++?
         dylibbundler -b -x temp-install/usr/local/bin/sciteco \
                      -cd -d temp-install/usr/local/lib/sciteco -p @executable_path/../lib/sciteco
-        GZIP="-9" tar -C temp-install -czf sciteco-curses_nightly_macos_x86_64.tar.gz .
+        # FIXME: Should we encode the Git commit into the package version?
+        # Unfortunately, I cannot find detailed information on how Mac OS
+        # interpretes these version strings.
+        pkgbuild --identifier net.sf.sciteco.pkg --version 2.0.0 \
+                 --root temp-install --install-location / \
+                 sciteco-curses_nightly_macos_x86_64.pkg
     - name: Archive Mac OS Distribution (ncurses)
       uses: pyTooling/Actions/releaser/composite@v0.4.5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
-        files: ./*.tar.gz
+        files: ./*.pkg
 
   win32-curses:
     runs-on: windows-2019
