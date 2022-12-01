@@ -322,11 +322,10 @@ If the GUI is waiting on user input, this signal is effectively
 ignored.
 Some GUIs may depend on delivery of \fBSIGINT\fP when \fB^C\fP
 is pressed in order to interrupt macros interactively.
+Others will poll for keypresses.
 Note that this signal can usually also be generated when pressing
 \fB^C\fP on the process' associated console
 (also if there is a graphical window).
-This is useful for GUIs that do not yet support interruptions
-directly.
 .TP
 .SCITECO_TOPIC "SIGTERM"
 .B SIGTERM
