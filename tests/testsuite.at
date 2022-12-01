@@ -113,6 +113,12 @@ AT_CLEANUP
 
 AT_BANNER([Known Bugs])
 
+AT_SETUP([Dangling Else/End-If])
+AT_CHECK([$SCITECO -e "'"], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e "| (0/0) '"], 1, ignore, ignore)
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
 # NOTE: This bug depends on specific build options of Glib's
 # PCRE which is not predictable.
 #AT_SETUP([Pattern matching overflow])
