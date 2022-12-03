@@ -130,14 +130,14 @@ mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
 		   temp-bin/.teco_ini
 	cp @srcdir@/COPYING @srcdir@/ChangeLog temp-bin/
 	rm -rf temp-install/
-#	cp /usr/i686-w64-mingw32/bin/intl.dll \
-#	   /usr/i686-w64-mingw32/bin/libglib-2.0-0.dll \
-#	   /usr/i686-w64-mingw32/bin/pdcurses.dll \
-#	   temp-bin/
-	cp /usr/i686-w64-mingw32/bin/gspawn-win32-helper-console.exe \
+	cp /usr/i686-w64-mingw32/bin/gspawn-win32-helper*.exe \
 	   temp-bin/
-	i686-w64-mingw32-strip -s temp-bin/gspawn-win32-helper-console.exe
-	cd temp-bin/; zip -r ../$@ .
+	# Collect DLLs for all included binaries
+	for f in temp-bin/*.exe; do \
+		MINGW_BUNDLEDLLS_SEARCH_PATH=/usr/i686-w64-mingw32/bin \
+		@srcdir@/contrib/mingw-bundledlls --copy $$f; \
+	done
+	cd temp-bin/; zip -9 -r ../$@ .
 	rm -rf temp-bin/
 
 clean:
