@@ -304,14 +304,12 @@ jobs:
         # FIXME: It's possible to change the location of loaders.cache via $GDK_PIXBUF_MODULE_FILE.
         # If we did that, we could avoid "reusing" the lib/ directory.
         # This is important when somebody changes $SCITECOPATH.
-        mkdir -p lib/gdk-pixbuf-2.0/2.10.0/loaders/
-        cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{libpixbufloader-svg.dll,libpixbufloader-png.dll} \
-           lib/gdk-pixbuf-2.0/2.10.0/loaders/
-        cp ../win32/loaders.cache lib/gdk-pixbuf-2.0/2.10.0/
+        cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{libpixbufloader-svg.dll,libpixbufloader-png.dll} .
         # Collect DLLs for all pixbuf loaders into the root directory
-        for f in lib/gdk-pixbuf-2.0/2.10.0/loaders/*.dll; do
-        	cp `../contrib/mingw-bundledlls $f` .
-        done
+        for f in libpixbufloader-*.dll; do ../contrib/mingw-bundledlls --copy $f; done
+        mkdir -p lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        mv libpixbufloader-*.dll lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        cp ../win32/loaders.cache lib/gdk-pixbuf-2.0/2.10.0/
         zip -9 -r ../sciteco-gtk3_nightly_win32.zip .
     - name: Archive Windows Distribution (GTK+ 3)
       uses: pyTooling/Actions/releaser/composite@v0.4.5
