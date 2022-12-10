@@ -16,12 +16,32 @@ AT_COLOR_TESTS
 
 AT_BANNER([Features])
 
+AT_SETUP([Number stack])
+AT_CHECK([$SCITECO -e "2%a,%a - 3\"N(0/0)'"], 0, ignore, ignore)
+# It's not quite clear what would be the best semantics for comma:
+# a) Superfluous commas as in ",," or "(1,)" should be an error.
+# b) Superfluous commas should be ignored which is effectively what we do now.
+#    Even then it might be advisable to treat (1,) like (1).
+# c) The empty "list" element is equivalent to 0, so
+#    "1,,2" is equivalent to "1,0,2" and (1,) to (1,0).
+AT_CHECK([$SCITECO -e "(1,) \"~|(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Missing left operand])
 AT_CHECK([$SCITECO -e '+23='], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Closing loops at the correct macro level])
 AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Pass-through loops])
+# NOTE: This requires the <=>, so that values get consumed from the stack.
+# More elegant would be a command for popping exactly one argument like <:$>.
+AT_CHECK([$SCITECO -e "1,2,3,-1:<\"~1;'%a=> Qa-6\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "1,2,3,-1:<\"~1;'%a= F>(0/0)> Qa-6\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "3<%a:>-3\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "3<%a :F>(0/0):>-3\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([String arguments])
@@ -112,6 +132,15 @@ AT_CHECK([$SCITECO -e '@ES/SETILEXER//'], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Known Bugs])
+
+AT_SETUP([Number stack])
+# Nobody needs the current semantic of digit "commands" and they
+# will be replaced with proper number parser states, which will also allow for
+# floating point constants.
+# With the current parser, it is hard to even interpret the following code correctly...
+AT_CHECK([$SCITECO -e "(12)3 - 3\"N(0/0)'"], 0, ignore, ignore)
+AT_XFAIL_IF(true)
+AT_CLEANUP
 
 AT_SETUP([Dangling Else/End-If])
 AT_CHECK([$SCITECO -e "'"], 1, ignore, ignore)

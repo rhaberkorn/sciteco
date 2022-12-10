@@ -278,7 +278,8 @@ teco_state_start_loop_close(teco_machine_main_t *ctx, GError **error)
 		return;
 	}
 
-	teco_loop_context_t *lctx = &g_array_index(teco_loop_stack, teco_loop_context_t, teco_loop_stack->len-1);
+	teco_loop_context_t *lctx = &g_array_index(teco_loop_stack, teco_loop_context_t,
+	                                           teco_loop_stack->len-1);
 	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
 
 	/*
@@ -289,19 +290,18 @@ teco_state_start_loop_close(teco_machine_main_t *ctx, GError **error)
 	 */
 	if (!lctx->pass_through) {
 		if (colon_modified) {
-			if (!teco_expressions_eval(FALSE, error))
+			if (!teco_expressions_brace_close(error))
 				return;
-			teco_expressions_push_op(TECO_OP_NEW);
-		} else if (!teco_expressions_discard_args(error)) {
+			if (lctx->counter != 1)
+				teco_expressions_brace_open();
+		} else if (!teco_expressions_discard_args(error) ||
+		           (lctx->counter == 1 && !teco_expressions_brace_close(error))) {
 			return;
 		}
 	}
 
 	if (lctx->counter == 1) {
 		/* this was the last loop iteration */
-		if (!lctx->pass_through &&
-		    !teco_expressions_brace_close(error))
-			return;
 		undo__insert_val__teco_loop_stack(teco_loop_stack->len-1, *lctx);
 		g_array_remove_index(teco_loop_stack, teco_loop_stack->len-1);
 	} else {
@@ -1251,9 +1251,13 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_start,
 
 /*$ F<
  * F< -- Go to loop start or jump to beginning of macro
+ * :F<
  *
  * Immediately jumps to the current loop's start.
  * Also works from inside conditionals.
+ *
+ * This command behaves exactly like \fB>\fP with regard to
+ * colon-modifiers.
  *
  * Outside of loops \(em or in a macro without
  * a loop \(em this jumps to the beginning of the macro.
@@ -1261,16 +1265,33 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_start,
 static void
 teco_state_fcommand_loop_start(teco_machine_main_t *ctx, GError **error)
 {
-	/* FIXME: what if in brackets? */
-	if (!teco_expressions_discard_args(error))
+	if (teco_loop_stack->len <= ctx->loop_stack_fp) {
+		/* outside of loop */
+		if (!teco_expressions_discard_args(error))
+			return;
+		ctx->macro_pc = -1;
 		return;
+	}
 
-	ctx->macro_pc = teco_loop_stack->len > ctx->loop_stack_fp
-	              ? g_array_index(teco_loop_stack, teco_loop_context_t, teco_loop_stack->len-1).pc : -1;
+	teco_loop_context_t *lctx = &g_array_index(teco_loop_stack, teco_loop_context_t,
+	                                           teco_loop_stack->len-1);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+
+	if (!lctx->pass_through) {
+		if (colon_modified) {
+			if (!teco_expressions_brace_close(error))
+				return;
+			teco_expressions_brace_open();
+		} else if (!teco_expressions_discard_args(error)) {
+			return;
+		}
+	}
+
+	ctx->macro_pc = lctx->pc;
 }
 
 /*$ F> continue
- * F> -- Go to loop end
+ * F> -- Go to loop end or return from macro
  * :F>
  *
  * Jumps to the current loop's end.
@@ -1285,15 +1306,25 @@ teco_state_fcommand_loop_start(teco_machine_main_t *ctx, GError **error)
  * be exited, you can type in the loop's remaining commands
  * without them being executed (but they are parsed).
  *
- * When colon-modified, \fB:F>\fP behaves like \fB:>\fP
- * and allows numbers to be aggregated on the stack.
+ * This command behaves exactly like \fB>\fP with regard to
+ * colon-modifiers.
  *
  * Calling \fBF>\fP outside of a loop at the current
- * macro invocation level will throw an error.
+ * macro invocation level is equivalent to calling <$$>
+ * (terminate command line or return from macro).
  */
 static void
 teco_state_fcommand_loop_end(teco_machine_main_t *ctx, GError **error)
 {
+	if (teco_loop_stack->len <= ctx->loop_stack_fp) {
+		/* outside of loop */
+		ctx->parent.current = &teco_state_start;
+		if (!teco_expressions_eval(FALSE, error))
+			return;
+		teco_error_return_set(error, teco_expressions_args());
+		return;
+	}
+
 	guint old_len = teco_loop_stack->len;
 
 	/*

@@ -1982,9 +1982,9 @@ from it manually.
 Consequently, if \fIn\fP is omitted the loop will be an
 infinite one.
 .LP
-Additionally \*(ST supports special colon-modified forms
-of the loop start and end commands for processing the
-argument stack dynamically.
+Additionally \*(ST supports special colon-modified
+\(lqpass-through\(rq forms of the loop start and end commands
+for processing the argument stack dynamically.
 .SCITECO_TOPIC :>
 The \fB:>\fP loop end command will \fInot\fP pop values left
 on the stack since the beginning of the loop and can be used
@@ -1996,8 +1996,8 @@ For instance, the following command will leave the numbers
 0Ua 5<%a:>
 .SCITECO_TT_END
 .EE
-The command can be understood as an aggregated form of the
-expression \(lq(%a,%a,%a,%a,%a)\(rq.
+The command can be understood as equivalent to the expressions
+\(lq(%a)(%a)(%a)(%a)(%a)\(rq or \(lq(%a,%a,%a,%a,%a)\(rq.
 .SCITECO_TOPIC :<
 Consequently, the colon-modified loop start command will
 \fInot\fP represent an argument barrier and the corresponding
