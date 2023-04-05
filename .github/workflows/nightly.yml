@@ -48,7 +48,7 @@ jobs:
         cp debian-temp/sciteco-common_*.deb sciteco-common_nightly_${{matrix.os}}_all.deb
 
     - name: Archive Debian/Ubuntu Packages
-      uses: pyTooling/Actions/releaser/composite@v0.4.5
+      uses: pyTooling/Actions/releaser/composite@v0.4.6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
@@ -124,7 +124,7 @@ jobs:
                  --root temp-install --install-location / \
                  sciteco-curses_nightly_macos_x86_64.pkg
     - name: Archive Mac OS Distribution (ncurses)
-      uses: pyTooling/Actions/releaser/composite@v0.4.5
+      uses: pyTooling/Actions/releaser/composite@v0.4.6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
@@ -216,7 +216,7 @@ jobs:
         for f in *.exe; do ../contrib/mingw-bundledlls --copy $f; done
         zip -9 -r ../sciteco-pdcurses_nightly_win32.zip .
     - name: Archive Windows Distribution (PDCurses)
-      uses: pyTooling/Actions/releaser/composite@v0.4.5
+      uses: pyTooling/Actions/releaser/composite@v0.4.6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
@@ -312,7 +312,7 @@ jobs:
         cp ../win32/loaders.cache lib/gdk-pixbuf-2.0/2.10.0/
         zip -9 -r ../sciteco-gtk3_nightly_win32.zip .
     - name: Archive Windows Distribution (GTK+ 3)
-      uses: pyTooling/Actions/releaser/composite@v0.4.5
+      uses: pyTooling/Actions/releaser/composite@v0.4.6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
