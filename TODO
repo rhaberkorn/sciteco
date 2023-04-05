@@ -4,8 +4,20 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * <'> should result in an error outside of IF-statements.
+ * <Ix$> hangs after interruption.
+   These are apparently very costly calculations to make the caret
+   visible after each and every UNDO sent to Scintilla.
+   This is because it implicitly does a SCROLLCARET each time.
+   There are already optimizations but they don't work on undo
+   (see 8ef010da59743fcc4927c790f585ba414ec7b129).
+   It may be better to temporarily disable scrolling altogether and
+   enable it after every keypress.
+ * The "lexer.test..." macros do not work with the unnamed buffer,
+   so there should be a special test in .teco_ini.
  * Rubbing out <LF> via ^W will rub out more than expected.
+   This has also been observed after words e.g. rubbing out after "foo "
+   will sometimes rub out an entire line.
+   This is not reproducible.
  * After commands like ECcat /dev/zero$ result in OOM,
    we do not correctly recover, even though malloc_trim() is called.
    This could be because of Scintilla's undo token.
@@ -42,6 +54,7 @@ Known Bugs:
  * crashes on large files: S^EM^X$ (regexp: .*)
    Happens because the Glib regex engine is based on a recursive
    Perl regex library.
+   The Homebrew and MinGW versions of glib no longer suffer from this.
    This is apparently impossible to fix as long as we do not
    have control over the regex engine build.
    We should therefore switch the underlying Regex engine.
@@ -96,6 +109,19 @@ Known Bugs:
    connected to a terminal.
    Suspension from the command-line has therefore been disabled
    on Gtk for the time being.
+ * Many Scintilla commands <ES> can easily crash the editor.
+   A lot of the dangerous cases could be catched by parsing
+   Scintilla.iface instead of the C header.
+   This would also allow automatically mapping a part of the messages
+   (property getters and setters) into the global Q-Reg space using
+   special registers.
+   This feature would especially be important in order to support
+   e.g. the SCI_SETPROPERTY message with two strings in order to
+   set lexer properties.
+ * Mac OS: The colors are screwed up with the terminal.tes color scheme
+   (and with --no-profile) under Mac OS terminal emulators.
+   This does not happen under Linux with Darling.
+   See https://github.com/rhaberkorn/sciteco/issues/8
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -207,6 +233,8 @@ Features:
  * The C/C++ lexer supports preprocessor evaluation.
    This is currently always enabled but there are no defines.
    Could be added as a global reg to set up defines easily.
+   NOTE: This requires the SCI_SETPROPERTY message which
+   is currently unsupported by <ES>.
  * Now that we have redo/reinsertion:
    When ^G modifier is active, normal inserts could insert
    between effective and rubbed out command line - without
@@ -379,9 +407,48 @@ Features:
    native Scintilla packages.
    Perhaps it makes sense to be able to build against them
    using --with-scintilla.
- * Update the lexer library based on a SciTE that corresponds
-   to our current Scintilla version.
-   Add a Python lexer and one for Linux device trees.
+ * Write a Scintilla/Lexilla lexer for Roff
+ * There is an Urxvt extension 52-osc for implementing the
+   xterm-like clipboard control sequences.
+   If may therefore make sense to support that even without checking
+   the xterm version and update documentation accordingly.
+ * Write standard library module for spell checking.
+   This can eg. use hunspell/aspell/ispell `-a` mode.
+   See my SciTE implementation on how to do this.
+   The resulting macro can be added to a save hook.
+ * A dirtify-hook would be useful and could be used for
+   spell checking. Naturally it could only be exected at the
+   end of executing interactive commands) and it should be triggered
+   only at the end of command lines.
+ * CSS lexer config
+ * Add a dedicated JSON lexer.
+   JSON files are currently handled by the Javascript lexer (js.tes).
+ * <'> and <|> should result in an error outside of If-statements.
+   This is not strictly necessary and complicates the parser.
+   <'> is currently a no-op outside of dead If-branches.
+   | ... ' is basically equivalent to 0< ... >.
+   Furthermore, it may not be trivial to detect such dangling
+   Else/End-If statements as the parser state does not tell us enough.
+   There is nothing that makes code after a successful If-condition
+   special. Even if we always incresed the nest_level, that
+   variable does not discern Ifs and Whiles.
+ * Possible Nightly Build improvements (and therefore releases):
+   * Build 32-bit Ubuntu packages
+   * Push nightly builds into the Ubuntu PPA.
+   * AppImage for Linux
+   * 64-bit Windows builds
+   * Mac OS Arm64 builds either separately or via universal binary.
+ * Linux: Relocatable binaries instead of hardcoding the library path.
+   This makes it possible to run builds installed via
+   `make install DESTDIR=...` and will aid in creating AppImages.
+ * sample.teco_ini: Support opening files on certain lines
+   (filename:line).
+   Theoretically, this could also be added to the <EB> syntax,
+   although the colon character is allowed in filenames under Windows.
+   In principe there is little need for that in interactive mode,
+   but it would ease opening filenames copied from compiler errors
+   or grep -n results.
+ * <:EF> for saving and closing a buffer, similar to <:EX>.
 
 Optimizations:
  * There is should be a common error code for null-byte tests.
@@ -397,6 +464,8 @@ Optimizations:
  * Add a configure-switch for LTO (--enable-lto).
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
+ * Polling for keyboard events in the Gtk+ and Curses UIs
+   can probably be rate-limited, e.g. every 500ms.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
