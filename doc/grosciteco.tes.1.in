@@ -156,8 +156,8 @@ a \*(ST macro package with a man page called
 \fBgreat-macro.tes\fP(7sciteco):
 .
 .RS
-.EX
 .SCITECO_TT
+.EX
 groff -Z -Tascii -man -M@pkgdatadir@ -msciteco \\
       great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
 grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.woman.tec \\

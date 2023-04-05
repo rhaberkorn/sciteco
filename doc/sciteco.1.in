@@ -56,8 +56,8 @@ invoked as scripts by using a Hash-Bang line like
 .\" not allowed since they are not escaped correctly.
 .SCITECO_TOPIC scripting
 .RS
-.EX
 .SCITECO_TT
+.EX
 #!@bindir@/sciteco -m
 .SCITECO_TT_END
 .EE

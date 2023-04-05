@@ -138,8 +138,8 @@ By default function keys except Escape, Backspace and Return are
 ignored by \*(ST.
 By setting bit 6 of the \fBED\fP flag variable, function key handling
 is enabled:
-.EX
 .SCITECO_TT
+.EX
 0,64ED
 .SCITECO_TT_END
 .EE
@@ -309,8 +309,8 @@ state flags enables the corresponding macro only for the specified
 states.
 For instance, to enable the \(lq^FRIGHT\(rq function key macro
 only in the \(lqstart\(rq state, you could set:
-.EX
 .SCITECO_TT
+.EX
 1^_U[^FRIGHT]
 .SCITECO_TT_END
 .EE
@@ -1104,8 +1104,8 @@ different EOL styles.
 The feature is enabled by default but is controlled by bit 4
 of the \fBED\fP flag setting.
 It can be turned off by executing:
-.EX
 .SCITECO_TT
+.EX
 16,0ED
 .SCITECO_TT_END
 .EE
@@ -1131,8 +1131,8 @@ enable C++ lexing and syntax highlighting automatically.
 editing operations.
 Hooks are by default disabled.
 To enable them, set bit 5 in the \fBED\fP flags:
-.EX
 .SCITECO_TT
+.EX
 0,32ED
 .SCITECO_TT_END
 .EE
@@ -1272,8 +1272,8 @@ When specifying more than one modifier their order is insignificant.
 The colon (\fB:\fP) modifier usually prevents a command from
 failing and instructs it to return a condition (success/failure)
 boolean instead.
-.EX
 .SCITECO_TT
+.EX
 1000:C=
 .SCITECO_TT_END
 .EE
@@ -1286,8 +1286,8 @@ to be changed for individual commands.
 The alternative termination character must be specified just before
 the first string argument.
 For instance:
-.EX
 .SCITECO_TT
+.EX
 @FS/foo/bar/
 .SCITECO_TT_END
 .EE
@@ -1300,8 +1300,8 @@ the termination character is reset to Escape and another one may
 be chosen.
 This feature is especially useful for embedding TECO code in
 string arguments, as in:
-.EX
 .SCITECO_TT
+.EX
 @^Um{
   @FS{foo}/bar/
 }
@@ -1390,8 +1390,8 @@ This allows the useful idioms of changing to the previous
 buffer with \(lq-%*\fB$\fP\(rq, changing to the next
 buffer with \(lq%*\fB$\fP\(rq and changing the current buffer
 temporarily:
-.EX
 .SCITECO_TT
+.EX
 [* ! ...change current buffer... ! ]*
 .SCITECO_TT_END
 .EE
@@ -1409,8 +1409,8 @@ It is possible to set this register using the \fB^U\fP or
 directory in a manner similar to the \fBFG\fP command.
 This allows you to change the current directory temporarily
 with the following idiom:
-.EX
 .SCITECO_TT
+.EX
 [$ ! ...change current directory... ! ]$
 .SCITECO_TT_END
 .EE
@@ -1566,8 +1566,8 @@ and
 commands.
 For instance to search in a macro without overwriting the
 contents of the search register you could write:
-.EX
 .SCITECO_TT
+.EX
 [_ Sfoo$ ]_
 .SCITECO_TT_END
 .EE
@@ -1991,8 +1991,8 @@ on the stack since the beginning of the loop and can be used
 to aggregate stack values.
 For instance, the following command will leave the numbers
 1 to 5 on the expression stack:
-.EX
 .SCITECO_TT
+.EX
 0Ua 5<%a:>
 .SCITECO_TT_END
 .EE
@@ -2005,8 +2005,8 @@ loop end command will not discard any values which is useful
 for looping over the contents of the stack.
 E.g. the following command will print the numbers 1 to 5
 (actually every additional number argument):
-.EX
 .SCITECO_TT
+.EX
 1,2,3,4,5,-1:<"~1;'=>
 .SCITECO_TT_END
 .EE
@@ -2057,8 +2057,8 @@ This construct is especially useful in macros to imply default
 parameter values.
 For instance the following macro inserts \fIn\fP tab characters
 (one by default):
-.EX
 .SCITECO_TT
+.EX
 @^Ut{
   "~1'<9@I//>
 }
