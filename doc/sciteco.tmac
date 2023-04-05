@@ -35,7 +35,6 @@
 .  \}
 ..
 .
-.
 .\"
 .\" grosciteco does not handle font families right now
 .\" and probably will never do because of the limited
@@ -53,6 +52,7 @@
 .  if '\\$1'SP' .sp
 .  device sciteco_tt_end
 .  ll 65535n
+.  nr LL \\n[.l]u
 ..
 .
 .\"
@@ -60,6 +60,10 @@
 .\" Word wrapping will be performed by Scintilla.
 .\"
 .ll 65535n
+.\" for ms, mdoc, man
+.nr LL \n[.l]u
+.
+.\" set title length for man pages
 .nr LT 90n
 .
 .\"
