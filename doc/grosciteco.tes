@@ -124,11 +124,11 @@ EBN[input]
     !cmd.xf!
       :M#sa :M#giU.n Q.n+16U.#nt .(:M#sa).X[font] :M#sc
       :Q[fonts.\.n]"F F< ' -U[fonts.\.n]
-      @:EU[styles]{\.#ntESSTYLESETFONTCourier^J}
+      @:EU[styles]{\.#ntESSTYLESETFONTMonospace^J}
       Ocmd.xfQ[font]
       !cmd.xfR!
         Q.nU[default-style]
-        @:EU[styles]{16ESSTYLESETFONTCourier^J}
+        @:EU[styles]{16ESSTYLESETFONTMonospace^J}
         F<
       !cmd.xfB!
         @:EU[styles]{1,\.nESSTYLESETBOLD 1,\.#ntESSTYLESETBOLD^J}
