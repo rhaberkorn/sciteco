@@ -48,7 +48,7 @@ jobs:
         cp debian-temp/sciteco-common_*.deb sciteco-common_nightly_${{matrix.os}}_all.deb
 
     - name: Archive Debian/Ubuntu Packages
-      uses: pyTooling/Actions/releaser/composite@v0.4.6
+      uses: pyTooling/Actions/releaser@v0.4.6
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
