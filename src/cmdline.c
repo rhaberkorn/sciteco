@@ -77,16 +77,9 @@ static teco_string_t teco_last_cmdline = {NULL, 0};
  * It already handles command line replacement (TECO_ERROR_CMDLINE).
  *
  * @param data String to insert.
- *             NULL inserts a character from the previously
- *             rubbed out command line (rubin).
  * @param len Length of string to insert.
  * @param error A GError.
  * @return FALSE to throw a GError
- */
-/*
- * FIXME: Passing data == NULL to perform a rubin is inelegant.
- * Better make teco_cmdline_rubin() a proper function.
- * FIXME: The inner loop should be factored out.
  */
 gboolean
 teco_cmdline_insert(const gchar *data, gsize len, GError **error)
@@ -97,11 +90,8 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 
 	teco_cmdline.machine.macro_pc = teco_cmdline.pc = teco_cmdline.effective_len;
 
-	if (!data) {
-		if (teco_cmdline.effective_len < teco_cmdline.str.len)
-			teco_cmdline.effective_len++;
-	} else if (len <= teco_cmdline.str.len - teco_cmdline.effective_len &&
-	           !teco_string_cmp(&src, teco_cmdline.str.data + teco_cmdline.effective_len, len)) {
+	if (len <= teco_cmdline.str.len - teco_cmdline.effective_len &&
+	    !teco_string_cmp(&src, teco_cmdline.str.data + teco_cmdline.effective_len, len)) {
 		teco_cmdline.effective_len += len;
 	} else {
 		if (teco_cmdline.effective_len < teco_cmdline.str.len)
@@ -119,6 +109,8 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 	/*
 	 * Parse/execute characters, one at a time so
 	 * undo tokens get emitted for the corresponding characters.
+	 *
+	 * FIXME: The inner loop should be factored out.
 	 */
 	while (teco_cmdline.pc < teco_cmdline.effective_len) {
 		g_autoptr(GError) tmp_error = NULL;

@@ -65,7 +65,8 @@ gboolean teco_cmdline_insert(const gchar *data, gsize len, GError **error);
 static inline gboolean
 teco_cmdline_rubin(GError **error)
 {
-	return teco_cmdline_insert(NULL, 0, error);
+	return teco_cmdline.effective_len >= teco_cmdline.str.len ||
+	       teco_cmdline_insert(teco_cmdline.str.data + teco_cmdline.effective_len, 1, error);
 }
 
 gboolean teco_cmdline_keypress_c(gchar key, GError **error);
