@@ -421,16 +421,6 @@ teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t 
 	return teco_state_process_edit_cmd(ctx, parent_ctx, key, error);
 }
 
-/*
- * NOTE: The wordchars are null-terminated, so the null byte
- * is always considered to be a non-wordchar.
- */
-static inline gboolean
-teco_is_wordchar(const gchar *wordchars, gchar c)
-{
-	return c != '\0' && strchr(wordchars, c);
-}
-
 gboolean
 teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
                                                  gchar key, GError **error)
@@ -441,21 +431,24 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 	case TECO_CTL_KEY('W'): { /* rubout/reinsert word */
 		teco_interface_popup_clear();
 
-		g_autofree gchar *wchars = g_malloc(teco_interface_ssm(SCI_GETWORDCHARS, 0, 0));
-		teco_interface_ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars);
+		g_auto(teco_string_t) wchars;
+		wchars.len = teco_interface_ssm(SCI_GETWORDCHARS, 0, 0);
+		wchars.data = g_malloc(wchars.len + 1);
+		teco_interface_ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars.data);
+		wchars.data[wchars.len] = '\0';
 
 		if (teco_cmdline.modifier_enabled) {
 			/* reinsert word chars */
 			while (ctx->parent.current == current &&
 			       teco_cmdline.effective_len < teco_cmdline.str.len &&
-			       teco_is_wordchar(wchars, teco_cmdline.str.data[teco_cmdline.effective_len]))
+			       teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len]))
 				if (!teco_cmdline_rubin(error))
 					return FALSE;
 
 			/* reinsert non-word chars */
 			while (ctx->parent.current == current &&
 			       teco_cmdline.effective_len < teco_cmdline.str.len &&
-			       !teco_is_wordchar(wchars, teco_cmdline.str.data[teco_cmdline.effective_len]))
+			       !teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len]))
 				if (!teco_cmdline_rubin(error))
 					return FALSE;
 
@@ -475,7 +468,7 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 		 * rubout the entire command.
 		 */
 		if (ctx->result && ctx->result->len > 0) {
-			gboolean is_wordchar = teco_is_wordchar(wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]);
+			gboolean is_wordchar = teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]);
 			teco_cmdline_rubout();
 			if (ctx->parent.current != current) {
 				/* rub out string building command */
@@ -490,13 +483,13 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 			 */
 			if (!is_wordchar) {
 				while (ctx->result->len > 0 &&
-				       !teco_is_wordchar(wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
+				       !teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
 					teco_cmdline_rubout();
 			}
 
 			/* rubout word chars */
 			while (ctx->result->len > 0 &&
-			       teco_is_wordchar(wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
+			       teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
 				teco_cmdline_rubout();
 
 			return TRUE;

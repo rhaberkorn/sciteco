@@ -14,10 +14,6 @@ Known Bugs:
    enable it after every keypress.
  * The "lexer.test..." macros do not work with the unnamed buffer,
    so there should be a special test in .teco_ini.
- * Rubbing out <LF> via ^W will rub out more than expected.
-   This has also been observed after words e.g. rubbing out after "foo "
-   will sometimes rub out an entire line.
-   This is not reproducible.
  * After commands like ECcat /dev/zero$ result in OOM,
    we do not correctly recover, even though malloc_trim() is called.
    This could be because of Scintilla's undo token.
