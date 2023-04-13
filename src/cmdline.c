@@ -100,19 +100,20 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 	if (!data) {
 		if (teco_cmdline.effective_len < teco_cmdline.str.len)
 			teco_cmdline.effective_len++;
+	} else if (len <= teco_cmdline.str.len - teco_cmdline.effective_len &&
+	           !teco_string_cmp(&src, teco_cmdline.str.data + teco_cmdline.effective_len, len)) {
+		teco_cmdline.effective_len += len;
 	} else {
-		if (!teco_string_cmp(&src, teco_cmdline.str.data + teco_cmdline.effective_len,
-		                     teco_cmdline.str.len - teco_cmdline.effective_len)) {
-			teco_cmdline.effective_len += len;
-		} else {
-			if (teco_cmdline.effective_len < teco_cmdline.str.len)
-				/* automatically disable immediate editing modifier */
-				teco_cmdline.modifier_enabled = FALSE;
+		if (teco_cmdline.effective_len < teco_cmdline.str.len)
+			/*
+			 * Automatically disable immediate editing modifier.
+			 * FIXME: Should we show a message as when pressing ^G?
+			 */
+			teco_cmdline.modifier_enabled = FALSE;
 
-			teco_cmdline.str.len = teco_cmdline.effective_len;
-			teco_string_append(&teco_cmdline.str, data, len);
-			teco_cmdline.effective_len = teco_cmdline.str.len;
-		}
+		teco_cmdline.str.len = teco_cmdline.effective_len;
+		teco_string_append(&teco_cmdline.str, data, len);
+		teco_cmdline.effective_len = teco_cmdline.str.len;
 	}
 
 	/*
