@@ -196,8 +196,12 @@ AC_ARG_WITH(lexilla,
 	AS_HELP_STRING([--with-lexilla=PATH],
 		       [Specify Lexilla's path [default=./contrib/lexilla]]),
 	[LEXILLA_PATH=$withval], [LEXILLA_PATH=./contrib/lexilla])
-LEXILLA_PATH=`canonicalize $LEXILLA_PATH`
-AC_SUBST(LEXILLA_PATH)
+AM_CONDITIONAL(LEXILLA, [test x$LEXILLA_PATH != xno])
+if [[ x$LEXILLA_PATH != xno ]]; then
+	LEXILLA_PATH=`canonicalize $LEXILLA_PATH`
+	AC_SUBST(LEXILLA_PATH)
+	AC_DEFINE(HAVE_LEXILLA, 1, [Building with Lexilla (Lexer) support])
+fi
 
 CPPFLAGS="$CPPFLAGS -I$LEXILLA_PATH/include"
 

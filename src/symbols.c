@@ -25,7 +25,9 @@
 #include <glib.h>
 
 #include <Scintilla.h>
+#ifdef HAVE_LEXILLA
 #include <Lexilla.h>
+#endif
 
 #include "sciteco.h"
 #include "string-utils.h"
@@ -319,6 +321,7 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 
 	sptr_t lParam = 0;
 
+#ifdef HAVE_LEXILLA
 	if (ctx->scintilla.iMessage == SCI_SETILEXER) {
 		if (teco_string_contains(str, '\0')) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
@@ -333,7 +336,9 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 			            "Lexilla lexer \"%s\" not found.", lexer);
 			return NULL;
 		}
-	} else if (str->len > 0) {
+	} else
+#endif
+	if (str->len > 0) {
 		/*
 		 * NOTE: There may even be messages that read strings
 		 * with embedded nulls.

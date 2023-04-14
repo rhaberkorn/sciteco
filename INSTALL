@@ -49,7 +49,7 @@ installed by the user manually:
  * When choosing the Curses interface:
    * Scinterm (v3.1 or later):
      http://foicica.com/scinterm/
- * Lexilla (v5.0.0 or later):
+ * Lexilla (v5.0.0 or later, optional):
    https://www.scintilla.org/Lexilla.html
 
 On Ubuntu, you can install all dependencies you could possibly need

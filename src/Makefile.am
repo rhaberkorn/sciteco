@@ -68,8 +68,10 @@ sciteco_minimal_SOURCES =
 symbols-scintilla.c symbols-scilexer.c : sciteco-minimal$(EXEEXT)
 endif
 sciteco_minimal_LDADD = libsciteco-base.la \
-                        @SCINTILLA_PATH@/bin/scintilla.a \
-                        @LEXILLA_PATH@/bin/liblexilla.a
+                        @SCINTILLA_PATH@/bin/scintilla.a
+if LEXILLA
+sciteco_minimal_LDADD += @LEXILLA_PATH@/bin/liblexilla.a
+endif
 # Scintilla is unfortunately still written in C++, so we must force
 # Automake to use the C++ linker when linking the binaries.
 # The following hack is actually advocated in the Automake manual.
@@ -77,7 +79,10 @@ nodist_EXTRA_sciteco_minimal_SOURCES = fuck-this-shit.cpp
 
 bin_PROGRAMS = sciteco
 sciteco_SOURCES =
-nodist_sciteco_SOURCES = symbols-scintilla.c symbols-scilexer.c
+nodist_sciteco_SOURCES = symbols-scintilla.c
+if LEXILLA
+nodist_sciteco_SOURCES += symbols-scilexer.c
+endif
 sciteco_LDADD = $(sciteco_minimal_LDADD)
 # see above
 nodist_EXTRA_sciteco_SOURCES = fuck-this-shit.cpp
