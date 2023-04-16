@@ -803,6 +803,10 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 		}
 	}
 
+	/* insert_len might end up > 0 after interruptions */
+	if (!ctx->expectstring.string.len)
+		ctx->expectstring.insert_len = 0;
+
 	if (!ctx->expectstring.nesting) {
 		/*
 		 * Call process_cb() even if interactive feedback
@@ -857,11 +861,11 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 	} else if (ctx->mode == TECO_MODE_NORMAL) {
 		teco_string_append_c(&ctx->expectstring.string, chr);
 	}
+
 	/*
-	 * NOTE: As an optimization insert_len is not
-	 * restored on undo since that is only
-	 * necessary in interactive mode and we get
-	 * called once per character when this is necessary.
+	 * NOTE: As an optimization insert_len is not restored on undo since
+	 * it is 0 after every key press anyway.
+	 * The only exception is when interrupting a command in a loop.
 	 */
 	ctx->expectstring.insert_len += ctx->expectstring.string.len - old_len;
 
@@ -872,6 +876,10 @@ gboolean
 teco_state_expectstring_refresh(teco_machine_main_t *ctx, GError **error)
 {
 	teco_state_t *current = ctx->parent.current;
+
+	/* insert_len might end up > 0 after interruptions */
+	if (!ctx->expectstring.string.len)
+		ctx->expectstring.insert_len = 0;
 
 	/* never calls process_cb() in parse-only mode */
 	if (ctx->expectstring.insert_len && current->expectstring.process_cb &&
