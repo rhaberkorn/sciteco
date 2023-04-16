@@ -98,6 +98,7 @@ dist_lexer_DATA += lexers/verilog.tes \
                    lexers/caml.tes \
                    lexers/python.tes \
                    lexers/yaml.tes \
-                   lexers/markdown.tes
+                   lexers/markdown.tes \
+                   lexers/asciidoc.tes
 
 endif

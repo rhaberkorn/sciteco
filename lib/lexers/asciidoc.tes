@@ -1,0 +1,28 @@
+!* Asciidoc *!
+
+@[lexer.test.asciidoc]{
+  :EN*.adocQ*"S -1 '
+  :EN*.asciidocQ*
+}
+
+@[lexer.set.asciidoc]{
+  ESSETILEXERasciidoc
+  1,1ESSTYLESETBOLD
+  1,2ESSTYLESETBOLD
+  1,3ESSTYLESETITALIC
+  1,4ESSTYLESETITALIC
+  !* FIXME: We probably need separate color codes *!
+  :M[color.preproc],5M[color.set]
+  5U.i 5<:M[color.preproc2],%.iM[color.set]>
+  :M[color.keyword],11M[color.set]
+  :M[color.keyword],12M[color.set]
+  :M[color.comment],13M[color.set]
+  :M[color.variable],14M[color.set]
+  :M[color.string2],15M[color.set]
+  :M[color.keyword],16M[color.set]
+  :M[color.comment],17M[color.set]
+  :M[color.comment],18M[color.set]
+  :M[color.keyword],20M[color.set]
+  :M[color.variable],21M[color.set]
+  :M[color.string],22M[color.set]
+}
