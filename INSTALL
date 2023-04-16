@@ -44,10 +44,10 @@ These dependencies are bundled with the SciTECO Git repository
 and with source tar balls, so they usually do not have to be
 installed by the user manually:
 
- * Scintilla (v5.0.0 or later):
+ * Scintilla (v5.3.0 or later):
    http://www.scintilla.org/
  * When choosing the Curses interface:
-   * Scinterm (v3.1 or later):
+   * Scinterm (v4.0 or later):
      http://foicica.com/scinterm/
  * Lexilla (v5.0.0 or later, optional):
    https://www.scintilla.org/Lexilla.html

@@ -134,6 +134,13 @@ PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.44], [
 	LIBS="$LIBS $LIBGLIB_LIBS"
 ])
 
+# Required by Scintilla.
+AX_PTHREAD([], [
+	AC_MSG_ERROR([pthread not found!])
+])
+SCINTILLA_CXXFLAGS="$SCINTILLA_CXXFLAGS $PTHREAD_CFLAGS"
+LIBS="$LIBS $PTHREAD_LIBS"
+
 case $host in
 *-mingw*)
 	AC_CHECK_HEADERS([windows.h], , [
@@ -200,10 +207,9 @@ AM_CONDITIONAL(LEXILLA, [test x$LEXILLA_PATH != xno])
 if [[ x$LEXILLA_PATH != xno ]]; then
 	LEXILLA_PATH=`canonicalize $LEXILLA_PATH`
 	AC_SUBST(LEXILLA_PATH)
+	CPPFLAGS="$CPPFLAGS -I$LEXILLA_PATH/include"
 	AC_DEFINE(HAVE_LEXILLA, 1, [Building with Lexilla (Lexer) support])
 fi
-
-CPPFLAGS="$CPPFLAGS -I$LEXILLA_PATH/include"
 
 AC_ARG_WITH(interface,
 	AS_HELP_STRING([--with-interface=ncurses|netbsd-curses|xcurses|pdcurses|pdcurses-gui|gtk],

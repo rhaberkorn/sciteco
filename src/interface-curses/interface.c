@@ -159,6 +159,17 @@ static gint teco_xterm_version(void) G_GNUC_UNUSED;
 #define COLOR_LWHITE	COLOR_LIGHT(COLOR_WHITE)
 
 /**
+ * Returns the curses `COLOR_PAIR` for the given curses foreground and background `COLOR`s.
+ * This is used simply to enumerate every possible color combination.
+ * Note: only 256 combinations are possible due to curses portability.
+ * Note: This references the global curses variable `COLORS` and is not a constant expression.
+ * @param f The curses foreground `COLOR`.
+ * @param b The curses background `COLOR`.
+ * @return int number for defining a curses `COLOR_PAIR`.
+ */
+#define SCI_COLOR_PAIR(f, b) ((b) * ((COLORS < 16) ? 8 : 16) + (f) + 1)
+
+/**
  * Curses attribute for the color combination
  * `f` (foreground) and `b` (background)
  * according to the color pairs initialized by
