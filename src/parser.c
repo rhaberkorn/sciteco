@@ -803,10 +803,6 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 		}
 	}
 
-	/* insert_len might end up > 0 after interruptions */
-	if (!ctx->expectstring.string.len)
-		ctx->expectstring.insert_len = 0;
-
 	if (!ctx->expectstring.nesting) {
 		/*
 		 * Call process_cb() even if interactive feedback
@@ -838,6 +834,8 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 		if (current->expectstring.string_building)
 			teco_machine_stringbuilding_reset(&ctx->expectstring.machine);
 
+		if (ctx->parent.must_undo)
+			teco_undo_gsize(ctx->expectstring.insert_len);
 		ctx->expectstring.insert_len = 0;
 		return next;
 	}
@@ -863,10 +861,16 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 	}
 
 	/*
-	 * NOTE: As an optimization insert_len is not restored on undo since
-	 * it is 0 after every key press anyway.
-	 * The only exception is when interrupting a command in a loop.
+	 * NOTE: insert_len is always 0 after key presses in interactive mode,
+	 * so we wouldn't have to undo it.
+	 * But there is one exception: When interrupting a loop including a string
+	 * argument (e.g. <I...$>), insert_len could end up != 0 which would consequently
+	 * crash once you change the string argument.
+	 * The only way to avoid repeated undo tokens might be adding an initial() callback
+	 * that sets it to 0 on undo. But that is very tricky.
 	 */
+	if (ctx->parent.must_undo)
+		teco_undo_gsize(ctx->expectstring.insert_len);
 	ctx->expectstring.insert_len += ctx->expectstring.string.len - old_len;
 
 	return current;
@@ -877,17 +881,16 @@ teco_state_expectstring_refresh(teco_machine_main_t *ctx, GError **error)
 {
 	teco_state_t *current = ctx->parent.current;
 
-	/* insert_len might end up > 0 after interruptions */
-	if (!ctx->expectstring.string.len)
-		ctx->expectstring.insert_len = 0;
-
 	/* never calls process_cb() in parse-only mode */
 	if (ctx->expectstring.insert_len && current->expectstring.process_cb &&
 	    !current->expectstring.process_cb(ctx, &ctx->expectstring.string,
 	                                      ctx->expectstring.insert_len, error))
 		return FALSE;
 
+	if (ctx->parent.must_undo)
+		teco_undo_gsize(ctx->expectstring.insert_len);
 	ctx->expectstring.insert_len = 0;
+
 	return TRUE;
 }
 
