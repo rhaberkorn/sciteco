@@ -4,14 +4,6 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * <Ix$> hangs after interruption.
-   These are apparently very costly calculations to make the caret
-   visible after each and every UNDO sent to Scintilla.
-   This is because it implicitly does a SCROLLCARET each time.
-   There are already optimizations but they don't work on undo
-   (see 8ef010da59743fcc4927c790f585ba414ec7b129).
-   It may be better to temporarily disable scrolling altogether and
-   enable it after every keypress.
  * The "lexer.test..." macros do not work with the unnamed buffer,
    so there should be a special test in .teco_ini.
  * After commands like ECcat /dev/zero$ result in OOM,
@@ -117,7 +109,7 @@ Known Bugs:
  * Mac OS: The colors are screwed up with the terminal.tes color scheme
    (and with --no-profile) under Mac OS terminal emulators.
    This does not happen under Linux with Darling.
-   See https://github.com/rhaberkorn/sciteco/issues/8
+   See https://github.com/rhaberkorn/sciteco/issues/12
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -434,6 +426,8 @@ Features:
    * AppImage for Linux
    * 64-bit Windows builds
    * Mac OS Arm64 builds either separately or via universal binary.
+     See https://codetinkering.com/switch-homebrew-arm-x86/
+     Target flag: `-target arm64-apple-macos11`
  * Linux: Relocatable binaries instead of hardcoding the library path.
    This makes it possible to run builds installed via
    `make install DESTDIR=...` and will aid in creating AppImages.

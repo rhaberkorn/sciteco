@@ -513,9 +513,9 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 
 	if (teco_validate_pos(v)) {
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION,
+			undo__teco_interface_ssm(SCI_GOTOPOS,
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
-		teco_interface_ssm(SCI_SETEMPTYSELECTION, v, 0);
+		teco_interface_ssm(SCI_GOTOPOS, v, 0);
 
 		if (teco_machine_main_eval_colon(ctx))
 			teco_expressions_push(TECO_SUCCESS);
@@ -535,9 +535,9 @@ teco_move_chars(teco_int_t n)
 	if (!teco_validate_pos(pos + n))
 		return TECO_FAILURE;
 
-	teco_interface_ssm(SCI_SETEMPTYSELECTION, pos + n, 0);
+	teco_interface_ssm(SCI_GOTOPOS, pos + n, 0);
 	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 
 	return TECO_SUCCESS;
 }
@@ -603,11 +603,9 @@ teco_move_lines(teco_int_t n)
 	if (!teco_validate_line(line))
 		return TECO_FAILURE;
 
-	/* avoids scrolling caret (expensive operation) */
-	teco_interface_ssm(SCI_SETEMPTYSELECTION,
-	                   teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0), 0);
+	teco_interface_ssm(SCI_GOTOLINE, line, 0);
 	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 
 	return TECO_SUCCESS;
 }
@@ -719,11 +717,11 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 	}
 	if (v < 0) {
 		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 		if (teco_machine_main_eval_colon(ctx))
 			teco_expressions_push(TECO_SUCCESS);
 	} else {
-		teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 		if (!teco_machine_main_eval_colon(ctx)) {
 			teco_error_move_set(error, "W");
 			return;
@@ -771,14 +769,14 @@ teco_delete_words(teco_int_t n)
 	if (n >= 0) {
 		if (size != teco_interface_ssm(SCI_GETLENGTH, 0, 0)) {
 			teco_interface_ssm(SCI_UNDO, 0, 0);
-			teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+			teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 		}
 		return TECO_FAILURE;
 	}
 	g_assert(size != teco_interface_ssm(SCI_GETLENGTH, 0, 0));
 
 	if (teco_current_doc_must_undo()) {
-		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 	teco_ring_dirtify();
@@ -924,7 +922,7 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 
 	if (teco_current_doc_must_undo()) {
 		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		undo__teco_interface_ssm(SCI_SETEMPTYSELECTION, pos, 0);
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 

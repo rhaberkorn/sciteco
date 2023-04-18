@@ -308,9 +308,9 @@ teco_state_help_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 	 * multiple topics in the same buffer without
 	 * closing it first.
 	 */
-	undo__teco_interface_ssm(SCI_SETEMPTYSELECTION,
+	undo__teco_interface_ssm(SCI_GOTOPOS,
 	                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
-	teco_interface_ssm(SCI_SETEMPTYSELECTION, topic->pos, 0);
+	teco_interface_ssm(SCI_GOTOPOS, topic->pos, 0);
 
 	return &teco_state_start;
 }

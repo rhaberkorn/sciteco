@@ -1632,12 +1632,9 @@ teco_interface_event_loop_iter(void)
 	}
 
 	/*
-	 * We avoid Scintilla messages that scroll the caret during macro
-	 * execution since it has been benchmarked to be very a very costly operation.
+	 * Scintilla has been patched to avoid any automatic scrolling since that
+	 * has been benchmarked to be a very costly operation.
 	 * Instead we do it only once after every keypress.
-	 *
-	 * FIXME: This could be in teco_cmdline_keypress() since it is common among
-	 * all interface implementations.
 	 */
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 
