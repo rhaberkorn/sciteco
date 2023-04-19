@@ -154,15 +154,7 @@ teco_view_ssm(teco_view_t *ctx, unsigned int iMessage, uptr_t wParam, sptr_t lPa
 void
 teco_view_free(teco_view_t *ctx)
 {
-	/*
-	 * FIXME: It's not entirely clear why g_object_unref() won't do here.
-	 * This results in crashes later on because something is still referencing
-	 * the widget/GObject.
-	 * However, currently displayed views (ctx == teco_interface.current_view_widget)
-	 * should have a reference count of 2 and unreffing them should not actually
-	 * touch the object until is is removed from the view.
-	 */
-	gtk_widget_destroy(teco_view_get_widget(ctx));
+	g_object_unref(teco_view_get_widget(ctx));
 }
 
 static struct {
