@@ -1626,7 +1626,7 @@ teco_interface_event_loop_iter(void)
 	 * Control keys and keys with printable representation
 	 */
 	default:
-		if (key <= 0xFF &&
+		if (key < 0x80 &&
 		    !teco_cmdline_keypress_c(key, &teco_interface.event_loop_error))
 			return;
 	}
