@@ -62,6 +62,8 @@
 static void teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                                     GdkRectangle *allocation,
                                                     gpointer user_data);
+static void teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str,
+                                             gpointer user_data);
 static gboolean teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
                                               gpointer user_data);
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
@@ -183,6 +185,7 @@ static struct {
 	GtkWidget *message_widget;
 
 	teco_view_t *cmdline_view;
+	GtkIMContext *input_method;
 
 	GtkWidget *popup_widget;
 
@@ -326,9 +329,12 @@ teco_interface_init(void)
 	teco_view_ssm(teco_interface.cmdline_view, SCI_SETMARGINWIDTHN, 1,
 	              teco_view_ssm(teco_interface.cmdline_view, SCI_TEXTWIDTH, STYLE_ASTERISK, (sptr_t)"*"));
 	teco_view_ssm(teco_interface.cmdline_view, SCI_MARGINSETTEXT, 0, (sptr_t)"*");
+	/* only required as long as we avoid ordinary character representations */
 	teco_view_ssm(teco_interface.cmdline_view, SCI_INDICSETSTYLE, INDIC_CONTROLCHAR, INDIC_ROUNDBOX);
 	teco_view_ssm(teco_interface.cmdline_view, SCI_INDICSETALPHA, INDIC_CONTROLCHAR, 128);
 	teco_view_ssm(teco_interface.cmdline_view, SCI_INDICSETSTYLE, INDIC_RUBBEDOUT, INDIC_STRIKE);
+	/* we will forward key events, so the view should only react to text insertion */
+	teco_view_ssm(teco_interface.cmdline_view, SCI_CLEARALLCMDKEYS, 0, 0);
 
 	GtkWidget *cmdline_widget = teco_view_get_widget(teco_interface.cmdline_view);
 	gtk_widget_set_name(cmdline_widget, "sciteco-cmdline");
@@ -337,6 +343,14 @@ teco_interface_init(void)
 	gtk_box_pack_start(GTK_BOX(vbox), cmdline_widget, FALSE, FALSE, 0);
 
 	gtk_container_add(GTK_CONTAINER(teco_interface.window), vbox);
+
+	teco_interface.input_method = gtk_im_context_simple_new();
+	gtk_im_context_set_client_window(teco_interface.input_method,
+	                                 gtk_widget_get_window(cmdline_widget));
+	gtk_im_context_focus_in(teco_interface.input_method);
+	gtk_im_context_set_use_preedit(teco_interface.input_method, FALSE);
+	g_signal_connect(teco_interface.input_method, "commit",
+	                 G_CALLBACK(teco_interface_cmdline_commit_cb), NULL);
 
 	/*
 	 * Popup widget will be shown in the bottom
@@ -712,7 +726,8 @@ teco_interface_popup_clear(void)
  * event loop (e.g. using libX11 or Win32 APIs).
  * There already is a keyboard hook for Win32 in interface-curses.
  * On the downside, such solutions will probably freeze the window
- * while SciTECO is busy.
+ * while SciTECO is busy. However we currently freeze the window
+ * anyway while being busy to avoid flickering.
  */
 gboolean
 teco_interface_is_interrupted(void)
@@ -799,12 +814,30 @@ teco_interface_set_css_variables(teco_view_t *view)
 	gtk_widget_set_size_request(teco_view_get_widget(teco_interface.cmdline_view), -1, text_height);
 }
 
-static gboolean
-teco_interface_handle_key_press(guint keyval, guint state, GError **error)
+static void
+teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str, gpointer user_data)
 {
-	teco_view_t *last_view = teco_interface_current_view;
+	g_autoptr(GError) error = NULL;
 
-	switch (keyval) {
+	/*
+	 * FIXME: This is only for consistency as long as we
+	 * do not support Unicode.
+	 */
+	for (char *p = str; *p != '\0'; p = g_utf8_next_char(p))
+		if (g_utf8_get_char(p) >= 0x80)
+			return;
+
+	if (!teco_cmdline_keypress(str, strlen(str), &error) &&
+	    g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT))
+		gtk_main_quit();
+}
+
+static gboolean
+teco_interface_handle_key_press(GdkEventKey *event, GError **error)
+{
+	const teco_view_t *last_view = teco_interface_current_view;
+
+	switch (event->keyval) {
 	case GDK_KEY_Escape:
 		if (!teco_cmdline_keypress_c('\e', error))
 			return FALSE;
@@ -832,7 +865,7 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 		break
 #define FNS(KEY, MACRO) \
 	case GDK_KEY_##KEY: \
-		if (!teco_cmdline_fnmacro(state & GDK_SHIFT_MASK ? "S" #MACRO : #MACRO, error)) \
+		if (!teco_cmdline_fnmacro(event->state & GDK_SHIFT_MASK ? "S" #MACRO : #MACRO, error)) \
 			return FALSE; \
 		break
 	FN(Down, DOWN); FN(Up, UP);
@@ -844,7 +877,7 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 		gchar macro_name[3+1];
 
 		g_snprintf(macro_name, sizeof(macro_name),
-			   "F%d", keyval - GDK_KEY_F1 + 1);
+			   "F%d", event->keyval - GDK_KEY_F1 + 1);
 		if (!teco_cmdline_fnmacro(macro_name, error))
 			return FALSE;
 		break;
@@ -866,25 +899,27 @@ teco_interface_handle_key_press(guint keyval, guint state, GError **error)
 	 * Control keys and keys with printable representation
 	 */
 	default: {
-		gunichar u = gdk_keyval_to_unicode(keyval);
+		gunichar u = gdk_keyval_to_unicode(event->keyval);
 
-		if (!u || g_unichar_to_utf8(u, NULL) != 1)
-			break;
-
-		gchar key;
-
-		g_unichar_to_utf8(u, &key);
-		if (key > 0x7F)
-			break;
-		/*
-		 * NOTE: Alt-Gr key-combinations are sometimes reported as
-		 * Ctrl+Alt, so we filter those out.
-		 */
-		if ((state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK)
-			key = TECO_CTL_KEY(g_ascii_toupper(key));
-
-		if (!teco_cmdline_keypress_c(key, error))
-			return FALSE;
+		if (u && u < 0x80 && (event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK) {
+			/*
+			 * NOTE: Alt-Gr key-combinations are sometimes reported as
+			 * Ctrl+Alt, so we filter those out.
+			 */
+			if (!teco_cmdline_keypress_c(TECO_CTL_KEY(g_ascii_toupper(u)), error))
+				return FALSE;
+		} else {
+			/*
+			 * This is necessary to handle dead keys and in the future
+			 * for inputting Asian languages.
+			 *
+			 * FIXME: We do not yet support preediting.
+			 * It would be easier to forward the event to the Scintilla
+			 * widget and use its existing IM support.
+			 * But this breaks the event freezing and results in flickering.
+			 */
+			gtk_im_context_filter_keypress(teco_interface.input_method, event);
+		}
 	}
 	}
 
@@ -1079,6 +1114,9 @@ teco_interface_cleanup(void)
 {
 	teco_string_clear(&teco_interface.info_current);
 
+	if (teco_interface.input_method)
+		g_object_unref(teco_interface.input_method);
+
 	if (teco_interface.window)
 		gtk_widget_destroy(teco_interface.window);
 
@@ -1177,7 +1215,7 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		gdk_window_freeze_updates(top_window);
 
 		teco_sigint_occurred = FALSE;
-		teco_interface_handle_key_press(event->key.keyval, event->key.state, &error);
+		teco_interface_handle_key_press(&event->key, &error);
 		teco_sigint_occurred = FALSE;
 
 		gdk_window_thaw_updates(top_window);
