@@ -603,7 +603,6 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 	 * NOTE: teco_view_ssm() already locks the GDK lock.
 	 */
 	teco_view_ssm(teco_interface.cmdline_view, SCI_CLEARALL, 0, 0);
-	teco_view_ssm(teco_interface.cmdline_view, SCI_SCROLLCARET, 0, 0);
 
 	/* format effective command line */
 	for (guint i = 0; i < cmdline->effective_len; i++)
@@ -1138,17 +1137,13 @@ teco_interface_cleanup(void)
  * Called when the commandline widget is resized.
  * This should ensure that the caret jumps to the middle of the command line,
  * imitating the behaviour of the current Curses command line.
- *
- * @bug This no longer works when the command-line gets very long
- * and the caret will eventually be stuck at the right edge.
- * There seems to be an internal limit.
  */
 static void
 teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                         GdkRectangle *allocation, gpointer user_data)
 {
-	teco_view_ssm(teco_interface.cmdline_view,
-	              SCI_SETXCARETPOLICY, CARET_SLOP, allocation->width/2);
+	teco_view_ssm(teco_interface.cmdline_view, SCI_SETXCARETPOLICY,
+	              CARET_SLOP | CARET_EVEN, allocation->width/2);
 }
 
 static gboolean
