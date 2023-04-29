@@ -100,7 +100,7 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gint stop_p
 			 ctx->parent.current, ctx->mode);
 #endif
 
-		if (teco_interface_is_interrupted()) {
+		if (G_UNLIKELY(teco_interface_is_interrupted())) {
 			teco_error_interrupted_set(error);
 			goto error_attach;
 		}

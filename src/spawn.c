@@ -51,6 +51,7 @@ static gboolean teco_spawn_stdin_watch_cb(GIOChannel *chan,
                                           GIOCondition condition, gpointer data);
 static gboolean teco_spawn_stdout_watch_cb(GIOChannel *chan,
                                            GIOCondition condition, gpointer data);
+static gboolean teco_spawn_idle_cb(gpointer user_data);
 
 /*
  * FIXME: Global state should be part of teco_machine_main_t
@@ -58,6 +59,7 @@ static gboolean teco_spawn_stdout_watch_cb(GIOChannel *chan,
 static struct {
 	GMainContext *mainctx;
 	GMainLoop *mainloop;
+	GSource *idle_src;
 	GSource *child_src;
 	GSource *stdin_src, *stdout_src;
 
@@ -85,6 +87,15 @@ teco_spawn_init(void)
 	 */
 	teco_spawn_ctx.mainctx = g_main_context_new();
 	teco_spawn_ctx.mainloop = g_main_loop_new(teco_spawn_ctx.mainctx, FALSE);
+
+	/*
+	 * This is required on platforms that require polling (both Gtk and Curses).
+	 */
+	teco_spawn_ctx.idle_src = g_idle_source_new();
+	g_source_set_priority(teco_spawn_ctx.idle_src, G_PRIORITY_LOW);
+	g_source_set_callback(teco_spawn_ctx.idle_src, (GSourceFunc)teco_spawn_idle_cb,
+	                      NULL, NULL);
+	g_source_attach(teco_spawn_ctx.idle_src, teco_spawn_ctx.mainctx);
 }
 
 static gchar **
@@ -334,15 +345,15 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	g_source_unref(teco_spawn_ctx.child_src);
 	g_spawn_close_pid(pid);
 
+	/*
+	 * NOTE: This includes interruptions due to teco_interrupt()
+	 * following CTRL+C.
+	 * But they are reported as G_SPAWN_ERROR_FAILED and hard to filter out.
+	 */
 	if (teco_spawn_ctx.error) {
 		g_propagate_error(error, teco_spawn_ctx.error);
 		teco_spawn_ctx.error = NULL;
 		goto gerror;
-	}
-
-	if (teco_interface_is_interrupted()) {
-		teco_error_interrupted_set(error);
-		return NULL;
 	}
 
 	if (teco_machine_main_eval_colon(ctx))
@@ -659,6 +670,8 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 		 * NOTE: Since this reads from an external process and regular memory
 		 * limiting in teco_machine_main_step() is not performed, we could insert
 		 * indefinitely (eg. cat /dev/zero).
+		 * We could also check in teco_spawn_idle_cb(), but there is no guarantee we
+		 * actually return to the main loop.
 		 */
 		if (!teco_memory_check(0, &teco_spawn_ctx.error))
 			goto error;
@@ -671,10 +684,21 @@ error:
 	return G_SOURCE_REMOVE;
 }
 
+static gboolean
+teco_spawn_idle_cb(gpointer user_data)
+{
+	if (G_UNLIKELY(teco_interface_is_interrupted()))
+		/* Just in case this didn't yet happen. Should kill the child process. */
+		teco_interrupt();
+	return G_SOURCE_CONTINUE;
+}
+
 #ifndef NDEBUG
 static void __attribute__((destructor))
 teco_spawn_cleanup(void)
 {
+	g_source_unref(teco_spawn_ctx.idle_src);
+
 	g_main_loop_unref(teco_spawn_ctx.mainloop);
 	g_main_context_unref(teco_spawn_ctx.mainctx);
 
