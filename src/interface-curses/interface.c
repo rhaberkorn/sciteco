@@ -103,7 +103,7 @@
 #define CURSES_TTY
 #endif
 
-#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
+#ifdef G_OS_WIN32
 
 /**
  * This handler is the Windows-analogue of a signal
@@ -119,7 +119,7 @@ teco_console_ctrl_handler(DWORD type)
 {
 	switch (type) {
 	case CTRL_C_EVENT:
-		teco_sigint_occurred = TRUE;
+		teco_interrupted = TRUE;
 		return TRUE;
 	}
 
@@ -396,6 +396,16 @@ teco_interface_init(void)
 	 */
 #ifndef CURSES_TTY
 	teco_interface_init_clipboard();
+#endif
+
+	/*
+	 * The default SIGINT signal handler seems to partially work
+	 * as the console control handler.
+	 * However, a second CTRL+C event (or raise(SIGINT)) would
+	 * terminate the process.
+	 */
+#ifdef G_OS_WIN32
+	SetConsoleCtrlHandler(teco_console_ctrl_handler, TRUE);
 #endif
 }
 
@@ -675,14 +685,11 @@ teco_interface_init_interactive(GError **error)
 	teco_interface_init_screen();
 
 	/*
-	 * We must register this handler for
-	 * asynchronous interruptions via CTRL+C
-	 * reliably. The signal handler we already
-	 * have won't do.
-	 * Doing this here ensures that we have a higher
-	 * precedence than the handler installed by PDCursesMod.
+	 * We always have a CTRL handler on Windows, but doing it
+	 * here again, ensures that we have a higher precedence
+	 * than the one installed by PDCurses.
 	 */
-#if defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
+#ifdef G_OS_WIN32
 	SetConsoleCtrlHandler(teco_console_ctrl_handler, TRUE);
 #endif
 
@@ -1465,7 +1472,7 @@ teco_interface_popup_clear(void)
 gboolean
 teco_interface_is_interrupted(void)
 {
-	return teco_sigint_occurred != FALSE;
+	return teco_interrupted != FALSE;
 }
 
 #else /* !CURSES_TTY && !PDCURSES_WINCON && !NCURSES_WIN32 */
@@ -1473,27 +1480,29 @@ teco_interface_is_interrupted(void)
 /*
  * This function is called repeatedly, so we can poll the keyboard input queue,
  * filtering out CTRL+C.
- * This is naturally very inefficient.
  * It's currently necessary as a fallback e.g. for PDCURSES_GUI or XCurses.
+ *
+ * NOTE: Theoretically, this can be optimized by doing wgetch() only every X
+ * microseconds like on Gtk+.
+ * But this turned out to slow things down, at least on PDCurses/WinGUI.
  */
 gboolean
 teco_interface_is_interrupted(void)
 {
-	if (teco_interface.cmdline_window) { /* interactive mode */
-		gint key;
+	if (!teco_interface.cmdline_window)
+		/* batch mode */
+		return teco_interrupted != FALSE;
 
-		/*
-		 * NOTE: getch() is configured to be nonblocking.
-		 */
-		while ((key = wgetch(teco_interface.cmdline_window)) != ERR) {
-			if (G_UNLIKELY(key == TECO_CTL_KEY('C')))
-				return TRUE;
-			g_queue_push_tail(teco_interface.input_queue,
-			                  GINT_TO_POINTER(key));
-		}
+	/* NOTE: getch() is configured to be nonblocking. */
+	gint key;
+	while ((key = wgetch(teco_interface.cmdline_window)) != ERR) {
+		if (G_UNLIKELY(key == TECO_CTL_KEY('C')))
+			return TRUE;
+		g_queue_push_tail(teco_interface.input_queue,
+		                  GINT_TO_POINTER(key));
 	}
 
-	return teco_sigint_occurred != FALSE;
+	return teco_interrupted != FALSE;
 }
 
 #endif
@@ -1528,7 +1537,7 @@ teco_interface_blocking_getch(void)
 	gint key = wgetch(teco_interface.cmdline_window);
 	teco_memory_start_limiting();
 	/* allow asynchronous interruptions on <CTRL/C> */
-	teco_sigint_occurred = FALSE;
+	teco_interrupted = FALSE;
 	nodelay(teco_interface.cmdline_window, TRUE);
 #if defined(CURSES_TTY) || defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */

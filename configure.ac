@@ -170,7 +170,7 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat sscanf], , [
 # glib defines G_OS_UNIX instead...
 case $host in
 *-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
-	AC_CHECK_FUNCS([realpath fchown dup dup2 getpid open read mmap], , [
+	AC_CHECK_FUNCS([realpath fchown dup dup2 getpid open read kill mmap], , [
 		AC_MSG_ERROR([Missing libc function])
 	])
 	;;

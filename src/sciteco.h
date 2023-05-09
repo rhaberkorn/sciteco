@@ -85,10 +85,7 @@ enum {
 extern teco_int_t teco_ed;
 
 /* in main.c */
-extern volatile sig_atomic_t teco_sigint_occurred;
-
-/* in main.c */
-void teco_interrupt(void);
+extern volatile sig_atomic_t teco_interrupted;
 
 /*
  * Allows automatic cleanup of FILE pointers.

@@ -70,6 +70,12 @@ static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *
                                                 gpointer user_data);
 static gboolean teco_interface_sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
 
+/**
+ * Interval between polling for keypresses.
+ * In other words, this is the maximum latency to detect CTRL+C interruptions.
+ */
+#define TECO_POLL_INTERVAL	100000 /* microseconds */
+
 #define UNNAMED_FILE		"(Unnamed)"
 
 #define USER_CSS_FILE		".teco_css"
@@ -719,22 +725,27 @@ teco_interface_popup_clear(void)
  * system call overhead.
  * But the GDK lock that would be necessary for synchronization
  * has been deprecated.
- *
- * @todo It would be great to have platform-specific optimizations,
- * so we can detect interruptions without having to drive the Glib
- * event loop (e.g. using libX11 or Win32 APIs).
- * There already is a keyboard hook for Win32 in interface-curses.
- * On the downside, such solutions will probably freeze the window
- * while SciTECO is busy. However we currently freeze the window
- * anyway while being busy to avoid flickering.
  */
 gboolean
 teco_interface_is_interrupted(void)
 {
-	if (gtk_main_level() > 0)
-		gtk_main_iteration_do(FALSE);
+	if (!gtk_main_level())
+		/* batch mode */
+		return teco_interrupted != FALSE;
 
-	return teco_sigint_occurred != FALSE;
+	/*
+	 * By polling only every TECO_POLL_INTERVAL microseconds
+	 * we save 75-90% of runtime.
+	 */
+	static guint64 last_poll_ts = 0;
+	guint64 now_ts = g_get_monotonic_time();
+
+	if (G_LIKELY(last_poll_ts+TECO_POLL_INTERVAL > now_ts))
+		return teco_interrupted != FALSE;
+	last_poll_ts = now_ts;
+
+	gtk_main_iteration_do(FALSE);
+	return teco_interrupted != FALSE;
 }
 
 static void
@@ -1172,12 +1183,10 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		    gdk_keyval_to_upper(event->keyval) == GDK_KEY_C)
 			/*
 			 * Handle asynchronous interruptions if CTRL+C is pressed.
-			 * This will usually send SIGINT to the entire process
-			 * group and set `teco_sigint_occurred`.
 			 * If the execution thread is currently blocking,
 			 * the key is delivered like an ordinary key press.
 			 */
-			teco_interrupt();
+			teco_interrupted = TRUE;
 		else
 			g_queue_push_tail(teco_interface.event_queue,
 			                  gdk_event_copy((GdkEvent *)event));
@@ -1209,9 +1218,9 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		 */
 		gdk_window_freeze_updates(top_window);
 
-		teco_sigint_occurred = FALSE;
+		teco_interrupted = FALSE;
 		teco_interface_handle_key_press(&event->key, &error);
-		teco_sigint_occurred = FALSE;
+		teco_interrupted = FALSE;
 
 		gdk_window_thaw_updates(top_window);
 
@@ -1255,12 +1264,6 @@ teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event, gpointer 
 static gboolean
 teco_interface_sigterm_handler(gpointer user_data)
 {
-	/*
-	 * Since this handler replaces the default signal handler,
-	 * we also have to make sure it interrupts.
-	 */
-	teco_interrupt();
-
 	/*
 	 * Similar to window deletion - emulate "close" key press.
 	 */

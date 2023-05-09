@@ -52,32 +52,13 @@
 
 teco_int_t teco_ed = TECO_ED_AUTOEOL;
 
-volatile sig_atomic_t teco_sigint_occurred = FALSE;
-
-#ifdef G_OS_UNIX
-
-void
-teco_interrupt(void)
-{
-	/*
-	 * This sends SIGINT to the entire process group,
-	 * which makes sure that subprocesses are signalled,
-	 * even when called from the wrong thread.
-	 */
-	if (kill(0, SIGINT))
-		teco_sigint_occurred = TRUE;
-}
-
-#else /* !G_OS_UNIX */
-
-void
-teco_interrupt(void)
-{
-	if (raise(SIGINT))
-		teco_sigint_occurred = TRUE;
-}
-
-#endif
+/**
+ * Whether there was an asyncronous interruption (usually after pressing CTRL+C).
+ * However you should always use teco_interface_is_interrupted(),
+ * to check for interruptions because of its side effects.
+ * This variable is safe to set to TRUE from signal handlers and threads.
+ */
+volatile sig_atomic_t teco_interrupted = FALSE;
 
 /*
  * FIXME: Move this into file-utils.c?
@@ -309,7 +290,7 @@ teco_initialize_environment(const gchar *program)
 static void
 teco_sigint_handler(int signal)
 {
-	teco_sigint_occurred = TRUE;
+	teco_interrupted = TRUE;
 }
 
 int

@@ -19,7 +19,17 @@
 #include "config.h"
 #endif
 
+#include <signal.h>
+
 #include <glib.h>
+
+#include <gmodule.h>
+#include <glib/gprintf.h>
+
+#ifdef HAVE_WINDOWS_H
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include "sciteco.h"
 #include "interface.h"
@@ -60,8 +70,10 @@ static struct {
 	GMainContext *mainctx;
 	GMainLoop *mainloop;
 	GSource *idle_src;
+	GPid pid;
 	GSource *child_src;
 	GSource *stdin_src, *stdout_src;
+	gboolean interrupted;
 
 	teco_int_t from, to;
 	teco_int_t start;
@@ -220,10 +232,13 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	/*
 	 * NOTE: With G_SPAWN_LEAVE_DESCRIPTORS_OPEN and without G_SPAWN_SEARCH_PATH_FROM_ENVP,
 	 * Glib offers an "optimized codepath" on UNIX.
-	 * G_SPAWN_SEARCH_PATH_FROM_ENVP does not appear to work on Windows, anyway.
 	 */
 	static const GSpawnFlags flags = G_SPAWN_DO_NOT_REAP_CHILD |
+#ifdef G_OS_UNIX
 	                                 G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN |
+#else
+	                                 G_SPAWN_SEARCH_PATH_FROM_ENVP |
+#endif
 	                                 G_SPAWN_STDERR_TO_DEV_NULL;
 
 	if (ctx->mode > TECO_MODE_NORMAL)
@@ -257,17 +272,17 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	if (!envp)
 		goto gerror;
 
-	GPid pid;
 	gint stdin_fd, stdout_fd;
 
-	if (!g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &pid,
+	if (!g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &teco_spawn_ctx.pid,
 	                              &stdin_fd, &stdout_fd, NULL, error))
 		goto gerror;
 
-	teco_spawn_ctx.child_src = g_child_watch_source_new(pid);
+	teco_spawn_ctx.child_src = g_child_watch_source_new(teco_spawn_ctx.pid);
 	g_source_set_callback(teco_spawn_ctx.child_src, (GSourceFunc)teco_spawn_child_watch_cb,
 	                      NULL, NULL);
 	g_source_attach(teco_spawn_ctx.child_src, teco_spawn_ctx.mainctx);
+	teco_spawn_ctx.interrupted = FALSE;
 
 #ifdef G_OS_WIN32
 	stdin_chan = g_io_channel_win32_new_fd(stdin_fd);
@@ -343,11 +358,10 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	g_source_unref(teco_spawn_ctx.stdout_src);
 
 	g_source_unref(teco_spawn_ctx.child_src);
-	g_spawn_close_pid(pid);
+	g_spawn_close_pid(teco_spawn_ctx.pid);
 
 	/*
-	 * NOTE: This includes interruptions due to teco_interrupt()
-	 * following CTRL+C.
+	 * NOTE: This includes interruptions following CTRL+C.
 	 * But they are reported as G_SPAWN_ERROR_FAILED and hard to filter out.
 	 */
 	if (teco_spawn_ctx.error) {
@@ -487,6 +501,9 @@ gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_mach
  * the <command> completes, which may result in editor hangs.
  * You may however interrupt the spawned process by sending
  * the \fBSIGINT\fP signal to \*(ST, e.g. by pressing CTRL+C.
+ * The first time, this will try to kill the spawned process
+ * gracefully.
+ * The second time you press CTRL+C, it will hard kill the process.
  *
  * In interactive mode, \*(ST performs TAB-completion
  * of filenames in the <command> string parameter but
@@ -687,9 +704,39 @@ error:
 static gboolean
 teco_spawn_idle_cb(gpointer user_data)
 {
-	if (G_UNLIKELY(teco_interface_is_interrupted()))
-		/* Just in case this didn't yet happen. Should kill the child process. */
-		teco_interrupt();
+	if (G_LIKELY(!teco_interface_is_interrupted()))
+		return G_SOURCE_CONTINUE;
+	teco_interrupted = FALSE;
+
+#ifdef G_OS_WIN32
+	/*
+	 * FIXME: We could actually try to gracefully terminate the process first
+	 * using GenerateConsoleCtrlEvent(CTRL_C_EVENT).
+	 * However, it's hard to find the correct process group id.
+	 * We can pass 0, but this will fire our own control handler again,
+	 * resulting in a hard kill via TerminateProcess() anyway.
+	 * Masking the control handler is also not viable because it's a race
+	 * condition. All the workarounds would be very hacky.
+	 *
+	 * FIXME: TerminateProcess() does not work on processes that ignore their
+	 * control handler after calling SetConsoleCtrlHandler(NULL, TRUE),
+	 * even though it correctly sets its return code.
+	 * SciTECO will currently simply hang on these processes - but you can
+	 * kill the child process via the task manager.
+	 */
+	TerminateProcess(teco_spawn_ctx.pid, 1);
+#elif defined(G_OS_UNIX)
+	/*
+	 * The first CTRL+C will try to gracefully terminate the process.
+	 */
+	if (teco_spawn_ctx.interrupted || kill(teco_spawn_ctx.pid, SIGINT);
+		kill(teco_spawn_ctx.pid, SIGKILL);
+#else
+	/* This may signal unrelated processes as well. */
+	raise(SIGINT);
+#endif
+	teco_spawn_ctx.interrupted = TRUE;
+
 	return G_SOURCE_CONTINUE;
 }
 
