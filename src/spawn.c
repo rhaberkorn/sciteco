@@ -729,7 +729,7 @@ teco_spawn_idle_cb(gpointer user_data)
 	/*
 	 * The first CTRL+C will try to gracefully terminate the process.
 	 */
-	if (teco_spawn_ctx.interrupted || kill(teco_spawn_ctx.pid, SIGINT);
+	if (teco_spawn_ctx.interrupted || kill(teco_spawn_ctx.pid, SIGINT))
 		kill(teco_spawn_ctx.pid, SIGKILL);
 #else
 	/* This may signal unrelated processes as well. */
