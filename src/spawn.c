@@ -70,6 +70,7 @@ static struct {
 	GMainContext *mainctx;
 	GMainLoop *mainloop;
 	GSource *idle_src;
+	/** Process ID or Job Object handle on Windows */
 	GPid pid;
 	GSource *child_src;
 	GSource *stdin_src, *stdout_src;
@@ -232,12 +233,11 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	/*
 	 * NOTE: With G_SPAWN_LEAVE_DESCRIPTORS_OPEN and without G_SPAWN_SEARCH_PATH_FROM_ENVP,
 	 * Glib offers an "optimized codepath" on UNIX.
+	 * G_SPAWN_SEARCH_PATH_FROM_ENVP does not appear to work on Windows, anyway.
 	 */
-	static const GSpawnFlags flags = G_SPAWN_DO_NOT_REAP_CHILD |
+	static const GSpawnFlags flags = G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH |
 #ifdef G_OS_UNIX
-	                                 G_SPAWN_SEARCH_PATH | G_SPAWN_LEAVE_DESCRIPTORS_OPEN |
-#else
-	                                 G_SPAWN_SEARCH_PATH_FROM_ENVP |
+	                                 G_SPAWN_LEAVE_DESCRIPTORS_OPEN |
 #endif
 	                                 G_SPAWN_STDERR_TO_DEV_NULL;
 
@@ -274,20 +274,36 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 
 	gint stdin_fd, stdout_fd;
 
-	if (!g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &teco_spawn_ctx.pid,
+	GPid pid;
+	if (!g_spawn_async_with_pipes(NULL, argv, envp, flags, NULL, NULL, &pid,
 	                              &stdin_fd, &stdout_fd, NULL, error))
 		goto gerror;
 
-	teco_spawn_ctx.child_src = g_child_watch_source_new(teco_spawn_ctx.pid);
+	teco_spawn_ctx.child_src = g_child_watch_source_new(pid);
 	g_source_set_callback(teco_spawn_ctx.child_src, (GSourceFunc)teco_spawn_child_watch_cb,
 	                      NULL, NULL);
 	g_source_attach(teco_spawn_ctx.child_src, teco_spawn_ctx.mainctx);
 	teco_spawn_ctx.interrupted = FALSE;
 
 #ifdef G_OS_WIN32
+	/*
+	 * Assigning the process to a job object will allow us to
+	 * kill the entire process tree relatively easily and without
+	 * race conditions.
+	 */
+	teco_spawn_ctx.pid = CreateJobObjectA(NULL, NULL);
+	if (!teco_spawn_ctx.pid || !AssignProcessToJobObject(teco_spawn_ctx.pid, pid)) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Cannot assign process to job object (%lu)", GetLastError());
+		goto gerror;
+	}
+
 	stdin_chan = g_io_channel_win32_new_fd(stdin_fd);
 	stdout_chan = g_io_channel_win32_new_fd(stdout_fd);
-#else /* the UNIX constructors should work everywhere else */
+#else
+	teco_spawn_ctx.pid = pid;
+
+	/* the UNIX constructors should work everywhere else */
 	stdin_chan = g_io_channel_unix_new(stdin_fd);
 	stdout_chan = g_io_channel_unix_new(stdout_fd);
 #endif
@@ -358,7 +374,10 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	g_source_unref(teco_spawn_ctx.stdout_src);
 
 	g_source_unref(teco_spawn_ctx.child_src);
-	g_spawn_close_pid(teco_spawn_ctx.pid);
+	g_spawn_close_pid(pid);
+#ifdef G_OS_WIN32
+	CloseHandle(teco_spawn_ctx.pid);
+#endif
 
 	/*
 	 * NOTE: This includes interruptions following CTRL+C.
@@ -571,8 +590,12 @@ teco_spawn_child_watch_cb(GPid pid, gint status, gpointer data)
 	/*
 	 * There might still be data to read from stdout,
 	 * but we cannot count on the stdout watcher to be ever called again.
+	 *
+	 * FIXME: This is not done after interruptions since it will hang at least on Windows.
+	 * This shouldn't happen since the IO channel is non-blocking.
 	 */
-	teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel, G_IO_IN, NULL);
+	if (!teco_spawn_ctx.interrupted)
+		teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel, G_IO_IN, NULL);
 
 	/*
 	 * teco_spawn_stdout_watch_cb() might have set the error.
@@ -701,6 +724,52 @@ error:
 	return G_SOURCE_REMOVE;
 }
 
+#ifdef G_OS_WIN32
+
+static inline void
+teco_spawn_terminate_hard(GPid job)
+{
+	TerminateJobObject(job, 1);
+}
+
+/*
+ * FIXME: We could actually try to gracefully terminate the process first
+ * using GenerateConsoleCtrlEvent(CTRL_C_EVENT).
+ * However, it's hard to find the correct process group id.
+ * We can pass 0, but this will fire our own control handler again,
+ * resulting in a hard kill via TerminateProcess() anyway.
+ * Masking the control handler is also not viable because it's a race
+ * condition. All the workarounds would be very hacky.
+ */
+#define teco_spawn_terminate_soft teco_spawn_terminate_hard
+
+#elif defined(G_OS_UNIX)
+
+static inline void
+teco_spawn_terminate_soft(GPid pid)
+{
+	kill(pid, SIGINT);
+}
+
+static inline void
+teco_spawn_terminate_hard(GPid pid)
+{
+	kill(pid, SIGKILL);
+}
+
+#else /* !G_OS_WIN32 && !G_OS_UNIX */
+
+static inline void
+teco_spawn_terminate_soft(GPid pid)
+{
+	/* This may signal unrelated processes as well. */
+	raise(SIGINT);
+}
+
+#define teco_spawn_terminate_hard teco_spawn_terminate_soft
+
+#endif
+
 static gboolean
 teco_spawn_idle_cb(gpointer user_data)
 {
@@ -708,33 +777,13 @@ teco_spawn_idle_cb(gpointer user_data)
 		return G_SOURCE_CONTINUE;
 	teco_interrupted = FALSE;
 
-#ifdef G_OS_WIN32
-	/*
-	 * FIXME: We could actually try to gracefully terminate the process first
-	 * using GenerateConsoleCtrlEvent(CTRL_C_EVENT).
-	 * However, it's hard to find the correct process group id.
-	 * We can pass 0, but this will fire our own control handler again,
-	 * resulting in a hard kill via TerminateProcess() anyway.
-	 * Masking the control handler is also not viable because it's a race
-	 * condition. All the workarounds would be very hacky.
-	 *
-	 * FIXME: TerminateProcess() does not work on processes that ignore their
-	 * control handler after calling SetConsoleCtrlHandler(NULL, TRUE),
-	 * even though it correctly sets its return code.
-	 * SciTECO will currently simply hang on these processes - but you can
-	 * kill the child process via the task manager.
-	 */
-	TerminateProcess(teco_spawn_ctx.pid, 1);
-#elif defined(G_OS_UNIX)
 	/*
 	 * The first CTRL+C will try to gracefully terminate the process.
 	 */
-	if (teco_spawn_ctx.interrupted || kill(teco_spawn_ctx.pid, SIGINT))
-		kill(teco_spawn_ctx.pid, SIGKILL);
-#else
-	/* This may signal unrelated processes as well. */
-	raise(SIGINT);
-#endif
+	if (!teco_spawn_ctx.interrupted)
+		teco_spawn_terminate_soft(teco_spawn_ctx.pid);
+	else
+		teco_spawn_terminate_hard(teco_spawn_ctx.pid);
 	teco_spawn_ctx.interrupted = TRUE;
 
 	return G_SOURCE_CONTINUE;
