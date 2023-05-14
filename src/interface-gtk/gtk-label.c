@@ -69,7 +69,7 @@ teco_gtk_label_style_updated(GtkWidget *widget)
 	GtkStyleContext *style = gtk_widget_get_style_context(widget);
 
 	GdkRGBA normal_color;
-	gtk_style_context_get_color(style, GTK_STATE_NORMAL, &normal_color);
+	gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &normal_color);
 	self->bg.red   = GDK_TO_PANGO_COLOR(normal_color.red);
 	self->bg.green = GDK_TO_PANGO_COLOR(normal_color.green);
 	self->bg.blue  = GDK_TO_PANGO_COLOR(normal_color.blue);
