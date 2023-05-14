@@ -60,6 +60,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_USER_H
+#include <sys/user.h>
+#endif
 #ifdef HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>
 #endif
@@ -463,23 +466,33 @@ teco_memory_get_usage(void)
 
 #define NEED_POLL_THREAD
 
-#elif defined(G_OS_UNIX) && defined(HAVE_SYSCTL)
+#elif defined(G_OS_UNIX) && defined(HAVE_SYSCONF) && defined(HAVE_SYSCTL)
 
 /*
  * Practically only for FreeBSD.
  *
- * FIXME: Is this even critical or can we link in dlmalloc?
+ * The malloc replacement via dlmalloc also works on FreeBSD,
+ * but this implementation has been benchmarked to be up to 4 times faster
+ * (but only if we poll in a separate thread).
+ * On the downside, this will of course be less precise.
  */
 static gsize
 teco_memory_get_usage(void)
 {
+	static long page_size = 0;
+
+	if (G_UNLIKELY(!page_size))
+		page_size = sysconf(_SC_PAGESIZE);
+
 	struct kinfo_proc procstk;
 	size_t len = sizeof(procstk);
 	int pidinfo[] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
 
-	sysctl(pidinfo, G_N_ELEMENTS(pidinfo), &procstk, &len, NULL, 0);
+	if (G_UNLIKELY(sysctl(pidinfo, G_N_ELEMENTS(pidinfo),
+	                      &procstk, &len, NULL, 0) < 0))
+		return 0;
 
-	return procstk.ki_rssize; // FIXME: Which unit?
+	return procstk.ki_rssize * page_size;
 }
 
 #define NEED_POLL_THREAD

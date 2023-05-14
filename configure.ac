@@ -377,8 +377,10 @@ AC_ARG_ENABLE(malloc-replacement,
 	[malloc_replacement=$enableval], [malloc_replacement=check])
 if [[ $malloc_replacement = check ]]; then
 	# We currently do not support dlmalloc on Windows and Mac OS.
+	# It works on FreeBSD, but is slower than the polling fallback,
+	# it has been disabled by default.
 	case $host in
-	*-*-darwin* | *-mingw*) malloc_replacement=no;;
+	*-*-*bsd* | *-*-darwin* | *-mingw*) malloc_replacement=no;;
 	*) malloc_replacement=yes;;
 	esac
 fi
@@ -422,8 +424,8 @@ else
 		AC_DEFINE(HAVE_PROCFS, 1, [Whether procfs (/proc) is supported])
 		;;
 	*-*-*bsd*)
-		AC_CHECK_HEADERS([sys/types.h sys/sysctl.h])
-		AC_CHECK_FUNCS([sysctl])
+		AC_CHECK_HEADERS([sys/types.h sys/user.h sys/sysctl.h])
+		AC_CHECK_FUNCS([sysconf sysctl])
 		;;
 	*-*-darwin*)
 		AC_CHECK_HEADERS([mach/mach.h mach/message.h mach/kern_return.h mach/task_info.h])
