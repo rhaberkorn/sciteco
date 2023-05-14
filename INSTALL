@@ -55,7 +55,8 @@ installed by the user manually:
 On Ubuntu, you can install all dependencies you could possibly need
 as follows:
 
-  $ sudo apt-get install git build-essential autoconf automake libtool \
+  $ sudo apt-get install git build-essential \
+                         pkg-config autoconf automake libtool \
                          libglib2.0-dev libncurses-dev libgtk-3-dev \
                          groff doxygen
 
