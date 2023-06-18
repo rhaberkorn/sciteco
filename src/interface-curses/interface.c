@@ -1507,6 +1507,31 @@ teco_interface_is_interrupted(void)
 
 #endif
 
+static void
+teco_interface_refresh(void)
+{
+	/*
+	 * Scintilla has been patched to avoid any automatic scrolling since that
+	 * has been benchmarked to be a very costly operation.
+	 * Instead we do it only once after every keypress.
+	 */
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
+
+	/*
+	 * Info window is updated very often which is very
+	 * costly, especially when using PDC_set_title(),
+	 * so we redraw it here, where the overhead does
+	 * not matter much.
+	 */
+	teco_interface_draw_info();
+	wnoutrefresh(teco_interface.info_window);
+	teco_view_noutrefresh(teco_interface_current_view);
+	wnoutrefresh(teco_interface.msg_window);
+	wnoutrefresh(teco_interface.cmdline_window);
+	teco_curses_info_popup_noutrefresh(&teco_interface.popup);
+	doupdate();
+}
+
 static gint
 teco_interface_blocking_getch(void)
 {
@@ -1640,48 +1665,22 @@ teco_interface_event_loop_iter(void)
 			return;
 	}
 
-	/*
-	 * Scintilla has been patched to avoid any automatic scrolling since that
-	 * has been benchmarked to be a very costly operation.
-	 * Instead we do it only once after every keypress.
-	 */
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-
-	/*
-	 * Info window is updated very often which is very
-	 * costly, especially when using PDC_set_title(),
-	 * so we redraw it here, where the overhead does
-	 * not matter much.
-	 */
-	teco_interface_draw_info();
-	wnoutrefresh(teco_interface.info_window);
-	teco_view_noutrefresh(teco_interface_current_view);
-	wnoutrefresh(teco_interface.msg_window);
-	wnoutrefresh(teco_interface.cmdline_window);
-	teco_curses_info_popup_noutrefresh(&teco_interface.popup);
-	doupdate();
+	teco_interface_refresh();
 }
 
 gboolean
 teco_interface_event_loop(GError **error)
 {
-	static const teco_cmdline_t empty_cmdline; // FIXME
-
 	/*
 	 * Initialize Curses for interactive mode
 	 */
 	if (!teco_interface_init_interactive(error))
 		return FALSE;
 
-	/* initial refresh */
-	teco_interface_draw_info();
-	wnoutrefresh(teco_interface.info_window);
-	teco_view_noutrefresh(teco_interface_current_view);
-	teco_interface_msg_clear();
-	wnoutrefresh(teco_interface.msg_window);
+	static const teco_cmdline_t empty_cmdline; // FIXME
 	teco_interface_cmdline_update(&empty_cmdline);
-	wnoutrefresh(teco_interface.cmdline_window);
-	doupdate();
+	teco_interface_msg_clear();
+	teco_interface_refresh();
 
 #ifdef EMCURSES
 	PDC_emscripten_set_handler(teco_interface_event_loop_iter, TRUE);

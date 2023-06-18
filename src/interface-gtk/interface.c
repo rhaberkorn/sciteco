@@ -64,6 +64,9 @@ static void teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                                     gpointer user_data);
 static void teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str,
                                              gpointer user_data);
+static void teco_interface_size_allocate_cb(GtkWidget *widget,
+                                            GdkRectangle *allocation,
+                                            gpointer user_data);
 static gboolean teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
                                               gpointer user_data);
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
@@ -307,6 +310,9 @@ teco_interface_init(void)
 	gtk_event_box_set_above_child(GTK_EVENT_BOX(teco_interface.event_box_widget), TRUE);
 	gtk_box_pack_start(GTK_BOX(overlay_vbox), teco_interface.event_box_widget,
 	                   TRUE, TRUE, 0);
+
+	g_signal_connect(teco_interface.event_box_widget, "size-allocate",
+			 G_CALLBACK(teco_interface_size_allocate_cb), NULL);
 
 	teco_interface.message_bar_widget = gtk_info_bar_new();
 	gtk_widget_set_name(teco_interface.message_bar_widget, "sciteco-message-bar");
@@ -825,6 +831,52 @@ teco_interface_set_css_variables(teco_view_t *view)
 }
 
 static void
+teco_interface_refresh(gboolean current_view_changed)
+{
+	/*
+	 * The styles configured via Scintilla might change
+	 * with every keypress.
+	 */
+	if (teco_interface_current_view)
+		teco_interface_set_css_variables(teco_interface_current_view);
+
+	/*
+	 * The info area is updated very often and setting the
+	 * window title each time it is updated is VERY costly.
+	 * So we set it here once after every keypress even if the
+	 * info line did not change.
+	 * View changes are also only applied here to the GTK
+	 * window even though GDK updates have been frozen since
+	 * the size reallocations are very costly.
+	 */
+	teco_interface_refresh_info();
+
+	if (current_view_changed) {
+		/*
+		 * The last view's object is not guaranteed to
+		 * still exist.
+		 * However its widget is, due to reference counting.
+		 */
+		if (teco_interface.current_view_widget)
+			gtk_container_remove(GTK_CONTAINER(teco_interface.event_box_widget),
+			                     teco_interface.current_view_widget);
+
+		teco_interface.current_view_widget = teco_view_get_widget(teco_interface_current_view);
+
+		gtk_container_add(GTK_CONTAINER(teco_interface.event_box_widget),
+		                  teco_interface.current_view_widget);
+		gtk_widget_show(teco_interface.current_view_widget);
+	}
+
+	/*
+	 * Scintilla has been patched to avoid any automatic scrolling since that
+	 * has been benchmarked to be a very costly operation.
+	 * Instead we do it only once after every keypress.
+	 */
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
+}
+
+static void
 teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str, gpointer user_data)
 {
 	g_autoptr(GError) error = NULL;
@@ -933,46 +985,7 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 	}
 	}
 
-	/*
-	 * Scintilla has been patched to avoid any automatic scrolling since that
-	 * has been benchmarked to be a very costly operation.
-	 * Instead we do it only once after every keypress.
-	 */
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-
-	/*
-	 * The styles configured via Scintilla might change
-	 * with every keypress.
-	 */
-	teco_interface_set_css_variables(teco_interface_current_view);
-
-	/*
-	 * The info area is updated very often and setting the
-	 * window title each time it is updated is VERY costly.
-	 * So we set it here once after every keypress even if the
-	 * info line did not change.
-	 * View changes are also only applied here to the GTK
-	 * window even though GDK updates have been frozen since
-	 * the size reallocations are very costly.
-	 */
-	teco_interface_refresh_info();
-
-	if (teco_interface_current_view != last_view) {
-		/*
-		 * The last view's object is not guaranteed to
-		 * still exist.
-		 * However its widget is, due to reference counting.
-		 */
-		if (teco_interface.current_view_widget)
-			gtk_container_remove(GTK_CONTAINER(teco_interface.event_box_widget),
-			                     teco_interface.current_view_widget);
-
-		teco_interface.current_view_widget = teco_view_get_widget(teco_interface_current_view);
-
-		gtk_container_add(GTK_CONTAINER(teco_interface.event_box_widget),
-		                  teco_interface.current_view_widget);
-		gtk_widget_show(teco_interface.current_view_widget);
-	}
+	teco_interface_refresh(teco_interface_current_view != last_view);
 
 	return TRUE;
 }
@@ -1032,16 +1045,11 @@ teco_interface_event_loop(GError **error)
 	g_list_free_full(icon_list, g_object_unref);
 #endif
 
-	teco_interface_refresh_info();
-
 	/*
 	 * Initialize the CSS variable provider and the CSS provider
 	 * for the included fallback.css.
 	 */
 	teco_interface.css_var_provider = gtk_css_provider_new();
-	if (teco_interface_current_view)
-		/* set CSS variables initially */
-		teco_interface_set_css_variables(teco_interface_current_view);
 	GdkScreen *default_screen = gdk_screen_get_default();
 	gtk_style_context_add_provider_for_screen(default_screen,
 	                                          GTK_STYLE_PROVIDER(teco_interface.css_var_provider),
@@ -1073,22 +1081,7 @@ teco_interface_event_loop(GError **error)
 	                                          GTK_STYLE_PROVIDER(user_css_provider),
 	                                          GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-	/*
-	 * When changing views, the new widget is not
-	 * added immediately to avoid flickering in the GUI.
-	 * It is only updated once per key press and only
-	 * if it really changed.
-	 * Therefore we must add the current view to the
-	 * window initially.
-	 * For the same reason, window title updates are
-	 * deferred to once after every key press, so we must
-	 * set the window title initially.
-	 */
-	if (teco_interface_current_view) {
-		teco_interface.current_view_widget = teco_view_get_widget(teco_interface_current_view);
-		gtk_container_add(GTK_CONTAINER(teco_interface.event_box_widget),
-		                  teco_interface.current_view_widget);
-	}
+	teco_interface_refresh(TRUE);
 
 	gtk_widget_show_all(teco_interface.window);
 	/* don't show popup by default */
@@ -1155,6 +1148,16 @@ teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
 {
 	teco_view_ssm(teco_interface.cmdline_view, SCI_SETXCARETPOLICY,
 	              CARET_SLOP | CARET_EVEN, allocation->width/2);
+}
+
+static void
+teco_interface_size_allocate_cb(GtkWidget *widget,
+                                GdkRectangle *allocation, gpointer user_data)
+{
+	/*
+	 * This especially ensures that the caret is visible after startup.
+	 */
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 }
 
 static gboolean
