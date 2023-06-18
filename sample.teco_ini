@@ -13,6 +13,7 @@ EMQ[$SCITECOPATH]/session.tes
   Oadd,edit,close,quit
   !add!
     ! Add code here to execute when a document is added !
+    :Q*+1Oedit
     32,0ED
 
     M[lexer.auto]
