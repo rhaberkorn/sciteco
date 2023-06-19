@@ -6,6 +6,201 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
+Version 2.0.0
+~~~~~~~~~~~~~
+
+b65c64a don't set up any margins or indention settings on the unnamed buffer in sample.teco_ini
+aa2e96a,
+29bf227,
+f557af9,
+bac1efa fixed <EC> interruptions on Gtk+ and most other platforms.
+        On supported platforms the first CTRL+C will try to gracefully kill the
+        subprocess, while the second one resorts to a more agressive method.
+5470fc3 Curses: do not allow typing any non-ASCII characters - fixes crashes on PDCurses/WinGUI.
+        This is a temporary limitation as long as we do not support Unicode.
+f0d57d7 added Asciidoc lexer config
+85599c7 added Markdown and YAML lexer configs
+d10997a improved the C/C++ and Gob lexers
+4273088 added lexers for Python and Linux Device Trees
+df6c898 CPP lexer: support *.ino files (Arduino IDE sketches)
+b8e8cc8 added lexing support for Gob2 (GObject Builder)
+9f7f187,
+b091d8b The "cpp" lexer configuration has been split into "c.tes" and "cpp.tes"
+        effectively improving C support.
+2f72665,
+a6b5394 fixed crashes after interruptions of commands with string arguments in interactive mode
+        It's not clear whether this has been broken in v0.6.4.
+60a0913 data installation path is now configurable via --with-scitecodatadir
+030e0f5 Allow disabling Lexilla (Lexer) support by specifying --without-lexilla.
+        When optimizing for size, this helps saving 50% of the compressed binary size.
+ba08753 Fixed rubbing out words (^W) and possible chrashes.
+        This has probably been broken in v0.6.4 as well.
+cc417af fixed formatting of dates in manpages
+9f659ec,
+e752a64 fixed grosciteco (and thus building) for newer Groff versions (#11)
+ca9de04 sciteco(1) manpage: All UIs support ^C interruptions now
+101a868,
+73cab56 bumped required PDCursesMod version to v4.3.4 or later
+147e53b,
+9586a03,
+9a5e363,
+3706112 Fixed CTRL+C interruptions on all versions of PDCurses
+0d3da2c reduced memory use in interactive mode due to undo tokens
+d6126b3 fixed rubout of certain constructs like Ifoo$FRX$$
+        It's not known whether this bug existed on v0.6.4.
+aa00bf1 added ./configure --enable-debug and make sure that NDEBUG is defined properly
+4c79d26 Gtk: fixed entering dead keys
+1c88da4 Woman pages under Gtk: fixed monospaced example blocks
+39490d6 Gtk: default font is now "Monospace" instead of Courier.
+        This avoids unexpected ligatures.
+f15bc53 Gtk+: fixed interpretation of Alt-Gr-keypresses.
+        This bug appeared with newer Gtk+3 versions.
+8031da6 Gtk+: Stop memory limiting when idling
+18a0543 Gtk: disabled ^Z suspension on Unix for the time being.
+        This cannot easily be made working properly.
+fdb89d9 GTK: Support for Xembed protocol via --xembed.
+        This is useful for instance with tabbed (https://tools.suckless.org/tabbed/):
+        $ tabbed sciteco --xembed
+6df603d Gtk: fixed message bar's background color
+073f5f2 Gtk: The GObject Builder (GOB2) is no longer required.
+b21d294 Gtk: Display control characters in titles and autocompletion popups
+        like in the text buffer.
+45413d0 Gtk UI: popup will now overlay both the Scintilla view and message widgets
+e768487 Gtk UI: full color scheme support
+cff9fb1,
+8627a00 Gtk UI: added option --no-csd to disable client-side decorations
+f25f97e Gtk UI: uses header bars now
+eed939f install PNG icon and use it to set GTK's window icon
+3fd1a19 GTK UI: beep on error
+f337481 improved default selection colors and made them configurable via color.tes
+3ed4116 fixed building on Mac OS
+af16d43 fixed crashes when the Q-Reg stack is non-empty at exit
+        This might have been broken in v0.6.4 as well.
+8ef010d optimized caret scrolling: this is a costly operation and is now done only once per keypress
+8baa1b3 optimized character representation setting
+50d63f2 fixed hiding savepoint files on Win32
+0267b68 Optimized process spawning (EC) on UNIX
+ae913ab Negative searches (<S>) check for multiplication overflows now
+9fa78ca Memory limiting fixed on Mac OS X
+5167dad guard against too low arguments to <S> by checking whether the memory limit would be exceeded.
+        This fixes potential crashes.
+e3b2bb7 fixed Clang builds
+a2e52ca,
+432ad24 Significant internal rewrites.
+        * String termination takes string building characters into account, ie. you can use
+          the termination character (escape by default) in ^EQ[...].
+        * Also, it's now possible to escape it using ^Q/^R, adding yet another way to insert escape
+          characters.
+        * All strings are 8-bit-clean now. This means you can also use SciTECO as
+          a scriptable binary editor.
+        * Gtk+ (>= v3.12) interface is usable and stable now.
+        * Memory limiting should finally work on Linux, Windows, Mac OS and
+          FreeBSD.
+        * Glib v2.44 is the minimum required version now.
+524bc39 improved Emscripten support: fixed configure-checks, generate *.js and detect EMCurses
+90baf34 Automatic case-folding of commands in interactive mode when enabling bit 3 in ED (`0,8ED`)
+2491d5f fixed checks for missing left and right operands to binary operators
+4038aa2 fixed and optimized piping very large buffers via EC/EG
+5069c3b fixed Q-Reg autocompletion for `Q` command
+8b00fa8,
+6f9705b support NetBSD's curses (--with-interface=netbsd-curses)
+af05d38,
+f4da329 Significantly reduced memory use for undo tokens (interactive mode)
+f90b197,
+733e012,
+5e84b63,
+0ad317e build system portability fixes (FreeBSD compatibility)
+c1113c2 fixed table formatting in generated HTML files (sciteco.7.html)
+e4d5a99 allow dollar sign ($) as another variant of ^[ (discard all arguments or return)
+8460f92 Fixed rubout of the first command after command line termination ($$).
+        It's unclear whether this has been an issue in v0.6.4.
+0fbbc0d womanpage lexer: fixed popup styling
+bece75c updated sample.teco_ini: 2EJ now sets a more or less global memory limit
+(!)1cec19d Fixed interpretation of the Q-Register specification "..".
+           The parser would allow arbitrarily many dots in front of a local Q-Register
+           name. ".." is the local Q-Register "." now.
+84ab169 auto-completion of Q-Register names, goto labels and help topics
+be39ab9 The manpage generator generator-docs.tes has been renamed to tedoc.tes
+b44a4ba standard lib: added getopt.tes for parsing command line options in scripts
+cb5e08b It is now possible to write SciTECO scripts with command-line arguments.
+e7867fb implemented self-documenting (online) help system.
+        You can use `?` for looking up a help topic.
+        Documentation is opened as so called "womanpages" which are generated from
+        Troff man pages using grosciteco.
+        Groff is therefore now a hard compile-time requirement.
+c0fe494 fixed segfault when munging empty scripts
+(!)9f6cba5 Globbing (EN and EB commands) support character classes now and
+           ^EN string building construct can be used to escape glob patterns.
+(!)61ff6e9 Integrated clipboard support on Gtk+, PDCurses and ncurses/XTerm.
+           The clipboard is exposed as Q-Registers beginning with "~".
+16e9b0d Added ^E@ string building character for expanding arbitrary strings
+        so they can be parsed from UNIX shells.
+        On Windows, you will have to enable UNIX98 shell emulation to make
+        use of this feature.
+9e97b58 session.tes: save and restore the working directory as part of the session
+c4dbe74 fixed rubout and reinsertion of the loop end command (>)
+4686d18,
+39124fd EG and EC use $SHELL (UNIX) and $COMSPEC (Windows) as the default command
+        interpreters now.
+        The corresponding Q-Register is always the uppercased $COMSPEC even if
+        the native system uses a different spelling.
+4db7f46 Implemented ^C command to terminate a script (similar to exit(3)).
+        This is disallowed in interactive mode.
+247884a `F>` outside of loops will now return the parent macro level (like $$)
+         and terminate the command line in interactive mode.
+(!)de73943 Added pass-through loops: `:<`, `:>`, `:F<`.
+           F< outside of loops jumps to the beginning of the macro now.
+           A lot of checks have been added for unterminated loops etc.
+52a8d7f,
+(!)f08187e Implemented <$$> command for returning from a macro
+           Since $$ is a regular command now also in interactive mode,
+           syntactic characters (eg. string termination) are now longer taken into
+           account when terminating command lines.
+5fce211 Fixed many rubout-rubin cases.
+1da5bde,
+b259cb6 optimized command execution in batch mode, during macro calls, loops etc.
+406cf5a added 16px, 32px and 256px versions of the SciTECO PNG icon
+f9c1765,
+131fe7c added :EX (colon-modified EX): exits SciTECO saving all modified buffers
+40318a2 refactored pattern matching processing: fixes segfaults and memleaks
+dc02222 ncurses: use a default escape delay of 25ms
+21e0d30 curses UI: fixed truncation of non-filename popup entries
+b710f6a curses UI: properly truncate q-register and file names
+efa862d,
+(!)ecbc58f Different operators can have the same precedence now.
+           SciTECO now has the same operator precedence table as C.
+8baae75 Curses UI: revised popup area, with borders and a scroll bar; reduce flickering
+(!)e77f4d3 <nA> for n pointing to the buffer end throws an error now.
+7a85142 fixed error message for Qq if <q> does not exist
+45e2f9a curses UI: support terminal palette restoration on PDCurses/win32 and xterm
+c77101c curses: fixed arithmetic error when window is smaller than 2 columns
+6a9a7d5 added port of the Solarized color scheme (solarized.tes)
+f69d1f0 programmable terminal color redefinition and theming SciTECO curses UI based on Scintilla styles
+        This is using 3EJ.
+95ebb1c <:Q> returns -1 for non-existent registers now
+(!)9c19ab0 do not imply values for the "=" command but fail instead if argument is missing
+859a831 enable function key macros automatically when sourcing fnkeys.tes
+007cfe7 disable all Scintilla margins by default
+c39b545,
+ae2f607 added "^FCLOSE" function key macro and defined SIGTERM behaviour
+d9e2250 the Scintilla caret is now non-blinking by default
+a1a7d3d never show the horizontal scrollbar by default
+65a1e61 disable PDCurses/win32a "function keys"
+91bbf67 improved ncurses/win32 support
+17e7768 added XCurses support
+8101cec major Curses UI revision: initialize curses as late as possible
+15409ba Handle environment variables more consistently.
+        Subprocesses inherit the Q-Registers beginning with "$" as their
+        process environment.
+7919aca support UNIX-shell-like tilde-expansions in file names and directories
+88dc6ac It is an error now to try to set or append the string part of "*" and appending to "$"
+02d414b added <FG> command and special Q-Register "$" to set and get the current working directory
+6c62ccc Modified ^W (rub out word) in string (and file name) arguments:
+        ensure that we always rub out beyond empty arguments
+b65eee0 support specialized ^W (rub out part of file name) immediate editing command in file name arguments
+c98a2cd restrict globbing in the EB command to regular files.
+bae8cd7 The <EN> command now allows matching file names and checking file types.
+
 Version 0.6.4
 ~~~~~~~~~~~~~
 

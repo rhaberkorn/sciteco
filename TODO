@@ -4,19 +4,22 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * The "lexer.test..." macros do not work with the unnamed buffer,
-   so there should be a special test in .teco_ini.
- * After commands like ECcat /dev/zero$ result in OOM,
-   we do not correctly recover, even though malloc_trim() is called.
-   This could be because of Scintilla's undo token.
-   Perhaps it would be best to disable any undo handling by Scintilla
-   via SCI_SETUNDOCOLLECTION. This would also save memory.
+ * Using fnkeys.tes still flickers on PDCurses/WinGUI.
+   Apparently a PDCurses bug.
+ * Win32: Interrupting <EC> will sometimes hang.
+   Affects both PDCurses/WinGUI and Gtk.
+   In this case you have to kill the subprocess using the task manager.
+   Could this be a race condition when adding the process to the job object?
+   Perhaps the child process should be created suspended before being added
+   to the job object. Glib does not currently allow that.
+ * dlmalloc's malloc_trim() does not seem to free any resident memory
+   after hitting the OOM limit, eg. after <%a>.
+   Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
+   always left at the end.
  * S<LF>^ES^N<$ does not find the first line that does not begin with "<"
    ^ES is apparently not greedy.
  * fnkeys.tes: Cursor movements will swallow all preceding braced
    expressions - there should be more checks.
- * rubout of EB does not always restore the view to an edited Q-Register.
-   (Is this still relevant after the Great Ceification event?)
  * Colors are still wrong in Linux console even if TERM=linux-16color
    when using Solarized. Affects e.g. the message line which uses the
    reverse of STYLE_DEFAULT.
@@ -299,9 +302,11 @@ Features:
    This should now be relatively easy to implement by reusing
    the parser.
  * multiline commandline
-   * perhaps use Scintilla view as mini buffer.
+   * Perhaps use Scintilla view as mini buffer.
      This means patching Scintilla, so it does not break lines
-     on new line characters.
+     on new line characters and we can use character representations
+     (extend SCI_SETLINEENDTYPESALLOWED?).
+     cmdline.c can then directly operate on the Scintilla document.
    * A Scintilla view will allow syntax highlighting
  * command line could highlight dead branches (e.g. gray them out)
  * Add special Q-Register for dot:
@@ -423,6 +428,10 @@ Features:
  * Possible Nightly Build improvements (and therefore releases):
    * Build 32-bit Ubuntu packages
    * Push nightly builds into the Ubuntu PPA.
+     We should probably create a new PPA sciteco-nightly.
+     A new private key has already been registered on Launchpad and
+     Github. We just need to integrate with CI.
+     See also https://github.com/marketplace/actions/import-gpg
    * AppImage for Linux
    * 64-bit Windows builds
    * Mac OS Arm64 builds either separately or via universal binary.
@@ -439,8 +448,16 @@ Features:
    but it would ease opening filenames copied from compiler errors
    or grep -n results.
  * <:EF> for saving and closing a buffer, similar to <:EX>.
+ * Bash completions.
 
 Optimizations:
+ * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
+   However, we do not actually know that we do not continue
+   in interactive mode. Also, some scripts like grosciteco.tes
+   make use of styling in batch mode. So this would have to be
+   requested explicitly per ED flag or command line option.
+ * teco_interface_cmdline_update() should be called only once
+   after inserting an entire command line macro.
  * There is should be a common error code for null-byte tests.
  * teco_string_append() could be optimized by ORing a padding
    into the realloc() size (e.g. 0xFF).
@@ -454,8 +471,10 @@ Optimizations:
  * Add a configure-switch for LTO (--enable-lto).
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
- * Polling for keyboard events in the Gtk+ and Curses UIs
-   can probably be rate-limited, e.g. every 500ms.
+ * Define TECO_DESTRUCTOR depending on NDEBUG instead
+   of ifdefing all __attribute__((destructors)).
+   This also avoids warning for symbols referenced only in
+   the constructors.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
