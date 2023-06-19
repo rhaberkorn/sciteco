@@ -25,8 +25,8 @@ BUILT_SOURCES =
 
 dist_noinst_SCRIPTS = symbols-extract.tes
 
-# Emscripten HTML page:
-EXTRA_DIST = sciteco.html
+# Emscripten HTML page and Unix desktop file:
+EXTRA_DIST = sciteco.html sciteco.desktop
 
 noinst_LTLIBRARIES = libsciteco-base.la
 libsciteco_base_la_SOURCES = main.c sciteco.h list.h \

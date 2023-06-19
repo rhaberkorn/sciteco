@@ -12,5 +12,4 @@ ico/sciteco-32.png	=> usr/share/icons/hicolor/32x32/apps/sciteco.png
 ico/sciteco-48.png	=> usr/share/icons/hicolor/48x48/apps/sciteco.png
 ico/sciteco-256.png	=> usr/share/icons/hicolor/256x256/apps/sciteco.png
 
-# Not currently part of source tree:
-debian/sciteco.desktop	usr/share/applications
+src/sciteco.desktop	=> usr/share/applications
