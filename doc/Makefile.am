@@ -22,10 +22,10 @@ dist_bin_SCRIPTS += grosciteco.tes
 # Unfortunately, there is no way to query the built-in
 # Groff tmac path.
 # Therefore, the "sciteco" macros are installed into
-# SciTECO's pkgdatadir. Users can copy this file, set up
+# SciTECO's scitecodatadir. Users can copy this file, set up
 # environment variables like $GROFF_TMAC_PATH or pass
 # the directory via `groff -M`.
-dist_pkgdata_DATA = sciteco.tmac
+dist_scitecodata_DATA = sciteco.tmac
 
 # Fix up the hash-bang line of installed SciTECO scripts upon
 # installation to refer to the installed sciteco binary.

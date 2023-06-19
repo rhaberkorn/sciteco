@@ -8,4 +8,4 @@ libsciteco_interface_la_SOURCES = interface.c \
                                   gtk-info-popup.c gtk-info-popup.h \
                                   gtk-label.c gtk-label.h
 
-dist_pkgdata_DATA = fallback.css
+dist_scitecodata_DATA = fallback.css

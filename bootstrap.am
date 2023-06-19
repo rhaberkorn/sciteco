@@ -32,7 +32,7 @@ SUBST_MACRO = EB$<\e \
               <FS@PACKAGE_URL_DEV^Q@\e@PACKAGE_URL_DEV@\e;>J \
               <FS@bindir^Q@\e$(bindir)\e;>J \
               <FS@libexecdir^Q@\e$(libexecdir)\e;>J \
-              <FS@pkgdatadir^Q@\e$(pkgdatadir)\e;>J \
+              <FS@scitecodatadir^Q@\e$(scitecodatadir)\e;>J \
               <FS@scitecolibdir^Q@\e$(scitecolibdir)\e;>J \
               <FS@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>J \
               <FS@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>J \

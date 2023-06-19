@@ -36,15 +36,6 @@ AC_SUBST(SCINTILLA_CXXFLAGS)
 # Necessary so we can change their default values here
 AC_SUBST(AM_CPPFLAGS)
 
-# SciTECO library macro directory
-scitecolibdir=$datadir/$PACKAGE/lib
-AC_SUBST(scitecolibdir)
-
-# These paths can be changed at install-time and
-# should not be written into config.h:
-AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(pkgdatadir)\"' \
-                          -D'SCITECOLIBDIR=\"\$(scitecolibdir)\"'"
-
 # Auxiliary functions
 
 # expand $1 and print its absolute path
@@ -179,6 +170,20 @@ esac
 #
 # Config options
 #
+
+AC_ARG_WITH(scitecodatadir,
+	AS_HELP_STRING([--with-scitecodatadir=PATH],
+	               [Installation directory of data [default=DATADIR/sciteco]]),
+	[scitecodatadir=$withval], [scitecodatadir=$datadir/$PACKAGE])
+AC_SUBST(scitecodatadir)
+# SciTECO library macro directory
+scitecolibdir=$scitecodatadir/lib
+AC_SUBST(scitecolibdir)
+
+# These paths can be changed at install-time and
+# should not be written into config.h:
+AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(scitecodatadir)\"' \
+                          -D'SCITECOLIBDIR=\"\$(scitecolibdir)\"'"
 
 # FIXME: It does not really make sense to have this configurable.
 # It would make more sense to allow linking against an externally-provided

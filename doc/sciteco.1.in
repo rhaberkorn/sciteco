@@ -345,7 +345,7 @@ program termination or user-programmed behaviour.
 .B $SCITECOCONFIG/.teco_ini
 Default profile macro.
 .TP
-.B @pkgdatadir@/sample.teco_ini
+.B @scitecodatadir@/sample.teco_ini
 Sample profile macro configuring commonly used run-time options,
 syntax highlighting, session handling
 and opening files specified on the command line.
@@ -377,7 +377,7 @@ CSS file that can be used to apply \*(ST color schemes
 to the entire UI and to do other style customizations.
 .TP
 .SCITECO_TOPIC "fallback.css"
-.B @pkgdatadir@/fallback.css
+.B @scitecodatadir@/fallback.css
 When using the Gtk UI, this is a fallback stylesheet
 in case
 .B $SCITECOCONFIG/.teco_css

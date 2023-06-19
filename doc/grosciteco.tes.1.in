@@ -141,7 +141,7 @@ that are also installed into the system.
 .LP
 Note that \(lqsciteco.tmac\(rq is not installed into the
 standard \fBGNU roff\fP macro search directories, but into
-\*(ST data directory at \(lq@pkgdatadir@\(rq.
+\*(ST data directory at \(lq@scitecodatadir@\(rq.
 It must thus be moved or linked manually into one of the
 search paths, or the data dir must be added to the search
 paths.
@@ -158,7 +158,7 @@ a \*(ST macro package with a man page called
 .RS
 .SCITECO_TT
 .EX
-groff -Z -Tascii -man -M@pkgdatadir@ -msciteco \\
+groff -Z -Tascii -man -M@scitecodatadir@ -msciteco \\
       great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
 grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.woman.tec \\
                great-macro.tes.7sciteco.intermediate

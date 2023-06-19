@@ -863,7 +863,7 @@ The CSS file is loaded from
 .B $SCITECOCONFIG/.teco_css
 if it is existing.
 Else, \*(ST loads the fallback CSS at
-.BR @pkgdatadir@/fallback.css ,
+.BR @scitecodatadir@/fallback.css ,
 which can also be used as a template when writing \fB.teco_css\fP.
 The fallback CSS can also be consulted for additional documentation
 on \*(ST's named widgets and special CSS classes.

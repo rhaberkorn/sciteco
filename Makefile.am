@@ -7,15 +7,15 @@ MAYBE_DLMALLOC = contrib/dlmalloc
 endif
 SUBDIRS = lib $(MAYBE_DLMALLOC) contrib/rb3ptr src doc tests
 
-dist_pkgdata_DATA = sample.teco_ini
+dist_scitecodata_DATA = sample.teco_ini
 
 EXTRA_DIST = README TODO
 
 # Only the lower resolution PNG icons are installed as they are
 # required by the GTK UI.
 # Other uses are left to the distro package manager.
-dist_pkgdata_DATA += ico/sciteco-16.png ico/sciteco-32.png \
-                     ico/sciteco-48.png
+dist_scitecodata_DATA += ico/sciteco-16.png ico/sciteco-32.png \
+                         ico/sciteco-48.png
 EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
 EXTRA_DIST += win32/loaders.cache
