@@ -29,8 +29,7 @@ endif
 %:
 	dh $@
 
-build build-arch build-indep: build-curses-stamp build-gtk-stamp
-	dh_testdir
+build build-arch build-indep: build-curses-stamp build-gtk-stamp;
 
 build-curses-stamp:
 	dh_testdir
@@ -65,6 +64,38 @@ build-gtk-stamp:
 install:
 	xvfb-run -a dh install -Bbuild-gtk -psciteco-gtk
 	dh install -Bbuild-curses -psciteco-curses -psciteco-common
+
+# NOTE: This skips the dh_install* commands of `dh binary-arch`
+# which would ignore `-p...`.
+define custom_binary_arch
+	dh_testroot -a $(1)
+	dh_prep -a $(1)
+	dh_bugfiles -a $(1)
+	dh_ucf -a $(1)
+	dh_lintian -a $(1)
+	dh_icons -a $(1)
+	dh_perl -a $(1)
+	dh_usrlocal -a $(1)
+	dh_link -a $(1)
+	dh_strip_nondeterminism -a $(1)
+	dh_compress -a $(1)
+	dh_fixperms -a $(1)
+	dh_missing -a $(1)
+	dh_strip -a $(1)
+	dh_makeshlibs -a $(1)
+	dh_shlibdeps -a $(1)
+	dh_installdeb -a $(1)
+	dh_gencontrol -a $(1)
+	dh_md5sums -a $(1)
+	dh_builddeb -a $(1)
+endef
+
+binary-arch:
+	$(call custom_binary_arch,-O-Bbuild-gtk -O-psciteco-gtk)
+	$(call custom_binary_arch,-O-Bbuild-curses -O-psciteco-curses)
+
+binary-indep:
+	dh binary-indep -Bbuild-curses
 
 clean:
 	dh clean -Bbuild-gtk
