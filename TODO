@@ -380,6 +380,7 @@ Features:
    all of SciTECO can be run against nodejs as a runtime.
    I'm not aware of any (working) alternatives, like cross-compiling
    for the JVM.
+   See also https://gist.github.com/VitoVan/92ba4f2b68fec31cda803119686295e5
  * Windows supports virtual terminals now. See:
    https://docs.microsoft.com/en-us/windows/console/classic-vs-vt
    Perhaps we should transition from PDCurses to something using
@@ -449,6 +450,7 @@ Features:
    or grep -n results.
  * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
+ * Case-sensitive search command (modifier or flag).
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -483,8 +485,6 @@ Documentation:
    Furthermore, womanpages could contain "hypertext" links
    to help topics using special Troff markup and grosciteco support.
  * The command reference should include an overview.
- * Write a cheat sheet. Either on www.cheatography.com, or
-   using Groff and include with SciTECO.
  * Write some tutorials for the Wiki, e.g. about paragraph
    reflowing...
    Object-oriented SciTECO ideoms etc. ;-)

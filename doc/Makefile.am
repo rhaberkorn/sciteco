@@ -95,6 +95,10 @@ SUFFIXES += .htbl .html
 .htbl.html:
 	@GROFF@ -wall -Thtml -man $< >$@
 
+# FIXME: We may want to build the cheat sheet automatically.
+# This would require a full Groff installation, though.
+EXTRA_DIST += cheat-sheet.mm
+
 #
 # Doxygen processing (do not install or distribute)
 #
