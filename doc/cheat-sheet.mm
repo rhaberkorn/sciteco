@@ -1,4 +1,4 @@
-\# pdfroff -P-pa4 -rW=19c -rO=1c -rL=31c -mm -mpdfmark -mhdtbl -mpdfpic cheat-sheet.mm >cheat-sheet.pdf
+\# pdfroff -P-pa4 -rW=19c -rO=1c -rL=31c -mm -mpdfmark -mhdtbl -mpspic cheat-sheet.mm >cheat-sheet.pdf
 .pdfinfo /Title  SciTECO Cheat Sheet
 .pdfinfo /Author Robin Haberkorn
 .
@@ -74,7 +74,6 @@ A full language description can be found in
 ..
 .
 .\" Legend
-.\" FIXME: Perhaps should use 4 columns to save space
 .TBL cols=4 width='10% 40% 10% 40%'
 .  TR fgc=white bgc=black fst=B
 .    TD colspan=4 "Legend"
@@ -332,7 +331,7 @@ Kill (delete) whole buffer.
 .    TD
 .      CI X q
 .    TD
-Copy from next line until beginning of next line into Q-Register \fIq\fP.
+Copy from current position until beginning of next line into Q-Register \fIq\fP.
 .  TRX
 .    TD
 .      CI "" n X q
