@@ -628,8 +628,7 @@ teco_memory_stop_limiting(void)
 	g_mutex_unlock(&teco_memory_mutex);
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_memory_cleanup(void)
 {
 	if (!teco_memory_thread)
@@ -642,7 +641,6 @@ teco_memory_cleanup(void)
 
 	g_thread_join(teco_memory_thread);
 }
-#endif
 
 #else /* !NEED_POLL_THREAD */
 

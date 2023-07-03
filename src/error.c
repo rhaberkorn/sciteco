@@ -161,10 +161,7 @@ teco_error_add_frame_toplevel(void)
 	teco_error_add_frame(TECO_FRAME_TOPLEVEL, 0);
 }
 
-#ifndef NDEBUG
-__attribute__((destructor))
-#endif
-void
+void TECO_DEBUG_CLEANUP
 teco_error_clear_frames(void)
 {
 	teco_stailq_entry_t *entry;

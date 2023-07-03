@@ -374,11 +374,9 @@ teco_expressions_format(gchar *buffer, teco_int_t number)
 	return p;
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_expressions_cleanup(void)
 {
 	g_array_free(teco_numbers, TRUE);
 	g_array_free(teco_operators, TRUE);
 }
-#endif

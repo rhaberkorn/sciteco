@@ -789,8 +789,7 @@ teco_spawn_idle_cb(gpointer user_data)
 	return G_SOURCE_CONTINUE;
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_spawn_cleanup(void)
 {
 	g_source_unref(teco_spawn_ctx.idle_src);
@@ -801,4 +800,3 @@ teco_spawn_cleanup(void)
 	if (teco_spawn_ctx.error)
 		g_error_free(teco_spawn_ctx.error);
 }
-#endif

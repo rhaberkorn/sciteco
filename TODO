@@ -473,10 +473,6 @@ Optimizations:
  * Add a configure-switch for LTO (--enable-lto).
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
- * Define TECO_DESTRUCTOR depending on NDEBUG instead
-   of ifdefing all __attribute__((destructors)).
-   This also avoids warning for symbols referenced only in
-   the constructors.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...

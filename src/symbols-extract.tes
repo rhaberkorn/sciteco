@@ -48,13 +48,12 @@ teco_symbols_init(void)
 	teco_symbol_list_init(&Q[getopt.n], entries, G_N_ELEMENTS(entries), FALSE);
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_cmdline_cleanup(void)
 {
 	teco_symbol_list_clear(&Q[getopt.n]);
 }
-#endif^J
+
 
 !* write output file *!
 2EL EWQ#ou

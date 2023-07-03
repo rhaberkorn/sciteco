@@ -235,8 +235,7 @@ teco_help_auto_complete(const gchar *topic_name, teco_string_t *insert)
 	                                 topic_name ? strlen(topic_name) : 0, 0, insert);
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_help_cleanup(void)
 {
 	if (!teco_help_chunk)
@@ -251,7 +250,6 @@ teco_help_cleanup(void)
 		teco_help_topic_free((teco_help_topic_t *)cur);
 	}
 }
-#endif
 
 /*
  * Command states

@@ -316,15 +316,13 @@ teco_cmdline_fnmacro(const gchar *name, GError **error)
 	return TRUE;
 }
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_cmdline_cleanup(void)
 {
 	teco_machine_main_clear(&teco_cmdline.machine);
 	teco_string_clear(&teco_cmdline.str);
 	teco_string_clear(&teco_last_cmdline);
 }
-#endif
 
 /*
  * Commandline key processing.

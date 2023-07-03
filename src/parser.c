@@ -52,13 +52,11 @@ teco_loop_stack_init(void)
 TECO_DEFINE_ARRAY_UNDO_INSERT_VAL(teco_loop_stack, teco_loop_context_t);
 TECO_DEFINE_ARRAY_UNDO_REMOVE_INDEX(teco_loop_stack);
 
-#ifndef NDEBUG
-static void __attribute__((destructor))
+static void TECO_DEBUG_CLEANUP
 teco_loop_stack_cleanup(void)
 {
 	g_array_free(teco_loop_stack, TRUE);
 }
-#endif
 
 gboolean
 teco_machine_input(teco_machine_t *ctx, gchar chr, GError **error)

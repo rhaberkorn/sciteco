@@ -58,6 +58,16 @@ teco_is_failure(teco_bool_t x)
 	return x >= 0;
 }
 
+/**
+ * Call function as destructor on debug builds.
+ * This should be used only if the cleanup is optional.
+ */
+#ifdef NDEBUG
+#define TECO_DEBUG_CLEANUP __attribute__((unused))
+#else
+#define TECO_DEBUG_CLEANUP __attribute__((destructor))
+#endif
+
 /** TRUE if C is a control character */
 #define TECO_IS_CTL(C)		((C) < ' ')
 /** ASCII character to echo control character C */
