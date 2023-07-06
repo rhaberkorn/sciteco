@@ -319,6 +319,10 @@ teco_qreg_plain_undo_edit(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
+/**
+ * Initializer for vtables of Q-Registers with "plain" storage of strings.
+ * These store their string part as teco_docs.
+ */
 #define TECO_INIT_QREG(...) { \
 	.set_integer		= teco_qreg_plain_set_integer, \
 	.undo_set_integer	= teco_qreg_plain_undo_set_integer, \
@@ -345,6 +349,78 @@ teco_qreg_plain_new(const gchar *name, gsize len)
 	return teco_qreg_new(&vtable, name, len);
 }
 
+static gboolean
+teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
+{
+	g_auto(teco_string_t) str = {NULL, 0};
+
+	if (!teco_qreg_plain_edit(qreg, error) ||
+	    !qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+		return FALSE;
+
+	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
+	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
+	teco_view_ssm(teco_qreg_view, SCI_ADDTEXT, str.len, (sptr_t)str.data);
+	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
+
+	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
+	return TRUE;
+}
+
+static gboolean
+teco_qreg_external_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
+{
+	g_auto(teco_string_t) other_str, own_str = {NULL, 0};
+
+	teco_doc_get_string(src, &other_str.data, &other_str.len);
+
+	if (!qreg->vtable->get_string(qreg, &own_str.data, &own_str.len, error) ||
+	    !qreg->vtable->set_string(qreg, other_str.data, other_str.len, error))
+		return FALSE;
+
+	teco_doc_set_string(src, own_str.data, own_str.len);
+	return TRUE;
+}
+
+static gboolean
+teco_qreg_external_undo_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
+{
+	if (!qreg->vtable->undo_set_string(qreg, error))
+		return FALSE;
+	if (qreg->must_undo) // FIXME
+		teco_doc_undo_set_string(src);
+	return TRUE;
+}
+
+static gint
+teco_qreg_external_get_character(teco_qreg_t *qreg, guint position, GError **error)
+{
+	g_auto(teco_string_t) str = {NULL, 0};
+
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+		return -1;
+
+	if (position >= str.len) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
+		            "Position %u out of range", position);
+		return -1;
+	}
+
+	return str.data[position];
+}
+
+/**
+ * Initializer for vtables of Q-Registers with "external" storage of strings.
+ * These rely on custom implementations of get_string() and set_string().
+ */
+#define TECO_INIT_QREG_EXTERNAL(...) TECO_INIT_QREG( \
+	.exchange_string	= teco_qreg_external_exchange_string, \
+	.undo_exchange_string	= teco_qreg_external_undo_exchange_string, \
+	.edit			= teco_qreg_external_edit, \
+	.get_character		= teco_qreg_external_get_character, \
+	##__VA_ARGS__ \
+)
+
 /*
  * NOTE: The integer-component is currently unused on the "*" special register.
  */
@@ -368,8 +444,8 @@ teco_qreg_bufferinfo_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **er
 }
 
 /*
- * FIXME: These operations can and should be implemented.
- * Setting the "*" register could for instance rename the file.
+ * FIXME: Something could be implemented here. There are 2 possibilities:
+ * Either it renames the current buffer, or opens a file (alternative to EB).
  */
 static gboolean
 teco_qreg_bufferinfo_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
@@ -436,26 +512,6 @@ teco_qreg_bufferinfo_get_character(teco_qreg_t *qreg, guint position, GError **e
 	return teco_ring_current->filename[position];
 }
 
-static gboolean
-teco_qreg_bufferinfo_edit(teco_qreg_t *qreg, GError **error)
-{
-	if (!teco_qreg_plain_edit(qreg, error))
-		return FALSE;
-
-	g_auto(teco_string_t) str = {NULL, 0};
-
-	if (!teco_qreg_bufferinfo_get_string(qreg, &str.data, &str.len, error))
-		return FALSE;
-
-	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_ADDTEXT, str.len, (sptr_t)str.data);
-	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
-
-	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
-	return TRUE;
-}
-
 /** @static @memberof teco_qreg_t */
 teco_qreg_t *
 teco_qreg_bufferinfo_new(void)
@@ -470,7 +526,8 @@ teco_qreg_bufferinfo_new(void)
 		.undo_append_string	= teco_qreg_bufferinfo_undo_append_string,
 		.get_string		= teco_qreg_bufferinfo_get_string,
 		.get_character		= teco_qreg_bufferinfo_get_character,
-		.edit			= teco_qreg_bufferinfo_edit
+		/* we don't want to inherit all the other stuff from TECO_INIT_QREG_EXTERNAL(). */
+		.edit			= teco_qreg_external_edit
 	);
 
 	return teco_qreg_new(&vtable, "*", 1);
@@ -549,80 +606,16 @@ teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErr
 	return TRUE;
 }
 
-static gint
-teco_qreg_workingdir_get_character(teco_qreg_t *qreg, guint position, GError **error)
-{
-	g_auto(teco_string_t) str = {NULL, 0};
-
-	if (!teco_qreg_workingdir_get_string(qreg, &str.data, &str.len, error))
-		return -1;
-
-	if (position >= str.len) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %u out of range", position);
-		return -1;
-	}
-
-	return str.data[position];
-}
-
-static gboolean
-teco_qreg_workingdir_edit(teco_qreg_t *qreg, GError **error)
-{
-	g_auto(teco_string_t) str = {NULL, 0};
-
-	if (!teco_qreg_plain_edit(qreg, error) ||
-	    !teco_qreg_workingdir_get_string(qreg, &str.data, &str.len, error))
-		return FALSE;
-
-	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_ADDTEXT, str.len, (sptr_t)str.data);
-	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
-
-	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
-	return TRUE;
-}
-
-static gboolean
-teco_qreg_workingdir_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
-{
-	g_auto(teco_string_t) other_str, own_str = {NULL, 0};
-
-	teco_doc_get_string(src, &other_str.data, &other_str.len);
-
-	if (!teco_qreg_workingdir_get_string(qreg, &own_str.data, &own_str.len, error) ||
-	    /* FIXME: Why is teco_qreg_plain_set_string() sufficient? */
-	    !teco_qreg_plain_set_string(qreg, other_str.data, other_str.len, error))
-		return FALSE;
-
-	teco_doc_set_string(src, own_str.data, own_str.len);
-	return TRUE;
-}
-
-static gboolean
-teco_qreg_workingdir_undo_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
-{
-	teco_undo_change_dir_to_current();
-	if (qreg->must_undo) // FIXME
-		teco_doc_undo_set_string(src);
-	return TRUE;
-}
-
 /** @static @memberof teco_qreg_t */
 teco_qreg_t *
 teco_qreg_workingdir_new(void)
 {
-	static teco_qreg_vtable_t vtable = TECO_INIT_QREG(
+	static teco_qreg_vtable_t vtable = TECO_INIT_QREG_EXTERNAL(
 		.set_string		= teco_qreg_workingdir_set_string,
 		.undo_set_string	= teco_qreg_workingdir_undo_set_string,
 		.append_string		= teco_qreg_workingdir_append_string,
 		.undo_append_string	= teco_qreg_workingdir_undo_append_string,
-		.get_string		= teco_qreg_workingdir_get_string,
-		.get_character		= teco_qreg_workingdir_get_character,
-		.edit			= teco_qreg_workingdir_edit,
-		.exchange_string	= teco_qreg_workingdir_exchange_string,
-		.undo_exchange_string	= teco_qreg_workingdir_undo_exchange_string
+		.get_string		= teco_qreg_workingdir_get_string
 	);
 
 	/*
@@ -760,89 +753,16 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErro
 	return TRUE;
 }
 
-static gint
-teco_qreg_clipboard_get_character(teco_qreg_t *qreg, guint position, GError **error)
-{
-	g_auto(teco_string_t) str = {NULL, 0};
-
-	if (!teco_qreg_clipboard_get_string(qreg, &str.data, &str.len, error))
-		return -1;
-
-	if (position >= str.len) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %u out of range", position);
-		return -1;
-	}
-
-	return str.data[position];
-}
-
-static gboolean
-teco_qreg_clipboard_edit(teco_qreg_t *qreg, GError **error)
-{
-	if (!teco_qreg_plain_edit(qreg, error))
-		return FALSE;
-
-	g_auto(teco_string_t) str = {NULL, 0};
-
-	if (!teco_qreg_clipboard_get_string(qreg, &str.data, &str.len, error))
-		return FALSE;
-
-	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_APPENDTEXT, str.len, (sptr_t)str.data);
-	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
-
-	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
-	return TRUE;
-}
-
-/*
- * FIXME: Very similar to teco_qreg_workingdir_exchange_string().
- */
-static gboolean
-teco_qreg_clipboard_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
-{
-	g_auto(teco_string_t) other_str, own_str = {NULL, 0};
-
-	teco_doc_get_string(src, &other_str.data, &other_str.len);
-
-	if (!teco_qreg_clipboard_get_string(qreg, &own_str.data, &own_str.len, error) ||
-	    /* FIXME: Why is teco_qreg_plain_set_string() sufficient? */
-	    !teco_qreg_plain_set_string(qreg, other_str.data, other_str.len, error))
-		return FALSE;
-
-	teco_doc_set_string(src, own_str.data, own_str.len);
-	return TRUE;
-}
-
-/*
- * FIXME: Very similar to teco_qreg_workingdir_undo_exchange_string().
- */
-static gboolean
-teco_qreg_clipboard_undo_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
-{
-	if (!teco_qreg_clipboard_undo_set_string(qreg, error))
-		return FALSE;
-	if (qreg->must_undo) // FIXME
-		teco_doc_undo_set_string(src);
-	return TRUE;
-}
-
 /** @static @memberof teco_qreg_t */
 teco_qreg_t *
 teco_qreg_clipboard_new(const gchar *name)
 {
-	static teco_qreg_vtable_t vtable = TECO_INIT_QREG(
+	static teco_qreg_vtable_t vtable = TECO_INIT_QREG_EXTERNAL(
 		.set_string		= teco_qreg_clipboard_set_string,
 		.undo_set_string	= teco_qreg_clipboard_undo_set_string,
 		.append_string		= teco_qreg_clipboard_append_string,
 		.undo_append_string	= teco_qreg_clipboard_undo_append_string,
-		.get_string		= teco_qreg_clipboard_get_string,
-		.get_character		= teco_qreg_clipboard_get_character,
-		.edit			= teco_qreg_clipboard_edit,
-		.exchange_string	= teco_qreg_clipboard_exchange_string,
-		.undo_exchange_string	= teco_qreg_clipboard_undo_exchange_string
+		.get_string		= teco_qreg_clipboard_get_string
 	);
 
 	teco_qreg_t *qreg = teco_qreg_new(&vtable, "~", 1);

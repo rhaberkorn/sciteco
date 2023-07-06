@@ -63,6 +63,12 @@ AT_CHECK([$SCITECO -e '0U[[AB^Q@:>@(0/0)]]'], 0, ignore, ignore)
 # TODO: String building in Q-Register definitions
 AT_CLEANUP
 
+AT_SETUP([Q-Register stack])
+AT_CHECK([$SCITECO -e "[[a 23Ub ]]b Qb\"N(0/0)'"], 0, ignore, ignore)
+# FG will temporarily change the working directory to tests/testsuite.dir.
+AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([8-bit cleanlyness])
 AT_CHECK([$SCITECO -e "0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z= Z-4\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
