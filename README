@@ -107,6 +107,7 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
+* [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
 * Users of OpenWrt may try to install the
   [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
 * Yocto/OpenEmbedded users should try the
@@ -115,8 +116,8 @@ There are prebuilt binary packages and source bundles for your convenience:
   for Windows users.
 * The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
-These releases may be quite outdated, so you may also try out the
-[nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
+These releases may be quite outdated and not all of them are provided or tested by the author.
+So you may also try out the [nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
 they represent the repository's HEAD commit but may well be unstable.
 Both ncurses and Gtk+ packages are provided both for Ubuntu and Windows.
 For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
