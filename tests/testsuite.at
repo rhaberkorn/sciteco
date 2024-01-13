@@ -137,6 +137,11 @@ AT_SETUP([Empty lexer name])
 AT_CHECK([$SCITECO -e '@ES/SETILEXER//'], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Empty command string])
+AT_CHECK([$SCITECO -e '@EC//'], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e '@EGa//'], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Number stack])

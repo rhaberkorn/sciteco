@@ -257,12 +257,11 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	g_autoptr(GIOChannel) stdin_chan = NULL, stdout_chan = NULL;
 	g_auto(GStrv) argv = NULL, envp = NULL;
 
-	if (teco_string_contains(str, '\0')) {
+	if (!str->len || teco_string_contains(str, '\0')) {
 		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Command line must not contain null-bytes");
+		            "Command line must not be empty or contain null-bytes");
 		goto gerror;
 	}
-	g_assert(str->data != NULL);
 
 	argv = teco_parse_shell_command_line(str->data, error);
 	if (!argv)
@@ -413,14 +412,14 @@ cleanup:
 gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
 
 /*$ EC pipe filter
- * EC[command]$ -- Execute operating system command and filter buffer contents
- * linesEC[command]$
- * -EC[command]$
- * from,toEC[command]$
- * :EC[command]$ -> Success|Failure
- * lines:EC[command]$ -> Success|Failure
- * -:EC[command]$ -> Success|Failure
- * from,to:EC[command]$ -> Success|Failure
+ * ECcommand$ -- Execute operating system command and filter buffer contents
+ * linesECcommand$
+ * -ECcommand$
+ * from,toECcommand$
+ * :ECcommand$ -> Success|Failure
+ * lines:ECcommand$ -> Success|Failure
+ * -:ECcommand$ -> Success|Failure
+ * from,to:ECcommand$ -> Success|Failure
  *
  * The EC command allows you to interface with the operating
  * system shell and external programs.
@@ -546,14 +545,14 @@ teco_state_egcommand_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 }
 
 /*$ EG EGq
- * EGq[command]$ -- Set Q-Register to output of operating system command
- * linesEGq[command]$
- * -EGq[command]$
- * from,toEGq[command]$
- * :EGq[command]$ -> Success|Failure
- * lines:EGq[command]$ -> Success|Failure
- * -:EGq[command]$ -> Success|Failure
- * from,to:EGq[command]$ -> Success|Failure
+ * EGq command$ -- Set Q-Register to output of operating system command
+ * linesEGq command$
+ * -EGq command$
+ * from,toEGq command$
+ * :EGq command$ -> Success|Failure
+ * lines:EGq command$ -> Success|Failure
+ * -:EGq command$ -> Success|Failure
+ * from,to:EGq command$ -> Success|Failure
  *
  * Runs an operating system <command> and set Q-Register
  * <q> to the data read from its standard output stream.
