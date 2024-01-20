@@ -257,7 +257,6 @@ Inserted when the Help or shift-Help key is pressed.
 .TQ
 .SCITECO_TOPIC ^FCLOSE
 .B ^FCLOSE
-ISCITECO_TOPIC when the Close key has been pressed.
 Inserted when the Close key has been pressed.
 More importantly, this key is emulated in some GUIs
 (notably GTK+) when the user tries to close \*(ST's
