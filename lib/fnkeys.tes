@@ -95,5 +95,14 @@
 @[CLOSE]{(EX)}
 1U[CLOSE]
 
+!*
+ * Zoom with F9/F10 if function keys are enabled.
+ * This is automatically rubbed out.
+ *!
+@[F9]{(ESZOOMOUT{-13D}}
+1U[F9]
+@[F10]{(ESZOOMIN{-12D}}
+1U[F10]
+
 ! enable function key (macro) support !
 0,64ED
