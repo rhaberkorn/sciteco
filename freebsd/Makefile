@@ -4,11 +4,11 @@ CATEGORIES=	editors textproc devel
 MASTER_SITES=	https://github.com/rhaberkorn/${PORTNAME}/releases/download/v${DISTVERSION}/ \
 		SOURCEFORGE/${PORTNAME}/v${DISTVERSION}/
 
-MAINTAINER=	bob@eager.cx
+MAINTAINER=	robin.haberkorn@googlemail.com
 COMMENT=	Scintilla-based Text Editor and Corrector
 WWW=		https://github.com/rhaberkorn/sciteco
 
-LICENSE=	GPLv3
+LICENSE=	GPLv3+
 LICENSE_FILE=	${WRKSRC}/COPYING
 
 FLAVORS=	curses gtk
