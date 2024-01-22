@@ -72,7 +72,7 @@ TECO_INTEGER_32_CONFIGURE_ON=--with-teco-integer=32
 .if ${FLAVOR} == gtk
 # Run under Xvfb (see above).
 # This is done only now, since USES=gmake would overwrite MAKE_CMD.
-MAKE_CMD="${.CURDIR}/xvfb-run.sh" ${GMAKE}
+MAKE_CMD="${SCRIPTDIR}/xvfb-run.sh" ${GMAKE}
 .endif
 
 post-install:
