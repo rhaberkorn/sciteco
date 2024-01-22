@@ -27,8 +27,12 @@ USE_GNOME=	glib20
 
 GNU_CONFIGURE=	yes
 CONFIGURE_ARGS=
+# Out-of-tree builds are broken without special preparation
+# (see INSTALL in SciTECO source distribution).
+#CONFIGURE_OUTSOURCE=yes
 
 MAKEFILE=	GNUmakefile
+TEST_TARGET=	check
 
 # NOTE: Unlike on Debian, we cannot build a sciteco-common package.
 # FreeBSD does not yet support subpackages.
@@ -81,6 +85,8 @@ post-install:
 	${INSTALL_DATA} ${WRKSRC}/ico/sciteco-${SZ}.png \
 			${STAGEDIR}${PREFIX}/share/icons/hicolor/${SZ}x${SZ}/apps/sciteco.png
 .endfor
+	# To appease `make check-plist`:
+	${RM} ${STAGEDIR}${DATADIR}/*.png
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/applications
 	${INSTALL_DATA} ${WRKSRC}/src/sciteco.desktop \
 			${STAGEDIR}${PREFIX}/share/applications/sciteco.desktop
