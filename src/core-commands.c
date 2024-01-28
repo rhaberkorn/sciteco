@@ -2098,6 +2098,12 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * on exit the author is aware of is \fBxterm\fP(1) and
  * the Linux console driver.
  * You have been warned. Good luck.
+ * .IP 4
+ * The column after the last horizontal movement.
+ * This is only used by \fCfnkeys.tes\fP and is similar to the Scintilla-internal
+ * setting \fBSCI_CHOOSECARETX\fP.
+ * Unless most other settings, this is on purpose not restored on rubout,
+ * so it "survives" command line replacements.
  */
 static void
 teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
@@ -2106,8 +2112,11 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 		EJ_USER_INTERFACE = 0,
 		EJ_BUFFERS,
 		EJ_MEMORY_LIMIT,
-		EJ_INIT_COLOR
+		EJ_INIT_COLOR,
+		EJ_CARETX
 	};
+
+	static teco_int_t caret_x = 0;
 
 	teco_int_t property;
 	if (!teco_expressions_eval(FALSE, error) ||
@@ -2144,6 +2153,10 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 			teco_interface_init_color((guint)value, (guint32)color);
 			break;
 
+		case EJ_CARETX:
+			caret_x = value;
+			break;
+
 		default:
 			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
 			            "Cannot set property %" TECO_INT_FORMAT " "
@@ -2178,6 +2191,10 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 
 	case EJ_MEMORY_LIMIT:
 		teco_expressions_push(teco_memory_limit);
+		break;
+
+	case EJ_CARETX:
+		teco_expressions_push(caret_x);
 		break;
 
 	default:

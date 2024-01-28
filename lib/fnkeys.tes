@@ -1,43 +1,59 @@
-! Here we define some reasonable default function key macros.
-  Their corresponding command-line editing macros begin with  !
+!*
+ * Here we define some reasonable default function key macros.
+ * Their corresponding command-line editing macros begin with .
+ *!
 
-! edit command line to move <n> chars, updating existing move ops !
+!*
+ * Edit command line to move <n> chars, updating existing move ops.
+ * The command line at the time of call looks like: (123C)(M[FOO
+ *!
 @#c{{U.c
   <-A-("=-D1;' -D>
-  .">
-    -A-)"= -S(\U.v .,Z-2D 0A-C"=2DQ.v|2D-Q.v'%.c | I(Q.c '
-  | I(Q.c '
-  "> Q.c\IC) | -Q.c\IR) '
+  .-4"< Oins ' -2A-C"N -2A-R"N Oins ' ' -A-)"N Oins '
+    <R -A-("=1;'>
+    \U.v .-1,Z-2D 0A-R"=-'Q.v%.c 2D
+  !ins!
+  I( Q.c"> Q.c\IC | -Q.c\IR ' I)
 }}
 
-! Make DELETE an ESCAPE surrogate.
-  Macro is enabled everywhere. !
+!*
+ * Make DELETE an ESCAPE surrogate.
+ * Macro is enabled everywhere.
+ *!
 @[DC]{}
 
-! Make SHIFT+DELETE a rubout/re-insert key.
-  This reverses the ^G modifier for BACKSPACE.
-  The macro is enabled everywhere. !
+!*
+ * Make SHIFT+DELETE a rubout/re-insert key.
+ * This reverses the ^G modifier for BACKSPACE.
+ * The macro is enabled everywhere.
+ *!
 @[SDC]{}
 
-! Command line editing macros.
-  They are enabled only in the start state (i.e. they
-  have no effect in string arguments, etc.). !
+!*
+ * Command line editing macros.
+ * They are enabled only in the start state (i.e. they
+ * have no effect in string arguments, etc.).
+ *!
 
 @[HOME]{
   .ESLINEFROMPOSITIONESPOSITIONFROMLINEU.p
   Q.pU.l <Q.l-."U 1; ' Q.l-.AU.c Q.c- "N Q.c-9"N Q.lU.p 1; '' %.l>
+  Q.pESGETCOLUMN,4EJ
   Q.p-.M#c
 }
 @[HOME]{(M[HOME]}
 1U[HOME]
 
 @[END]{
-  .ESLINEFROMPOSITIONESGETLINEENDPOSITION-.M#c
+  .ESLINEFROMPOSITIONESGETLINEENDPOSITIONU.p
+  Q.pESGETCOLUMN,4EJ
+  Q.p-.M#c
 }
 @[END]{(M[END]}
 1U[END]
 
 @[NPAGE]{
+  0,4EJ
   .ESLINEFROMPOSITION+(ESLINESONSCREEN)
   ESPOSITIONFROMLINEU.p
   Q.p"< Z | Q.p '-.M#c
@@ -46,6 +62,7 @@
 1U[NPAGE]
 
 @[PPAGE]{
+  0,4EJ
   .ESLINEFROMPOSITION-(ESLINESONSCREEN)U.l
   Q.l"< 0 | Q.lESPOSITIONFROMLINE '-.M#c
 }
@@ -53,41 +70,45 @@
 1U[PPAGE]
 
 @[LEFT]{
-  ."=0|-1'M#c
+  ."=0|.-1'U.p
+  Q.pESGETCOLUMN,4EJ
+  Q.p-.M#c
 }
 @[LEFT]{(M[LEFT]}
 1U[LEFT]
 
 @[SLEFT]{
-  0,0,.ESWORDSTARTPOSITIONESWORDSTARTPOSITION-.M#c
+  0,0,.ESWORDSTARTPOSITIONESWORDSTARTPOSITIONU.p
+  Q.pESGETCOLUMN,4EJ
+  Q.p-.M#c
 }
 @[SLEFT]{(M[SLEFT]}
 1U[SLEFT]
 
 @[RIGHT]{
-  .-Z"=0|1'M#c
+  .-Z"=.|.+1'U.p
+  Q.pESGETCOLUMN,4EJ
+  Q.p-.M#c
 }
 @[RIGHT]{(M[RIGHT]}
 1U[RIGHT]
 
 @[SRIGHT]{
-  0,0,.ESWORDENDPOSITIONESWORDENDPOSITION-.M#c
+  0,0,.ESWORDENDPOSITIONESWORDENDPOSITIONU.p
+  Q.pESGETCOLUMN,4EJ
+  Q.p-.M#c
 }
 @[SRIGHT]{(M[SRIGHT]}
 1U[SRIGHT]
 
 @[UP]{
-  .ESGETCOLUMN
-  (.ESLINEFROMPOSITION-1)
-  ESFINDCOLUMN-.M#c
+  4EJ(.ESLINEFROMPOSITION-1)ESFINDCOLUMN-.M#c
 }
 @[UP]{(M[UP]}
 1U[UP]
 
 @[DOWN]{
-  .ESGETCOLUMN
-  (.ESLINEFROMPOSITION+1)
-  ESFINDCOLUMN-.M#c
+  4EJ(.ESLINEFROMPOSITION+1)ESFINDCOLUMN-.M#c
 }
 @[DOWN]{(M[DOWN]}
 1U[DOWN]
@@ -104,5 +125,5 @@
 @[F10]{(ESZOOMIN{-12D}}
 1U[F10]
 
-! enable function key (macro) support !
+!* enable function key (macro) support *!
 0,64ED
