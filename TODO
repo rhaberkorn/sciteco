@@ -4,6 +4,8 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
+ * 1,(2) does not leave 2 arguments on the stack, but only one.
+   Sometimes bracing a parameter is unavoidable.
  * Using fnkeys.tes still flickers on PDCurses/WinGUI.
    Apparently a PDCurses bug.
  * Win32: Interrupting <EC> will sometimes hang.
@@ -18,8 +20,6 @@ Known Bugs:
    always left at the end.
  * S<LF>^ES^N<$ does not find the first line that does not begin with "<"
    ^ES is apparently not greedy.
- * fnkeys.tes: Cursor movements will swallow all preceding braced
-   expressions - there should be more checks.
  * Colors are still wrong in Linux console even if TERM=linux-16color
    when using Solarized. Affects e.g. the message line which uses the
    reverse of STYLE_DEFAULT.
@@ -67,9 +67,9 @@ Known Bugs:
      automatically.
      Unfortunately, neither Linux, nor FreeBSD allow the re-linking
      based on file descriptors. On Linux this fails because the
-     file's link count will be 0; on BSD, /dev/fd/X is on a different
-     volume and cannot be linked to its old path.
-     Thus, we'd have to copy the file.
+     file's link count will be 0;
+     On BSD linkat(AT_EMPTY_PATH) requires root privileges and does not
+     work with unlinked files anyway.
    * Windows NT has hard links as well, but they don't work with
      file handles either.
      However, it could be possible to call
@@ -79,6 +79,7 @@ Known Bugs:
    * Windows has file system forks, but they can be orphaned just
      like ordinary files but are harder to locate and clean up manually.
  * Setting window title is broken on ncurses/XTerm.
+   The necessary capabilities are usually not in the Terminfo database.
    Perhaps do some XTerm magic here. We can also restore
    window titles on exit using XTerm.
  * Glib (error) messages are not integrated with SciTECO's
@@ -175,11 +176,6 @@ Features:
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
    cannot be rubbed out properly).
- * fnkeys.tec could preserve the column more reliably when
-   moving up and down by encoding a character offset into the
-   command line. E.g. (100-3C) would tell us that we have to add
-   3 to the real column when moving up/down because the current
-   line is too short.
  * Function key macros should behave more like regular macros:
    If inserting a character results in an error, the entire
    macro should be rubbed out. This means it would be OK to
@@ -451,6 +447,9 @@ Features:
  * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
  * Case-sensitive search command (modifier or flag).
+ * FreeBSD: rctl(8) theoretically allows setting up per-process actions
+   when exceeding the memory limit.
+   This however requires special system settings.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
