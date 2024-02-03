@@ -1006,45 +1006,6 @@ teco_interface_event_loop(GError **error)
 	}
 	g_assert(scitecoconfig.data != NULL);
 
-#ifdef G_OS_WIN32
-	/*
-	 * FIXME: This is necessary so that the icon themes are found in the same
-	 * directory as sciteco.exe.
-	 * This fails of course when $SCITECOCONFIG is changed.
-	 * We should perhaps always use the absolute path of sciteco.exe.
-	 * If you want to install SciTECO differently, you can still set
-	 * $XDG_DATA_DIRS.
-	 *
-	 * FIXME FIXME FIXME: This is also currently broken.
-	 */
-	//g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
-	//gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
-#else
-	/*
-	 * Load icons for the GTK window.
-	 * This is not necessary on Windows since the icon included
-	 * as a resource will be used by default.
-	 */
-	static const gchar *icon_files[] = {
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png"
-	};
-	GList *icon_list = NULL;
-
-	for (gint i = 0; i < G_N_ELEMENTS(icon_files); i++) {
-		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_files[i], NULL);
-
-		/* fail silently if there's a problem with one of the icons */
-		if (icon_pixbuf)
-			icon_list = g_list_append(icon_list, icon_pixbuf);
-	}
-
-	gtk_window_set_default_icon_list(icon_list);
-
-	g_list_free_full(icon_list, g_object_unref);
-#endif
-
 	/*
 	 * Initialize the CSS variable provider and the CSS provider
 	 * for the included fallback.css.
@@ -1086,6 +1047,50 @@ teco_interface_event_loop(GError **error)
 	gtk_widget_show_all(teco_interface.window);
 	/* don't show popup by default */
 	gtk_widget_hide(teco_interface.popup_widget);
+
+#ifdef G_OS_WIN32
+	/*
+	 * FIXME: This is necessary so that the icon themes are found in the same
+	 * directory as sciteco.exe.
+	 * This fails of course when $SCITECOCONFIG is changed.
+	 * We should perhaps always use the absolute path of sciteco.exe.
+	 * If you want to install SciTECO differently, you can still set
+	 * $XDG_DATA_DIRS.
+	 *
+	 * FIXME FIXME FIXME: This is also currently broken.
+	 */
+	//g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
+	//gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
+#else
+	/*
+	 * Load icons for the GTK window.
+	 * This is not necessary on Windows since the icon included
+	 * as a resource will be used by default.
+	 */
+	static const gchar *icon_files[] = {
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
+		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png"
+	};
+	GList *icon_list = NULL;
+
+	for (gint i = 0; i < G_N_ELEMENTS(icon_files); i++) {
+		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_files[i], NULL);
+
+		/* fail silently if there's a problem with one of the icons */
+		if (icon_pixbuf)
+			icon_list = g_list_append(icon_list, icon_pixbuf);
+	}
+
+	/*
+	 * The position of this call after gtk_widget_show() is important, so that
+	 * tabbed and other Xembed hosts can pick up the icon.
+	 * They also do not pick up the icon if set via gtk_window_set_default_icon_list().
+	 */
+	gtk_window_set_icon_list(GTK_WINDOW(teco_interface.window), icon_list);
+
+	g_list_free_full(icon_list, g_object_unref);
+#endif
 
 	/*
 	 * SIGTERM emulates the "Close" key just like when
