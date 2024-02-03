@@ -305,6 +305,10 @@ for details.
 environment before initializing Curses, so these variables
 can be modified in the profile macro.
 .
+.LP
+On GTK+, you may turn off the infamous client-side window decorations
+by setting the environment variable \fBGTK_CSD\fP to \(lq0\(rq.
+.
 .
 .SH SIGNALS
 .

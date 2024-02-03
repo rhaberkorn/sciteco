@@ -279,7 +279,8 @@ teco_interface_init(void)
 	                            "type-label");
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(teco_interface.info_bar_widget),
 	                          teco_interface.info_type_widget);
-	if (teco_interface.xembed_id || teco_interface.no_csd) {
+	if (teco_interface.xembed_id || teco_interface.no_csd ||
+	    !g_strcmp0(g_getenv("GTK_CSD"), "0")) {
 		/* fall back to adding the info bar as an ordinary widget */
 		gtk_box_pack_start(GTK_BOX(vbox), teco_interface.info_bar_widget,
 		                   FALSE, FALSE, 0);
@@ -390,12 +391,6 @@ teco_interface_init(void)
 GOptionGroup *
 teco_interface_get_options(void)
 {
-	/*
-	 * FIXME: On platforms where you want to disable CSD, you usually
-	 * want to disable it always, so it should be configurable in the SciTECO
-	 * profile.
-	 * On the other hand, you could just install gtk3-nocsd.
-	 */
 	static const GOptionEntry entries[] = {
 		{"no-csd", 0, G_OPTION_FLAG_IN_MAIN,
 		 G_OPTION_ARG_NONE, &teco_interface.no_csd,
