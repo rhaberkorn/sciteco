@@ -165,7 +165,7 @@ teco_state_start_range(teco_machine_main_t *ctx, GError **error)
 	teco_expressions_push(teco_interface_ssm(SCI_GETLENGTH, 0, 0));
 }
 
-/*$ "\\"
+/*$ \[rs]
  * n\\ -- Insert or read ASCII numbers
  * \\ -> n
  *
@@ -2100,7 +2100,7 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * You have been warned. Good luck.
  * .IP 4
  * The column after the last horizontal movement.
- * This is only used by \fCfnkeys.tes\fP and is similar to the Scintilla-internal
+ * This is only used by \fBfnkeys.tes\fP and is similar to the Scintilla-internal
  * setting \fBSCI_CHOOSECARETX\fP.
  * Unless most other settings, this is on purpose not restored on rubout,
  * so it "survives" command line replacements.

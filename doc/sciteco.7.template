@@ -1630,7 +1630,7 @@ When \fB^V\fP is not followed by \fB^V\fP, a single character
 .BI ^W c
 Analogous to \fB^V\fP, but upper-cases characters.
 .TP
-.SCITECO_TOPIC ^E\\ ^E\\q
+.SCITECO_TOPIC ^E\[rs] ^E\[rs]q
 .BI ^E\(rs q
 Expands to the formatted number stored in the
 numeric part of Q-Register \fIq\fP.
