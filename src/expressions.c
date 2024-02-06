@@ -184,7 +184,28 @@ teco_expressions_calc(GError **error)
 
 	switch (op) {
 	case TECO_OP_POW:
-		for (result = 1; vright--; result *= vleft);
+		if (!vright) {
+			result = vleft < 0 ? -1 : 1;
+			break;
+		}
+		if (vright < 0) {
+			if (!vleft) {
+				g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+				                    "Negative power of 0 is not defined");
+				return FALSE;
+			}
+			result = ABS(vleft) == 1 ? vleft : 0;
+			break;
+		}
+		result = 1;
+		for (;;) {
+			if (vright & 1)
+				result *= vleft;
+			vright >>= 1;
+			if (!vright)
+				break;
+			vleft *= vleft;
+		}
 		break;
 	case TECO_OP_MUL:
 		result = vleft * vright;
