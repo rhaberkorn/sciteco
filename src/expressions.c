@@ -318,6 +318,9 @@ guint teco_brace_level = 0;
 void
 teco_expressions_brace_open(void)
 {
+	while (teco_operators->len > 0 && teco_expressions_peek_op(0) == TECO_OP_NEW)
+		teco_expressions_pop_op(0);
+
 	teco_expressions_push_op(TECO_OP_BRACE);
 	teco_undo_guint(teco_brace_level)++;
 }
