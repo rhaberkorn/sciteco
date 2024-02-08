@@ -4,8 +4,20 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * 1,(2) does not leave 2 arguments on the stack, but only one.
-   Sometimes bracing a parameter is unavoidable.
+ * E%$...$ broken.
+   Similarily EQ$file$ won't do what you would expect it to.
+ * <.(:W;).Xa> leaves values on the stack.
+   Apparently breaking from within expressions is not currently safe.
+ * Cannot escape ^E in search strings. This makes it nearly impossible
+   to search for ^E.
+   S^Q^E$ should work.
+ * Ctrl+U rubout and Ctrl+G,Tab file name completions do not work
+   in ^U command.
+ * Editing very large files, or at least files with very long lines, is painstakingly slow.
+   Try for instance openrussian-custom-2023-10-09.sql.
+   For some strange reason, this affects both Curses and GTK.
+ * ?^F does not autocomplete if the control character is typed
+   via control and not via caret.
  * Using fnkeys.tes still flickers on PDCurses/WinGUI.
    Apparently a PDCurses bug.
  * Win32: Interrupting <EC> will sometimes hang.
@@ -87,6 +99,7 @@ Known Bugs:
  * Out-of-tree builds are broken.
    See contrib/scintilla.am.
  * Gtk on Unix: On ^Z, we do not suspend properly. The window is still shown.
+   This would be a useful feature especially with --xembed on st.
    Perhaps we should try to catch SIGTSTP?
    This does not work with g_unix_signal_add(), though, so any
    workaround would be tricky.
@@ -98,7 +111,7 @@ Known Bugs:
    the window has really been hidden/unrealized.
    Even if everything worked, it might well be annoying if
    you accidentally suspend your instance while not being
-   connected to a terminal.
+   connected to a terminal. Although this could be checked at runtime.
    Suspension from the command-line has therefore been disabled
    on Gtk for the time being.
  * Many Scintilla commands <ES> can easily crash the editor.
@@ -114,6 +127,7 @@ Known Bugs:
    (and with --no-profile) under Mac OS terminal emulators.
    This does not happen under Linux with Darling.
    See https://github.com/rhaberkorn/sciteco/issues/12
+ * GTK: Scrolling via mouse is not reliably prevented in all situations.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -199,6 +213,11 @@ Features:
    SciTECO would try to execute escape sequences.
    The ED flag could still exist and tell whether the function
    key macros are used at all (i.e. this is how Gtk behaves currently).
+ * Support more function keys.
+   Perhaps we can safely support more via define_key(3NCURSES).
+   At the very least PDCurses and Gtk could support much more
+   keys and Alt and Ctrl modifiers.
+   See also https://gist.github.com/rkumar/1237091
  * Mouse support. Not that hard to implement. Mouse events
    use a pseudo function key macro as in Curses.
    Using some special command, macros can query the current
@@ -212,6 +231,10 @@ Features:
    Command line arguments should then also be handled
    differently, passing them in an array or single string
    register, so they no longer affect the unnamed buffer.
+ * Once we've got --stdout, it makes sense to ship a version of
+   tecat written in SciTECO.
+   This is useful as a git diff textconv filter.
+   See https://gist.github.com/rhaberkorn/6534ecf1b05de6216d0a9c33f31ab5f8
  * For third-party macro authors, it is useful to know
    the standard library path (e.g. to install new lexers).
    There could be a --print-path option, or with the --quiet
@@ -384,12 +407,6 @@ Features:
  * Improve the message line so it can log multiple messages.
    Especially important on GUI platforms and Win32 so we can get
    rid of the attached console window.
- * On Unix/X11, it may be possible to draw the Gtk+ UI into the
-   same window as the current terminal.
-   SciTECO now supports Xembed via the --xembed option.
-   Urxvt and many other terminal emulators have $WINDOWID.
-   But the two won't work together. Urxvt and XTerm are apparently
-   not real Xembed hosts.
  * Currently, you cannot pass UTF-8 parameters to SciTECO macros.
    This is not critical since we don't support Unicode anyway.
    Sooner or later however we should use g_win32_get_command_line().
@@ -400,8 +417,13 @@ Features:
  * Write a Scintilla/Lexilla lexer for Roff
  * There is an Urxvt extension 52-osc for implementing the
    xterm-like clipboard control sequences.
-   If may therefore make sense to support that even without checking
-   the xterm version and update documentation accordingly.
+   Other emulators also support it. It is not always detectable
+   at run time.
+   It may therefore make sense to always enable it after manually
+   setting the corrsponding flag.
+   Apparently there is also a terminfo entry Ms, but it's probably
+   not worth using it since it won't always be set.
+   See also https://github.com/tmux/tmux/wiki/Clipboard
  * Write standard library module for spell checking.
    This can eg. use hunspell/aspell/ispell `-a` mode.
    See my SciTE implementation on how to do this.
@@ -450,6 +472,12 @@ Features:
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions
    when exceeding the memory limit.
    This however requires special system settings.
+ * Auto-completions customization via external programs.
+   This among other things could be used to integrate LSPs-driven
+   autocompletions.
+ * Whereever we take buffer positions (nJ; n,mD; nQ...),
+   negative numbers could refer to the end of the buffer or
+   Q-Register string.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -459,7 +487,8 @@ Optimizations:
    requested explicitly per ED flag or command line option.
  * teco_interface_cmdline_update() should be called only once
    after inserting an entire command line macro.
- * There is should be a common error code for null-byte tests.
+ * There should be a common error code for null-byte tests
+   instead of TECO_ERROR_FAILED.
  * teco_string_append() could be optimized by ORing a padding
    into the realloc() size (e.g. 0xFF).
    However, this has not proven effective on Linux/glibc
@@ -472,6 +501,13 @@ Optimizations:
  * Add a configure-switch for LTO (--enable-lto).
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
+ * Newer GCC and C23 features:
+   * Perhaps teco_bool_t usage could be simplified using
+     __attribute__((hardbool)).
+   * Use `#elifdef` instead of `#elif defined`.
+   * Use `[[gnu::foo]]` instead of `__attribute__((foo))`.
+   * The TECO_FOR_EACH() hack could be simplified at least marginally
+     using __VA_OPT__().
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
