@@ -17,6 +17,7 @@ When you delete a character from the end of the command line macro (called rubou
 side-effects of that character which may be a command or part of a command, are undone.
 
 <img align="left" alt="SciTECO demo" src="https://sciteco.sourceforge.net/graphics/sciteco-ncurses.gif"/>
+<br/>
 
 SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
 GTK+ 3 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
@@ -141,4 +142,4 @@ Additional Documentation
 * A [short presentation](http://sciteco.sf.net/manuals/presentation.pdf)
   (in German!) hold at [Netz39](http://www.netz39.de/).
 
-<img align="center" alt="SciTECO icon" src="ico/sciteco-48.png"/>
+<img align="middle" alt="SciTECO icon" src="ico/sciteco-48.png"/>
