@@ -125,18 +125,19 @@ PKG_CHECK_MODULES(LIBGLIB, [glib-2.0 >= 2.44], [
 	LIBS="$LIBS $LIBGLIB_LIBS"
 ])
 
-# Required by Scintilla.
-AX_PTHREAD([], [
-	AC_MSG_ERROR([pthread not found!])
-])
-SCINTILLA_CXXFLAGS="$SCINTILLA_CXXFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-
 case $host in
 *-mingw*)
 	AC_CHECK_HEADERS([windows.h], , [
 		AC_MSG_ERROR([Missing Windows headers!])
 	])
+	;;
+*)
+	# Required by Scintilla.
+	AX_PTHREAD([], [
+		AC_MSG_ERROR([pthread not found!])
+	])
+	SCINTILLA_CXXFLAGS="$SCINTILLA_CXXFLAGS $PTHREAD_CFLAGS"
+	LIBS="$LIBS $PTHREAD_LIBS"
 	;;
 esac
 
