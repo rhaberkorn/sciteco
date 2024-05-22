@@ -47,12 +47,26 @@ jobs:
         cp debian-temp/sciteco-gtk_*.deb sciteco-gtk_nightly_${{matrix.os}}_amd64.deb
         cp debian-temp/sciteco-common_*.deb sciteco-common_nightly_${{matrix.os}}_all.deb
 
-    - name: Archive Debian/Ubuntu Packages
+    - name: Build AppImages
+      # Should always be on the oldest supported Ubuntu
+      if: matrix.os == 'ubuntu-20.04'
+      run: |
+        cd AppImage
+        wget -O pkg2appimage.AppImage \
+                "https://github.com/AppImageCommunity/pkg2appimage/releases/download/continuous/pkg2appimage--x86_64.AppImage"
+        chmod +x pkg2appimage.AppImage
+        ./pkg2appimage.AppImage curses.yml
+        mv out/*.AppImage sciteco-curses_nightly_x86_64.AppImage
+        ./pkg2appimage.AppImage gtk.yml
+        mv out/*.AppImage sciteco-gtk_nightly_x86_64.AppImage
+        chmod a+x *.AppImage
+
+    - name: Archive Debian/Ubuntu Packages and AppImages
       uses: pyTooling/Actions/releaser@v1.0.5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
-        files: ./*.deb
+        files: ./*.deb ./AppImage/*.AppImage
 
   macos:
     runs-on: macos-12

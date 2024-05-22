@@ -115,12 +115,12 @@ There are prebuilt binary packages and source bundles for your convenience:
   [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
 * [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
   for Windows users.
-* The official [SciTECO homepage](http://sciteco.sf.net/) is a live demo.
 
 These releases may be quite outdated and not all of them are provided or tested by the author.
 So you may also try out the [nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
 they represent the repository's HEAD commit but may well be unstable.
-Both ncurses and Gtk+ packages are provided both for Ubuntu and Windows.
+Both ncurses and Gtk+ packages are provided for Ubuntu, generic Linux
+(in the form of [AppImages](https://appimage.org/)) and Windows.
 For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 we currently only provide *experimental* ncurses builds.
 

@@ -1,0 +1,31 @@
+app: sciteco-curses
+
+# We currently use paths hardcoded at build-time.
+# Alternatively, it would be possible to customize the AppRun script or
+# add a wrapper that sets $SCITECOPATH.
+union: true
+
+ingredients:
+  packages:
+    - sciteco-curses
+  dist: focal
+  sources:
+    - deb http://archive.ubuntu.com/ubuntu/ focal main universe
+#  ppas:
+#    - robin-haberkorn/sciteco
+  script:
+    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-common_nightly_ubuntu-20.04_all.deb"
+    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-curses_nightly_ubuntu-20.04_all.deb"
+  post_script:
+    - dpkg -I sciteco-curses*.deb | grep "Version:" | cut -d':' -f2 | cut -d'+' -f1 | sed 's/^[ ]*//g' >VERSION
+
+script:
+  # This is currently not installed by sciteco-curses.
+  # FIXME: There should perhaps be a unique name in the desktop file, so it does not conflict with the Gtk version.
+  - wget -O sciteco-curses.desktop -c "https://raw.githubusercontent.com/rhaberkorn/sciteco/master/src/sciteco.desktop"
+  - sed -i -e 's@gsciteco@sciteco@g' sciteco-curses.desktop
+  - echo 'Terminal=true' >>sciteco-curses.desktop
+  - wget -O sciteco.png -c "https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco-256.png"
+  # Thinning: These documentation files are pointless.
+  # SciTECO comes with its own online help system.
+  - rm -rf ./usr/share/doc ./usr/share/man

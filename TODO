@@ -454,11 +454,11 @@ Features:
      A new private key has already been registered on Launchpad and
      Github. We just need to integrate with CI.
      See also https://github.com/marketplace/actions/import-gpg
-   * AppImage for Linux
    * 64-bit Windows builds
    * Mac OS Arm64 builds either separately or via universal binary.
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
+ * Get into AppImageHub.
  * Linux: Relocatable binaries instead of hardcoding the library path.
    This makes it possible to run builds installed via
    `make install DESTDIR=...` and will aid in creating AppImages.
@@ -485,6 +485,9 @@ Features:
    https://github.com/fpjohnston/TECO-64/blob/master/doc/oper.md
    However, instead of introducing a separate parser state, better
    use operators like ~=, ~< etc.
+ * It should be possible to disable auto-completions of one-character
+   register names, so that we can map the idention macro to M<TAB>.
+ * fnkeys.tes: Rubin/Rubout via cursor keys?
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
