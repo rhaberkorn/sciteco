@@ -79,7 +79,7 @@ jobs:
         ./configure --with-interface=ncurses --enable-debug --enable-html-manual
 
     - run: make
-    - run: make install
+    - run: sudo make install
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
