@@ -15,7 +15,7 @@ ingredients:
 #    - robin-haberkorn/sciteco
   script:
     - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-common_nightly_ubuntu-20.04_all.deb"
-    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-gtk_nightly_ubuntu-20.04_all.deb"
+    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-gtk_nightly_ubuntu-20.04_amd64.deb"
   post_script:
     - dpkg -I sciteco-gtk*.deb | grep "Version:" | cut -d':' -f2 | cut -d'+' -f1 | sed 's/^[ ]*//g' >VERSION
 
