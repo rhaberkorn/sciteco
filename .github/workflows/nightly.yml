@@ -56,9 +56,9 @@ jobs:
                 "https://github.com/AppImageCommunity/pkg2appimage/releases/download/continuous/pkg2appimage--x86_64.AppImage"
         chmod +x pkg2appimage.AppImage
         ./pkg2appimage.AppImage curses.yml
-        mv out/*.AppImage sciteco-curses_nightly_x86_64.AppImage
+        mv out/*.AppImage ../sciteco-curses_nightly_x86_64.AppImage
         ./pkg2appimage.AppImage gtk.yml
-        mv out/*.AppImage sciteco-gtk_nightly_x86_64.AppImage
+        mv out/*.AppImage ../sciteco-gtk_nightly_x86_64.AppImage
         chmod a+x *.AppImage
 
     - name: Archive Debian/Ubuntu Packages and AppImages
@@ -66,7 +66,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
-        files: ./*.deb ./AppImage/*.AppImage
+        files: ./*.deb ./*.AppImage
 
   macos:
     runs-on: macos-12
