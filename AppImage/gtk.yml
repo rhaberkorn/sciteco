@@ -8,6 +8,10 @@ union: true
 ingredients:
   packages:
     - sciteco-gtk
+  exclude:
+    # pkg2appimage blacklists Gtk, Pango and other libs from the GNOME stack,
+    # so excluding glib as well should actually improve portability.
+    - libglib2.0-0
   dist: focal
   sources:
     - deb http://archive.ubuntu.com/ubuntu/ focal main universe
