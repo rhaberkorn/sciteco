@@ -6,8 +6,11 @@ Tasks:
 Known Bugs:
  * E%$...$ broken.
    Similarily EQ$file$ won't do what you would expect it to.
- * <.(:W;).Xa> leaves values on the stack.
+ * <23(1;)> leaves values on the stack and the internal hidden
+   brace open..
    Apparently breaking from within expressions is not currently safe.
+   We could save the brace level in the loop context and then use
+   teco_expressions_brace_return().
  * Cannot escape ^E in search strings. This makes it nearly impossible
    to search for ^E.
    S^Q^E$ should work.
@@ -478,6 +481,10 @@ Features:
  * Whereever we take buffer positions (nJ; n,mD; nQ...),
    negative numbers could refer to the end of the buffer or
    Q-Register string.
+ * Support extended operators like in TECO-64:
+   https://github.com/fpjohnston/TECO-64/blob/master/doc/oper.md
+   However, instead of introducing a separate parser state, better
+   use operators like ~=, ~< etc.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.

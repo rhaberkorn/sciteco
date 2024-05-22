@@ -16,7 +16,7 @@ jobs:
     steps:
 
     - name: Git Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4.1.6
       with:
         submodules: true
 
@@ -61,7 +61,7 @@ jobs:
     steps:
 
     - name: Git Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4.1.6
       with:
         submodules: true
 
@@ -105,7 +105,7 @@ jobs:
     steps:
 
     - name: Git Clone
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4.1.6
       with:
         submodules: true
 
