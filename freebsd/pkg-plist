@@ -80,6 +80,7 @@ man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/tal.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/tcl.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/test.tes
+%%LEXILLA%%%%DATADIR%%/lib/lexers/troff.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/vala.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/vb.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/verilog.tes

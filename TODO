@@ -417,7 +417,6 @@ Features:
    native Scintilla packages.
    Perhaps it makes sense to be able to build against them
    using --with-scintilla.
- * Write a Scintilla/Lexilla lexer for Roff
  * There is an Urxvt extension 52-osc for implementing the
    xterm-like clipboard control sequences.
    Other emulators also support it. It is not always detectable

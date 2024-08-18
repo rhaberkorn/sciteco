@@ -1,0 +1,85 @@
+!* troff/nroff *!
+
+@[lexer.test.troff]{
+  :EN*.groffQ*"S -1 '
+  :EN*.roffQ*"S -1 '
+  :EN*.meQ*"S -1 '
+  :EN*.mmQ*"S -1 '
+  :EN*.msQ*"S -1 '
+  :EN*.momQ*"S -1 '
+  :EN*.manQ*"S -1 '
+  :EN*.mdocQ*"S -1 '
+  :EN*.tmacQ*"S -1 '
+  :EN*.[12345678]Q*
+}
+
+!* Heirloom Troff specific requests *!
+[lexer.troff.heirloom]
+  bleedat breakchar brnl brpnl
+  cropat dch dwh
+  errprint
+  fallback fdeferlig feature fkern flig fp fps fspacewidth
+  hidechar hylang hylen hypp
+  index
+  kernafter kernbefore kernpair
+  lc_ctype lds letadj lhang lnr lnrf lpfx
+  mediasize minss
+  nhychar nrf
+  padj papersize psbb pshape
+  recursionlimit rhang
+  sentchar spacewidth
+  track transchar trimat
+  unwatch unwatchn
+  watch watchlength watchn
+  xflag
+!* Neatroff-specific requests *!
+[lexer.troff.neatroff]
+  << >> cl co co+ co< co> eos ff ffsc fmap
+  hycost hydash hystop in2 kn ochar pmll ssh ti2
+
+@[lexer.set.troff]{
+  ESSETILEXERtroff
+  !* Predefined requests (derived from Groff) *!
+  0ESSETKEYWORDS
+    ab ad af aln als am am1 ami ami1 as as1 asciify
+    backtrace bd blm box boxa bp br brp break
+    c2 cc ce cf cflags ch char chop class close color composite continue cp cs cu
+    da de de1 defcolor dei dei1 device devicem di do ds ds1 dt
+    ec ecr ecs el em eo ev evc ex
+    fam fc fchar fcolor fi fl fp fschar fspecial ft ftr fzoom
+    gcolor
+    hc hcode hla hlm hpf hpfa hpfcode hw hy hym hys
+    ie if ig . in it itc
+    kern
+    lc length linetabs linetabs lf lg ll lsm ls lt
+    mc mk mso
+    na ne nf nh nm nn nop nr nroff ns nx
+    open opena os output
+    pc pev pi pl pm pn pnr po ps psbb pso ptr pvs pvs
+    rchar rd return rfschar rj rm rn rnn rr rs rt
+    schar shc shift sizes so sp special spreadwarn ss sty substring sv sy
+    ta tc ti tkf tl tm tm1 tmc tr trf trin trnt troff
+    uf ul unformat
+    vpt vs
+    warn warnscale wh while write writec writem
+    Q[lexer.troff.heirloom] Q[lexer.troff.neatroff]
+  !* Flow control requests/commands with conditionals *!
+  1ESSETKEYWORDSif ie while
+  !* Flow control requests/commands without conditionals *!
+  2ESSETKEYWORDSel nop
+  !* Requests and commands, initiating ignore blocks *!
+  3ESSETKEYWORDSig
+  !* Requests and commands with end-macros.
+     Mom macros alias MAC to de. *!
+  4ESSETKEYWORDSam am1 de de1 MAC
+
+  :M[color.keyword],1M[color.set]
+  :M[color.preproc],2M[color.set]
+  :M[color.number],3M[color.set]
+  :M[color.operator],4M[color.set]
+  :M[color.string],5M[color.set]
+  :M[color.comment],6M[color.set]
+  !*:M[color.comment],7M[color.set]*!
+  7U.i 20<:M[color.variable],%.iM[color.set]>
+  :M[color.preproc2],17M[color.set]
+}
