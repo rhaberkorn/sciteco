@@ -426,10 +426,7 @@ Features:
    Apparently there is also a terminfo entry Ms, but it's probably
    not worth using it since it won't always be set.
    See also https://github.com/tmux/tmux/wiki/Clipboard
- * Write standard library module for spell checking.
-   This can eg. use hunspell/aspell/ispell `-a` mode.
-   See my SciTE implementation on how to do this.
-   The resulting macro can be added to a save hook.
+ * Add a save-ED-hook, which could be useful for spell checking.
  * A dirtify-hook would be useful and could be used for
    spell checking. Naturally it could only be exected at the
    end of executing interactive commands) and it should be triggered
