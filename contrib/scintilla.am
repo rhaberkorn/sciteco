@@ -5,6 +5,8 @@
 # 1.) Out-of-tree builds are not straight forward and require
 #     manually cloning the submodules into the build system.
 #     `make distcheck` is consequently also broken.
+#     Lexilla already has DIR_O, that could be used for proper
+#     out of tree builds, but Scintilla is still lacking it.
 # 2.) We cannot add plain static libraries to libtool convenience
 #     libraries using LIBADD.
 #     Therefore, we cannot wrap Scintilla and Lexilla into a convenience
@@ -53,6 +55,7 @@ clean-local-scintilla:
 	$(MAKE_SCINTILLA) clean
 
 MAKE_LEXILLA = $(MAKE) -C @LEXILLA_PATH@/src \
+               SCINTILLA_INCLUDE=@SCINTILLA_PATH@/include \
                CXXFLAGS='@SCINTILLA_CXXFLAGS@' \
                CC='@CC@' CXX='@CXX@' \
                AR='@AR@' RANLIB='@RANLIB@'

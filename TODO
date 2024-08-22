@@ -4,6 +4,9 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
+ * A local Q-Register can be left as the edited document
+   even after invoking a macro via <M>.
+   This is probably not safe and we should throw an error instead.
  * E%$...$ broken.
    Similarily EQ$file$ won't do what you would expect it to.
  * <23(1;)> leaves values on the stack and the internal hidden
@@ -101,6 +104,7 @@ Known Bugs:
    logging system.
  * Out-of-tree builds are broken.
    See contrib/scintilla.am.
+   See also https://github.com/ScintillaOrg/lexilla/issues/266
  * Gtk on Unix: On ^Z, we do not suspend properly. The window is still shown.
    This would be a useful feature especially with --xembed on st.
    Perhaps we should try to catch SIGTSTP?
