@@ -131,6 +131,7 @@ jobs:
       run: make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
-    - run: make distcheck
+    - name: make distcheck
+      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-interface=pdcurses-gui"
     - name: Build Source Tarball
       run: make dist
