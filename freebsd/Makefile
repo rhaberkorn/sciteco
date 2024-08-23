@@ -27,9 +27,7 @@ USE_GNOME=	glib20
 
 GNU_CONFIGURE=	yes
 CONFIGURE_ARGS=
-# Out-of-tree builds are broken without special preparation
-# (see INSTALL in SciTECO source distribution).
-#CONFIGURE_OUTSOURCE=yes
+CONFIGURE_OUTSOURCE=yes
 
 MAKEFILE=	GNUmakefile
 TEST_TARGET=	check

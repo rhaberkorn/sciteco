@@ -34,9 +34,6 @@ build build-arch build-indep: build-curses-stamp build-gtk-stamp;
 build-curses-stamp:
 	dh_testdir
 	rm -rf build-curses
-	mkdir -p build-curses/contrib
-	cp -r contrib/scintilla contrib/scinterm contrib/lexilla \
-	      build-curses/contrib/
 	dh_auto_configure -Bbuild-curses -- \
 	                  --with-interface=ncurses
 	dh_auto_build -Bbuild-curses
@@ -48,9 +45,6 @@ build-curses-stamp:
 build-gtk-stamp:
 	dh_testdir
 	rm -rf build-gtk
-	mkdir -p build-gtk/contrib
-	cp -r contrib/scintilla contrib/lexilla \
-	      build-gtk/contrib/
 	dh_auto_configure -Bbuild-gtk -- \
 	                  --program-prefix=g \
 	                  --with-interface=gtk

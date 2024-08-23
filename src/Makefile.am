@@ -67,10 +67,9 @@ noinst_PROGRAMS = sciteco-minimal
 sciteco_minimal_SOURCES =
 symbols-scintilla.c symbols-scilexer.c : sciteco-minimal$(EXEEXT)
 endif
-sciteco_minimal_LDADD = libsciteco-base.la \
-                        @SCINTILLA_PATH@/bin/scintilla.a
+sciteco_minimal_LDADD = libsciteco-base.la $(LIBSCINTILLA)
 if LEXILLA
-sciteco_minimal_LDADD += @LEXILLA_PATH@/bin/liblexilla.a
+sciteco_minimal_LDADD += $(LIBLEXILLA)
 endif
 # Scintilla is unfortunately still written in C++, so we must force
 # Automake to use the C++ linker when linking the binaries.

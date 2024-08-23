@@ -3,7 +3,7 @@ Installation Instructions
 
 Copyright (C) 1994, 1995, 1996, 1999, 2000, 2001, 2002, 2004, 2005,
 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
-Copyright (C) 2013-2023 Robin Haberkorn
+Copyright (C) 2013-2024 Robin Haberkorn
 
    Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -47,7 +47,7 @@ installed by the user manually:
  * Scintilla (v5.3.0 or later):
    http://www.scintilla.org/
  * When choosing the Curses interface:
-   * Scinterm (v4.0 or later):
+   * Scinterm (v5.2 or later):
      http://foicica.com/scinterm/
  * Lexilla (v5.0.0 or later, optional):
    https://www.scintilla.org/Lexilla.html
@@ -136,31 +136,6 @@ Prebuilt packages, like Debian source and binary packages, as well as
 Windows releases need special configuration options.
 Building these packages is automated by the `./distribute` script
 (a standalone Makefile script).
-
-Out of Tree Builds
-==================
-
-Like any Autoconf/Automake-based project, SciTECO can generally
-be built out-of-tree (in a different directory than its sources).
-This is often useful, especially when cross-compiling.
-Unfortunately, the Scintilla (and related libraries') build-system
-does not support out-of-tree builds, so even though Scintilla has been tied
-into SciTECO's build system for convenience, out-of-tree builds
-cannot be performed directly as Scintilla would still be built
-in SciTECO's source directory by default.
-
-However, you may copy Scintilla, Scinterm and Lexilla into
-SciTECO's build directory.
-An out-of-tree build of SciTECO can thus be achieved using the
-following steps (supposing that the build directory will be
-a subdirectory of the Git repository called `build-dir`):
-
-  $ mkdir -p build-dir/contrib
-  $ cp -r contrib/{scintilla,scinterm,lexilla} build-dir/contrib/
-  $ cd build-dir
-  $ ../configure
-  $ make
-  ...
 
 For more details on building Autoconf-based projects refer to the
 remainder of this document which covers installing Autoconf-based

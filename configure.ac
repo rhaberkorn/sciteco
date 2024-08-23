@@ -191,8 +191,8 @@ AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(scitecodatadir)\"' \
 # Scintilla (some platforms ship with it).
 AC_ARG_WITH(scintilla,
 	AS_HELP_STRING([--with-scintilla=PATH],
-		       [Specify Scintilla's path [default=./contrib/scintilla]]),
-	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=./contrib/scintilla])
+		       [Specify Scintilla's path [default=SRCDIR/contrib/scintilla]]),
+	[SCINTILLA_PATH=$withval], [SCINTILLA_PATH=$srcdir/contrib/scintilla])
 SCINTILLA_PATH=`canonicalize $SCINTILLA_PATH`
 AC_SUBST(SCINTILLA_PATH)
 
@@ -200,15 +200,15 @@ CPPFLAGS="$CPPFLAGS -I$SCINTILLA_PATH/include"
 
 AC_ARG_WITH(scinterm,
 	AS_HELP_STRING([--with-scinterm=PATH],
-		       [Specify Scinterm's path [default=./contrib/scinterm]]),
-	[SCINTERM_PATH=$withval], [SCINTERM_PATH=./contrib/scinterm])
+		       [Specify Scinterm's path [default=SRCDIR/contrib/scinterm]]),
+	[SCINTERM_PATH=$withval], [SCINTERM_PATH=$srcdir/contrib/scinterm])
 SCINTERM_PATH=`canonicalize $SCINTERM_PATH`
 AC_SUBST(SCINTERM_PATH)
 
 AC_ARG_WITH(lexilla,
 	AS_HELP_STRING([--with-lexilla=PATH],
-		       [Specify Lexilla's path [default=./contrib/lexilla]]),
-	[LEXILLA_PATH=$withval], [LEXILLA_PATH=./contrib/lexilla])
+		       [Specify Lexilla's path [default=SRCDIR/contrib/lexilla]]),
+	[LEXILLA_PATH=$withval], [LEXILLA_PATH=$srcdir/contrib/lexilla])
 AM_CONDITIONAL(LEXILLA, [test x$LEXILLA_PATH != xno])
 if [[ x$LEXILLA_PATH != xno ]]; then
 	LEXILLA_PATH=`canonicalize $LEXILLA_PATH`

@@ -48,10 +48,8 @@ jobs:
       run: xvfb-run -a make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
-    # FIXME: Will try to perform an out-of-tree build which will not
-    # work without manual intervention due to Scintilla.
-#   - name: make distcheck
-#     run: xvfb-run -a make distcheck
+    - name: make distcheck
+      run: xvfb-run -a make distcheck
     - name: Build Source Tarball
       run: make dist
 
@@ -86,9 +84,7 @@ jobs:
       run: make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
-    # FIXME: Will try to perform an out-of-tree build which will not
-    # work without manual intervention due to Scintilla.
-#   - run: make distcheck
+    - run: make distcheck
     - name: Build Source Tarball
       run: make dist
 
@@ -135,8 +131,6 @@ jobs:
       run: make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
-    # FIXME: Will try to perform an out-of-tree build which will not
-    # work without manual intervention due to Scintilla.
-#   - run: make distcheck
+    - run: make distcheck
     - name: Build Source Tarball
       run: make dist
