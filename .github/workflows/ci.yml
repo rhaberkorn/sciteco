@@ -132,6 +132,9 @@ jobs:
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     - name: make distcheck
-      run: make distcheck DISTCHECK_CONFIGURE_FLAGS="--with-interface=pdcurses-gui"
+      env:
+        DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui
+        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+      run: make distcheck
     - name: Build Source Tarball
       run: make dist
