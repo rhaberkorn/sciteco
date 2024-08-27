@@ -1029,7 +1029,8 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 		teco_error_range_set(error, "A");
 		return;
 	}
-	teco_expressions_push(teco_interface_ssm(SCI_GETCHARAT, v, 0));
+	/* internally, the character is casted to signed char */
+	teco_expressions_push((guchar)teco_interface_ssm(SCI_GETCHARAT, v, 0));
 }
 
 static teco_state_t *
@@ -1764,7 +1765,7 @@ static teco_state_t *
 teco_state_ascii_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 {
 	if (ctx->mode == TECO_MODE_NORMAL)
-		teco_expressions_push(chr);
+		teco_expressions_push((guchar)chr);
 
 	return &teco_state_start;
 }

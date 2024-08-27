@@ -261,7 +261,8 @@ teco_qreg_plain_get_character(teco_qreg_t *qreg, guint position, GError **error)
 	teco_doc_edit(&qreg->string);
 
 	if (position < teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0))
-		ret = teco_view_ssm(teco_qreg_view, SCI_GETCHARAT, position, 0);
+		/* internally, values are casted to signed char */
+		ret = (guchar)teco_view_ssm(teco_qreg_view, SCI_GETCHARAT, position, 0);
 	else
 		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
 		            "Position %u out of range", position);
@@ -407,7 +408,7 @@ teco_qreg_external_get_character(teco_qreg_t *qreg, guint position, GError **err
 		return -1;
 	}
 
-	return str.data[position];
+	return (guchar)str.data[position];
 }
 
 /**
@@ -510,7 +511,7 @@ teco_qreg_bufferinfo_get_character(teco_qreg_t *qreg, guint position, GError **e
 		return -1;
 	}
 
-	return teco_ring_current->filename[position];
+	return (guchar)teco_ring_current->filename[position];
 }
 
 /** @static @memberof teco_qreg_t */

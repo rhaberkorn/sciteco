@@ -81,6 +81,9 @@ AT_CLEANUP
 
 AT_SETUP([8-bit cleanlyness])
 AT_CHECK([$SCITECO -e "0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z= Z-4\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "129@I// -A-129\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "129@^Ua// 0Qa-129\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@^Ua/^^/ 129:@^Ua// Ma-129\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])
