@@ -62,12 +62,7 @@ extern teco_cmdline_t teco_cmdline;
 
 gboolean teco_cmdline_insert(const gchar *data, gsize len, GError **error);
 
-static inline gboolean
-teco_cmdline_rubin(GError **error)
-{
-	return teco_cmdline.effective_len >= teco_cmdline.str.len ||
-	       teco_cmdline_insert(teco_cmdline.str.data + teco_cmdline.effective_len, 1, error);
-}
+gboolean teco_cmdline_rubin(GError **error);
 
 gboolean teco_cmdline_keypress_c(gchar key, GError **error);
 
@@ -82,12 +77,7 @@ teco_cmdline_keypress(const gchar *str, gsize len, GError **error)
 
 gboolean teco_cmdline_fnmacro(const gchar *name, GError **error);
 
-static inline void
-teco_cmdline_rubout(void)
-{
-	if (teco_cmdline.effective_len)
-		teco_undo_pop(--teco_cmdline.effective_len);
-}
+void teco_cmdline_rubout(void);
 
 extern gboolean teco_quit_requested;
 

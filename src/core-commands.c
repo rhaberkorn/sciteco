@@ -129,7 +129,8 @@ teco_state_start_dot(teco_machine_main_t *ctx, GError **error)
 {
 	if (!teco_expressions_eval(FALSE, error))
 		return;
-	teco_expressions_push(teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0));
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
 }
 
 /*$ Z size
@@ -145,7 +146,8 @@ teco_state_start_zed(teco_machine_main_t *ctx, GError **error)
 {
 	if (!teco_expressions_eval(FALSE, error))
 		return;
-	teco_expressions_push(teco_interface_ssm(SCI_GETLENGTH, 0, 0));
+	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
 }
 
 /*$ H
@@ -162,7 +164,8 @@ teco_state_start_range(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 	teco_expressions_push(0);
-	teco_expressions_push(teco_interface_ssm(SCI_GETLENGTH, 0, 0));
+	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
 }
 
 /*$ \[rs]
@@ -511,11 +514,13 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_pop_num_calc(&v, 0, error))
 		return;
 
-	if (teco_validate_pos(v)) {
+	sptr_t pos = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, v);
+	/* see teco_validate_pos(): this is saving SCI_POSITIONRELATIVE calls */
+	if (!v || (v > 0 && pos > 0)) {
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS,
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
-		teco_interface_ssm(SCI_GOTOPOS, v, 0);
+		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 
 		if (teco_machine_main_eval_colon(ctx))
 			teco_expressions_push(TECO_SUCCESS);
@@ -531,11 +536,18 @@ static teco_bool_t
 teco_move_chars(teco_int_t n)
 {
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	sptr_t next_pos = teco_interface_ssm(SCI_POSITIONRELATIVE, pos, n);
 
-	if (!teco_validate_pos(pos + n))
+	if (n <= 0) {
+		/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
+		sptr_t dot = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos);
+		if (dot+n < 0)
+			return TECO_FAILURE;
+	} else if (!next_pos) {
 		return TECO_FAILURE;
+	}
 
-	teco_interface_ssm(SCI_GOTOPOS, pos + n, 0);
+	teco_interface_ssm(SCI_GOTOPOS, next_pos, 0);
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 
@@ -879,7 +891,7 @@ static gboolean
 teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_lines, GError **error)
 {
 	teco_bool_t rc;
-	teco_int_t from, len;
+	sptr_t from, len; /* in bytes */
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;
@@ -894,20 +906,32 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 			len = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0) - from;
 			rc = teco_bool(teco_validate_line(line));
 		} else {
-			if (!teco_expressions_pop_num_calc(&len, teco_num_sign, error))
+			teco_int_t len_glyphs;
+			if (!teco_expressions_pop_num_calc(&len_glyphs, teco_num_sign, error))
 				return FALSE;
-			rc = teco_bool(teco_validate_pos(from + len));
+			sptr_t to = teco_interface_ssm(SCI_POSITIONRELATIVE, from, len_glyphs);
+			len = to-from;
+			if (len_glyphs <= 0) {
+				/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
+				sptr_t from_glyphs = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, from);
+				rc = teco_bool(from_glyphs+len_glyphs >= 0);
+			} else {
+				rc = teco_bool(to > 0);
+			}
 		}
 		if (len < 0) {
 			len *= -1;
 			from -= len;
 		}
 	} else {
-		teco_int_t to = teco_expressions_pop_num(0);
-		from = teco_expressions_pop_num(0);
+		teco_int_t to_glyphs = teco_expressions_pop_num(0);
+		sptr_t to = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, to_glyphs);
+		teco_int_t from_glyphs = teco_expressions_pop_num(0);
+		from = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, from_glyphs);
 		len = to - from;
-		rc = teco_bool(len >= 0 && teco_validate_pos(from) &&
-		                           teco_validate_pos(to));
+		/* see teco_validate_pos(): here we are just saving SCI_POSITIONRELATIVE calls */
+		rc = teco_bool(len >= 0 && (!from_glyphs || (from_glyphs > 0 && from > 0)) &&
+		                           (!to_glyphs || (to_glyphs > 0 && to > 0)));
 	}
 
 	if (teco_machine_main_eval_colon(ctx)) {
@@ -1012,25 +1036,61 @@ teco_state_start_delete_chars(teco_machine_main_t *ctx, GError **error)
  *
  * If the position of the queried character is off-page,
  * the command will yield an error.
+ *
+ * If the document is encoded as UTF-8 and there is
+ * an incomplete sequence at the requested position,
+ * -1 is returned.
+ * All other invalid Unicode sequences are returned as -2.
  */
-/** @todo does Scintilla really return code points??? */
 static void
 teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 {
 	teco_int_t v;
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
 		return;
-	v += teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	/*
-	 * NOTE: We cannot use teco_validate_pos() here since
-	 * the end of the buffer is not a valid position for <A>.
-	 */
-	if (v < 0 || v >= teco_interface_ssm(SCI_GETLENGTH, 0, 0)) {
+
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	sptr_t get_pos = teco_interface_ssm(SCI_POSITIONRELATIVE, pos, v);
+	sptr_t len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+
+	if (v <= 0) {
+		/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
+		sptr_t dot = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos);
+		if (dot+v < 0) {
+			teco_error_range_set(error, "A");
+			return;
+		}
+	} else if (!get_pos || get_pos == len) {
 		teco_error_range_set(error, "A");
 		return;
 	}
-	/* internally, the character is casted to signed char */
-	teco_expressions_push((guchar)teco_interface_ssm(SCI_GETCHARAT, v, 0));
+
+	teco_int_t ret;
+
+	if (teco_interface_ssm(SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
+		gchar buf[6+1];
+		struct Sci_TextRangeFull range = {
+			.chrg = {get_pos, MIN(len, get_pos+sizeof(buf)-1)},
+			.lpstrText = buf
+		};
+		/*
+		 * Probably faster than SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
+		 * or repeatedly calling SCI_GETCHARAT.
+		 */
+		teco_interface_ssm(SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
+		/*
+		 * Make sure that the -1/-2 error values are preserved.
+		 * The sign bit in UCS-4/UTF-32 is unused, so this will even
+		 * suffice if TECO_INTEGER == 32.
+		 */
+		ret = (gint32)g_utf8_get_char_validated(buf, -1);
+	} else {
+		// FIXME: Everything else is a single-byte encoding?
+		/* internally, the character is casted to signed char */
+		ret = (guchar)teco_interface_ssm(SCI_GETCHARAT, get_pos, 0);
+	}
+
+	teco_expressions_push(ret);
 }
 
 static teco_state_t *
@@ -2419,19 +2479,39 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	if (!args)
 		return TRUE;
 
-	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-	for (int i = args; i > 0; i--) {
-		gchar chr = (gchar)teco_expressions_peek_num(i-1);
-		teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)&chr);
+	if (teco_interface_ssm(SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
+		/* detect possible errors before introducing side effects */
+		for (int i = args; i > 0; i--) {
+			gunichar chr = teco_expressions_peek_num(i-1);
+			if (!g_unichar_validate(chr)) {
+				teco_error_codepoint_set(error, "I");
+				return FALSE;
+			}
+		}
+		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+		for (int i = args; i > 0; i--) {
+			gunichar chr = teco_expressions_peek_num(i-1);
+			gchar buf[6];
+			teco_interface_ssm(SCI_ADDTEXT,
+			                   g_unichar_to_utf8(chr, buf), (sptr_t)buf);
+		}
+	} else {
+		// FIXME: everything else is a single-byte encoding?
+		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+		for (int i = args; i > 0; i--) {
+			gchar chr = (gchar)teco_expressions_peek_num(i-1);
+			teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)&chr);
+		}
 	}
-	for (int i = args; i > 0; i--)
-		if (!teco_expressions_pop_num_calc(NULL, 0, error))
-			return FALSE;
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
 
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+
+	for (int i = args; i > 0; i--)
+		if (!teco_expressions_pop_num_calc(NULL, 0, error))
+			return FALSE;
 
 	return TRUE;
 }

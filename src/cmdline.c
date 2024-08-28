@@ -180,6 +180,19 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 }
 
 gboolean
+teco_cmdline_rubin(GError **error)
+{
+	if (!teco_cmdline.str.len)
+		return TRUE;
+
+	const gchar *start, *end, *next;
+	start = teco_cmdline.str.data+teco_cmdline.effective_len;
+	end = teco_cmdline.str.data+teco_cmdline.str.len;
+	next = g_utf8_find_next_char(start, end) ? : end;
+	return teco_cmdline_insert(start, next-start, error);
+}
+
+gboolean
 teco_cmdline_keypress_c(gchar key, GError **error)
 {
 	teco_machine_t *machine = &teco_cmdline.machine.parent;
@@ -314,6 +327,18 @@ teco_cmdline_fnmacro(const gchar *name, GError **error)
 	}
 
 	return TRUE;
+}
+
+void
+teco_cmdline_rubout(void)
+{
+	const gchar *p;
+	p = g_utf8_find_prev_char(teco_cmdline.str.data,
+	                          teco_cmdline.str.data+teco_cmdline.effective_len);
+	if (p) {
+		teco_cmdline.effective_len = p - teco_cmdline.str.data;
+		teco_undo_pop(teco_cmdline.effective_len);
+	}
 }
 
 static void TECO_DEBUG_CLEANUP

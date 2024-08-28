@@ -40,6 +40,7 @@ typedef enum {
 	 */
 	TECO_ERROR_SYNTAX,
 	TECO_ERROR_ARGEXPECTED,
+	TECO_ERROR_CODEPOINT,
 	TECO_ERROR_MOVE,
 	TECO_ERROR_WORDS,
 	TECO_ERROR_RANGE,
@@ -71,6 +72,13 @@ teco_error_argexpected_set(GError **error, const gchar *cmd)
 {
 	g_set_error(error, TECO_ERROR, TECO_ERROR_ARGEXPECTED,
 	            "Argument expected for <%s>", cmd);
+}
+
+static inline void
+teco_error_codepoint_set(GError **error, const gchar *cmd)
+{
+	g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+	            "Invalid Unicode codepoint for <%s>", cmd);
 }
 
 static inline void
