@@ -760,13 +760,17 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 		}
 	}
 
+	/*
+	 * NOTE: This does not use SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
+	 * since it may not be safe when copying from register to register.
+	 */
 	g_autofree gchar *str = g_malloc(len + 1);
 
-	struct Sci_TextRange text_range = {
-		.chrg = {.cpMin = from, .cpMax = from + len},
+	struct Sci_TextRangeFull range = {
+		.chrg = {from, from + len},
 		.lpstrText = str
 	};
-	teco_interface_ssm(SCI_GETTEXTRANGE, 0, (sptr_t)&text_range);
+	teco_interface_ssm(SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
 
 	if (teco_machine_main_eval_colon(ctx)) {
 		if (!qreg->vtable->undo_append_string(qreg, error) ||
