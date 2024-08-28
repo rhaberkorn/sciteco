@@ -313,7 +313,6 @@ Features:
    be a special TAB-completion (^G mode?) that completes only buffers
    in the ring. It should also display the numeric buffer ids.
  * properly support Unicode encodings and the character-based model
-   * link against libncursesw if possible
    * translate documents to Unicode strings
    * a position refers to a character/codepoint
  * Progress indication in commandline cursor:
@@ -526,4 +525,5 @@ Documentation:
  * Write some tutorials for the Wiki, e.g. about paragraph
    reflowing...
    Object-oriented SciTECO ideoms etc. ;-)
- * Record a "video" on https://asciinema.org/
+ * What to do with `--xembed`: tabbed, st
+   when used as the git editor, etc.

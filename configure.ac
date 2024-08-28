@@ -226,11 +226,16 @@ case $INTERFACE in
 *curses*)
 	case $INTERFACE in
 	ncurses | netbsd-curses)
-		PKG_CHECK_MODULES(NCURSES, [ncurses], [
+		# The widechar version of ncurses is necessary for Unicode
+		# support even when not using widechar APIs.
+		PKG_CHECK_MODULES(NCURSES, [ncursesw], [
 			CFLAGS="$CFLAGS $NCURSES_CFLAGS"
 			CXXFLAGS="$CXXFLAGS $NCURSES_CFLAGS"
 			LIBS="$LIBS $NCURSES_LIBS"
 		], [
+			# This should be sufficient to detect non-widechar
+			# ncurses versions as well, although we could also check
+			# for an "ncurses" package.
 			AC_CHECK_LIB(ncurses, initscr, , [
 				AC_MSG_ERROR([libncurses missing!])
 			])
