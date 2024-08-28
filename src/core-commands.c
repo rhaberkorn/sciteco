@@ -130,7 +130,7 @@ teco_state_start_dot(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
+	teco_expressions_push(teco_bytes2glyphs(pos));
 }
 
 /*$ Z size
@@ -147,7 +147,7 @@ teco_state_start_zed(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
+	teco_expressions_push(teco_bytes2glyphs(pos));
 }
 
 /*$ H
@@ -165,7 +165,7 @@ teco_state_start_range(teco_machine_main_t *ctx, GError **error)
 		return;
 	teco_expressions_push(0);
 	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-	teco_expressions_push(teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos));
+	teco_expressions_push(teco_bytes2glyphs(pos));
 }
 
 /*$ \[rs]
@@ -514,9 +514,8 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_pop_num_calc(&v, 0, error))
 		return;
 
-	sptr_t pos = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, v);
-	/* see teco_validate_pos(): this is saving SCI_POSITIONRELATIVE calls */
-	if (!v || (v > 0 && pos > 0)) {
+	gssize pos = teco_glyphs2bytes(v);
+	if (pos >= 0) {
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS,
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
@@ -536,16 +535,9 @@ static teco_bool_t
 teco_move_chars(teco_int_t n)
 {
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	sptr_t next_pos = teco_interface_ssm(SCI_POSITIONRELATIVE, pos, n);
-
-	if (n <= 0) {
-		/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
-		sptr_t dot = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos);
-		if (dot+n < 0)
-			return TECO_FAILURE;
-	} else if (!next_pos) {
+	gssize next_pos = teco_glyphs2bytes_relative(pos, n);
+	if (next_pos < 0)
 		return TECO_FAILURE;
-	}
 
 	teco_interface_ssm(SCI_GOTOPOS, next_pos, 0);
 	if (teco_current_doc_must_undo())
@@ -891,7 +883,7 @@ static gboolean
 teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_lines, GError **error)
 {
 	teco_bool_t rc;
-	sptr_t from, len; /* in bytes */
+	gssize from, len; /* in bytes */
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;
@@ -909,15 +901,9 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 			teco_int_t len_glyphs;
 			if (!teco_expressions_pop_num_calc(&len_glyphs, teco_num_sign, error))
 				return FALSE;
-			sptr_t to = teco_interface_ssm(SCI_POSITIONRELATIVE, from, len_glyphs);
+			gssize to = teco_glyphs2bytes_relative(from, len_glyphs);
+			rc = teco_bool(to >= 0);
 			len = to-from;
-			if (len_glyphs <= 0) {
-				/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
-				sptr_t from_glyphs = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, from);
-				rc = teco_bool(from_glyphs+len_glyphs >= 0);
-			} else {
-				rc = teco_bool(to > 0);
-			}
 		}
 		if (len < 0) {
 			len *= -1;
@@ -925,13 +911,11 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 		}
 	} else {
 		teco_int_t to_glyphs = teco_expressions_pop_num(0);
-		sptr_t to = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, to_glyphs);
+		gssize to = teco_glyphs2bytes(to_glyphs);
 		teco_int_t from_glyphs = teco_expressions_pop_num(0);
-		from = teco_interface_ssm(SCI_POSITIONRELATIVE, 0, from_glyphs);
+		from = teco_glyphs2bytes(from_glyphs);
 		len = to - from;
-		/* see teco_validate_pos(): here we are just saving SCI_POSITIONRELATIVE calls */
-		rc = teco_bool(len >= 0 && (!from_glyphs || (from_glyphs > 0 && from > 0)) &&
-		                           (!to_glyphs || (to_glyphs > 0 && to > 0)));
+		rc = teco_bool(len >= 0 && from >= 0 && to >= 0);
 	}
 
 	if (teco_machine_main_eval_colon(ctx)) {
@@ -1050,17 +1034,10 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	sptr_t get_pos = teco_interface_ssm(SCI_POSITIONRELATIVE, pos, v);
+	gssize get_pos = teco_glyphs2bytes_relative(pos, v);
 	sptr_t len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
 
-	if (v <= 0) {
-		/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
-		sptr_t dot = teco_interface_ssm(SCI_COUNTCHARACTERS, 0, pos);
-		if (dot+v < 0) {
-			teco_error_range_set(error, "A");
-			return;
-		}
-	} else if (!get_pos || get_pos == len) {
+	if (get_pos < 0 || get_pos == len) {
 		teco_error_range_set(error, "A");
 		return;
 	}

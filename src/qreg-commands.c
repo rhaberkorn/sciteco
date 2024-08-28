@@ -678,7 +678,7 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
-	teco_int_t from, len;
+	gssize from, len; /* in bytes */
 
 	if (!teco_expressions_eval(FALSE, error))
 		return NULL;
@@ -702,12 +702,11 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 			len *= -1;
 		}
 	} else {
-		teco_int_t to = teco_expressions_pop_num(0);
-		from = teco_expressions_pop_num(0);
-
+		gssize to = teco_glyphs2bytes(teco_expressions_pop_num(0));
+		from = teco_glyphs2bytes(teco_expressions_pop_num(0));
 		len = to - from;
 
-		if (len < 0 || !teco_validate_pos(from) || !teco_validate_pos(to)) {
+		if (len < 0 || from < 0 || to < 0) {
 			teco_error_range_set(error, "X");
 			return NULL;
 		}

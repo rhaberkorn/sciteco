@@ -118,3 +118,87 @@ teco_interface_process_notify(SCNotification *notify)
 	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
 #endif
 }
+
+/**
+ * Convert a glyph index to a byte offset as used by Scintilla.
+ *
+ * This is optimized with the "line character index",
+ * which must always be enabled in UTF-8 documents.
+ *
+ * It is also used to validate glyph indexes.
+ *
+ * @param pos Position in glyphs/characters.
+ * @return Position in bytes or -1 if pos is out of bounds.
+ */
+gssize
+teco_glyphs2bytes(teco_int_t pos)
+{
+	if (pos < 0)
+		return -1; /* invalid position */
+	if (!pos)
+		return 0;
+
+	if (!(teco_interface_ssm(SCI_GETLINECHARACTERINDEX, 0, 0) &
+	      SC_LINECHARACTERINDEX_UTF32))
+		/* assume single-byte encoding */
+		return pos <= teco_interface_ssm(SCI_GETLENGTH, 0, 0) ? pos : -1;
+
+	sptr_t line = teco_interface_ssm(SCI_LINEFROMINDEXPOSITION, pos,
+	                                 SC_LINECHARACTERINDEX_UTF32);
+	sptr_t line_bytes = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0);
+	pos -= teco_interface_ssm(SCI_INDEXPOSITIONFROMLINE, line,
+	                          SC_LINECHARACTERINDEX_UTF32);
+	return teco_interface_ssm(SCI_POSITIONRELATIVE, line_bytes, pos) ? : -1;
+}
+
+/**
+ * Convert byte offset to glyph/character index without bounds checking.
+ */
+teco_int_t
+teco_bytes2glyphs(gsize pos)
+{
+	if (!pos)
+		return 0;
+
+	if (!(teco_interface_ssm(SCI_GETLINECHARACTERINDEX, 0, 0) &
+	      SC_LINECHARACTERINDEX_UTF32))
+		/* assume single-byte encoding */
+		return pos;
+
+	sptr_t line = teco_interface_ssm(SCI_LINEFROMPOSITION, pos, 0);
+	sptr_t line_bytes = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0);
+	return teco_interface_ssm(SCI_INDEXPOSITIONFROMLINE, line,
+	                          SC_LINECHARACTERINDEX_UTF32) +
+	       teco_interface_ssm(SCI_COUNTCHARACTERS, line_bytes, pos);
+}
+
+#define TECO_RELATIVE_LIMIT 1024
+
+/**
+ * Convert a glyph index relative to a byte position to
+ * a byte position.
+ *
+ * Can be used to implement commands with relative character
+ * ranges.
+ * As an optimization, this always counts characters for deltas
+ * smaller than TECO_RELATIVE_LIMIT, so it will be fast
+ * even where the character-index based lookup is too slow
+ * (as on exceedingly long lines).
+ *
+ * @param pos Byte position to start.
+ * @param n Number of glyphs/characters to the left (negative) or
+ *   right (positive) of pos.
+ * @return Position in bytes or -1 if the resulting position is out of bounds.
+ */
+gssize
+teco_glyphs2bytes_relative(gsize pos, teco_int_t n)
+{
+	if (!n)
+		return pos;
+	if (ABS(n) > TECO_RELATIVE_LIMIT)
+		return teco_glyphs2bytes(teco_bytes2glyphs(pos) + n);
+
+	sptr_t res = teco_interface_ssm(SCI_POSITIONRELATIVE, pos, n);
+	/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
+	return res ? : n > 0 ? -1 : teco_bytes2glyphs(pos)+n >= 0 ? 0 : -1;
+}

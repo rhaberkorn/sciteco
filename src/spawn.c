@@ -76,8 +76,8 @@ static struct {
 	GSource *stdin_src, *stdout_src;
 	gboolean interrupted;
 
-	teco_int_t from, to;
-	teco_int_t start;
+	gssize from, to;
+	gsize start;
 	gboolean text_added;
 
 	teco_eol_writer_t stdin_writer;
@@ -202,15 +202,17 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 		break;
 	}
 
-	default:
+	default: {
 		/* pipe and replace character range */
-		if (!teco_expressions_pop_num_calc(&teco_spawn_ctx.to, 0, error) ||
-		    !teco_expressions_pop_num_calc(&teco_spawn_ctx.from, 0, error))
+		teco_int_t from, to;
+		if (!teco_expressions_pop_num_calc(&to, 0, error) ||
+		    !teco_expressions_pop_num_calc(&from, 0, error))
 			return FALSE;
+		teco_spawn_ctx.from = teco_glyphs2bytes(from);
+		teco_spawn_ctx.to = teco_glyphs2bytes(to);
 		rc = teco_bool(teco_spawn_ctx.from <= teco_spawn_ctx.to &&
-		               teco_validate_pos(teco_spawn_ctx.from) &&
-		               teco_validate_pos(teco_spawn_ctx.to));
-		break;
+		               teco_spawn_ctx.from >= 0 && teco_spawn_ctx.to >= 0);
+	}
 	}
 
 	if (teco_is_failure(rc)) {

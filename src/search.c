@@ -38,11 +38,8 @@
 #include "search.h"
 
 typedef struct {
-	/*
-	 * FIXME: Should perhaps all be teco_int_t?
-	 */
-	gint dot;
-	gint from, to;
+	gssize dot;
+	gssize from, to;
 	gint count;
 
 	teco_buffer_t *from_buffer, *to_buffer;
@@ -79,16 +76,16 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 			return FALSE;
 		if (v1 <= v2) {
 			teco_search_parameters.count = 1;
-			teco_search_parameters.from = (gint)v1;
-			teco_search_parameters.to = (gint)v2;
+			teco_search_parameters.from = teco_glyphs2bytes(v1);
+			teco_search_parameters.to = teco_glyphs2bytes(v2);
 		} else {
 			teco_search_parameters.count = -1;
-			teco_search_parameters.from = (gint)v2;
-			teco_search_parameters.to = (gint)v1;
+			teco_search_parameters.from = teco_glyphs2bytes(v2);
+			teco_search_parameters.to = teco_glyphs2bytes(v1);
 		}
 
-		if (!teco_validate_pos(teco_search_parameters.from) ||
-		    !teco_validate_pos(teco_search_parameters.to)) {
+		if (teco_search_parameters.from < 0 ||
+		    teco_search_parameters.to < 0) {
 			/*
 			 * FIXME: In derived classes, the command name will
 			 * no longer be correct.

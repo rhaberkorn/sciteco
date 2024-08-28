@@ -112,6 +112,12 @@ teco_view_setup(teco_view_t *ctx)
 	teco_view_ssm(ctx, SCI_STYLESETBACK, STYLE_CALLTIP, 0xFFFFFF);
 
 	/*
+	 * Documents are UTF-8 by default and all UTF-8 documents
+	 * are expected to have a character index.
+	 */
+	teco_view_ssm(ctx, SCI_ALLOCATELINECHARACTERINDEX, SC_LINECHARACTERINDEX_UTF32, 0);
+
+	/*
 	 * Since we have patched out Scintilla's original SetRepresentations(),
 	 * it no longer resets them on SCI_SETDOCPOINTER.
 	 * Therefore it is sufficient for all kinds of views to initialize

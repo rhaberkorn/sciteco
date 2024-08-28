@@ -160,12 +160,9 @@ void teco_interface_cleanup(void);
  * since sciteco.h should not depend on interface.h.
  */
 
-// FIXME: Should probably return the byte offset
-static inline gboolean
-teco_validate_pos(teco_int_t n)
-{
-	return !n || (n > 0 && teco_interface_ssm(SCI_POSITIONRELATIVE, 0, n) > 0);
-}
+gssize teco_glyphs2bytes(teco_int_t pos);
+teco_int_t teco_bytes2glyphs(gsize pos);
+gssize teco_glyphs2bytes_relative(gsize pos, teco_int_t n);
 
 static inline gboolean
 teco_validate_line(teco_int_t n)
