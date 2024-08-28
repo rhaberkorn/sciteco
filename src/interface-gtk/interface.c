@@ -876,14 +876,6 @@ teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str, gpointer use
 {
 	g_autoptr(GError) error = NULL;
 
-	/*
-	 * FIXME: This is only for consistency as long as we
-	 * do not support Unicode.
-	 */
-	for (char *p = str; *p != '\0'; p = g_utf8_next_char(p))
-		if (g_utf8_get_char(p) >= 0x80)
-			return;
-
 	if (!teco_cmdline_keypress(str, strlen(str), &error) &&
 	    g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT))
 		gtk_main_quit();

@@ -20,6 +20,6 @@
 
 #include <curses.h>
 
-gsize teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width);
+guint teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width);
 
-gsize teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width);
+guint teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width);

@@ -51,6 +51,12 @@ teco_ascii_toupper(gchar chr)
  * A target teco_string_t::data is always null-terminated and thus safe to pass
  * to functions expecting traditional null-terminated C strings if you can
  * guarantee that it contains no null-character other than the trailing one.
+ *
+ * @warning For consistency with C idioms the underlying character type is
+ * `char`, which might be signed!
+ * Accessing individual characters may yield signed integers and that sign
+ * might be preserved when upcasting to a larger signed integer.
+ * In this case you should always cast to `guchar` first.
  */
 typedef struct {
 	/**

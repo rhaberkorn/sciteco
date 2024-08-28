@@ -344,7 +344,7 @@ static struct {
 	WINDOW *msg_window;
 
 	WINDOW *cmdline_window, *cmdline_pad;
-	gsize cmdline_len, cmdline_rubout_len;
+	guint cmdline_len, cmdline_rubout_len;
 
 	GQueue *input_queue;
 
@@ -680,7 +680,7 @@ teco_interface_init_interactive(GError **error)
 #endif
 
 	/* for displaying UTF-8 characters properly */
-	setlocale(LC_CTYPE, "");
+	setlocale(LC_ALL, "");
 
 	teco_interface_init_screen();
 
@@ -1044,7 +1044,8 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 	 * We don't know if it is similar to the last one,
 	 * so resizing makes no sense.
 	 * We approximate the size of the new formatted command-line,
-	 * wasting a few bytes for control characters.
+	 * wasting a few bytes for control characters and
+	 * multi-byte Unicode sequences.
 	 */
 	if (teco_interface.cmdline_pad)
 		delwin(teco_interface.cmdline_pad);
@@ -1626,6 +1627,7 @@ teco_interface_event_loop_iter(void)
 
 	/*
 	 * Function key macros
+	 * FIXME: What about keyname()?
 	 */
 #define FN(KEY) \
 	case KEY_##KEY: \
@@ -1660,7 +1662,7 @@ teco_interface_event_loop_iter(void)
 	 * Control keys and keys with printable representation
 	 */
 	default:
-		if (key < 0x80 &&
+		if (key <= 0xFF &&
 		    !teco_cmdline_keypress_c(key, &teco_interface.event_loop_error))
 			return;
 	}
