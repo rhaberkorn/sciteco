@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <locale.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -305,6 +306,13 @@ main(int argc, char **argv)
 
 	signal(SIGINT, teco_sigint_handler);
 	signal(SIGTERM, teco_sigint_handler);
+
+	/*
+	 * Important for Unicode handling in curses and glib.
+	 * In particular, in order to accept Unicode characters
+	 * in option strings.
+	 */
+	setlocale(LC_ALL, "");
 
 	g_autofree gchar *mung_filename = teco_process_options(&argc, &argv);
 	/*

@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <locale.h>
 #include <errno.h>
 
 #ifdef HAVE_WINDOWS_H
@@ -678,9 +677,6 @@ teco_interface_init_interactive(GError **error)
 	 */
 	PDC_set_function_key(FUNCTION_KEY_SHUT_DOWN, KEY_CLOSE);
 #endif
-
-	/* for displaying UTF-8 characters properly */
-	setlocale(LC_ALL, "");
 
 	teco_interface_init_screen();
 
