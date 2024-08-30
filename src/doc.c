@@ -60,6 +60,7 @@ teco_doc_edit(teco_doc_t *ctx)
 	 *
 	 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER.
 	 * Does that mean the index needs to be recalculated repeatedly as well?
+	 * What if the document/register is made non-UTF-8 afterwards?
 	 */
 	teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
 	              SC_LINECHARACTERINDEX_UTF32, 0);

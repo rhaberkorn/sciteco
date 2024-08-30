@@ -1761,6 +1761,67 @@ teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+/*$ ^E glyphs2bytes bytes2glyphs
+ * glyphs^E -> bytes -- Translate between glyph and byte indexes
+ * bytes:^E -> glyphs
+ * ^E -> bytes
+ * :^E -> length
+ *
+ * Translates from glyph/character to byte indexes when called
+ * without a colon.
+ * Otherwise when colon-modified, translates from byte indexes
+ * back to glyph indexes.
+ * These values can differ in documents with multi-byte
+ * encodings (of which only UTF-8 is supported).
+ * It is especially useful to translate between these indexes
+ * when manually invoking Scintilla messages (\fBES\fP command), as
+ * they almost always take byte positions.
+ *
+ * When called without arguments, \fB^E\fP returns the current
+ * position (dot) in bytes.
+ * This is equivalent, but faster than \(lq.^E\(rq.
+ * \fB:^E\fP without arguments returns the length of the current
+ * document in bytes, which is equivalent but faster than \(lqZ^E\(rq.
+ *
+ * When passing in indexes outside of the document's valid area,
+ * -1 is returned, so the return value can also be interpreted
+ * as a TECO boolean, signalling truth/success for invalid indexes.
+ * This provides an elegant and effective way to validate
+ * buffer addresses.
+ */
+static void
+teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
+{
+	teco_int_t res;
+
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+	if (!teco_expressions_args()) {
+		/*
+		 * This is shorter than .^E or Z^E and avoids unnecessary glyph to
+		 * byte index translations.
+		 * On the other hand :^E is inconsistent, as it will return a byte
+		 * index, instead of glyph index.
+		 */
+		res = teco_interface_ssm(teco_machine_main_eval_colon(ctx)
+		                         ? SCI_GETLENGTH : SCI_GETCURRENTPOS, 0, 0);
+	} else {
+		teco_int_t pos;
+		if (!teco_expressions_pop_num_calc(&pos, 0, error))
+			return;
+		if (teco_machine_main_eval_colon(ctx)) {
+			/* teco_bytes2glyphs() does not check addresses */
+			res = 0 <= pos && pos <= teco_interface_ssm(SCI_GETLENGTH, 0, 0)
+				? teco_bytes2glyphs(pos) : -1;
+		} else {
+			/* negative values for invalid indexes are passed down. */
+			res = teco_glyphs2bytes(pos);
+		}
+	}
+
+	teco_expressions_push(res);
+}
+
 static teco_state_t *
 teco_state_control_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 {
@@ -1787,7 +1848,8 @@ teco_state_control_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 		['C']  = {&teco_state_start, teco_state_control_exit},
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},
-		['R']  = {&teco_state_start, teco_state_control_radix}
+		['R']  = {&teco_state_start, teco_state_control_radix},
+		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes}
 	};
 
 	/*
@@ -2350,6 +2412,70 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+/*$ EE encoding codepage charset
+ * codepageEE -- Edit current document's encoding (codepage/charset)
+ * EE -> codepage
+ *
+ * When called with an argument, it sets the current codepage,
+ * otherwise returns it.
+ * 65001 (UTF-8) is the default for new buffers.
+ * 0 (ANSI) should be used when working with raw bytes.
+ */
+static void
+teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
+{
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+
+	sptr_t old_cp = teco_interface_ssm(SCI_GETCODEPAGE, 0, 0);
+
+	if (!teco_expressions_args()) {
+		teco_expressions_push(old_cp ? : teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0));
+		return;
+	}
+
+	/*
+	 * Set code page
+	 */
+	if (teco_current_doc_must_undo()) {
+		if (old_cp == SC_CP_UTF8) {
+			undo__teco_interface_ssm(SCI_ALLOCATELINECHARACTERINDEX,
+			                         SC_LINECHARACTERINDEX_UTF32, 0);
+			undo__teco_interface_ssm(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
+		} else {
+			undo__teco_interface_ssm(SCI_SETCODEPAGE, old_cp, 0);
+			undo__teco_interface_ssm(SCI_STYLESETCHARACTERSET, STYLE_DEFAULT,
+			                         teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0));
+			undo__teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
+			                         SC_LINECHARACTERINDEX_UTF32, 0);
+		}
+	}
+
+	teco_int_t v;
+	if (!teco_expressions_pop_num_calc(&v, 0, error))
+		return;
+	if (v == SC_CP_UTF8) {
+		teco_interface_ssm(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
+		/*
+		 * UTF-8 documents strictly require the line character index.
+		 * See teco_glyphs2bytes() and teco_bytes2glyphs().
+		 */
+		teco_interface_ssm(SCI_ALLOCATELINECHARACTERINDEX,
+		                   SC_LINECHARACTERINDEX_UTF32, 0);
+		return;
+	}
+
+	teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
+	                   SC_LINECHARACTERINDEX_UTF32, 0);
+	teco_interface_ssm(SCI_STYLESETCHARACTERSET, STYLE_DEFAULT, v);
+	/* 0 is used for ALL single-byte encodings */
+	teco_interface_ssm(SCI_SETCODEPAGE, 0, 0);
+	/*
+	 * FIXME: Should we attempt any code page conversion via
+	 * g_iconv()?
+	 */
+}
+
 /*$ EX exit
  * [bool]EX -- Exit program
  * -EX
@@ -2435,6 +2561,7 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 		['D']  = {&teco_state_start, teco_state_ecommand_flags},
 		['J']  = {&teco_state_start, teco_state_ecommand_properties},
 		['L']  = {&teco_state_start, teco_state_ecommand_eol},
+		['E']  = {&teco_state_start, teco_state_ecommand_encoding},
 		['X']  = {&teco_state_start, teco_state_ecommand_exit}
 	};
 

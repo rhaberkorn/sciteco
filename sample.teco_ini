@@ -30,7 +30,7 @@ EMQ[$SCITECOPATH]/session.tes
 
   !edit!
     ! Add code here to execute when a document is edited !
-    .ESGETCOLUMN,4EJ
+    ESGETCOLUMN,4EJ
     
 
   !close!
