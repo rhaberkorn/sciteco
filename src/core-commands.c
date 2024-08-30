@@ -1010,6 +1010,9 @@ teco_state_start_delete_chars(teco_machine_main_t *ctx, GError **error)
  * This can be an ASCII <code> or Unicode codepoint
  * depending on Scintilla's encoding of the current
  * buffer.
+ * Invalid Unicode byte sequences are reported as
+ * -1 or -2.
+ *
  *   - If <n> is 0, return the <code> of the character
  *     pointed to by dot.
  *   - If <n> is 1, return the <code> of the character

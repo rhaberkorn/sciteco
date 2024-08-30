@@ -53,6 +53,16 @@ teco_doc_edit(teco_doc_t *ctx)
 	 * initialized only once.
 	 */
 	//teco_view_set_representations(teco_qreg_view);
+
+	/*
+	 * Documents are UTF-8 by default and all UTF-8 documents
+	 * are expected to have a character index.
+	 *
+	 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER.
+	 * Does that mean the index needs to be recalculated repeatedly as well?
+	 */
+	teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
+	              SC_LINECHARACTERINDEX_UTF32, 0);
 }
 
 /** @memberof teco_doc_t */

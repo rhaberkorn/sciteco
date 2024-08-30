@@ -204,6 +204,21 @@ teco_qreg_plain_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **error)
 	return TRUE;
 }
 
+static gint
+teco_qreg_plain_get_codepage(teco_qreg_t *qreg)
+{
+	if (teco_qreg_current)
+		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
+
+	teco_doc_edit(&qreg->string);
+	gint ret = teco_view_ssm(teco_qreg_view, SCI_GETCODEPAGE, 0, 0);
+
+	if (teco_qreg_current)
+		teco_doc_edit(&teco_qreg_current->string);
+
+	return ret;
+}
+
 static gboolean
 teco_qreg_plain_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
 {
@@ -250,23 +265,64 @@ teco_qreg_plain_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GError **
 	return TRUE;
 }
 
-static gint
-teco_qreg_plain_get_character(teco_qreg_t *qreg, guint position, GError **error)
+static gboolean
+teco_qreg_plain_get_character(teco_qreg_t *qreg, teco_int_t position,
+                              teco_int_t *chr, GError **error)
 {
-	gint ret = -1;
+	gboolean ret = TRUE;
 
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
 	teco_doc_edit(&qreg->string);
 
-	if (position < teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0))
-		/* internally, values are casted to signed char */
-		ret = (guchar)teco_view_ssm(teco_qreg_view, SCI_GETCHARAT, position, 0);
-	else
+	sptr_t len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
+	gssize off = teco_view_glyphs2bytes(teco_qreg_view, position);
+
+	if (off < 0 || off == len) {
 		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %u out of range", position);
+		            "Position %" TECO_INT_FORMAT " out of range", position);
+		ret = FALSE;
 		/* make sure we still restore the current Q-Register */
+	} else if (teco_view_ssm(teco_qreg_view, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
+		gchar buf[6+1];
+		struct Sci_TextRangeFull range = {
+			.chrg = {off, MIN(len, off+sizeof(buf)-1)},
+			.lpstrText = buf
+		};
+		/*
+		 * Probably faster than SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
+		 * or repeatedly calling SCI_GETCHARAT.
+		 */
+		teco_view_ssm(teco_qreg_view, SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
+		/*
+		 * Make sure that the -1/-2 error values are preserved.
+		 * The sign bit in UCS-4/UTF-32 is unused, so this will even
+		 * suffice if TECO_INTEGER == 32.
+		 */
+		*chr = (gint32)g_utf8_get_char_validated(buf, -1);
+	} else {
+		// FIXME: Everything else is a single-byte encoding?
+		/* internally, the character is casted to signed char */
+		*chr = (guchar)teco_view_ssm(teco_qreg_view, SCI_GETCHARAT, off, 0);
+	}
+
+	if (teco_qreg_current)
+		teco_doc_edit(&teco_qreg_current->string);
+
+	return ret;
+}
+
+static teco_int_t
+teco_qreg_plain_get_length(teco_qreg_t *qreg, GError **error)
+{
+	if (teco_qreg_current)
+		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
+
+	teco_doc_edit(&qreg->string);
+
+	sptr_t len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
+	teco_int_t ret = teco_view_bytes2glyphs(teco_qreg_view, len);
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string);
@@ -329,12 +385,14 @@ teco_qreg_plain_undo_edit(teco_qreg_t *qreg, GError **error)
 	.set_integer		= teco_qreg_plain_set_integer, \
 	.undo_set_integer	= teco_qreg_plain_undo_set_integer, \
 	.get_integer		= teco_qreg_plain_get_integer, \
+	.get_codepage		= teco_qreg_plain_get_codepage, \
 	.set_string		= teco_qreg_plain_set_string, \
 	.undo_set_string	= teco_qreg_plain_undo_set_string, \
 	.append_string		= teco_qreg_plain_append_string, \
 	.undo_append_string	= teco_qreg_plain_undo_set_string, \
 	.get_string		= teco_qreg_plain_get_string, \
 	.get_character		= teco_qreg_plain_get_character, \
+	.get_length		= teco_qreg_plain_get_length, \
 	.exchange_string	= teco_qreg_plain_exchange_string, \
 	.undo_exchange_string	= teco_qreg_plain_undo_exchange_string, \
 	.edit			= teco_qreg_plain_edit, \
@@ -369,6 +427,15 @@ teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
+static gint
+teco_qreg_external_get_codepage(teco_qreg_t *qreg)
+{
+	/*
+	 * External registers are always assumed to be UTF-8-encoded.
+	 */
+	return SC_CP_UTF8;
+}
+
 static gboolean
 teco_qreg_external_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
 {
@@ -394,21 +461,40 @@ teco_qreg_external_undo_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GErr
 	return TRUE;
 }
 
-static gint
-teco_qreg_external_get_character(teco_qreg_t *qreg, guint position, GError **error)
+static gboolean
+teco_qreg_external_get_character(teco_qreg_t *qreg, teco_int_t position,
+                                 teco_int_t *chr, GError **error)
+{
+	g_auto(teco_string_t) str = {NULL, 0};
+
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+		return FALSE;
+
+	if (position < 0 || position >= g_utf8_strlen(str.data, str.len)) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
+		            "Position %" TECO_INT_FORMAT " out of range", position);
+		return FALSE;
+	}
+	const gchar *p = g_utf8_offset_to_pointer(str.data, position);
+
+	/*
+	 * Make sure that the -1/-2 error values are preserved.
+	 * The sign bit in UCS-4/UTF-32 is unused, so this will even
+	 * suffice if TECO_INTEGER == 32.
+	 */
+	*chr = (gint32)g_utf8_get_char_validated(p, -1);
+	return TRUE;
+}
+
+static teco_int_t
+teco_qreg_external_get_length(teco_qreg_t *qreg, GError **error)
 {
 	g_auto(teco_string_t) str = {NULL, 0};
 
 	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
 		return -1;
 
-	if (position >= str.len) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %u out of range", position);
-		return -1;
-	}
-
-	return (guchar)str.data[position];
+	return g_utf8_strlen(str.data, str.len);
 }
 
 /**
@@ -416,10 +502,12 @@ teco_qreg_external_get_character(teco_qreg_t *qreg, guint position, GError **err
  * These rely on custom implementations of get_string() and set_string().
  */
 #define TECO_INIT_QREG_EXTERNAL(...) TECO_INIT_QREG( \
+	.get_codepage		= teco_qreg_external_get_codepage, \
 	.exchange_string	= teco_qreg_external_exchange_string, \
 	.undo_exchange_string	= teco_qreg_external_undo_exchange_string, \
 	.edit			= teco_qreg_external_edit, \
 	.get_character		= teco_qreg_external_get_character, \
+	.get_length		= teco_qreg_external_get_length, \
 	##__VA_ARGS__ \
 )
 
@@ -497,23 +585,6 @@ teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErr
 	return TRUE;
 }
 
-static gint
-teco_qreg_bufferinfo_get_character(teco_qreg_t *qreg, guint position, GError **error)
-{
-	gsize max_len;
-
-	if (!teco_qreg_bufferinfo_get_string(qreg, NULL, &max_len, error))
-		return -1;
-
-	if (position >= max_len) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %u out of range", position);
-		return -1;
-	}
-
-	return (guchar)teco_ring_current->filename[position];
-}
-
 /** @static @memberof teco_qreg_t */
 teco_qreg_t *
 teco_qreg_bufferinfo_new(void)
@@ -527,9 +598,11 @@ teco_qreg_bufferinfo_new(void)
 		.append_string		= teco_qreg_bufferinfo_append_string,
 		.undo_append_string	= teco_qreg_bufferinfo_undo_append_string,
 		.get_string		= teco_qreg_bufferinfo_get_string,
-		.get_character		= teco_qreg_bufferinfo_get_character,
 		/* we don't want to inherit all the other stuff from TECO_INIT_QREG_EXTERNAL(). */
-		.edit			= teco_qreg_external_edit
+		.get_codepage		= teco_qreg_external_get_codepage,
+		.edit			= teco_qreg_external_edit,
+		.get_character		= teco_qreg_external_get_character,
+		.get_length		= teco_qreg_external_get_length
 	);
 
 	return teco_qreg_new(&vtable, "*", 1);

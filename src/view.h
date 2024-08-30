@@ -70,3 +70,7 @@ gboolean teco_view_save_to_file(teco_view_t *ctx, const gchar *filename, GError 
 
 /** @pure @memberof teco_view_t */
 void teco_view_free(teco_view_t *ctx);
+
+gssize teco_view_glyphs2bytes(teco_view_t *ctx, teco_int_t pos);
+teco_int_t teco_view_bytes2glyphs(teco_view_t *ctx, gsize pos);
+gssize teco_view_glyphs2bytes_relative(teco_view_t *ctx, gsize pos, teco_int_t n);

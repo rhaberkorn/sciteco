@@ -47,13 +47,17 @@ typedef const struct {
 	gboolean (*undo_set_integer)(teco_qreg_t *qreg, GError **error);
 	gboolean (*get_integer)(teco_qreg_t *qreg, teco_int_t *ret, GError **error);
 
+	gint (*get_codepage)(teco_qreg_t *qreg);
 	gboolean (*set_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
 	gboolean (*undo_set_string)(teco_qreg_t *qreg, GError **error);
 	gboolean (*append_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
 	gboolean (*undo_append_string)(teco_qreg_t *qreg, GError **error);
 
 	gboolean (*get_string)(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error);
-	gint (*get_character)(teco_qreg_t *qreg, guint position, GError **error);
+	gboolean (*get_character)(teco_qreg_t *qreg, teco_int_t position,
+	                          teco_int_t *chr, GError **error);
+	/* always returns length in glyphs in contrast to get_string() */
+	teco_int_t (*get_length)(teco_qreg_t *qreg, GError **error);
 
 	/*
 	 * These callbacks exist only to optimize teco_qreg_stack_push|pop()

@@ -259,9 +259,9 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	if (teco_machine_main_eval_colon(ctx)) {
 		/* Query Q-Register's existence or string size */
 		if (qreg) {
-			gsize len;
-
-			if (!qreg->vtable->get_string(qreg, NULL, &len, error))
+			/* get_string() would return the size in bytes */
+			teco_int_t len = qreg->vtable->get_length(qreg, error);
+			if (len < 0)
 				return NULL;
 			teco_expressions_push(len);
 		} else {
@@ -281,10 +281,9 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 			return NULL;
 		}
 
-		gint c = qreg->vtable->get_character(qreg, pos, error);
-		if (c < 0)
+		teco_int_t c;
+		if (!qreg->vtable->get_character(qreg, pos, &c, error))
 			return NULL;
-
 		teco_expressions_push(c);
 	} else {
 		/* Query integer */
@@ -311,6 +310,8 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
  * Positions are handled like buffer positions \(em they
  * begin at 0 up to the length of the string minus 1.
  * An error is thrown for invalid positions.
+ * If <q> is Unicode-encoded, -1 or -2 could be returned for
+ * invalid byte sequences.
  * Both non-colon-modified forms of Q require register <q>
  * to be defined and fail otherwise.
  *
@@ -369,24 +370,40 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	gint args = teco_expressions_args();
 
 	if (args > 0) {
-		g_autofree gchar *buffer = g_malloc(args);
+		g_autofree gchar *buffer = NULL;
+		gsize len = 0;
 
-		for (gint i = args; i > 0; i--) {
-			teco_int_t v;
-			if (!teco_expressions_pop_num_calc(&v, 0, error))
-				return NULL;
-			buffer[i-1] = (gchar)v;
+		if (qreg->vtable->get_codepage(qreg) == SC_CP_UTF8) {
+			buffer = g_malloc(6*args);
+			for (gint i = args; i > 0; i--) {
+				teco_int_t v;
+				if (!teco_expressions_pop_num_calc(&v, 0, error))
+					return NULL;
+				if (!g_unichar_validate(v)) {
+					teco_error_codepoint_set(error, "^U");
+					return NULL;
+				}
+				len += g_unichar_to_utf8(v, buffer+len);
+			}
+		} else {
+			buffer = g_malloc(args);
+			for (gint i = args; i > 0; i--) {
+				teco_int_t v;
+				if (!teco_expressions_pop_num_calc(&v, 0, error))
+					return NULL;
+				buffer[len++] = v;
+			}
 		}
 
 		if (colon_modified) {
 			/* append to register */
 			if (!qreg->vtable->undo_append_string(qreg, error) ||
-			    !qreg->vtable->append_string(qreg, buffer, args, error))
+			    !qreg->vtable->append_string(qreg, buffer, len, error))
 				return NULL;
 		} else {
 			/* set register */
 			if (!qreg->vtable->undo_set_string(qreg, error) ||
-			    !qreg->vtable->set_string(qreg, buffer, args, error))
+			    !qreg->vtable->set_string(qreg, buffer, len, error))
 				return NULL;
 		}
 	}

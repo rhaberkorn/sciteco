@@ -154,15 +154,29 @@ void teco_interface_process_notify(SCNotification *notify);
 /** @pure */
 void teco_interface_cleanup(void);
 
+static inline gssize
+teco_glyphs2bytes(teco_int_t pos)
+{
+	return teco_view_glyphs2bytes(teco_interface_current_view, pos);
+}
+
+static inline teco_int_t
+teco_bytes2glyphs(gsize pos)
+{
+	return teco_view_bytes2glyphs(teco_interface_current_view, pos);
+}
+
+static inline gssize
+teco_glyphs2bytes_relative(gsize pos, teco_int_t n)
+{
+	return teco_view_glyphs2bytes_relative(teco_interface_current_view, pos, n);
+}
+
 /*
  * The following functions are here for lack of a better place.
  * They could also be in sciteco.h, but only if declared as non-inline
  * since sciteco.h should not depend on interface.h.
  */
-
-gssize teco_glyphs2bytes(teco_int_t pos);
-teco_int_t teco_bytes2glyphs(gsize pos);
-gssize teco_glyphs2bytes_relative(gsize pos, teco_int_t n);
 
 static inline gboolean
 teco_validate_line(teco_int_t n)

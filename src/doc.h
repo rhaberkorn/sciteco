@@ -42,7 +42,7 @@ typedef struct teco_doc_scintilla_t teco_doc_scintilla_t;
 typedef struct {
 	/**
 	 * Underlying Scintilla document.
-	 * It is created on demand in teco_doc_maybe_create_document(),
+	 * It is created on demand in teco_doc_get_scintilla(),
 	 * so that we don't waste memory on integer-only Q-Registers.
 	 */
 	teco_doc_scintilla_t *doc;
