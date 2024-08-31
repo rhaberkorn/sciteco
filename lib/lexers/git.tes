@@ -1,0 +1,16 @@
+!* Git commit and rebase messages *!
+
+@[lexer.test.git]{
+  :EN*/COMMIT_EDITMSGQ*"S -1 '
+  :EN*/git-rebase-todoQ*
+}
+
+@[lexer.set.git]{
+  :M[color.comment],1M[color.set]
+
+  .U.p
+  J< .-Z"= 1; '
+    0A-#"= ESSTARTSTYLING 1,(Q.lESLINELENGTH)ESSETSTYLING '
+  :L; %.l>
+  Q.pJ
+}

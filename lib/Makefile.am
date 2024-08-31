@@ -100,6 +100,7 @@ dist_lexer_DATA += lexers/verilog.tes \
                    lexers/yaml.tes \
                    lexers/markdown.tes \
                    lexers/asciidoc.tes \
-                   lexers/troff.tes
+                   lexers/troff.tes \
+                   lexers/git.tes
 
 endif
