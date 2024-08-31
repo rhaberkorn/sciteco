@@ -95,7 +95,6 @@ and provides the following \fBtroff\fP macros that
 can be called by documentation authors:
 .
 .TP
-.TQ
 \fB.SCITECO_TOPIC \fItopics...\fR
 .SCITECO_TOPIC .SCITECO_TOPIC SCITECO_TOPIC
 Defines one or more topics in \*(ST's help system.
