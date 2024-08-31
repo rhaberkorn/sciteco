@@ -172,6 +172,12 @@ teco_glyphs2bytes_relative(gsize pos, teco_int_t n)
 	return teco_view_glyphs2bytes_relative(teco_interface_current_view, pos, n);
 }
 
+static inline teco_int_t
+teco_interface_get_character(gsize pos, gsize len)
+{
+	return teco_view_get_character(teco_interface_current_view, pos, len);
+}
+
 /*
  * The following functions are here for lack of a better place.
  * They could also be in sciteco.h, but only if declared as non-inline

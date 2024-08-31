@@ -284,27 +284,8 @@ teco_qreg_plain_get_character(teco_qreg_t *qreg, teco_int_t position,
 		            "Position %" TECO_INT_FORMAT " out of range", position);
 		ret = FALSE;
 		/* make sure we still restore the current Q-Register */
-	} else if (teco_view_ssm(teco_qreg_view, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
-		gchar buf[4+1];
-		struct Sci_TextRangeFull range = {
-			.chrg = {off, MIN(len, off+sizeof(buf)-1)},
-			.lpstrText = buf
-		};
-		/*
-		 * Probably faster than SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
-		 * or repeatedly calling SCI_GETCHARAT.
-		 */
-		teco_view_ssm(teco_qreg_view, SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
-		/*
-		 * Make sure that the -1/-2 error values are preserved.
-		 * The sign bit in UCS-4/UTF-32 is unused, so this will even
-		 * suffice if TECO_INTEGER == 32.
-		 */
-		*chr = (gint32)g_utf8_get_char_validated(buf, -1);
 	} else {
-		// FIXME: Everything else is a single-byte encoding?
-		/* internally, the character is casted to signed char */
-		*chr = (guchar)teco_view_ssm(teco_qreg_view, SCI_GETCHARAT, off, 0);
+		*chr = teco_view_get_character(teco_qreg_view, off, len);
 	}
 
 	if (teco_qreg_current)

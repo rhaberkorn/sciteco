@@ -1045,32 +1045,7 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 		return;
 	}
 
-	teco_int_t ret;
-
-	if (teco_interface_ssm(SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
-		gchar buf[4+1];
-		struct Sci_TextRangeFull range = {
-			.chrg = {get_pos, MIN(len, get_pos+sizeof(buf)-1)},
-			.lpstrText = buf
-		};
-		/*
-		 * Probably faster than SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
-		 * or repeatedly calling SCI_GETCHARAT.
-		 */
-		teco_interface_ssm(SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
-		/*
-		 * Make sure that the -1/-2 error values are preserved.
-		 * The sign bit in UCS-4/UTF-32 is unused, so this will even
-		 * suffice if TECO_INTEGER == 32.
-		 */
-		ret = (gint32)g_utf8_get_char_validated(buf, -1);
-	} else {
-		// FIXME: Everything else is a single-byte encoding?
-		/* internally, the character is casted to signed char */
-		ret = (guchar)teco_interface_ssm(SCI_GETCHARAT, get_pos, 0);
-	}
-
-	teco_expressions_push(ret);
+	teco_expressions_push(teco_interface_get_character(get_pos, len));
 }
 
 static teco_state_t *

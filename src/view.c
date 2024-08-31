@@ -543,3 +543,43 @@ teco_view_glyphs2bytes_relative(teco_view_t *ctx, gsize pos, teco_int_t n)
 	/* SCI_POSITIONRELATIVE may return 0 even if the offset is valid */
 	return res ? : n > 0 ? -1 : teco_view_bytes2glyphs(ctx, pos)+n >= 0 ? 0 : -1;
 }
+
+/**
+ * Get codepoint at given byte offset.
+ *
+ * @param ctx The view to operate on.
+ * @param pos The glyph's byte position
+ * @param len The length of the document in bytes
+ * @return The requested codepoint.
+ *   In UTF-8 encoded documents, this might be -1 (incomplete sequence)
+ *   or -2 (invalid byte sequence).
+ */
+teco_int_t
+teco_view_get_character(teco_view_t *ctx, gsize pos, gsize len)
+{
+	if (teco_view_ssm(ctx, SCI_GETCODEPAGE, 0, 0) != SC_CP_UTF8)
+		/*
+		 * We don't support the asiatic multi-byte encodings,
+		 * so everything else is single-byte codepages.
+		 * NOTE: Internally, the character is casted to signed char
+		 * and may therefore become negative.
+		 */
+		return (guchar)teco_view_ssm(ctx, SCI_GETCHARAT, pos, 0);
+
+	gchar buf[4+1];
+	struct Sci_TextRangeFull range = {
+		.chrg = {pos, MIN(len, pos+sizeof(buf)-1)},
+		.lpstrText = buf
+	};
+	/*
+	 * Probably faster than SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
+	 * or repeatedly calling SCI_GETCHARAT.
+	 */
+	teco_view_ssm(ctx, SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
+	/*
+	 * Make sure that the -1/-2 error values are preserved.
+	 * The sign bit in UCS-4/UTF-32 is unused, so this will even
+	 * suffice if TECO_INTEGER == 32.
+	 */
+	return (gint32)g_utf8_get_char_validated(buf, -1);
+}

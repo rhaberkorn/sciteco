@@ -310,8 +310,10 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
  * Positions are handled like buffer positions \(em they
  * begin at 0 up to the length of the string minus 1.
  * An error is thrown for invalid positions.
- * If <q> is Unicode-encoded, -1 or -2 could be returned for
- * invalid byte sequences.
+ * If <q> is encoded as UTF-8 and there is
+ * an incomplete sequence at the requested position,
+ * -1 is returned.
+ * All other invalid Unicode sequences are returned as -2.
  * Both non-colon-modified forms of Q require register <q>
  * to be defined and fail otherwise.
  *
