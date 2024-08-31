@@ -11,8 +11,9 @@ LR 0X[output-woman] 2LR 0X[input] HK
 :Q[getopt.t]"< EU[getopt.t]Q[output-woman].tec '
 
 EBN[input]
+0EE !* Groff intermediate code is always ASCII *!
 
-! skip whitespace characters !
+!* skip whitespace characters *!
 @#sw{
   <0A-^^ "N 1; ' :C;>
 }
@@ -49,30 +50,32 @@ EBN[input]
   Q.n<.-Z"= 1; ' 0A-10"= 1; ' D>
 ].n }
 
+!* style last N glyphs/characters *!
 1U[default-style]
 @[style]{ [.l
   U.l Q[font]-Q[default-style]"N
-    .-Q.lESSTARTSTYLING Q[font],Q.lESSETSTYLING
+    .-Q.lESSTARTSTYLING Q[font],Q.lESSETSTYLING
   '
 ].l }
 
 [topics]
 
-!*
- * Special characters
- * FIXME: Use UTF8 characters once available
- *!
-[glyphs.**]*
+!* special characters *!
+[glyphs.**]∗
 [glyphs.\-]-
 [glyphs.aa]'
 [glyphs.dq]"
-[glyphs.hy]-
-[glyphs.la]<
-[glyphs.ra]>
-[glyphs.lq]"
-[glyphs.rq]"
+[glyphs.hy]‐
+[glyphs.em]—
+[glyphs.bu]•
+[glyphs.la]⟨
+[glyphs.ra]⟩
+[glyphs.lq]“
+[glyphs.rq]”
 [glyphs.rs]\
 [glyphs.+]+
+[glyphs.->]→
+[glyphs.tm]™
 
 !* process formatter commands *!
 @[format]{ <
@@ -103,16 +106,16 @@ EBN[input]
          * a table). Only the line+column should no longer change.
          * Either store line+column or use markers.
          *!
-        [* EB 0:M[move] .U.d ]*
+        [* EB 0:M[move] U.d ]*
         :EU[topics]\.d:
         C :X[topics]
         L F<
       !cmd.xXsciteco_tt!
-        [* EB 0:M[move] .U[ttstart] ]*
+        [* EB 0:M[move] U[ttstart] ]*
         L F<
       !cmd.xXsciteco_tt_end!
         [* EB 0:M[move]
-          .-Q[ttstart]<
+          -Q[ttstart]<
             Q[ttstart]ESSTARTSTYLING Q[ttstart]ESGETSTYLEAT+16,1ESSETSTYLING
           %[ttstart]>
         ]*
@@ -194,22 +197,27 @@ EBN[input]
       :M#sw :M#gi/Q[res.h]+Q[pos.h]U.[to.h] :M#gi/Q[res.v]+Q[pos.v]U.[to.v] :M#sc
       [* EB
       Q.[to.h]-Q[pos.h]"=
-        ! vertical line !
+        !* vertical line *!
         Q.[to.v]-Q[pos.v]"< Q[pos.v]U.v Q.[to.v]U[pos.v] | Q.[to.v]U.v '
-        1:M[move] I+ %[pos.v]
+        1:M[move] %[pos.v] .-Z"= I R '
+        -A-9472"= 0A-9472"= I┬ | I┐ '
+                | 0A-9472"= I┌ | I╷ ' '
         Q.v-Q[pos.v]<
-          1:M[move] I| %[pos.v]
+          1:M[move] %[pos.v] .-Z"= I R '
+          -A-9472"= 0A-9472"= I┼ | I┤ '
+                  | 0A-9472"= I├ | I│ ' '
         >
-        1:M[move] I+
+        1:M[move] .-Z"= I R '
+        -A-9472"= 0A-9472"= I┴ | I┘ '
+                | 0A-9472"= I└ | I╵ ' '
         Q.[to.v]U[pos.v]
       |
-        ! horizontal line !
+        !* horizontal line
+           FIXME: works only if horizonal lines are drawn first. *!
         Q.[to.h]-Q[pos.h]"< Q[pos.h]U.h Q.[to.h]U[pos.h] | Q.[to.h]U.h '
-        1:M[move] I+ %[pos.h]
-        Q.h-Q[pos.h]<
-          1:M[move] I- %[pos.h]
+        Q.h-Q[pos.h]+1<
+          1:M[move] I─ %[pos.h]
         >
-        1:M[move] I+
         Q.[to.h]U[pos.h]
       '
       ]* F<
@@ -221,14 +229,23 @@ EBN[input]
     :Q.w%[pos.h] :M#sc F<
 
   !cmd.C!
-    :M#sw .(:M#sa).X.w
+    :M#sw 0A-^^u"=
+      C 16 :M#giU.w 
+    |
+      .(:M#sa).X.w 0Q[glyphs.Q.w]U.w
+    '
     [* EB 1:M[move]
-    G[glyphs.Q.w] 1:M[style] ]* :M#sc F<
+    Q.wI 1:M[style] ]* :M#sc F<
 
   !cmd.c!
     :M#sw 0AU.w C
     [* EB 1:M[move]
     G[glyphs.U.w] 1:M[style] ]* :M#sc F<
+
+  !cmd.N!
+    :M#sw :M#giU.w
+    [* EB 1:M[move]
+    Q.wI 1:M[style] ]* :M#sc F<
 
   !cmd.n!
     :M#sw :M#gi :M#gi :M#sc F<
@@ -268,7 +285,8 @@ Q*U*
  * TODO: The size can still be improved by using SCI_SETSTYLINGEX
  * if appropriate.
  *!
-EB J 0U#cs 0U#cd
+EB 0EE !* operate in single-byte mode *!
+J 0U#cs 0U#cd
 <
   .ESGETSTYLEATUs Qs"< Qs= '
   .-Z"< Qs-Q#cs"= C F< ' '
