@@ -285,7 +285,7 @@ teco_qreg_plain_get_character(teco_qreg_t *qreg, teco_int_t position,
 		ret = FALSE;
 		/* make sure we still restore the current Q-Register */
 	} else if (teco_view_ssm(teco_qreg_view, SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
-		gchar buf[6+1];
+		gchar buf[4+1];
 		struct Sci_TextRangeFull range = {
 			.chrg = {off, MIN(len, off+sizeof(buf)-1)},
 			.lpstrText = buf

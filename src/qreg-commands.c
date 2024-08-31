@@ -374,7 +374,8 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 		gsize len = 0;
 
 		if (qreg->vtable->get_codepage(qreg) == SC_CP_UTF8) {
-			buffer = g_malloc(6*args);
+			/* the glib docs wrongly claim that one character can take 6 bytes */
+			buffer = g_malloc(4*args);
 			for (gint i = args; i > 0; i--) {
 				teco_int_t v;
 				if (!teco_expressions_pop_num_calc(&v, 0, error))

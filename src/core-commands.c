@@ -1048,7 +1048,7 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 	teco_int_t ret;
 
 	if (teco_interface_ssm(SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
-		gchar buf[6+1];
+		gchar buf[4+1];
 		struct Sci_TextRangeFull range = {
 			.chrg = {get_pos, MIN(len, get_pos+sizeof(buf)-1)},
 			.lpstrText = buf
