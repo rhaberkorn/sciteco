@@ -48,22 +48,28 @@ teco_doc_edit(teco_doc_t *ctx)
 	teco_view_ssm(teco_qreg_view, SCI_SETSEL, ctx->anchor, (sptr_t)ctx->dot);
 
 	/*
-	 * NOTE: Thanks to a custom Scintilla patch, se representations
+	 * NOTE: Thanks to a custom Scintilla patch, representations
 	 * do not get reset after SCI_SETDOCPOINTER, so they have to be
 	 * initialized only once.
 	 */
 	//teco_view_set_representations(teco_qreg_view);
 
 	/*
-	 * Documents are UTF-8 by default and all UTF-8 documents
-	 * are expected to have a character index.
+	 * All UTF-8 documents are expected to have a character index.
+	 * This allocates nothing if the document is not UTF-8.
+	 * But it is reference counted, so it must not be allocated
+	 * more than once.
 	 *
-	 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER.
-	 * Does that mean the index needs to be recalculated repeatedly as well?
-	 * What if the document/register is made non-UTF-8 afterwards?
+	 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER
+	 * (although I don't know why and where).
+	 * Recalculating it could be inefficient.
+	 * The index is reference-counted. Perhaps we could just allocate
+	 * one more time, so it doesn't get freed when changing documents.
 	 */
-	teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
-	              SC_LINECHARACTERINDEX_UTF32, 0);
+	if (!(teco_view_ssm(teco_qreg_view,
+	                    SCI_GETLINECHARACTERINDEX, 0, 0) & SC_LINECHARACTERINDEX_UTF32))
+		teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
+		              SC_LINECHARACTERINDEX_UTF32, 0);
 }
 
 /** @memberof teco_doc_t */

@@ -1771,6 +1771,9 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 
 	if (!teco_expressions_eval(FALSE, error))
 		return;
+
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+
 	if (!teco_expressions_args()) {
 		/*
 		 * This is shorter than .^E or Z^E and avoids unnecessary glyph to
@@ -1778,13 +1781,12 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 		 * On the other hand :^E is inconsistent, as it will return a byte
 		 * index, instead of glyph index.
 		 */
-		res = teco_interface_ssm(teco_machine_main_eval_colon(ctx)
-		                         ? SCI_GETLENGTH : SCI_GETCURRENTPOS, 0, 0);
+		res = teco_interface_ssm(colon_modified ? SCI_GETLENGTH : SCI_GETCURRENTPOS, 0, 0);
 	} else {
 		teco_int_t pos;
 		if (!teco_expressions_pop_num_calc(&pos, 0, error))
 			return;
-		if (teco_machine_main_eval_colon(ctx)) {
+		if (colon_modified) {
 			/* teco_bytes2glyphs() does not check addresses */
 			res = 0 <= pos && pos <= teco_interface_ssm(SCI_GETLENGTH, 0, 0)
 				? teco_bytes2glyphs(pos) : -1;
@@ -2387,14 +2389,102 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+static const gchar *
+teco_codepage2str(guint codepage)
+{
+	/*
+	 * The multi-byte charsets are excluded, since we don't
+	 * support them in SciTECO, even though Scintilla has them.
+	 * Contrary to the Scintilla documentation, Gtk supports
+	 * most of them.
+	 * Those that are supported are tested, so the codepage
+	 * mapping should be definitive (although there could be
+	 * similar related codepages).
+	 */
+	switch (codepage) {
+	case SC_CP_UTF8:		return "UTF-8";
+	case SC_CHARSET_ANSI:
+	case SC_CHARSET_DEFAULT:	return "ISO-8859-1"; /* LATIN1 */
+	case SC_CHARSET_BALTIC:		return "ISO-8859-13"; /* LATIN7 */
+	//case SC_CHARSET_CHINESEBIG5:	return "BIG5";
+	case SC_CHARSET_EASTEUROPE:	return "ISO-8859-2"; /* LATIN2 */
+	//case SC_CHARSET_GB2312:	return "GB2312";
+	case SC_CHARSET_GREEK:		return "ISO-8859-7"; // CP1253???
+	//case SC_CHARSET_HANGUL:	return "UHC";
+	/* unsure whether this is supported on Gtk */
+	case SC_CHARSET_MAC:		return "MAC";
+	/* not supported by Gtk */
+	case SC_CHARSET_OEM:		return "CP437";
+	/*
+	 * Apparently, this can be CP1251 on the native Windows
+	 * port of Scintilla.
+	 */
+	case SC_CHARSET_RUSSIAN:	return "KOI8-R";
+	case SC_CHARSET_OEM866:		return "CP866";
+	case SC_CHARSET_CYRILLIC:	return "CP1251";
+	//case SC_CHARSET_SHIFTJIS:	return "SHIFT-JIS";
+	//case SC_CHARSET_SYMBOL:
+	case SC_CHARSET_TURKISH:	return "ISO-8859-9"; /* LATIN5 */
+	//case SC_CHARSET_JOHAB:	return "JOHAB";
+	case SC_CHARSET_HEBREW:		return "ISO-8859-8"; // CP1255?
+	/*
+	 * FIXME: Some arabic codepage is supported by Gtk,
+	 * but I am not sure which.
+	 */
+	case SC_CHARSET_ARABIC:		return "ISO-8859-6"; // CP720, CP1256???
+	/* apparently not supported by Gtk */
+	case SC_CHARSET_VIETNAMESE:	return "CP1258";
+	case SC_CHARSET_THAI:		return "ISO-8859-11";
+	case SC_CHARSET_8859_15:	return "ISO-8859-15"; /* LATIN9 */
+	}
+
+	return NULL;
+}
+
 /*$ EE encoding codepage charset
  * codepageEE -- Edit current document's encoding (codepage/charset)
  * EE -> codepage
+ * codepage:EE
+ * :EE -> codepage
  *
  * When called with an argument, it sets the current codepage,
  * otherwise returns it.
+ * The following codepages are supported:
+ * - 0: ANSI (raw bytes)
+ * - 1: ISO-8859-1 (latin1)
+ * - 77: Macintosh Latin encoding
+ * - 161: ISO-8859-7
+ * - 162: ISO-8859-9 (latin5)
+ * - 163: CP1258
+ * - 177: ISO-8859-8
+ * - 178: ISO-8859-6
+ * - 186: ISO-8859-13 (latin7)
+ * - 204: KOI8-R
+ * - 222: ISO-8859-11
+ * - 238: ISO-8859-2 (latin2)
+ * - 255: CP437
+ * - 866: CP866
+ * - 1000: ISO-8859-15 (latin9)
+ * - 1251: CP1251
+ * - 65001: UTF-8
+ *
+ * Displaying characters in the single-byte (non-UTF-8) codepages might
+ * be supported only with the Gtk UI.
+ * At least 77, 178, 163 and 255 are not displayed correctly on Gtk.
  * 65001 (UTF-8) is the default for new buffers.
- * 0 (ANSI) should be used when working with raw bytes.
+ * 0 (ANSI) should be used when working with raw bytes,
+ * but is currently displayed like ISO-8859-1 (latin1).
+ *
+ * \fBEE\fP does not change the buffer contents itself by default, only
+ * how it is displayed and how \*(ST interacts with it.
+ * This allows fixing up the codepage if it is not in the default UTF-8
+ * or if codepage guessing failed.
+ *
+ * When colon-modified the \fB:EE\fP command will also additionally convert
+ * the current buffer contents into the new code page, preserving the
+ * current position (dot).
+ * This will fail if the conversion would be lossy.
+ * Conversions from and to UTF-8 \fIshould\fP always be successful.
  */
 static void
 teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
@@ -2402,53 +2492,153 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 
-	sptr_t old_cp = teco_interface_ssm(SCI_GETCODEPAGE, 0, 0);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+
+	sptr_t old_cp = teco_interface_ssm(SCI_GETCODEPAGE, 0, 0)
+				? : teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0);
 
 	if (!teco_expressions_args()) {
-		teco_expressions_push(old_cp ? : teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0));
+		/* get current code page */
+		teco_expressions_push(old_cp);
 		return;
 	}
 
 	/*
 	 * Set code page
 	 */
-	if (teco_current_doc_must_undo()) {
-		if (old_cp == SC_CP_UTF8) {
+	teco_int_t new_cp;
+	if (!teco_expressions_pop_num_calc(&new_cp, 0, error))
+		return;
+
+	if (old_cp == SC_CP_UTF8 && new_cp == SC_CP_UTF8)
+		return;
+
+	if (teco_current_doc_must_undo() && teco_undo_enabled) {
+		if (old_cp == SC_CP_UTF8) { /* new_cp != SC_CP_UTF8 */
 			undo__teco_interface_ssm(SCI_ALLOCATELINECHARACTERINDEX,
 			                         SC_LINECHARACTERINDEX_UTF32, 0);
 			undo__teco_interface_ssm(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
 		} else {
-			undo__teco_interface_ssm(SCI_SETCODEPAGE, old_cp, 0);
-			undo__teco_interface_ssm(SCI_STYLESETCHARACTERSET, STYLE_DEFAULT,
-			                         teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0));
-			undo__teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
-			                         SC_LINECHARACTERINDEX_UTF32, 0);
+			undo__teco_interface_ssm(SCI_SETCODEPAGE, 0, 0);
+			for (gint style = 0; style <= STYLE_LASTPREDEFINED; style++)
+				undo__teco_interface_ssm(SCI_STYLESETCHARACTERSET, style, old_cp);
+			/*
+			 * The index is internally reference-counted and could underflow,
+			 * so don't do it more than necessary.
+			 */
+			if (new_cp == SC_CP_UTF8)
+				undo__teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
+				                         SC_LINECHARACTERINDEX_UTF32, 0);
 		}
 	}
 
-	teco_int_t v;
-	if (!teco_expressions_pop_num_calc(&v, 0, error))
-		return;
-	if (v == SC_CP_UTF8) {
+	teco_int_t dot_glyphs;
+	if (colon_modified) {
+		sptr_t dot_bytes = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		dot_glyphs = teco_bytes2glyphs(dot_bytes);
+
+		/*
+		 * Convert buffer to new codepage.
+		 *
+		 * FIXME: Could be optimized slightly by converting first
+		 * before the gap, inserting the converted text and then
+		 * converting after the gap.
+		 */
+		const gchar *to_codepage = teco_codepage2str(new_cp);
+		const gchar *from_codepage = teco_codepage2str(old_cp);
+		if (!to_codepage || !from_codepage) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			                    "Unknown or unsupported codepage/charset");
+			return;
+		}
+
+		const gchar *buf = (const gchar *)teco_interface_ssm(SCI_GETCHARACTERPOINTER, 0, 0);
+		gsize len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+		g_autofree gchar *converted;
+		gsize converted_len;
+
+		/*
+		 * This fails if there is no direct translation.
+		 * If we'd use g_convert_with_fallback(), it would be tricky to choose
+		 * fallback characters that will always work.
+		 */
+		converted = g_convert(buf, len, to_codepage, from_codepage,
+		                      NULL, &converted_len, error);
+		if (!converted)
+			return;
+
+		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+		teco_interface_ssm(SCI_CLEARALL, 0, 0);
+		teco_interface_ssm(SCI_APPENDTEXT, converted_len, (sptr_t)converted);
+		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
+		teco_ring_dirtify();
+
+		if (teco_current_doc_must_undo()) {
+			undo__teco_interface_ssm(SCI_GOTOPOS, dot_bytes, 0);
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+		}
+	}
+
+	if (new_cp == SC_CP_UTF8) {
 		teco_interface_ssm(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
 		/*
 		 * UTF-8 documents strictly require the line character index.
 		 * See teco_glyphs2bytes() and teco_bytes2glyphs().
 		 */
+		g_assert(!(teco_interface_ssm(SCI_GETLINECHARACTERINDEX, 0, 0)
+						& SC_LINECHARACTERINDEX_UTF32));
 		teco_interface_ssm(SCI_ALLOCATELINECHARACTERINDEX,
 		                   SC_LINECHARACTERINDEX_UTF32, 0);
-		return;
+	} else {
+		/*
+		 * The index is NOT released automatically when setting the codepage.
+		 * But it is internally reference-counted and could underflow,
+		 * so don't do it more than necessary.
+		 */
+		if (old_cp == SC_CP_UTF8) {
+			teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
+			                   SC_LINECHARACTERINDEX_UTF32, 0);
+			g_assert(!(teco_interface_ssm(SCI_GETLINECHARACTERINDEX, 0, 0)
+							& SC_LINECHARACTERINDEX_UTF32));
+		}
+
+		/*
+		 * Configure a single-byte codepage/charset.
+		 * This requires setting it on all of the possible styles.
+		 * Unfortunately there can theoretically even be 255 (STYLE_MAX) styles.
+		 * This is important only for display purposes - other than that
+		 * all single-byte encodings are handled the same.
+		 *
+		 * FIXME: Should we avoid this if new_cp == 0?
+		 * It will be used for raw byte handling mostly.
+		 * Perhaps we should even set char representations appropriately
+		 * for all non-ANSI codepoints in the 0 codepage.
+		 * But this would also be costly...
+		 */
+		if (teco_current_doc_must_undo()) {
+			/*
+			 * There is a chance the user will see this buffer even if we
+			 * are currently in batch mode.
+			 */
+			for (gint style = 0; style <= STYLE_LASTPREDEFINED; style++)
+				teco_interface_ssm(SCI_STYLESETCHARACTERSET, style, new_cp);
+		} else {
+			/* we must still set it, so that <EE> retrieval works */
+			teco_interface_ssm(SCI_STYLESETCHARACTERSET, STYLE_DEFAULT, new_cp);
+		}
+		/* 0 is used for ALL single-byte encodings */
+		teco_interface_ssm(SCI_SETCODEPAGE, 0, 0);
 	}
 
-	teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
-	                   SC_LINECHARACTERINDEX_UTF32, 0);
-	teco_interface_ssm(SCI_STYLESETCHARACTERSET, STYLE_DEFAULT, v);
-	/* 0 is used for ALL single-byte encodings */
-	teco_interface_ssm(SCI_SETCODEPAGE, 0, 0);
-	/*
-	 * FIXME: Should we attempt any code page conversion via
-	 * g_iconv()?
-	 */
+	if (colon_modified)
+		/*
+		 * Only now, it will be safe to recalculate dot in the new encoding.
+		 * If the new codepage is UTF-8, the line character index will be
+		 * ready only now.
+		 * FIXME: Apparently the line character index is still not ready
+		 * after switching to UTF-8!
+		 */
+		teco_interface_ssm(SCI_GOTOPOS, teco_glyphs2bytes(dot_glyphs), 0);
 }
 
 /*$ EX exit
