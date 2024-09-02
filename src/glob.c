@@ -225,17 +225,19 @@ teco_globber_compile_pattern(const gchar *pattern)
 					*pout++ = '[';
 					break;
 				}
+				/* fall through: escape PCRE metacharacters */
+			case '\\':
+			case '^':
+			case '$':
+			case '.':
+			case '|':
+			case '(':
+			case ')':
+			case '+':
+			case '{':
+				*pout++ = '\\';
 				/* fall through */
 			default:
-				/*
-				 * For simplicity, all non-alphanumeric
-				 * characters are escaped since they could
-				 * be PCRE magic characters.
-				 * g_regex_escape_string() is inefficient.
-				 * character anyway.
-				 */
-				if (!g_ascii_isalnum(*pattern))
-					*pout++ = '\\';
 				*pout++ = *pattern;
 				break;
 			}
@@ -271,12 +273,13 @@ teco_globber_compile_pattern(const gchar *pattern)
 					*pout++ = ']';
 					break;
 				}
-				/* fall through */
-			default:
-				if (!g_ascii_isalnum(*pattern))
-					*pout++ = '\\';
+				/* fall through: escape PCRE metacharacters */
+			case '\\':
+			case '[':
+				*pout++ = '\\';
 				/* fall through */
 			case '-':
+			default:
 				state = STATE_CLASS;
 				*pout++ = *pattern;
 				break;
