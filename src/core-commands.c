@@ -1552,20 +1552,20 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gchar chr, GError **error
 		break;
 	case 'A':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_isalpha((gchar)value);
+			result = g_unichar_isalpha(value);
 		break;
 	case 'C':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_isalnum((gchar)value) ||
+			result = g_unichar_isalnum(value) ||
 			         value == '.' || value == '$' || value == '_';
 		break;
 	case 'D':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_isdigit((gchar)value);
+			result = g_unichar_isdigit(value);
 		break;
 	case 'I':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = G_IS_DIR_SEPARATOR((gchar)value);
+			result = G_IS_DIR_SEPARATOR(value);
 		break;
 	case 'S':
 	case 'T':
@@ -1598,15 +1598,15 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gchar chr, GError **error
 		break;
 	case 'R':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_isalnum((gchar)value);
+			result = g_unichar_isalnum(value);
 		break;
 	case 'V':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_islower((gchar)value);
+			result = g_unichar_islower(value);
 		break;
 	case 'W':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			result = g_ascii_isupper((gchar)value);
+			result = g_unichar_isupper(value);
 		break;
 	default:
 		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,

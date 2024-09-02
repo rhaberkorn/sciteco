@@ -2066,17 +2066,17 @@ For instance the following macro inserts \fIn\fP tab characters
 .TP
 .SCITECO_TOPIC """A"
 .IB n \(dqA
-Applies if \fIn\fP is the code of an alphabetic character.
+Applies if \fIn\fP is the Unicode codepoint of an alphabetic character.
 .TP
 .SCITECO_TOPIC """C"
 .IB n \(dqC
-Applies if \fIn\fP is the code of a symbol constituent.
+Applies if \fIn\fP is the Unicode codepoint of a symbol constituent.
 Like in pattern matching, a symbol constituent is defined
 as an alpha-numeric character, dot, dollar or underscore.
 .TP
 .SCITECO_TOPIC """D"
 .IB n \(dqD
-Applies if \fIn\fP is the code of a digit character (0 to 9).
+Applies if \fIn\fP is the Unicode codepoint of a digit character.
 The current radix is insignificant.
 .TP
 .SCITECO_TOPIC """I"
@@ -2149,16 +2149,16 @@ will commonly write:
 .TP
 .SCITECO_TOPIC """R"
 .IB n \(dqR
-Applies if \fIn\fP is the code of an alpha-numeric character.
+Applies if \fIn\fP is the Unicode codepoint of an alpha-numeric character.
 .TP
 .SCITECO_TOPIC """V"
 .IB n \(dqV
-Applies if \fIn\fP is the code of a lower-case alphabetic
+Applies if \fIn\fP is the Unicode codepoint of a lower-case alphabetic
 character.
 .TP
 .SCITECO_TOPIC """W"
 .IB n \(dqW
-Applies if \fIn\fP is the code of a upper-case alphabetic
+Applies if \fIn\fP is the Unicode codepoint of an upper-case alphabetic
 character.
 .LP
 There are also a number of flow-control commands like
