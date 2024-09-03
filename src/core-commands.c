@@ -2753,24 +2753,31 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 
 	if (teco_interface_ssm(SCI_GETCODEPAGE, 0, 0) == SC_CP_UTF8) {
 		/* detect possible errors before introducing side effects */
-		for (int i = args; i > 0; i--) {
-			gunichar chr = teco_expressions_peek_num(i-1);
-			if (!g_unichar_validate(chr)) {
+		for (gint i = args; i > 0; i--) {
+			teco_int_t chr = teco_expressions_peek_num(i-1);
+			if (chr < 0 || !g_unichar_validate(chr)) {
 				teco_error_codepoint_set(error, "I");
 				return FALSE;
 			}
 		}
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-		for (int i = args; i > 0; i--) {
-			gunichar chr = teco_expressions_peek_num(i-1);
+		for (gint i = args; i > 0; i--) {
+			/* 4 bytes should be enough, but we better follow the documentation */
 			gchar buf[6];
-			teco_interface_ssm(SCI_ADDTEXT,
-			                   g_unichar_to_utf8(chr, buf), (sptr_t)buf);
+			gsize len = g_unichar_to_utf8(teco_expressions_peek_num(i-1), buf);
+			teco_interface_ssm(SCI_ADDTEXT, len, (sptr_t)buf);
 		}
 	} else {
-		// FIXME: everything else is a single-byte encoding?
+		/* everything else is a single-byte encoding */
+		for (gint i = args; i > 0; i--) {
+			teco_int_t chr = teco_expressions_peek_num(i-1);
+			if (chr < 0 || chr > 0xFF) {
+				teco_error_codepoint_set(error, "I");
+				return FALSE;
+			}
+		}
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-		for (int i = args; i > 0; i--) {
+		for (gint i = args; i > 0; i--) {
 			gchar chr = (gchar)teco_expressions_peek_num(i-1);
 			teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)&chr);
 		}
@@ -2781,7 +2788,8 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 
-	for (int i = args; i > 0; i--)
+	/* This is done only now because it can _theoretically_ fail. */
+	for (gint i = args; i > 0; i--)
 		if (!teco_expressions_pop_num_calc(NULL, 0, error))
 			return FALSE;
 
