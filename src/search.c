@@ -113,22 +113,6 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 	return TRUE;
 }
 
-static const gchar *
-teco_regexp_escape_chr(gchar chr)
-{
-	static gchar escaped[] = {'\\', '\0', '\0', '\0'};
-
-	if (!chr) {
-		escaped[1] = 'c';
-		escaped[2] = '@';
-		return escaped;
-	}
-
-	escaped[1] = chr;
-	escaped[2] = '\0';
-	return g_ascii_isalnum(chr) ? escaped + 1 : escaped;
-}
-
 typedef enum {
 	TECO_SEARCH_STATE_START,
 	TECO_SEARCH_STATE_NOT,
@@ -160,6 +144,9 @@ typedef enum {
  *         When a non-empty string is returned, the state has always
  *         been reset to TECO_STATE_STATE_START.
  *         Must be freed with g_free().
+ *
+ * @fixme The allocations could be avoided by letting it append
+ * to the target regexp teco_string_t directly.
  */
 static gchar *
 teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
@@ -183,8 +170,11 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				 */
 				if (!escape_default)
 					return g_strdup("");
-				pattern->len--;
-				return g_strdup(teco_regexp_escape_chr(*pattern->data++));
+				gsize len = g_utf8_next_char(pattern->data) - pattern->data;
+				gchar *escaped = g_regex_escape_string(pattern->data, len);
+				pattern->data += len;
+				pattern->len -= len;
+				return escaped;
 			}
 			break;
 
@@ -246,6 +236,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 		case TECO_SEARCH_STATE_ANYQ: {
 			teco_qreg_t *reg;
 
+			/* FIXME: Once the parser is UTF-8, we need pass a code point here */
 			switch (teco_machine_qregspec_input(teco_search_qreg_machine,
 			                                    *pattern->data, &reg, NULL, error)) {
 			case TECO_MACHINE_QREGSPEC_ERROR:
@@ -298,6 +289,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
  * string argument) are currently not reported as errors.
  *
  * @param pattern The pattern to scan through.
+ *                It must always be in UTF-8.
  *                Modifies the pointer to point after the last
  *                successfully scanned character, so it can be
  *                called recursively. It may also point to the
@@ -315,6 +307,14 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 	g_auto(teco_string_t) re = {NULL, 0};
 
 	do {
+		/*
+		 * FIXME: Currently we are fed single bytes, so there
+		 * could be an incomplete UTF-8 sequence at the end of the pattern.
+		 * This should not be necessary once we have an Unicode-aware parser.
+		 */
+		if (pattern->len > 0 && (gint32)g_utf8_get_char_validated(pattern->data, -1) < 0)
+			break;
+
 		/*
 		 * First check whether it is a class.
 		 * This will not treat individual characters
@@ -346,8 +346,13 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 			case TECO_CTL_KEY('X'): teco_string_append_c(&re, '.'); break;
 			case TECO_CTL_KEY('N'): state = TECO_SEARCH_STATE_NOT; break;
 			default: {
-				const gchar *escaped = teco_regexp_escape_chr(*pattern->data);
+				gsize len = g_utf8_next_char(pattern->data) - pattern->data;
+				/* the allocation could theoretically be avoided by escaping char-wise */
+				g_autofree gchar *escaped = g_regex_escape_string(pattern->data, len);
 				teco_string_append(&re, escaped, strlen(escaped));
+				pattern->data += len;
+				pattern->len -= len;
+				continue;
 			}
 			}
 			break;
@@ -550,8 +555,13 @@ teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
 static gboolean
 teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gsize new_chars, GError **error)
 {
-	static const GRegexCompileFlags flags = G_REGEX_CASELESS | G_REGEX_MULTILINE |
-	                                        G_REGEX_DOTALL | G_REGEX_RAW;
+	/* FIXME: Should G_REGEX_OPTIMIZE be added under certain circumstances? */
+	GRegexCompileFlags flags = G_REGEX_CASELESS | G_REGEX_MULTILINE | G_REGEX_DOTALL;
+
+	/* this is set in teco_state_search_initial() */
+	if (ctx->expectstring.machine.codepage != SC_CP_UTF8)
+		/* single byte encoding */
+		flags |= G_REGEX_RAW;
 
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_SETSEL,
