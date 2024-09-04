@@ -91,7 +91,18 @@ teco_string_diff(const teco_string_t *a, const gchar *b, gsize b_len)
 	return len;
 }
 
-/** @memberof teco_string_t */
+/**
+ * Get the length of the prefix common to two strings
+ * without considering case.
+ *
+ * @fixme This is currently only used for symbols and one/two letter
+ * Q-Register names, which cannot be UTF-8.
+ * If we rewrote this to perform Unicode case folding, we would
+ * also have to check for character validity.
+ * Once our parser is Unicode-aware, this is not necessary.
+ *
+ * @memberof teco_string_t
+ */
 gsize
 teco_string_casediff(const teco_string_t *a, const gchar *b, gsize b_len)
 {

@@ -83,6 +83,12 @@ teco_qreg_execute(teco_qreg_t *qreg, teco_qreg_table_t *qreg_table_locals, GErro
 {
 	g_auto(teco_string_t) macro = {NULL, 0};
 
+	/*
+	 * FIXME: Once we have an Unicode-aware parser,
+	 * we should probably check the encoding of the register.
+	 * On the other hand, we will have to validate the
+	 * UTF-8 codepoints before execution anyway.
+	 */
 	if (!qreg->vtable->get_string(qreg, &macro.data, &macro.len, error) ||
 	    !teco_execute_macro(macro.data, macro.len, qreg_table_locals, error)) {
 		teco_error_add_frame_qreg(qreg->head.name.data, qreg->head.name.len);
@@ -1310,6 +1316,7 @@ teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gchar chr, 
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
+		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
 		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
 	}
 	return teco_state_qregspec_done(ctx, error);
@@ -1334,6 +1341,7 @@ teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gchar chr, GEr
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
+		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
 		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
 	}
 	return &teco_state_qregspec_secondchar;
@@ -1352,6 +1360,7 @@ teco_state_qregspec_secondchar_input(teco_machine_qregspec_t *ctx, gchar chr, GE
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
+		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
 		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
 	}
 	return teco_state_qregspec_done(ctx, error);
