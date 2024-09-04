@@ -1647,6 +1647,12 @@ Expands to the character whose code is stored in the numeric
 part of Q-Register \fIq\fP.
 For instance if register \(lqA\(rq contains the code 66,
 \(lq^EUa\(rq expands to the character \(lqB\(rq.
+The interpretation of this code depends on the context.
+Within inserts and searches (\fBI\fP, \fBS\fP, etc.) bytes or Unicode codepoints
+are expected depending on the buffer's encoding.
+Operations on registers (\fBEU\fP) similarily consult the
+register's encoding.
+Everything else expects Unicode codepoints.
 .TP
 .SCITECO_TOPIC ^EQ ^EQq
 .BI ^EQ q

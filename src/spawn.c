@@ -164,6 +164,11 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
 
+	/*
+	 * Command-lines and file names are always assumed to be UTF-8.
+	 */
+	teco_undo_guint(ctx->expectstring.machine.codepage) = SC_CP_UTF8;
+
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;
 

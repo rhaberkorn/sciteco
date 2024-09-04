@@ -204,14 +204,14 @@ teco_qreg_plain_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **error)
 	return TRUE;
 }
 
-static gint
+static guint
 teco_qreg_plain_get_codepage(teco_qreg_t *qreg)
 {
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
 	teco_doc_edit(&qreg->string);
-	gint ret = teco_view_ssm(teco_qreg_view, SCI_GETCODEPAGE, 0, 0);
+	guint ret = teco_view_get_codepage(teco_qreg_view);
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string);
@@ -408,7 +408,7 @@ teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
-static gint
+static guint
 teco_qreg_external_get_codepage(teco_qreg_t *qreg)
 {
 	/*

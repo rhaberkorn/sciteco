@@ -47,7 +47,7 @@ typedef const struct {
 	gboolean (*undo_set_integer)(teco_qreg_t *qreg, GError **error);
 	gboolean (*get_integer)(teco_qreg_t *qreg, teco_int_t *ret, GError **error);
 
-	gint (*get_codepage)(teco_qreg_t *qreg);
+	guint (*get_codepage)(teco_qreg_t *qreg);
 	gboolean (*set_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
 	gboolean (*undo_set_string)(teco_qreg_t *qreg, GError **error);
 	gboolean (*append_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);

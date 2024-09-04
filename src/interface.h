@@ -154,6 +154,12 @@ void teco_interface_process_notify(SCNotification *notify);
 /** @pure */
 void teco_interface_cleanup(void);
 
+static inline guint
+teco_interface_get_codepage(void)
+{
+	return teco_view_get_codepage(teco_interface_current_view);
+}
+
 static inline gssize
 teco_glyphs2bytes(teco_int_t pos)
 {

@@ -309,9 +309,6 @@ typedef enum {
 /**
  * A stringbuilding state machine.
  *
- * @fixme Should contain the escape char (currently in teco_machine_expectstring_t),
- * so that we can escape it via ^Q.
- *
  * @extends teco_machine_t
  */
 typedef struct teco_machine_stringbuilding_t {
@@ -350,6 +347,13 @@ typedef struct teco_machine_stringbuilding_t {
 	 * (see teco_state_stringbuilding_start_process_edit_cmd()).
 	 */
 	teco_string_t *result;
+
+	/**
+	 * Encoding of string in `result`.
+	 * This is inherited from the embedding command and may depend on
+	 * the buffer's or Q-Register's encoding.
+	 */
+	guint codepage;
 } teco_machine_stringbuilding_t;
 
 void teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gchar escape_char,
@@ -508,6 +512,7 @@ void teco_machine_main_clear(teco_machine_main_t *ctx);
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(teco_machine_main_t, teco_machine_main_clear);
 
+gboolean teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error);
 teco_state_t *teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **error);
 gboolean teco_state_expectstring_refresh(teco_machine_main_t *ctx, GError **error);
 
@@ -533,6 +538,7 @@ gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco
 		return teco_state_expectstring_input(ctx, chr, error); \
 	} \
 	TECO_DEFINE_STATE(NAME, \
+		.initial_cb = (teco_state_initial_cb_t)teco_state_expectstring_initial, \
 		.refresh_cb = (teco_state_refresh_cb_t)teco_state_expectstring_refresh, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectstring_process_edit_cmd, \

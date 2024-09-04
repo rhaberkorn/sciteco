@@ -2494,8 +2494,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 
 	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
 
-	sptr_t old_cp = teco_interface_ssm(SCI_GETCODEPAGE, 0, 0)
-				? : teco_interface_ssm(SCI_STYLEGETCHARACTERSET, STYLE_DEFAULT, 0);
+	guint old_cp = teco_interface_get_codepage();
 
 	if (!teco_expressions_args()) {
 		/* get current code page */
@@ -2744,6 +2743,12 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 {
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
+
+	/*
+	 * Current document's encoding determines the behaviour of
+	 * string building constructs.
+	 */
+	teco_undo_guint(ctx->expectstring.machine.codepage) = teco_interface_get_codepage();
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;

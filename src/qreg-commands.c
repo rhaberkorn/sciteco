@@ -470,6 +470,23 @@ TECO_DEFINE_STATE_EXPECTQREG(teco_state_eucommand,
 	.expectqreg.type = TECO_QREG_OPTIONAL_INIT
 );
 
+static gboolean
+teco_state_setqregstring_building_initial(teco_machine_main_t *ctx, GError **error)
+{
+	if (ctx->mode > TECO_MODE_NORMAL)
+		return TRUE;
+
+	teco_qreg_t *qreg;
+	teco_machine_qregspec_get_results(ctx->expectqreg, &qreg, NULL);
+
+	/*
+	 * The expected codepage of string building constructs is determined
+	 * by the Q-Register.
+	 */
+	teco_undo_guint(ctx->expectstring.machine.codepage) = qreg->vtable->get_codepage(qreg);
+	return TRUE;
+}
+
 static teco_state_t *
 teco_state_setqregstring_building_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
@@ -487,6 +504,7 @@ teco_state_setqregstring_building_done(teco_machine_main_t *ctx, const teco_stri
  * characters \fBenabled\fP.
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_setqregstring_building,
+	.initial_cb = (teco_state_initial_cb_t)teco_state_setqregstring_building_initial,
 	.expectstring.string_building = TRUE
 );
 

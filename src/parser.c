@@ -410,6 +410,7 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, gcha
 		/* parse-only mode */
 		return &teco_state_stringbuilding_start;
 
+	/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
 	switch (ctx->mode) {
 	case TECO_STRINGBUILDING_MODE_UPPER:
 		chr = g_ascii_toupper(chr);
@@ -442,6 +443,7 @@ teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gchar 
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_LOWER;
 	} else {
+		/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
 		teco_string_append_c(ctx->result, g_ascii_tolower(chr));
 	}
 
@@ -465,6 +467,7 @@ teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gchar 
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_UPPER;
 	} else {
+		/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
 		teco_string_append_c(ctx->result, g_ascii_toupper(chr));
 	}
 
@@ -576,15 +579,28 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gchar
 	teco_int_t value;
 	if (!qreg->vtable->get_integer(qreg, &value, error))
 		return NULL;
-	if (value < 0 || value > 0xFF) {
-		g_autofree gchar *name_printable = teco_string_echo(qreg->head.name.data, qreg->head.name.len);
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Q-Register \"%s\" does not contain a valid character", name_printable);
-		return NULL;
+
+	if (ctx->codepage == SC_CP_UTF8) {
+		if (value < 0 || !g_unichar_validate(value))
+			goto error_codepoint;
+		/* 4 bytes should be enough, but we better follow the documentation */
+		gchar buf[6];
+		gsize len = g_unichar_to_utf8(value, buf);
+		teco_string_append(ctx->result, buf, len);
+	} else {
+		if (value < 0 || value > 0xFF)
+			goto error_codepoint;
+		teco_string_append_c(ctx->result, (gchar)value);
 	}
 
-	teco_string_append_c(ctx->result, (gchar)value);
 	return &teco_state_stringbuilding_start;
+
+error_codepoint: {
+	g_autofree gchar *name_printable = teco_string_echo(qreg->head.name.data, qreg->head.name.len);
+	g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+	            "Q-Register \"%s\" does not contain a valid codepoint", name_printable);
+	return NULL;
+}
 }
 
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_u);
@@ -708,6 +724,7 @@ teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gchar escap
 	teco_machine_init(&ctx->parent, &teco_state_stringbuilding_start, must_undo);
 	ctx->escape_char = escape_char;
 	ctx->qreg_table_locals = locals;
+	ctx->codepage = SC_CP_UTF8;
 }
 
 void
@@ -744,6 +761,14 @@ teco_machine_stringbuilding_clear(teco_machine_stringbuilding_t *ctx)
 {
 	if (ctx->machine_qregspec)
 		teco_machine_qregspec_free(ctx->machine_qregspec);
+}
+
+gboolean
+teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error)
+{
+	if (ctx->mode == TECO_MODE_NORMAL)
+		teco_undo_guint(ctx->expectstring.machine.codepage) = SC_CP_UTF8;
+	return TRUE;
 }
 
 teco_state_t *

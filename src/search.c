@@ -60,6 +60,8 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
 
+	teco_undo_guint(ctx->expectstring.machine.codepage) = teco_interface_get_codepage();
+
 	if (G_UNLIKELY(!teco_search_qreg_machine))
 		teco_search_qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals,
 		                                                     ctx->parent.must_undo);
@@ -978,11 +980,19 @@ teco_state_search_delete_done(teco_machine_main_t *ctx, const teco_string_t *str
  */
 TECO_DEFINE_STATE_SEARCH(teco_state_search_delete);
 
+static gboolean
+teco_state_replace_insert_initial(teco_machine_main_t *ctx, GError **error)
+{
+	if (ctx->mode == TECO_MODE_NORMAL)
+		teco_undo_guint(ctx->expectstring.machine.codepage) = teco_interface_get_codepage();
+	return TRUE;
+}
+
 /*
  * FIXME: Could be static
  */
 TECO_DEFINE_STATE_INSERT(teco_state_replace_insert,
-	.initial_cb = NULL
+	.initial_cb = (teco_state_initial_cb_t)teco_state_replace_insert_initial
 );
 
 static teco_state_t *
