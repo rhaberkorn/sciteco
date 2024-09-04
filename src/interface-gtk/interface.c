@@ -881,6 +881,45 @@ teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str, gpointer use
 		gtk_main_quit();
 }
 
+/**
+ * Try to find an ANSI (latin) key for a given keypress.
+ *
+ * If the given key press does not generate a key from the ANSI
+ * range, it tries to find one in another group.
+ *
+ * @param event Key event to look up. In case of success,
+ *   this event structure might also be written to.
+ * @return The codepoint of the ANSI version or 0 if there is
+ *   no fitting ANSI/latin key.
+ */
+static gchar
+teco_interface_get_ansi_key(GdkEventKey *event)
+{
+	gunichar cp = gdk_keyval_to_unicode(event->keyval);
+	if (cp && cp < 0x80)
+		return cp;
+
+	GdkKeymap *map = gdk_keymap_get_for_display(gdk_window_get_display(event->window));
+	g_autofree GdkKeymapKey *keys = NULL;
+	g_autofree guint *keyvals = NULL;
+	gint n_entries = 0;
+
+	gdk_keymap_get_entries_for_keycode(map, event->hardware_keycode,
+	                                   &keys, &keyvals, &n_entries);
+	for (gint i = 0; i < n_entries; i++) {
+		g_assert(keys[i].keycode == event->hardware_keycode);
+		cp = gdk_keyval_to_unicode(keyvals[i]);
+		if (cp && cp < 0x80 &&
+		    gdk_keyval_is_upper(keyvals[i]) == gdk_keyval_is_upper(event->keyval)) {
+			event->keyval = keyvals[i];
+			event->group = keys[i].group;
+			return cp;
+		}
+	}
+
+	return 0;
+}
+
 static gboolean
 teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 {
@@ -947,29 +986,46 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 	/*
 	 * Control keys and keys with printable representation
 	 */
-	default: {
-		gunichar u = gdk_keyval_to_unicode(event->keyval);
-
-		if (u && u < 0x80 && (event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK) {
-			/*
-			 * NOTE: Alt-Gr key-combinations are sometimes reported as
-			 * Ctrl+Alt, so we filter those out.
-			 */
-			if (!teco_cmdline_keypress_c(TECO_CTL_KEY(g_ascii_toupper(u)), error))
-				return FALSE;
-		} else {
-			/*
-			 * This is necessary to handle dead keys and in the future
-			 * for inputting Asian languages.
-			 *
-			 * FIXME: We do not yet support preediting.
-			 * It would be easier to forward the event to the Scintilla
-			 * widget and use its existing IM support.
-			 * But this breaks the event freezing and results in flickering.
-			 */
-			gtk_im_context_filter_keypress(teco_interface.input_method, event);
+	default:
+		/*
+		 * NOTE: Alt-Gr key-combinations are sometimes reported as
+		 * Ctrl+Alt, so we filter those out.
+		 */
+		if ((event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK) {
+			gchar c = teco_interface_get_ansi_key(event);
+			if (c) {
+				if (!teco_cmdline_keypress_c(TECO_CTL_KEY(g_ascii_toupper(c)), error))
+					return FALSE;
+				break;
+			}
 		}
-	}
+
+		/*
+		 * If the current state is case-insensitive, it is a command name -
+		 * which consists only of ANSI letters - we try to
+		 * accept non-ANSI letters as well.
+		 * This means, you don't have to change keyboard layouts
+		 * so often.
+		 * FIXME: This could be made to work with string-building constructs
+		 * within Q-Register specs as well.
+		 * Unfortunately, Q-Reg specs and string building can be nested
+		 * indefinitely.
+		 * This would effectively require a new is_case_sensitive_cb().
+		 */
+		if (teco_cmdline.machine.parent.current->is_case_insensitive ||
+		    teco_cmdline.machine.expectstring.machine.parent.current->is_case_insensitive)
+			teco_interface_get_ansi_key(event);
+
+		/*
+		 * This is necessary to handle dead keys and in the future
+		 * for inputting Asian languages.
+		 *
+		 * FIXME: We do not yet support preediting.
+		 * It would be easier to forward the event to the Scintilla
+		 * widget and use its existing IM support.
+		 * But this breaks the event freezing and results in flickering.
+		 */
+		gtk_im_context_filter_keypress(teco_interface.input_method, event);
 	}
 
 	teco_interface_refresh(teco_interface_current_view != last_view);

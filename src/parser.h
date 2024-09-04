@@ -189,6 +189,15 @@ struct teco_state_t {
 	 */
 	bool is_start : 1;
 	/**
+	 * Whether this state accepts case insensitive characters,
+	 * ie. is part of a command name, that can be case folded.
+	 * This is also used to determine which state accepts only
+	 * ANSI characters.
+	 * @fixme But it should be callback to detect all
+	 * string building constructs nested in Q-Reg specs.
+	 */
+	bool is_case_insensitive : 1;
+	/**
 	 * Function key macro mask.
 	 * This is not a bitmask since it is compared with values set
 	 * from TECO, so the bitorder needs to be defined.
@@ -252,13 +261,14 @@ gboolean teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_m
  * @implements TECO_DEFINE_STATE
  * @ingroup states
  *
- * Base class of states with case-insenstive input.
+ * Base class of states with case-insensitive input.
  *
  * This is meant for states accepting command characters
  * that can possibly be case-folded.
  */
 #define TECO_DEFINE_STATE_CASEINSENSITIVE(NAME, ...) \
 	TECO_DEFINE_STATE(NAME, \
+		.is_case_insensitive = TRUE, \
 		.process_edit_cmd_cb = teco_state_caseinsensitive_process_edit_cmd, \
 		##__VA_ARGS__ \
 	)
