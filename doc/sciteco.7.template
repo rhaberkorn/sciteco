@@ -86,17 +86,22 @@ regular commands for command-line editing.
 .SH KEY TRANSLATION
 .
 When the user presses a key or key-combination it is first translated
-to an ASCII character.
-All immediate editing commands and regular \*(ST commands operate on
+to an UTF-8 string.
+All immediate editing commands and regular \*(ST commands however operate on
 a language based solely on
 .B ASCII
-characters.
+codes, which is a subset of Unicode.
 The rules for translating keys are as follows:
 .RS
 .IP 1. 4
 Keys with a printable representation (letters, digits and special
-characters) are translated to their printable representation.
-Shift-combinations automatically result in upper-case letters.
+characters) are translated to their printable representation
+according to the current keyboard layout and modifier keys.
+On the Gtk UI, \*(ST tries to automatically take ANSI letter
+values in situations where the parser accepts only ANSI
+characters.
+\# On Curses, you might need key macros to achieve the same,
+\# but they are not yet implemented.
 .IP 2.
 .SCITECO_TOPIC ctrl
 Control-combinations (e.g. CTRL+A) are translated to control
@@ -104,7 +109,9 @@ codes, that is a code smaller than 32.
 The control code can be calculated by stripping the seventh bit
 from the upper-case letter's ASCII code.
 So for instance, the upper or lower case A (65) will be translated
-to code 1, B to code 2, ecetera.
+to code 1, B (66) to code 2, ecetera.
+\*(ST will always use latin letters regardless of the current
+keyboard layout.
 \*(ST echos control codes as Caret followed by the corresponding
 upper case letter, so you seldomly need to know a control codes
 actual numeric code.
@@ -1068,11 +1075,24 @@ Every document has a current position called dot
 (after the \(lq.\(rq command that returns it).
 A document may contain any sequence of bytes but positions
 refer to characters that might not correspond to individual
-bytes depending on the document's encoding.
+bytes depending on the document's encoding (see \fBEE\fP command).
+The \fB^E\fP command can be used to translate between byte
+and character/glyph positions.
 Consequently when querying the code at a character position
 or inserting characters by code, the code may be an Unicode
 codepoint instead of byte-sized integer.
-Currently however, \*(ST will only handle ASCII files.
+.LP
+Currently, \*(ST supports UTF-8 and single-byte ANSI encodings,
+that can also be used for editing raw binary files.
+\# You can configure other single-byte code pages with EE,
+\# but there isn't yet any way to insert characters.
+UTF-8 is the default codepage for new buffers and Q-Registers.
+While navigation in documents with single-byte encodings
+takes place in constant time, \*(ST uses heuristics in
+UTF-8 documents for translating between byte and character
+offsets which are slower especially when \(lqjumping\(rq
+into very large lines.
+\# But there are optimizations for R, C and A...
 .LP
 .SCITECO_TOPIC "EOL translation"
 To simplify working with files using different end of line

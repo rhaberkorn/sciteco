@@ -74,8 +74,10 @@ Features
 * Munging: Macros may be munged, that is executed in batch mode. In other words, SciTECO
   can be used for scripting.
   By default, a profile is munged.
-* 8-bit clean: SciTECO can be used to edit binary files if automatic EOL conversion
-  is turned off (`16,0ED`).
+* Full Unicode (UTF-8) support: The document is still represented as a random-accessible
+  codepoint sequence.
+* 8-bit clean: SciTECO can be used to edit binary files if the encoding is changed to
+  ANSI (`0EE`) and automatic EOL conversion is turned off (`16,0ED`).
 * Self-documenting: An integrated indexed help system allows browsing formatted documentation
   about commands, macros and concepts within SciTECO (`?` command).
   Macro packages can be documented with the `tedoc` tool, generating man pages.
