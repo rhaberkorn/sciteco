@@ -73,7 +73,7 @@ Z"=
 |
   [session.path] ! disables session saving !
   [.f
-    <:L;R 0X.f [* EBQ.f ]* L>
+    <:L;R 0X.f [* EBN.f ]* L>
   ].f
   -EF
 '
