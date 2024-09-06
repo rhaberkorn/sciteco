@@ -382,7 +382,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 				teco_int_t v;
 				if (!teco_expressions_pop_num_calc(&v, 0, error))
 					return NULL;
-				if (!g_unichar_validate(v)) {
+				if (v < 0 || !g_unichar_validate(v)) {
 					teco_error_codepoint_set(error, "^U");
 					return NULL;
 				}
@@ -394,6 +394,10 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 				teco_int_t v;
 				if (!teco_expressions_pop_num_calc(&v, 0, error))
 					return NULL;
+				if (v < 0 || v > 0xFF) {
+					teco_error_codepoint_set(error, "^U");
+					return NULL;
+				}
 				buffer[len++] = v;
 			}
 		}
