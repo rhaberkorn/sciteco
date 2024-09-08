@@ -86,7 +86,7 @@ teco_int_t
 teco_expressions_pop_num(guint index)
 {
 	teco_int_t n = 0;
-	teco_operator_t op = teco_expressions_pop_op(0);
+	G_GNUC_UNUSED teco_operator_t op = teco_expressions_pop_op(0);
 
 	g_assert(op == TECO_OP_NUMBER);
 

@@ -23,6 +23,10 @@ AC_CANONICAL_HOST
 
 AX_CHECK_ENABLE_DEBUG
 AM_CONDITIONAL(DEBUG, [test x$ax_enable_debug != xno])
+if [[ x$ax_enable_debug = xno ]]; then
+	# glib does not look at NDEBUG
+	AC_DEFINE(G_DISABLE_ASSERT, 1, [Disable g_assert()])
+fi
 
 # Use the user provided CXXFLAGS for Scintilla as well.
 # This makes sure that the same optimizations are applied
