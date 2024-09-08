@@ -1040,7 +1040,7 @@ teco_interface_event_loop(GError **error)
 	g_assert(scitecoconfig_reg != NULL);
 	g_auto(teco_string_t) scitecoconfig = {NULL, 0};
 	if (!scitecoconfig_reg->vtable->get_string(scitecoconfig_reg,
-	                                           &scitecoconfig.data, &scitecoconfig.len, error))
+	                                           &scitecoconfig.data, &scitecoconfig.len, NULL, error))
 		return FALSE;
 	if (teco_string_contains(&scitecoconfig, '\0')) {
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,

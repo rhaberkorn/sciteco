@@ -1451,7 +1451,7 @@ teco_state_changedir_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 		teco_qreg_t *qreg = teco_qreg_table_find(&teco_qreg_table_globals, "$HOME", 5);
 		g_assert(qreg != NULL);
 		teco_string_t home;
-		if (!qreg->vtable->get_string(qreg, &home.data, &home.len, error))
+		if (!qreg->vtable->get_string(qreg, &home.data, &home.len, NULL, error))
 			return NULL;
 
 		/*
@@ -2634,8 +2634,6 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		 * Only now, it will be safe to recalculate dot in the new encoding.
 		 * If the new codepage is UTF-8, the line character index will be
 		 * ready only now.
-		 * FIXME: Apparently the line character index is still not ready
-		 * after switching to UTF-8!
 		 */
 		teco_interface_ssm(SCI_GOTOPOS, teco_glyphs2bytes(dot_glyphs), 0);
 }

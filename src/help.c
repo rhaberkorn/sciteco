@@ -94,7 +94,7 @@ teco_help_init(GError **error)
 	teco_qreg_t *lib_reg = teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECOPATH", 12);
 	g_assert(lib_reg != NULL);
 	g_auto(teco_string_t) lib_path = {NULL, 0};
-	if (!lib_reg->vtable->get_string(lib_reg, &lib_path.data, &lib_path.len, error))
+	if (!lib_reg->vtable->get_string(lib_reg, &lib_path.data, &lib_path.len, NULL, error))
 		return FALSE;
 	/*
 	 * FIXME: lib_path may contain null-bytes.

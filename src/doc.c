@@ -30,8 +30,31 @@
 #include "doc.h"
 
 static inline teco_doc_scintilla_t *
+teco_doc_scintilla_ref(teco_doc_scintilla_t *doc)
+{
+	if (doc)
+		teco_view_ssm(teco_qreg_view, SCI_ADDREFDOCUMENT, 0, (sptr_t)doc);
+	return doc;
+}
+
+static inline void
+teco_doc_scintilla_release(teco_doc_scintilla_t *doc)
+{
+	if (doc)
+		teco_view_ssm(teco_qreg_view, SCI_RELEASEDOCUMENT, 0, (sptr_t)doc);
+}
+
+TECO_DEFINE_UNDO_OBJECT(doc_scintilla, teco_doc_scintilla_t *,
+                        teco_doc_scintilla_ref, teco_doc_scintilla_release);
+
+static inline teco_doc_scintilla_t *
 teco_doc_get_scintilla(teco_doc_t *ctx)
 {
+	/*
+	 * FIXME: Perhaps we should always specify SC_DOCUMENTOPTION_TEXT_LARGE?
+	 * SC_DOCUMENTOPTION_STYLES_NONE is unfortunately also not safe to set
+	 * always as the Q-Reg might well be used for styling even in batch mode.
+	 */
 	if (G_UNLIKELY(!ctx->doc))
 		ctx->doc = (teco_doc_scintilla_t *)teco_view_ssm(teco_qreg_view, SCI_CREATEDOCUMENT, 0, 0);
 	return ctx->doc;
@@ -66,8 +89,8 @@ teco_doc_edit(teco_doc_t *ctx)
 	 * The index is reference-counted. Perhaps we could just allocate
 	 * one more time, so it doesn't get freed when changing documents.
 	 */
-	if (!(teco_view_ssm(teco_qreg_view,
-	                    SCI_GETLINECHARACTERINDEX, 0, 0) & SC_LINECHARACTERINDEX_UTF32))
+	if (!(teco_view_ssm(teco_qreg_view, SCI_GETLINECHARACTERINDEX, 0, 0)
+						& SC_LINECHARACTERINDEX_UTF32))
 		teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
 		              SC_LINECHARACTERINDEX_UTF32, 0);
 }
@@ -85,23 +108,52 @@ teco_doc_undo_edit(teco_doc_t *ctx)
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETXOFFSET, ctx->xoffset, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
 	undo__teco_view_ssm(teco_qreg_view, SCI_SETDOCPOINTER, 0,
-	               (sptr_t)teco_doc_get_scintilla(ctx));
+	                    (sptr_t)teco_doc_get_scintilla(ctx));
 }
 
 /** @memberof teco_doc_t */
 void
-teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len)
+teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len, guint codepage)
 {
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
+	teco_doc_scintilla_release(ctx->doc);
+	ctx->doc = NULL;
+
 	teco_doc_reset(ctx);
 	teco_doc_edit(ctx);
 
-	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
-	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
 	teco_view_ssm(teco_qreg_view, SCI_APPENDTEXT, len, (sptr_t)(str ? : ""));
-	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
+
+	if (codepage != SC_CP_UTF8) {
+		/*
+		 * We have a new UTF-8 document and
+		 * teco_doc_edit() currently always initializes an index.
+		 */
+		teco_view_ssm(teco_qreg_view, SCI_RELEASELINECHARACTERINDEX,
+		              SC_LINECHARACTERINDEX_UTF32, 0);
+		g_assert(!(teco_view_ssm(teco_qreg_view, SCI_GETLINECHARACTERINDEX, 0, 0)
+							& SC_LINECHARACTERINDEX_UTF32));
+
+		/*
+		 * Configure a single-byte codepage/charset.
+		 * This requires setting it on all of the possible styles.
+		 * Unfortunately there can theoretically even be 255 (STYLE_MAX) styles.
+		 * This is important only for display purposes - other than that
+		 * all single-byte encodings are handled the same.
+		 *
+		 * FIXME: Should we avoid this if codepage == 0?
+		 * It will be used for raw byte handling mostly.
+		 * Perhaps we should even set char representations appropriately
+		 * for all non-ANSI codepoints in the 0 codepage.
+		 * But this would also be costly...
+		 */
+		for (gint style = 0; style <= STYLE_LASTPREDEFINED; style++)
+			teco_view_ssm(teco_qreg_view, SCI_STYLESETCHARACTERSET, style, codepage);
+		/* 0 is used for ALL single-byte encodings */
+		teco_view_ssm(teco_qreg_view, SCI_SETCODEPAGE, 0, 0);
+	}
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string);
@@ -117,13 +169,13 @@ teco_doc_undo_set_string(teco_doc_t *ctx)
 	 */
 	teco_doc_update(ctx, teco_qreg_view);
 
-	if (teco_qreg_current && teco_qreg_current->must_undo) // FIXME
+	if (teco_qreg_current && teco_qreg_current->must_undo && // FIXME
+	    ctx == &teco_qreg_current->string)
+		/* load old document into view */
 		teco_doc_undo_edit(&teco_qreg_current->string);
 
 	teco_doc_undo_reset(ctx);
-	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
-
-	teco_doc_undo_edit(ctx);
+	teco_undo_object_doc_scintilla_push(&ctx->doc);
 }
 
 /**
@@ -134,17 +186,22 @@ teco_doc_undo_set_string(teco_doc_t *ctx)
  *            It can be NULL if you are interested only in the string's length.
  *            Strings must be freed via g_free().
  * @param len Where to store the string's length (mandatory).
+ * @param codepage Where to store the document's codepage or NULL
+ *                 if that information is not necessary.
  *
  * @see teco_qreg_vtable_t::get_string()
  * @memberof teco_doc_t
  */
 void
-teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *len)
+teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *outlen, guint *codepage)
 {
 	if (!ctx->doc) {
 		if (str)
 			*str = NULL;
-		*len = 0;
+		if (outlen)
+			*outlen = 0;
+		if (codepage)
+			*codepage = SC_CP_UTF8;
 		return;
 	}
 
@@ -153,11 +210,15 @@ teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *len)
 
 	teco_doc_edit(ctx);
 
-	*len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
+	gsize len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
 	if (str) {
-		*str = g_malloc(*len + 1);
-		teco_view_ssm(teco_qreg_view, SCI_GETTEXT, *len + 1, (sptr_t)*str);
+		*str = g_malloc(len + 1);
+		teco_view_ssm(teco_qreg_view, SCI_GETTEXT, len + 1, (sptr_t)*str);
 	}
+	if (outlen)
+		*outlen = len;
+	if (codepage)
+		*codepage = teco_view_get_codepage(teco_qreg_view);
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string);
@@ -202,6 +263,5 @@ teco_doc_exchange(teco_doc_t *ctx, teco_doc_t *other)
 void
 teco_doc_clear(teco_doc_t *ctx)
 {
-	if (ctx->doc)
-		teco_view_ssm(teco_qreg_view, SCI_RELEASEDOCUMENT, 0, (sptr_t)ctx->doc);
+	teco_doc_scintilla_release(ctx->doc);
 }

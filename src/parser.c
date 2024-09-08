@@ -628,7 +628,7 @@ teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gchar
 	 * FIXME: Should we have a special teco_qreg_get_string_append() function?
 	 */
 	g_auto(teco_string_t) str = {NULL, 0};
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
 	teco_string_append(ctx->result, str.data, str.len);
 	return &teco_state_stringbuilding_start;
@@ -657,7 +657,7 @@ teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, g
 		return &teco_state_stringbuilding_start;
 
 	g_auto(teco_string_t) str = {NULL, 0};
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
 	/*
 	 * NOTE: g_shell_quote() expects a null-terminated string, so it is
@@ -700,7 +700,7 @@ teco_state_stringbuilding_ctle_n_input(teco_machine_stringbuilding_t *ctx, gchar
 		return &teco_state_stringbuilding_start;
 
 	g_auto(teco_string_t) str = {NULL, 0};
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
 	if (teco_string_contains(&str, '\0')) {
 		teco_error_qregcontainsnull_set(error, qreg->head.name.data, qreg->head.name.len,

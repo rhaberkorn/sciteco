@@ -65,10 +65,10 @@ teco_doc_init(teco_doc_t *ctx)
 void teco_doc_edit(teco_doc_t *ctx);
 void teco_doc_undo_edit(teco_doc_t *ctx);
 
-void teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len);
+void teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len, guint codepage);
 void teco_doc_undo_set_string(teco_doc_t *ctx);
 
-void teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *len);
+void teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *len, guint *codepage);
 
 void teco_doc_update_from_view(teco_doc_t *ctx, teco_view_t *from);
 void teco_doc_update_from_doc(teco_doc_t *ctx, const teco_doc_t *from);

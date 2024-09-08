@@ -121,7 +121,7 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 		teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, "$COMSPEC", 8);
 		g_assert(reg != NULL);
 		teco_string_t comspec;
-		if (!reg->vtable->get_string(reg, &comspec.data, &comspec.len, error))
+		if (!reg->vtable->get_string(reg, &comspec.data, &comspec.len, NULL, error))
 			return NULL;
 
 		argv = g_new(gchar *, 5);
@@ -140,7 +140,7 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 		teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, "$SHELL", 6);
 		g_assert(reg != NULL);
 		teco_string_t shell;
-		if (!reg->vtable->get_string(reg, &shell.data, &shell.len, error))
+		if (!reg->vtable->get_string(reg, &shell.data, &shell.len, NULL, error))
 			return NULL;
 
 		argv = g_new(gchar *, 4);
@@ -673,6 +673,8 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 		/* source has already been dispatched */
 		return G_SOURCE_REMOVE;
 
+	teco_qreg_t *qreg = teco_spawn_ctx.register_argument;
+
 	for (;;) {
 		teco_string_t buffer;
 
@@ -691,20 +693,16 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 		if (!buffer.len)
 			return G_SOURCE_CONTINUE;
 
-		if (teco_spawn_ctx.register_argument) {
+		if (qreg) {
 			if (teco_spawn_ctx.text_added) {
-				if (!teco_spawn_ctx.register_argument->vtable->undo_append_string(teco_spawn_ctx.register_argument,
-				                                                                  &teco_spawn_ctx.error) ||
-				    !teco_spawn_ctx.register_argument->vtable->append_string(teco_spawn_ctx.register_argument,
-				                                                             buffer.data, buffer.len,
-				                                                             &teco_spawn_ctx.error))
+				if (!qreg->vtable->undo_append_string(qreg, &teco_spawn_ctx.error) ||
+				    !qreg->vtable->append_string(qreg, buffer.data, buffer.len,
+				                                 &teco_spawn_ctx.error))
 					goto error;
 			} else {
-				if (!teco_spawn_ctx.register_argument->vtable->undo_set_string(teco_spawn_ctx.register_argument,
-				                                                               &teco_spawn_ctx.error) ||
-				    !teco_spawn_ctx.register_argument->vtable->set_string(teco_spawn_ctx.register_argument,
-				                                                          buffer.data, buffer.len,
-				                                                          &teco_spawn_ctx.error))
+				if (!qreg->vtable->undo_set_string(qreg, &teco_spawn_ctx.error) ||
+				    !qreg->vtable->set_string(qreg, buffer.data, buffer.len,
+				                              SC_CP_UTF8, &teco_spawn_ctx.error))
 					goto error;
 			}
 		} else {

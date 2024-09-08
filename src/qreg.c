@@ -89,7 +89,7 @@ teco_qreg_execute(teco_qreg_t *qreg, teco_qreg_table_t *qreg_table_locals, GErro
 	 * On the other hand, we will have to validate the
 	 * UTF-8 codepoints before execution anyway.
 	 */
-	if (!qreg->vtable->get_string(qreg, &macro.data, &macro.len, error) ||
+	if (!qreg->vtable->get_string(qreg, &macro.data, &macro.len, NULL, error) ||
 	    !teco_execute_macro(macro.data, macro.len, qreg_table_locals, error)) {
 		teco_error_add_frame_qreg(qreg->head.name.data, qreg->head.name.len);
 		return FALSE;
@@ -210,25 +210,11 @@ teco_qreg_plain_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **error)
 	return TRUE;
 }
 
-static guint
-teco_qreg_plain_get_codepage(teco_qreg_t *qreg)
-{
-	if (teco_qreg_current)
-		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
-
-	teco_doc_edit(&qreg->string);
-	guint ret = teco_view_get_codepage(teco_qreg_view);
-
-	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
-
-	return ret;
-}
-
 static gboolean
-teco_qreg_plain_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
+teco_qreg_plain_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
+                           guint codepage, GError **error)
 {
-	teco_doc_set_string(&qreg->string, str, len);
+	teco_doc_set_string(&qreg->string, str, len, codepage);
 	return TRUE;
 }
 
@@ -265,9 +251,10 @@ teco_qreg_plain_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GE
 }
 
 static gboolean
-teco_qreg_plain_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error)
+teco_qreg_plain_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
+                           guint *codepage, GError **error)
 {
-	teco_doc_get_string(&qreg->string, str, len);
+	teco_doc_get_string(&qreg->string, str, len, codepage);
 	return TRUE;
 }
 
@@ -372,7 +359,6 @@ teco_qreg_plain_undo_edit(teco_qreg_t *qreg, GError **error)
 	.set_integer		= teco_qreg_plain_set_integer, \
 	.undo_set_integer	= teco_qreg_plain_undo_set_integer, \
 	.get_integer		= teco_qreg_plain_get_integer, \
-	.get_codepage		= teco_qreg_plain_get_codepage, \
 	.set_string		= teco_qreg_plain_set_string, \
 	.undo_set_string	= teco_qreg_plain_undo_set_string, \
 	.append_string		= teco_qreg_plain_append_string, \
@@ -402,7 +388,7 @@ teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 	g_auto(teco_string_t) str = {NULL, 0};
 
 	if (!teco_qreg_plain_edit(qreg, error) ||
-	    !qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	    !qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return FALSE;
 
 	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
@@ -414,27 +400,19 @@ teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
-static guint
-teco_qreg_external_get_codepage(teco_qreg_t *qreg)
-{
-	/*
-	 * External registers are always assumed to be UTF-8-encoded.
-	 */
-	return SC_CP_UTF8;
-}
-
 static gboolean
 teco_qreg_external_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
 {
 	g_auto(teco_string_t) other_str, own_str = {NULL, 0};
+	guint other_cp, own_cp;
 
-	teco_doc_get_string(src, &other_str.data, &other_str.len);
+	teco_doc_get_string(src, &other_str.data, &other_str.len, &other_cp);
 
-	if (!qreg->vtable->get_string(qreg, &own_str.data, &own_str.len, error) ||
-	    !qreg->vtable->set_string(qreg, other_str.data, other_str.len, error))
+	if (!qreg->vtable->get_string(qreg, &own_str.data, &own_str.len, &own_cp, error) ||
+	    !qreg->vtable->set_string(qreg, other_str.data, other_str.len, other_cp, error))
 		return FALSE;
 
-	teco_doc_set_string(src, own_str.data, own_str.len);
+	teco_doc_set_string(src, own_str.data, own_str.len, own_cp);
 	return TRUE;
 }
 
@@ -454,7 +432,7 @@ teco_qreg_external_get_character(teco_qreg_t *qreg, teco_int_t position,
 {
 	g_auto(teco_string_t) str = {NULL, 0};
 
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return FALSE;
 
 	if (position < 0 || position >= g_utf8_strlen(str.data, str.len)) {
@@ -478,7 +456,7 @@ teco_qreg_external_get_length(teco_qreg_t *qreg, GError **error)
 {
 	g_auto(teco_string_t) str = {NULL, 0};
 
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return -1;
 
 	return g_utf8_strlen(str.data, str.len);
@@ -489,7 +467,6 @@ teco_qreg_external_get_length(teco_qreg_t *qreg, GError **error)
  * These rely on custom implementations of get_string() and set_string().
  */
 #define TECO_INIT_QREG_EXTERNAL(...) TECO_INIT_QREG( \
-	.get_codepage		= teco_qreg_external_get_codepage, \
 	.exchange_string	= teco_qreg_external_exchange_string, \
 	.undo_exchange_string	= teco_qreg_external_undo_exchange_string, \
 	.edit			= teco_qreg_external_edit, \
@@ -525,7 +502,8 @@ teco_qreg_bufferinfo_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **er
  * Either it renames the current buffer, or opens a file (alternative to EB).
  */
 static gboolean
-teco_qreg_bufferinfo_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
+teco_qreg_bufferinfo_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
+                                guint codepage, GError **error)
 {
 	teco_error_qregopunsupported_set(error, qreg->head.name.data, qreg->head.name.len, FALSE);
 	return FALSE;
@@ -554,7 +532,8 @@ teco_qreg_bufferinfo_undo_append_string(teco_qreg_t *qreg, GError **error)
  * NOTE: The `string` component is currently unused on the "*" register.
  */
 static gboolean
-teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error)
+teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
+                                guint *codepage, GError **error)
 {
 	/*
 	 * On platforms with a default non-forward-slash directory
@@ -569,6 +548,8 @@ teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErr
 	 * NOTE: teco_file_normalize_path() does not change the size of the string.
 	 */
 	*len = teco_ring_current->filename ? strlen(teco_ring_current->filename) : 0;
+	if (codepage)
+		 *codepage = SC_CP_UTF8;
 	return TRUE;
 }
 
@@ -586,7 +567,6 @@ teco_qreg_bufferinfo_new(void)
 		.undo_append_string	= teco_qreg_bufferinfo_undo_append_string,
 		.get_string		= teco_qreg_bufferinfo_get_string,
 		/* we don't want to inherit all the other stuff from TECO_INIT_QREG_EXTERNAL(). */
-		.get_codepage		= teco_qreg_external_get_codepage,
 		.edit			= teco_qreg_external_edit,
 		.get_character		= teco_qreg_external_get_character,
 		.get_length		= teco_qreg_external_get_length
@@ -596,7 +576,8 @@ teco_qreg_bufferinfo_new(void)
 }
 
 static gboolean
-teco_qreg_workingdir_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
+teco_qreg_workingdir_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
+                                guint codepage, GError **error)
 {
 	/*
 	 * NOTE: Makes sure that `dir` will be null-terminated as str[len] may not be '\0'.
@@ -647,7 +628,8 @@ teco_qreg_workingdir_undo_append_string(teco_qreg_t *qreg, GError **error)
 }
 
 static gboolean
-teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error)
+teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
+                                guint *codepage, GError **error)
 {
 	/*
 	 * On platforms with a default non-forward-slash directory
@@ -664,6 +646,8 @@ teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErr
 		*str = teco_file_normalize_path(dir);
 	else
 		g_free(dir);
+	if (codepage)
+		*codepage = SC_CP_UTF8;
 
 	return TRUE;
 }
@@ -694,7 +678,8 @@ teco_qreg_workingdir_new(void)
 }
 
 static gboolean
-teco_qreg_clipboard_set_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
+teco_qreg_clipboard_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
+                               guint codepage, GError **error)
 {
 	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
 	const gchar *clipboard_name = qreg->head.name.data + 1;
@@ -779,7 +764,8 @@ teco_qreg_clipboard_undo_set_string(teco_qreg_t *qreg, GError **error)
 }
 
 static gboolean
-teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error)
+teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
+                               guint *codepage, GError **error)
 {
 	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
 	const gchar *clipboard_name = qreg->head.name.data + 1;
@@ -811,6 +797,8 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len, GErro
 	else
 		teco_string_clear(&str_converted);
 	*len = str_converted.len;
+	if (codepage)
+		*codepage = SC_CP_UTF8;
 
 	return TRUE;
 }
@@ -921,7 +909,8 @@ teco_qreg_table_set_environ(teco_qreg_table_t *table, GError **error)
 			qreg = found;
 		}
 
-		if (!qreg->vtable->set_string(qreg, value, strlen(value), error))
+		if (!qreg->vtable->set_string(qreg, value, strlen(value),
+		                              SC_CP_UTF8, error))
 			return FALSE;
 	}
 
@@ -976,7 +965,7 @@ teco_qreg_table_get_environ(teco_qreg_table_t *table, GError **error)
 			continue;
 
 		g_auto(teco_string_t) value = {NULL, 0};
-		if (!cur->vtable->get_string(cur, &value.data, &value.len, error)) {
+		if (!cur->vtable->get_string(cur, &value.data, &value.len, NULL, error)) {
 			g_strfreev(envp);
 			return NULL;
 		}
@@ -1070,12 +1059,13 @@ teco_qreg_stack_push(teco_qreg_t *qreg, GError **error)
 {
 	teco_qreg_stack_entry_t entry;
 	g_auto(teco_string_t) string = {NULL, 0};
+	guint codepage;
 
 	if (!qreg->vtable->get_integer(qreg, &entry.integer, error) ||
-	    !qreg->vtable->get_string(qreg, &string.data, &string.len, error))
+	    !qreg->vtable->get_string(qreg, &string.data, &string.len, &codepage, error))
 		return FALSE;
 	teco_doc_init(&entry.string);
-	teco_doc_set_string(&entry.string, string.data, string.len);
+	teco_doc_set_string(&entry.string, string.data, string.len, codepage);
 	teco_doc_update(&entry.string, &qreg->string);
 
 	/* pass ownership of entry to teco_qreg_stack */

@@ -372,10 +372,14 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	gint args = teco_expressions_args();
 
 	if (args > 0) {
+		guint codepage = SC_CP_UTF8;
+		if (colon_modified && !qreg->vtable->get_string(qreg, NULL, NULL, &codepage, error))
+			return NULL;
+
 		g_autofree gchar *buffer = NULL;
 		gsize len = 0;
 
-		if (qreg->vtable->get_codepage(qreg) == SC_CP_UTF8) {
+		if (codepage == SC_CP_UTF8) {
 			/* the glib docs wrongly claim that one character can take 6 bytes */
 			buffer = g_malloc(4*args);
 			for (gint i = args; i > 0; i--) {
@@ -410,7 +414,8 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 		} else {
 			/* set register */
 			if (!qreg->vtable->undo_set_string(qreg, error) ||
-			    !qreg->vtable->set_string(qreg, buffer, len, error))
+			    !qreg->vtable->set_string(qreg, buffer, len,
+			                              SC_CP_UTF8, error))
 				return NULL;
 		}
 	}
@@ -423,7 +428,8 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	} else {
 		/* set register */
 		if (!qreg->vtable->undo_set_string(qreg, error) ||
-		    !qreg->vtable->set_string(qreg, str->data, str->len, error))
+		    !qreg->vtable->set_string(qreg, str->data, str->len,
+		                              SC_CP_UTF8, error))
 			return NULL;
 	}
 
@@ -487,8 +493,8 @@ teco_state_setqregstring_building_initial(teco_machine_main_t *ctx, GError **err
 	 * The expected codepage of string building constructs is determined
 	 * by the Q-Register.
 	 */
-	teco_undo_guint(ctx->expectstring.machine.codepage) = qreg->vtable->get_codepage(qreg);
-	return TRUE;
+	teco_undo_guint(ctx->expectstring.machine.codepage);
+	return qreg->vtable->get_string(qreg, NULL, NULL, &ctx->expectstring.machine.codepage, error);
 }
 
 static teco_state_t *
@@ -523,7 +529,7 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 
 	g_auto(teco_string_t) str = {NULL, 0};
 
-	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, error))
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
 
 	if (str.len > 0) {
@@ -767,8 +773,10 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 		    !qreg->vtable->append_string(qreg, str, len, error))
 			return NULL;
 	} else {
+		guint cp = teco_interface_get_codepage();
+
 		if (!qreg->vtable->undo_set_string(qreg, error) ||
-		    !qreg->vtable->set_string(qreg, str, len, error))
+		    !qreg->vtable->set_string(qreg, str, len, cp, error))
 			return NULL;
 	}
 

@@ -318,7 +318,8 @@ teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str,
 		teco_qreg_t *glob_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
 		g_assert(glob_reg != NULL);
 		if (!glob_reg->vtable->undo_set_string(glob_reg, error) ||
-		    !glob_reg->vtable->set_string(glob_reg, filename, strlen(filename), error))
+		    !glob_reg->vtable->set_string(glob_reg, filename, strlen(filename),
+		                                  SC_CP_UTF8, error))
 			return NULL;
 	}
 
@@ -493,7 +494,8 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 	teco_qreg_t *glob_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
 	g_assert(glob_reg != NULL);
 	g_auto(teco_string_t) pattern_str = {NULL, 0};
-	if (!glob_reg->vtable->get_string(glob_reg, &pattern_str.data, &pattern_str.len, error))
+	if (!glob_reg->vtable->get_string(glob_reg, &pattern_str.data, &pattern_str.len,
+	                                  NULL, error))
 		return NULL;
 	if (teco_string_contains(&pattern_str, '\0')) {
 		teco_error_qregcontainsnull_set(error, "_", 1, FALSE);

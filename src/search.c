@@ -250,7 +250,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				teco_machine_qregspec_reset(teco_search_qreg_machine);
 
 				g_auto(teco_string_t) str = {NULL, 0};
-				if (!reg->vtable->get_string(reg, &str.data, &str.len, error))
+				if (!reg->vtable->get_string(reg, &str.data, &str.len, NULL, error))
 					return NULL;
 
 				pattern->data++;
@@ -677,13 +677,15 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
 			undo__teco_interface_ssm(SCI_SETANCHOR, anchor, 0);
 
 		if (!search_reg->vtable->undo_set_string(search_reg, error) ||
-		    !search_reg->vtable->set_string(search_reg, str->data, str->len, error))
+		    !search_reg->vtable->set_string(search_reg, str->data, str->len,
+		                                    SC_CP_UTF8, error))
 			return NULL;
 
 		teco_interface_ssm(SCI_SETANCHOR, anchor, 0);
 	} else {
 		g_auto(teco_string_t) search_str = {NULL, 0};
-		if (!search_reg->vtable->get_string(search_reg, &search_str.data, &search_str.len, error) ||
+		if (!search_reg->vtable->get_string(search_reg, &search_str.data, &search_str.len,
+		                                    NULL, error) ||
 		    !teco_state_search_process(ctx, &search_str, search_str.len, error))
 			return NULL;
 	}
@@ -1075,11 +1077,13 @@ teco_state_replace_default_insert_done_overwrite(teco_machine_main_t *ctx, const
 
 	if (str->len > 0) {
 		if (!replace_reg->vtable->undo_set_string(replace_reg, error) ||
-		    !replace_reg->vtable->set_string(replace_reg, str->data, str->len, error))
+		    !replace_reg->vtable->set_string(replace_reg, str->data, str->len,
+		                                     SC_CP_UTF8, error))
 			return NULL;
 	} else {
 		g_auto(teco_string_t) replace_str = {NULL, 0};
-		if (!replace_reg->vtable->get_string(replace_reg, &replace_str.data, &replace_str.len, error) ||
+		if (!replace_reg->vtable->get_string(replace_reg, &replace_str.data, &replace_str.len,
+		                                     NULL, error) ||
 		    (replace_str.len > 0 && !teco_state_insert_process(ctx, &replace_str, replace_str.len, error)))
 			return NULL;
 	}
@@ -1106,7 +1110,8 @@ teco_state_replace_default_ignore_done(teco_machine_main_t *ctx, const teco_stri
 	g_assert(replace_reg != NULL);
 
 	if (!replace_reg->vtable->undo_set_string(replace_reg, error) ||
-	    !replace_reg->vtable->set_string(replace_reg, str->data, str->len, error))
+	    !replace_reg->vtable->set_string(replace_reg, str->data, str->len,
+	                                     SC_CP_UTF8, error))
 		return NULL;
 
 	return &teco_state_start;

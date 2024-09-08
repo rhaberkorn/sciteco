@@ -41,19 +41,22 @@ extern teco_view_t *teco_qreg_view;
  * FIXME: Use TECO_DECLARE_VTABLE_METHOD(gboolean, teco_qreg, set_integer, teco_qreg_t *, teco_int_t, GError **);
  * ...
  * teco_qreg_set_integer_t set_integer;
+ * ...
+ * teco_qreg_set_integer(qreg, 23, error);
  */
 typedef const struct {
 	gboolean (*set_integer)(teco_qreg_t *qreg, teco_int_t value, GError **error);
 	gboolean (*undo_set_integer)(teco_qreg_t *qreg, GError **error);
 	gboolean (*get_integer)(teco_qreg_t *qreg, teco_int_t *ret, GError **error);
 
-	guint (*get_codepage)(teco_qreg_t *qreg);
-	gboolean (*set_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
+	gboolean (*set_string)(teco_qreg_t *qreg, const gchar *str, gsize len,
+	                       guint codepage, GError **error);
 	gboolean (*undo_set_string)(teco_qreg_t *qreg, GError **error);
 	gboolean (*append_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
 	gboolean (*undo_append_string)(teco_qreg_t *qreg, GError **error);
 
-	gboolean (*get_string)(teco_qreg_t *qreg, gchar **str, gsize *len, GError **error);
+	gboolean (*get_string)(teco_qreg_t *qreg, gchar **str, gsize *len,
+	                       guint *codepage, GError **error);
 	gboolean (*get_character)(teco_qreg_t *qreg, teco_int_t position,
 	                          teco_int_t *chr, GError **error);
 	/* always returns length in glyphs in contrast to get_string() */

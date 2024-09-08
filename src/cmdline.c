@@ -125,7 +125,8 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 				teco_qreg_t *cmdline_reg = teco_qreg_table_find(&teco_qreg_table_globals, "\e", 1);
 				teco_string_t new_cmdline;
 
-				if (!cmdline_reg->vtable->get_string(cmdline_reg, &new_cmdline.data, &new_cmdline.len, error))
+				if (!cmdline_reg->vtable->get_string(cmdline_reg, &new_cmdline.data, &new_cmdline.len,
+				                                     NULL, error))
 					return FALSE;
 
 				/*
@@ -307,7 +308,7 @@ teco_cmdline_fnmacro(const gchar *name, GError **error)
 			return TRUE;
 
 		g_auto(teco_string_t) macro_str = {NULL, 0};
-		return macro_reg->vtable->get_string(macro_reg, &macro_str.data, &macro_str.len, error) &&
+		return macro_reg->vtable->get_string(macro_reg, &macro_str.data, &macro_str.len, NULL, error) &&
 		       teco_cmdline_keypress(macro_str.data, macro_str.len, error);
 	}
 
@@ -1051,7 +1052,7 @@ teco_state_save_cmdline_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg
 		return &teco_state_start;
 
 	if (!qreg->vtable->undo_set_string(qreg, error) ||
-	    !qreg->vtable->set_string(qreg, teco_last_cmdline.data, teco_last_cmdline.len, error))
+	    !qreg->vtable->set_string(qreg, teco_last_cmdline.data, teco_last_cmdline.len, SC_CP_UTF8, error))
 		return NULL;
 
 	return &teco_state_start;
