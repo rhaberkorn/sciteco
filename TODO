@@ -66,8 +66,13 @@ Known Bugs:
    The Homebrew and MinGW versions of glib no longer suffer from this.
    This is apparently impossible to fix as long as we do not
    have control over the regex engine build.
-   We should therefore switch the underlying Regex engine.
-   Oniguruma looks promising and is also packed for Ubuntu (libonig2).
+   Scintilla has built-in SCFIND_CXX11REGEX support with SCI_FINDTEXTFULL.
+   However, even the G++ implementation appears to cause
+   stack overflows:
+   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61582
+   What about the builtin SCFIND_REGEXP?
+   Alternatively we should switch the underlying Regex engine.
+   Oniguruma looks promising and is also packaged for Ubuntu (libonig2).
    It would also directly allow globbing by tweaking the syntax.
    TRE also looks promising and is smaller than Oniguruma.
    GRegEx (PCRE) could still be supported as a fallback.
@@ -132,6 +137,9 @@ Known Bugs:
    This does not happen under Linux with Darling.
    See https://github.com/rhaberkorn/sciteco/issues/12
  * GTK: Scrolling via mouse is not reliably prevented in all situations.
+ * Autocompletions in <EB> should automatically escape globbing
+   characters. Otherwise it is very tricky to open files
+   with magic characters.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -222,6 +230,13 @@ Features:
    At the very least PDCurses and Gtk could support much more
    keys and Alt and Ctrl modifiers.
    See also https://gist.github.com/rkumar/1237091
+ * If function key macros would support all printable keys
+   as well, this could be especially helpful for making use of
+   international non-ANSI keys.
+   In particular, it could be useful to access TECO commands
+   when pressing Unicode keys (eg. insert I when pressing И
+   in the start state).
+   Gtk already does that automatically.
  * Mouse support. Not that hard to implement. Mouse events
    use a pseudo function key macro as in Curses.
    Using some special command, macros can query the current
@@ -229,7 +244,7 @@ Features:
  * Support loading from stdin (--stdin) and writing to
    the current buffer to stdout on exit (--stdout).
    This will make it easy to write command line filters,
-   We will need flags like --8-bit-clean and --quiet with
+   We will need flags like and --quiet with
    single-letter forms to make it possible to write hash-bang
    lines like #!...sciteco -q8iom
    Command line arguments should then also be handled
@@ -312,9 +327,14 @@ Features:
  * instead of 0EB to show the list of buffers, there should perhaps
    be a special TAB-completion (^G mode?) that completes only buffers
    in the ring. It should also display the numeric buffer ids.
- * properly support Unicode encodings and the character-based model
-   * translate documents to Unicode strings
-   * a position refers to a character/codepoint
+ * Gtk: Unicode IME support for asiatic languages.
+   Have a look how it is done in Scintilla.
+ * Unicode-aware parser. Entire code points are passed into the
+   state machines instead of individual bytes.
+   Whereever we expect a single character,
+   any Unicode code point should be accepted.
+   This would disallow any non-UTF8 encoding for TECO source files,
+   though.
  * Progress indication in commandline cursor:
    Perhaps blinking or invisible?
  * Command to free Q-Register (remove from table).
@@ -410,9 +430,6 @@ Features:
  * Improve the message line so it can log multiple messages.
    Especially important on GUI platforms and Win32 so we can get
    rid of the attached console window.
- * Currently, you cannot pass UTF-8 parameters to SciTECO macros.
-   This is not critical since we don't support Unicode anyway.
-   Sooner or later however we should use g_win32_get_command_line().
  * Some platforms like MinGW and some Linux flavours have
    native Scintilla packages.
    Perhaps it makes sense to be able to build against them
@@ -455,6 +472,7 @@ Features:
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
  * Get into AppImageHub.
+ * Get meta-rhaberkorn into https://layers.openembedded.org
  * Linux: Relocatable binaries instead of hardcoding the library path.
    This makes it possible to run builds installed via
    `make install DESTDIR=...` and will aid in creating AppImages.
@@ -484,6 +502,23 @@ Features:
  * It should be possible to disable auto-completions of one-character
    register names, so that we can map the idention macro to M<TAB>.
  * fnkeys.tes: Rubin/Rubout via cursor keys?
+ * Add a configure-switch for LTO (--enable-lto).
+ * Curses: could now optionally support Unicode "icons" in the
+   file/directory popups (cf. `exa --icons`).
+   This isn't in all fonts, so it must be disabled by default.
+ * Update Scintilla and Scinterm.
+   The last PR has been merged and we don't have to link
+   to our own Scinterm fork.
+ * There should be a string building character for including
+   a character by code. Currently, there is only ^EUq where
+   q must be set earlier.
+   This would be useful when searching in binary files or
+   to include Unicode characters by code point.
+   Unfortunately its syntax cannot depend on the string argument's
+   encoding, as that could confuse parse-only mode.
+   Perhaps ^E!xxxx or overload ^Qx0123.
+ * Tweak the Makefile lexer for Automake support.
+   In the simplest case, just add the *.am file extension.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -504,9 +539,12 @@ Optimizations:
  * commonly used (special) Q-Registers could be cached,
    saving the q-reg table lookup
  * refactor search commands (create proper base class)
- * Add a configure-switch for LTO (--enable-lto).
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
+ * Avoid Scintilla Undo actions entirely.
+   This will make undo token creation of deletions harder,
+   since we must first query the text to be reinserted again,
+   but will probably save lots of memory.
  * Newer GCC and C23 features:
    * Perhaps teco_bool_t usage could be simplified using
      __attribute__((hardbool)).
