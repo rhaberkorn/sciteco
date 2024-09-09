@@ -18,8 +18,7 @@ G_ENABLE_DIAGNOSTIC=1
 # are accepted on command lines.
 case $host in
 *-*-darwin*)
-	LANG=C
-	LC_CTYPE=UTF-8
+	LC_ALL=`defaults read -g AppleLocale | @SED@ 's/@.*$//g'`.UTF-8
 	;;
 *)
 	LC_ALL=C.UTF-8
