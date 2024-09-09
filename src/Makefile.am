@@ -98,10 +98,10 @@ CLEANFILES = $(BUILT_SOURCES) \
 
 symbols-scintilla.c : @SCINTILLA_PATH@/include/Scintilla.h \
                       symbols-extract.tes
-	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
+	$(SCITECO_MINIMAL) -8m -- @srcdir@/symbols-extract.tes \
 	                   -p "SCI_" -n teco_symbol_list_scintilla $@ $<
 
 symbols-scilexer.c : @LEXILLA_PATH@/include/SciLexer.h \
                      symbols-extract.tes
-	$(SCITECO_MINIMAL) -m -- @srcdir@/symbols-extract.tes \
+	$(SCITECO_MINIMAL) -8m -- @srcdir@/symbols-extract.tes \
 	                   -p "SCE_" -n teco_symbol_list_scilexer $@ $<

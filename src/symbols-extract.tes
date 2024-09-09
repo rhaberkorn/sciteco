@@ -1,4 +1,4 @@
-#!/usr/local/bin/sciteco -m
+#!/usr/local/bin/sciteco -8m
 !*
  * ./symbols-extract.tes [-p <prefix pattern list>] -n <SymbolList object> [--] \
  *                       <output file> <input header>
