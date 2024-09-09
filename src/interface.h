@@ -161,19 +161,19 @@ teco_interface_get_codepage(void)
 }
 
 static inline gssize
-teco_glyphs2bytes(teco_int_t pos)
+teco_interface_glyphs2bytes(teco_int_t pos)
 {
 	return teco_view_glyphs2bytes(teco_interface_current_view, pos);
 }
 
 static inline teco_int_t
-teco_bytes2glyphs(gsize pos)
+teco_interface_bytes2glyphs(gsize pos)
 {
 	return teco_view_bytes2glyphs(teco_interface_current_view, pos);
 }
 
 static inline gssize
-teco_glyphs2bytes_relative(gsize pos, teco_int_t n)
+teco_interface_glyphs2bytes_relative(gsize pos, teco_int_t n)
 {
 	return teco_view_glyphs2bytes_relative(teco_interface_current_view, pos, n);
 }

@@ -130,7 +130,7 @@ teco_state_start_dot(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	teco_expressions_push(teco_bytes2glyphs(pos));
+	teco_expressions_push(teco_interface_bytes2glyphs(pos));
 }
 
 /*$ Z size
@@ -147,7 +147,7 @@ teco_state_start_zed(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-	teco_expressions_push(teco_bytes2glyphs(pos));
+	teco_expressions_push(teco_interface_bytes2glyphs(pos));
 }
 
 /*$ H
@@ -165,7 +165,7 @@ teco_state_start_range(teco_machine_main_t *ctx, GError **error)
 		return;
 	teco_expressions_push(0);
 	sptr_t pos = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-	teco_expressions_push(teco_bytes2glyphs(pos));
+	teco_expressions_push(teco_interface_bytes2glyphs(pos));
 }
 
 /*$ \[rs]
@@ -514,7 +514,7 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_pop_num_calc(&v, 0, error))
 		return;
 
-	gssize pos = teco_glyphs2bytes(v);
+	gssize pos = teco_interface_glyphs2bytes(v);
 	if (pos >= 0) {
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS,
@@ -535,7 +535,7 @@ static teco_bool_t
 teco_move_chars(teco_int_t n)
 {
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	gssize next_pos = teco_glyphs2bytes_relative(pos, n);
+	gssize next_pos = teco_interface_glyphs2bytes_relative(pos, n);
 	if (next_pos < 0)
 		return TECO_FAILURE;
 
@@ -901,7 +901,7 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 			teco_int_t len_glyphs;
 			if (!teco_expressions_pop_num_calc(&len_glyphs, teco_num_sign, error))
 				return FALSE;
-			gssize to = teco_glyphs2bytes_relative(from, len_glyphs);
+			gssize to = teco_interface_glyphs2bytes_relative(from, len_glyphs);
 			rc = teco_bool(to >= 0);
 			len = to-from;
 		}
@@ -911,9 +911,9 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 		}
 	} else {
 		teco_int_t to_glyphs = teco_expressions_pop_num(0);
-		gssize to = teco_glyphs2bytes(to_glyphs);
+		gssize to = teco_interface_glyphs2bytes(to_glyphs);
 		teco_int_t from_glyphs = teco_expressions_pop_num(0);
-		from = teco_glyphs2bytes(from_glyphs);
+		from = teco_interface_glyphs2bytes(from_glyphs);
 		len = to - from;
 		rc = teco_bool(len >= 0 && from >= 0 && to >= 0);
 	}
@@ -1037,7 +1037,7 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	gssize get_pos = teco_glyphs2bytes_relative(pos, v);
+	gssize get_pos = teco_interface_glyphs2bytes_relative(pos, v);
 	sptr_t len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
 
 	if (get_pos < 0 || get_pos == len) {
@@ -1787,12 +1787,12 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 		if (!teco_expressions_pop_num_calc(&pos, 0, error))
 			return;
 		if (colon_modified) {
-			/* teco_bytes2glyphs() does not check addresses */
+			/* teco_interface_bytes2glyphs() does not check addresses */
 			res = 0 <= pos && pos <= teco_interface_ssm(SCI_GETLENGTH, 0, 0)
-				? teco_bytes2glyphs(pos) : -1;
+				? teco_interface_bytes2glyphs(pos) : -1;
 		} else {
 			/* negative values for invalid indexes are passed down. */
-			res = teco_glyphs2bytes(pos);
+			res = teco_interface_glyphs2bytes(pos);
 		}
 	}
 
@@ -2539,7 +2539,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 	teco_int_t dot_glyphs;
 	if (colon_modified) {
 		sptr_t dot_bytes = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		dot_glyphs = teco_bytes2glyphs(dot_bytes);
+		dot_glyphs = teco_interface_bytes2glyphs(dot_bytes);
 
 		/*
 		 * Convert buffer to new codepage.
@@ -2587,7 +2587,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		teco_interface_ssm(SCI_SETCODEPAGE, SC_CP_UTF8, 0);
 		/*
 		 * UTF-8 documents strictly require the line character index.
-		 * See teco_glyphs2bytes() and teco_bytes2glyphs().
+		 * See teco_view_glyphs2bytes() and teco_view_bytes2glyphs().
 		 */
 		g_assert(!(teco_interface_ssm(SCI_GETLINECHARACTERINDEX, 0, 0)
 						& SC_LINECHARACTERINDEX_UTF32));
@@ -2637,7 +2637,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		 * If the new codepage is UTF-8, the line character index will be
 		 * ready only now.
 		 */
-		teco_interface_ssm(SCI_GOTOPOS, teco_glyphs2bytes(dot_glyphs), 0);
+		teco_interface_ssm(SCI_GOTOPOS, teco_interface_glyphs2bytes(dot_glyphs), 0);
 }
 
 /*$ EX exit

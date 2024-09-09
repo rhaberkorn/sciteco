@@ -214,8 +214,8 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 		if (!teco_expressions_pop_num_calc(&to, 0, error) ||
 		    !teco_expressions_pop_num_calc(&from, 0, error))
 			return FALSE;
-		teco_spawn_ctx.from = teco_glyphs2bytes(from);
-		teco_spawn_ctx.to = teco_glyphs2bytes(to);
+		teco_spawn_ctx.from = teco_interface_glyphs2bytes(from);
+		teco_spawn_ctx.to = teco_interface_glyphs2bytes(to);
 		rc = teco_bool(teco_spawn_ctx.from <= teco_spawn_ctx.to &&
 		               teco_spawn_ctx.from >= 0 && teco_spawn_ctx.to >= 0);
 	}

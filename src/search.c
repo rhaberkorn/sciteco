@@ -78,12 +78,12 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 			return FALSE;
 		if (v1 <= v2) {
 			teco_search_parameters.count = 1;
-			teco_search_parameters.from = teco_glyphs2bytes(v1);
-			teco_search_parameters.to = teco_glyphs2bytes(v2);
+			teco_search_parameters.from = teco_interface_glyphs2bytes(v1);
+			teco_search_parameters.to = teco_interface_glyphs2bytes(v2);
 		} else {
 			teco_search_parameters.count = -1;
-			teco_search_parameters.from = teco_glyphs2bytes(v2);
-			teco_search_parameters.to = teco_glyphs2bytes(v1);
+			teco_search_parameters.from = teco_interface_glyphs2bytes(v2);
+			teco_search_parameters.to = teco_interface_glyphs2bytes(v1);
 		}
 
 		if (teco_search_parameters.from < 0 ||

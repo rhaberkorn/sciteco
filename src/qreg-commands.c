@@ -750,8 +750,8 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 			len *= -1;
 		}
 	} else {
-		gssize to = teco_glyphs2bytes(teco_expressions_pop_num(0));
-		from = teco_glyphs2bytes(teco_expressions_pop_num(0));
+		gssize to = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
+		from = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
 		len = to - from;
 
 		if (len < 0 || from < 0 || to < 0) {
