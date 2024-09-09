@@ -33,7 +33,9 @@ fi
 # to SciTECO and Scintilla.
 # We cannot pass CXXFLAGS directly to Scintilla since
 # we modify it during library checking.
-SCINTILLA_CXXFLAGS="$CXXFLAGS"
+# Additionally, we can disable unused Scintilla features.
+# See https://scintilla.org/ScintillaDoc.html#BuildingScintilla
+SCINTILLA_CXXFLAGS="$CXXFLAGS -DNO_CXX11_REGEX -DSCI_DISABLE_PROVISIONAL"
 AC_SUBST(SCINTILLA_CXXFLAGS)
 
 # Automake build flag substitutions.
