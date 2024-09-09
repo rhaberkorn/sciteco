@@ -724,7 +724,7 @@ teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gchar escap
 	teco_machine_init(&ctx->parent, &teco_state_stringbuilding_start, must_undo);
 	ctx->escape_char = escape_char;
 	ctx->qreg_table_locals = locals;
-	ctx->codepage = SC_CP_UTF8;
+	ctx->codepage = teco_default_codepage();
 }
 
 void
@@ -767,7 +767,7 @@ gboolean
 teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error)
 {
 	if (ctx->mode == TECO_MODE_NORMAL)
-		teco_undo_guint(ctx->expectstring.machine.codepage) = SC_CP_UTF8;
+		teco_undo_guint(ctx->expectstring.machine.codepage) = teco_default_codepage();
 	return TRUE;
 }
 

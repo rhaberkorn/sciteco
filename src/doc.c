@@ -60,10 +60,19 @@ teco_doc_get_scintilla(teco_doc_t *ctx)
 	return ctx->doc;
 }
 
-/** @memberof teco_doc_t */
+/**
+ * Edit the given document in the Q-Register view.
+ *
+ * @param ctx The document to edit.
+ * @param default_cp The codepage to configure if the document is new.
+ *
+ * @memberof teco_doc_t
+ */
 void
-teco_doc_edit(teco_doc_t *ctx)
+teco_doc_edit(teco_doc_t *ctx, guint default_cp)
 {
+	gboolean new_doc = ctx->doc == NULL;
+
 	teco_view_ssm(teco_qreg_view, SCI_SETDOCPOINTER, 0,
 	              (sptr_t)teco_doc_get_scintilla(ctx));
 	teco_view_ssm(teco_qreg_view, SCI_SETFIRSTVISIBLELINE, ctx->first_line, 0);
@@ -77,22 +86,33 @@ teco_doc_edit(teco_doc_t *ctx)
 	 */
 	//teco_view_set_representations(teco_qreg_view);
 
-	/*
-	 * All UTF-8 documents are expected to have a character index.
-	 * This allocates nothing if the document is not UTF-8.
-	 * But it is reference counted, so it must not be allocated
-	 * more than once.
-	 *
-	 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER
-	 * (although I don't know why and where).
-	 * Recalculating it could be inefficient.
-	 * The index is reference-counted. Perhaps we could just allocate
-	 * one more time, so it doesn't get freed when changing documents.
-	 */
-	if (!(teco_view_ssm(teco_qreg_view, SCI_GETLINECHARACTERINDEX, 0, 0)
-						& SC_LINECHARACTERINDEX_UTF32))
+	if (new_doc && default_cp != SC_CP_UTF8) {
+		/*
+		 * There is a chance the user will see this buffer even if we
+		 * are currently in batch mode.
+		 */
+		for (gint style = 0; style <= STYLE_LASTPREDEFINED; style++)
+			teco_view_ssm(teco_qreg_view, SCI_STYLESETCHARACTERSET,
+			              style, default_cp);
+		/* 0 is used for ALL single-byte encodings */
+		teco_view_ssm(teco_qreg_view, SCI_SETCODEPAGE, 0, 0);
+	} else if (!(teco_view_ssm(teco_qreg_view, SCI_GETLINECHARACTERINDEX, 0, 0)
+							& SC_LINECHARACTERINDEX_UTF32)) {
+		/*
+		 * All UTF-8 documents are expected to have a character index.
+		 * This allocates nothing if the document is not UTF-8.
+		 * But it is reference counted, so it must not be allocated
+		 * more than once.
+		 *
+		 * FIXME: This apparently gets reset with every SCI_SETDOCPOINTER
+		 * (although I don't know why and where).
+		 * Recalculating it could be inefficient.
+		 * The index is reference-counted. Perhaps we could just allocate
+		 * one more time, so it doesn't get freed when changing documents.
+		 */
 		teco_view_ssm(teco_qreg_view, SCI_ALLOCATELINECHARACTERINDEX,
 		              SC_LINECHARACTERINDEX_UTF32, 0);
+	}
 }
 
 /** @memberof teco_doc_t */
@@ -122,41 +142,12 @@ teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len, guint codepage
 	ctx->doc = NULL;
 
 	teco_doc_reset(ctx);
-	teco_doc_edit(ctx);
+	teco_doc_edit(ctx, codepage);
 
 	teco_view_ssm(teco_qreg_view, SCI_APPENDTEXT, len, (sptr_t)(str ? : ""));
 
-	if (codepage != SC_CP_UTF8) {
-		/*
-		 * We have a new UTF-8 document and
-		 * teco_doc_edit() currently always initializes an index.
-		 */
-		teco_view_ssm(teco_qreg_view, SCI_RELEASELINECHARACTERINDEX,
-		              SC_LINECHARACTERINDEX_UTF32, 0);
-		g_assert(!(teco_view_ssm(teco_qreg_view, SCI_GETLINECHARACTERINDEX, 0, 0)
-							& SC_LINECHARACTERINDEX_UTF32));
-
-		/*
-		 * Configure a single-byte codepage/charset.
-		 * This requires setting it on all of the possible styles.
-		 * Unfortunately there can theoretically even be 255 (STYLE_MAX) styles.
-		 * This is important only for display purposes - other than that
-		 * all single-byte encodings are handled the same.
-		 *
-		 * FIXME: Should we avoid this if codepage == 0?
-		 * It will be used for raw byte handling mostly.
-		 * Perhaps we should even set char representations appropriately
-		 * for all non-ANSI codepoints in the 0 codepage.
-		 * But this would also be costly...
-		 */
-		for (gint style = 0; style <= STYLE_LASTPREDEFINED; style++)
-			teco_view_ssm(teco_qreg_view, SCI_STYLESETCHARACTERSET, style, codepage);
-		/* 0 is used for ALL single-byte encodings */
-		teco_view_ssm(teco_qreg_view, SCI_SETCODEPAGE, 0, 0);
-	}
-
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 }
 
 /** @memberof teco_doc_t */
@@ -201,14 +192,14 @@ teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *outlen, guint *codepage
 		if (outlen)
 			*outlen = 0;
 		if (codepage)
-			*codepage = SC_CP_UTF8;
+			*codepage = teco_default_codepage();
 		return;
 	}
 
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(ctx);
+	teco_doc_edit(ctx, teco_default_codepage());
 
 	gsize len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
 	if (str) {
@@ -221,7 +212,7 @@ teco_doc_get_string(teco_doc_t *ctx, gchar **str, gsize *outlen, guint *codepage
 		*codepage = teco_view_get_codepage(teco_qreg_view);
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 }
 
 /** @memberof teco_doc_t */

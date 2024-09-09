@@ -72,6 +72,27 @@ teco_view_setup(teco_view_t *ctx)
 	 */
 	teco_view_ssm(ctx, SCI_SETMARGINWIDTHN, 1, 0);
 
+	if (teco_ed & TECO_ED_DEFAULT_ANSI) {
+		/*
+		 * Configure a single-byte codepage/charset.
+		 * This requires setting it on all of the possible styles.
+		 * Fortunately, we can do it before SCI_STYLECLEARALL.
+		 * This is important only for display purposes - other than that
+		 * all single-byte encodings are handled the same.
+		 */
+		teco_view_ssm(ctx, SCI_STYLESETCHARACTERSET, STYLE_DEFAULT, SC_CHARSET_ANSI);
+		/* 0 is used for ALL single-byte encodings */
+		teco_view_ssm(ctx, SCI_SETCODEPAGE, 0, 0);
+	} else {
+		/*
+		 * Documents are UTF-8 by default and all UTF-8 documents
+		 * are expected to have a character index.
+		 * This is a property of the document, instead of the view.
+		 */
+		teco_view_ssm(ctx, SCI_ALLOCATELINECHARACTERINDEX,
+		              SC_LINECHARACTERINDEX_UTF32, 0);
+	}
+
 	/*
 	 * Set some basic styles in order to provide
 	 * a consistent look across UIs if no profile
@@ -118,14 +139,6 @@ teco_view_setup(teco_view_t *ctx)
 	 * the representations only once.
 	 */
 	teco_view_set_representations(ctx);
-
-	/*
-	 * Documents are UTF-8 by default and all UTF-8 documents
-	 * are expected to have a character index.
-	 * This is a property of the document, instead of the view.
-	 */
-	teco_view_ssm(ctx, SCI_ALLOCATELINECHARACTERINDEX,
-	              SC_LINECHARACTERINDEX_UTF32, 0);
 }
 
 TECO_DEFINE_UNDO_CALL(teco_view_ssm, teco_view_t *, unsigned int, uptr_t, sptr_t);
@@ -144,6 +157,28 @@ teco_view_set_representations(teco_view_t *ctx)
 	for (guint cc = 0; cc < G_N_ELEMENTS(reps); cc++) {
 		gchar buf[] = {(gchar)cc, '\0'};
 		teco_view_ssm(ctx, SCI_SETREPRESENTATION, (uptr_t)buf, (sptr_t)reps[cc]);
+	}
+
+	if (teco_ed & TECO_ED_DEFAULT_ANSI) {
+		/*
+		 * Non-ANSI chars should be visible somehow.
+		 * This would best be done always when changing the
+		 * encoding to 0, but it would be kind of expensive.
+		 *
+		 * FIXME: On the other hand, this could cause problems
+		 * when setting SC_CP_UTF8 later on.
+		 */
+		for (guint cc = 0x80; cc <= 0xFF; cc++) {
+			gchar buf[] = {(gchar)cc, '\0'};
+			gchar rep[2+1];
+			/*
+			 * Hexadecimal is poorly supported in SciTECO, but
+			 * multiple decimal numbers one after another look
+			 * confusing, esp. in Curses.
+			 */
+			g_snprintf(rep, sizeof(rep), "%02X", cc);
+			teco_view_ssm(ctx, SCI_SETREPRESENTATION, (uptr_t)buf, (sptr_t)rep);
+		}
 	}
 }
 

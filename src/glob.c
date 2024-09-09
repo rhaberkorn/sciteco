@@ -319,7 +319,7 @@ teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str,
 		g_assert(glob_reg != NULL);
 		if (!glob_reg->vtable->undo_set_string(glob_reg, error) ||
 		    !glob_reg->vtable->set_string(glob_reg, filename, strlen(filename),
-		                                  SC_CP_UTF8, error))
+		                                  teco_default_codepage(), error))
 			return NULL;
 	}
 

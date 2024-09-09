@@ -127,11 +127,11 @@ teco_qreg_set_eol_mode(teco_qreg_t *qreg, gint mode)
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 	teco_view_ssm(teco_qreg_view, SCI_SETEOLMODE, mode, 0);
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 }
 
 /** @memberof teco_qreg_t */
@@ -144,7 +144,7 @@ teco_qreg_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 	teco_doc_reset(&qreg->string);
 
 	/*
@@ -162,7 +162,7 @@ teco_qreg_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
 		return FALSE;
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 
 	return TRUE;
 }
@@ -174,18 +174,14 @@ teco_qreg_save(teco_qreg_t *qreg, const gchar *filename, GError **error)
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 
-	if (!teco_view_save(teco_qreg_view, filename, error)) {
-		if (teco_qreg_current)
-			teco_doc_edit(&teco_qreg_current->string);
-		return FALSE;
-	}
+	gboolean ret = teco_view_save(teco_qreg_view, filename, error);
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 
-	return TRUE;
+	return ret;
 }
 
 static gboolean
@@ -239,14 +235,14 @@ teco_qreg_plain_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GE
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 
 	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
 	teco_view_ssm(teco_qreg_view, SCI_APPENDTEXT, len, (sptr_t)str);
 	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 	return TRUE;
 }
 
@@ -262,27 +258,24 @@ static gboolean
 teco_qreg_plain_get_character(teco_qreg_t *qreg, teco_int_t position,
                               teco_int_t *chr, GError **error)
 {
-	gboolean ret = TRUE;
-
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 
 	sptr_t len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
 	gssize off = teco_view_glyphs2bytes(teco_qreg_view, position);
 
-	if (off < 0 || off == len) {
+	gboolean ret = off >= 0 && off != len;
+	if (!ret)
 		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
 		            "Position %" TECO_INT_FORMAT " out of range", position);
-		ret = FALSE;
 		/* make sure we still restore the current Q-Register */
-	} else {
+	else
 		*chr = teco_view_get_character(teco_qreg_view, off, len);
-	}
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 
 	return ret;
 }
@@ -293,13 +286,13 @@ teco_qreg_plain_get_length(teco_qreg_t *qreg, GError **error)
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 
 	sptr_t len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
 	teco_int_t ret = teco_view_bytes2glyphs(teco_qreg_view, len);
 
 	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string);
+		teco_doc_edit(&teco_qreg_current->string, 0);
 
 	return ret;
 }
@@ -326,7 +319,7 @@ teco_qreg_plain_edit(teco_qreg_t *qreg, GError **error)
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
-	teco_doc_edit(&qreg->string);
+	teco_doc_edit(&qreg->string, teco_default_codepage());
 	teco_interface_show_view(teco_qreg_view);
 	teco_interface_info_update(qreg);
 
@@ -549,7 +542,7 @@ teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	 */
 	*len = teco_ring_current->filename ? strlen(teco_ring_current->filename) : 0;
 	if (codepage)
-		 *codepage = SC_CP_UTF8;
+		 *codepage = teco_default_codepage();
 	return TRUE;
 }
 
@@ -647,7 +640,7 @@ teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	else
 		g_free(dir);
 	if (codepage)
-		*codepage = SC_CP_UTF8;
+		*codepage = teco_default_codepage();
 
 	return TRUE;
 }
@@ -798,7 +791,7 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 		teco_string_clear(&str_converted);
 	*len = str_converted.len;
 	if (codepage)
-		*codepage = SC_CP_UTF8;
+		*codepage = teco_default_codepage();
 
 	return TRUE;
 }
@@ -910,7 +903,7 @@ teco_qreg_table_set_environ(teco_qreg_table_t *table, GError **error)
 		}
 
 		if (!qreg->vtable->set_string(qreg, value, strlen(value),
-		                              SC_CP_UTF8, error))
+		                              teco_default_codepage(), error))
 			return FALSE;
 	}
 

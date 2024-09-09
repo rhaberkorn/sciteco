@@ -105,6 +105,7 @@ teco_get_default_config_path(const gchar *program)
 static gchar *teco_eval_macro = NULL;
 static gboolean teco_mung_file = FALSE;
 static gboolean teco_mung_profile = TRUE;
+static gboolean teco_8bit_clean = FALSE;
 
 static gchar *
 teco_process_options(gint *argc, gchar ***argv)
@@ -120,6 +121,8 @@ teco_process_options(gint *argc, gchar ***argv)
 		 "Do not mung "
 		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE " "
 		 "even if it exists"},
+		{"8bit", '8', 0, G_OPTION_ARG_NONE, &teco_8bit_clean,
+		 "Use ANSI encoding by default and disable automatic EOL conversion"},
 		{NULL}
 	};
 
@@ -319,6 +322,10 @@ main(int argc, char **argv)
 	 * All remaining arguments in argv are arguments
 	 * to the macro or munged file.
 	 */
+
+	if (teco_8bit_clean)
+		/* equivalent to 16,4ED but executed earlier */
+		teco_ed = (teco_ed & ~TECO_ED_AUTOEOL) | TECO_ED_DEFAULT_ANSI;
 
 	/*
 	 * Theoretically, QReg tables should only be initialized

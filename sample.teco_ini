@@ -17,7 +17,7 @@ EMQ[$SCITECOPATH]/session.tes
     32,0ED
 
     !* non-UTF-8 documents are assumed to be in latin1 (8859-1) *!
-    1024<:C; -A"T 1EE 1;'> J
+    EE"N 1024<:C; -A"T 1EE 1;'> J '
 
     M[lexer.auto]
 

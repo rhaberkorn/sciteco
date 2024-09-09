@@ -62,7 +62,7 @@ teco_doc_init(teco_doc_t *ctx)
 	memset(ctx, 0, sizeof(*ctx));
 }
 
-void teco_doc_edit(teco_doc_t *ctx);
+void teco_doc_edit(teco_doc_t *ctx, guint default_cp);
 void teco_doc_undo_edit(teco_doc_t *ctx);
 
 void teco_doc_set_string(teco_doc_t *ctx, const gchar *str, gsize len, guint codepage);

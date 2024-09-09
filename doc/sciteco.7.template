@@ -1086,7 +1086,10 @@ Currently, \*(ST supports UTF-8 and single-byte ANSI encodings,
 that can also be used for editing raw binary files.
 \# You can configure other single-byte code pages with EE,
 \# but there isn't yet any way to insert characters.
-UTF-8 is the default codepage for new buffers and Q-Registers.
+UTF-8 is the default codepage for new buffers and Q-Registers
+unless the 2nd \fBED\fP flag bit is set.
+You can also specify \fB--8bit\fP to optimize \*(ST for
+8-bit cleanliness.
 While navigation in documents with single-byte encodings
 takes place in constant time, \*(ST uses heuristics in
 UTF-8 documents for translating between byte and character

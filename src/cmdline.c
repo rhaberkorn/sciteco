@@ -1052,7 +1052,8 @@ teco_state_save_cmdline_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg
 		return &teco_state_start;
 
 	if (!qreg->vtable->undo_set_string(qreg, error) ||
-	    !qreg->vtable->set_string(qreg, teco_last_cmdline.data, teco_last_cmdline.len, SC_CP_UTF8, error))
+	    !qreg->vtable->set_string(qreg, teco_last_cmdline.data, teco_last_cmdline.len,
+	                              teco_default_codepage(), error))
 		return NULL;
 
 	return &teco_state_start;

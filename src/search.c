@@ -678,7 +678,7 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
 
 		if (!search_reg->vtable->undo_set_string(search_reg, error) ||
 		    !search_reg->vtable->set_string(search_reg, str->data, str->len,
-		                                    SC_CP_UTF8, error))
+		                                    teco_default_codepage(), error))
 			return NULL;
 
 		teco_interface_ssm(SCI_SETANCHOR, anchor, 0);
@@ -1078,7 +1078,7 @@ teco_state_replace_default_insert_done_overwrite(teco_machine_main_t *ctx, const
 	if (str->len > 0) {
 		if (!replace_reg->vtable->undo_set_string(replace_reg, error) ||
 		    !replace_reg->vtable->set_string(replace_reg, str->data, str->len,
-		                                     SC_CP_UTF8, error))
+		                                     teco_default_codepage(), error))
 			return NULL;
 	} else {
 		g_auto(teco_string_t) replace_str = {NULL, 0};
@@ -1111,7 +1111,7 @@ teco_state_replace_default_ignore_done(teco_machine_main_t *ctx, const teco_stri
 
 	if (!replace_reg->vtable->undo_set_string(replace_reg, error) ||
 	    !replace_reg->vtable->set_string(replace_reg, str->data, str->len,
-	                                     SC_CP_UTF8, error))
+	                                     teco_default_codepage(), error))
 		return NULL;
 
 	return &teco_state_start;

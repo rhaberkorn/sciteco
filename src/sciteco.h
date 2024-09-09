@@ -21,6 +21,8 @@
 
 #include <glib.h>
 
+#include <Scintilla.h>
+
 #if TECO_INTEGER == 32
 typedef gint32 teco_int_t;
 #define TECO_INT_FORMAT G_GINT32_FORMAT
@@ -83,6 +85,7 @@ teco_is_failure(teco_bool_t x)
  * This is not a bitfield, since it is set from SciTECO.
  */
 enum {
+	TECO_ED_DEFAULT_ANSI	= (1 << 2),
 	TECO_ED_AUTOCASEFOLD	= (1 << 3),
 	TECO_ED_AUTOEOL		= (1 << 4),
 	TECO_ED_HOOKS		= (1 << 5),
@@ -93,6 +96,12 @@ enum {
 
 /* in main.c */
 extern teco_int_t teco_ed;
+
+static inline guint
+teco_default_codepage(void)
+{
+	return teco_ed & TECO_ED_DEFAULT_ANSI ? SC_CHARSET_ANSI : SC_CP_UTF8;
+}
 
 /* in main.c */
 extern volatile sig_atomic_t teco_interrupted;

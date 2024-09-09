@@ -372,7 +372,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	gint args = teco_expressions_args();
 
 	if (args > 0) {
-		guint codepage = SC_CP_UTF8;
+		guint codepage = teco_default_codepage();
 		if (colon_modified && !qreg->vtable->get_string(qreg, NULL, NULL, &codepage, error))
 			return NULL;
 
@@ -415,7 +415,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 			/* set register */
 			if (!qreg->vtable->undo_set_string(qreg, error) ||
 			    !qreg->vtable->set_string(qreg, buffer, len,
-			                              SC_CP_UTF8, error))
+			                              codepage, error))
 				return NULL;
 		}
 	}
@@ -429,7 +429,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 		/* set register */
 		if (!qreg->vtable->undo_set_string(qreg, error) ||
 		    !qreg->vtable->set_string(qreg, str->data, str->len,
-		                              SC_CP_UTF8, error))
+		                              teco_default_codepage(), error))
 			return NULL;
 	}
 

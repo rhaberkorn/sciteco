@@ -19,6 +19,7 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .OP "-e|--eval" macro
 .OP "-m|--mung"
 .OP "--no-profile"
+.OP "-8|--8bit"
 .RI [ "UI option .\|.\|." ]
 .OP "--"
 .RI [ script ]
@@ -191,6 +192,14 @@ munging an empty file.
 This is useful to fix up a broken profile script.
 This option has no effect when a file is explicitly munged with
 .BR \-\-mung .
+.IP "\fB-8\fR, \fB--8bit\fR"
+.SCITECO_TOPIC "-8" "--8-bit"
+Use raw single-byte ANSI encoding by default and disable automatic EOL conversion,
+which optimizes \*(ST for 8-bit cleanliness.
+It is equivalent to executing \(lq16,4ED\(rq, but since it is executed
+very early at startup, all Q-Registers and the unnamed buffer will
+already be in ANSI encoding.
+This option is also useful when munging the profile macro.
 .IP "\fIUI options .\|.\|.\fP"
 Some graphical user interfaces, notably GTK+, provide
 additional command line options.

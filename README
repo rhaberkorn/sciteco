@@ -77,7 +77,7 @@ Features
 * Full Unicode (UTF-8) support: The document is still represented as a random-accessible
   codepoint sequence.
 * 8-bit clean: SciTECO can be used to edit binary files if the encoding is changed to
-  ANSI (`0EE`) and automatic EOL conversion is turned off (`16,0ED`).
+  ANSI and automatic EOL conversion is turned off (easiest with `--8bit`).
 * Self-documenting: An integrated indexed help system allows browsing formatted documentation
   about commands, macros and concepts within SciTECO (`?` command).
   Macro packages can be documented with the `tedoc` tool, generating man pages.

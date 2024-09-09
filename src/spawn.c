@@ -165,9 +165,10 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 		return TRUE;
 
 	/*
-	 * Command-lines and file names are always assumed to be UTF-8.
+	 * Command-lines and file names are always assumed to be UTF-8,
+	 * unless we set TECO_ED_DEFAULT_ANSI.
 	 */
-	teco_undo_guint(ctx->expectstring.machine.codepage) = SC_CP_UTF8;
+	teco_undo_guint(ctx->expectstring.machine.codepage) = teco_default_codepage();
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;
@@ -702,7 +703,7 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 			} else {
 				if (!qreg->vtable->undo_set_string(qreg, &teco_spawn_ctx.error) ||
 				    !qreg->vtable->set_string(qreg, buffer.data, buffer.len,
-				                              SC_CP_UTF8, &teco_spawn_ctx.error))
+				                              teco_default_codepage(), &teco_spawn_ctx.error))
 					goto error;
 			}
 		} else {

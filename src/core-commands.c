@@ -2038,6 +2038,11 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
  * Without any argument ED returns the current flags.
  *
  * Currently, the following flags are used by \*(ST:
+ *   - 4: If enabled, prefer raw single-byte ANSI encoding
+ *     for all new buffers and registers.
+ *     This does not change the encoding of any existing
+ *     buffers and any initialized default register when set via
+ *     \fBED\fP, so you might want to launch \*(ST with \fB--8bit\fP.
  *   - 8: Enable/disable automatic folding of case-insensitive
  *     command characters during interactive key translation.
  *     The case of letter keys is inverted, so one or two
@@ -2610,9 +2615,6 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		 *
 		 * FIXME: Should we avoid this if new_cp == 0?
 		 * It will be used for raw byte handling mostly.
-		 * Perhaps we should even set char representations appropriately
-		 * for all non-ANSI codepoints in the 0 codepage.
-		 * But this would also be costly...
 		 */
 		if (teco_current_doc_must_undo()) {
 			/*
