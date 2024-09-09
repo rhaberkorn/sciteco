@@ -28,6 +28,7 @@
 
 #ifdef HAVE_WINDOWS_H
 #define WIN32_LEAN_AND_MEAN
+#define UNICODE
 #include <windows.h>
 #endif
 
@@ -56,26 +57,35 @@ G_STATIC_ASSERT(INVALID_FILE_ATTRIBUTES == TECO_FILE_INVALID_ATTRIBUTES);
 teco_file_attributes_t
 teco_file_get_attributes(const gchar *filename)
 {
-	return GetFileAttributes((LPCTSTR)filename);
+	g_autofree gunichar2 *filename_utf16 = g_utf8_to_utf16(filename, -1, NULL, NULL, NULL);
+	return filename_utf16 ? GetFileAttributesW(filename_utf16)
+	                      : TECO_FILE_INVALID_ATTRIBUTES;
 }
 
 void
 teco_file_set_attributes(const gchar *filename, teco_file_attributes_t attrs)
 {
-	SetFileAttributes((LPCTSTR)filename, attrs);
+	g_autofree gunichar2 *filename_utf16 = g_utf8_to_utf16(filename, -1, NULL, NULL, NULL);
+	if (filename_utf16)
+		SetFileAttributesW(filename_utf16, attrs);
 }
 
 gchar *
 teco_file_get_absolute_path(const gchar *path)
 {
+	if (!path)
+		return NULL;
+	g_autofree gunichar2 *path_utf16 = g_utf8_to_utf16(path, -1, NULL, NULL, NULL);
 	TCHAR buf[MAX_PATH];
-	return path && GetFullPathName(path, sizeof(buf), buf, NULL) ? g_strdup(buf) : NULL;
+	return path_utf16 && GetFullPathNameW(path_utf16, G_N_ELEMENTS(buf), buf, NULL)
+					? g_utf16_to_utf8(buf, -1, NULL, NULL, NULL) : NULL;
 }
 
 gboolean
 teco_file_is_visible(const gchar *path)
 {
-	return !(GetFileAttributes((LPCTSTR)path) & FILE_ATTRIBUTE_HIDDEN);
+	g_autofree gunichar2 *path_utf16 = g_utf8_to_utf16(path, -1, NULL, NULL, NULL);
+	return path_utf16 && !(GetFileAttributesW(path_utf16) & FILE_ATTRIBUTE_HIDDEN);
 }
 
 #else /* !G_OS_WIN32 */
@@ -83,7 +93,7 @@ teco_file_is_visible(const gchar *path)
 teco_file_attributes_t
 teco_file_get_attributes(const gchar *filename)
 {
-	struct stat buf;
+	GStatBuf buf;
 	return g_stat(filename, &buf) ? TECO_FILE_INVALID_ATTRIBUTES : buf.st_mode;
 }
 
