@@ -35,6 +35,16 @@ teco_ascii_toupper(gchar chr)
 	return chr >= 'a' && chr <= 'z' ? chr & ~0x20 : chr;
 }
 
+static inline gchar *
+teco_strv_remove(gchar **strv, guint i)
+{
+	gchar *ret = strv[i];
+	do
+		strv[i] = strv[i+1];
+	while (strv[++i]);
+	return ret;
+}
+
 /**
  * An 8-bit clean null-terminated string.
  *

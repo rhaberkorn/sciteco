@@ -108,7 +108,7 @@ static gboolean teco_mung_profile = TRUE;
 static gboolean teco_8bit_clean = FALSE;
 
 static gchar *
-teco_process_options(gint *argc, gchar ***argv)
+teco_process_options(gchar ***argv)
 {
 	static const GOptionEntry option_entries[] = {
 		{"eval", 'e', 0, G_OPTION_ARG_STRING, &teco_eval_macro,
@@ -159,7 +159,7 @@ teco_process_options(gint *argc, gchar ***argv)
 	 */
 	g_option_context_set_strict_posix(options, TRUE);
 
-	if (!g_option_context_parse(options, argc, argv, &error)) {
+	if (!g_option_context_parse_strv(options, argv, &error)) {
 		g_fprintf(stderr, "Option parsing failed: %s\n",
 			  error->message);
 		exit(EXIT_FAILURE);
@@ -174,16 +174,13 @@ teco_process_options(gint *argc, gchar ***argv)
 	 * and "--" is not the first non-option argument as in
 	 * sciteco foo -- -C bar.
 	 */
-	if (*argc >= 2 && !strcmp((*argv)[1], "--")) {
-		(*argv)[1] = (*argv)[0];
-		(*argv)++;
-		(*argc)--;
-	}
+	if ((*argv)[0] && !g_strcmp0((*argv)[1], "--"))
+		g_free(teco_strv_remove(*argv, 1));
 
 	gchar *mung_filename = NULL;
 
 	if (teco_mung_file) {
-		if (*argc < 2) {
+		if (!(*argv)[0] || !(*argv)[1]) {
 			g_fprintf(stderr, "Script to mung expected!\n");
 			exit(EXIT_FAILURE);
 		}
@@ -194,11 +191,7 @@ teco_process_options(gint *argc, gchar ***argv)
 			exit(EXIT_FAILURE);
 		}
 
-		mung_filename = g_strdup((*argv)[1]);
-
-		(*argv)[1] = (*argv)[0];
-		(*argv)++;
-		(*argc)--;
+		mung_filename = teco_strv_remove(*argv, 1);
 	}
 
 	return mung_filename;
@@ -317,7 +310,18 @@ main(int argc, char **argv)
 	 */
 	setlocale(LC_ALL, "");
 
-	g_autofree gchar *mung_filename = teco_process_options(&argc, &argv);
+#ifdef G_OS_WIN32
+	/*
+	 * main()'s argv is in the system locale, so we might loose
+	 * information when passing it to g_option_context_parse().
+	 * The remaining strings are also not guaranteed to be in
+	 * UTF-8.
+	 */
+	g_auto(GStrv) argv_utf8 = g_win32_get_command_line();
+#else
+	g_auto(GStrv) argv_utf8 = g_strdupv(argv);
+#endif
+	g_autofree gchar *mung_filename = teco_process_options(&argv_utf8);
 	/*
 	 * All remaining arguments in argv are arguments
 	 * to the macro or munged file.
@@ -358,7 +362,7 @@ main(int argc, char **argv)
 	/* current working directory ("$") */
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_workingdir_new());
 	/* environment defaults and registers */
-	teco_initialize_environment(argv[0]);
+	teco_initialize_environment(argv_utf8[0]);
 
 	teco_qreg_table_t local_qregs;
 	teco_qreg_table_init(&local_qregs, TRUE);
@@ -376,8 +380,8 @@ main(int argc, char **argv)
 	 * Also, the Unnamed Buffer should be kept empty for piping.
 	 * Therefore, it would be best to store the arguments in Q-Regs, e.g. $0,$1,$2...
 	 */
-	for (gint i = 1; i < argc; i++) {
-		teco_interface_ssm(SCI_APPENDTEXT, strlen(argv[i]), (sptr_t)argv[i]);
+	for (gint i = 1; argv_utf8[i]; i++) {
+		teco_interface_ssm(SCI_APPENDTEXT, strlen(argv_utf8[i]), (sptr_t)argv_utf8[i]);
 		teco_interface_ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
 	}
 
