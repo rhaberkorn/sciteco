@@ -13,3 +13,7 @@ SCITECOPATH=@abs_top_srcdir@/lib
 # Glib debug options
 G_SLICE=debug-blocks
 G_ENABLE_DIAGNOSTIC=1
+
+# For the Unicode tests - makes sure that UTF-8 characters
+# are accepted on command lines.
+LC_ALL=C.UTF-8
