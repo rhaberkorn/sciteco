@@ -112,16 +112,19 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel autotools mingw-w64-i686-toolchain
+        base-devel mingw-w64-i686-autotools mingw-w64-i686-toolchain
         mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
         groff mingw-w64-i686-doxygen
 
     - name: Configure Build
       env:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+      # --disable-shared makes sure that libtool won't create wrapper binaries.
+      # They are not required and cause problems when running the test suite
+      # as they don't pass down UTF-8 parameters properly.
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses-gui --enable-debug --enable-html-manual
+        ./configure --with-interface=pdcurses-gui --enable-debug --disable-shared --enable-html-manual
 
     - run: make
     - run: make install
@@ -133,7 +136,7 @@ jobs:
       run: cd doc && make devdoc
     - name: make distcheck
       env:
-        DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui
+        DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui --disable-shared
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
       run: make distcheck
     - name: Build Source Tarball

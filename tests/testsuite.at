@@ -93,6 +93,8 @@ AT_SETUP([Unicode])
 AT_CHECK([$SCITECO -e "8594@I/Здравствуй, мир!/ Z-17\"N(0/0)' J0A-8594\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "8594@^Ua/Здравствуй, мир!/ :Qa-17\"N(0/0)' 0Qa-8594\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@I/Здравствуй, мир!/ JW .-10\"N(0/0)' ^E-20\"N(0/0)' 204:EE .-10\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@I/TEST/ @EW/юникод.txt/"], 0, ignore, ignore)
+AT_CHECK([test -f юникод.txt], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])

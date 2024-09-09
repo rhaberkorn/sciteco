@@ -169,7 +169,7 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel autotools mingw-w64-i686-toolchain
+        base-devel mingw-w64-i686-autotools mingw-w64-i686-toolchain
         mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
         groff
 
@@ -188,14 +188,17 @@ jobs:
         CFLAGS: -O3 -flto
         CXXFLAGS: -O3 -flto
         LDFLAGS: -flto
+      # --disable-shared makes sure that libtool won't create wrapper binaries.
+      # They are not required and cause problems when running the test suite
+      # as they don't pass down UTF-8 parameters properly.
       run: |
         autoreconf -i
         mkdir build-wingui build-wincon
         (cd build-wingui
-         ../configure --with-interface=pdcurses-gui --enable-html-manual --program-prefix=g \
+         ../configure --with-interface=pdcurses-gui --disable-shared --enable-html-manual --program-prefix=g \
                       PDCURSES_LIBS="-lpdcurses_wingui -lgdi32 -lcomdlg32 -lwinmm")
         (cd build-wincon
-         ../configure --with-interface=pdcurses --enable-html-manual \
+         ../configure --with-interface=pdcurses --disable-shared --enable-html-manual \
                       PDCURSES_LIBS="-lpdcurses_wincon -lgdi32 -lwinmm")
 
     - name: make
@@ -263,7 +266,7 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel autotools mingw-w64-i686-toolchain
+        base-devel mingw-w64-i686-autotools mingw-w64-i686-toolchain
         mingw-w64-i686-glib2 mingw-w64-i686-gtk3
         groff
 
@@ -273,9 +276,12 @@ jobs:
         CFLAGS: -O3 -flto
         CXXFLAGS: -O3 -flto
         LDFLAGS: -flto
+      # --disable-shared makes sure that libtool won't create wrapper binaries.
+      # They are not required and cause problems when running the test suite
+      # as they don't pass down UTF-8 parameters properly.
       run: |
         autoreconf -i
-        ./configure --with-interface=gtk --enable-html-manual
+        ./configure --with-interface=gtk --disable-shared --enable-html-manual
 
     - name: make
       run: make -j 2
