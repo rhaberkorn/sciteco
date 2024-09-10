@@ -85,8 +85,9 @@ jobs:
     # the system libncurses ABI breaks.
     # However, Homebrew installs ncurses as a keg and it will refer to a
     # non-standard $TERMINFO. This could be worked around.
+    # The macOS Groff version appears to be outdated.
     - name: Install Build Dependencies
-      run: brew install autoconf automake libtool glib dylibbundler
+      run: brew install autoconf automake libtool glib groff dylibbundler
     # Required by pyTooling/Actions/releaser
     - name: Set up Python
       uses: actions/setup-python@v4.3.0
