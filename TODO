@@ -137,9 +137,17 @@ Known Bugs:
    This does not happen under Linux with Darling.
    See https://github.com/rhaberkorn/sciteco/issues/12
  * GTK: Scrolling via mouse is not reliably prevented in all situations.
- * Autocompletions in <EB> should automatically escape globbing
-   characters. Otherwise it is very tricky to open files
-   with magic characters.
+ * File name autocompletion should take glob patterns into account.
+   The simple reason is that if a filename really contains glob characters
+   and you are trying to open it with EB, you might end up not being
+   able to autocomplete it if a previous autocompletion inserted
+   escaped glob patterns.
+   Unfortunately, this would be very tricky to do right.
+ * There is no way to type the ^W^W string building character,
+   not even with upcarets.
+ * ^V and ^W string building characters do not operate
+   on ^EQq and ^EUq, which is a pity as that would be the
+   only sane use for them.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -329,12 +337,6 @@ Features:
    in the ring. It should also display the numeric buffer ids.
  * Gtk: Unicode IME support for asiatic languages.
    Have a look how it is done in Scintilla.
- * Unicode-aware parser. Entire code points are passed into the
-   state machines instead of individual bytes.
-   Whereever we expect a single character,
-   any Unicode code point should be accepted.
-   This would disallow any non-UTF8 encoding for TECO source files,
-   though.
  * Progress indication in commandline cursor:
    Perhaps blinking or invisible?
  * Command to free Q-Register (remove from table).
@@ -504,8 +506,12 @@ Features:
  * fnkeys.tes: Rubin/Rubout via cursor keys?
  * Add a configure-switch for LTO (--enable-lto).
  * Curses: could now optionally support Unicode "icons" in the
-   file/directory popups (cf. `exa --icons`).
-   This isn't in all fonts, so it must be disabled by default.
+   file/directory popups (cf. `exa --icons`) and left to
+   "<Buffer>" or "<Q-Register>".
+   This isn't in all fonts, but you can always install
+   Nerd Fonts: https://www.nerdfonts.com
+   The mapping could be stolen from exa:
+   https://github.com/ogham/exa/blob/master/src/output/icons.rs
  * Update Scintilla and Scinterm.
    The last PR has been merged and we don't have to link
    to our own Scinterm fork.
@@ -552,6 +558,8 @@ Optimizations:
    * Use `[[gnu::foo]]` instead of `__attribute__((foo))`.
    * The TECO_FOR_EACH() hack could be simplified at least marginally
      using __VA_OPT__().
+ * Parsing might be optimized with libc's Unicode handling
+   functions and/or custom optimized versions.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
