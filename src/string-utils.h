@@ -197,6 +197,19 @@ teco_string_rindex(const teco_string_t *str, gchar chr)
 
 const gchar *teco_string_last_occurrence(const teco_string_t *str, const gchar *chars);
 
+/**
+ * Validate whether string consists exclusively of valid UTF-8, but accept null bytes.
+ * @note there is g_utf8_validate_len() in Glib 2.60
+ */
+static inline gboolean
+teco_string_validate_utf8(const teco_string_t *str)
+{
+	const gchar *p = str->data;
+	while (!g_utf8_validate(p, str->len - (p - str->data), &p) && !*p)
+		p++;
+	return p - str->data == str->len;
+}
+
 /** @memberof teco_string_t */
 static inline void
 teco_string_clear(teco_string_t *str)

@@ -136,6 +136,7 @@ typedef enum {
  *                The pointer is modified and always left after
  *                the last character used, so it may point to the
  *                terminating null byte after the call.
+ * @param codepage The codepage of pattern.
  * @param escape_default Whether to treat single characters
  *                       as classes or not.
  * @param error A GError.
@@ -150,7 +151,7 @@ typedef enum {
  */
 static gchar *
 teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
-                  gboolean escape_default, GError **error)
+                  guint codepage, gboolean escape_default, GError **error)
 {
 	while (pattern->len > 0) {
 		switch (*state) {
@@ -170,7 +171,8 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				 */
 				if (!escape_default)
 					return g_strdup("");
-				gsize len = g_utf8_next_char(pattern->data) - pattern->data;
+				gsize len = codepage == SC_CP_UTF8
+						? g_utf8_next_char(pattern->data) - pattern->data : 1;
 				gchar *escaped = g_regex_escape_string(pattern->data, len);
 				pattern->data += len;
 				pattern->len -= len;
@@ -235,16 +237,26 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 
 		case TECO_SEARCH_STATE_ANYQ: {
 			teco_qreg_t *reg;
+			gsize len;
+			gunichar chr;
 
-			/* FIXME: Once the parser is UTF-8, we need pass a code point here */
+			if (codepage == SC_CP_UTF8) {
+				len = g_utf8_next_char(pattern->data) - pattern->data;
+				chr = g_utf8_get_char(pattern->data);
+			} else {
+				len = 1;
+				chr = *pattern->data;
+			}
 			switch (teco_machine_qregspec_input(teco_search_qreg_machine,
-			                                    *pattern->data, &reg, NULL, error)) {
+			                                    chr, &reg, NULL, error)) {
 			case TECO_MACHINE_QREGSPEC_ERROR:
 				return NULL;
 
 			case TECO_MACHINE_QREGSPEC_MORE:
 				/* incomplete, but consume byte */
-				break;
+				pattern->data += len;
+				pattern->len -= len;
+				continue;
 
 			case TECO_MACHINE_QREGSPEC_DONE:
 				teco_machine_qregspec_reset(teco_search_qreg_machine);
@@ -253,8 +265,8 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				if (!reg->vtable->get_string(reg, &str.data, &str.len, NULL, error))
 					return NULL;
 
-				pattern->data++;
-				pattern->len--;
+				pattern->data += len;
+				pattern->len -= len;
 				*state = TECO_SEARCH_STATE_START;
 				return g_regex_escape_string(str.data, str.len);
 			}
@@ -289,11 +301,11 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
  * string argument) are currently not reported as errors.
  *
  * @param pattern The pattern to scan through.
- *                It must always be in UTF-8.
  *                Modifies the pointer to point after the last
  *                successfully scanned character, so it can be
  *                called recursively. It may also point to the
  *                terminating null byte after the call.
+ * @param codepage The codepage of pattern.
  * @param single_expr Whether to scan a single pattern
  *                    expression or an arbitrary sequence.
  * @param error A GError.
@@ -301,7 +313,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
  *         Must be freed with g_free().
  */
 static gchar *
-teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error)
+teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr, GError **error)
 {
 	teco_search_state_t state = TECO_SEARCH_STATE_START;
 	g_auto(teco_string_t) re = {NULL, 0};
@@ -313,7 +325,7 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 		 * as classes, so we do not convert them to regexp
 		 * classes unnecessarily.
 		 */
-		g_autofree gchar *temp = teco_class2regexp(&state, pattern, FALSE, error);
+		g_autofree gchar *temp = teco_class2regexp(&state, pattern, codepage, FALSE, error);
 		if (!temp)
 			return NULL;
 
@@ -338,7 +350,8 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 			case TECO_CTL_KEY('X'): teco_string_append_c(&re, '.'); break;
 			case TECO_CTL_KEY('N'): state = TECO_SEARCH_STATE_NOT; break;
 			default: {
-				gsize len = g_utf8_next_char(pattern->data) - pattern->data;
+				gsize len = codepage == SC_CP_UTF8
+						? g_utf8_next_char(pattern->data) - pattern->data : 1;
 				/* the allocation could theoretically be avoided by escaping char-wise */
 				g_autofree gchar *escaped = g_regex_escape_string(pattern->data, len);
 				teco_string_append(&re, escaped, strlen(escaped));
@@ -351,7 +364,7 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 
 		case TECO_SEARCH_STATE_NOT: {
 			state = TECO_SEARCH_STATE_START;
-			g_autofree gchar *temp = teco_class2regexp(&state, pattern, TRUE, error);
+			g_autofree gchar *temp = teco_class2regexp(&state, pattern, codepage, TRUE, error);
 			if (!temp)
 				return NULL;
 			if (!*temp)
@@ -387,7 +400,7 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 
 		case TECO_SEARCH_STATE_MANY: {
 			/* consume exactly one pattern element */
-			g_autofree gchar *temp = teco_pattern2regexp(pattern, TRUE, error);
+			g_autofree gchar *temp = teco_pattern2regexp(pattern, codepage, TRUE, error);
 			if (!temp)
 				return NULL;
 			if (!*temp)
@@ -413,7 +426,7 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 				state = TECO_SEARCH_STATE_START;
 				break;
 			default: {
-				g_autofree gchar *temp = teco_pattern2regexp(pattern, TRUE, error);
+				g_autofree gchar *temp = teco_pattern2regexp(pattern, codepage, TRUE, error);
 				if (!temp)
 					return NULL;
 				if (!*temp)
@@ -551,9 +564,18 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	GRegexCompileFlags flags = G_REGEX_CASELESS | G_REGEX_MULTILINE | G_REGEX_DOTALL;
 
 	/* this is set in teco_state_search_initial() */
-	if (ctx->expectstring.machine.codepage != SC_CP_UTF8)
+	if (ctx->expectstring.machine.codepage != SC_CP_UTF8) {
 		/* single byte encoding */
 		flags |= G_REGEX_RAW;
+	} else if (!teco_string_validate_utf8(str)) {
+		/*
+		 * While SciTECO code is always guaranteed to be in valid UTF-8,
+		 * the result of string building may not (eg. if ^EQq inserts garbage).
+		 */
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+		                    "Invalid UTF-8 byte sequence in search pattern");
+		return FALSE;
+	}
 
 	if (teco_current_doc_must_undo())
 		undo__teco_interface_ssm(SCI_SETSEL,
@@ -568,8 +590,9 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 
 	g_autoptr(GRegex) re = NULL;
 	teco_string_t pattern = *str;
+	g_autofree gchar *re_pattern;
 	/* NOTE: teco_pattern2regexp() modifies str pointer */
-	g_autofree gchar *re_pattern = teco_pattern2regexp(&pattern, FALSE, error);
+	re_pattern = teco_pattern2regexp(&pattern, ctx->expectstring.machine.codepage, FALSE, error);
 	if (!re_pattern)
 		return FALSE;
 	teco_machine_qregspec_reset(teco_search_qreg_machine);

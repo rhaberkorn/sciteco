@@ -85,6 +85,7 @@ AT_CHECK([$SCITECO -e "@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z-4\"N(0
 AT_CHECK([$SCITECO -e "0EE 129@I// -A-129\"N(0/0)' HXa @EQa// EE\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -8e "129@:^Ua// 0Qa-129\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "1EE 167Ua @I/^EUa/ .-1\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -8e "194Ua Qa@I//J :@S/^EUa/\"F(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Unicode])
@@ -201,13 +202,5 @@ AT_SKIP_IF([case $host in *-*-*bsd* | *-*-darwin*) true;; *) false;; esac])
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.
 AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
-AT_XFAIL_IF(true)
-AT_CLEANUP
-
-AT_SETUP([Unicode glitches])
-# While TECO code must always be UTF-8, strings after string building
-# can be in single-byte encodings as well.
-# It must be possible to search for single bytes in single-byte encodings.
-AT_CHECK([$SCITECO -8e "164Ua Ga@I//J :@S/^EUa/\"F(0/0)'"], 0, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP

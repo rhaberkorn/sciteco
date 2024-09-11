@@ -158,17 +158,11 @@ gboolean
 teco_execute_macro(const gchar *macro, gsize macro_len,
                    teco_qreg_table_t *qreg_table_locals, GError **error)
 {
-	/*
-	 * Validate UTF-8, but accept null bytes.
-	 * NOTE: there is g_utf8_validate_len() in Glib 2.60
-	 */
-	const gchar *p = macro;
-	while (!g_utf8_validate(p, macro_len - (p - macro), &p) && !*p)
-		p++;
-	if (p - macro < macro_len) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
-		            "Invalid UTF-8 byte sequence at %" G_GSIZE_FORMAT,
-		            p - macro);
+	const teco_string_t str = {(gchar *)macro, macro_len};
+
+	if (!teco_string_validate_utf8(&str)) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+		                    "Invalid UTF-8 byte sequence in macro");
 		return FALSE;
 	}
 
