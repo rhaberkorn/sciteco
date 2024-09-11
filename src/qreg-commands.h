@@ -33,10 +33,10 @@ teco_state_expectqreg_reset(teco_machine_main_t *ctx)
 
 gboolean teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error);
 
-teco_state_t *teco_state_expectqreg_input(teco_machine_main_t *ctx, gchar chr, GError **error);
+teco_state_t *teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTQREG
@@ -47,7 +47,7 @@ gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_m
  */
 #define TECO_DEFINE_STATE_EXPECTQREG(NAME, ...) \
 	static teco_state_t * \
-	NAME##_input(teco_machine_main_t *ctx, gchar chr, GError **error) \
+	NAME##_input(teco_machine_main_t *ctx, gunichar chr, GError **error) \
 	{ \
 		return teco_state_expectqreg_input(ctx, chr, error); \
 	} \

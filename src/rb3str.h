@@ -65,5 +65,5 @@ teco_rb3str_head_t *teco_rb3str_nfind(teco_rb3str_tree_t *tree, gboolean case_se
                                       const gchar *str, gsize len);
 
 gboolean teco_rb3str_auto_complete(teco_rb3str_tree_t *tree, gboolean case_sensitive,
-                                   const gchar *str, gsize str_len, gsize restrict_len,
+                                   const gchar *str, gsize str_len, guint restrict_len,
                                    teco_string_t *insert);

@@ -164,8 +164,8 @@ gpointer teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
  * significantly improves batch-mode performance.
  */
 
-TECO_DECLARE_UNDO_SCALAR(gchar);
-#define teco_undo_gchar(VAR) (*teco_undo_object_gchar_push(&(VAR)))
+TECO_DECLARE_UNDO_SCALAR(gunichar);
+#define teco_undo_gunichar(VAR) (*teco_undo_object_gunichar_push(&(VAR)))
 
 TECO_DECLARE_UNDO_SCALAR(gint);
 #define teco_undo_gint(VAR) (*teco_undo_object_gint_push(&(VAR)))

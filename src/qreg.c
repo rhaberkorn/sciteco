@@ -84,10 +84,9 @@ teco_qreg_execute(teco_qreg_t *qreg, teco_qreg_table_t *qreg_table_locals, GErro
 	g_auto(teco_string_t) macro = {NULL, 0};
 
 	/*
-	 * FIXME: Once we have an Unicode-aware parser,
-	 * we should probably check the encoding of the register.
-	 * On the other hand, we will have to validate the
-	 * UTF-8 codepoints before execution anyway.
+	 * SciTECO macros must be in UTF-8, but we don't check the encoding,
+	 * so as not to complicate TECO_ED_DEFAULT_ANSI mode.
+	 * The UTF-8 byte sequences are checked anyway.
 	 */
 	if (!qreg->vtable->get_string(qreg, &macro.data, &macro.len, NULL, error) ||
 	    !teco_execute_macro(macro.data, macro.len, qreg_table_locals, error)) {
@@ -1220,7 +1219,7 @@ TECO_DECLARE_STATE(teco_state_qregspec_secondchar);
 TECO_DECLARE_STATE(teco_state_qregspec_string);
 
 static teco_state_t *teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx,
-                                                            gchar chr, GError **error);
+                                                            gunichar chr, GError **error);
 
 static teco_state_t *
 teco_state_qregspec_done(teco_machine_qregspec_t *ctx, GError **error)
@@ -1255,7 +1254,7 @@ teco_state_qregspec_done(teco_machine_qregspec_t *ctx, GError **error)
 }
 
 static teco_state_t *
-teco_state_qregspec_start_input(teco_machine_qregspec_t *ctx, gchar chr, GError **error)
+teco_state_qregspec_start_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
 	/*
 	 * FIXME: We're using teco_state_qregspec_start as a success condition,
@@ -1272,7 +1271,7 @@ teco_state_qregspec_start_input(teco_machine_qregspec_t *ctx, gchar chr, GError 
 }
 
 /* in cmdline.c */
-gboolean teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 TECO_DEFINE_STATE(teco_state_qregspec_start,
 	.is_start = TRUE,
@@ -1280,7 +1279,7 @@ TECO_DEFINE_STATE(teco_state_qregspec_start,
 );
 
 static teco_state_t *
-teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gchar chr, GError **error)
+teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
 	/*
 	 * FIXME: Disallow space characters?
@@ -1299,8 +1298,7 @@ teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gchar chr, 
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
-		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
-		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
+		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
 	}
 	return teco_state_qregspec_done(ctx, error);
 }
@@ -1316,7 +1314,7 @@ TECO_DEFINE_STATE(teco_state_qregspec_start_global,
 );
 
 static teco_state_t *
-teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gchar chr, GError **error)
+teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
 	/*
 	 * FIXME: Disallow space characters?
@@ -1324,8 +1322,7 @@ teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gchar chr, GEr
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
-		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
-		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
+		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
 	}
 	return &teco_state_qregspec_secondchar;
 }
@@ -1335,7 +1332,7 @@ TECO_DEFINE_STATE(teco_state_qregspec_firstchar,
 );
 
 static teco_state_t *
-teco_state_qregspec_secondchar_input(teco_machine_qregspec_t *ctx, gchar chr, GError **error)
+teco_state_qregspec_secondchar_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
 	/*
 	 * FIXME: Disallow space characters?
@@ -1343,8 +1340,7 @@ teco_state_qregspec_secondchar_input(teco_machine_qregspec_t *ctx, gchar chr, GE
 	if (!ctx->parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
-		/* FIXME: g_unicode_toupper() once we have an Unicode-conforming parser */
-		teco_string_append_c(&ctx->name, g_ascii_toupper(chr));
+		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
 	}
 	return teco_state_qregspec_done(ctx, error);
 }
@@ -1354,7 +1350,7 @@ TECO_DEFINE_STATE(teco_state_qregspec_secondchar,
 );
 
 static teco_state_t *
-teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gchar chr, GError **error)
+teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
 	/*
 	 * Makes sure that braces within string building constructs do not have to be
@@ -1395,7 +1391,7 @@ teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gchar chr, GError
 
 /* in cmdline.c */
 gboolean teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx,
-                                                     gchar key, GError **error);
+                                                     gunichar key, GError **error);
 
 TECO_DEFINE_STATE(teco_state_qregspec_string,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_string_process_edit_cmd
@@ -1456,7 +1452,7 @@ teco_machine_qregspec_get_stringbuilding(teco_machine_qregspec_t *ctx)
  * @memberof teco_machine_qregspec_t
  */
 teco_machine_qregspec_status_t
-teco_machine_qregspec_input(teco_machine_qregspec_t *ctx, gchar chr,
+teco_machine_qregspec_input(teco_machine_qregspec_t *ctx, gunichar chr,
                             teco_qreg_t **result, teco_qreg_table_t **result_table, GError **error)
 {
 	ctx->parse_only = result == NULL;
@@ -1484,7 +1480,7 @@ teco_machine_qregspec_get_results(teco_machine_qregspec_t *ctx,
 gboolean
 teco_machine_qregspec_auto_complete(teco_machine_qregspec_t *ctx, teco_string_t *insert)
 {
-	gsize restrict_len = 0;
+	guint restrict_len = 0;
 
 	/*
 	 * NOTE: We could have separate process_edit_cmd_cb() for
@@ -1499,6 +1495,10 @@ teco_machine_qregspec_auto_complete(teco_machine_qregspec_t *ctx, teco_string_t 
 		/* two-letter Q-Reg */
 		restrict_len = 2;
 
+	/*
+	 * FIXME: This is not quite right as it will propose even
+	 * lower case single or two-letter Q-Register names.
+	 */
 	return teco_rb3str_auto_complete(&ctx->result_table->tree, !restrict_len,
 	                                 ctx->name.data, ctx->name.len, restrict_len, insert) &&
 	       ctx->nesting == 1;

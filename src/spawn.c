@@ -417,7 +417,7 @@ cleanup:
 }
 
 /* in cmdline.c */
-gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /*$ EC pipe filter
  * ECcommand$ -- Execute operating system command and filter buffer contents
@@ -642,7 +642,7 @@ teco_spawn_stdin_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer dat
 	gssize bytes_written = teco_eol_writer_convert(&teco_spawn_ctx.stdin_writer, buffer,
 	                                               convert_len, &teco_spawn_ctx.error);
 	if (bytes_written < 0) {
-		/* GError ocurred */
+		/* GError occurred */
 		g_main_loop_quit(teco_spawn_ctx.mainloop);
 		return G_SOURCE_REMOVE;
 	}

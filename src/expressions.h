@@ -123,7 +123,7 @@ teco_int_t teco_expressions_peek_num(guint index);
 teco_int_t teco_expressions_pop_num(guint index);
 gboolean teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error);
 
-void teco_expressions_add_digit(gchar digit);
+void teco_expressions_add_digit(gunichar digit);
 
 void teco_expressions_push_op(teco_operator_t op);
 gboolean teco_expressions_push_calc(teco_operator_t op, GError **error);

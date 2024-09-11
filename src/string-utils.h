@@ -26,11 +26,11 @@
 /**
  * Upper-case SciTECO command character.
  *
- * There are implementations in glib (g_ascii_toupper) and libc,
+ * There are implementations in glib (g_ascii_toupper() and g_unichar_toupper()) and libc,
  * but this implementation is sufficient for all letters used by SciTECO commands.
  */
-static inline gchar
-teco_ascii_toupper(gchar chr)
+static inline gunichar
+teco_ascii_toupper(gunichar chr)
 {
 	return chr >= 'a' && chr <= 'z' ? chr & ~0x20 : chr;
 }
@@ -52,6 +52,7 @@ teco_strv_remove(gchar **strv, guint i)
  * and the allocation length is not stored.
  * Just like GString, teco_string_t are always null-terminated but at the
  * same time 8-bit clean (can contain null-characters).
+ * It may or may not contain UTF-8 byte sequences.
  *
  * The API is designed such that teco_string_t operations operate on plain
  * (null-terminated) C strings, a single character or character array as well as
@@ -74,7 +75,7 @@ typedef struct {
 	 * The pointer is guaranteed to be non-NULL after initialization.
 	 */
 	gchar *data;
-	/** Length of `data` without the trailing null-byte. */
+	/** Length of `data` without the trailing null-byte in bytes. */
 	gsize len;
 } teco_string_t;
 
@@ -126,6 +127,16 @@ static inline void
 teco_string_append_c(teco_string_t *str, gchar chr)
 {
 	teco_string_append(str, &chr, sizeof(chr));
+}
+
+/** @memberof teco_string_t */
+static inline void
+teco_string_append_wc(teco_string_t *target, gunichar chr)
+{
+	/* 4 bytes should be enough, but we better follow the documentation */
+	target->data = g_realloc(target->data, target->len + 6 + 1);
+	target->len += g_unichar_to_utf8(chr, target->data+target->len);
+	target->data[target->len] = '\0';
 }
 
 /**

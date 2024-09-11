@@ -227,7 +227,7 @@ void teco_machine_qregspec_reset(teco_machine_qregspec_t *ctx);
  */
 struct teco_machine_stringbuilding_t *teco_machine_qregspec_get_stringbuilding(teco_machine_qregspec_t *ctx);
 
-teco_machine_qregspec_status_t teco_machine_qregspec_input(teco_machine_qregspec_t *ctx, gchar chr,
+teco_machine_qregspec_status_t teco_machine_qregspec_input(teco_machine_qregspec_t *ctx, gunichar chr,
                                                            teco_qreg_t **result,
                                                            teco_qreg_table_t **result_table, GError **error);
 

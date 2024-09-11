@@ -45,7 +45,7 @@
 #include "goto-commands.h"
 #include "core-commands.h"
 
-static teco_state_t *teco_state_control_input(teco_machine_main_t *ctx, gchar chr, GError **error);
+static teco_state_t *teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
 /*
  * NOTE: This needs some extra code in teco_state_start_input().
@@ -1049,7 +1049,7 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 }
 
 static teco_state_t *
-teco_state_start_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	static teco_machine_main_transition_t transitions[] = {
 		/*
@@ -1388,7 +1388,7 @@ teco_state_fcommand_cond_else(teco_machine_main_t *ctx, GError **error)
 }
 
 static teco_state_t *
-teco_state_fcommand_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_fcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	static teco_machine_main_transition_t transitions[] = {
 		/*
@@ -1512,7 +1512,7 @@ teco_state_changedir_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 TECO_DEFINE_STATE_EXPECTDIR(teco_state_changedir);
 
 static teco_state_t *
-teco_state_condcommand_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	teco_int_t value = 0;
 	gboolean result = TRUE;
@@ -1800,7 +1800,7 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 }
 
 static teco_state_t *
-teco_state_control_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	static teco_machine_main_transition_t transitions[] = {
 		/*
@@ -1841,10 +1841,10 @@ teco_state_control_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_control);
 
 static teco_state_t *
-teco_state_ascii_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_ascii_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	if (ctx->mode == TECO_MODE_NORMAL)
-		teco_expressions_push((guchar)chr);
+		teco_expressions_push(chr);
 
 	return &teco_state_start;
 }
@@ -1877,7 +1877,7 @@ TECO_DEFINE_STATE(teco_state_ascii);
  * only be seen when executing the following command.
  */
 static teco_state_t *
-teco_state_escape_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	/*$ ^[^[ ^[$ $$ terminate return
 	 * [a1,a2,...]$$ -- Terminate command line or return from macro
@@ -2700,7 +2700,7 @@ teco_state_ecommand_exit(teco_machine_main_t *ctx, GError **error)
 }
 
 static teco_state_t *
-teco_state_ecommand_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	static teco_machine_main_transition_t transitions[] = {
 		/*
@@ -2874,10 +2874,9 @@ teco_state_insert_indent_initial(teco_machine_main_t *ctx, GError **error)
 		len -= teco_interface_ssm(SCI_GETCOLUMN,
 		                          teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0) % len;
 
-		gchar spaces[len];
-
-		memset(spaces, ' ', sizeof(spaces));
-		teco_interface_ssm(SCI_ADDTEXT, sizeof(spaces), (sptr_t)spaces);
+		gchar space = ' ';
+		while (len-- > 0)
+			teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)&space);
 	}
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();

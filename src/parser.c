@@ -59,7 +59,7 @@ teco_loop_stack_cleanup(void)
 }
 
 gboolean
-teco_machine_input(teco_machine_t *ctx, gchar chr, GError **error)
+teco_machine_input(teco_machine_t *ctx, gunichar chr, GError **error)
 {
 	teco_state_t *next = ctx->current->input_cb(ctx, chr, error);
 	if (!next)
@@ -86,10 +86,20 @@ teco_state_end_of_macro(teco_machine_t *ctx, GError **error)
 }
 
 /**
+ * Execute macro from current PC to stop position.
+ *
  * Handles all expected exceptions and preparing them for stack frame insertion.
+ *
+ * @param ctx State machine.
+ * @param macro The macro to execute.
+ *   It does not have to be complete.
+ *   It must consist only of validated UTF-8 sequences, though.
+ * @param stop_pos Where to stop execution in bytes.
+ * @param error Location to store error.
+ * @return FALSE if an error occurred.
  */
 gboolean
-teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gint stop_pos, GError **error)
+teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_pos, GError **error)
 {
 	while (ctx->macro_pc < stop_pos) {
 #ifdef DEBUG
@@ -110,9 +120,13 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gint stop_p
 		if (!teco_memory_check(0, error))
 			goto error_attach;
 
-		if (!teco_machine_input(&ctx->parent, macro[ctx->macro_pc], error))
+		/* UTF-8 sequences are already validated */
+		gunichar chr = g_utf8_get_char(macro+ctx->macro_pc);
+
+		if (!teco_machine_input(&ctx->parent, chr, error))
 			goto error_attach;
-		ctx->macro_pc++;
+
+		ctx->macro_pc = g_utf8_next_char(macro+ctx->macro_pc) - macro;
 	}
 
 	/*
@@ -144,6 +158,20 @@ gboolean
 teco_execute_macro(const gchar *macro, gsize macro_len,
                    teco_qreg_table_t *qreg_table_locals, GError **error)
 {
+	/*
+	 * Validate UTF-8, but accept null bytes.
+	 * NOTE: there is g_utf8_validate_len() in Glib 2.60
+	 */
+	const gchar *p = macro;
+	while (!g_utf8_validate(p, macro_len - (p - macro), &p) && !*p)
+		p++;
+	if (p - macro < macro_len) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+		            "Invalid UTF-8 byte sequence at %" G_GSIZE_FORMAT,
+		            p - macro);
+		return FALSE;
+	}
+
 	/*
 	 * This is not auto-cleaned up, so it can be initialized
 	 * on demand.
@@ -309,26 +337,26 @@ teco_machine_main_eval_colon(teco_machine_main_t *ctx)
 teco_state_t *
 teco_machine_main_transition_input(teco_machine_main_t *ctx,
                                    teco_machine_main_transition_t *transitions,
-                                   guint len, gchar chr, GError **error)
+                                   guint len, gunichar chr, GError **error)
 {
-	if (chr < 0 || chr >= len || !transitions[(guint)chr].next) {
+	if (chr >= len || !transitions[chr].next) {
 		teco_error_syntax_set(error, chr);
 		return NULL;
 	}
 
-	if (ctx->mode == TECO_MODE_NORMAL && transitions[(guint)chr].transition_cb) {
+	if (ctx->mode == TECO_MODE_NORMAL && transitions[chr].transition_cb) {
 		/*
 		 * NOTE: We could also just let transition_cb return a boolean...
 		 */
 		GError *tmp_error = NULL;
-		transitions[(guint)chr].transition_cb(ctx, &tmp_error);
+		transitions[chr].transition_cb(ctx, &tmp_error);
 		if (tmp_error) {
 			g_propagate_error(error, tmp_error);
 			return NULL;
 		}
 	}
 
-	return transitions[(guint)chr].next;
+	return transitions[chr].next;
 }
 
 void
@@ -342,11 +370,11 @@ teco_machine_main_clear(teco_machine_main_t *ctx)
  * FIXME: All teco_state_stringbuilding_* states could be static?
  */
 static teco_state_t *teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx,
-                                                         gchar chr, GError **error);
+                                                         gunichar chr, GError **error);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctl);
 
 static teco_state_t *teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx,
-                                                             gchar chr, GError **error);
+                                                             gunichar chr, GError **error);
 TECO_DECLARE_STATE(teco_state_stringbuilding_escaped);
 
 TECO_DECLARE_STATE(teco_state_stringbuilding_lower);
@@ -360,7 +388,7 @@ TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_quote);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_n);
 
 static teco_state_t *
-teco_state_stringbuilding_start_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_start_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (chr == '^')
 		return &teco_state_stringbuilding_ctl;
@@ -372,7 +400,7 @@ teco_state_stringbuilding_start_input(teco_machine_stringbuilding_t *ctx, gchar 
 
 /* in cmdline.c */
 gboolean teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
-                                                          gchar key, GError **error);
+                                                          gunichar key, GError **error);
 
 TECO_DEFINE_STATE(teco_state_stringbuilding_start,
 		.is_start = TRUE,
@@ -381,7 +409,7 @@ TECO_DEFINE_STATE(teco_state_stringbuilding_start,
 );
 
 static teco_state_t *
-teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	chr = teco_ascii_toupper(chr);
 
@@ -396,40 +424,50 @@ teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gchar ch
 		chr = TECO_CTL_KEY(chr);
 	}
 
+	/*
+	 * Source code is always in UTF-8, so it does not
+	 * make sense to handle ctx->codepage != SC_CP_UTF8
+	 * separately.
+	 */
 	if (ctx->result)
-		teco_string_append_c(ctx->result, chr);
+		teco_string_append_wc(ctx->result, chr);
 	return &teco_state_stringbuilding_start;
 }
 
 TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_stringbuilding_ctl);
 
 static teco_state_t *
-teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (!ctx->result)
 		/* parse-only mode */
 		return &teco_state_stringbuilding_start;
 
-	/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
+	/*
+	 * The subtle difference between UTF-8 and single-byte targets
+	 * is that we don't try to casefold non-ANSI characters in single-byte mode.
+	 */
 	switch (ctx->mode) {
 	case TECO_STRINGBUILDING_MODE_UPPER:
-		chr = g_ascii_toupper(chr);
+		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
+					? g_unichar_toupper(chr) : chr;
 		break;
 	case TECO_STRINGBUILDING_MODE_LOWER:
-		chr = g_ascii_tolower(chr);
+		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
+					? g_unichar_tolower(chr) : chr;
 		break;
 	default:
 		break;
 	}
 
-	teco_string_append_c(ctx->result, chr);
+	teco_string_append_wc(ctx->result, chr);
 	return &teco_state_stringbuilding_start;
 }
 
 TECO_DEFINE_STATE(teco_state_stringbuilding_escaped);
 
 static teco_state_t *
-teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (!ctx->result)
 		/* parse-only mode */
@@ -443,8 +481,9 @@ teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gchar 
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_LOWER;
 	} else {
-		/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
-		teco_string_append_c(ctx->result, g_ascii_tolower(chr));
+		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
+					? g_unichar_tolower(chr) : chr;
+		teco_string_append_wc(ctx->result, chr);
 	}
 
 	return &teco_state_stringbuilding_start;
@@ -453,7 +492,7 @@ teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gchar 
 TECO_DEFINE_STATE(teco_state_stringbuilding_lower);
 
 static teco_state_t *
-teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (!ctx->result)
 		/* parse-only mode */
@@ -467,8 +506,9 @@ teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gchar 
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_UPPER;
 	} else {
-		/* FIXME: Consult ctx->codepage once we have an Unicode-conforming parser */
-		teco_string_append_c(ctx->result, g_ascii_toupper(chr));
+		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
+					? g_unichar_toupper(chr) : chr;
+		teco_string_append_wc(ctx->result, chr);
 	}
 
 	return &teco_state_stringbuilding_start;
@@ -477,7 +517,7 @@ teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gchar 
 TECO_DEFINE_STATE(teco_state_stringbuilding_upper);
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_state_t *next;
 
@@ -489,8 +529,9 @@ teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gchar c
 	case 'N':  next = &teco_state_stringbuilding_ctle_n; break;
 	default:
 		if (ctx->result) {
-			gchar buf[] = {TECO_CTL_KEY('E'), chr};
-			teco_string_append(ctx->result, buf, sizeof(buf));
+			gchar buf[1+6] = {TECO_CTL_KEY('E')};
+			gsize len = g_unichar_to_utf8(chr, buf+1);
+			teco_string_append(ctx->result, buf, 1+len);
 		}
 		return &teco_state_stringbuilding_start;
 	}
@@ -508,7 +549,7 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_stringbuilding_ctle);
 
 /* in cmdline.c */
 gboolean teco_state_stringbuilding_qreg_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
-                                                         gchar chr, GError **error);
+                                                         gunichar chr, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_STRINGBUILDING_QREG
@@ -523,7 +564,7 @@ gboolean teco_state_stringbuilding_qreg_process_edit_cmd(teco_machine_stringbuil
 	)
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_num_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_num_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_qreg_t *qreg;
 
@@ -558,7 +599,7 @@ teco_state_stringbuilding_ctle_num_input(teco_machine_stringbuilding_t *ctx, gch
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_num);
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_qreg_t *qreg;
 
@@ -583,10 +624,7 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gchar
 	if (ctx->codepage == SC_CP_UTF8) {
 		if (value < 0 || !g_unichar_validate(value))
 			goto error_codepoint;
-		/* 4 bytes should be enough, but we better follow the documentation */
-		gchar buf[6];
-		gsize len = g_unichar_to_utf8(value, buf);
-		teco_string_append(ctx->result, buf, len);
+		teco_string_append_wc(ctx->result, value);
 	} else {
 		if (value < 0 || value > 0xFF)
 			goto error_codepoint;
@@ -606,7 +644,7 @@ error_codepoint: {
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_u);
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_qreg_t *qreg;
 
@@ -637,7 +675,7 @@ teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gchar
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_q);
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_qreg_t *qreg;
 	teco_qreg_table_t *table;
@@ -680,7 +718,7 @@ teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, g
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_quote);
 
 static teco_state_t *
-teco_state_stringbuilding_ctle_n_input(teco_machine_stringbuilding_t *ctx, gchar chr, GError **error)
+teco_state_stringbuilding_ctle_n_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	teco_qreg_t *qreg;
 	teco_qreg_table_t *table;
@@ -717,7 +755,7 @@ teco_state_stringbuilding_ctle_n_input(teco_machine_stringbuilding_t *ctx, gchar
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_n);
 
 void
-teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gchar escape_char,
+teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gunichar escape_char,
                                  teco_qreg_table_t *locals, gboolean must_undo)
 {
 	memset(ctx, 0, sizeof(*ctx));
@@ -738,6 +776,10 @@ teco_machine_stringbuilding_reset(teco_machine_stringbuilding_t *ctx)
 	ctx->mode = TECO_STRINGBUILDING_MODE_NORMAL;
 }
 
+/*
+ * If we case folded only ANSI characters as in teco_ascii_toupper(),
+ * this could be simplified.
+ */
 void
 teco_machine_stringbuilding_escape(teco_machine_stringbuilding_t *ctx, const gchar *str, gsize len,
                                    teco_string_t *target)
@@ -745,12 +787,18 @@ teco_machine_stringbuilding_escape(teco_machine_stringbuilding_t *ctx, const gch
 	target->data = g_malloc(len*2+1);
 	target->len = 0;
 
-	for (guint i = 0; i < len; i++) {
-		if (teco_ascii_toupper(str[i]) == ctx->escape_char ||
-		    (ctx->escape_char == '[' && str[i] == ']') ||
-		    (ctx->escape_char == '{' && str[i] == '}'))
+	for (guint i = 0; i < len; ) {
+		gunichar chr = g_utf8_get_char(str+i);
+
+		if (g_unichar_toupper(chr) == ctx->escape_char ||
+		    (ctx->escape_char == '[' && chr == ']') ||
+		    (ctx->escape_char == '{' && chr == '}'))
 			target->data[target->len++] = TECO_CTL_KEY('Q');
-		target->data[target->len++] = str[i];
+
+		gsize lenc = g_utf8_next_char(str+i) - (str+i);
+		memcpy(target->data+target->len, str+i, lenc);
+		target->len += lenc;
+		i += lenc;
 	}
 
 	target->data[target->len] = '\0';
@@ -772,7 +820,7 @@ teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error)
 }
 
 teco_state_t *
-teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	teco_state_t *current = ctx->parent.current;
 
@@ -789,13 +837,18 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 		/*
 		 * FIXME: Exclude setting at least whitespace characters as the
 		 * new string escape character to avoid accidental errors?
+		 *
+		 * FIXME: Should we perhaps restrict case folding escape characters
+		 * to the ANSI range (teco_ascii_toupper())?
+		 * This would be faster than case folding each and every character
+		 * of a string argument to check against the escape char.
 		 */
 		switch (ctx->expectstring.machine.escape_char) {
 		case '\e':
 		case '{':
 			if (ctx->parent.must_undo)
-				teco_undo_gchar(ctx->expectstring.machine.escape_char);
-			ctx->expectstring.machine.escape_char = teco_ascii_toupper(chr);
+				teco_undo_gunichar(ctx->expectstring.machine.escape_char);
+			ctx->expectstring.machine.escape_char = g_unichar_toupper(chr);
 			return current;
 		}
 	}
@@ -819,7 +872,7 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 				ctx->expectstring.nesting--;
 				break;
 			}
-		} else if (teco_ascii_toupper(chr) == ctx->expectstring.machine.escape_char) {
+		} else if (g_unichar_toupper(chr) == ctx->expectstring.machine.escape_char) {
 			if (ctx->parent.must_undo)
 				teco_undo_gint(ctx->expectstring.nesting);
 			ctx->expectstring.nesting--;
@@ -849,7 +902,7 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 
 		if (current->expectstring.last) {
 			if (ctx->parent.must_undo)
-				teco_undo_gchar(ctx->expectstring.machine.escape_char);
+				teco_undo_gunichar(ctx->expectstring.machine.escape_char);
 			ctx->expectstring.machine.escape_char = '\e';
 		}
 		ctx->expectstring.nesting = 1;
@@ -880,7 +933,7 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **erro
 		if (!teco_machine_stringbuilding_input(&ctx->expectstring.machine, chr, str, error))
 			return NULL;
 	} else if (ctx->mode == TECO_MODE_NORMAL) {
-		teco_string_append_c(&ctx->expectstring.string, chr);
+		teco_string_append_wc(&ctx->expectstring.string, chr);
 	}
 
 	/*
@@ -924,7 +977,7 @@ teco_state_expectfile_process(teco_machine_main_t *ctx, const teco_string_t *str
 	g_assert(str->data != NULL);
 
 	/*
-	 * Null-chars must not ocur in filename/path strings and at some point
+	 * Null-chars must not occur in filename/path strings and at some point
 	 * teco_string_t has to be converted to a null-terminated C string
 	 * as all the glib filename functions rely on null-terminated strings.
 	 * Doing it here ensures that teco_file_expand_path() can be safely called

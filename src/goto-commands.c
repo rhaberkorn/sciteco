@@ -53,7 +53,7 @@ teco_state_label_initial(teco_machine_main_t *ctx, GError **error)
  * I'm unsure whether !-signs should be allowed within comments.
  */
 static teco_state_t *
-teco_state_label_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	if (chr == '!') {
 		/*
@@ -85,7 +85,7 @@ teco_state_label_input(teco_machine_main_t *ctx, gchar chr, GError **error)
 
 	if (ctx->parent.must_undo)
 		undo__teco_string_truncate(&ctx->goto_label, ctx->goto_label.len);
-	teco_string_append_c(&ctx->goto_label, chr);
+	teco_string_append_wc(&ctx->goto_label, chr);
 	return &teco_state_label;
 }
 
@@ -138,7 +138,7 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 }
 
 /* in cmdline.c */
-gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar chr, GError **error);
+gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
 
 /*$ O
  * Olabel$ -- Go to label

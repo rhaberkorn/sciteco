@@ -50,7 +50,7 @@ teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error)
 }
 
 teco_state_t *
-teco_state_expectqreg_input(teco_machine_main_t *ctx, gchar chr, GError **error)
+teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
 	teco_state_t *current = ctx->parent.current;
 
@@ -680,6 +680,10 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
  * Note that the string of <q> will be copied upon macro execution,
  * so subsequent changes to Q-Register <q> from inside the macro do
  * not modify the executed code.
+ *
+ * While \fBM\fP does not check the register's configured encoding
+ * (as reported by \fBEE\fP), its contents must be and are checked to be in
+ * valid UTF-8.
  */
 TECO_DEFINE_STATE_EXPECTQREG(teco_state_macro);
 
@@ -714,6 +718,9 @@ teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * It is otherwise similar to the \(lqM\(rq command.
  *
  * If <file> could not be read, the command yields an error.
+ *
+ * As all \*(ST code, the contents of <file> must be in valid UTF-8
+ * even if operating in the \(lqdefault ANSI\(rq mode as configured by \fBED\fP.
  */
 TECO_DEFINE_STATE_EXPECTFILE(teco_state_macrofile);
 

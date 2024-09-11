@@ -101,11 +101,11 @@ typedef const struct {
 } teco_state_expectqreg_t;
 
 typedef gboolean (*teco_state_initial_cb_t)(teco_machine_t *ctx, GError **error);
-typedef teco_state_t *(*teco_state_input_cb_t)(teco_machine_t *ctx, gchar chr, GError **error);
+typedef teco_state_t *(*teco_state_input_cb_t)(teco_machine_t *ctx, gunichar chr, GError **error);
 typedef gboolean (*teco_state_refresh_cb_t)(teco_machine_t *ctx, GError **error);
 typedef gboolean (*teco_state_end_of_macro_cb_t)(teco_machine_t *ctx, GError **error);
 typedef gboolean (*teco_state_process_edit_cmd_cb_t)(teco_machine_t *ctx, teco_machine_t *parent_ctx,
-                                                     gchar key, GError **error);
+                                                     gunichar key, GError **error);
 
 typedef enum {
 	TECO_FNMACRO_MASK_START		= (1 << 0),
@@ -225,7 +225,7 @@ struct teco_state_t {
 gboolean teco_state_end_of_macro(teco_machine_t *ctx, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gchar chr, GError **error);
+gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE
@@ -254,7 +254,7 @@ gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent
 	extern teco_state_t NAME
 
 /* in cmdline.c */
-gboolean teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gchar chr, GError **error);
+gboolean teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_CASEINSENSITIVE
@@ -308,7 +308,7 @@ teco_machine_reset(teco_machine_t *ctx, teco_state_t *initial)
 		teco_undo_ptr(ctx->current) = initial;
 }
 
-gboolean teco_machine_input(teco_machine_t *ctx, gchar chr, GError **error);
+gboolean teco_machine_input(teco_machine_t *ctx, gunichar chr, GError **error);
 
 typedef enum {
 	TECO_STRINGBUILDING_MODE_NORMAL = 0,
@@ -336,7 +336,7 @@ typedef struct teco_machine_stringbuilding_t {
 	 * If this is `[` or `{`, it is assumed that `]` and `}` must
 	 * be escaped as well by teco_machine_stringbuilding_escape().
 	 */
-	gchar escape_char;
+	gunichar escape_char;
 
 	/**
 	 * Q-Register table for local registers.
@@ -366,7 +366,7 @@ typedef struct teco_machine_stringbuilding_t {
 	guint codepage;
 } teco_machine_stringbuilding_t;
 
-void teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gchar escape_char,
+void teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gunichar escape_char,
                                       teco_qreg_table_t *locals, gboolean must_undo);
 
 void teco_machine_stringbuilding_reset(teco_machine_stringbuilding_t *ctx);
@@ -381,7 +381,7 @@ void teco_machine_stringbuilding_reset(teco_machine_stringbuilding_t *ctx);
  * @return FALSE in case of error.
  */
 static inline gboolean
-teco_machine_stringbuilding_input(teco_machine_stringbuilding_t *ctx, gchar chr,
+teco_machine_stringbuilding_input(teco_machine_stringbuilding_t *ctx, gunichar chr,
                                   teco_string_t *result, GError **error)
 {
 	ctx->result = result;
@@ -497,7 +497,7 @@ void teco_machine_main_init(teco_machine_main_t *ctx,
 gboolean teco_machine_main_eval_colon(teco_machine_main_t *ctx);
 
 gboolean teco_machine_main_step(teco_machine_main_t *ctx,
-                                const gchar *macro, gint stop_pos, GError **error);
+                                const gchar *macro, gsize stop_pos, GError **error);
 
 gboolean teco_execute_macro(const gchar *macro, gsize macro_len,
                             teco_qreg_table_t *qreg_table_locals, GError **error);
@@ -516,18 +516,18 @@ typedef const struct {
  */
 teco_state_t *teco_machine_main_transition_input(teco_machine_main_t *ctx,
                                                  teco_machine_main_transition_t *transitions,
-                                                 guint len, gchar chr, GError **error);
+                                                 guint len, gunichar chr, GError **error);
 
 void teco_machine_main_clear(teco_machine_main_t *ctx);
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(teco_machine_main_t, teco_machine_main_clear);
 
 gboolean teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error);
-teco_state_t *teco_state_expectstring_input(teco_machine_main_t *ctx, gchar chr, GError **error);
+teco_state_t *teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 gboolean teco_state_expectstring_refresh(teco_machine_main_t *ctx, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTSTRING
@@ -543,7 +543,7 @@ gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco
  */
 #define TECO_DEFINE_STATE_EXPECTSTRING(NAME, ...) \
 	static teco_state_t * \
-	NAME##_input(teco_machine_main_t *ctx, gchar chr, GError **error) \
+	NAME##_input(teco_machine_main_t *ctx, gunichar chr, GError **error) \
 	{ \
 		return teco_state_expectstring_input(ctx, chr, error); \
 	} \
@@ -564,7 +564,7 @@ gboolean teco_state_expectfile_process(teco_machine_main_t *ctx, const teco_stri
                                        gsize new_chars, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTFILE
@@ -580,7 +580,7 @@ gboolean teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_m
 	)
 
 /* in cmdline.c */
-gboolean teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTDIR

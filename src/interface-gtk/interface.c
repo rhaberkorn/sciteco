@@ -927,19 +927,19 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 
 	switch (event->keyval) {
 	case GDK_KEY_Escape:
-		if (!teco_cmdline_keypress_c('\e', error))
+		if (!teco_cmdline_keypress_wc('\e', error))
 			return FALSE;
 		break;
 	case GDK_KEY_BackSpace:
-		if (!teco_cmdline_keypress_c(TECO_CTL_KEY('H'), error))
+		if (!teco_cmdline_keypress_wc(TECO_CTL_KEY('H'), error))
 			return FALSE;
 		break;
 	case GDK_KEY_Tab:
-		if (!teco_cmdline_keypress_c('\t', error))
+		if (!teco_cmdline_keypress_wc('\t', error))
 			return FALSE;
 		break;
 	case GDK_KEY_Return:
-		if (!teco_cmdline_keypress_c('\n', error))
+		if (!teco_cmdline_keypress_wc('\n', error))
 			return FALSE;
 		break;
 
@@ -994,7 +994,7 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 		if ((event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK) {
 			gchar c = teco_interface_get_ansi_key(event);
 			if (c) {
-				if (!teco_cmdline_keypress_c(TECO_CTL_KEY(g_ascii_toupper(c)), error))
+				if (!teco_cmdline_keypress_wc(TECO_CTL_KEY(g_ascii_toupper(c)), error))
 					return FALSE;
 				break;
 			}

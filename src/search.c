@@ -308,14 +308,6 @@ teco_pattern2regexp(teco_string_t *pattern, gboolean single_expr, GError **error
 
 	do {
 		/*
-		 * FIXME: Currently we are fed single bytes, so there
-		 * could be an incomplete UTF-8 sequence at the end of the pattern.
-		 * This should not be necessary once we have an Unicode-aware parser.
-		 */
-		if (pattern->len > 0 && (gint32)g_utf8_get_char_validated(pattern->data, -1) < 0)
-			break;
-
-		/*
 		 * First check whether it is a class.
 		 * This will not treat individual characters
 		 * as classes, so we do not convert them to regexp

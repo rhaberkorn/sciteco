@@ -114,10 +114,11 @@ teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error)
 }
 
 void
-teco_expressions_add_digit(gchar digit)
+teco_expressions_add_digit(gunichar digit)
 {
 	teco_int_t n = teco_expressions_args() > 0 ? teco_expressions_pop_num(0) : 0;
 
+	/* use g_unichar_digit_value()? */
 	teco_expressions_push(n*teco_radix + (n < 0 ? -1 : 1)*(digit - '0'));
 }
 

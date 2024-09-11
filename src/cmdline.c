@@ -194,7 +194,7 @@ teco_cmdline_rubin(GError **error)
 }
 
 gboolean
-teco_cmdline_keypress_c(gchar key, GError **error)
+teco_cmdline_keypress_wc(gunichar key, GError **error)
 {
 	teco_machine_t *machine = &teco_cmdline.machine.parent;
 	g_autoptr(GError) tmp_error = NULL;
@@ -283,6 +283,30 @@ teco_cmdline_keypress_c(gchar key, GError **error)
 	return TRUE;
 }
 
+/*
+ * FIXME: If one character causes an error, we should rub out the
+ * entire string.
+ * Usually it will be called only with single keys (strings containing
+ * single codepoints), but especially teco_cmdline_fnmacro() can emulate
+ * many key presses at once.
+ */
+gboolean
+teco_cmdline_keypress(const gchar *str, gsize len, GError **error)
+{
+	for (guint i = 0; i < len; i += g_utf8_next_char(str+i) - (str+i)) {
+		gunichar chr = g_utf8_get_char_validated(str+i, len-i);
+		if ((gint32)chr < 0) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+			                    "Invalid UTF-8 sequence");
+			return FALSE;
+		}
+		if (!teco_cmdline_keypress_wc(chr, error))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 gboolean
 teco_cmdline_fnmacro(const gchar *name, GError **error)
 {
@@ -361,7 +385,7 @@ teco_cmdline_cleanup(void)
  */
 
 gboolean
-teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	switch (key) {
 	case '\n': /* insert EOL sequence */
@@ -431,23 +455,30 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gch
 	}
 
 	teco_interface_popup_clear();
-	return teco_cmdline_insert(&key, sizeof(key), error);
+
+	gchar buf[6];
+	gsize len = g_unichar_to_utf8(key, buf);
+	return teco_cmdline_insert(buf, len, error);
 }
 
 gboolean
-teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
+	/*
+	 * Auto case folding is for syntactic characters,
+	 * so this could be done by working only with a-z and A-Z.
+	 * However, it's also not speed critical.
+	 */
 	if (teco_ed & TECO_ED_AUTOCASEFOLD)
-		/* will not modify non-letter keys */
-		key = g_ascii_islower(key) ? g_ascii_toupper(key)
-		                           : g_ascii_tolower(key);
+		key = g_unichar_islower(key) ? g_unichar_toupper(key)
+		                             : g_unichar_tolower(key);
 
 	return teco_state_process_edit_cmd(ctx, parent_ctx, key, error);
 }
 
 gboolean
 teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
-                                                 gchar key, GError **error)
+                                                 gunichar key, GError **error)
 {
 	teco_state_t *current = ctx->parent.current;
 
@@ -597,7 +628,7 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 
 gboolean
 teco_state_stringbuilding_qreg_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
-                                                gchar chr, GError **error)
+                                                gunichar chr, GError **error)
 {
 	g_assert(ctx->machine_qregspec != NULL);
 	/* We downcast since teco_machine_qregspec_t is private in qreg.c */
@@ -606,7 +637,7 @@ teco_state_stringbuilding_qreg_process_edit_cmd(teco_machine_stringbuilding_t *c
 }
 
 gboolean
-teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -614,7 +645,7 @@ teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_
 }
 
 gboolean
-teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -650,7 +681,7 @@ teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *par
 }
 
 gboolean
-teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -720,8 +751,8 @@ teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 		gboolean unambiguous = teco_file_auto_complete(ctx->expectstring.string.data, G_FILE_TEST_EXISTS, &new_chars);
 		teco_machine_stringbuilding_escape(stringbuilding_ctx, new_chars.data, new_chars.len, &new_chars_escaped);
 		if (unambiguous && ctx->expectstring.nesting == 1)
-			teco_string_append_c(&new_chars_escaped,
-			                     ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+			teco_string_append_wc(&new_chars_escaped,
+			                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
 
 		return teco_cmdline_insert(new_chars_escaped.data, new_chars_escaped.len, error);
 	}
@@ -731,7 +762,7 @@ teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
-teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -773,7 +804,7 @@ teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *
 }
 
 gboolean
-teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	g_assert(ctx->expectqreg != NULL);
 	/*
@@ -785,7 +816,7 @@ teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
-teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	switch (key) {
 	case '\t': { /* autocomplete Q-Register name */
@@ -820,7 +851,7 @@ teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_
 }
 
 gboolean
-teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = teco_machine_qregspec_get_stringbuilding(ctx);
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -860,7 +891,7 @@ teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_m
 }
 
 gboolean
-teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -905,7 +936,7 @@ teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *pa
 }
 
 gboolean
-teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -950,7 +981,7 @@ teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_mac
 }
 
 gboolean
-teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -997,7 +1028,7 @@ teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 }
 
 gboolean
-teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error)
+teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
@@ -1028,8 +1059,8 @@ teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 		gboolean unambiguous = teco_help_auto_complete(ctx->expectstring.string.data, &new_chars);
 		teco_machine_stringbuilding_escape(stringbuilding_ctx, new_chars.data, new_chars.len, &new_chars_escaped);
 		if (unambiguous && ctx->expectstring.nesting == 1)
-			teco_string_append_c(&new_chars_escaped,
-			                     ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+			teco_string_append_wc(&new_chars_escaped,
+			                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
 
 		return new_chars_escaped.len ? teco_cmdline_insert(new_chars_escaped.data, new_chars_escaped.len, error) : TRUE;
 	}

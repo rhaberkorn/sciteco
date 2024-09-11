@@ -78,7 +78,17 @@ teco_string_get_coord(const gchar *str, guint pos, guint *line, guint *column)
 	}
 }
 
-/** @memberof teco_string_t */
+/**
+ * Get the length of the prefix common to two strings.
+ * Works with UTF-8 and single-byte encodings.
+ *
+ * @param a Left string.
+ * @param b Right string.
+ * @param b_len Length of right string.
+ * @return Length of the common prefix in bytes.
+ *
+ * @memberof teco_string_t
+ */
 gsize
 teco_string_diff(const teco_string_t *a, const gchar *b, gsize b_len)
 {
@@ -92,14 +102,16 @@ teco_string_diff(const teco_string_t *a, const gchar *b, gsize b_len)
 }
 
 /**
- * Get the length of the prefix common to two strings
+ * Get the length of the prefix common to two UTF-8 strings
  * without considering case.
  *
- * @fixme This is currently only used for symbols and one/two letter
- * Q-Register names, which cannot be UTF-8.
- * If we rewrote this to perform Unicode case folding, we would
- * also have to check for character validity.
- * Once our parser is Unicode-aware, this is not necessary.
+ * The UTF-8 strings must be validated, which should be the case
+ * for help labels and short Q-Register names.
+ *
+ * @param a Left UTF-8 string.
+ * @param b Right UTF-8 string.
+ * @param b_len Length of right UTF-8 string.
+ * @return Length of the common prefix in bytes.
  *
  * @memberof teco_string_t
  */
@@ -108,9 +120,13 @@ teco_string_casediff(const teco_string_t *a, const gchar *b, gsize b_len)
 {
 	gsize len = 0;
 
-	while (len < a->len && len < b_len &&
-	       g_ascii_tolower(a->data[len]) == g_ascii_tolower(b[len]))
-		len++;
+	while (len < a->len && len < b_len) {
+		gunichar a_chr = g_utf8_get_char(a->data+len);
+		gunichar b_chr = g_utf8_get_char(b+len);
+		if (g_unichar_tolower(a_chr) != g_unichar_tolower(b_chr))
+			break;
+		len = g_utf8_next_char(b+len) - b;
+	}
 
 	return len;
 }

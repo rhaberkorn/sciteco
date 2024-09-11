@@ -87,10 +87,6 @@ regular commands for command-line editing.
 .
 When the user presses a key or key-combination it is first translated
 to an UTF-8 string.
-All immediate editing commands and regular \*(ST commands however operate on
-a language based solely on
-.B ASCII
-codes, which is a subset of Unicode.
 The rules for translating keys are as follows:
 .RS
 .IP 1. 4
@@ -137,6 +133,18 @@ function keys) are translated to user-definable character sequences.
 This feature is called function key macros and explained in the
 next subsection.
 .RE
+.
+.LP
+All immediate editing commands and regular \*(ST commands however operate on
+a language based solely on
+.B ASCII
+codes, which is a subset of Unicode.
+\# This is because we cannot assume the presence of any particular non-ANSI
+\# symbol on a user's keyboard.
+Since the \*(ST parser is Unicode-aware, this does not exclude
+using Unicode glyphs wherever a single character is expected,
+ie. \fB^^\fIx\fR and \fBU\fIq\fR works with arbitrary Unicode glyphs.
+All \*(ST macros must be in valid UTF-8.
 .
 .SS Function Key Macros
 .
@@ -1082,8 +1090,8 @@ Consequently when querying the code at a character position
 or inserting characters by code, the code may be an Unicode
 codepoint instead of byte-sized integer.
 .LP
-Currently, \*(ST supports UTF-8 and single-byte ANSI encodings,
-that can also be used for editing raw binary files.
+Currently, \*(ST supports buffers in UTF-8 and single-byte
+ANSI encodings, that can also be used for editing raw binary files.
 \# You can configure other single-byte code pages with EE,
 \# but there isn't yet any way to insert characters.
 UTF-8 is the default codepage for new buffers and Q-Registers

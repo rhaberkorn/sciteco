@@ -251,7 +251,7 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 }
 
 /* in cmdline.c */
-gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar key, GError **error);
+gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
 /*$ ES scintilla message
  * -- Send Scintilla message

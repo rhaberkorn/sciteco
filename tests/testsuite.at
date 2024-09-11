@@ -84,8 +84,6 @@ AT_CHECK([$SCITECO -e "0@I//J 0A\"N(0/0)' :@S/^@/\"F(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z-4\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "0EE 129@I// -A-129\"N(0/0)' HXa @EQa// EE\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -8e "129@:^Ua// 0Qa-129\"N(0/0)'"], 0, ignore, ignore)
-# FIXME: This will fail once we have an UTF-8-only parser.
-AT_CHECK([$SCITECO -8e "@:^Ua/^^/ 129:@^Ua// Ma-129\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "1EE 167Ua @I/^EUa/ .-1\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
@@ -95,6 +93,8 @@ AT_CHECK([$SCITECO -e "8594@^Ua/Здравствуй, мир!/ :Qa-17\"N(0/0)' 0
 AT_CHECK([$SCITECO -e "@I/Здравствуй, мир!/ JW .-10\"N(0/0)' ^E-20\"N(0/0)' 204:EE .-10\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@I/TEST/ @EW/юникод.txt/"], 0, ignore, ignore)
 AT_CHECK([test -f юникод.txt], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "^^ß-223\"N(0/0) 23Uъ Q[Ъ]-23\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@O/метка/ !метка!"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])
@@ -207,8 +207,7 @@ AT_CLEANUP
 AT_SETUP([Unicode glitches])
 # While TECO code must always be UTF-8, strings after string building
 # can be in single-byte encodings as well.
-# This might already work after introducing the Unicode-aware parser.
-# If not, it should be fixed.
+# It must be possible to search for single bytes in single-byte encodings.
 AT_CHECK([$SCITECO -8e "164Ua Ga@I//J :@S/^EUa/\"F(0/0)'"], 0, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP

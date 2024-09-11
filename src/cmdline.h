@@ -64,16 +64,8 @@ gboolean teco_cmdline_insert(const gchar *data, gsize len, GError **error);
 
 gboolean teco_cmdline_rubin(GError **error);
 
-gboolean teco_cmdline_keypress_c(gchar key, GError **error);
-
-static inline gboolean
-teco_cmdline_keypress(const gchar *str, gsize len, GError **error)
-{
-	for (guint i = 0; i < len; i++)
-		if (!teco_cmdline_keypress_c(str[i], error))
-			return FALSE;
-	return TRUE;
-}
+gboolean teco_cmdline_keypress_wc(gunichar key, GError **error);
+gboolean teco_cmdline_keypress(const gchar *str, gsize len, GError **error);
 
 gboolean teco_cmdline_fnmacro(const gchar *name, GError **error);
 

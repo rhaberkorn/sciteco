@@ -61,10 +61,10 @@ typedef enum {
 } teco_error_t;
 
 static inline void
-teco_error_syntax_set(GError **error, gchar chr)
+teco_error_syntax_set(GError **error, gunichar chr)
 {
 	g_set_error(error, TECO_ERROR, TECO_ERROR_SYNTAX,
-	            "Syntax error \"%c\" (%d)", chr, chr);
+	            "Syntax error \"%C\" (U+%04" G_GINT32_MODIFIER "X)", chr, chr);
 }
 
 static inline void

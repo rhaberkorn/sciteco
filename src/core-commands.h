@@ -43,7 +43,7 @@ gboolean teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t
                                    gsize new_chars, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gchar chr, GError **error);
+gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
 
 /**
  * @class TECO_DEFINE_STATE_INSERT

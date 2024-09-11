@@ -95,7 +95,7 @@ teco_rb3str_nfind(teco_rb3str_tree_t *tree, gboolean case_sensitive, const gchar
  * @param case_sensitive Whether to match case-sensitive.
  * @param str String to complete (not necessarily null-terminated).
  * @param str_len Length of characters in `str`.
- * @param restrict_len Limit completions to this size.
+ * @param restrict_len Limit completions to this size (in characters).
  * @param insert String to set with characters that can be autocompleted.
  * @return TRUE if the completion was unambiguous, else FALSE.
  *
@@ -103,7 +103,7 @@ teco_rb3str_nfind(teco_rb3str_tree_t *tree, gboolean case_sensitive, const gchar
  */
 gboolean
 teco_rb3str_auto_complete(teco_rb3str_tree_t *tree, gboolean case_sensitive,
-                          const gchar *str, gsize str_len, gsize restrict_len, teco_string_t *insert)
+                          const gchar *str, gsize str_len, guint restrict_len, teco_string_t *insert)
 {
 	memset(insert, 0, sizeof(*insert));
 
@@ -115,7 +115,7 @@ teco_rb3str_auto_complete(teco_rb3str_tree_t *tree, gboolean case_sensitive,
 	for (teco_rb3str_head_t *cur = teco_rb3str_nfind(tree, case_sensitive, str, str_len);
 	     cur && cur->key.len >= str_len && diff(&cur->key, str, str_len) == str_len;
 	     cur = teco_rb3str_get_next(cur)) {
-		if (restrict_len && cur->key.len != restrict_len)
+		if (restrict_len && g_utf8_strlen(cur->key.data, cur->key.len) != restrict_len)
 			continue;
 
 		if (G_UNLIKELY(!first)) {
@@ -136,7 +136,7 @@ teco_rb3str_auto_complete(teco_rb3str_tree_t *tree, gboolean case_sensitive,
 		for (teco_rb3str_head_t *cur = first;
 		     cur && cur->key.len >= str_len && diff(&cur->key, str, str_len) == str_len;
 		     cur = teco_rb3str_get_next(cur)) {
-			if (restrict_len && cur->key.len != restrict_len)
+			if (restrict_len && g_utf8_strlen(cur->key.data, cur->key.len) != restrict_len)
 				continue;
 
 			teco_interface_popup_add(TECO_POPUP_PLAIN,

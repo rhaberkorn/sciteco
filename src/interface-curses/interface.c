@@ -1582,6 +1582,9 @@ teco_interface_blocking_getch(void)
 void
 teco_interface_event_loop_iter(void)
 {
+	static gchar keybuf[4];
+	static gint keybuf_i = 0;
+
 	gint key = g_queue_is_empty(teco_interface.input_queue)
 			? teco_interface_blocking_getch()
 			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
@@ -1610,14 +1613,14 @@ teco_interface_event_loop_iter(void)
 		 * backspace.
 		 * In SciTECO backspace is normalized to ^H.
 		 */
-		if (!teco_cmdline_keypress_c(TECO_CTL_KEY('H'),
-		                             &teco_interface.event_loop_error))
+		if (!teco_cmdline_keypress_wc(TECO_CTL_KEY('H'),
+		                              &teco_interface.event_loop_error))
 			return;
 		break;
 	case KEY_ENTER:
 	case '\r':
 	case '\n':
-		if (!teco_cmdline_keypress_c('\n', &teco_interface.event_loop_error))
+		if (!teco_cmdline_keypress_wc('\n', &teco_interface.event_loop_error))
 			return;
 		break;
 
@@ -1658,8 +1661,19 @@ teco_interface_event_loop_iter(void)
 	 * Control keys and keys with printable representation
 	 */
 	default:
-		if (key <= 0xFF &&
-		    !teco_cmdline_keypress_c(key, &teco_interface.event_loop_error))
+		if (key > 0xFF)
+			return;
+
+		/*
+		 * NOTE: There's also wget_wch(), but it requires
+		 * a widechar version of Curses.
+		 */
+		keybuf[keybuf_i++] = key;
+		gunichar cp = g_utf8_get_char_validated(keybuf, keybuf_i);
+		if (keybuf_i >= sizeof(keybuf) || cp != (gunichar)-2)
+			keybuf_i = 0;
+		if ((gint32)cp < 0 ||
+		    !teco_cmdline_keypress_wc(cp, &teco_interface.event_loop_error))
 			return;
 	}
 

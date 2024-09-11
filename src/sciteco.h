@@ -71,7 +71,7 @@ teco_is_failure(teco_bool_t x)
 #endif
 
 /** TRUE if C is a control character */
-#define TECO_IS_CTL(C)		((guchar)(C) < ' ')
+#define TECO_IS_CTL(C)		((gunichar)(C) < ' ')
 /** ASCII character to echo control character C */
 #define TECO_CTL_ECHO(C)	((C) | 0x40)
 /**
