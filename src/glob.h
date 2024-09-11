@@ -46,6 +46,21 @@ teco_globber_is_pattern(const gchar *str)
 gchar *teco_globber_escape_pattern(const gchar *pattern);
 GRegex *teco_globber_compile_pattern(const gchar *pattern);
 
+/* in cmdline.c */
+gboolean teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+
+/**
+ * @interface TECO_DEFINE_STATE_EXPECTGLOB
+ * @implements TECO_DEFINE_STATE_EXPECTFILE
+ * @ingroup states
+ */
+#define TECO_DEFINE_STATE_EXPECTGLOB(NAME, ...) \
+	TECO_DEFINE_STATE_EXPECTFILE(NAME, \
+		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
+		                       teco_state_expectglob_process_edit_cmd, \
+		##__VA_ARGS__ \
+	)
+
 /*
  * Command states
  */

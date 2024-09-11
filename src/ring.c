@@ -512,7 +512,7 @@ teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * A value of 1 denotes the first buffer, 2 the second,
  * ecetera.
  */
-TECO_DEFINE_STATE_EXPECTFILE(teco_state_edit_file,
+TECO_DEFINE_STATE_EXPECTGLOB(teco_state_edit_file,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_edit_file_initial
 );
 

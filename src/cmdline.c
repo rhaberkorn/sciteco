@@ -52,6 +52,7 @@
 #include "eol.h"
 #include "error.h"
 #include "qreg.h"
+#include "glob.h"
 #include "cmdline.h"
 
 #if defined(HAVE_MALLOC_TRIM) && !defined(HAVE_DECL_MALLOC_TRIM)
@@ -762,6 +763,60 @@ teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
+teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
+
+	/*
+	 * NOTE: We don't just define teco_state_stringbuilding_start_process_edit_cmd(),
+	 * as it would be hard to subclass/overwrite for different main machine states.
+	 */
+	if (!stringbuilding_current->is_start)
+		return stringbuilding_current->process_edit_cmd_cb(&stringbuilding_ctx->parent, &ctx->parent, key, error);
+
+	switch (key) {
+	case '\t': { /* autocomplete file name */
+		if (teco_cmdline.modifier_enabled)
+			break;
+
+		if (teco_interface_popup_is_shown()) {
+			/* cycle through popup pages */
+			teco_interface_popup_show();
+			return TRUE;
+		}
+
+		if (teco_string_contains(&ctx->expectstring.string, '\0'))
+			/* null-byte not allowed in file names */
+			return TRUE;
+
+		/*
+		 * We do not support autocompleting glob patterns.
+		 *
+		 * FIXME: What if the last autocompletion inserted escaped glob
+		 * characters?
+		 * Perhaps teco_file_auto_complete() should natively support glob patterns.
+		 */
+		if (teco_globber_is_pattern(ctx->expectstring.string.data))
+			return TRUE;
+
+		g_auto(teco_string_t) new_chars, new_chars_escaped;
+		gboolean unambiguous = teco_file_auto_complete(ctx->expectstring.string.data, G_FILE_TEST_EXISTS, &new_chars);
+		g_autofree gchar *pattern_escaped = teco_globber_escape_pattern(new_chars.data);
+		teco_machine_stringbuilding_escape(stringbuilding_ctx, pattern_escaped, strlen(pattern_escaped), &new_chars_escaped);
+		if (unambiguous && ctx->expectstring.nesting == 1)
+			teco_string_append_wc(&new_chars_escaped,
+			                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+
+		return teco_cmdline_insert(new_chars_escaped.data, new_chars_escaped.len, error);
+	}
+	}
+
+	/* ^W should behave like in commands accepting files */
+	return teco_state_expectfile_process_edit_cmd(ctx, parent_ctx, key, error);
+}
+
+gboolean
 teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
@@ -800,7 +855,8 @@ teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *
 	}
 	}
 
-	return stringbuilding_current->process_edit_cmd_cb(&stringbuilding_ctx->parent, &ctx->parent, key, error);
+	/* ^W should behave like in commands accepting files */
+	return teco_state_expectfile_process_edit_cmd(ctx, parent_ctx, key, error);
 }
 
 gboolean

@@ -452,7 +452,7 @@ teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str,
  * when they should be in a register, the user will
  * have to edit that register anyway.
  */
-TECO_DEFINE_STATE_EXPECTFILE(teco_state_glob_pattern,
+TECO_DEFINE_STATE_EXPECTGLOB(teco_state_glob_pattern,
 	.expectstring.last = FALSE
 );
 

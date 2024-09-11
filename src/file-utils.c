@@ -37,7 +37,6 @@
 
 #include "sciteco.h"
 #include "qreg.h"
-#include "glob.h"
 #include "interface.h"
 #include "string-utils.h"
 #include "file-utils.h"
@@ -236,9 +235,6 @@ gboolean
 teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_t *insert)
 {
 	memset(insert, 0, sizeof(*insert));
-
-	if (teco_globber_is_pattern(filename))
-		return FALSE;
 
 	g_autofree gchar *filename_expanded = teco_file_expand_path(filename);
 	gsize filename_len = strlen(filename_expanded);
