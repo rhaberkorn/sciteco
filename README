@@ -76,6 +76,9 @@ Features
   By default, a profile is munged.
 * Full Unicode (UTF-8) support: The document is still represented as a random-accessible
   codepoint sequence.
+  While SciTECO macros can be written in plain ASCII - even in its printable subset -
+  Unicode glyphs can be used everywhere, where a single character is accepted, for instance
+  in single letter Q-Register names.
 * 8-bit clean: SciTECO can be used to edit binary files if the encoding is changed to
   ANSI and automatic EOL conversion is turned off (easiest with `--8bit`).
 * Self-documenting: An integrated indexed help system allows browsing formatted documentation
