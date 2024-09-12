@@ -35,12 +35,12 @@
 /** @extends teco_rb3str_head_t */
 typedef struct {
 	teco_rb3str_head_t head;
-	gint pc;
+	gsize pc;
 } teco_goto_label_t;
 
 /** @private @static @memberof teco_goto_label_t */
 static teco_goto_label_t *
-teco_goto_label_new(const gchar *name, gsize len, gint pc)
+teco_goto_label_new(const gchar *name, gsize len, gsize pc)
 {
 	teco_goto_label_t *label = g_new0(teco_goto_label_t, 1);
 	teco_string_init(&label->head.name, name, len);
@@ -79,10 +79,10 @@ teco_goto_table_dump(teco_goto_table_t *ctx)
 #endif
 
 /** @memberof teco_goto_table_t */
-gint
+gssize
 teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len)
 {
-	gint existing_pc = -1;
+	gssize existing_pc = -1;
 
 	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
 	if (label) {
@@ -95,7 +95,7 @@ teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len)
 }
 
 /** @memberof teco_goto_table_t */
-gint
+gssize
 teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len)
 {
 	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
@@ -103,13 +103,13 @@ teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len)
 }
 
 /** @memberof teco_goto_table_t */
-gint
-teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc)
+gssize
+teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc)
 {
 	if (pc < 0)
 		return teco_goto_table_remove(ctx, name, len);
 
-	gint existing_pc = -1;
+	gssize existing_pc = -1;
 
 	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
 	if (label) {
@@ -135,7 +135,7 @@ teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint p
  */
 typedef struct {
 	teco_goto_table_t *table;
-	gint pc;
+	gssize pc;
 	gsize len;
 	gchar name[];
 } teco_goto_table_undo_set_t;
@@ -153,7 +153,7 @@ teco_goto_table_undo_set_action(teco_goto_table_undo_set_t *ctx, gboolean run)
 
 /** @memberof teco_goto_table_t */
 void
-teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc)
+teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc)
 {
 	if (!ctx->must_undo)
 		return;

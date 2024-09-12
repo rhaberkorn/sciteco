@@ -102,12 +102,6 @@ gboolean
 teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_pos, GError **error)
 {
 	while (ctx->macro_pc < stop_pos) {
-#ifdef DEBUG
-		g_printf("EXEC(%d): input='%c'/%x, state=%p, mode=%d\n",
-			 ctx->macro_pc, macro[ctx->macro_pc], macro[ctx->macro_pc],
-			 ctx->parent.current, ctx->mode);
-#endif
-
 		if (G_UNLIKELY(teco_interface_is_interrupted())) {
 			teco_error_interrupted_set(error);
 			goto error_attach;
@@ -122,6 +116,11 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_
 
 		/* UTF-8 sequences are already validated */
 		gunichar chr = g_utf8_get_char(macro+ctx->macro_pc);
+
+#ifdef DEBUG
+		g_printf("EXEC(%d): input='%C' (U+%04" G_GINT32_MODIFIER "X), state=%p, mode=%d\n",
+			 ctx->macro_pc, chr, chr, ctx->parent.current, ctx->mode);
+#endif
 
 		if (!teco_machine_input(&ctx->parent, chr, error))
 			goto error_attach;

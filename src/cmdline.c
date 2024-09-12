@@ -87,7 +87,7 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 {
 	const teco_string_t src = {(gchar *)data, len};
 	teco_string_t old_cmdline = {NULL, 0};
-	guint repl_pc = 0;
+	gsize repl_pc = 0;
 
 	teco_cmdline.machine.macro_pc = teco_cmdline.pc = teco_cmdline.effective_len;
 

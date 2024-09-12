@@ -38,7 +38,7 @@ typedef struct {
 	/** how many iterations are left */
 	teco_int_t counter;
 	/** Program counter of loop start command */
-	guint pc : sizeof(guint)*8 - 1;
+	gsize pc : sizeof(gsize)*8 - 1;
 	/**
 	 * Whether the loop represents an argument
 	 * barrier or not (it "passes through"
@@ -432,7 +432,8 @@ typedef enum {
 struct teco_machine_main_t {
 	teco_machine_t parent;
 
-	gsize macro_pc;
+	/* signed because it is sometimes set to -1 for flow control */
+	gssize macro_pc;
 
 	/**
 	 * Aliases bitfield with an integer.

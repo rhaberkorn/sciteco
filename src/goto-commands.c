@@ -61,8 +61,8 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		 * on rubout.
 		 * Otherwise, the label will be removed (PC == -1).
 		 */
-		gint existing_pc = teco_goto_table_set(&ctx->goto_table, ctx->goto_label.data,
-		                                       ctx->goto_label.len, ctx->macro_pc);
+		gssize existing_pc = teco_goto_table_set(&ctx->goto_table, ctx->goto_label.data,
+		                                         ctx->goto_label.len, ctx->macro_pc);
 		if (ctx->parent.must_undo)
 			teco_goto_table_undo_set(&ctx->goto_table, ctx->goto_label.data, ctx->goto_label.len, existing_pc);
 
@@ -119,7 +119,7 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 	}
 
 	if (value == 0) {
-		gint pc = teco_goto_table_find(&ctx->goto_table, label.data, label.len);
+		gssize pc = teco_goto_table_find(&ctx->goto_table, label.data, label.len);
 
 		if (pc >= 0) {
 			ctx->macro_pc = pc;

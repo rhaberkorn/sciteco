@@ -40,12 +40,12 @@ teco_goto_table_init(teco_goto_table_t *ctx, gboolean must_undo)
 	ctx->must_undo = must_undo;
 }
 
-gint teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len);
+gssize teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len);
 
-gint teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len);
+gssize teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len);
 
-gint teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc);
-void teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gint pc);
+gssize teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc);
+void teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc);
 
 /** @memberof teco_goto_table_t */
 static inline gboolean

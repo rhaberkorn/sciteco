@@ -167,6 +167,10 @@ AT_CHECK([$SCITECO -e '@EC//'], 1, ignore, ignore)
 AT_CHECK([$SCITECO -e '@EGa//'], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Jump to beginning of macro])
+AT_CHECK([$SCITECO -e "%a-2\"< F< ' Qa-2\"N(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Number stack])
