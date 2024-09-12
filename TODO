@@ -148,6 +148,10 @@ Known Bugs:
  * ^V and ^W string building characters do not operate
    on ^EQq and ^EUq, which is a pity as that would be the
    only sane use for them.
+ * lexer.tes should store the basename of the matched
+   lexer configuration.
+   This helps in macros like aspell (sp), where we currently
+   have to rely on the numeric lexer ids.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -206,49 +210,32 @@ Features:
      and the return type.
    * Having a separate number parser state will simplify
      number syntax highlighting.
- * Function key masking flag for the beginning of the command
+ * Key macro masking flag for the beginning of the command
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
    cannot be rubbed out properly).
- * Function key macros should behave more like regular macros:
-   If inserting a character results in an error, the entire
-   macro should be rubbed out. This means it would be OK to
-   let commands in function key macros fail and would fix, e.g.
-   ^FCLOSE.
- * Function key macros could support special escape sequences
+ * Key macros could support special escape sequences
    that allow us to modify the parser state reliably.
    E.g. one construct could expand to the current string argument's
    termination character (which may not be Escape).
-   In combination with a special function key macro state
+   In combination with a special key macro state
    effective only in the start state of the string building
    state machine, perhaps only in insertion commands, this
    could be used to make the cursor movement keys work in
    insertion commands by automatically terminating the command.
    Even more simple, the function key flag could be effective
    only when the termination character is $.
- * Function key handling should always be enabled. This was
-   configurable because of the way escape was handled in ncurses.
-   Now that escape is always immediate, there is little benefit
-   in having this still configurable. In fact if turned off,
-   SciTECO would try to execute escape sequences.
-   The ED flag could still exist and tell whether the function
-   key macros are used at all (i.e. this is how Gtk behaves currently).
  * Support more function keys.
    Perhaps we can safely support more via define_key(3NCURSES).
    At the very least PDCurses and Gtk could support much more
    keys and Alt and Ctrl modifiers.
    See also https://gist.github.com/rkumar/1237091
- * If function key macros would support all printable keys
-   as well, this could be especially helpful for making use of
-   international non-ANSI keys.
-   In particular, it could be useful to access TECO commands
-   when pressing Unicode keys (eg. insert I when pressing И
-   in the start state).
-   Gtk already does that automatically.
  * Mouse support. Not that hard to implement. Mouse events
-   use a pseudo function key macro as in Curses.
+   use a pseudo key macro as in Curses.
    Using some special command, macros can query the current
    mouse state (this maps to an Interface method).
+   This should be configurable via an ED flag as it changes
+   the behavior of the terminal.
  * Support loading from stdin (--stdin) and writing to
    the current buffer to stdout on exit (--stdout).
    This will make it easy to write command line filters,
@@ -525,6 +512,9 @@ Features:
    Perhaps ^E!xxxx or overload ^Qx0123.
  * Tweak the Makefile lexer for Automake support.
    In the simplest case, just add the *.am file extension.
+ * Add an fnkeys.tes alternative where moving cursor keys
+   leaves you in the insert (I) command.
+   That will behave very similar to classical editors.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -560,6 +550,11 @@ Optimizations:
      using __VA_OPT__().
  * Parsing might be optimized with libc's Unicode handling
    functions and/or custom optimized versions.
+ * The new Scintilla IDocumentEditable interface could be
+   used to speed up Q-Register string accesses.
+   That is, when it actually supports anything useful.
+   This is a provisional feature and supported only via C++,
+   so we would need a small wrapper to call it from C world.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
