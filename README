@@ -54,7 +54,8 @@ Features
   the command stream.
   This also enables navigating with function keys (e.g. cursor keys) as demonstrated
   by the standard library `fnkeys.tes`.
-  Function key macros can be context-sensitive, too.
+  In fact, all keys with printable representation and control keys can be remapped using
+  key macros - and they can be context-sensitive as well!
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters...
 * Interactivity: Immediate searching (similar to search-as-you-type) and
