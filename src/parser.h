@@ -108,10 +108,11 @@ typedef gboolean (*teco_state_process_edit_cmd_cb_t)(teco_machine_t *ctx, teco_m
                                                      gunichar key, GError **error);
 
 typedef enum {
-	TECO_FNMACRO_MASK_START		= (1 << 0),
-	TECO_FNMACRO_MASK_STRING	= (1 << 1),
-	TECO_FNMACRO_MASK_DEFAULT	= ~((1 << 2)-1)
-} teco_fnmacro_mask_t;
+	TECO_KEYMACRO_MASK_START		= (1 << 0),
+	TECO_KEYMACRO_MASK_STRING		= (1 << 1),
+	TECO_KEYMACRO_MASK_CASEINSENSITIVE	= (1 << 2),
+	TECO_KEYMACRO_MASK_DEFAULT		= ~((1 << 3)-1)
+} teco_keymacro_mask_t;
 
 /**
  * A teco_machine_t state.
@@ -184,28 +185,19 @@ struct teco_state_t {
 	/**
 	 * Whether this state is a start state (ie. not within any
 	 * escape sequence etc.).
-	 * This is separate of TECO_FNMACRO_MASK_START which is set
+	 * This is separate of TECO_KEYMACRO_MASK_START which is set
 	 * only in the main machine's start states.
 	 */
 	bool is_start : 1;
 	/**
-	 * Whether this state accepts case insensitive characters,
-	 * ie. is part of a command name, that can be case folded.
-	 * This is also used to determine which state accepts only
-	 * ANSI characters.
-	 * @fixme But it should be callback to detect all
-	 * string building constructs nested in Q-Reg specs.
-	 */
-	bool is_case_insensitive : 1;
-	/**
-	 * Function key macro mask.
+	 * Key macro mask.
 	 * This is not a bitmask since it is compared with values set
 	 * from TECO, so the bitorder needs to be defined.
 	 *
 	 * @fixme If we intend to "forward" masks from other state machines like
 	 * teco_machine_stringbuilding_t, this should probably be a callback.
 	 */
-	teco_fnmacro_mask_t fnmacro_mask : 8;
+	teco_keymacro_mask_t keymacro_mask : 8;
 
 	/**
 	 * Additional state-dependent callbacks and settings.
@@ -245,7 +237,7 @@ gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent
 		.end_of_macro_cb = teco_state_end_of_macro, \
 		.process_edit_cmd_cb = teco_state_process_edit_cmd, \
 		.is_start = FALSE, \
-		.fnmacro_mask = TECO_FNMACRO_MASK_DEFAULT, \
+		.keymacro_mask = TECO_KEYMACRO_MASK_DEFAULT, \
 		##__VA_ARGS__ \
 	}
 
@@ -268,7 +260,7 @@ gboolean teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_m
  */
 #define TECO_DEFINE_STATE_CASEINSENSITIVE(NAME, ...) \
 	TECO_DEFINE_STATE(NAME, \
-		.is_case_insensitive = TRUE, \
+		.keymacro_mask = TECO_KEYMACRO_MASK_CASEINSENSITIVE, \
 		.process_edit_cmd_cb = teco_state_caseinsensitive_process_edit_cmd, \
 		##__VA_ARGS__ \
 	)
@@ -552,7 +544,7 @@ gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco
 		.refresh_cb = (teco_state_refresh_cb_t)teco_state_expectstring_refresh, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectstring_process_edit_cmd, \
-		.fnmacro_mask = TECO_FNMACRO_MASK_STRING, \
+		.keymacro_mask = TECO_KEYMACRO_MASK_STRING, \
 		.expectstring.string_building = TRUE, \
 		.expectstring.last = TRUE, \
 		.expectstring.process_cb = NULL,	/* do nothing */ \

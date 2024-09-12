@@ -1164,7 +1164,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		 *
 		 * FIXME: Maybe, there should be a special teco_state_t
 		 * for beginnings of command-lines?
-		 * It could also be used for a corresponding FNMACRO mask.
+		 * It could also be used for a corresponding KEYMACRO mask.
 		 */
 		if (teco_cmdline.effective_len == 1 && teco_cmdline.str.data[0] == '*')
 			return &teco_state_save_cmdline;
@@ -1260,7 +1260,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_start,
 	.end_of_macro_cb = NULL, /* Allowed at the end of a macro! */
 	.is_start = TRUE,
-	.fnmacro_mask = TECO_FNMACRO_MASK_START
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
 
 /*$ F<
@@ -1971,7 +1971,7 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_escape,
 	 * when it comes to function key macro masking.
 	 */
 	.is_start = TRUE,
-	.fnmacro_mask = TECO_FNMACRO_MASK_START
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
 
 /*$ EF close
@@ -2058,7 +2058,6 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
  *     of files.
  *   - 32: Enable/Disable buffer editing hooks
  *     (via execution of macro in global Q-Register \(lqED\(rq)
- *   - 64: Enable/Disable function key macros
  *   - 128: Enable/Disable enforcement of UNIX98
  *     \(lq/bin/sh\(rq emulation for operating system command
  *     executions

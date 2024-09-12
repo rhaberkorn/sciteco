@@ -1545,7 +1545,7 @@ teco_interface_blocking_getch(void)
 	 * escape sequences.
 	 */
 #ifdef NCURSES_UNIX
-	keypad(teco_interface.cmdline_window, teco_ed & TECO_ED_FNKEYS);
+	keypad(teco_interface.cmdline_window, TRUE);
 #endif
 
 	/* no special <CTRL/C> handling */
@@ -1585,6 +1585,8 @@ teco_interface_event_loop_iter(void)
 	static gchar keybuf[4];
 	static gint keybuf_i = 0;
 
+	GError **error = &teco_interface.event_loop_error;
+
 	gint key = g_queue_is_empty(teco_interface.input_queue)
 			? teco_interface_blocking_getch()
 			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
@@ -1613,24 +1615,24 @@ teco_interface_event_loop_iter(void)
 		 * backspace.
 		 * In SciTECO backspace is normalized to ^H.
 		 */
-		if (!teco_cmdline_keypress_wc(TECO_CTL_KEY('H'),
-		                              &teco_interface.event_loop_error))
+		if (!teco_cmdline_keymacro_c(TECO_CTL_KEY('H'), error))
 			return;
 		break;
 	case KEY_ENTER:
 	case '\r':
 	case '\n':
-		if (!teco_cmdline_keypress_wc('\n', &teco_interface.event_loop_error))
+		if (!teco_cmdline_keymacro_c('\n', error))
 			return;
 		break;
 
 	/*
 	 * Function key macros
-	 * FIXME: What about keyname()?
+	 *
+	 * FIXME: Perhaps support everything returned by keyname()?
 	 */
 #define FN(KEY) \
 	case KEY_##KEY: \
-		if (!teco_cmdline_fnmacro(#KEY, &teco_interface.event_loop_error)) \
+		if (!teco_cmdline_keymacro(#KEY, -1, error)) \
 			return; \
 		break
 #define FNS(KEY) FN(KEY); FN(S##KEY)
@@ -1640,9 +1642,8 @@ teco_interface_event_loop_iter(void)
 		gchar macro_name[3+1];
 
 		g_snprintf(macro_name, sizeof(macro_name),
-			   "F%d", key - KEY_F0);
-		if (!teco_cmdline_fnmacro(macro_name,
-		                          &teco_interface.event_loop_error))
+		           "F%d", key - KEY_F0);
+		if (!teco_cmdline_keymacro(macro_name, -1, error))
 			return;
 		break;
 	}
@@ -1662,6 +1663,7 @@ teco_interface_event_loop_iter(void)
 	 */
 	default:
 		if (key > 0xFF)
+			/* unhandled function key */
 			return;
 
 		/*
@@ -1669,12 +1671,22 @@ teco_interface_event_loop_iter(void)
 		 * a widechar version of Curses.
 		 */
 		keybuf[keybuf_i++] = key;
-		gunichar cp = g_utf8_get_char_validated(keybuf, keybuf_i);
+		gsize len = keybuf_i;
+		gunichar cp = g_utf8_get_char_validated(keybuf, len);
 		if (keybuf_i >= sizeof(keybuf) || cp != (gunichar)-2)
 			keybuf_i = 0;
-		if ((gint32)cp < 0 ||
-		    !teco_cmdline_keypress_wc(cp, &teco_interface.event_loop_error))
+		if ((gint32)cp < 0)
+			/* incomplete or invalid */
 			return;
+		switch (teco_cmdline_keymacro(keybuf, len, error)) {
+		case TECO_KEYMACRO_ERROR:
+			return;
+		case TECO_KEYMACRO_SUCCESS:
+			break;
+		case TECO_KEYMACRO_UNDEFINED:
+			if (!teco_cmdline_keypress(keybuf, len, error))
+				return;
+		}
 	}
 
 	teco_interface_refresh();

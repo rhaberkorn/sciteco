@@ -53,8 +53,8 @@ EMQ[$SCITECOPATH]/session.tes
   The size unit is 1pt/100 !
 ! [lexer.font]Monospace 1300U[lexer.font] !
 
-! Uncomment to enable default keyboard macros and function keys !
-! EMQ[$SCITECOPATH]/fnkeys.tes !
+! Enable default function key macros !
+EMQ[$SCITECOPATH]/fnkeys.tes
 
 ! Uncomment if XTerm allows clipboard operations !
 ! 0,256ED !

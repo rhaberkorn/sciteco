@@ -927,19 +927,19 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 
 	switch (event->keyval) {
 	case GDK_KEY_Escape:
-		if (!teco_cmdline_keypress_wc('\e', error))
+		if (!teco_cmdline_keymacro_c('\e', error))
 			return FALSE;
 		break;
 	case GDK_KEY_BackSpace:
-		if (!teco_cmdline_keypress_wc(TECO_CTL_KEY('H'), error))
+		if (!teco_cmdline_keymacro_c(TECO_CTL_KEY('H'), error))
 			return FALSE;
 		break;
 	case GDK_KEY_Tab:
-		if (!teco_cmdline_keypress_wc('\t', error))
+		if (!teco_cmdline_keymacro_c('\t', error))
 			return FALSE;
 		break;
 	case GDK_KEY_Return:
-		if (!teco_cmdline_keypress_wc('\n', error))
+		if (!teco_cmdline_keymacro_c('\n', error))
 			return FALSE;
 		break;
 
@@ -948,12 +948,12 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 	 */
 #define FN(KEY, MACRO) \
 	case GDK_KEY_##KEY: \
-		if (!teco_cmdline_fnmacro(#MACRO, error)) \
+		if (!teco_cmdline_keymacro(#MACRO, -1, error)) \
 			return FALSE; \
 		break
 #define FNS(KEY, MACRO) \
 	case GDK_KEY_##KEY: \
-		if (!teco_cmdline_fnmacro(event->state & GDK_SHIFT_MASK ? "S" #MACRO : #MACRO, error)) \
+		if (!teco_cmdline_keymacro(event->state & GDK_SHIFT_MASK ? "S" #MACRO : #MACRO, -1, error)) \
 			return FALSE; \
 		break
 	FN(Down, DOWN); FN(Up, UP);
@@ -965,8 +965,8 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 		gchar macro_name[3+1];
 
 		g_snprintf(macro_name, sizeof(macro_name),
-			   "F%d", event->keyval - GDK_KEY_F1 + 1);
-		if (!teco_cmdline_fnmacro(macro_name, error))
+		           "F%d", event->keyval - GDK_KEY_F1 + 1);
+		if (!teco_cmdline_keymacro(macro_name, -1, error))
 			return FALSE;
 		break;
 	}
@@ -994,10 +994,32 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 		if ((event->state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK) {
 			gchar c = teco_interface_get_ansi_key(event);
 			if (c) {
-				if (!teco_cmdline_keypress_wc(TECO_CTL_KEY(g_ascii_toupper(c)), error))
+				if (!teco_cmdline_keymacro_c(TECO_CTL_KEY(g_ascii_toupper(c)), error))
 					return FALSE;
 				break;
 			}
+		}
+
+		/*
+		 * First look up a key macro.
+		 * Only if it's undefined, we try to automatically find an ANSI key.
+		 * On the downside, this means we cannot define key macros for dead keys
+		 * or keys that require some sort of input method editing.
+		 *
+		 * FIXME: This might be a good reason to be able to disable the
+		 * automatic ANSIfication, as we could look up the key macro in
+		 * teco_interface_cmdline_commit_cb().
+		 */
+		gunichar cp = gdk_keyval_to_unicode(event->keyval);
+		if (cp) {
+			char buf[6];
+			gsize len = g_unichar_to_utf8(cp, buf);
+			teco_keymacro_status_t rc = teco_cmdline_keymacro(buf, len, error);
+			if (rc == TECO_KEYMACRO_ERROR)
+				return FALSE;
+			if (rc == TECO_KEYMACRO_SUCCESS)
+				break;
+			g_assert(rc == TECO_KEYMACRO_UNDEFINED);
 		}
 
 		/*
@@ -1010,10 +1032,11 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 		 * within Q-Register specs as well.
 		 * Unfortunately, Q-Reg specs and string building can be nested
 		 * indefinitely.
-		 * This would effectively require a new is_case_sensitive_cb().
+		 * This would effectively require a new keymacro_mask_cb().
 		 */
-		if (teco_cmdline.machine.parent.current->is_case_insensitive ||
-		    teco_cmdline.machine.expectstring.machine.parent.current->is_case_insensitive)
+		if ((teco_cmdline.machine.parent.current->keymacro_mask |
+		     teco_cmdline.machine.expectstring.machine.parent.current->keymacro_mask) &
+								TECO_KEYMACRO_MASK_CASEINSENSITIVE)
 			teco_interface_get_ansi_key(event);
 
 		/*
@@ -1029,7 +1052,6 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 	}
 
 	teco_interface_refresh(teco_interface_current_view != last_view);
-
 	return TRUE;
 }
 

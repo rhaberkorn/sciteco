@@ -82,7 +82,7 @@ static teco_string_t teco_last_cmdline = {NULL, 0};
  * @param error A GError.
  * @return FALSE to throw a GError
  */
-gboolean
+static gboolean
 teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 {
 	const teco_string_t src = {(gchar *)data, len};
@@ -181,7 +181,7 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 	return TRUE;
 }
 
-gboolean
+static gboolean
 teco_cmdline_rubin(GError **error)
 {
 	if (!teco_cmdline.str.len)
@@ -194,55 +194,52 @@ teco_cmdline_rubin(GError **error)
 	return teco_cmdline_insert(start, next-start, error);
 }
 
+/**
+ * Process key press or expansion of key macro.
+ *
+ * Should be called only with the results of a single keypress.
+ * They are considered an unity and in case of errors, we
+ * rubout the entire sequence (unless there was a $$ return in the
+ * middle).
+ *
+ * @param data Key presses in UTF-8.
+ * @param len Length of data.
+ * @param error A GError.
+ * @return FALSE if error was set.
+ *   If TRUE was returned, there could still have been an error,
+ *   but it has already been handled.
+ */
 gboolean
-teco_cmdline_keypress_wc(gunichar key, GError **error)
+teco_cmdline_keypress(const gchar *data, gsize len, GError **error)
 {
+	const teco_string_t str = {(gchar *)data, len};
 	teco_machine_t *machine = &teco_cmdline.machine.parent;
-	g_autoptr(GError) tmp_error = NULL;
+
+	if (!teco_string_validate_utf8(&str)) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+		                    "Invalid UTF-8 sequence");
+		return FALSE;
+	}
 
 	/*
-	 * Cleanup messages,etc...
+	 * Cleanup messages, etc...
 	 */
 	teco_interface_msg_clear();
 
-	/*
-	 * Process immediate editing commands, inserting
-	 * characters as necessary into the command line.
-	 */
-	if (!machine->current->process_edit_cmd_cb(machine, NULL, key, &tmp_error)) {
-		if (g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_RETURN)) {
-			/*
-			 * Return from top-level macro, results
-			 * in command line termination.
-			 * The return "arguments" are currently
-			 * ignored.
-			 */
-			g_assert(machine->current == &teco_state_start);
+	gsize start_pc = teco_cmdline.pc;
 
-			teco_interface_popup_clear();
+	for (guint i = 0; i < len; i = g_utf8_next_char(data+i) - data) {
+		gunichar chr = g_utf8_get_char(data+i);
+		g_autoptr(GError) tmp_error = NULL;
 
-			if (teco_quit_requested) {
-				/* cought by user interface */
-				g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
-				return FALSE;
-			}
+		/*
+		 * Process immediate editing commands, inserting
+		 * characters as necessary into the command line.
+		 */
+		if (machine->current->process_edit_cmd_cb(machine, NULL, chr, &tmp_error))
+			continue;
 
-			teco_undo_clear();
-			/* also empties all Scintilla undo buffers */
-			teco_ring_set_scintilla_undo(TRUE);
-			teco_view_set_scintilla_undo(teco_qreg_view, TRUE);
-			/*
-			 * FIXME: Reset main machine?
-			 */
-			teco_goto_table_clear(&teco_cmdline.machine.goto_table);
-			teco_expressions_clear();
-			g_array_remove_range(teco_loop_stack, 0, teco_loop_stack->len);
-
-			teco_string_clear(&teco_last_cmdline);
-			teco_last_cmdline = teco_cmdline.str;
-			memset(&teco_cmdline.str, 0, sizeof(teco_cmdline.str));
-			teco_cmdline.effective_len = 0;
-		} else {
+		if (!g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_RETURN)) {
 			/*
 			 * NOTE: Error message already displayed in
 			 * teco_cmdline_insert().
@@ -252,29 +249,76 @@ teco_cmdline_keypress_wc(gunichar key, GError **error)
 			 * is thrown. They must be executed so
 			 * as if the character had never been
 			 * inserted.
+			 * Actually we rub out the entire command line
+			 * up until the insertion point.
 			 */
-			teco_undo_pop(teco_cmdline.pc);
-			teco_cmdline.effective_len = teco_cmdline.pc;
+			teco_undo_pop(start_pc);
+			teco_cmdline.effective_len = start_pc;
 			/* program counter could be messed up */
 			teco_cmdline.machine.macro_pc = teco_cmdline.effective_len;
-		}
 
 #ifdef HAVE_MALLOC_TRIM
-		/*
-		 * Undo stacks can grow very large - sometimes large enough to
-		 * make the system swap and become unresponsive.
-		 * This shrinks the program break after lots of memory has
-		 * been freed, reducing the virtual memory size and aiding
-		 * in recovering from swapping issues.
-		 *
-		 * This is particularily important with some memory limiting backends
-		 * after hitting the memory limit* as otherwise the program's resident
-		 * size won't shrink and it would be impossible to recover.
-		 */
-		if (g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_RETURN) ||
-		    g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_MEMLIMIT))
-			malloc_trim(0);
+			/*
+			 * Undo stacks can grow very large - sometimes large enough to
+			 * make the system swap and become unresponsive.
+			 * This shrinks the program break after lots of memory has
+			 * been freed, reducing the virtual memory size and aiding
+			 * in recovering from swapping issues.
+			 *
+			 * This is particularily important with some memory limiting backends
+			 * after hitting the memory limit* as otherwise the program's resident
+			 * size won't shrink and it would be impossible to recover.
+			 */
+			if (g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_MEMLIMIT))
+				malloc_trim(0);
 #endif
+
+			break;
+		}
+
+		/*
+		 * Return from top-level macro, results
+		 * in command line termination.
+		 * The return "arguments" are currently
+		 * ignored.
+		 */
+		g_assert(machine->current == &teco_state_start);
+
+		teco_interface_popup_clear();
+
+		if (teco_quit_requested) {
+			/* caught by user interface */
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
+			return FALSE;
+		}
+
+		teco_undo_clear();
+		/* also empties all Scintilla undo buffers */
+		teco_ring_set_scintilla_undo(TRUE);
+		teco_view_set_scintilla_undo(teco_qreg_view, TRUE);
+		/*
+		 * FIXME: Reset main machine?
+		 */
+		teco_goto_table_clear(&teco_cmdline.machine.goto_table);
+		teco_expressions_clear();
+		g_array_remove_range(teco_loop_stack, 0, teco_loop_stack->len);
+
+		teco_string_clear(&teco_last_cmdline);
+		teco_last_cmdline = teco_cmdline.str;
+		memset(&teco_cmdline.str, 0, sizeof(teco_cmdline.str));
+		teco_cmdline.effective_len = 0;
+
+#ifdef HAVE_MALLOC_TRIM
+		/* see above */
+		malloc_trim(0);
+#endif
+
+		/*
+		 * Continue with the other keys,
+		 * but we obviously can't rub out beyond the return if any
+		 * error occurs later on.
+		 */
+		start_pc = teco_cmdline.pc;
 	}
 
 	/*
@@ -284,57 +328,40 @@ teco_cmdline_keypress_wc(gunichar key, GError **error)
 	return TRUE;
 }
 
-/*
- * FIXME: If one character causes an error, we should rub out the
- * entire string.
- * Usually it will be called only with single keys (strings containing
- * single codepoints), but especially teco_cmdline_fnmacro() can emulate
- * many key presses at once.
- */
-gboolean
-teco_cmdline_keypress(const gchar *str, gsize len, GError **error)
-{
-	for (guint i = 0; i < len; i += g_utf8_next_char(str+i) - (str+i)) {
-		gunichar chr = g_utf8_get_char_validated(str+i, len-i);
-		if ((gint32)chr < 0) {
-			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
-			                    "Invalid UTF-8 sequence");
-			return FALSE;
-		}
-		if (!teco_cmdline_keypress_wc(chr, error))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-gboolean
-teco_cmdline_fnmacro(const gchar *name, GError **error)
+teco_keymacro_status_t
+teco_cmdline_keymacro(const gchar *name, gssize name_len, GError **error)
 {
 	g_assert(name != NULL);
+
+	if (name_len < 0)
+		name_len = strlen(name);
 
 	/*
 	 * NOTE: It should be safe to allocate on the stack since
 	 * there are only a limited number of possible function key macros.
 	 */
-	gchar macro_name[1 + strlen(name)];
-	macro_name[0] = TECO_CTL_KEY('F');
-	memcpy(macro_name+1, name, sizeof(macro_name)-1);
+	gchar macro_name[1 + name_len];
+	macro_name[0] = TECO_CTL_KEY('K');
+	memcpy(macro_name+1, name, name_len);
 
-	teco_qreg_t *macro_reg;
-
-	if (teco_ed & TECO_ED_FNKEYS &&
-	    (macro_reg = teco_qreg_table_find(&teco_qreg_table_globals, macro_name, sizeof(macro_name)))) {
+	teco_qreg_t *macro_reg = teco_qreg_table_find(&teco_qreg_table_globals, macro_name, sizeof(macro_name));
+	if (macro_reg) {
 		teco_int_t macro_mask;
 		if (!macro_reg->vtable->get_integer(macro_reg, &macro_mask, error))
-			return FALSE;
+			return TECO_KEYMACRO_ERROR;
 
-		if (macro_mask & teco_cmdline.machine.parent.current->fnmacro_mask)
-			return TRUE;
+		/*
+		 * FIXME: This does not work with Q-Register specs embedded into string arguments.
+		 * There should be a keymacro_mask_cb() instead.
+		 */
+		if (!((teco_cmdline.machine.parent.current->keymacro_mask |
+		       teco_cmdline.machine.expectstring.machine.parent.current->keymacro_mask) & ~macro_mask))
+			return TECO_KEYMACRO_UNDEFINED;
 
 		g_auto(teco_string_t) macro_str = {NULL, 0};
 		return macro_reg->vtable->get_string(macro_reg, &macro_str.data, &macro_str.len, NULL, error) &&
-		       teco_cmdline_keypress(macro_str.data, macro_str.len, error);
+		       teco_cmdline_keypress(macro_str.data, macro_str.len, error)
+					? TECO_KEYMACRO_SUCCESS : TECO_KEYMACRO_ERROR;
 	}
 
 	/*
@@ -342,20 +369,16 @@ teco_cmdline_fnmacro(const gchar *name, GError **error)
 	 * except "CLOSE" which quits the application
 	 * (this may loose unsaved data but is better than
 	 * not doing anything if the user closes the window).
-	 * NOTE: Doing the check here is less efficient than
-	 * doing it in the UI implementations, but defines
-	 * the default actions centrally.
-	 * Also, fnmacros are only handled after key presses.
 	 */
-	if (!strcmp(name, "CLOSE")) {
+	if (name_len == 5 && !strncmp(name, "CLOSE", name_len)) {
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
-		return FALSE;
+		return TECO_KEYMACRO_ERROR;
 	}
 
-	return TRUE;
+	return TECO_KEYMACRO_UNDEFINED;
 }
 
-void
+static void
 teco_cmdline_rubout(void)
 {
 	const gchar *p;

@@ -60,16 +60,29 @@ typedef struct {
 
 extern teco_cmdline_t teco_cmdline;
 
-gboolean teco_cmdline_insert(const gchar *data, gsize len, GError **error);
+gboolean teco_cmdline_keypress(const gchar *data, gsize len, GError **error);
 
-gboolean teco_cmdline_rubin(GError **error);
+typedef enum {
+	TECO_KEYMACRO_ERROR = 0,	/**< GError occurred */
+	TECO_KEYMACRO_SUCCESS,		/**< key macro found and inserted */
+	TECO_KEYMACRO_UNDEFINED		/**< no key macro found */
+} teco_keymacro_status_t;
 
-gboolean teco_cmdline_keypress_wc(gunichar key, GError **error);
-gboolean teco_cmdline_keypress(const gchar *str, gsize len, GError **error);
+teco_keymacro_status_t teco_cmdline_keymacro(const gchar *name, gssize name_len, GError **error);
 
-gboolean teco_cmdline_fnmacro(const gchar *name, GError **error);
-
-void teco_cmdline_rubout(void);
+static inline gboolean
+teco_cmdline_keymacro_c(gchar key, GError **error)
+{
+	switch (teco_cmdline_keymacro(&key, sizeof(key), error)) {
+	case TECO_KEYMACRO_ERROR:
+		return FALSE;
+	case TECO_KEYMACRO_SUCCESS:
+		break;
+	case TECO_KEYMACRO_UNDEFINED:
+		return teco_cmdline_keypress(&key, sizeof(key), error);
+	}
+	return TRUE;
+}
 
 extern gboolean teco_quit_requested;
 

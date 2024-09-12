@@ -96,8 +96,7 @@ according to the current keyboard layout and modifier keys.
 On the Gtk UI, \*(ST tries to automatically take ANSI letter
 values in situations where the parser accepts only ANSI
 characters.
-\# On Curses, you might need key macros to achieve the same,
-\# but they are not yet implemented.
+On Curses, you might need key macros to achieve the same.
 .IP 2.
 .SCITECO_TOPIC ctrl
 Control-combinations (e.g. CTRL+A) are translated to control
@@ -129,149 +128,164 @@ there is often an equivalent typed with the caret character
 (e.g. \(lq^I\(rq).
 .IP 4.
 A selection of other keys without printable representation (called
-function keys) are translated to user-definable character sequences.
-This feature is called function key macros and explained in the
-next subsection.
+function keys) are looked up as key macros, allowing user-definable character
+sequences to be inserted, including immediate editing commands.
+If there is no matching key macro, nothing is inserted.
+The key macro feature is explained in the next subsection.
+.IP 5.
+All keys with printable representations are also looked up
+as key macros, allowing them to be remapped just like function keys.
+Otherwise the corresponding UTF-8 strings are inserted into the command stream.
+.IP 6.
+The result of key macro lookups or the default printable representations
+are processed as immediate editing commands in a context-sensitive manner
+(see section
+.BR "COMMANDLINE EDITING" ).
+By default they are inserted into the command line macro and are
+immediately executed.
 .RE
 .
 .LP
-All immediate editing commands and regular \*(ST commands however operate on
+While \*(ST handles keys with arbitrary Unicode representations,
+all immediate editing commands and regular \*(ST commands operate on
 a language based solely on
 .B ASCII
 codes, which is a subset of Unicode.
 \# This is because we cannot assume the presence of any particular non-ANSI
 \# symbol on a user's keyboard.
+\# Immediate editing commands do not operate directly on function keys
+\# because we didn't want to introduce an UI-independent representation
+\# of function keys - it would also complicate insertion of immediate
+\# editing commands from key macros.
 Since the \*(ST parser is Unicode-aware, this does not exclude
 using Unicode glyphs wherever a single character is expected,
 ie. \fB^^\fIx\fR and \fBU\fIq\fR works with arbitrary Unicode glyphs.
 All \*(ST macros must be in valid UTF-8.
 .
-.SS Function Key Macros
+.SS Key Macros
 .
-.SCITECO_TOPIC "function key"
+.SCITECO_TOPIC "key macro" ^K
 By default function keys except Escape, Backspace and Return are
 ignored by \*(ST.
-By setting bit 6 of the \fBED\fP flag variable, function key handling
-is enabled:
-.SCITECO_TT
-.EX
-0,64ED
-.SCITECO_TT_END
-.EE
-This is usually performed in the editor profile.
-With certain interfaces (curses) after enabling function keys,
-the Escape key might only be handled after a short delay.
+With certain interfaces (curses) the Escape key might only be handled
+after a short delay.
 This is because it might be used by the terminal to transmit
 Escape Sequences.
 This delay is minimized by \*(ST, so using the escape key
 should not be a problem even on ncurses/UNIX.
+If the default delay is too small, it can be tweaked with the
+.B ESCDELAY
+environment variable and if necessary a key macro can be
+defined as an escape surrogate as described in this section
+.RB ( fnkeys.tes
+defines the delete key as an escape surrogate for instance).
 .LP
-Enabling function keys also enables Function Key Macros.
-These are Q-Register strings inserted into the command stream
-(before immediate editing command handling) when certain function
-keys (or combinations) are pressed.
-The following list of Function Key Macro registers are supported:
+To make use of function keys or to remap all other keys,
+special Q-Register strings can be defined that are inserted into the command stream
+before immediate editing command handling.
+The following list of key macro registers are supported:
+.
 .TP 9
-.SCITECO_TOPIC ^FDOWN
-.B ^FDOWN
+.SCITECO_TOPIC ^KDOWN
+.B ^KDOWN
 .TQ
-.SCITECO_TOPIC ^FUP
-.B ^FUP
+.SCITECO_TOPIC ^KUP
+.B ^KUP
 Inserted when the down/up cursor keys are pressed.
 .TP
-.SCITECO_TOPIC ^FLEFT
-.B ^FLEFT
+.SCITECO_TOPIC ^KLEFT
+.B ^KLEFT
 .TQ
-.SCITECO_TOPIC ^FSLEFT
-.B ^FSLEFT
+.SCITECO_TOPIC ^KSLEFT
+.B ^KSLEFT
 Inserted when the left or shift-left cursor keys are
 pressed.
 .TP
-.SCITECO_TOPIC ^FRIGHT
-.B ^FRIGHT
+.SCITECO_TOPIC ^KRIGHT
+.B ^KRIGHT
 .TQ
-.SCITECO_TOPIC ^FSRIGHT
-.B ^FSRIGHT
+.SCITECO_TOPIC ^KSRIGHT
+.B ^KSRIGHT
 Inserted when the right or shift-right cursor keys are
 pressed.
 .TP
-.SCITECO_TOPIC ^FHOME
-.B ^FHOME
+.SCITECO_TOPIC ^KHOME
+.B ^KHOME
 .TQ
-.SCITECO_TOPIC ^FSHOME
-.B ^FSHOME
+.SCITECO_TOPIC ^KSHOME
+.B ^KSHOME
 Inserted when the Home or shift-Home keys are pressed.
 .TP
-.SCITECO_TOPIC ^FF
-.BI ^FF x
-Inserted when the Fx-key is pressed
+.SCITECO_TOPIC ^KF
+.BI ^KF x
+Inserted when the F\fIx\fP-key is pressed
 .RI ( x
 is a number between 0 and 63).
 .TP
-.SCITECO_TOPIC ^FDC
-.B ^FDC
+.SCITECO_TOPIC ^KDC
+.B ^KDC
 .TQ
-.SCITECO_TOPIC ^FSDC
-.B ^FSDC
+.SCITECO_TOPIC ^KSDC
+.B ^KSDC
 Inserted when the Delete or shift-Delete key is pressed.
 .TP
-.SCITECO_TOPIC ^FIC
-.B ^FIC
+.SCITECO_TOPIC ^KIC
+.B ^KIC
 .TQ
-.SCITECO_TOPIC ^FSIC
-.B ^FSIC
+.SCITECO_TOPIC ^KSIC
+.B ^KSIC
 Inserted when the Insert or shift-Insert key is pressed.
 .TP
-.SCITECO_TOPIC ^FPPAGE
-.B ^FPPAGE
+.SCITECO_TOPIC ^KPPAGE
+.B ^KPPAGE
 .TQ
-.SCITECO_TOPIC ^FNPAGE
-.B ^FNPAGE
+.SCITECO_TOPIC ^KNPAGE
+.B ^KNPAGE
 Inserted when the Page-Up or Page-Down key is pressed.
 .TP
-.SCITECO_TOPIC ^FPRINT
-.B ^FPRINT
+.SCITECO_TOPIC ^KPRINT
+.B ^KPRINT
 .TQ
-.SCITECO_TOPIC ^FSPRINT
-.B ^FSPRINT
+.SCITECO_TOPIC ^KSPRINT
+.B ^KSPRINT
 Inserted when the Print or shift-Print key is pressed.
 .TP
-.SCITECO_TOPIC ^FA1
-.B ^FA1
+.SCITECO_TOPIC ^KA1
+.B ^KA1
 .TQ
-.SCITECO_TOPIC ^FA3
-.B ^FA3
+.SCITECO_TOPIC ^KA3
+.B ^KA3
 .TQ
-.SCITECO_TOPIC ^FB2
-.B ^FB2
+.SCITECO_TOPIC ^KB2
+.B ^KB2
 .TQ
-.SCITECO_TOPIC ^FC1
-.B ^FC1
+.SCITECO_TOPIC ^KC1
+.B ^KC1
 .TQ
-.SCITECO_TOPIC ^FC3
-.B ^FC3
+.SCITECO_TOPIC ^KC3
+.B ^KC3
 Inserted when the numeric key pad's upper left key (7),
 upper right key (9), central key (5), lower left key (1),
 or lower right key (3) is pressed and num-lock is disabled.
 The key-pad's cursor keys are handled like the regular
 cursor keys.
 .TP
-.SCITECO_TOPIC ^FEND
-.B ^FEND
+.SCITECO_TOPIC ^KEND
+.B ^KEND
 .TQ
-.SCITECO_TOPIC ^FSEND
-.B ^FSEND
+.SCITECO_TOPIC ^KSEND
+.B ^KSEND
 Inserted when the End or shift-End key is pressed.
 .TP
-.SCITECO_TOPIC ^FHELP
-.B ^FHELP
+.SCITECO_TOPIC ^KHELP
+.B ^KHELP
 .TQ
-.SCITECO_TOPIC ^FSHELP
-.B ^FSHELP
+.SCITECO_TOPIC ^KSHELP
+.B ^KSHELP
 Inserted when the Help or shift-Help key is pressed.
 .TQ
-.SCITECO_TOPIC ^FCLOSE
-.B ^FCLOSE
+.SCITECO_TOPIC ^KCLOSE
+.B ^KCLOSE
 Inserted when the Close key has been pressed.
 More importantly, this key is emulated in some GUIs
 (notably GTK+) when the user tries to close \*(ST's
@@ -280,34 +294,50 @@ This allows customizing \*(ST's behaviour when
 program termination is requested (e.g. only quit if
 there are no unsaved buffers).
 The close key is also special because
-it has a default action if function key macros are
-disabled or the \(lq^FCLOSE\(rq macro is undefined:
+it has a default action if the \(lq^KCLOSE\(rq macro is undefined:
 It unconditionally quits \*(ST.
 The default action is \fBnot\fP performed when
-\(lq^FCLOSE\(rq has merely been masked out in the
+\(lq^KCLOSE\(rq has merely been masked out in the
 current parser state (see below).
+.TP
+.BI ^K x
+Any other key with printable representation and all control codes
+are looked up with a \(lq^K\(rq prefix.
+\fIx\fP can usually only be a single Unicode glyph.
+\# Although the result of IMEs is looked up in Gtk, which I suppose
+\# can be multiple codepoints.
+If undefined, \fIx\fP is inserted unmodified.
+\# NOTE: Since all function key macros are longer than 2
+\# characters, there shouldn't be any namespace collisions.
 .
 .LP
-\(lq^F\(rq corresponds to CTRL+F in the above list but
+\(lq^K\(rq corresponds to CTRL+K (ASCII code 11) in the above list but
 might be typed with a caret due to string building characters
 in long Q-Register names.
 The names are all derived from key definitions of the curses
 library \(em not all of them may be supported on any particular
 user interface.
 .LP
-By default function key macros are effective everywhere \(em
-pressing a function key has the same effect as processing
-the characters of the corresponding function key macro as
+The result of key macro expansion differs from
+consecutive key presses in that they are considered an unity.
+If insertion of a single character fails (raises an error),
+the entire macro expansion is automatically rubbed out.
+.LP
+By default key macros are effective everywhere \(em
+pressing a key has the same effect as processing
+the characters of the corresponding key macro as
 immediate editing commands (or self-inserting characters).
-However function key macros that rewrite the current command line
+However key macros that rewrite the current command line
 will only work correctly from specific \*(ST parser states.
-\*(ST therefore allows you to mask function key macros in
+Another common use of key macros would be to define
+aliases of \*(ST commands for non-latin keys on Curses.
+\*(ST therefore allows you to mask key macros in
 specific parser states by evaluating the Q-Register's numeric
-part, thus allowing you to control \fIwhere\fP a function key
+part, thus allowing you to control \fIwhere\fP a key
 macro is effective.
 The numeric part represents a bitmask of states where
-function keys are \fIdisabled\fP (so the default value 0
-enables that function key everywhere).
+keys macros are \fIdisabled\fP (so the default value 0
+enables that key macro everywhere).
 \*(ST defines the following state flags:
 .IP 1 4
 Bit 0 represents the \(lqstart\(rq state where \*(ST accepts the
@@ -316,23 +346,27 @@ This is the state you will want command line editing macros
 to be enabled in.
 .IP 2
 Bit 1 represents any string argument.
+.IP 4
+Bit 2 represents any case insensitive syntactic character.
+This is the state you might want to use for translating
+non-latin characters to their latin equivalent.
 .LP
 All other bits/flags represent any other parser state.
 Consequently, setting the register to the inverse of a bitmask of
 state flags enables the corresponding macro only for the specified
 states.
-For instance, to enable the \(lq^FRIGHT\(rq function key macro
+For instance, to enable the \(lq^KRIGHT\(rq key macro
 only in the \(lqstart\(rq state, you could set:
 .SCITECO_TT
 .EX
-1^_U[^FRIGHT]
+1^_U[^KRIGHT]
 .SCITECO_TT_END
 .EE
 .LP
-A set of useful Function Key Macros are provided in the
+A set of useful key macros for function keys is provided in the
 standard library
 .BR fnkeys.tes .
-It demonstrates how Function Key Macros may be used to define
+It demonstrates how key macros may be used to define
 alternate Escape keys (so the delay issue is not experienced),
 or do insertion and command-line editing using function keys.
 .
@@ -1523,11 +1557,11 @@ the original clipboard contents, though.
 The numeric parts of the clipboard registers are currently
 not used by \*(ST.
 .TP
-.BI ^F key
-Function key registers as documented in section
-\fBKEY TRANSLATION\fP.
-Their string-content represents a function key macro
-and their numeric part is a function key mask.
+.BI ^K key
+Key macro registers as documented in section
+.BR "KEY TRANSLATION" .
+Their string-content represents a key macro
+and their numeric part is a key macro mask.
 None of those registers are automatically initialized
 on startup.
 .TP
