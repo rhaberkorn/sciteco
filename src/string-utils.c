@@ -55,13 +55,20 @@ teco_string_echo(const gchar *str, gsize len)
 	return ret;
 }
 
-/** @memberof teco_string_t */
+/**
+ * Get character coordinates for a given byte index.
+ *
+ * The given string must be valid UTF-8.
+ *
+ * @memberof teco_string_t
+ */
 void
-teco_string_get_coord(const gchar *str, guint pos, guint *line, guint *column)
+teco_string_get_coord(const gchar *str, gsize off, guint *pos, guint *line, guint *column)
 {
+	*pos = 0;
 	*line = *column = 1;
 
-	for (guint i = 0; i < pos; i++) {
+	for (guint i = 0; i < off; i = g_utf8_next_char(str+i) - str) {
 		switch (str[i]) {
 		case '\r':
 			if (str[i+1] == '\n')
@@ -75,6 +82,7 @@ teco_string_get_coord(const gchar *str, guint pos, guint *line, guint *column)
 			(*column)++;
 			break;
 		}
+		(*pos)++;
 	}
 }
 

@@ -37,13 +37,6 @@ guint teco_error_return_args = 0;
  */
 guint teco_error_pos = 0, teco_error_line = 0, teco_error_column = 0;
 
-void
-teco_error_set_coord(const gchar *str, guint pos)
-{
-	teco_error_pos = pos;
-	teco_string_get_coord(str, pos, &teco_error_line, &teco_error_column);
-}
-
 typedef enum {
 	TECO_FRAME_QREG,
 	TECO_FRAME_FILE,

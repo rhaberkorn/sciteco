@@ -243,5 +243,5 @@ TECO_DECLARE_UNDO_SCALAR(gconstpointer);
 
 /** @} */
 
-void teco_undo_pop(gint pc);
+void teco_undo_pop(gsize pc);
 void teco_undo_clear(void);

@@ -143,7 +143,11 @@ teco_error_return_set(GError **error, guint args)
 
 extern guint teco_error_pos, teco_error_line, teco_error_column;
 
-void teco_error_set_coord(const gchar *str, guint pos);
+static inline void
+teco_error_set_coord(const gchar *str, gsize pos)
+{
+	teco_string_get_coord(str, pos, &teco_error_pos, &teco_error_line, &teco_error_column);
+}
 
 void teco_error_display_short(const GError *error);
 void teco_error_display_full(const GError *error);

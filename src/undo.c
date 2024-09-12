@@ -112,7 +112,7 @@ teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
 }
 
 void
-teco_undo_pop(gint pc)
+teco_undo_pop(gsize pc)
 {
 	while ((gint)teco_undo_heads->len > pc) {
 		teco_undo_token_t *top =

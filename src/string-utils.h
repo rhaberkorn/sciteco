@@ -162,7 +162,7 @@ void undo__teco_string_truncate(teco_string_t *, gsize);
 
 gchar *teco_string_echo(const gchar *str, gsize len);
 
-void teco_string_get_coord(const gchar *str, guint pos, guint *line, guint *column);
+void teco_string_get_coord(const gchar *str, gsize off, guint *pos, guint *line, guint *column);
 
 typedef gsize (*teco_string_diff_t)(const teco_string_t *a, const gchar *b, gsize b_len);
 gsize teco_string_diff(const teco_string_t *a, const gchar *b, gsize b_len);

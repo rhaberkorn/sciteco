@@ -440,7 +440,7 @@ typedef enum {
 struct teco_machine_main_t {
 	teco_machine_t parent;
 
-	gint macro_pc;
+	gsize macro_pc;
 
 	/**
 	 * Aliases bitfield with an integer.

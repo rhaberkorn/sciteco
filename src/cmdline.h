@@ -46,7 +46,7 @@ typedef struct {
 	gsize effective_len;
 
 	/** Program counter within the command-line macro */
-	guint pc;
+	gsize pc;
 
 	/**
 	 * Specifies whether the immediate editing modifier
