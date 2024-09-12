@@ -226,7 +226,7 @@ teco_cmdline_keypress(const gchar *data, gsize len, GError **error)
 	 */
 	teco_interface_msg_clear();
 
-	gsize start_pc = teco_cmdline.pc;
+	gsize start_pc = teco_cmdline.effective_len;
 
 	for (guint i = 0; i < len; i = g_utf8_next_char(data+i) - data) {
 		gunichar chr = g_utf8_get_char(data+i);
@@ -318,7 +318,7 @@ teco_cmdline_keypress(const gchar *data, gsize len, GError **error)
 		 * but we obviously can't rub out beyond the return if any
 		 * error occurs later on.
 		 */
-		start_pc = teco_cmdline.pc;
+		start_pc = 0;
 	}
 
 	/*
