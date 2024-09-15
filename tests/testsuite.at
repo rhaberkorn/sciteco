@@ -190,6 +190,7 @@ AT_CLEANUP
 
 # NOTE: This bug depends on specific build options of Glib's
 # PCRE which is not predictable.
+# It segfaults at least on Ubuntu 20.04 (libpcre3 v2:8.39).
 #AT_SETUP([Pattern matching overflow])
 ## Should no longer dump core.
 ## It could fail because the memory limit is exceeed,
@@ -199,9 +200,6 @@ AT_CLEANUP
 #AT_CLEANUP
 
 AT_SETUP([Recursion overflow])
-# On Mac OS and FreeBSD we cannot always reliably provoke a stack overflow.
-# Let's suppose this is the case on all BSDs.
-AT_SKIP_IF([case $host in *-*-*bsd* | *-*-darwin*) true;; *) false;; esac])
 # Should no longer dump core.
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.

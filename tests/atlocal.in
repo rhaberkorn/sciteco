@@ -24,3 +24,8 @@ case $host in
 	LC_ALL=C.UTF-8
 	;;
 esac
+
+# Default stack size on Linux (8M).
+# Some platforms allow very large stack sizes, making it hard to test
+# against potential stack overflows.
+ulimit -s 8192
