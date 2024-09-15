@@ -41,6 +41,7 @@ man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/flash.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/freebasic.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/gap.tes
+%%LEXILLA%%%%DATADIR%%/lib/lexers/git.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/go.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/gob.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/html.tes
