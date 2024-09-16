@@ -29,7 +29,6 @@ SUBST_MACRO = EB$<\e \
               <FS@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>J \
               <FS@PACKAGE_VERSION^Q@\e@PACKAGE_VERSION@\e;>J \
               <FS@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>J \
-              <FS@PACKAGE_URL_DEV^Q@\e@PACKAGE_URL_DEV@\e;>J \
               <FS@bindir^Q@\e$(bindir)\e;>J \
               <FS@libexecdir^Q@\e$(libexecdir)\e;>J \
               <FS@scitecodatadir^Q@\e$(scitecodatadir)\e;>J \

@@ -2289,6 +2289,7 @@ This manual mentions differences on several occasions.
 .
 .SH SEE ALSO
 .
+.\" FIXME: The URLs do not format in FreeBSD's man or in woman pages.
 .TP
 Program invocation and options:
 .BR sciteco (1)
@@ -2298,22 +2299,19 @@ Scintilla messages and other documentation:
 Scintilla
 .UE
 .TP
-Scinterm manual, documenting the mapping of
-\(lqRGB\(rq values to terminal colors on curses user interfaces:
+Scinterm manual, documenting the mapping of \(lqRGB\(rq values to terminal colors on curses user interfaces:
 .UR http://foicica.com/scinterm/manual.html
 Scinterm manual
 .UE
 .TP
-Suitable terminal fonts for icon support in Curses (see
-.BR ED command).
+Suitable terminal fonts for icon support in Curses (see \fBED\fP flags):
 .UR https://www.nerdfonts.com/
 Nerd Fonts
 .UE
 .TP
-Gtk+ 3 documentation, containg details about
-its CSS support and syntax:
-.UR https://developer.gnome.org/gtk3/stable/GtkCssProvider.html
-GtkCssProvider
+Gtk+ 3 documentation, containg details about its CSS support and syntax:
+.UR https://docs.gtk.org/gtk3/css-overview.html
+Overview of CSS in GTK
 .UE
 .
 .

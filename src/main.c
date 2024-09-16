@@ -137,7 +137,7 @@ teco_process_options(gchar ***argv)
 	g_option_context_set_description(
 		options,
 		"Bug reports should go to <" PACKAGE_BUGREPORT "> or "
-		"<" PACKAGE_URL_DEV ">."
+		"<" PACKAGE_URL ">."
 	);
 
 	g_option_context_add_main_entries(options, option_entries, NULL);

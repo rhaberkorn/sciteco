@@ -5,11 +5,7 @@ AC_PREREQ([2.65])
 AC_INIT([SciTECO], [2.1.0],
 	[robin.haberkorn@googlemail.com],
 	[sciteco],
-	[http://sciteco.sf.net/])
-PACKAGE_URL_DEV=https://github.com/rhaberkorn/sciteco
-AC_SUBST(PACKAGE_URL_DEV)
-AC_DEFINE_UNQUOTED(PACKAGE_URL_DEV, ["$PACKAGE_URL_DEV"],
-                   [Package development homepage.])
+	[https://github.com/rhaberkorn/sciteco])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE

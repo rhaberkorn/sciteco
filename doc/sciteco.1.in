@@ -405,21 +405,14 @@ It may also be used as a template for
 Language reference:
 .BR sciteco (7)
 .TP
-The \fBtroff\fP post-processor for \*(ST, including
-information on how to write \(lqwomanpages\(rq:
+The \fBtroff\fP post-processor for \*(ST, including information on how to write \(lqwomanpages\(rq:
 .BR grosciteco.tes (1)
 .TP
-A \fBtroff\fP pre-processor commonly used to generate
-man-pages:
+A \fBtroff\fP pre-processor commonly used to generate man-pages:
 .BR tedoc.tes (1)
 .TP
-Homepage:
-.UR @PACKAGE_URL@
-\*(ST at Sourceforge
-.UE
-.TP
 Development home, bug tracker and wiki:
-.UR @PACKAGE_URL_DEV@
+.UR @PACKAGE_URL@
 \*(ST at Github
 .UE
 .TP
