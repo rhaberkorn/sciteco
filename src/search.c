@@ -463,16 +463,16 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 }
 
 static gboolean
-teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
+teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 {
 	g_autoptr(GMatchInfo) info = NULL;
-	const gchar *buffer = (const gchar *)teco_interface_ssm(SCI_GETCHARACTERPOINTER, 0, 0);
+	const gchar *buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, from, to-from);
 	GError *tmp_error = NULL;
 
 	/*
 	 * NOTE: The return boolean does NOT signal whether an error was generated.
 	 */
-	g_regex_match_full(re, buffer, (gssize)to, from, 0, &info, &tmp_error);
+	g_regex_match_full(re, buffer, to-from, 0, 0, &info, &tmp_error);
 	if (tmp_error) {
 		g_propagate_error(error, tmp_error);
 		return FALSE;
@@ -552,7 +552,7 @@ teco_do_search(GRegex *re, gint from, gint to, gint *count, GError **error)
 
 	if (matched_from >= 0 && matched_to >= 0)
 		/* match success */
-		teco_interface_ssm(SCI_SETSEL, matched_from, matched_to);
+		teco_interface_ssm(SCI_SETSEL, from+matched_from, from+matched_to);
 
 	return TRUE;
 }
