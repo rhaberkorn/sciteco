@@ -26,6 +26,8 @@ Known Bugs:
    via control and not via caret.
  * Using fnkeys.tes still flickers on PDCurses/WinGUI.
    Apparently a PDCurses bug.
+ * PDCurses/WinGUI: Pressing Ctrl+Shift+6 on an US keyboard layout
+   inserts "6^^". This may well be a PDCurses/WinGUI bug.
  * Win32: Interrupting <EC> will sometimes hang.
    Affects both PDCurses/WinGUI and Gtk.
    In this case you have to kill the subprocess using the task manager.
@@ -60,22 +62,15 @@ Known Bugs:
    and b) the file mode and ownership of re-created files can be preserved.
    We should fall back silently to an (inefficient) memory copy or temporary
    file strategy if this is detected.
- * crashes on large files: S^EM^X$ (regexp: .*)
-   Happens because the Glib regex engine is based on a recursive
+ * crashes on large files: S^EM^X$ (regexp: (.)+)
+   Happens because the Glib regex engine is based on a recursive (backtracking)
    Perl regex library.
-   The Homebrew and MinGW versions of glib no longer suffer from this.
+   I can provoke the problem only on Ubuntu 20.04.
    This is apparently impossible to fix as long as we do not
    have control over the regex engine build.
-   Scintilla has built-in SCFIND_CXX11REGEX support with SCI_FINDTEXTFULL.
-   However, even the G++ implementation appears to cause
-   stack overflows:
-   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61582
-   What about the builtin SCFIND_REGEXP?
-   Alternatively we should switch the underlying Regex engine.
-   Oniguruma looks promising and is also packaged for Ubuntu (libonig2).
-   It would also directly allow globbing by tweaking the syntax.
-   TRE also looks promising and is smaller than Oniguruma.
-   GRegEx (PCRE) could still be supported as a fallback.
+   We need something based on a non-backtracking Thompson's NFA with Unicode (UTF-8), see
+   https://swtch.com/~rsc/regexp/
+   Basically only RE2 would check all the boxes.
  * It is still possible to crash SciTECO using recursive functions,
    since they map to the C program's call stack.
    It is perhaps best to use another stack of
@@ -148,10 +143,8 @@ Known Bugs:
  * ^V and ^W string building characters do not operate
    on ^EQq and ^EUq, which is a pity as that would be the
    only sane use for them.
- * lexer.tes should store the basename of the matched
-   lexer configuration.
-   This helps in macros like aspell (sp), where we currently
-   have to rely on the numeric lexer ids.
+ * The unnamed buffer hasn't got margins set.
+   Should be fixed in sample.teco_ini.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -490,18 +483,7 @@ Features:
    use operators like ~=, ~< etc.
  * It should be possible to disable auto-completions of one-character
    register names, so that we can map the idention macro to M<TAB>.
- * fnkeys.tes: Rubin/Rubout via cursor keys?
  * Add a configure-switch for LTO (--enable-lto).
- * Curses: could now optionally support Unicode "icons" in the
-   file/directory popups (cf. `exa --icons`) and left to
-   "<Buffer>" or "<Q-Register>".
-   This isn't in all fonts, but you can always install
-   Nerd Fonts: https://www.nerdfonts.com
-   The mapping could be stolen from exa:
-   https://github.com/ogham/exa/blob/master/src/output/icons.rs
- * Update Scintilla and Scinterm.
-   The last PR has been merged and we don't have to link
-   to our own Scinterm fork.
  * There should be a string building character for including
    a character by code. Currently, there is only ^EUq where
    q must be set earlier.
@@ -510,11 +492,46 @@ Features:
    Unfortunately its syntax cannot depend on the string argument's
    encoding, as that could confuse parse-only mode.
    Perhaps ^E!xxxx or overload ^Qx0123.
+   TECO-11 has ^Ennn (octal), but only for searching?
  * Tweak the Makefile lexer for Automake support.
    In the simplest case, just add the *.am file extension.
  * Add an fnkeys.tes alternative where moving cursor keys
    leaves you in the insert (I) command.
    That will behave very similar to classical editors.
+ * Lexing via SciTECO macros?
+   They would have to be in their own parser instance since Scintilla
+   could ask us to restyle at any time and within string arguments,
+   which would confuse the parser as it is.
+   Also, parsers are not fully embeddable right now.
+   At the same time, it would need access to the view/document it's
+   supposed to style. Tricky, but not impossible.
+ * Support external lexers.
+   Eg. @ES/SCI_SETILEXER/scintillua:APL/
+   automatically loads libscintillua.so or scintillua.dll, caches
+   the library handle and creates the "APL" lexer.
+   There would also have to be some kind of SCI_NAMEDSTYLE wrapper,
+   so we can look up style ids by name (specifically for Scintillua).
+ * ^^ in string building expanding to a single caret is not
+   consistent. Perhaps we should allow only ^Q^ as a way to insert a
+   single caret?
+   At the very least, Ctrl+^ should insert char 30 instead of a single
+   caret.
+ * Support for non-ANSI single byte encodings is still incomplete.
+   You can set them with EE and they will be correctly
+   displayed (on Gtk at least), but there is no way
+   to insert text in these codepages, at least outside
+   of the latin range of course.
+   There are two ways this could be implemented:
+   * Either all sorts of commands automatically iconv
+     from/to the configured encoding.
+   * Or we iconv once to UTF-8 when loading the file
+     and iconv back when saving.
+     This is probably easier but means, you have to
+     somehow specify the codepage on EB as you cannot
+     change it later on.
+     We could say that nEB...$ specifies the code page
+     if the string argument is nonempty.
+     On the other hand, iconv uses symbolic identifiers.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -555,6 +572,14 @@ Optimizations:
    That is, when it actually supports anything useful.
    This is a provisional feature and supported only via C++,
    so we would need a small wrapper to call it from C world.
+ * Perhaps replace glib with gnulib. Could improve
+   portability and reduce binary size on platforms where
+   I have to ship the glib shared library.
+   Also we could control memory allocations more tightly.
+   We could also make use of the fnmatch and canonicalize
+   modules.
+   On the other hand, this imports tons of sh*t into the
+   repository and chains us to Autotools.
 
 Documentation:
  * Code docs (Doxygen). It's slowly getting better...
@@ -568,3 +593,5 @@ Documentation:
    Object-oriented SciTECO ideoms etc. ;-)
  * What to do with `--xembed`: tabbed, st
    when used as the git editor, etc.
+ * Perhaps there should be a Getting Started document,
+   that is automatically opened by sample.teco_ini.
