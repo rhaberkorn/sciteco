@@ -916,12 +916,12 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 	if (teco_is_failure(search_state))
 		return &teco_state_start;
 
-	gint dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	sptr_t dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	if (teco_search_parameters.dot < dot) {
 		/* kill forwards */
-		gint anchor = teco_interface_ssm(SCI_GETANCHOR, 0, 0);
+		sptr_t anchor = teco_interface_ssm(SCI_GETANCHOR, 0, 0);
 
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS, dot, 0);
@@ -929,17 +929,22 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 
 		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot,
 		                   anchor - teco_search_parameters.dot);
+
+		/* NOTE: An undo action is not always created. */
+		if (teco_current_doc_must_undo() &&
+		    teco_search_parameters.dot != anchor)
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	} else {
 		/* kill backwards */
 		teco_interface_ssm(SCI_DELETERANGE, dot, teco_search_parameters.dot - dot);
+
+		/* NOTE: An undo action is not always created. */
+		if (teco_current_doc_must_undo() &&
+		    teco_search_parameters.dot != dot)
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	}
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 	teco_ring_dirtify();
-
-	/* NOTE: An undo action is not always created. */
-	if (teco_current_doc_must_undo() &&
-	    teco_search_parameters.dot != dot)
-		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 
 	return &teco_state_start;
 }
