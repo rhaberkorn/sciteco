@@ -2065,6 +2065,11 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
  *     Should only be enabled if XTerm allows the
  *     \fIGetSelection\fP and \fISetSelection\fP window
  *     operations.
+ *   - 512: Enable/Disable Unicode icons in the Curses UI.
+ *     This requires a capable font, like the ones provided
+ *     by the \(lqNerd Fonts\(rq project.
+ *     Changes to this flag in interactive mode may not become
+ *     effective immediately.
  *
  * The features controlled thus are discribed in other sections
  * of this manual.

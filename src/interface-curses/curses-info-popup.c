@@ -28,6 +28,7 @@
 #include "interface.h"
 #include "curses-utils.h"
 #include "curses-info-popup.h"
+#include "curses-icons.h"
 
 /*
  * FIXME: This is redundant with gtk-info-popup.c.
@@ -75,8 +76,13 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 	gint pad_cols;			/**! entry columns */
 	gint pad_colwidth;		/**! width per entry column */
 
-	/* reserve 2 spaces between columns */
-	pad_colwidth = MIN(ctx->longest + 2, cols - 2);
+	/*
+	 * With Unicode icons enabled, we reserve 2 characters at the beginning and one
+	 * after the filename/directory.
+	 * Otherwise 2 characters after the entry.
+	 */
+	gint reserve = teco_ed & TECO_ED_ICONS ? 2+1 : 2;
+	pad_colwidth = MIN(ctx->longest + reserve, cols - 2);
 
 	/* pad_cols = floor((cols - 2) / pad_colwidth) */
 	pad_cols = (cols - 2) / pad_colwidth;
@@ -111,8 +117,15 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 
 		switch (entry->type) {
 		case TECO_POPUP_FILE:
+			g_assert(!teco_string_contains(&entry->name, '\0'));
+			if (teco_ed & TECO_ED_ICONS)
+				wprintw(ctx->pad, "%C ", teco_curses_icons_lookup_file(entry->name.data));
+			teco_curses_format_filename(ctx->pad, entry->name.data, -1);
+			break;
 		case TECO_POPUP_DIRECTORY:
 			g_assert(!teco_string_contains(&entry->name, '\0'));
+			if (teco_ed & TECO_ED_ICONS)
+				wprintw(ctx->pad, "%C ", teco_curses_icons_lookup_dir(entry->name.data));
 			teco_curses_format_filename(ctx->pad, entry->name.data, -1);
 			break;
 		default:

@@ -91,7 +91,8 @@ enum {
 	TECO_ED_HOOKS		= (1 << 5),
 	//TECO_ED_MOUSEKEY	= (1 << 6),
 	TECO_ED_SHELLEMU	= (1 << 7),
-	TECO_ED_XTERM_CLIPBOARD	= (1 << 8)
+	TECO_ED_XTERM_CLIPBOARD	= (1 << 8),
+	TECO_ED_ICONS		= (1 << 9)
 };
 
 /* in main.c */

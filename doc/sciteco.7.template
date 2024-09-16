@@ -2304,6 +2304,12 @@ Scinterm manual, documenting the mapping of
 Scinterm manual
 .UE
 .TP
+Suitable terminal fonts for icon support in Curses (see
+.BR ED command).
+.UR https://www.nerdfonts.com/
+Nerd Fonts
+.UE
+.TP
 Gtk+ 3 documentation, containg details about
 its CSS support and syntax:
 .UR https://developer.gnome.org/gtk3/stable/GtkCssProvider.html

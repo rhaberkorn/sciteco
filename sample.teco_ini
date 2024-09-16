@@ -59,6 +59,9 @@ EMQ[$SCITECOPATH]/fnkeys.tes
 ! Uncomment if XTerm allows clipboard operations !
 ! 0,256ED !
 
+! Uncomment to enable Unicode icons in the Curses UI !
+! 0,512ED !
+
 ! Uncomment to tweak the memory limit !
 ! 500*1000*1000,2EJ !
 

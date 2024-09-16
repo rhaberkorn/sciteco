@@ -64,11 +64,12 @@
 #include "qreg.h"
 #include "ring.h"
 #include "error.h"
-#include "curses-utils.h"
-#include "curses-info-popup.h"
 #include "view.h"
 #include "memory.h"
 #include "interface.h"
+#include "curses-utils.h"
+#include "curses-info-popup.h"
+#include "curses-icons.h"
 
 #if defined(__PDCURSES__) && defined(G_OS_WIN32) && \
     !defined(PDCURSES_GUI)
@@ -339,6 +340,7 @@ static struct {
 		TECO_INFO_TYPE_QREG
 	} info_type;
 	teco_string_t info_current;
+	gboolean info_dirty;
 
 	WINDOW *msg_window;
 
@@ -977,7 +979,8 @@ teco_interface_draw_info(void)
 	switch (teco_interface.info_type) {
 	case TECO_INFO_TYPE_QREG:
 		info_type_str = PACKAGE_NAME " - <QRegister> ";
-		waddstr(teco_interface.info_window, info_type_str);
+		wprintw(teco_interface.info_window, "%s %C <QRegister> ", PACKAGE_NAME,
+		        teco_ed & TECO_ED_ICONS ? TECO_CURSES_ICONS_QREG : '-');
 		/* same formatting as in command lines */
 		teco_curses_format_str(teco_interface.info_window,
 		                       teco_interface.info_current.data,
@@ -986,10 +989,14 @@ teco_interface_draw_info(void)
 
 	case TECO_INFO_TYPE_BUFFER:
 		info_type_str = PACKAGE_NAME " - <Buffer> ";
-		waddstr(teco_interface.info_window, info_type_str);
 		g_assert(!teco_string_contains(&teco_interface.info_current, '\0'));
+		wprintw(teco_interface.info_window, "%s %C <Buffer> ", PACKAGE_NAME,
+		        teco_ed & TECO_ED_ICONS ? teco_curses_icons_lookup_file(teco_interface.info_current.data) : '-');
 		teco_curses_format_filename(teco_interface.info_window,
-		                            teco_interface.info_current.data, -1);
+		                            teco_interface.info_current.data,
+		                            getmaxx(teco_interface.info_window) -
+		                            getcurx(teco_interface.info_window) - 1);
+		waddch(teco_interface.info_window, teco_interface.info_dirty ? '*' : ' ');
 		break;
 
 	default:
@@ -999,13 +1006,13 @@ teco_interface_draw_info(void)
 	wclrtoeol(teco_interface.info_window);
 
 	/*
-	 * Make sure the title will consist only of printable
-	 * characters
+	 * Make sure the title will consist only of printable characters.
 	 */
 	g_autofree gchar *info_current_printable;
 	info_current_printable = teco_string_echo(teco_interface.info_current.data,
 	                                          teco_interface.info_current.len);
-	g_autofree gchar *title = g_strconcat(info_type_str, info_current_printable, NULL);
+	g_autofree gchar *title = g_strconcat(info_type_str, info_current_printable,
+	                                      teco_interface.info_dirty ? "*" : "", NULL);
 	teco_interface_set_window_title(title);
 }
 
@@ -1015,6 +1022,7 @@ teco_interface_info_update_qreg(const teco_qreg_t *reg)
 	teco_string_clear(&teco_interface.info_current);
 	teco_string_init(&teco_interface.info_current,
 	                 reg->head.name.data, reg->head.name.len);
+	teco_interface.info_dirty = FALSE;
 	teco_interface.info_type = TECO_INFO_TYPE_QREG;
 	/* NOTE: drawn in teco_interface_event_loop_iter() */
 }
@@ -1026,8 +1034,7 @@ teco_interface_info_update_buffer(const teco_buffer_t *buffer)
 
 	teco_string_clear(&teco_interface.info_current);
 	teco_string_init(&teco_interface.info_current, filename, strlen(filename));
-	teco_string_append_c(&teco_interface.info_current,
-	                     buffer->dirty ? '*' : ' ');
+	teco_interface.info_dirty = buffer->dirty;
 	teco_interface.info_type = TECO_INFO_TYPE_BUFFER;
 	/* NOTE: drawn in teco_interface_event_loop_iter() */
 }
