@@ -1,4 +1,4 @@
-! AUTO-GENERATED FROM SCITE PROPERTY SET !
+!* HTML and embedded scripting languages *!
 
 @[lexer.test.html]{
   :EN*.htmlQ*"S -1 '
@@ -78,21 +78,66 @@
     __dir__ __file__ __function__ __line__ __method__ __namespace__ __sleep __wakeup
   5ESSETKEYWORDS
     ELEMENT DOCTYPE ATTLIST ENTITY NOTATION
+  !* HTML *!
+  :M[color.keyword],1M[color.set]
   :M[color.number],5M[color.set]
   :M[color.string],6M[color.set]
-  :M[color.string],7M[color.set]
+  :M[color.string2],7M[color.set]
+  :M[color.comment],9M[color.set]
+  :M[color.variable],10M[color.set]
+  :M[color.preproc],17M[color.set]
+  !* Embedded Javascript *!
   :M[color.comment],42M[color.set]
   :M[color.comment],43M[color.set]
   :M[color.comment],44M[color.set]
   :M[color.number],45M[color.set]
   :M[color.keyword],47M[color.set]
   :M[color.string],48M[color.set]
-  :M[color.string],49M[color.set]
+  :M[color.string2],49M[color.set]
   :M[color.operator],50M[color.set]
+  !* ASP Javascript *!
+  :M[color.comment],57M[color.set]
+  :M[color.comment],58M[color.set]
+  :M[color.comment],59M[color.set]
+  :M[color.number],60M[color.set]
+  :M[color.keyword],62M[color.set]
+  :M[color.string],63M[color.set]
+  :M[color.string2],64M[color.set]
+  :M[color.operator],65M[color.set]
+  !* Embedded VBScript *!
   :M[color.comment],72M[color.set]
+  :M[color.number],73M[color.set]
+  :M[color.keyword],74M[color.set]
+  :M[color.string],75M[color.set]
+  !* ASP VBScript *!
   :M[color.comment],82M[color.set]
+  :M[color.number],83M[color.set]
+  :M[color.keyword],84M[color.set]
+  :M[color.string],85M[color.set]
+  !* Embedded Python *!
   :M[color.comment],92M[color.set]
+  :M[color.number],93M[color.set]
+  :M[color.string],94M[color.set]
+  :M[color.string2],95M[color.set]
+  :M[color.string],97M[color.set]
+  :M[color.string2],98M[color.set]
+  :M[color.operator],101M[color.set]
+  !* ASP Python *!
   :M[color.comment],107M[color.set]
+  :M[color.number],108M[color.set]
+  :M[color.string],109M[color.set]
+  :M[color.string2],110M[color.set]
+  :M[color.string],112M[color.set]
+  :M[color.string2],113M[color.set]
+  :M[color.operator],116M[color.set]
+  !* PHP *!
+  :M[color.string],119M[color.set]
+  :M[color.string2],120M[color.set]
+  :M[color.keyword],121M[color.set]
+  :M[color.number],122M[color.set]
+  :M[color.variable],123M[color.set]
   :M[color.comment],124M[color.set]
   :M[color.comment],125M[color.set]
+  :M[color.variable],126M[color.set]
+  :M[color.operator],127M[color.set]
 }
