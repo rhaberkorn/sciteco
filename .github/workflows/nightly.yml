@@ -112,7 +112,7 @@ jobs:
       # but the more we get rid off, the better.
       run: |
         autoreconf -i
-        ./configure --with-interface=ncurses --enable-static-executables
+        ./configure --with-interface=ncurses --enable-static-executables --enable-html-manual
 
     - name: make
       run: make -j 2
@@ -144,6 +144,29 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
         files: ./*.pkg
+
+    # The website is published on Mac OS only because we cannot tweak the
+    # ./configure flags on Ubuntu where Debian packages are built.
+    # FIXME: This could be done without a gh-pages branch, see
+    # https://github.com/actions/starter-workflows/blob/main/pages/static.yml
+    # This however should be in its own workflow and we'd have to rebuild
+    # SciTECO and everything.
+    - run: make install
+    - name: Install lowdown (Markdown processor)
+      run: brew install lowdown
+    - name: Generate website
+      run: cd www && sciteco -m build.tes
+    - name: Publish Website
+      run: |
+        cd www
+        touch .nojekyll
+        git init
+        cp ../.git/config ./.git/config
+        git add .nojekyll *.html
+        git config --local user.email "Website@GitHubActions"
+        git config --local user.name "GitHub Actions"
+        git commit -a -m "update ${{ github.sha }}"
+        git push -u origin +HEAD:gh-pages
 
   win32-curses:
     runs-on: windows-2019

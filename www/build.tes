@@ -1,0 +1,114 @@
+#!/usr/local/bin/sciteco -m
+!*
+ * Generate the website at https://rhaberkorn.github.io/sciteco
+ * This reuses content from Markdown documents and the manpages.
+ * Everything else is cross-linked to Sourceforge.
+ * It must currently be run from the www/ subdirectory of an in-tree-build.
+ * The HTML manuals must be in ../doc.
+ * Required tools: lowdown
+ *!
+
+!*
+ * Perhaps everything should be white on black, like in a terminal?
+ * The first line could be inverted (black on white).
+ *!
+@[header]{I
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; Q[title]</title>
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+}
+
+!* This is a macro, so we can potentially customize the content per page *!
+@[footer]{I
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>
+}
+
+EBindex.html HK
+  [title]Home M[header]
+  EClowdown -thtml --html-no-skiphtml --html-no-escapehtml ../README.md
+  M[footer]
+EW
+
+EBscreenshots.html HK
+  [title]Screenshots M[header]
+  EClowdown -thtml --html-no-skiphtml --html-no-escapehtml ../screenshots.md
+  M[footer]
+EW
+
+[manpage-header]
+  <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
+  <div class="grohtml">
+
+EB../doc/sciteco.1.html
+  S<body>S<h1  L 0,.K
+  [title]sciteco(1) M[header] G[manpage-header]
+  FD<hr>S</body> .,ZK
+  M[footer]
+EWsciteco.1.html
+
+EB../doc/sciteco.7.html
+  S<body>S<h1  L 0,.K
+  [title]sciteco(7) M[header] G[manpage-header]
+  FD<hr>S</body> .,ZK
+  M[footer]
+EWsciteco.7.html
+
+!*
+ * These manpages are not in the header bar, but still postprocessed
+ * for consinstency.
+ *!
+
+EB../doc/grosciteco.tes.1.html
+  S<body>S<h1  L 0,.K
+  [title]grosciteco.tes(1) M[header] G[manpage-header]
+  FD<hr>S</body> .,ZK
+  M[footer]
+EWgrosciteco.tes.1.html
+
+EB../doc/tedoc.tes.1.html
+  S<body>S<h1  L 0,.K
+  [title]tedoc.tes(1) M[header] G[manpage-header]
+  FD<hr>S</body> .,ZK
+  M[footer]
+EWtedoc.tes.1.html
+
+EX

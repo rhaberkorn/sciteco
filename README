@@ -16,10 +16,10 @@ as far as possible. For instance, moving the cursor to the right can be done imm
 When you delete a character from the end of the command line macro (called rubout), the
 side-effects of that character which may be a command or part of a command, are undone.
 
-![SciTECO demo](https://sciteco.sourceforge.net/graphics/sciteco-ncurses.gif)
+![SciTECO demo](https://sciteco.sf.net/graphics/sciteco-ncurses.gif)
 
-SciTECO uses the [Scintilla](http://www.scintilla.org/) editor component and supports
-GTK+ 3 as well as Curses frontends (using [Scinterm](http://foicica.com/scinterm/)).
+SciTECO uses the [Scintilla](https://www.scintilla.org/) editor component and supports
+GTK+ 3 as well as Curses frontends (using [Scinterm](https://foicica.com/scinterm/)).
 
 The Curses frontend is verified to work with [ncurses](https://www.gnu.org/software/ncurses/),
 [NetBSD Curses](https://github.com/sabotage-linux/netbsd-curses),
@@ -111,8 +111,8 @@ Download
 
 There are prebuilt binary packages and source bundles for your convenience:
 
-* [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
+* [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
 * Users of OpenWrt may try to install the
@@ -131,20 +131,20 @@ For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 we currently only provide *experimental* ncurses builds.
 
 If everything fails, you can try building from source.
-See [`INSTALL`](INSTALL) for more details.
+See [`INSTALL`](https://github.com/rhaberkorn/sciteco/blob/master/INSTALL) for more details.
 
 Additional Documentation
 ========================
 
 * Online manpages:
-  [__sciteco__(1)](http://sciteco.sf.net/manuals/sciteco.1.html),
-  [__sciteco__(7)](http://sciteco.sf.net/manuals/sciteco.7.html),
-  [__grosciteco.tes__(1)](http://sciteco.sf.net/manuals/grosciteco.tes.1.html),
-  [__tedoc.tes__(1)](http://sciteco.sf.net/manuals/tedoc.tes.1.html)
-* [Cheat Sheet and Language Overview](http://sciteco.sf.net/manuals/cheat-sheet.pdf).
+  [__sciteco__(1)](https://rhaberkorn.github.io/sciteco/sciteco.1.html),
+  [__sciteco__(7)](https://rhaberkorn.github.io/sciteco/sciteco.7.html),
+  [__grosciteco.tes__(1)](https://rhaberkorn.github.io/sciteco/grosciteco.tes.1.html),
+  [__tedoc.tes__(1)](https://rhaberkorn.github.io/sciteco/tedoc.tes.1.html)
+* [Cheat Sheet and Language Overview](https://sciteco.sf.net/manuals/cheat-sheet.pdf).
   This can be printed on an A4 sheet of paper.
 * [Wiki at Github](https://github.com/rhaberkorn/sciteco/wiki)
-* A [short presentation](http://sciteco.sf.net/manuals/presentation.pdf)
-  (in German!) hold at [Netz39](http://www.netz39.de/).
+* A [short presentation](https://sciteco.sf.net/manuals/presentation.pdf)
+  (in German!) hold at [Netz39](https://www.netz39.de/).
 
-<p align="center"><img alt="SciTECO icon" src="ico/sciteco-48.png"/></p>
+<p align="center"><img alt="SciTECO icon" src="https://github.com/rhaberkorn/sciteco/raw/master/ico/sciteco-48.png"/></p>
