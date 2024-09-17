@@ -16,7 +16,7 @@ as far as possible. For instance, moving the cursor to the right can be done imm
 When you delete a character from the end of the command line macro (called rubout), the
 side-effects of that character which may be a command or part of a command, are undone.
 
-![SciTECO demo](https://sciteco.sf.net/graphics/sciteco-ncurses.gif)
+![SciTECO demo](https://sciteco.sf.net/screenshots/v2.1-dev-freebsd-ncurses.gif)
 
 SciTECO uses the [Scintilla](https://www.scintilla.org/) editor component and supports
 GTK+ 3 as well as Curses frontends (using [Scinterm](https://foicica.com/scinterm/)).
