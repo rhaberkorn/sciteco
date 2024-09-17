@@ -1635,7 +1635,8 @@ contents of the search register you could write:
 [_ Sfoo$ ]_
 .SCITECO_TT_END
 .EE
-.
+To copy the string and numeric contents of register \(lqA\(rq to \(lqB\(rq,
+you could write \(lq[a ]b\(rq.
 .
 .SH STRING-BUILDING CHARACTERS
 .SCITECO_TOPIC "string building"
