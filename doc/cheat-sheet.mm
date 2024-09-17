@@ -1,16 +1,20 @@
-\# pdfroff -P-pa4 -rW=19c -rO=1c -rL=31c -mm -mpdfmark -mhdtbl -mpspic cheat-sheet.mm >cheat-sheet.pdf
+\# pdfmom --roff -U -P-pa4 -rW=19c -rO=1c -rL=31c -mm -mhdtbl -mpdfpic cheat-sheet.mm >cheat-sheet.pdf
+.PGNH
+.
 .pdfinfo /Title  SciTECO Cheat Sheet
 .pdfinfo /Author Robin Haberkorn
 .
-.PGNH
 .SP 0.5c
+.
+.\" allow \fC instead of \f(CR.
+.ftr C CR
 .
 .ad c
 \#.B "SciTECO Cheat Sheet"
 \#.SP
 Overview of \fBSciTECO\fP as an editor.
 A full language description can be found in
-.pdfhref W -D https://sciteco.sourceforge.net/manuals/sciteco.7.html -A . \fBsciteco\fP(7)
+.pdfhref W -D https://rhaberkorn.github.io/sciteco/sciteco.7.html -A . \fBsciteco\fP(7)
 .br
 .
 .\" subscripts
@@ -232,6 +236,11 @@ Finish (close) current buffer, discarding all unsaved changes.
 \fCFG\fIpath\fR\*$
 .    TD
 Go to folder \fIpath\fP, ie. change working directory.
+.  TRX
+.    TD
+.      CI 0EE
+.    TD
+Set single byte ASCII mode.
 .  TRX
 .    TD colspan=2
 \fBTip:\fP You can use the Tab-key for autocompleting filenames and paths.
@@ -669,7 +678,7 @@ Expand to integer contents of Q-Register \fIq\fP.
 .    TD
 \*[CTRL ^E]\fCU\fIq
 .    TD
-Expand to character represented by ASCII code in Q-Register \fIq\fP.
+Expand to character represented by codepoint in Q-Register \fIq\fP.
 .  TRX
 .    TD
 \*[CTRL ^Q]\fIx
@@ -720,8 +729,8 @@ Rub in word.
 Also try Shift+Delete if \fCfnkeys.tes\fP is loaded.
 .ETB
 .
-.sp |(u;\nL-8c)
-.PSPIC -I -5c ../ico/sciteco-256.eps 5c
+.sp |(u;\nL-7.7c)
+.PDFPIC -I -5c ../ico/sciteco-256.pdf 5c
 .
 .NCOL
 .
@@ -760,12 +769,12 @@ Decrease Q-Register \fIq\fP and return new value.
 .    TD
 \*[CTRL ^^]\fIx
 .    TD
-ASCII code of character \fIx\fP.
+Codepoint of character \fIx\fP.
 .  TRX
 .    TD
 .      CI "" n A
 .    TD
-Get ASCII code \fIn\fP characters after current position.
+Get codepoint \fIn\fP characters after current position.
 .  TRX
 .    TD
 \fC\\

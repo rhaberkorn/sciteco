@@ -151,6 +151,7 @@ jobs:
     # https://github.com/actions/starter-workflows/blob/main/pages/static.yml
     # This however should be in its own workflow and we'd have to rebuild
     # SciTECO and everything.
+    # FIXME: Also build cheat-sheet.pdf automatically?
     - run: make install
     - name: Install lowdown (Markdown processor)
       run: brew install lowdown
