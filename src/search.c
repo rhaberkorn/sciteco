@@ -466,7 +466,8 @@ static gboolean
 teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 {
 	g_autoptr(GMatchInfo) info = NULL;
-	const gchar *buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, from, to-from);
+	/* NOTE: can return NULL pointer for completely new and empty documents */
+	const gchar *buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, from, to-from) ? : "";
 	GError *tmp_error = NULL;
 
 	/*

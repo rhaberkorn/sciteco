@@ -135,6 +135,10 @@ AT_CHECK([$SCITECO -e "2147483647@S/foo/"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "-2147483648@S/foo/"], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Search on new empty document])
+AT_CHECK([$SCITECO -e ":@S/foo/\"S(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
 AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
