@@ -1,5 +1,11 @@
 # Screenshots
 
+## v2.1.0
+
+![FreeBSD/Gtk+3, Unicode editing and spell checking](https://sciteco.sf.net/screenshots/v2.1.0-freebsd-gtk.png "FreeBSD/Gtk+3, Unicode editing and spell checking")
+
+![FreeBSD/ncurses, Unicode icons](https://sciteco.sf.net/screenshots/v2.1.0-freebsd-ncurses.png "FreeBSD/ncurses, Unicode icons")
+
 ## v2.1 (dev)
 
 ![FreeBSD/ncurses](https://sciteco.sf.net/screenshots/v2.1-dev-freebsd-ncurses.gif "FreeBSD/ncurses")
