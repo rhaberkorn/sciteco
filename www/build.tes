@@ -17,6 +17,8 @@
 <html>
 <head>
 	<title>SciTECO - &lt;Website&gt; Q[title]</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
 	<style>
 	@import "https://www.nerdfonts.com/assets/css/webfont.css";
 
