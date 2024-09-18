@@ -79,6 +79,11 @@ AT_CHECK([$SCITECO -e "[[a 23Ub ]]b Qb\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Editing local registers in macro calls])
+AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([8-bit cleanliness])
 AT_CHECK([$SCITECO -e "0@I//J 0A\"N(0/0)' :@S/^@/\"F(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z-4\"N(0/0)'"], 0, ignore, ignore)

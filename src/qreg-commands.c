@@ -652,8 +652,15 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	} else {
 		g_auto(teco_qreg_table_t) table;
 		teco_qreg_table_init(&table, FALSE);
+
 		if (!teco_qreg_execute(qreg, &table, error))
 			return NULL;
+		if (teco_qreg_current && !teco_qreg_current->must_undo) {
+			/* currently editing local Q-Register */
+			teco_error_editinglocalqreg_set(error, teco_qreg_current->head.name.data,
+			                                teco_qreg_current->head.name.len);
+			return NULL;
+		}
 	}
 
 	return &teco_state_start;

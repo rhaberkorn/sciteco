@@ -47,6 +47,7 @@ typedef enum {
 	TECO_ERROR_INVALIDQREG,
 	TECO_ERROR_QREGOPUNSUPPORTED,
 	TECO_ERROR_QREGCONTAINSNULL,
+	TECO_ERROR_EDITINGLOCALQREG,
 	TECO_ERROR_MEMLIMIT,
 
 	/** Interrupt current operation */
@@ -124,6 +125,14 @@ teco_error_qregcontainsnull_set(GError **error, const gchar *name, gsize len, gb
 	g_autofree gchar *name_printable = teco_string_echo(name, len);
 	g_set_error(error, TECO_ERROR, TECO_ERROR_QREGCONTAINSNULL,
 	            "%sQ-Register \"%s\" contains null-byte", local ? "Local " : "", name_printable);
+}
+
+static inline void
+teco_error_editinglocalqreg_set(GError **error, const gchar *name, gsize len)
+{
+	g_autofree gchar *name_printable = teco_string_echo(name, len);
+	g_set_error(error, TECO_ERROR, TECO_ERROR_EDITINGLOCALQREG,
+	            "Editing local Q-Register \"%s\" at end of macro call", name_printable);
 }
 
 static inline void

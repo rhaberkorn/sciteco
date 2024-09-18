@@ -1160,6 +1160,12 @@ teco_ed_hook(teco_ed_hook_t type, GError **error)
 
 	if (!teco_qreg_execute(qreg, &locals, error))
 		goto error_add_frame;
+	if (teco_qreg_current && !teco_qreg_current->must_undo) {
+		/* currently editing local Q-Register */
+		teco_error_editinglocalqreg_set(error, teco_qreg_current->head.name.data,
+		                                teco_qreg_current->head.name.len);
+		goto error_add_frame;
+	}
 
 	return teco_expressions_discard_args(error) &&
 	       teco_expressions_brace_close(error);
