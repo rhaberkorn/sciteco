@@ -64,13 +64,15 @@
 
 EBindex.html HK
   [title]Home M[header]
+  EClowdown -thtml --html-no-skiphtml --html-no-escapehtml ../NEWS.md
+  I<hr>
   EClowdown -thtml --html-no-skiphtml --html-no-escapehtml ../README.md
   M[footer]
 EW
 
 EBscreenshots.html HK
   [title]Screenshots M[header]
-  EClowdown -thtml --html-no-skiphtml --html-no-escapehtml ../screenshots.md
+  EClowdown -thtml --html-no-skiphtml --html-no-escapehtml screenshots.md
   M[footer]
 EW
 
