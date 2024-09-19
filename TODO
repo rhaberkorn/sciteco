@@ -509,8 +509,6 @@ Features:
  * ^^ in string building expanding to a single caret is not
    consistent. Perhaps we should allow only ^Q^ as a way to insert a
    single caret?
-   At the very least, Ctrl+^ should insert char 30 instead of a single
-   caret.
  * Support for non-ANSI single byte encodings is still incomplete.
    You can set them with EE and they will be correctly
    displayed (on Gtk at least), but there is no way

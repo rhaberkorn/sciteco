@@ -383,10 +383,20 @@ TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_n);
 static teco_state_t *
 teco_state_stringbuilding_start_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
-	if (chr == '^')
+	switch (chr) {
+	case '^':
 		return &teco_state_stringbuilding_ctl;
-	if (TECO_IS_CTL(chr))
-		return teco_state_stringbuilding_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+	case TECO_CTL_KEY('^'):
+		/*
+		 * Ctrl+^ is inserted verbatim as code 30.
+		 * Otherwise it would expand to a single caret
+		 * just like caret+caret (^^).
+		 */
+		break;
+	default:
+		if (TECO_IS_CTL(chr))
+			return teco_state_stringbuilding_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+	}
 
 	return teco_state_stringbuilding_escaped_input(ctx, chr, error);
 }
@@ -407,7 +417,14 @@ teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar
 	chr = teco_ascii_toupper(chr);
 
 	switch (chr) {
-	case '^': break;
+	case '^':
+		/*
+		 * Double-caret expands to a single caret.
+		 * Ctrl+^ (30) is handled separately and inserts code 30.
+		 * The special handling of the double-caret should perhaps
+		 * be abolished altogether.
+		 */
+		break;
 	case 'Q':
 	case 'R': return &teco_state_stringbuilding_escaped;
 	case 'V': return &teco_state_stringbuilding_lower;
