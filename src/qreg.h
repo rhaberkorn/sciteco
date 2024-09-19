@@ -72,6 +72,13 @@ typedef const struct {
 
 	gboolean (*edit)(teco_qreg_t *qreg, GError **error);
 	gboolean (*undo_edit)(teco_qreg_t *qreg, GError **error);
+
+	/*
+	 * Load and save already care about undo token
+	 * creation.
+	 */
+	gboolean (*load)(teco_qreg_t *qreg, const gchar *filename, GError **error);
+	gboolean (*save)(teco_qreg_t *qreg, const gchar *filename, GError **error);
 } teco_qreg_vtable_t;
 
 /** @extends teco_rb3str_head_t */
@@ -112,13 +119,6 @@ gboolean teco_qreg_execute(teco_qreg_t *qreg, teco_qreg_table_t *qreg_table_loca
 
 void teco_qreg_undo_set_eol_mode(teco_qreg_t *qreg);
 void teco_qreg_set_eol_mode(teco_qreg_t *qreg, gint mode);
-
-/*
- * Load and save already care about undo token
- * creation.
- */
-gboolean teco_qreg_load(teco_qreg_t *qreg, const gchar *filename, GError **error);
-gboolean teco_qreg_save(teco_qreg_t *qreg, const gchar *filename, GError **error);
 
 /** @memberof teco_qreg_t */
 static inline void

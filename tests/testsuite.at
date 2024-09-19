@@ -84,6 +84,22 @@ AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Loading files into Q-Registers])
+AT_CHECK([echo -n ".." >loadqreg.txt], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@EQa/loadqreg.txt/ :Qa-2\"N(0/0)'"], 0, ignore, ignore)
+# Does the same as FG..$. Afterwards, the parent directory should be shorter.
+AT_CHECK([$SCITECO -e ":Q\$Ul @EQ\$/loadqreg.txt/ :Q\$-Ql+1\">(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Saving Q-Registers contents to files])
+AT_CHECK([$SCITECO -e '@^Ua/test/ @E%a/saveqreg.txt/'], 0, ignore, ignore)
+AT_CHECK([test "`cat saveqreg.txt`" = test], 0, ignore, ignore)
+# The result of E%$ should always have forward slashes,
+# so this check will work on Win32 as well.
+AT_CHECK([$SCITECO -e '@E%$/saveqreg.txt/'], 0, ignore, ignore)
+AT_CHECK([test "`cat saveqreg.txt`" = "$PWD"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([8-bit cleanliness])
 AT_CHECK([$SCITECO -e "0@I//J 0A\"N(0/0)' :@S/^@/\"F(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z-4\"N(0/0)'"], 0, ignore, ignore)

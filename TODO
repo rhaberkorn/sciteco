@@ -4,8 +4,6 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * E%$...$ broken.
-   Similarily EQ$file$ won't do what you would expect it to.
  * <23(1;)> leaves values on the stack and the internal hidden
    brace open..
    Apparently breaking from within expressions is not currently safe.

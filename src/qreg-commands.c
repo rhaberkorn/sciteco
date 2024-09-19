@@ -149,7 +149,7 @@ teco_state_loadqreg_done(teco_machine_main_t *ctx, const teco_string_t *str, GEr
 	if (str->len > 0) {
 		/* Load file into Q-Register */
 		g_autofree gchar *filename = teco_file_expand_path(str->data);
-		if (!teco_qreg_load(qreg, filename, error))
+		if (!qreg->vtable->load(qreg, filename, error))
 			return NULL;
 	} else {
 		/* Edit Q-Register */
@@ -202,7 +202,7 @@ teco_state_saveqreg_done(teco_machine_main_t *ctx, const teco_string_t *str, GEr
 		return &teco_state_start;
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
-	return teco_qreg_save(qreg, filename, error) ? &teco_state_start : NULL;
+	return qreg->vtable->save(qreg, filename, error) ? &teco_state_start : NULL;
 }
 
 /*$ E% E%q

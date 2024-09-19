@@ -524,7 +524,7 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
 	if (teco_qreg_current) {
-		if (!teco_qreg_save(teco_qreg_current, filename, error))
+		if (!teco_qreg_current->vtable->save(teco_qreg_current, filename, error))
 			return NULL;
 	} else {
 		if (!teco_buffer_save(teco_ring_current, *filename ? filename : NULL, error))

@@ -133,56 +133,6 @@ teco_qreg_set_eol_mode(teco_qreg_t *qreg, gint mode)
 		teco_doc_edit(&teco_qreg_current->string, 0);
 }
 
-/** @memberof teco_qreg_t */
-gboolean
-teco_qreg_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
-{
-	if (!qreg->vtable->undo_set_string(qreg, error))
-		return FALSE;
-
-	if (teco_qreg_current)
-		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
-
-	teco_doc_edit(&qreg->string, teco_default_codepage());
-	teco_doc_reset(&qreg->string);
-
-	/*
-	 * teco_view_load() might change the EOL style.
-	 */
-	teco_qreg_undo_set_eol_mode(qreg);
-
-	/*
-	 * undo_set_string() pushes undo tokens that restore
-	 * the previous document in the view.
-	 * So if loading fails, teco_qreg_current will be
-	 * made the current document again.
-	 */
-	if (!teco_view_load(teco_qreg_view, filename, error))
-		return FALSE;
-
-	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string, 0);
-
-	return TRUE;
-}
-
-/** @memberof teco_qreg_t */
-gboolean
-teco_qreg_save(teco_qreg_t *qreg, const gchar *filename, GError **error)
-{
-	if (teco_qreg_current)
-		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
-
-	teco_doc_edit(&qreg->string, teco_default_codepage());
-
-	gboolean ret = teco_view_save(teco_qreg_view, filename, error);
-
-	if (teco_qreg_current)
-		teco_doc_edit(&teco_qreg_current->string, 0);
-
-	return ret;
-}
-
 static gboolean
 teco_qreg_plain_set_integer(teco_qreg_t *qreg, teco_int_t value, GError **error)
 {
@@ -343,6 +293,54 @@ teco_qreg_plain_undo_edit(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
+static gboolean
+teco_qreg_plain_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
+{
+	if (!qreg->vtable->undo_set_string(qreg, error))
+		return FALSE;
+
+	if (teco_qreg_current)
+		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
+
+	teco_doc_edit(&qreg->string, teco_default_codepage());
+	teco_doc_reset(&qreg->string);
+
+	/*
+	 * teco_view_load() might change the EOL style.
+	 */
+	teco_qreg_undo_set_eol_mode(qreg);
+
+	/*
+	 * undo_set_string() pushes undo tokens that restore
+	 * the previous document in the view.
+	 * So if loading fails, teco_qreg_current will be
+	 * made the current document again.
+	 */
+	if (!teco_view_load(teco_qreg_view, filename, error))
+		return FALSE;
+
+	if (teco_qreg_current)
+		teco_doc_edit(&teco_qreg_current->string, 0);
+
+	return TRUE;
+}
+
+static gboolean
+teco_qreg_plain_save(teco_qreg_t *qreg, const gchar *filename, GError **error)
+{
+	if (teco_qreg_current)
+		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
+
+	teco_doc_edit(&qreg->string, teco_default_codepage());
+
+	gboolean ret = teco_view_save(teco_qreg_view, filename, error);
+
+	if (teco_qreg_current)
+		teco_doc_edit(&teco_qreg_current->string, 0);
+
+	return ret;
+}
+
 /**
  * Initializer for vtables of Q-Registers with "plain" storage of strings.
  * These store their string part as teco_docs.
@@ -362,6 +360,8 @@ teco_qreg_plain_undo_edit(teco_qreg_t *qreg, GError **error)
 	.undo_exchange_string	= teco_qreg_plain_undo_exchange_string, \
 	.edit			= teco_qreg_plain_edit, \
 	.undo_edit		= teco_qreg_plain_undo_edit, \
+	.load			= teco_qreg_plain_load, \
+	.save			= teco_qreg_plain_save, \
 	##__VA_ARGS__ \
 }
 
@@ -454,6 +454,55 @@ teco_qreg_external_get_length(teco_qreg_t *qreg, GError **error)
 	return g_utf8_strlen(str.data, str.len);
 }
 
+/*
+ * NOTE: This does not perform EOL normalization unlike teco_view_load().
+ * It shouldn't be critical since "external" registers are mainly used for filenames.
+ * Otherwise we could of course load into the view() and call set_string() afterwards.
+ */
+static gboolean
+teco_qreg_external_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
+{
+	g_auto(teco_string_t) str = {NULL, 0};
+
+	return g_file_get_contents(filename, &str.data, &str.len, error) &&
+	       qreg->vtable->undo_set_string(qreg, error) &&
+	       qreg->vtable->set_string(qreg, str.data, str.len, teco_default_codepage(), error);
+}
+
+/*
+ * NOTE: This does not simply use g_file_set_contents(), as we have to create
+ * save point files as well.
+ * FIXME: On the other hand, this does not set the correct EOL style on the document,
+ * so teco_view_save() will save only with the default EOL style.
+ * It might therefore still be a good idea to avoid any conversion.
+ */
+static gboolean
+teco_qreg_external_save(teco_qreg_t *qreg, const gchar *filename, GError **error)
+{
+	if (teco_qreg_current)
+		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
+
+	teco_doc_edit(&qreg->string, teco_default_codepage());
+
+	g_auto(teco_string_t) str = {NULL, 0};
+	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
+		return FALSE;
+
+	teco_view_ssm(teco_qreg_view, SCI_BEGINUNDOACTION, 0, 0);
+	teco_view_ssm(teco_qreg_view, SCI_CLEARALL, 0, 0);
+	teco_view_ssm(teco_qreg_view, SCI_ADDTEXT, str.len, (sptr_t)str.data);
+	teco_view_ssm(teco_qreg_view, SCI_ENDUNDOACTION, 0, 0);
+
+	undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
+
+	gboolean ret = teco_view_save(teco_qreg_view, filename, error);
+
+	if (teco_qreg_current)
+		teco_doc_edit(&teco_qreg_current->string, 0);
+
+	return ret;
+}
+
 /**
  * Initializer for vtables of Q-Registers with "external" storage of strings.
  * These rely on custom implementations of get_string() and set_string().
@@ -464,6 +513,8 @@ teco_qreg_external_get_length(teco_qreg_t *qreg, GError **error)
 	.edit			= teco_qreg_external_edit, \
 	.get_character		= teco_qreg_external_get_character, \
 	.get_length		= teco_qreg_external_get_length, \
+	.load			= teco_qreg_external_load, \
+	.save			= teco_qreg_external_save, \
 	##__VA_ARGS__ \
 )
 
@@ -549,7 +600,7 @@ teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 teco_qreg_t *
 teco_qreg_bufferinfo_new(void)
 {
-	static teco_qreg_vtable_t vtable = TECO_INIT_QREG(
+	static teco_qreg_vtable_t vtable = TECO_INIT_QREG_EXTERNAL(
 		.set_integer		= teco_qreg_bufferinfo_set_integer,
 		.undo_set_integer	= teco_qreg_bufferinfo_undo_set_integer,
 		.get_integer		= teco_qreg_bufferinfo_get_integer,
@@ -558,10 +609,14 @@ teco_qreg_bufferinfo_new(void)
 		.append_string		= teco_qreg_bufferinfo_append_string,
 		.undo_append_string	= teco_qreg_bufferinfo_undo_append_string,
 		.get_string		= teco_qreg_bufferinfo_get_string,
-		/* we don't want to inherit all the other stuff from TECO_INIT_QREG_EXTERNAL(). */
-		.edit			= teco_qreg_external_edit,
-		.get_character		= teco_qreg_external_get_character,
-		.get_length		= teco_qreg_external_get_length
+		/*
+		 * As teco_qreg_bufferinfo_set_string() is not implemented,
+		 * it's important to not inherit teco_qreg_external_exchange_string().
+		 * `[*` and `]*` will still work though.
+		 * The inherited teco_qreg_external_load() will simply fail.
+		 */
+		.exchange_string	= teco_qreg_plain_exchange_string,
+		.undo_exchange_string	= teco_qreg_plain_undo_exchange_string
 	);
 
 	return teco_qreg_new(&vtable, "*", 1);
@@ -795,6 +850,24 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	return TRUE;
 }
 
+/*
+ * Regardless of whether EOL normalization is enabled,
+ * this will never perform it.
+ * Other than that, it's very similar to teco_qreg_external_load().
+ */
+static gboolean
+teco_qreg_clipboard_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
+{
+	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
+	const gchar *clipboard_name = qreg->head.name.data + 1;
+
+	g_auto(teco_string_t) str = {NULL, 0};
+
+	return g_file_get_contents(filename, &str.data, &str.len, error) &&
+	       teco_qreg_clipboard_undo_set_string(qreg, error) &&
+	       teco_interface_set_clipboard(clipboard_name, str.data, str.len, error);
+}
+
 /** @static @memberof teco_qreg_t */
 teco_qreg_t *
 teco_qreg_clipboard_new(const gchar *name)
@@ -804,7 +877,8 @@ teco_qreg_clipboard_new(const gchar *name)
 		.undo_set_string	= teco_qreg_clipboard_undo_set_string,
 		.append_string		= teco_qreg_clipboard_append_string,
 		.undo_append_string	= teco_qreg_clipboard_undo_append_string,
-		.get_string		= teco_qreg_clipboard_get_string
+		.get_string		= teco_qreg_clipboard_get_string,
+		.load			= teco_qreg_clipboard_load
 	);
 
 	teco_qreg_t *qreg = teco_qreg_new(&vtable, "~", 1);
