@@ -359,6 +359,31 @@ teco_machine_main_clear(teco_machine_main_t *ctx)
 	teco_machine_stringbuilding_clear(&ctx->expectstring.machine);
 }
 
+/** Append string to result with case folding. */
+static void
+teco_machine_stringbuilding_append(teco_machine_stringbuilding_t *ctx, const gchar *str, gsize len)
+{
+	g_assert(ctx->result != NULL);
+
+	switch (ctx->mode) {
+	case TECO_STRINGBUILDING_MODE_NORMAL:
+		teco_string_append(ctx->result, str, len);
+		break;
+	case TECO_STRINGBUILDING_MODE_UPPER: {
+		g_autofree gchar *folded = ctx->codepage == SC_CP_UTF8
+						? g_utf8_strup(str, len) : g_ascii_strup(str, len);
+		teco_string_append(ctx->result, folded, strlen(folded));
+		break;
+	}
+	case TECO_STRINGBUILDING_MODE_LOWER: {
+		g_autofree gchar *folded = ctx->codepage == SC_CP_UTF8
+						? g_utf8_strdown(str, len) : g_ascii_strdown(str, len);
+		teco_string_append(ctx->result, folded, strlen(folded));
+		break;
+	}
+	}
+}
+
 /*
  * FIXME: All teco_state_stringbuilding_* states could be static?
  */
@@ -458,6 +483,8 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, guni
 	 * is that we don't try to casefold non-ANSI characters in single-byte mode.
 	 */
 	switch (ctx->mode) {
+	case TECO_STRINGBUILDING_MODE_NORMAL:
+		break;
 	case TECO_STRINGBUILDING_MODE_UPPER:
 		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
 					? g_unichar_toupper(chr) : chr;
@@ -465,8 +492,6 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, guni
 	case TECO_STRINGBUILDING_MODE_LOWER:
 		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
 					? g_unichar_tolower(chr) : chr;
-		break;
-	default:
 		break;
 	}
 
@@ -477,50 +502,82 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, guni
 TECO_DEFINE_STATE(teco_state_stringbuilding_escaped);
 
 static teco_state_t *
-teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
+teco_state_stringbuilding_lower_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (!ctx->result)
 		/* parse-only mode */
 		return &teco_state_stringbuilding_start;
 
-	/*
-	 * FIXME: This does not handle ^V^V typed with up-carets.
-	 */
-	if (chr == TECO_CTL_KEY('V')) {
+	chr = teco_ascii_toupper(chr);
+
+	if (chr == 'V') {
 		if (ctx->parent.must_undo)
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_LOWER;
 	} else {
+		/* control keys cannot be case folded */
+		teco_string_append_wc(ctx->result, TECO_CTL_KEY(chr));
+	}
+
+	return &teco_state_stringbuilding_start;
+}
+
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_stringbuilding_lower_ctl);
+
+static teco_state_t *
+teco_state_stringbuilding_lower_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
+{
+	if (chr == '^')
+		return &teco_state_stringbuilding_lower_ctl;
+	if (TECO_IS_CTL(chr))
+		return teco_state_stringbuilding_lower_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+
+	if (ctx->result) {
 		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
 					? g_unichar_tolower(chr) : chr;
 		teco_string_append_wc(ctx->result, chr);
 	}
-
 	return &teco_state_stringbuilding_start;
 }
 
 TECO_DEFINE_STATE(teco_state_stringbuilding_lower);
 
 static teco_state_t *
-teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
+teco_state_stringbuilding_upper_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
 	if (!ctx->result)
 		/* parse-only mode */
 		return &teco_state_stringbuilding_start;
 
-	/*
-	 * FIXME: This does not handle ^W^W typed with up-carets.
-	 */
-	if (chr == TECO_CTL_KEY('W')) {
+	chr = teco_ascii_toupper(chr);
+
+	if (chr == 'W') {
 		if (ctx->parent.must_undo)
 			teco_undo_guint(ctx->mode);
 		ctx->mode = TECO_STRINGBUILDING_MODE_UPPER;
 	} else {
+		/* control keys cannot be case folded */
+		teco_string_append_wc(ctx->result, TECO_CTL_KEY(chr));
+	}
+
+	return &teco_state_stringbuilding_start;
+}
+
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_stringbuilding_upper_ctl);
+
+static teco_state_t *
+teco_state_stringbuilding_upper_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
+{
+	if (chr == '^')
+		return &teco_state_stringbuilding_upper_ctl;
+	if (TECO_IS_CTL(chr))
+		return teco_state_stringbuilding_upper_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+
+	if (ctx->result) {
 		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
 					? g_unichar_toupper(chr) : chr;
 		teco_string_append_wc(ctx->result, chr);
 	}
-
 	return &teco_state_stringbuilding_start;
 }
 
@@ -541,7 +598,7 @@ teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gunicha
 		if (ctx->result) {
 			gchar buf[1+6] = {TECO_CTL_KEY('E')};
 			gsize len = g_unichar_to_utf8(chr, buf+1);
-			teco_string_append(ctx->result, buf, 1+len);
+			teco_machine_stringbuilding_append(ctx, buf, 1+len);
 		}
 		return &teco_state_stringbuilding_start;
 	}
@@ -601,7 +658,7 @@ teco_state_stringbuilding_ctle_num_input(teco_machine_stringbuilding_t *ctx, gun
 	 */
 	gchar buffer[TECO_EXPRESSIONS_FORMAT_LEN];
 	const gchar *num = teco_expressions_format(buffer, value);
-	teco_string_append(ctx->result, num, strlen(num));
+	teco_machine_stringbuilding_append(ctx, num, strlen(num));
 
 	return &teco_state_stringbuilding_start;
 }
@@ -634,11 +691,31 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gunic
 	if (ctx->codepage == SC_CP_UTF8) {
 		if (value < 0 || !g_unichar_validate(value))
 			goto error_codepoint;
+		switch (ctx->mode) {
+		case TECO_STRINGBUILDING_MODE_NORMAL:
+			break;
+		case TECO_STRINGBUILDING_MODE_UPPER:
+			value = g_unichar_toupper(value);
+			break;
+		case TECO_STRINGBUILDING_MODE_LOWER:
+			value = g_unichar_tolower(value);
+			break;
+		}
 		teco_string_append_wc(ctx->result, value);
 	} else {
 		if (value < 0 || value > 0xFF)
 			goto error_codepoint;
-		teco_string_append_c(ctx->result, (gchar)value);
+		switch (ctx->mode) {
+		case TECO_STRINGBUILDING_MODE_NORMAL:
+			break;
+		case TECO_STRINGBUILDING_MODE_UPPER:
+			value = g_ascii_toupper(value);
+			break;
+		case TECO_STRINGBUILDING_MODE_LOWER:
+			value = g_ascii_tolower(value);
+			break;
+		}
+		teco_string_append_c(ctx->result, value);
 	}
 
 	return &teco_state_stringbuilding_start;
@@ -672,13 +749,10 @@ teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gunic
 		/* parse-only mode */
 		return &teco_state_stringbuilding_start;
 
-	/*
-	 * FIXME: Should we have a special teco_qreg_get_string_append() function?
-	 */
 	g_auto(teco_string_t) str = {NULL, 0};
 	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
-	teco_string_append(ctx->result, str.data, str.len);
+	teco_machine_stringbuilding_append(ctx, str.data, str.len);
 	return &teco_state_stringbuilding_start;
 }
 
@@ -720,7 +794,7 @@ teco_state_stringbuilding_ctle_quote_input(teco_machine_stringbuilding_t *ctx, g
 		return NULL;
 	}
 	g_autofree gchar *str_quoted = g_shell_quote(str.data ? : "");
-	teco_string_append(ctx->result, str_quoted, strlen(str_quoted));
+	teco_machine_stringbuilding_append(ctx, str_quoted, strlen(str_quoted));
 
 	return &teco_state_stringbuilding_start;
 }
@@ -757,7 +831,7 @@ teco_state_stringbuilding_ctle_n_input(teco_machine_stringbuilding_t *ctx, gunic
 	}
 
 	g_autofree gchar *str_escaped = teco_globber_escape_pattern(str.data);
-	teco_string_append(ctx->result, str_escaped, strlen(str_escaped));
+	teco_machine_stringbuilding_append(ctx, str_escaped, strlen(str_escaped));
 
 	return &teco_state_stringbuilding_start;
 }

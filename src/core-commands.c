@@ -2838,8 +2838,8 @@ teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
  * Secondly, the command inserts <text>.
  * In interactive mode, <text> is inserted interactively.
  *
- * String building characters are \fBenabled\fP for the
- * I command.
+ * Unlike in classic TECO dialects, string building characters are
+ * \fBenabled\fP for the \fBI\fP command.
  * When editing \*(ST macros, using the \fBEI\fP command
  * may be better, since it has string building characters
  * disabled.

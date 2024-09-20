@@ -1688,15 +1688,19 @@ character, so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
 .B ^V^V
 .TQ
 .BI ^V c
-Translates all following characters into lower case.
+Translates all following characters, including the expansions of \fB^EQ\fP,
+\fB^EU\fP etc., into lower case.
 When \fB^V\fP is not followed by \fB^V\fP, a single character
 \fIc\fP is lower-cased.
+\# Which is pretty pointless nowadays.
 .TP
 .SCITECO_TOPIC ^W^W ^Wc
 .B ^W^W
 .TQ
 .BI ^W c
 Analogous to \fB^V\fP, but upper-cases characters.
+Since \fB^W\fP is an immediate editing command, this can practically be typed
+only with upcarets in interactive mode.
 .TP
 .SCITECO_TOPIC ^E\[rs] ^E\[rs]q
 .BI ^E\(rs q

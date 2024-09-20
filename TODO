@@ -133,11 +133,6 @@ Known Bugs:
    able to autocomplete it if a previous autocompletion inserted
    escaped glob patterns.
    Unfortunately, this would be very tricky to do right.
- * There is no way to type the ^W^W string building character,
-   not even with upcarets.
- * ^V and ^W string building characters do not operate
-   on ^EQq and ^EUq, which is a pity as that would be the
-   only sane use for them.
  * The unnamed buffer hasn't got margins set.
    Should be fixed in sample.teco_ini.
 
