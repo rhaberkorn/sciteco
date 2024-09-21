@@ -307,6 +307,11 @@ main(int argc, char **argv)
 	 * Important for Unicode handling in curses and glib.
 	 * In particular, in order to accept Unicode characters
 	 * in option strings.
+	 *
+	 * NOTE: Windows 10 accepts ".UTF8" here, so the "ANSI"
+	 * versions of win32 API functions accept UTF-8.
+	 * We want to support older versions, though and
+	 * glib happily converts to Windows' native UTF-16.
 	 */
 	setlocale(LC_ALL, "");
 

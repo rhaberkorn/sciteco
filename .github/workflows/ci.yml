@@ -119,12 +119,9 @@ jobs:
     - name: Configure Build
       env:
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
-      # --disable-shared makes sure that libtool won't create wrapper binaries.
-      # They are not required and cause problems when running the test suite
-      # as they don't pass down UTF-8 parameters properly.
       run: |
         autoreconf -i
-        ./configure --with-interface=pdcurses-gui --enable-debug --disable-shared --enable-html-manual
+        ./configure --with-interface=pdcurses-gui --enable-debug --enable-html-manual
 
     - run: make
     - run: make install
@@ -136,7 +133,7 @@ jobs:
       run: cd doc && make devdoc
     - name: make distcheck
       env:
-        DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui --disable-shared
+        DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui
         PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
       run: make distcheck
     - name: Build Source Tarball

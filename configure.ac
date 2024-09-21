@@ -47,7 +47,12 @@ canonicalize() {
 }
 
 # Checks for programs.
-LT_INIT
+#
+# Disable shared libraries by default (--disable-shared).
+# We don't install any library, so this __should__ not matter.
+# In reality Libtool builds unnecessary wrapper binaries on win32 (MinGW) without this.
+# These wrapper binaries do not handle UTF-8 properly and break the test suite.
+LT_INIT([disable-shared])
 # FIXME: Check for -std=gnu11?
 AC_PROG_CC
 AC_PROG_SED
