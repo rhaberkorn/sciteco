@@ -118,14 +118,18 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 		switch (entry->type) {
 		case TECO_POPUP_FILE:
 			g_assert(!teco_string_contains(&entry->name, '\0'));
-			if (teco_ed & TECO_ED_ICONS)
-				wprintw(ctx->pad, "%C ", teco_curses_icons_lookup_file(entry->name.data));
+			if (teco_ed & TECO_ED_ICONS) {
+				teco_curses_add_wc(ctx->pad, teco_curses_icons_lookup_file(entry->name.data));
+				waddch(ctx->pad, ' ');
+			}
 			teco_curses_format_filename(ctx->pad, entry->name.data, -1);
 			break;
 		case TECO_POPUP_DIRECTORY:
 			g_assert(!teco_string_contains(&entry->name, '\0'));
-			if (teco_ed & TECO_ED_ICONS)
-				wprintw(ctx->pad, "%C ", teco_curses_icons_lookup_dir(entry->name.data));
+			if (teco_ed & TECO_ED_ICONS) {
+				teco_curses_add_wc(ctx->pad, teco_curses_icons_lookup_dir(entry->name.data));
+				waddch(ctx->pad, ' ');
+			}
 			teco_curses_format_filename(ctx->pad, entry->name.data, -1);
 			break;
 		default:

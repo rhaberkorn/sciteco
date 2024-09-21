@@ -976,11 +976,14 @@ teco_interface_draw_info(void)
 
 	const gchar *info_type_str;
 
+	waddstr(teco_interface.info_window, PACKAGE_NAME " ");
+
 	switch (teco_interface.info_type) {
 	case TECO_INFO_TYPE_QREG:
 		info_type_str = PACKAGE_NAME " - <QRegister> ";
-		wprintw(teco_interface.info_window, "%s %C <QRegister> ", PACKAGE_NAME,
-		        teco_ed & TECO_ED_ICONS ? TECO_CURSES_ICONS_QREG : '-');
+		teco_curses_add_wc(teco_interface.info_window,
+		                   teco_ed & TECO_ED_ICONS ? TECO_CURSES_ICONS_QREG : '-');
+		waddstr(teco_interface.info_window, " <QRegister> ");
 		/* same formatting as in command lines */
 		teco_curses_format_str(teco_interface.info_window,
 		                       teco_interface.info_current.data,
@@ -990,8 +993,9 @@ teco_interface_draw_info(void)
 	case TECO_INFO_TYPE_BUFFER:
 		info_type_str = PACKAGE_NAME " - <Buffer> ";
 		g_assert(!teco_string_contains(&teco_interface.info_current, '\0'));
-		wprintw(teco_interface.info_window, "%s %C <Buffer> ", PACKAGE_NAME,
-		        teco_ed & TECO_ED_ICONS ? teco_curses_icons_lookup_file(teco_interface.info_current.data) : '-');
+		teco_curses_add_wc(teco_interface.info_window,
+		                   teco_ed & TECO_ED_ICONS ? teco_curses_icons_lookup_file(teco_interface.info_current.data) : '-');
+		waddstr(teco_interface.info_window, " <Buffer> ");
 		teco_curses_format_filename(teco_interface.info_window,
 		                            teco_interface.info_current.data,
 		                            getmaxx(teco_interface.info_window) -

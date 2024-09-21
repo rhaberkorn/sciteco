@@ -23,3 +23,14 @@
 guint teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width);
 
 guint teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width);
+
+/**
+ * Add Unicode character to window.
+ * This is just like wadd_wch(), but does not require wide-char APIs.
+ */
+static inline void
+teco_curses_add_wc(WINDOW *win, gunichar chr)
+{
+	gchar buf[6];
+	waddnstr(win, buf, g_unichar_to_utf8(chr, buf));
+}
