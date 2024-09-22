@@ -347,6 +347,11 @@ static struct {
 	WINDOW *cmdline_window, *cmdline_pad;
 	guint cmdline_len, cmdline_rubout_len;
 
+	/**
+	 * Pad used exclusively for wgetch() as it will not
+	 * result in unwanted wrefresh().
+	 */
+	WINDOW *input_pad;
 	GQueue *input_queue;
 
 	teco_curses_info_popup_t popup;
@@ -697,12 +702,22 @@ teco_interface_init_interactive(GError **error)
 	curs_set(0);
 
 	teco_interface.info_window = newwin(1, 0, 0, 0);
-
 	teco_interface.msg_window = newwin(1, 0, LINES - 2, 0);
-
 	teco_interface.cmdline_window = newwin(0, 0, LINES - 1, 0);
-	keypad(teco_interface.cmdline_window, TRUE);
-	nodelay(teco_interface.cmdline_window, TRUE);
+
+	teco_interface.input_pad = newpad(1, 1);
+	/*
+	 * Controlling function key processing is important
+	 * on Unix Curses, as ESCAPE is handled as the beginning
+	 * of a escape sequence when terminal emulators are
+	 * involved.
+	 * Still, it's now enabled always since the ESCDELAY
+	 * workaround works nicely.
+	 * On some Curses variants (XCurses) keypad
+	 * must always be TRUE so we receive KEY_RESIZE.
+	 */
+	keypad(teco_interface.input_pad, TRUE);
+	nodelay(teco_interface.input_pad, TRUE);
 
 	teco_interface.input_queue = g_queue_new();
 
@@ -746,8 +761,8 @@ teco_interface_restore_batch(void)
 	 * Set window title to a reasonable default,
 	 * in case it is not reset immediately by the
 	 * shell.
-	 * FIXME: See set_window_title() why this
-	 * is necessary.
+	 * FIXME: See teco_interface_set_window_title()
+	 * why this is necessary.
 	 */
 #if defined(CURSES_TTY) && defined(HAVE_TIGETSTR)
 	teco_interface_set_window_title(g_getenv("TERM") ? : "");
@@ -1328,18 +1343,18 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	 * to be on the safe side.
 	 */
 	halfdelay(1); /* 100ms timeout */
-	keypad(stdscr, FALSE);
+	/* don't interpret escape sequences */
+	keypad(teco_interface.input_pad, FALSE);
 
 	/*
 	 * Skip "\e]52;x;" (7 characters).
 	 */
 	for (gint i = 0; i < 7; i++) {
-		if (getch() == ERR) {
+		if (wgetch(teco_interface.input_pad) == ERR) {
 			/* timeout */
-			cbreak();
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 			                    "Timed out reading XTerm clipboard");
-			return FALSE;
+			goto error;
 		}
 	}
 
@@ -1355,14 +1370,13 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 		 */
 		gchar buffer[MAX(3, 7)];
 
-		gchar c = (gchar)getch();
+		gchar c = (gchar)wgetch(teco_interface.input_pad);
 		if (c == ERR) {
 			/* timeout */
-			cbreak();
 			g_string_free(str_base64, TRUE);
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 			                    "Timed out reading XTerm clipboard");
-			return FALSE;
+			goto error;
 		}
 		if (c == '\a')
 			break;
@@ -1381,6 +1395,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	}
 
 	cbreak();
+	keypad(teco_interface.input_pad, TRUE);
 
 	if (str)
 		*str = str_base64->str;
@@ -1388,6 +1403,11 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 
 	g_string_free(str_base64, !str);
 	return TRUE;
+
+error:
+	cbreak();
+	keypad(teco_interface.input_pad, TRUE);
+	return FALSE;
 }
 
 #else /* !PDCURSES && !CURSES_TTY */
@@ -1497,13 +1517,17 @@ teco_interface_is_interrupted(void)
 gboolean
 teco_interface_is_interrupted(void)
 {
-	if (!teco_interface.cmdline_window)
+	if (!teco_interface.input_pad)
 		/* batch mode */
 		return teco_interrupted != FALSE;
 
-	/* NOTE: getch() is configured to be nonblocking. */
+	/*
+	 * NOTE: wgetch() is configured to be nonblocking.
+	 * We wgetch() on a dummy pad, so this does not call any
+	 * wrefresh().
+	 */
 	gint key;
-	while ((key = wgetch(teco_interface.cmdline_window)) != ERR) {
+	while ((key = wgetch(teco_interface.input_pad)) != ERR) {
 		if (G_UNLIKELY(key == TECO_CTL_KEY('C')))
 			return TRUE;
 		g_queue_push_tail(teco_interface.input_queue,
@@ -1543,35 +1567,19 @@ teco_interface_refresh(void)
 static gint
 teco_interface_blocking_getch(void)
 {
-	/*
-	 * Setting function key processing is important
-	 * on Unix Curses, as ESCAPE is handled as the beginning
-	 * of a escape sequence when terminal emulators are
-	 * involved.
-	 * On some Curses variants (XCurses) however, keypad
-	 * must always be TRUE so we receive KEY_RESIZE.
-	 *
-	 * FIXME: NetBSD's curses could be handled like ncurses,
-	 * but gets into an undefined state when SciTECO processes
-	 * escape sequences.
-	 */
-#ifdef NCURSES_UNIX
-	keypad(teco_interface.cmdline_window, TRUE);
-#endif
-
 	/* no special <CTRL/C> handling */
 	raw();
-	nodelay(teco_interface.cmdline_window, FALSE);
+	nodelay(teco_interface.input_pad, FALSE);
 	/*
 	 * Memory limiting is stopped temporarily, since it might otherwise
 	 * constantly place 100% load on the CPU.
 	 */
 	teco_memory_stop_limiting();
-	gint key = wgetch(teco_interface.cmdline_window);
+	gint key = wgetch(teco_interface.input_pad);
 	teco_memory_start_limiting();
 	/* allow asynchronous interruptions on <CTRL/C> */
 	teco_interrupted = FALSE;
-	nodelay(teco_interface.cmdline_window, TRUE);
+	nodelay(teco_interface.input_pad, TRUE);
 #if defined(CURSES_TTY) || defined(PDCURSES_WINCON) || defined(NCURSES_WIN32)
 	noraw(); /* FIXME: necessary because of NCURSES_WIN32 bug */
 	cbreak();
@@ -1768,6 +1776,8 @@ teco_interface_cleanup(void)
 		delwin(teco_interface.cmdline_pad);
 	if (teco_interface.msg_window)
 		delwin(teco_interface.msg_window);
+	if (teco_interface.input_pad)
+		delwin(teco_interface.input_pad);
 
 	/*
 	 * PDCurses/WinCon crashes if initscr() wasn't called.
