@@ -56,7 +56,7 @@ EMQ[$SCITECOPATH]/session.tes
 ! Enable default function key macros !
 EMQ[$SCITECOPATH]/fnkeys.tes
 
-! Uncomment if XTerm allows clipboard operations !
+! Uncomment if terminal supports OSC-52 clipboards !
 ! 0,256ED !
 
 ! Uncomment to enable Unicode icons in the Curses UI !

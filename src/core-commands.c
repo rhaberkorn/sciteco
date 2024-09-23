@@ -2061,10 +2061,9 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
  *   - 128: Enable/Disable enforcement of UNIX98
  *     \(lq/bin/sh\(rq emulation for operating system command
  *     executions
- *   - 256: Enable/Disable \fBxterm\fP(1) clipboard support.
- *     Should only be enabled if XTerm allows the
- *     \fIGetSelection\fP and \fISetSelection\fP window
- *     operations.
+ *   - 256: Enable/Disable OSC-52 clipboard support.
+ *     Must only be enabled if the terminal emulator is configured
+ *     properly.
  *   - 512: Enable/Disable Unicode icons in the Curses UI.
  *     This requires a capable font, like the ones provided
  *     by the \(lqNerd Fonts\(rq project.

@@ -1525,16 +1525,27 @@ The existence of a clipboard register can thus be checked
 in macros to determine whether getting and modifying that
 particular clipboard is supported natively.
 .br
-.SCITECO_TOPIC xterm
+.SCITECO_TOPIC OSC-52 xterm
 \*(ST does \fBnot\fP generally support clipboards on ncurses,
-but has special support when used with a sufficiently recent version
-of \fBxterm\fP(1).
-Since the operability of XTerm clipboards cannot be tested
+but has special support for OSC-52 escape sequences, as were
+introduced by sufficiently recent versions of
+.BR xterm (1)
+and have since been adopted by several other terminal emulators.
+Since the operability of OSC-52 clipboards cannot be tested
 automatically, users will have to set the flag 256 of the
-\fBED\fP flags if and only if their XTerm is configured for allowing
+\fBED\fP flags if and only if their terminal emulator is properly
+configured.
+.BR xterm (1)
+for instance must be configured for allowing
 the \fISetSelection\fP and \fIGetSelection\fP window operations.
-\*(ST will still check whether XTerm is actually used in
-a particular session.
+If running under
+.BR xterm (1),
+\*(ST will still check whether the XTerm version is sufficient.
+.SCITECO_TOPIC Kitty
+Other terminal emulators like Kitty may ask for permission to read the
+clipboard (\fBread-clipboard-ask\fP).
+This is not supported by \*(ST and must be disabled
+(use \fBread-clipboard\fP instead).
 .SCITECO_TOPIC xclip
 If native clipboard support is unavailable, users may
 still fall back to using external tools like \fBxclip\fP(1)

@@ -560,7 +560,7 @@ teco_interface_init_screen(void)
 	g_assert(teco_interface.screen_tty != NULL);
 
 	teco_interface.screen = newterm(NULL, teco_interface.screen_tty, teco_interface.screen_tty);
-	if (!teco_interface.screen) {
+	if (G_UNLIKELY(!teco_interface.screen)) {
 		g_fprintf(stderr, "Error initializing interactive mode. "
 		                  "$TERM may be incorrect.\n");
 		exit(EXIT_FAILURE);
@@ -1255,9 +1255,17 @@ teco_interface_init_clipboard(void)
 	 * must be enabled.
 	 * There is no way to find out if they are but we must
 	 * not register the clipboard registers if they aren't.
-	 * Therefore, a special XTerm clipboard ED flag an be set by the user.
+	 * Still, XTerm clipboards are broken with Unicode characters.
+	 * Also, there are other terminal emulators supporting OSC-52,
+	 * so the XTerm version is only checked if the terminal identifies as XTerm.
+	 * Also, a special clipboard ED flag must be set by the user.
+	 *
+	 * NOTE: Apparently there is also a terminfo entry Ms, but it's probably
+	 * not worth using it since it won't always be set and even if set, does not
+	 * tell you whether the terminal will actually answer to the escape sequence or not.
 	 */
-	if (!(teco_ed & TECO_ED_XTERM_CLIPBOARD) || teco_xterm_version() < 203)
+	if (!(teco_ed & TECO_ED_OSC52) ||
+	    (teco_xterm_version() >= 0 && teco_xterm_version() < 203))
 		return;
 
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
@@ -1323,6 +1331,8 @@ teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
 gboolean
 teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError **error)
 {
+	gboolean ret = TRUE;
+
 	/*
 	 * Query the clipboard -- XTerm will reply with the
 	 * OSC-52 command that would set the current selection.
@@ -1350,11 +1360,12 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	 * Skip "\e]52;x;" (7 characters).
 	 */
 	for (gint i = 0; i < 7; i++) {
-		if (wgetch(teco_interface.input_pad) == ERR) {
+		ret = wgetch(teco_interface.input_pad) != ERR;
+		if (!ret) {
 			/* timeout */
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 			                    "Timed out reading XTerm clipboard");
-			goto error;
+			goto cleanup;
 		}
 	}
 
@@ -1371,15 +1382,21 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 		gchar buffer[MAX(3, 7)];
 
 		gchar c = (gchar)wgetch(teco_interface.input_pad);
-		if (c == ERR) {
+		ret = c != ERR;
+		if (!ret) {
 			/* timeout */
 			g_string_free(str_base64, TRUE);
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 			                    "Timed out reading XTerm clipboard");
-			goto error;
+			goto cleanup;
 		}
 		if (c == '\a')
 			break;
+		if (c == '\e') {
+			/* OSC escape sequence can also be terminated by "\e\\" */
+			c = (gchar)wgetch(teco_interface.input_pad);
+			break;
+		}
 
 		/*
 		 * This could be simplified using sscanf() and
@@ -1394,20 +1411,16 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 		g_string_append_len(str_base64, buffer, out_len);
 	}
 
-	cbreak();
-	keypad(teco_interface.input_pad, TRUE);
-
 	if (str)
 		*str = str_base64->str;
 	*len = str_base64->len;
 
 	g_string_free(str_base64, !str);
-	return TRUE;
 
-error:
-	cbreak();
+cleanup:
 	keypad(teco_interface.input_pad, TRUE);
-	return FALSE;
+	nodelay(teco_interface.input_pad, TRUE);
+	return ret;
 }
 
 #else /* !PDCURSES && !CURSES_TTY */
