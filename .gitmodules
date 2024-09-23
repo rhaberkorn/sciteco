@@ -7,4 +7,4 @@
 	url = https://github.com/orbitalquark/scinterm.git
 [submodule "lexilla"]
 	path = contrib/lexilla
-	url = https://github.com/rhaberkorn/lexilla.git
+	url = https://github.com/ScintillaOrg/lexilla.git
