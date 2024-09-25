@@ -1694,6 +1694,9 @@ thus refers to the corresponding control code:
 Escape character \fIc\fP.
 The character is not handled as a string building or string termination
 character, so for instance \(lq^Q^Q\(rq translates to \(lq^Q\(rq.
+Furthermore, some immediate editing commands are inhibited right after \fB^Q\fR,
+so you can type \(lq^Q^U\(rq and \(lq^Q^W\(rq, which translate to control codes
+21 and 23.
 .TP
 .SCITECO_TOPIC ^V^V ^Vc lower
 .B ^V^V

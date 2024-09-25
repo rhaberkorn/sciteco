@@ -651,6 +651,27 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 }
 
 gboolean
+teco_state_stringbuilding_escaped_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
+                                                   gunichar key, GError **error)
+{
+	/*
+	 * Allow insertion of characters that would otherwise be interpreted as
+	 * immediate editing commands after ^Q/^R.
+	 */
+	switch (key) {
+	//case TECO_CTL_KEY('G'):
+	case TECO_CTL_KEY('W'):
+	case TECO_CTL_KEY('U'):
+		teco_interface_popup_clear();
+
+		gchar c = key;
+		return teco_cmdline_insert(&c, sizeof(c), error);
+	}
+
+	return teco_state_process_edit_cmd(parent_ctx, NULL, key, error);
+}
+
+gboolean
 teco_state_stringbuilding_qreg_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
                                                 gunichar chr, GError **error)
 {

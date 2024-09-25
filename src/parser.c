@@ -499,7 +499,14 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, guni
 	return &teco_state_stringbuilding_start;
 }
 
-TECO_DEFINE_STATE(teco_state_stringbuilding_escaped);
+/* in cmdline.c */
+gboolean teco_state_stringbuilding_escaped_process_edit_cmd(teco_machine_stringbuilding_t *ctx, teco_machine_t *parent_ctx,
+                                                            gunichar key, GError **error);
+
+TECO_DEFINE_STATE(teco_state_stringbuilding_escaped,
+	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)
+	                       teco_state_stringbuilding_escaped_process_edit_cmd
+);
 
 static teco_state_t *
 teco_state_stringbuilding_lower_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
