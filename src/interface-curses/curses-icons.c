@@ -63,6 +63,7 @@ static const teco_curses_icon_t teco_icons_file[] = {
 	{".vimrc",		0xe62b}, /*  */
 	{".vscode",		0xe70c}, /*  */
 	{".zshrc",		0xf489}, /*  */
+	{"COMMIT_EDITMSG",	0xf1d3}, /*  */
 	{"Cargo.lock",		0xe7a8}, /*  */
 	{"Dockerfile",		0xf308}, /*  */
 	{"GNUmakefile",		0xf489}, /*  */
@@ -72,6 +73,7 @@ static const teco_curses_icon_t teco_icons_file[] = {
 	{"config",		0xe5fc}, /*  */
 	{"docker-compose.yml",	0xf308}, /*  */
 	{"ds_store",		0xf179}, /*  */
+	{"git-rebase-todo",	0xf1d3}, /*  */
 	{"gitignore_global",	0xf1d3}, /*  */
 	{"go.mod",		0xe626}, /*  */
 	{"go.sum",		0xe626}, /*  */
