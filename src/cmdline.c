@@ -539,20 +539,15 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 		 * get the default behaviour of teco_state_process_edit_cmd().
 		 * This may not be a real-life issue serious enough to maintain
 		 * a result string even in parse-only mode.
-		 *
-		 * FIXME: Does not properly rubout string-building commands at the
-		 * start of the string argument -- ctx->result->len is not
-		 * a valid indicator of argument emptyness.
-		 * Since it chains to teco_state_process_edit_cmd() we will instead
-		 * rubout the entire command.
 		 */
 		if (ctx->result && ctx->result->len > 0) {
 			gboolean is_wordchar = teco_string_contains(&wchars, teco_cmdline.str.data[teco_cmdline.effective_len-1]);
 			teco_cmdline_rubout();
 			if (ctx->parent.current != current) {
 				/* rub out string building command */
-				while (ctx->result->len > 0 && ctx->parent.current != current)
+				do
 					teco_cmdline_rubout();
+				while (ctx->parent.current != current);
 				return TRUE;
 			}
 
