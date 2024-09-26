@@ -2,6 +2,8 @@
 
 @[lexer.test.git]{
   :EN*/COMMIT_EDITMSGQ*"S -1 '
+  :EN*/TAG_EDITMSGQ*"S -1 '
+  :EN*/MERGE_MSGQ*"S -1 '
   :EN*/git-rebase-todoQ*
 }
 

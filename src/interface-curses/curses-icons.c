@@ -67,14 +67,15 @@ static const teco_curses_icon_t teco_icons_file[] = {
 	{"Cargo.lock",		0xe7a8}, /*  */
 	{"Dockerfile",		0xf308}, /*  */
 	{"GNUmakefile",		0xf489}, /*  */
+	{"MERGE_MSG",		0xf1d3}, /*  */
 	{"Makefile",		0xf489}, /*  */
 	{"PKGBUILD",		0xf303}, /*  */
+	{"TAG_EDITMSG",		0xf1d3}, /*  */
 	{"bin",			0xe5fc}, /*  */
 	{"config",		0xe5fc}, /*  */
 	{"docker-compose.yml",	0xf308}, /*  */
 	{"ds_store",		0xf179}, /*  */
 	{"git-rebase-todo",	0xf1d3}, /*  */
-	{"gitignore_global",	0xf1d3}, /*  */
 	{"go.mod",		0xe626}, /*  */
 	{"go.sum",		0xe626}, /*  */
 	{"gradle",		0xe256}, /*  */
