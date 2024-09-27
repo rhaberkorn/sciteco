@@ -160,6 +160,11 @@ AT_SETUP([Memory limiting during spawning])
 AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Memory limiting during file reading])
+AT_CHECK([dd if=/dev/zero of=big-file.txt bs=1000 count=50000], 0, ignore, ignore)
+AT_CHECK([$SCITECO -8e "50*1000*1000,2EJ @EB'big-file.txt'"], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Q-Register stack cleanup])
 AT_CHECK([$SCITECO -e '@<:@a'], 0, ignore, ignore)
 AT_CLEANUP

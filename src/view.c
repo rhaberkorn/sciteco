@@ -45,6 +45,7 @@
 #include "error.h"
 #include "qreg.h"
 #include "eol.h"
+#include "memory.h"
 #include "view.h"
 
 /** @memberof teco_view_t */
@@ -216,8 +217,11 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 	 */
 	struct stat stat_buf = {.st_size = 0};
 	if (!fstat(g_io_channel_unix_get_fd(channel), &stat_buf) &&
-	    stat_buf.st_size > 0)
+	    stat_buf.st_size > 0) {
+		if (!teco_memory_check(stat_buf.st_size, error))
+			goto error;
 		teco_view_ssm(ctx, SCI_ALLOCATE, stat_buf.st_size, 0);
+	}
 
 	g_auto(teco_eol_reader_t) reader;
 	teco_eol_reader_init_gio(&reader, channel);
@@ -230,14 +234,24 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		teco_string_t str;
 
 		GIOStatus rc = teco_eol_reader_convert(&reader, &str.data, &str.len, error);
-		if (rc == G_IO_STATUS_ERROR) {
-			teco_view_ssm(ctx, SCI_ENDUNDOACTION, 0, 0);
-			return FALSE;
-		}
+		if (rc == G_IO_STATUS_ERROR)
+			goto error;
 		if (rc == G_IO_STATUS_EOF)
 			break;
 
 		teco_view_ssm(ctx, SCI_APPENDTEXT, str.len, (sptr_t)str.data);
+
+		/*
+		 * Even if we checked initially, knowing the file size,
+		 * Scintilla could allocate much more bytes.
+		 */
+		if (!teco_memory_check(0, error))
+			goto error;
+
+		if (G_UNLIKELY(teco_interface_is_interrupted())) {
+			teco_error_interrupted_set(error);
+			goto error;
+		}
 	}
 
 	/*
@@ -259,6 +273,10 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 
 	teco_view_ssm(ctx, SCI_ENDUNDOACTION, 0, 0);
 	return TRUE;
+
+error:
+	teco_view_ssm(ctx, SCI_ENDUNDOACTION, 0, 0);
+	return FALSE;
 }
 
 /**
