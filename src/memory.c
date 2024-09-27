@@ -288,7 +288,7 @@
  * Current memory usage.
  * Access must be synchronized using atomic operations.
  */
-static gint teco_memory_usage = 0;
+static guint teco_memory_usage = 0;
 
 /*
  * NOTE: This implementation based on malloc_usable_size() might
@@ -658,7 +658,7 @@ gsize teco_memory_limit = 500*1000*1000;
 gboolean
 teco_memory_set_limit(gsize new_limit, GError **error)
 {
-	gsize memory_usage = g_atomic_int_get(&teco_memory_usage);
+	gsize memory_usage = (guint)g_atomic_int_get(&teco_memory_usage);
 
 	if (G_UNLIKELY(new_limit && memory_usage > new_limit)) {
 		g_autofree gchar *usage_str = g_format_size(memory_usage);
@@ -691,18 +691,19 @@ teco_memory_set_limit(gsize new_limit, GError **error)
 gboolean
 teco_memory_check(gsize request, GError **error)
 {
-	gsize memory_usage = g_atomic_int_get(&teco_memory_usage) + request;
+	gsize memory_usage = (guint)g_atomic_int_get(&teco_memory_usage);
+	gsize requested_memory_usage = memory_usage+request;
 
 	/*
 	 * Check for overflows.
 	 * NOTE: Glib 2.48 has g_size_checked_add().
 	 */
-	if (G_UNLIKELY(memory_usage < request))
+	if (G_UNLIKELY(requested_memory_usage < memory_usage))
 		/* guaranteed to fail if memory limiting is enabled */
-		memory_usage = G_MAXSIZE;
+		requested_memory_usage = G_MAXSIZE;
 
-	if (G_UNLIKELY(teco_memory_limit && memory_usage >= teco_memory_limit)) {
-		g_autofree gchar *limit_str = g_format_size(memory_usage);
+	if (G_UNLIKELY(teco_memory_limit && requested_memory_usage >= teco_memory_limit)) {
+		g_autofree gchar *limit_str = g_format_size(requested_memory_usage);
 
 		g_set_error(error, TECO_ERROR, TECO_ERROR_MEMLIMIT,
 		            "Memory limit (%s) exceeded. See <EJ> command.",
