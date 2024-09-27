@@ -495,6 +495,16 @@ teco_memory_get_usage(void)
 	return procstk.ki_rssize * page_size;
 }
 
+/**
+ * Options passed to jemalloc.
+ *
+ * It's crucial to disable opt.retain, so that freeing memory after
+ * recovering from memory limit hits actually decreases the RSS.
+ * The reasons for activating the option, mentioned in jemalloc(3),
+ * shouldn't be relevant on FreeBSD.
+ */
+const gchar *malloc_conf = "retain:false";
+
 #define NEED_POLL_THREAD
 
 #elif defined(G_OS_UNIX) && defined(HAVE_SYSCONF) && defined(HAVE_PROCFS)
