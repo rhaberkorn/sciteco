@@ -205,6 +205,9 @@ teco_view_set_representations(teco_view_t *ctx)
 gboolean
 teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **error)
 {
+	g_auto(teco_eol_reader_t) reader;
+	teco_eol_reader_init_gio(&reader, channel);
+
 	teco_view_ssm(ctx, SCI_BEGINUNDOACTION, 0, 0);
 	teco_view_ssm(ctx, SCI_CLEARALL, 0, 0);
 
@@ -222,9 +225,6 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 			goto error;
 		teco_view_ssm(ctx, SCI_ALLOCATE, stat_buf.st_size, 0);
 	}
-
-	g_auto(teco_eol_reader_t) reader;
-	teco_eol_reader_init_gio(&reader, channel);
 
 	for (;;) {
 		/*
