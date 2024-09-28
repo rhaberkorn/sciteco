@@ -16,8 +16,6 @@
  */
 #pragma once
 
-#include <stdbool.h>
-
 #include <glib.h>
 
 #include <Scintilla.h>
@@ -48,7 +46,7 @@ typedef struct {
 	 * a signed integer, it's ok steal one
 	 * bit for the pass_through flag.
 	 */
-	bool pass_through : 1;
+	gboolean pass_through : 1;
 } teco_loop_context_t;
 
 extern GArray *teco_loop_stack;
@@ -73,8 +71,8 @@ void undo__remove_index__teco_loop_stack(guint);
  * FIXME: Maybe use TECO_DECLARE_VTABLE_METHOD()?
  */
 typedef const struct {
-	bool string_building : 1;
-	bool last : 1;
+	gboolean string_building : 1;
+	gboolean last : 1;
 
 	/**
 	 * Called repeatedly to process chunks of input and give interactive feedback.
@@ -188,7 +186,7 @@ struct teco_state_t {
 	 * This is separate of TECO_KEYMACRO_MASK_START which is set
 	 * only in the main machine's start states.
 	 */
-	bool is_start : 1;
+	gboolean is_start : 1;
 	/**
 	 * Key macro mask.
 	 * This is not a bitmask since it is compared with values set
@@ -444,8 +442,8 @@ struct teco_machine_main_t {
 		struct {
 			teco_mode_t mode : 8;
 
-			bool modifier_colon : 1;
-			bool modifier_at : 1;
+			gboolean modifier_colon : 1;
+			gboolean modifier_at : 1;
 		};
 		guint __flags;
 	};
