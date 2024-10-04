@@ -115,6 +115,8 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 
 typedef enum {
 	TECO_SEARCH_STATE_START,
+	TECO_SEARCH_STATE_CTL,
+	TECO_SEARCH_STATE_ESCAPE,
 	TECO_SEARCH_STATE_NOT,
 	TECO_SEARCH_STATE_CTL_E,
 	TECO_SEARCH_STATE_ANYQ,
@@ -320,6 +322,18 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 
 	do {
 		/*
+		 * Previous character was caret.
+		 * Make sure it is handled like a control character.
+		 * This is necessary even though we have string building activated,
+		 * to support constructs like ^Q^Q (typed with carets) in order to
+		 * quote pattern matching characters.
+		 */
+		if (state == TECO_SEARCH_STATE_CTL) {
+			*pattern->data = TECO_CTL_KEY(g_ascii_toupper(*pattern->data));
+			state = TECO_SEARCH_STATE_START;
+		}
+
+		/*
 		 * First check whether it is a class.
 		 * This will not treat individual characters
 		 * as classes, so we do not convert them to regexp
@@ -347,20 +361,35 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 		switch (state) {
 		case TECO_SEARCH_STATE_START:
 			switch (*pattern->data) {
-			case TECO_CTL_KEY('X'): teco_string_append_c(&re, '.'); break;
-			case TECO_CTL_KEY('N'): state = TECO_SEARCH_STATE_NOT; break;
-			default: {
-				gsize len = codepage == SC_CP_UTF8
-						? g_utf8_next_char(pattern->data) - pattern->data : 1;
-				/* the allocation could theoretically be avoided by escaping char-wise */
-				g_autofree gchar *escaped = g_regex_escape_string(pattern->data, len);
-				teco_string_append(&re, escaped, strlen(escaped));
-				pattern->data += len;
-				pattern->len -= len;
+			case '^':
+				state = TECO_SEARCH_STATE_CTL;
+				break;
+			case TECO_CTL_KEY('Q'):
+			case TECO_CTL_KEY('R'):
+				state = TECO_SEARCH_STATE_ESCAPE;
+				break;
+			case TECO_CTL_KEY('X'):
+				teco_string_append_c(&re, '.');
+				break;
+			case TECO_CTL_KEY('N'):
+				state = TECO_SEARCH_STATE_NOT;
+				break;
+			default:
+				state = TECO_SEARCH_STATE_ESCAPE;
 				continue;
 			}
-			}
 			break;
+
+		case TECO_SEARCH_STATE_ESCAPE: {
+			gsize len = codepage == SC_CP_UTF8
+					? g_utf8_next_char(pattern->data) - pattern->data : 1;
+			/* the allocation could theoretically be avoided by escaping char-wise */
+			g_autofree gchar *escaped = g_regex_escape_string(pattern->data, len);
+			teco_string_append(&re, escaped, strlen(escaped));
+			pattern->data += len;
+			pattern->len -= len;
+			continue;
+		}
 
 		case TECO_SEARCH_STATE_NOT: {
 			state = TECO_SEARCH_STATE_START;

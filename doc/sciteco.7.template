@@ -1789,6 +1789,14 @@ The following pattern match constructs are supported for matching
 one character in different character classes
 (caret-notations refer to the corresponding control characters):
 .TP
+.BI ^Q c
+.TQ
+.BI ^R c
+Escape character \fIc\fP.
+Since these are interpreted as string building characters as well,
+you may have to type two or three \fB^Q\fP in a row to escape a
+pattern match character.
+.TP
 .SCITECO_TOPIC ^S ^EB
 .B ^S
 .TQ

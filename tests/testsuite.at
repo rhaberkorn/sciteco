@@ -79,6 +79,14 @@ AT_CHECK([$SCITECO -e "[[a 23Ub ]]b Qb\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Searches])
+# FIXME: We cannot currently easily insert a single ASCII 5 (^E), as it must be followed
+# by a 2nd character. It can be quoted, but cannot be written as Caret+E.
+# You also cannot search for a single ASCII 5 using Caret+E.
+# 2 additional ^Q are translated to a single ^Q and interpreted at the search-pattern layer.
+AT_CHECK([$SCITECO -e "@I/^Q\05/ J @:S/^Q^Q^Q\05/\"F(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Editing local registers in macro calls])
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)

@@ -603,6 +603,7 @@ teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gunicha
 	case 'N':  next = &teco_state_stringbuilding_ctle_n; break;
 	default:
 		if (ctx->result) {
+			/* also makes sure that search patterns can start with ^E */
 			gchar buf[1+6] = {TECO_CTL_KEY('E')};
 			gsize len = g_unichar_to_utf8(chr, buf+1);
 			teco_machine_stringbuilding_append(ctx, buf, 1+len);
