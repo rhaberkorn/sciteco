@@ -1195,7 +1195,7 @@ teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
 {
 	int rc = str ? PDC_setclipboard(str, str_len) : PDC_clearclipboard();
 	if (rc != PDC_CLIP_SUCCESS) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		g_set_error(error, TECO_ERROR, TECO_ERROR_CLIPBOARD,
 		            "Error %d copying to clipboard", rc);
 		return FALSE;
 	}
@@ -1217,7 +1217,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	if (rc == PDC_CLIP_EMPTY)
 		return TRUE;
 	if (rc != PDC_CLIP_SUCCESS) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		g_set_error(error, TECO_ERROR, TECO_ERROR_CLIPBOARD,
 		            "Error %d retrieving clipboard", rc);
 		return FALSE;
 	}
@@ -1363,7 +1363,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 		ret = wgetch(teco_interface.input_pad) != ERR;
 		if (!ret) {
 			/* timeout */
-			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CLIPBOARD,
 			                    "Timed out reading XTerm clipboard");
 			goto cleanup;
 		}
@@ -1386,7 +1386,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 		if (!ret) {
 			/* timeout */
 			g_string_free(str_base64, TRUE);
-			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CLIPBOARD,
 			                    "Timed out reading XTerm clipboard");
 			goto cleanup;
 		}

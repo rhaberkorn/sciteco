@@ -651,15 +651,46 @@ teco_interface_get_selection_by_name(const gchar *name)
 	return gdk_atom_intern(name, FALSE);
 }
 
+static void
+teco_interface_clipboard_provide(GtkClipboard *clipboard, GtkSelectionData *selection, guint info, gpointer userdata)
+{
+	GString *str = userdata;
+	gtk_selection_data_set_text(selection, str->str, str->len);
+}
+
+static void
+teco_interface_clipboard_clear(GtkClipboard *clipboard, gpointer userdata)
+{
+	GString *str = userdata;
+	g_string_free(str, TRUE);
+}
+
 gboolean
 teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len, GError **error)
 {
+	static const GtkTargetEntry target = {"UTF8_STRING", 0, 0};
 	GtkClipboard *clipboard = gtk_clipboard_get(teco_interface_get_selection_by_name(name));
 
+	if (!str) {
+		gtk_clipboard_clear(clipboard);
+		return TRUE;
+	}
+
 	/*
-	 * NOTE: function has compatible semantics for str_len < 0.
+	 * NOTE: gtk_clipboard_set_text() would ignore embedded nulls,
+	 * even though it takes a length.
+	 * We could theoretically avoid one allocation, but don't yet have proper types
+	 * to store string data with length in one heap object.
 	 */
-	gtk_clipboard_set_text(clipboard, str, str_len);
+	GString *gstr = g_string_new_len(str, str_len);
+	if (!gtk_clipboard_set_with_data(clipboard, &target, 1,
+	                                 teco_interface_clipboard_provide,
+	                                 teco_interface_clipboard_clear, gstr)) {
+		g_string_free(gstr, TRUE);
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CLIPBOARD,
+		                    "Cannot set clipboard");
+		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -669,16 +700,28 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 {
 	GtkClipboard *clipboard = gtk_clipboard_get(teco_interface_get_selection_by_name(name));
 	/*
-	 * Could return NULL for an empty clipboard.
+	 * gtk_clipboard_wait_for_text() does not return the text length,
+	 * so it doesn't work with embedded nulls.
+	 * gtk_clipboard_wait_for_contents() could also return NULL for empty clipboards.
 	 *
-	 * FIXME: This converts to UTF8 and we loose the ability
-	 * to get clipboard with embedded nulls.
+	 * NOTE: This also drives the main event loop,
+	 * which should be safe (see teco_interface_key_pressed_cb()).
 	 */
-	g_autofree gchar *contents = gtk_clipboard_wait_for_text(clipboard);
+	GdkAtom utf8_string = gdk_atom_intern_static_string("UTF8_STRING");
+	g_autoptr(GtkSelectionData) contents = gtk_clipboard_wait_for_contents(clipboard, utf8_string);
+	if (!contents) {
+		*len = 0;
+		if (str)
+			*str = NULL;
+		return TRUE;
+	}
 
-	*len = contents ? strlen(contents) : 0;
-	if (str)
-		*str = g_steal_pointer(&contents);
+	*len = gtk_selection_data_get_length(contents);
+	if (str) {
+		/* gtk_selection_data_get_text() does not work with embedded nulls */
+		*str = memcpy(g_malloc(*len+1), gtk_selection_data_get_data(contents), *len);
+		(*str)[*len] = '\0';
+	}
 
 	return TRUE;
 }
