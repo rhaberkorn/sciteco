@@ -381,6 +381,7 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 			break;
 
 		case TECO_SEARCH_STATE_ESCAPE: {
+			state = TECO_SEARCH_STATE_START;
 			gsize len = codepage == SC_CP_UTF8
 					? g_utf8_next_char(pattern->data) - pattern->data : 1;
 			/* the allocation could theoretically be avoided by escaping char-wise */
