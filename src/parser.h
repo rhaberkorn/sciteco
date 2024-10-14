@@ -36,7 +36,9 @@ typedef struct {
 	/** how many iterations are left */
 	teco_int_t counter;
 	/** Program counter of loop start command */
-	gsize pc : sizeof(gsize)*8 - 1;
+	gsize pc;
+	/** Brace level at loop start */
+	guint brace_level : sizeof(guint)*8 - 1;
 	/**
 	 * Whether the loop represents an argument
 	 * barrier or not (it "passes through"

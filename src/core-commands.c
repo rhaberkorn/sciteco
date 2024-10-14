@@ -244,6 +244,7 @@ teco_state_start_loop_open(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error) ||
 	    !teco_expressions_pop_num_calc(&lctx.counter, -1, error))
 		return;
+	lctx.brace_level = teco_brace_level;
 	lctx.pass_through = teco_machine_main_eval_colon(ctx);
 
 	if (lctx.counter) {
@@ -283,6 +284,14 @@ teco_state_start_loop_close(teco_machine_main_t *ctx, GError **error)
 
 	teco_loop_context_t *lctx = &g_array_index(teco_loop_stack, teco_loop_context_t,
 	                                           teco_loop_stack->len-1);
+
+	/* only non-pass-through loops increase the brace level */
+	if (teco_brace_level != lctx->brace_level + !lctx->pass_through) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "Brace left open at loop end command");
+		return;
+	}
+
 	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
 
 	/*
@@ -351,7 +360,7 @@ teco_state_start_break(teco_machine_main_t *ctx, GError **error)
 {
 	if (teco_loop_stack->len <= ctx->loop_stack_fp) {
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-		                    "<;> only allowed in iterations");
+		                    "<;> only allowed in loops");
 		return;
 	}
 
@@ -376,7 +385,7 @@ teco_state_start_break(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_discard_args(error))
 		return;
 	if (!lctx.pass_through &&
-	    !teco_expressions_brace_close(error))
+	    !teco_expressions_brace_return(lctx.brace_level, 0, error))
 		return;
 
 	undo__insert_val__teco_loop_stack(teco_loop_stack->len, lctx);

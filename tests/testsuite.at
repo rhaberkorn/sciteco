@@ -13,6 +13,8 @@ AT_COLOR_TESTS
 # (translated to [ ... ]) in simple cases where balanced
 # brackets are required in TECO code as well and
 # quadrigraphs (@<:@ and @:>@) in all other cases.
+# Single round brackets also have to be replaced with the
+# quadrigraphs @{:@ and @:}@.
 
 AT_BANNER([Features])
 
@@ -43,6 +45,11 @@ AT_CLEANUP
 
 AT_SETUP([Closing loops at the correct macro level])
 AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
+AT_CLEANUP
+
+AT_SETUP([Braces in loops])
+AT_CHECK([$SCITECO -e "1<23@{:@42>"], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e "1<23(1;)> \"~|(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Pass-through loops])
