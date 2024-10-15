@@ -86,7 +86,7 @@ static gboolean
 teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 {
 	const teco_string_t src = {(gchar *)data, len};
-	teco_string_t old_cmdline = {NULL, 0};
+	g_auto(teco_string_t) old_cmdline = {NULL, 0};
 	gsize repl_pc = 0;
 
 	teco_cmdline.machine.macro_pc = teco_cmdline.pc = teco_cmdline.effective_len;
@@ -110,8 +110,6 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 	/*
 	 * Parse/execute characters, one at a time so
 	 * undo tokens get emitted for the corresponding characters.
-	 *
-	 * FIXME: The inner loop should be factored out.
 	 */
 	while (teco_cmdline.pc < teco_cmdline.effective_len) {
 		g_autoptr(GError) tmp_error = NULL;
@@ -162,6 +160,7 @@ teco_cmdline_insert(const gchar *data, gsize len, GError **error)
 
 					teco_string_clear(&teco_cmdline.str);
 					teco_cmdline.str = old_cmdline;
+					memset(&old_cmdline, 0, sizeof(old_cmdline));
 					teco_cmdline.machine.macro_pc = teco_cmdline.pc = repl_pc;
 
 					/* rubout cmdline replacement command */
