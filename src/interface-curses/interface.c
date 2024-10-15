@@ -635,28 +635,6 @@ teco_interface_init_interactive(GError **error)
 		return FALSE;
 
 	/*
-	 * On UNIX terminals, the escape key is usually
-	 * delivered as the escape character even though function
-	 * keys are delivered as escape sequences as well.
-	 * That's why there has to be a timeout for detecting
-	 * escape presses if function key handling is enabled.
-	 * This timeout can be controlled using $ESCDELAY on
-	 * ncurses but its default is much too long.
-	 * We set it to 25ms as Vim does. In the very rare cases
-	 * this won't suffice, $ESCDELAY can still be set explicitly.
-	 *
-	 * NOTE: The only terminal emulator I'm aware of that lets
-	 * us send an escape sequence for the escape key is Mintty
-	 * (see "\e[?7727h").
-	 *
-	 * FIXME: This appears to be ineffective for netbsd-curses.
-	 */
-#ifdef CURSES_TTY
-	if (!g_getenv("ESCDELAY"))
-		set_escdelay(25);
-#endif
-
-	/*
 	 * $TERM must be unset or "#win32con" for the win32
 	 * driver to load.
 	 * So we always ignore any $TERM changes by the user.
@@ -686,6 +664,28 @@ teco_interface_init_interactive(GError **error)
 #endif
 
 	teco_interface_init_screen();
+
+	/*
+	 * On UNIX terminals, the escape key is usually
+	 * delivered as the escape character even though function
+	 * keys are delivered as escape sequences as well.
+	 * That's why there has to be a timeout for detecting
+	 * escape presses if function key handling is enabled.
+	 * This timeout can be controlled using $ESCDELAY on
+	 * ncurses but its default is much too long.
+	 * We set it to 25ms as Vim does. In the very rare cases
+	 * this won't suffice, $ESCDELAY can still be set explicitly.
+	 *
+	 * NOTE: The only terminal emulator I'm aware of that lets
+	 * us send an escape sequence for the escape key is Mintty
+	 * (see "\e[?7727h").
+	 *
+	 * NOTE: The delay is overwritten by initscr() on netbsd-curses.
+	 */
+#ifdef CURSES_TTY
+	if (!g_getenv("ESCDELAY"))
+		set_escdelay(25);
+#endif
 
 	/*
 	 * We always have a CTRL handler on Windows, but doing it
