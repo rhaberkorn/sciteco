@@ -4,25 +4,16 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * <23(1;)> leaves values on the stack and the internal hidden
-   brace open..
-   Apparently breaking from within expressions is not currently safe.
-   We could save the brace level in the loop context and then use
-   teco_expressions_brace_return().
- * Cannot escape ^E in search strings. This makes it nearly impossible
-   to search for ^E.
-   S^Q^E$ should work.
- * Ctrl+U rubout and Ctrl+G,Tab file name completions do not work
-   in ^U command.
  * Editing very large files, or at least files with very long lines, is painstakingly slow.
    Try for instance openrussian-custom-2023-10-09.sql.
    For some strange reason, this affects both Curses and GTK.
- * ?^F does not autocomplete if the control character is typed
-   via control and not via caret.
- * Using fnkeys.tes still flickers on PDCurses/WinGUI.
-   Apparently a PDCurses bug.
+   In UTF-8 mode, this doesn't even load anytime soon.
  * PDCurses/WinGUI: Pressing Ctrl+Shift+6 on an US keyboard layout
-   inserts "6^^". This may well be a PDCurses/WinGUI bug.
+   inserts "6^^". This looks like a PDCurses/WinGUI bug.
+   https://github.com/Bill-Gray/PDCursesMod/issues/323
+ * PDCurses/WinGUI: There is still some flickering, but it got better
+   since key macros update the command line only once.
+   https://github.com/Bill-Gray/PDCursesMod/issues/322
  * Win32: Interrupting <EC> will sometimes hang.
    Affects both PDCurses/WinGUI and Gtk.
    In this case you have to kill the subprocess using the task manager.
@@ -33,15 +24,14 @@ Known Bugs:
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
    always left at the end.
- * S<LF>^ES^N<$ does not find the first line that does not begin with "<"
-   ^ES is apparently not greedy.
+ * S<LF>^ES^N<$ does not find the first line that does not begin with "<".
+   This is because \s+ backtracks and can match shorter sequences.
+   Perhaps ^ES should always be translated to \s++ (possessive quantifier)?
  * Colors are still wrong in Linux console even if TERM=linux-16color
    when using Solarized. Affects e.g. the message line which uses the
    reverse of STYLE_DEFAULT.
    Perhaps we must call init_color() before initializing color pairs
    (currently done by Scinterm).
- * Scinterm: The underline attribute is not applied properly
-   even on Urxvt where it obviously works.
  * session.save should save and reset ^R. Perhaps ^R should be
    mapped to a Q-Reg to allow [^R. Currently, saving the buffer session
    fails if ^R != 10.
@@ -57,7 +47,7 @@ Known Bugs:
    and b) the file mode and ownership of re-created files can be preserved.
    We should fall back silently to an (inefficient) memory copy or temporary
    file strategy if this is detected.
- * crashes on large files: S^EM^X$ (regexp: (.)+)
+ * Crashes on large files: S^EM^X$ (regexp: (.)+)
    Happens because the Glib regex engine is based on a recursive (backtracking)
    Perl regex library.
    I can provoke the problem only on Ubuntu 20.04.
@@ -88,6 +78,8 @@ Known Bugs:
      However, it could be possible to call
      CreateFile(FILE_FLAG_DELETE_ON_CLOSE) on the savepoint file,
      ensuring cleanup even on abnormal program termination.
+     However, this flag cannot be cleared once we restore a save point,
+     so we'd have to copy its contents just like in the UNIX case.
      There is also MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT).
    * Windows has file system forks, but they can be orphaned just
      like ordinary files but are harder to locate and clean up manually.
@@ -95,6 +87,9 @@ Known Bugs:
    The necessary capabilities are usually not in the Terminfo database.
    Perhaps do some XTerm magic here. We can also restore
    window titles on exit using XTerm.
+ * The XTerm OSC-52 clipboard feature appears to garble Unicode characters.
+   This is apparently an XTerm bug, probably due to 8-bit-uncleanliness.
+   It was verified by `printf "\e]52;c;?\a"` on the command line.
  * Glib (error) messages are not integrated with SciTECO's
    logging system.
  * Gtk on Unix: On ^Z, we do not suspend properly. The window is still shown.
@@ -126,15 +121,34 @@ Known Bugs:
    (and with --no-profile) under Mac OS terminal emulators.
    This does not happen under Linux with Darling.
    See https://github.com/rhaberkorn/sciteco/issues/12
- * GTK: Scrolling via mouse is not reliably prevented in all situations.
  * File name autocompletion should take glob patterns into account.
    The simple reason is that if a filename really contains glob characters
    and you are trying to open it with EB, you might end up not being
    able to autocomplete it if a previous autocompletion inserted
    escaped glob patterns.
    Unfortunately, this would be very tricky to do right.
- * The unnamed buffer hasn't got margins set.
-   Should be fixed in sample.teco_ini.
+ * The git.blame macro is broken, at least on Git v2.45.2 and v2.25.1. Compare
+   cat sample.teco_ini | git blame --incremental --contents - -- sample.teco_ini | grep -E '^[a-f0-9]{40}'
+   (which is wrong and does not even contain all commits) with
+   git blame --incremental --contents sample.teco_ini -- sample.teco_ini | grep -E '^[a-f0-9]{40}'
+   which is correct. Without --incremental even the formatting is broken.
+   This could well be a Git bug.
+ * Margins, identions and the like are not configured on the unnamed
+   buffer by sample.teco_ini.
+   And this is probably correct.
+   However when saving a new unnamed file for the first time,
+   nothing will change either and it's tricky to apply the correct
+   settings. You have to EF and EB the file after the initial
+   save to get everything set up correctly.
+   Or manually run 0M#ED, but this cannot be rubbed out.
+   We need a "save" ED hook to get this right.
+   For instance, you could check whether the margin is set up
+   as a sign of whether lexing has already been applied.
+   On the other hand, this Save also can't be properly rubbed out and
+   will not restore the original margins and styling unless we add native
+   commands for ALL of the Scintilla messages involved.
+   Automatically running EF EB...$ in the "save" hook could
+   also have unwanted side effects.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -209,16 +223,28 @@ Features:
    Even more simple, the function key flag could be effective
    only when the termination character is $.
  * Support more function keys.
-   Perhaps we can safely support more via define_key(3NCURSES).
+   We can define more function keys via define_key(3NCURSES).
+   Unfortunately they are not really standardized - st and urxvt for instance
+   have different escape sequences for Ctrl+Up or Alt+Up.
+   It seems they can be looked up with tigetstr() and
+   then passed to define_key().
+   Alternatively call use_extended_names(TRUE) and look up the
+   key codes with key_defined().
    At the very least PDCurses and Gtk could support much more
    keys and Alt and Ctrl modifiers.
-   See also https://gist.github.com/rkumar/1237091
+   See also https://stackoverflow.com/questions/31379824/how-to-get-control-characters-for-ctrlleft-from-terminfo-in-zsh
+   https://gist.github.com/rkumar/1237091
  * Mouse support. Not that hard to implement. Mouse events
    use a pseudo key macro as in Curses.
    Using some special command, macros can query the current
    mouse state (this maps to an Interface method).
    This should be configurable via an ED flag as it changes
    the behavior of the terminal.
+ * GTK currently allows mouse scrolling as it is not under control
+   of SciTECO.
+   Once we got mouse support in Curses, we could either also
+   automatically scroll or (better) expose the scroll events
+   as key macros.
  * Support loading from stdin (--stdin) and writing to
    the current buffer to stdout on exit (--stdout).
    This will make it easy to write command line filters,
@@ -265,17 +291,28 @@ Features:
      of EI that considers $SCITECOPATH.
      Current use of EI (insert without string building) will have
      to move, but it might vanish anyway once we can disable string building
-     with a special character.
-   * ::S for string "comparisons" (anchored search).
+     with a special character, eg. you could write I^C instead.
+   * <I> doesn't have string building enabled in classic TECO.
+     Changing this would perhaps be a change too radical.
+     Also, we would then need a string-building variant like <:I>.
+   * ::S for string "comparisons" (anchored search) and
+     ::FS for anchored search-replace.
      This is supposed to be an alias for .,.:FB which would be
      .,.:S in SciTECO. Apparanetly, the bounded search is still
      incompatible in SciTECO, as it is allowed to match beyond
      the bounds. Either the semantics of m,n:S should be changed
      or an FB command with classic TECO semantics should be
-     introduced..
+     introduced.
    * ^S (-(length) of last referenced string), ^Y as .+^S,.
    * ^Q convert line arg into character arg
    * ^A, T and stdio in general
+   * nA returned -1 in case of invalid positions (similar to SciTECO's ^E)
+     instead of failing.
+   * ^W was an immediate action command to repaint the screen.
+     This could be a regular command to allow refreshing in long loops.
+     Video TECO had ET for the same purpose.
+     TECO 10 had a ^W regular command for case folding all strings,
+     but I don't think it's worth supporting.
  * Search for beginning of string; i.e. a version of S that
    leaves dot before the search string, similar to FK
    (request of N.M.).
@@ -402,20 +439,6 @@ Features:
  * Improve the message line so it can log multiple messages.
    Especially important on GUI platforms and Win32 so we can get
    rid of the attached console window.
- * Some platforms like MinGW and some Linux flavours have
-   native Scintilla packages.
-   Perhaps it makes sense to be able to build against them
-   using --with-scintilla.
- * There is an Urxvt extension 52-osc for implementing the
-   xterm-like clipboard control sequences.
-   Other emulators also support it. It is not always detectable
-   at run time.
-   It may therefore make sense to always enable it after manually
-   setting the corrsponding flag.
-   Apparently there is also a terminfo entry Ms, but it's probably
-   not worth using it since it won't always be set.
-   See also https://github.com/tmux/tmux/wiki/Clipboard
- * Add a save-ED-hook, which could be useful for spell checking.
  * A dirtify-hook would be useful and could be used for
    spell checking. Naturally it could only be exected at the
    end of executing interactive commands) and it should be triggered
@@ -483,6 +506,11 @@ Features:
    encoding, as that could confuse parse-only mode.
    Perhaps ^E!xxxx or overload ^Qx0123.
    TECO-11 has ^Ennn (octal), but only for searching?
+ * There should be a string building construct for escaping
+   search patterns.
+   Since string building is performed immediately before
+   search pattern translation, you cannot currently
+   search for a Q-Register verbatim.
  * Tweak the Makefile lexer for Automake support.
    In the simplest case, just add the *.am file extension.
  * Add an fnkeys.tes alternative where moving cursor keys
@@ -520,6 +548,13 @@ Features:
      We could say that nEB...$ specifies the code page
      if the string argument is nonempty.
      On the other hand, iconv uses symbolic identifiers.
+ * Perhaps the Unicode "icons" should be configurable via TECO.
+   In the easiest case there could simply be 2 Q-Reg namespaces:
+   ^F... for filenames and ^E... for extensions.
+   The numeric part could be used to store the codepoints.
+ * Scinterm: The underline and italic styles are not applied properly
+   even on Urxvt where they obviously work.
+   https://github.com/orbitalquark/scinterm/issues/22
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -568,9 +603,19 @@ Optimizations:
    modules.
    On the other hand, this imports tons of sh*t into the
    repository and chains us to Autotools.
+ * Does it make sense to import glib-2.0.m4?
+ * According to ChatGPT (sic) the glibc and jemalloc malloc_usable_size()
+   do not change during the lifetime of an object,
+   although this is an implementation detail.
+   Perhaps we should support these system allocators by default
+   if malloc_usable_size() and the original functions as __malloc()
+   are defined.
+   But how to even test for glibc's ptmalloc?
+   Linux could use musl as well for instance.
 
 Documentation:
- * Code docs (Doxygen). It's slowly getting better...
+ * Doxygen docs could be deployed on Github pages
+   automatically.
  * The ? command could be extended to support looking
    up help terms at dot in the current document (e.g. if called ?$).
    Furthermore, womanpages could contain "hypertext" links
@@ -583,3 +628,6 @@ Documentation:
    when used as the git editor, etc.
  * Perhaps there should be a Getting Started document,
    that is automatically opened by sample.teco_ini.
+ * The HTML manuals lack monospaced fonts.
+   This is partly because an.tmac removes the Courier family
+   in nroff mode, but it still doesn't work if you undo this.
