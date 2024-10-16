@@ -18,6 +18,7 @@
 #include "config.h"
 #endif
 
+#include <stdbool.h>
 #include <string.h>
 
 #include <glib.h>
@@ -1268,7 +1269,7 @@ struct teco_machine_qregspec_t {
 	union {
 		struct {
 			teco_qreg_type_t type : 8;
-			gboolean parse_only : 1;
+			bool parse_only : 1;
 		};
 		guint __flags;
 	};
