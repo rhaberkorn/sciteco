@@ -138,5 +138,5 @@ Q[solarized.light]"T :M[solarized.light] | :M[solarized.dark] '
  * register `solarized.toggle` as the function key macro for F5.
  * This terminates the command line as it cannot be rubbed out.
  *!
-@[F5]{(M[solarized.toggle])}
-1U[F5]
+@[F5]{(M[solarized.toggle])}
+1U[F5]
