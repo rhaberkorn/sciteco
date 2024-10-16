@@ -1,10 +1,10 @@
 bin/%%PROGRAM_PREFIX%%grosciteco.tes
 bin/%%PROGRAM_PREFIX%%sciteco
 bin/%%PROGRAM_PREFIX%%tedoc.tes
-man/man1/%%PROGRAM_PREFIX%%grosciteco.tes.1.gz
-man/man1/%%PROGRAM_PREFIX%%sciteco.1.gz
-man/man1/%%PROGRAM_PREFIX%%tedoc.tes.1.gz
-man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
+share/man/man1/%%PROGRAM_PREFIX%%grosciteco.tes.1.gz
+share/man/man1/%%PROGRAM_PREFIX%%sciteco.1.gz
+share/man/man1/%%PROGRAM_PREFIX%%tedoc.tes.1.gz
+share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%DATADIR%%/lib/color.tes
 %%DATADIR%%/lib/colors/solarized.tes
 %%DATADIR%%/lib/colors/terminal.tes
