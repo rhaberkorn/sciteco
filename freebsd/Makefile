@@ -1,5 +1,5 @@
 PORTNAME=	sciteco
-DISTVERSION=	2.0.0
+DISTVERSION=	2.1.0
 CATEGORIES=	editors textproc devel
 MASTER_SITES=	https://github.com/rhaberkorn/${PORTNAME}/releases/download/v${DISTVERSION}/ \
 		SOURCEFORGE/${PORTNAME}/v${DISTVERSION}/

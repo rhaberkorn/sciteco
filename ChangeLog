@@ -6,6 +6,143 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
+Version 2.1.0
+~~~~~~~~~~~~~
+
+7413b9c Fixed memory leak when replacing command lines.
+        Even cursor movements via function keys (fnkeys.tes) were constantly leaking memory.
+820f716 improved support for braces within loops: warn about unclosed braces and fixed breaking from within braces
+7adcfbf,
+9a25dfd,
+(!)b36ff25 Pattern match characters support ^Q/^R now as well.
+           This makes it possible, albeit cumbersome, to escape pattern match characters.
+5395a7d check the memory limit and allow interruptions when loading files
+973e50d FreeBSD/jemalloc: fixed recovery after hitting memory limit
+b3ae8e2 fixed memory limiting if the process' memory usage is larger than 2GB and overflow checking
+f188d74 fixed rubbing out (some) string building constructs at the beginning of the command line argument
+dcaeb77 Inhibit some immediate editing commands after ^Q/^R string building constructs.
+        This makes it easier to insert ^W (23) by typing ^Q^W.
+        ^Q^U was coincidentally already working previously.
+c288762 Allow OSC-52 clipboards on all terminal emulators.
+        For Urxvt support, have a look at https://gist.github.com/rhaberkorn/d7406420b69841ebbcab97548e38b37d
+49e1f09 syntax errors are reported with "echoed" characters, ie. as purely printable characters
+(!)2b5b2a4 ^W^W and ^V^V can be typed completely with upcarets now and they case fold all expansions
+           of ^EQq, ^EUq and so on. For instance you can now type EUq^W^W^EQq$ to
+           upper case Q-Register q.
+(!)fcf962e Ctrl+^ (30) is no longer translated to a single caret in string building (refs #20)
+5b3906f,
+8fbd0b3 "Special" Q-Registers now support EQq...$ (load) and E%q...$ (save) commands.
+        You can for instance directly load the clipboard from file contents.
+b7b9840 check that local register is not edited at the end of macro calls
+3db9368 improved HTML lexer (html.tes)
+e307e56 netbsd-curses: fixed the default escape delay.
+        Recent versions of netbsd-curses are indeed fully supported now.
+84cc45e PDCurses/WinGUI: significantly reduced flickering
+a06bcea,
+6f16667,
+8744502 Curses: added support for cool Unicode icons (refs #5).
+        This requires "Nerd Fonts" and 0,512ED in the profile.
+52d73e8 GTK: support setting and getting clipboards containing null bytes
+c739742 GTK: allow disabling client-side decorations by setting $GTK_CSD=0.
+        This is the same variable used by gtk3-nocsd.
+19d3f12 GTK: Fixes icons in tabbed and st (when embedding SciTECO via --xembed).
+0e6e059 GTK: ignore the keyboard layout whereever possible (refs #5)
+bc859a0 fixed rubout of empty forward kill (FK)
+638f63c,
+966d3ef minor search optimization - search commands will remove the buffer gap less often
+ded9a02 test suite: enable the recursion overflow test case everywhere
+2fd3664,
+c2057eb,
+(!!)abb5d23 Function key macros have been reworked into a more generic key macro feature,
+            allowing you to repurpose "international" characters on your keyboard.
+            You could also simply remap them to their latin counterparts, so you don't have
+            to change keyboard layouts often (on Curses, as GTK does that automatically).
+            The function key macro prefix changed from ^F to ^K.
+            Also, you don't have to and should no longer set 0,64ED.
+cc63f3b improved file name autocompletion
+c59b33c,
+4789e39,
+4ca4ba2,
+f55f50e,
+73d574b,
+(!)6857807 The SciTECO parser is Unicode-based now (refs #5).
+           All language constructs are still exclusively based on ASCII,
+           but Unicode (UTF-8) is accepted everywhere, where an arbitrary character
+           is expected (as in string arguments and Q-Register names).
+           SciTECO macros must be in valid UTF-8, which may break existing macros that
+           embed arbitrary bytes.
+2f632e1 disable unused Scintilla features at build time, slightly reducing binary size
+e5d49eb Production builds will be slightly faster due to omission of runtime assertions.
+b729ee4 sample.teco_ini: Codepage guessing (refs #5)
+dd36439 sample.teco_ini: fixed opening files with glob characters in their names.
+        You are advised to merge changes into your ~/.teco_ini as after every upgrade.
+c4a1c3a,
+c222fa3 added an improvised lexer for styling Git commit, tag and merge messages.
+bed2f36 <f,tXq>: fixed for very large character ranges
+9241075 improved 8-bit cleanliness test cases and added Unicode test cases (refs #5)
+4f23187 Added raw ANSI mode via ED flags to facilitate 8-bit clean editing (refs #5).
+        There is also a `--8bit` and `-8` command line argument.
+41ab5cf Xq and ]q inherit the document encoding from the source document (refs #5)
+403c1cd search patterns are now expected to be in UTF-8 and the document's encoding is taken into account (refs #5)
+d714bb4,
+d556aee,
+b31b887 the ^EUq string building escape construct now respects the encoding (can insert bytes or codepoints) (refs #5)
+850fa38,
+(!)b85edaa <I> and <n^U> commands checks input codepoint ranges depending on the encoding (refs #5)
+a747cff conditionals, eg. <n"A>, now check for Unicode codepoints (refs #5)
+1d8f702 grosciteco: added the "aq", "ha" and "ti" glyphs (refs #22).
+        This fixes building on newer Groff versions, but may not have been an issue in v2.0.0.
+db5ab17 grosciteco: support Unicode (refs #5)
+33124e3,
+e384e4f Implemented <EE> and <^E> commands for configuring and converting between encodings and translating between
+        glyph and byte offsets (refs #5).
+        Support for handling single-byte encodings is still incomplete, but you can edit
+        raw binary files.
+62ccd35 win32: fixed opening and saving UTF-8 filenames (refs #5)
+4a4ffd9 win32: convert command line to UTF-8 (refs #5)
+90bad24 allow Unicode characters in command line arguments (refs #5)
+2a05075,
+745a76a,
+359e257,
+4dadac8,
+e466218,
+34683e8,
+7507ad3,
+7c59256,
+f79a6f6,
+c71ed30,
+(!)4c6b681 Input and displaying of Unicode characters is now possible (refs #5).
+           Furthermore you can edit and navigate Unicode (UTF-8) documents.
+           TECO addresses refer to glyphs now in Unicode documents, instead of bytes.
+           This uses heuristics and can be slow in certain corner cases.
+           Care must be taken when interacting with raw Scintilla-messages (ES) as they
+           are always byte-addressed. You must use the new ^E command in these situations
+           to translate between buffer addresses.
+fdc185b fixed retrieval of characters with codes larger than 127 (<A>, <nQ> commands)
+ee9cf43,
+e2c7c11 fully support out of tree builds
+fbaa927,
+07d9cdf,
+78e7f30,
+bbcf801 Updated Scintilla to v5.5.2, Scinterm to v5.1 and Lexilla to HEAD (rel-5-2-7-211-ge0f045a0).
+        This adds a troff/nroff lexer (for manpages among other things).
+83398b3 fixed expressions like `1,(2)` or `(1),(2)`: they are reported as two numbers now
+21c5be3 Fixed and improved the power (^*) operator.
+        It did not handle corner cases and was inefficient.
+f2b070c fnkeys.tes: cursor movement now preserves the column as in most text editors
+e37c2d6 fnkeys.tes: support zooming via F9/F10 on Gtk
+23fb4d2 grosciteco.tes(1) manpage: fixed formatting of list of troff macros
+5a8c5e8,
+27fba8b,
+c3e25ca,
+33721ec several fixes in the sciteco(1) and sciteco(7) man pages
+37eef3c avoid Groff warnings due to `\` escapes
+22906ff fixed Clang warnings about one-bit-wide boolean integers (-Wsingle-bit-bitfield-constant-conversion)
+7c1c6e2 fixed <EC$> assertions: specifying empty command strings was undefined
+f1fec09 fixed ]$ and ]~ (pop from Q-Reg stack to special Q-Registers).
+        The idiom [$ FG...$ ]$ to change the working directory temporarily now works.
+        Similarily you can now write [~ ^U~...$ ]~ to change the clipboard temporarily.
+
 Version 2.0.0
 ~~~~~~~~~~~~~
 
