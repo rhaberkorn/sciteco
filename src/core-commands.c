@@ -2759,12 +2759,9 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	/*
 	 * Current document's encoding determines the behaviour of
 	 * string building constructs.
-	 *
-	 * NOTE: This is not safe to undo in macro calls.
 	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	ctx->expectstring.machine.codepage = teco_interface_get_codepage();
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+	                                         teco_interface_get_codepage());
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;

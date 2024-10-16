@@ -43,7 +43,6 @@
 #include "core-commands.h"
 #include "qreg-commands.h"
 #include "error.h"
-#include "cmdline.h"
 #include "spawn.h"
 
 /*
@@ -168,12 +167,9 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 	/*
 	 * Command-lines and file names are always assumed to be UTF-8,
 	 * unless we set TECO_ED_DEFAULT_ANSI.
-	 *
-	 * NOTE: This is not safe to undo in macro calls.
 	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	ctx->expectstring.machine.codepage = teco_default_codepage();
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+	                                         teco_default_codepage());
 
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;

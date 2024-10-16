@@ -29,7 +29,6 @@
 #include "interface.h"
 #include "ring.h"
 #include "parser.h"
-#include "cmdline.h"
 #include "core-commands.h"
 #include "qreg.h"
 #include "qreg-commands.h"
@@ -493,12 +492,12 @@ teco_state_setqregstring_building_initial(teco_machine_main_t *ctx, GError **err
 	/*
 	 * The expected codepage of string building constructs is determined
 	 * by the Q-Register.
-	 *
-	 * NOTE: This is not safe to undo in macro calls.
 	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	return qreg->vtable->get_string(qreg, NULL, NULL, &ctx->expectstring.machine.codepage, error);
+	guint codepage;
+	if (!qreg->vtable->get_string(qreg, NULL, NULL, &codepage, error))
+		return FALSE;
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine, codepage);
+	return TRUE;
 }
 
 static teco_state_t *

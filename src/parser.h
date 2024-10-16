@@ -23,6 +23,7 @@
 #include "sciteco.h"
 #include "string-utils.h"
 #include "goto.h"
+#include "undo.h"
 #include "qreg.h"
 
 /*
@@ -282,6 +283,8 @@ struct teco_machine_t {
 	 * Whether side effects must be reverted on rubout.
 	 * State machines created within macro calls don't have to
 	 * even in interactive mode.
+	 * In fact you MUST not revert side effects if this is FALSE
+	 * as the data no longer exists on the call stack at undo-time.
 	 */
 	gboolean must_undo;
 };
@@ -360,6 +363,16 @@ typedef struct teco_machine_stringbuilding_t {
 
 void teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gunichar escape_char,
                                       teco_qreg_table_t *locals, gboolean must_undo);
+
+static inline void
+teco_machine_stringbuilding_set_codepage(teco_machine_stringbuilding_t *ctx,
+                                         guint codepage)
+{
+	/* NOTE: This is not safe to undo in macro calls. */
+	if (ctx->parent.must_undo)
+		teco_undo_guint(ctx->codepage);
+	ctx->codepage = codepage;
+}
 
 void teco_machine_stringbuilding_reset(teco_machine_stringbuilding_t *ctx);
 

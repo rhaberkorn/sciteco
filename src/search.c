@@ -35,7 +35,6 @@
 #include "parser.h"
 #include "core-commands.h"
 #include "error.h"
-#include "cmdline.h"
 #include "search.h"
 
 typedef struct {
@@ -61,12 +60,8 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
 
-	/*
-	 * NOTE: This is not safe to undo in macro calls.
-	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	ctx->expectstring.machine.codepage = teco_interface_get_codepage();
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+	                                         teco_interface_get_codepage());
 
 	if (G_UNLIKELY(!teco_search_qreg_machine))
 		teco_search_qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals,
@@ -1052,15 +1047,9 @@ TECO_DEFINE_STATE_SEARCH(teco_state_search_delete);
 static gboolean
 teco_state_replace_insert_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
-		return TRUE;
-
-	/*
-	 * NOTE: This is not safe to undo in macro calls.
-	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	ctx->expectstring.machine.codepage = teco_interface_get_codepage();
+	if (ctx->mode == TECO_MODE_NORMAL)
+		teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+		                                         teco_interface_get_codepage());
 	return TRUE;
 }
 

@@ -35,7 +35,6 @@
 #include "ring.h"
 #include "glob.h"
 #include "error.h"
-#include "cmdline.h"
 #include "core-commands.h"
 #include "goto-commands.h"
 #include "parser.h"
@@ -907,15 +906,9 @@ teco_machine_stringbuilding_clear(teco_machine_stringbuilding_t *ctx)
 gboolean
 teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
-		return TRUE;
-
-	/*
-	 * NOTE: This is not safe to undo in macro calls.
-	 */
-	if (ctx == &teco_cmdline.machine)
-		teco_undo_guint(ctx->expectstring.machine.codepage);
-	ctx->expectstring.machine.codepage = teco_default_codepage();
+	if (ctx->mode == TECO_MODE_NORMAL)
+		teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+		                                         teco_default_codepage());
 	return TRUE;
 }
 
