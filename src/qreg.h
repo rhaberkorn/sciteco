@@ -93,11 +93,11 @@ struct teco_qreg_t {
 	teco_int_t integer;
 	teco_doc_t string;
 
-	/*
+	/**
 	 * Whether to generate undo tokens (unnecessary for registers
 	 * in local qreg tables in macro invocations).
 	 *
-	 * FIXME: Every QRegister has this field, but it only differs
+	 * @fixme Every QRegister has this field, but it only differs
 	 * between local and global QRegisters. This wastes space.
 	 * Or by deferring any decision about undo token creation to a layer
 	 * that knows which table it is accessing.
@@ -129,6 +129,7 @@ teco_qreg_free(teco_qreg_t *qreg)
 	g_free(qreg);
 }
 
+extern const teco_qreg_table_t *teco_qreg_table_current;
 extern teco_qreg_t *teco_qreg_current;
 
 /** @extends teco_rb3str_tree_t */
@@ -170,6 +171,7 @@ teco_qreg_table_edit(teco_qreg_table_t *table, teco_qreg_t *qreg, GError **error
 {
 	if (!qreg->vtable->edit(qreg, error))
 		return FALSE;
+	teco_qreg_table_current = table;
 	teco_qreg_current = qreg;
 	return TRUE;
 }

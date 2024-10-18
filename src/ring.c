@@ -264,6 +264,7 @@ teco_ring_edit_by_name(const gchar *filename, GError **error)
 {
 	teco_buffer_t *buffer = teco_ring_find(filename);
 
+	teco_qreg_table_current = NULL;
 	teco_qreg_current = NULL;
 	if (buffer) {
 		teco_ring_current = buffer;
@@ -310,6 +311,7 @@ teco_ring_edit_by_id(teco_int_t id, GError **error)
 		return FALSE;
 	}
 
+	teco_qreg_table_current = NULL;
 	teco_qreg_current = NULL;
 	teco_ring_current = buffer;
 	teco_buffer_edit(buffer);

@@ -47,6 +47,8 @@
  * Initialized in main.c after the interface.
  */
 teco_view_t *teco_qreg_view = NULL;
+/** Table of currently edited Q-Register */
+const teco_qreg_table_t *teco_qreg_table_current = NULL;
 /** Currently edited Q-Register */
 teco_qreg_t *teco_qreg_current = NULL;
 
@@ -1234,8 +1236,8 @@ teco_ed_hook(teco_ed_hook_t type, GError **error)
 
 	if (!teco_qreg_execute(qreg, &locals, error))
 		goto error_add_frame;
-	if (teco_qreg_current && !teco_qreg_current->must_undo) {
-		/* currently editing local Q-Register */
+	if (teco_qreg_table_current == &locals) {
+		/* currently editing local Q-Register that's about to be freed */
 		teco_error_editinglocalqreg_set(error, teco_qreg_current->head.name.data,
 		                                teco_qreg_current->head.name.len);
 		goto error_add_frame;

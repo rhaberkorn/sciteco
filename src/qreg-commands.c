@@ -658,8 +658,8 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 
 		if (!teco_qreg_execute(qreg, &table, error))
 			return NULL;
-		if (teco_qreg_current && !teco_qreg_current->must_undo) {
-			/* currently editing local Q-Register */
+		if (teco_qreg_table_current == &table) {
+			/* currently editing local Q-Register that's about to be freed */
 			teco_error_editinglocalqreg_set(error, teco_qreg_current->head.name.data,
 			                                teco_qreg_current->head.name.len);
 			return NULL;

@@ -97,6 +97,7 @@ AT_CLEANUP
 AT_SETUP([Editing local registers in macro calls])
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e '@^Ua{@EQ.x// Mb Q*U*} Ma'], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Loading files into Q-Registers])
