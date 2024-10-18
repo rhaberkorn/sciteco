@@ -6,7 +6,7 @@ MASTER_SITES=	https://github.com/rhaberkorn/${PORTNAME}/releases/download/v${DIS
 
 MAINTAINER=	robin.haberkorn@googlemail.com
 COMMENT=	Scintilla-based Text Editor and Corrector
-WWW=		https://github.com/rhaberkorn/sciteco
+WWW=		https://rhaberkorn.github.io/sciteco/
 
 LICENSE=	GPLv3+
 LICENSE_FILE=	${WRKSRC}/COPYING
