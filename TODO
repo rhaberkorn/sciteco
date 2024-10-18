@@ -471,6 +471,8 @@ Features:
  * Linux: Relocatable binaries instead of hardcoding the library path.
    This makes it possible to run builds installed via
    `make install DESTDIR=...` and will aid in creating AppImages.
+   Currently we have to define "union: true" and consequently
+   the root directory is not what we would expect.
  * sample.teco_ini: Support opening files on certain lines
    (filename:line).
    Theoretically, this could also be added to the <EB> syntax,
@@ -552,9 +554,6 @@ Features:
    In the easiest case there could simply be 2 Q-Reg namespaces:
    ^F... for filenames and ^E... for extensions.
    The numeric part could be used to store the codepoints.
- * Scinterm: The underline and italic styles are not applied properly
-   even on Urxvt where they obviously work.
-   https://github.com/orbitalquark/scinterm/issues/22
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
