@@ -50,6 +50,7 @@ typedef enum {
 	TECO_ERROR_EDITINGLOCALQREG,
 	TECO_ERROR_MEMLIMIT,
 	TECO_ERROR_CLIPBOARD,
+	TECO_ERROR_WIN32,
 
 	/** Interrupt current operation */
 	TECO_ERROR_INTERRUPTED,
@@ -137,6 +138,15 @@ teco_error_editinglocalqreg_set(GError **error, const gchar *name, gsize len)
 	g_set_error(error, TECO_ERROR, TECO_ERROR_EDITINGLOCALQREG,
 	            "Editing local Q-Register \"%s\" at end of macro call", name_printable);
 }
+
+#ifdef G_OS_WIN32
+static inline void
+teco_error_win32_set(GError **error, const gchar *prefix, gint err)
+{
+	g_autofree gchar *msg = g_win32_error_message(err);
+	g_set_error(error, TECO_ERROR, TECO_ERROR_WIN32, "%s: %s", prefix, msg);
+}
+#endif
 
 static inline void
 teco_error_interrupted_set(GError **error)

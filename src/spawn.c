@@ -294,15 +294,35 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	teco_spawn_ctx.interrupted = FALSE;
 
 #ifdef G_OS_WIN32
+	teco_spawn_ctx.pid = CreateJobObject(NULL, NULL);
+	if (!teco_spawn_ctx.pid) {
+		teco_error_win32_set(error, "Cannot create job object", GetLastError());
+		goto gerror;
+	}
+	JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_info = {
+		.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+	};
+	if (!SetInformationJobObject(teco_spawn_ctx.pid, JobObjectExtendedLimitInformation,
+	                             &job_info, sizeof(job_info))) {
+		CloseHandle(teco_spawn_ctx.pid);
+		teco_error_win32_set(error, "Cannot configure job object", GetLastError());
+		goto gerror;
+	}
 	/*
 	 * Assigning the process to a job object will allow us to
 	 * kill the entire process tree relatively easily and without
 	 * race conditions.
+	 * There can however be a race condition while assigning the
+	 * job object since the process could already be dead.
 	 */
-	teco_spawn_ctx.pid = CreateJobObjectA(NULL, NULL);
-	if (!teco_spawn_ctx.pid || !AssignProcessToJobObject(teco_spawn_ctx.pid, pid)) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Cannot assign process to job object (%lu)", GetLastError());
+	DWORD exit_code;
+	if (!AssignProcessToJobObject(teco_spawn_ctx.pid, pid) &&
+	    (GetLastError() != ERROR_ACCESS_DENIED ||
+	     !GetExitCodeProcess(teco_spawn_ctx.pid, &exit_code) ||
+	     exit_code == STILL_ACTIVE)) {
+		CloseHandle(teco_spawn_ctx.pid);
+		teco_error_win32_set(error, "Cannot assign process to job object",
+		                     GetLastError());
 		goto gerror;
 	}
 

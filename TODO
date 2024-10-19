@@ -20,6 +20,7 @@ Known Bugs:
    Could this be a race condition when adding the process to the job object?
    Perhaps the child process should be created suspended before being added
    to the job object. Glib does not currently allow that.
+   This could already be fixed.
  * dlmalloc's malloc_trim() does not seem to free any resident memory
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
