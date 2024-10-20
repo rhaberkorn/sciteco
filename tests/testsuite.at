@@ -134,6 +134,8 @@ AT_SETUP([Automatic EOL normalization])
 AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N(0/0)' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt'"],
          0, ignore, ignore)
 AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@EB'autoeol-sciteco.txt' EL-0\"N(0/0)' 2EL @EW''"], 0, ignore, ignore)
+AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-input.txt], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting])

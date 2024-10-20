@@ -1,4 +1,4 @@
-Hello
-world
 FOO
-BAR
+BAR
+Здравствуй
+мир

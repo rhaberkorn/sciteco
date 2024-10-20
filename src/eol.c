@@ -239,7 +239,7 @@ teco_eol_reader_convert(teco_eol_reader_t *ctx, gchar **ret, gsize *data_len, GE
 				else if (ctx->eol_style != SC_EOL_CR)
 					ctx->eol_style_inconsistent = TRUE;
 			}
-			ctx->last_char = buffer[i];
+			ctx->last_char = (guchar)buffer[i];
 			break;
 		}
 	}
