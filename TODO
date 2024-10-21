@@ -16,11 +16,8 @@ Known Bugs:
    https://github.com/Bill-Gray/PDCursesMod/issues/322
  * Win32: Interrupting <EC> will sometimes hang.
    Affects both PDCurses/WinGUI and Gtk.
-   In this case you have to kill the subprocess using the task manager.
-   Could this be a race condition when adding the process to the job object?
-   Perhaps the child process should be created suspended before being added
-   to the job object. Glib does not currently allow that.
-   This could already be fixed.
+   This no longer happens with ECbash -c 'while true; do true; done'$.
+   However ECping -t 8.8.8.8$ still cannot be interrupted.
  * dlmalloc's malloc_trim() does not seem to free any resident memory
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is

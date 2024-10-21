@@ -92,10 +92,12 @@ static void __attribute__((constructor))
 teco_spawn_init(void)
 {
 	memset(&teco_spawn_ctx, 0, sizeof(teco_spawn_ctx));
+	/* FIXME: Cannot share these objects between calls */
+#if 0
 	/*
 	 * Context and loop can be reused between EC invocations.
 	 * However we should not use the default context, since it
-	 * may be used by GTK
+	 * may be used by GTK.
 	 */
 	teco_spawn_ctx.mainctx = g_main_context_new();
 	teco_spawn_ctx.mainloop = g_main_loop_new(teco_spawn_ctx.mainctx, FALSE);
@@ -108,6 +110,7 @@ teco_spawn_init(void)
 	g_source_set_callback(teco_spawn_ctx.idle_src, (GSourceFunc)teco_spawn_idle_cb,
 	                      NULL, NULL);
 	g_source_attach(teco_spawn_ctx.idle_src, teco_spawn_ctx.mainctx);
+#endif
 }
 
 static gchar **
@@ -286,6 +289,20 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	                              &stdin_fd, &stdout_fd, NULL, error))
 		goto gerror;
 
+	/*
+	 * FIXME: At least on Win32, we cannot resume a main loop
+	 * after it has been quit once, which is obviously a bug.
+	 * Therefore, we cannot cache the context, loop and idle_src.
+	 */
+	teco_spawn_ctx.mainctx = g_main_context_new();
+	teco_spawn_ctx.mainloop = g_main_loop_new(teco_spawn_ctx.mainctx, FALSE);
+
+	teco_spawn_ctx.idle_src = g_idle_source_new();
+	g_source_set_priority(teco_spawn_ctx.idle_src, G_PRIORITY_LOW);
+	g_source_set_callback(teco_spawn_ctx.idle_src, (GSourceFunc)teco_spawn_idle_cb,
+	                      NULL, NULL);
+	g_source_attach(teco_spawn_ctx.idle_src, teco_spawn_ctx.mainctx);
+
 	teco_spawn_ctx.child_src = g_child_watch_source_new(pid);
 	g_source_set_callback(teco_spawn_ctx.child_src, (GSourceFunc)teco_spawn_child_watch_cb,
 	                      NULL, NULL);
@@ -293,6 +310,9 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	teco_spawn_ctx.interrupted = FALSE;
 
 #ifdef G_OS_WIN32
+	/*
+	 * FIXME: In case of errors, we will leak memory.
+	 */
 	teco_spawn_ctx.pid = CreateJobObject(NULL, NULL);
 	if (!teco_spawn_ctx.pid) {
 		teco_error_win32_set(error, "Cannot create job object", GetLastError());
@@ -405,6 +425,10 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 #ifdef G_OS_WIN32
 	CloseHandle(teco_spawn_ctx.pid);
 #endif
+
+	g_source_unref(teco_spawn_ctx.idle_src);
+	g_main_loop_unref(teco_spawn_ctx.mainloop);
+	g_main_context_unref(teco_spawn_ctx.mainctx);
 
 	/*
 	 * NOTE: This includes interruptions following CTRL+C.
@@ -828,10 +852,13 @@ teco_spawn_idle_cb(gpointer user_data)
 static void TECO_DEBUG_CLEANUP
 teco_spawn_cleanup(void)
 {
+	/* FIXME: Cannot share these objects between calls */
+#if 0
 	g_source_unref(teco_spawn_ctx.idle_src);
 
 	g_main_loop_unref(teco_spawn_ctx.mainloop);
 	g_main_context_unref(teco_spawn_ctx.mainctx);
+#endif
 
 	if (teco_spawn_ctx.error)
 		g_error_free(teco_spawn_ctx.error);
