@@ -126,7 +126,7 @@ teco_eol_reader_convert(teco_eol_reader_t *ctx, gchar **ret, gsize *data_len, GE
 	}
 	ctx->offset += ctx->block_len;
 
-	if (ctx->offset == ctx->read_len) {
+	if (ctx->offset >= ctx->read_len) {
 		ctx->offset = 0;
 
 		switch (ctx->read_cb(ctx, &ctx->read_len, error)) {

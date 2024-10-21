@@ -24,7 +24,6 @@
 #include <glib.h>
 
 #include <gmodule.h>
-#include <glib/gprintf.h>
 
 #ifdef HAVE_WINDOWS_H
 #define WIN32_LEAN_AND_MEAN
@@ -362,7 +361,7 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	teco_spawn_ctx.stdout_src = g_io_create_watch(stdout_chan,
 	                                              G_IO_IN | G_IO_ERR | G_IO_HUP);
 	g_source_set_callback(teco_spawn_ctx.stdout_src, (GSourceFunc)teco_spawn_stdout_watch_cb,
-	                      NULL, NULL);
+	                      GINT_TO_POINTER(FALSE), NULL);
 	g_source_attach(teco_spawn_ctx.stdout_src, teco_spawn_ctx.mainctx);
 
 	if (!teco_spawn_ctx.register_argument) {
@@ -618,19 +617,23 @@ teco_spawn_child_watch_cb(GPid pid, gint status, gpointer data)
 	/*
 	 * There might still be data to read from stdout,
 	 * but we cannot count on the stdout watcher to be ever called again.
+	 * Moreover, reads may return 0 even if the socket is blocking.
 	 *
 	 * FIXME: This is not done after interruptions since it will hang at least on Windows.
 	 * This shouldn't happen since the IO channel is non-blocking.
 	 */
-	if (!teco_spawn_ctx.interrupted)
-		teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel, G_IO_IN, NULL);
+	if (!teco_spawn_ctx.interrupted) {
+		g_io_channel_set_flags(teco_spawn_ctx.stdout_reader.gio.channel, 0, NULL);
+		teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel,
+		                           G_IO_IN, GINT_TO_POINTER(TRUE));
+	}
 
 	/*
 	 * teco_spawn_stdout_watch_cb() might have set the error.
 	 */
 	if (!teco_spawn_ctx.error && !teco_spawn_check_wait_status(status, &teco_spawn_ctx.error))
-			teco_spawn_ctx.rc = teco_spawn_ctx.error->domain == G_SPAWN_EXIT_ERROR
-						? ABS(teco_spawn_ctx.error->code) : TECO_FAILURE;
+		teco_spawn_ctx.rc = teco_spawn_ctx.error->domain == G_SPAWN_EXIT_ERROR
+					? ABS(teco_spawn_ctx.error->code) : TECO_FAILURE;
 
 	g_main_loop_quit(teco_spawn_ctx.mainloop);
 }
@@ -691,6 +694,8 @@ remove:
 static gboolean
 teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer data)
 {
+	gboolean read_to_eof = GPOINTER_TO_INT(data);
+
 	if (teco_spawn_ctx.error)
 		/* source has already been dispatched */
 		return G_SOURCE_REMOVE;
@@ -706,13 +711,18 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 			goto error;
 
 		case G_IO_STATUS_EOF:
+			/*
+			 * NOTE: At least on Windows, the callback can still be invoked
+			 * afterwards, probably because the source is already queued.
+			 * This is not easy to prevent.
+			 */
 			return G_SOURCE_REMOVE;
 
 		default:
 			break;
 		}
 
-		if (!buffer.len)
+		if (!read_to_eof && !buffer.len)
 			return G_SOURCE_CONTINUE;
 
 		if (qreg) {
