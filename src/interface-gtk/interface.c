@@ -717,6 +717,11 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	}
 
 	*len = gtk_selection_data_get_length(contents);
+#ifdef G_OS_WIN32
+	/* the length always contains a trailing null byte on Windows */
+	if (*len > 0)
+		(*len)--;
+#endif
 	if (str) {
 		/* gtk_selection_data_get_text() does not work with embedded nulls */
 		*str = memcpy(g_malloc(*len+1), gtk_selection_data_get_data(contents), *len);
