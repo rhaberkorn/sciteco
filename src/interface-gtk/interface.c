@@ -655,7 +655,12 @@ static void
 teco_interface_clipboard_provide(GtkClipboard *clipboard, GtkSelectionData *selection, guint info, gpointer userdata)
 {
 	GString *str = userdata;
-	gtk_selection_data_set_text(selection, str->str, str->len);
+	gint len = str->len;
+#ifdef G_OS_WIN32
+	/* include trailing null byte */
+	len++;
+#endif
+	gtk_selection_data_set_text(selection, str->str, len);
 }
 
 static void
