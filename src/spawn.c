@@ -641,16 +641,26 @@ teco_spawn_child_watch_cb(GPid pid, gint status, gpointer data)
 	/*
 	 * There might still be data to read from stdout,
 	 * but we cannot count on the stdout watcher to be ever called again.
-	 * Moreover, reads may return 0 even if the socket is blocking.
-	 *
+	 */
+#ifdef G_OS_WIN32
+	/*
 	 * FIXME: This is not done after interruptions since it will hang at least on Windows.
-	 * This shouldn't happen since the IO channel is non-blocking.
+	 * This shouldn't happen at least if the IO channel is non-blocking.
+	 * Moreover, reads may return 0 even if the socket is blocking.
 	 */
 	if (!teco_spawn_ctx.interrupted) {
 		g_io_channel_set_flags(teco_spawn_ctx.stdout_reader.gio.channel, 0, NULL);
 		teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel,
 		                           G_IO_IN, GINT_TO_POINTER(TRUE));
 	}
+#else /* !G_OS_WIN32 */
+	/*
+	 * On UNIX on the other hand, we apparently never receive G_IO_STATUS_EOF
+	 * and MUST react to a read length of 0.
+	 */
+	teco_spawn_stdout_watch_cb(teco_spawn_ctx.stdout_reader.gio.channel,
+	                           G_IO_IN, GINT_TO_POINTER(FALSE));
+#endif
 
 	/*
 	 * teco_spawn_stdout_watch_cb() might have set the error.
