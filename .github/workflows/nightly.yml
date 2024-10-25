@@ -288,7 +288,7 @@ jobs:
       run: >
         pacman -S --noconfirm --needed
         base-devel mingw-w64-i686-autotools mingw-w64-i686-toolchain
-        mingw-w64-i686-glib2 mingw-w64-i686-gtk3
+        mingw-w64-i686-glib2 mingw-w64-i686-gtk3 mingw-w64-i686-librsvg
         groff
 
     - name: Configure Build
@@ -341,11 +341,11 @@ jobs:
         # FIXME: It's possible to change the location of loaders.cache via $GDK_PIXBUF_MODULE_FILE.
         # If we did that, we could avoid "reusing" the lib/ directory.
         # This is important when somebody changes $SCITECOPATH.
-        cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{libpixbufloader-svg.dll,libpixbufloader-png.dll} .
+        cp /mingw32/lib/gdk-pixbuf-2.0/2.10.0/loaders/{pixbufloader_svg.dll,libpixbufloader-png.dll} .
         # Collect DLLs for all pixbuf loaders into the root directory
-        for f in libpixbufloader-*.dll; do ../contrib/mingw-bundledlls --copy $f; done
+        for f in *pixbufloader*.dll; do ../contrib/mingw-bundledlls --copy $f; done
         mkdir -p lib/gdk-pixbuf-2.0/2.10.0/loaders/
-        mv libpixbufloader-*.dll lib/gdk-pixbuf-2.0/2.10.0/loaders/
+        mv *pixbufloader*.dll lib/gdk-pixbuf-2.0/2.10.0/loaders/
         cp ../win32/loaders.cache lib/gdk-pixbuf-2.0/2.10.0/
         zip -9 -r ../sciteco-gtk3_nightly_win32.zip .
     - name: Archive Windows Distribution (GTK+ 3)
