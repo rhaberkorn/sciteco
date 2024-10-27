@@ -408,8 +408,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 
 		if (colon_modified) {
 			/* append to register */
-			if (!qreg->vtable->undo_append_string(qreg, error) ||
-			    !qreg->vtable->append_string(qreg, buffer, len, error))
+			if (!qreg->vtable->append_string(qreg, buffer, len, error))
 				return NULL;
 		} else {
 			/* set register */
@@ -422,8 +421,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 
 	if (args > 0 || colon_modified) {
 		/* append to register */
-		if (!qreg->vtable->undo_append_string(qreg, error) ||
-		    !qreg->vtable->append_string(qreg, str->data, str->len, error))
+		if (!qreg->vtable->append_string(qreg, str->data, str->len, error))
 			return NULL;
 	} else {
 		/* set register */
@@ -790,8 +788,7 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	teco_interface_ssm(SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
 
 	if (teco_machine_main_eval_colon(ctx)) {
-		if (!qreg->vtable->undo_append_string(qreg, error) ||
-		    !qreg->vtable->append_string(qreg, str, len, error))
+		if (!qreg->vtable->append_string(qreg, str, len, error))
 			return NULL;
 	} else {
 		guint cp = teco_interface_get_codepage();

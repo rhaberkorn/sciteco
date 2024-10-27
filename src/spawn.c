@@ -761,8 +761,7 @@ teco_spawn_stdout_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer da
 
 		if (qreg) {
 			if (teco_spawn_ctx.text_added) {
-				if (!qreg->vtable->undo_append_string(qreg, &teco_spawn_ctx.error) ||
-				    !qreg->vtable->append_string(qreg, buffer.data, buffer.len,
+				if (!qreg->vtable->append_string(qreg, buffer.data, buffer.len,
 				                                 &teco_spawn_ctx.error))
 					goto error;
 			} else {

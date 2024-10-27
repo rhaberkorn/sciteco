@@ -183,6 +183,20 @@ teco_qreg_plain_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GE
 	if (!len)
 		return TRUE;
 
+	if (qreg->must_undo) { // FIXME
+		/*
+		 * Necessary, so that upon rubout the
+		 * string's parameters are restored.
+		 */
+		teco_doc_update(&qreg->string, teco_qreg_view);
+
+		if (teco_qreg_current && teco_qreg_current->must_undo) // FIXME
+			teco_doc_undo_edit(&teco_qreg_current->string);
+
+		teco_doc_undo_reset(&qreg->string);
+		undo__teco_view_ssm(teco_qreg_view, SCI_UNDO, 0, 0);
+	}
+
 	if (teco_qreg_current)
 		teco_doc_update(&teco_qreg_current->string, teco_qreg_view);
 
@@ -194,6 +208,15 @@ teco_qreg_plain_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GE
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string, 0);
+
+	/*
+	 * Make sure these undo tokens are only generated now,
+	 * so that teco_doc_edit() always initializes the document and
+	 * the default codepage.
+	 */
+	if (qreg->must_undo) // FIXME
+		teco_doc_undo_edit(&qreg->string);
+
 	return TRUE;
 }
 
@@ -354,7 +377,6 @@ teco_qreg_plain_save(teco_qreg_t *qreg, const gchar *filename, GError **error)
 	.set_string		= teco_qreg_plain_set_string, \
 	.undo_set_string	= teco_qreg_plain_undo_set_string, \
 	.append_string		= teco_qreg_plain_append_string, \
-	.undo_append_string	= teco_qreg_plain_undo_set_string, \
 	.get_string		= teco_qreg_plain_get_string, \
 	.get_character		= teco_qreg_plain_get_character, \
 	.get_length		= teco_qreg_plain_get_length, \
@@ -567,12 +589,6 @@ teco_qreg_bufferinfo_append_string(teco_qreg_t *qreg, const gchar *str, gsize le
 	return FALSE;
 }
 
-static gboolean
-teco_qreg_bufferinfo_undo_append_string(teco_qreg_t *qreg, GError **error)
-{
-	return TRUE;
-}
-
 /*
  * NOTE: The `string` component is currently unused on the "*" register.
  */
@@ -609,7 +625,6 @@ teco_qreg_bufferinfo_new(void)
 		.set_string		= teco_qreg_bufferinfo_set_string,
 		.undo_set_string	= teco_qreg_bufferinfo_undo_set_string,
 		.append_string		= teco_qreg_bufferinfo_append_string,
-		.undo_append_string	= teco_qreg_bufferinfo_undo_append_string,
 		.get_string		= teco_qreg_bufferinfo_get_string,
 		/*
 		 * As teco_qreg_bufferinfo_set_string() is not implemented,
@@ -671,12 +686,6 @@ teco_qreg_workingdir_append_string(teco_qreg_t *qreg, const gchar *str, gsize le
 }
 
 static gboolean
-teco_qreg_workingdir_undo_append_string(teco_qreg_t *qreg, GError **error)
-{
-	return TRUE;
-}
-
-static gboolean
 teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
                                 guint *codepage, GError **error)
 {
@@ -709,7 +718,6 @@ teco_qreg_workingdir_new(void)
 		.set_string		= teco_qreg_workingdir_set_string,
 		.undo_set_string	= teco_qreg_workingdir_undo_set_string,
 		.append_string		= teco_qreg_workingdir_append_string,
-		.undo_append_string	= teco_qreg_workingdir_undo_append_string,
 		.get_string		= teco_qreg_workingdir_get_string
 	);
 
@@ -776,12 +784,6 @@ teco_qreg_clipboard_append_string(teco_qreg_t *qreg, const gchar *str, gsize len
 {
 	teco_error_qregopunsupported_set(error, qreg->head.name.data, qreg->head.name.len, FALSE);
 	return FALSE;
-}
-
-static gboolean
-teco_qreg_clipboard_undo_append_string(teco_qreg_t *qreg, GError **error)
-{
-	return TRUE;
 }
 
 static gboolean
@@ -878,7 +880,6 @@ teco_qreg_clipboard_new(const gchar *name)
 		.set_string		= teco_qreg_clipboard_set_string,
 		.undo_set_string	= teco_qreg_clipboard_undo_set_string,
 		.append_string		= teco_qreg_clipboard_append_string,
-		.undo_append_string	= teco_qreg_clipboard_undo_append_string,
 		.get_string		= teco_qreg_clipboard_get_string,
 		.load			= teco_qreg_clipboard_load
 	);

@@ -52,8 +52,9 @@ typedef const struct {
 	gboolean (*set_string)(teco_qreg_t *qreg, const gchar *str, gsize len,
 	                       guint codepage, GError **error);
 	gboolean (*undo_set_string)(teco_qreg_t *qreg, GError **error);
+
+	/* does not need an explicit undo-call */
 	gboolean (*append_string)(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error);
-	gboolean (*undo_append_string)(teco_qreg_t *qreg, GError **error);
 
 	gboolean (*get_string)(teco_qreg_t *qreg, gchar **str, gsize *len,
 	                       guint *codepage, GError **error);
