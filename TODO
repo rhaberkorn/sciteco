@@ -418,9 +418,6 @@ Features:
    macros. The same construct would also be useful with
    non-interactive commands as a way to store the supplied parameter
    using EU for instance.
- * Adding a secret command line option to process immediate editing
-   commands in batch mode with undo would allow us to add some
-   test cases that otherwise only occur in interactive mode.
  * Emscripten nodejs port.
    This may be a viable way to run SciTECO "cross"-platform, at least
    for evaluation... on UNIX-like systems in absence of prebuilt binaries.

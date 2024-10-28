@@ -105,6 +105,7 @@ teco_get_default_config_path(const gchar *program)
 static gchar *teco_eval_macro = NULL;
 static gboolean teco_mung_file = FALSE;
 static gboolean teco_mung_profile = TRUE;
+static gchar *teco_fake_cmdline = NULL;
 static gboolean teco_8bit_clean = FALSE;
 
 static gchar *
@@ -121,6 +122,9 @@ teco_process_options(gchar ***argv)
 		 "Do not mung "
 		 "$SCITECOCONFIG" G_DIR_SEPARATOR_S INI_FILE " "
 		 "even if it exists"},
+		{"fake-cmdline", 0, G_OPTION_FLAG_HIDDEN,
+		 G_OPTION_ARG_STRING, &teco_fake_cmdline,
+		 "Emulate key presses in batch mode (for debugging)", "keys"},
 		{"8bit", '8', 0, G_OPTION_ARG_NONE, &teco_8bit_clean,
 		 "Use ANSI encoding by default and disable automatic EOL conversion"},
 		{NULL}
@@ -436,6 +440,15 @@ main(int argc, char **argv)
 	 * teco_cmdline_cleanup() here.
 	 */
 	teco_machine_main_init(&teco_cmdline.machine, &local_qregs, TRUE);
+
+	if (G_UNLIKELY(teco_fake_cmdline != NULL)) {
+		if (!teco_cmdline_keypress(teco_fake_cmdline, strlen(teco_fake_cmdline), &error) &&
+		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
+			teco_error_add_frame_toplevel();
+			goto error;
+		}
+		goto cleanup;
+	}
 
 	if (!teco_interface_event_loop(&error))
 		goto error;
