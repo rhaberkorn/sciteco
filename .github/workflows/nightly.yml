@@ -135,7 +135,8 @@ jobs:
         # FIXME: Should we encode the Git commit into the package version?
         # Unfortunately, I cannot find detailed information on how Mac OS
         # interpretes these version strings.
-        pkgbuild --identifier net.sf.sciteco.pkg --version 2.2.0 \
+        VERSION=`sed -nE 's/#define PACKAGE_VERSION "(.*)"/\1/p' config.h`
+        pkgbuild --identifier net.sf.sciteco.pkg --version $VERSION \
                  --root temp-install --install-location / \
                  sciteco-curses_nightly_macos_x86_64.pkg
     - name: Archive Mac OS Distribution (ncurses)
