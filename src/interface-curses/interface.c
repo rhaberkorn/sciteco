@@ -1062,6 +1062,13 @@ void
 teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 {
 	/*
+	 * Especially important on PDCurses, which can crash
+	 * in newpad() when run with --fake-cmdline.
+	 */
+	if (!teco_interface.cmdline_window) /* batch mode */
+		return;
+
+	/*
 	 * Replace entire pre-formatted command-line.
 	 * We don't know if it is similar to the last one,
 	 * so resizing makes no sense.
