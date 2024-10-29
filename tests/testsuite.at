@@ -171,6 +171,7 @@ AT_CLEANUP
 
 AT_SETUP([Search on new empty document])
 AT_CHECK([$SCITECO -e ":@S/foo/\"S(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e ":@N/foo/\"S(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting during spawning])

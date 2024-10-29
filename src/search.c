@@ -830,6 +830,13 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
 
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+	                                         teco_interface_get_codepage());
+
+	if (G_UNLIKELY(!teco_search_qreg_machine))
+		teco_search_qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals,
+		                                                     ctx->parent.must_undo);
+
 	teco_undo_object_parameters_push(&teco_search_parameters);
 	teco_search_parameters.dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
