@@ -4,20 +4,21 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
+ * Gtk sometimes allows scrolling with the mouse when it shouldn't.
+   All mouse events should currently be blocked.
  * Editing very large files, or at least files with very long lines, is painstakingly slow.
    Try for instance openrussian-custom-2023-10-09.sql.
    For some strange reason, this affects both Curses and GTK.
    In UTF-8 mode, this doesn't even load anytime soon.
- * PDCurses/WinGUI: Pressing Ctrl+Shift+6 on an US keyboard layout
-   inserts "6^^". This looks like a PDCurses/WinGUI bug.
-   https://github.com/Bill-Gray/PDCursesMod/issues/323
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
+   Could already be fixed upstream, see:
    https://github.com/Bill-Gray/PDCursesMod/issues/322
  * Win32: Interrupting <EC> will sometimes hang.
    Affects both PDCurses/WinGUI and Gtk.
    This no longer happens with ECbash -c 'while true; do true; done'$.
    However ECping -t 8.8.8.8$ still cannot be interrupted.
+ * PDCurses/Win32: Crashes sometimes without any error message.
  * dlmalloc's malloc_trim() does not seem to free any resident memory
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
@@ -147,6 +148,7 @@ Known Bugs:
    commands for ALL of the Scintilla messages involved.
    Automatically running EF EB...$ in the "save" hook could
    also have unwanted side effects.
+ * session.vcs does not properly work in MSYS2 environments.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -238,11 +240,6 @@ Features:
    mouse state (this maps to an Interface method).
    This should be configurable via an ED flag as it changes
    the behavior of the terminal.
- * GTK currently allows mouse scrolling as it is not under control
-   of SciTECO.
-   Once we got mouse support in Curses, we could either also
-   automatically scroll or (better) expose the scroll events
-   as key macros.
  * Support loading from stdin (--stdin) and writing to
    the current buffer to stdout on exit (--stdout).
    This will make it easy to write command line filters,
@@ -344,6 +341,9 @@ Features:
    Have a look how it is done in Scintilla.
  * Progress indication in commandline cursor:
    Perhaps blinking or invisible?
+   The problem is, this won't work so easily once we use a Scintilla
+   minibuffer everywhere.
+   Gtk could at the very least use the hourglass cursor.
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.
@@ -461,7 +461,10 @@ Features:
    * Mac OS Arm64 builds either separately or via universal binary.
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
- * Get into AppImageHub.
+ * Get into appimage.github.io and AppImageHub.
+   See https://github.com/AppImage/appimage.github.io/pull/3402
+ * Get into mentors.debian.net. First step to being adopted
+   into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
  * Linux: Relocatable binaries instead of hardcoding the library path.
    This makes it possible to run builds installed via
@@ -475,6 +478,7 @@ Features:
    In principe there is little need for that in interactive mode,
    but it would ease opening filenames copied from compiler errors
    or grep -n results.
+   Other editors use the +line[,col] syntax (see nano).
  * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
  * Case-sensitive search command (modifier or flag).
@@ -491,6 +495,10 @@ Features:
    https://github.com/fpjohnston/TECO-64/blob/master/doc/oper.md
    However, instead of introducing a separate parser state, better
    use operators like ~=, ~< etc.
+ * Perhaps ignore whitespace after @ as does TECO-64.
+   There is little benefit in using spaces or tabs as string delimiters,
+   but ignoring whitespace may increase readability. Eg.
+   @^Ua {...}
  * It should be possible to disable auto-completions of one-character
    register names, so that we can map the idention macro to M<TAB>.
  * Add a configure-switch for LTO (--enable-lto).
