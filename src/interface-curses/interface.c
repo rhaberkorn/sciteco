@@ -1705,6 +1705,18 @@ teco_interface_event_loop_iter(void)
 			/* unhandled function key */
 			return;
 
+#ifdef __PDCURSES__
+	/*
+	 * Especially PDCurses/WinGUI likes to report two keypresses,
+	 * e.g. for CTRL+Shift+6 (CTRL+^).
+	 * Make sure we don't filter out AltGr, which may be reported as CTRL+ALT.
+	 */
+	if ((PDC_get_key_modifiers() &
+	     (PDC_KEY_MODIFIER_CONTROL | PDC_KEY_MODIFIER_ALT)) == PDC_KEY_MODIFIER_CONTROL &&
+	    !TECO_IS_CTL(key))
+		return;
+#endif
+
 		/*
 		 * NOTE: There's also wget_wch(), but it requires
 		 * a widechar version of Curses.
