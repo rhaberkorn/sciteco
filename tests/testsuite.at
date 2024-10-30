@@ -1,6 +1,9 @@
 AT_INIT
 AT_COLOR_TESTS
 
+AT_ARG_OPTION([valgrind],
+	AS_HELP_STRING([--valgrind], [Run tests under Valgrind (memcheck)]))
+
 # NOTE: There is currently no way to influence the return
 # code of SciTECO, except to provoke an error.
 # Since errors cannot be yielded explicitly, we use the

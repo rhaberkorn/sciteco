@@ -6,8 +6,12 @@ host=@host@
 # anyway as we don't want to test some preinstalled SciTECO.
 SCITECO="@abs_top_builddir@/src/sciteco"
 
+if [ $at_arg_valgrind != false ]; then
+	SCITECO="valgrind --tool=memcheck --error-exitcode=66 $SCITECO"
+fi
+
 # For testing command-line editing:
-SCITECO_CMDLINE="@abs_top_builddir@/src/sciteco --no-profile --fake-cmdline"
+SCITECO_CMDLINE="$SCITECO --no-profile --fake-cmdline"
 
 # Make sure that the standard library from the source package
 # is used.
