@@ -101,7 +101,11 @@ teco_state_end_of_macro(teco_machine_t *ctx, GError **error)
 gboolean
 teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_pos, GError **error)
 {
+	gsize last_pc = 0;
+
 	while (ctx->macro_pc < stop_pos) {
+		last_pc = ctx->macro_pc;
+
 		if (G_UNLIKELY(teco_interface_is_interrupted())) {
 			teco_error_interrupted_set(error);
 			goto error_attach;
@@ -149,7 +153,7 @@ error_attach:
 	 * FIXME: Maybe this can be avoided altogether by passing in ctx->macro_pc
 	 * from the callees?
 	 */
-	teco_error_set_coord(macro, ctx->macro_pc-1);
+	teco_error_set_coord(macro, last_pc);
 	return FALSE;
 }
 
@@ -214,7 +218,8 @@ teco_execute_macro(const gchar *macro, gsize macro_len,
 
 	if (G_UNLIKELY(teco_loop_stack->len > macro_machine.loop_stack_fp)) {
 		const teco_loop_context_t *ctx = &g_array_index(teco_loop_stack, teco_loop_context_t, teco_loop_stack->len-1);
-		teco_error_set_coord(macro, ctx->pc);
+		/* ctx->pc points to the character after the loop start command */
+		teco_error_set_coord(macro, ctx->pc-1);
 
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 		                    "Unterminated loop");
