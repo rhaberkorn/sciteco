@@ -66,7 +66,7 @@ jobs:
     # NOTE: macOS already ships with ncurses and
     # XCode already comes with the autotools.
     - name: Install Build Dependencies
-      run: brew install autoconf automake libtool glib groff doxygen valgrind
+      run: brew install autoconf automake libtool glib groff doxygen
     - name: Configure Build
       env:
         # Make sure we don't pick up GCC by accident.
@@ -81,7 +81,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose --valgrind"
+      run: make check TESTSUITEFLAGS="--verbose"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     - run: make distcheck
