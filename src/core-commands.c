@@ -1292,7 +1292,7 @@ teco_state_fcommand_loop_start(teco_machine_main_t *ctx, GError **error)
 		/* outside of loop */
 		if (!teco_expressions_discard_args(error))
 			return;
-		ctx->macro_pc = -1;
+		ctx->macro_pc = 0;
 		return;
 	}
 

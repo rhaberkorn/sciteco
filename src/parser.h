@@ -447,8 +447,8 @@ typedef enum {
 struct teco_machine_main_t {
 	teco_machine_t parent;
 
-	/* signed because it is sometimes set to -1 for flow control */
-	gssize macro_pc;
+	/** Program counter, ie. pointer to the next character in the current macro frame */
+	gsize macro_pc;
 
 	/**
 	 * Aliases bitfield with an integer.

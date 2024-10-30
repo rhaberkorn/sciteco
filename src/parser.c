@@ -122,10 +122,10 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_
 			 ctx->macro_pc, chr, chr, ctx->parent.current, ctx->mode);
 #endif
 
+		ctx->macro_pc = g_utf8_next_char(macro+ctx->macro_pc) - macro;
+
 		if (!teco_machine_input(&ctx->parent, chr, error))
 			goto error_attach;
-
-		ctx->macro_pc = g_utf8_next_char(macro+ctx->macro_pc) - macro;
 	}
 
 	/*
@@ -149,7 +149,7 @@ error_attach:
 	 * FIXME: Maybe this can be avoided altogether by passing in ctx->macro_pc
 	 * from the callees?
 	 */
-	teco_error_set_coord(macro, ctx->macro_pc);
+	teco_error_set_coord(macro, ctx->macro_pc-1);
 	return FALSE;
 }
 
