@@ -30,6 +30,10 @@
 #include <windows.h>
 #endif
 
+#ifdef HAVE_SYS_CAPSICUM_H
+#include <sys/capsicum.h>
+#endif
+
 #include "sciteco.h"
 #include "interface.h"
 #include "undo.h"
@@ -267,6 +271,20 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 
 	g_autoptr(GIOChannel) stdin_chan = NULL, stdout_chan = NULL;
 	g_auto(GStrv) argv = NULL, envp = NULL;
+
+#ifdef HAVE_CAP_GETMODE
+	/*
+	 * If we don't explicitly check for sandboxing, glib could assert
+	 * internally and we want to detect all unexpected assertions
+	 * in "infinite monkey"-style tests.
+	 */
+	u_int sandbox_mode;
+	if (G_UNLIKELY(cap_getmode(&sandbox_mode) || sandbox_mode)) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Forbidden in Capsicum sandbox");
+		goto gerror;
+	}
+#endif
 
 	if (!str->len || teco_string_contains(str, '\0')) {
 		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,

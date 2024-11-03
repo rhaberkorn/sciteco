@@ -148,6 +148,10 @@ case $host in
 	;;
 esac
 
+# Optional support for sandboxing via FreeBSD's Capsicum.
+AC_CHECK_FUNCS([cap_enter cap_getmode])
+AC_CHECK_HEADERS([sys/capsicum.h])
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
 AC_C_INLINE

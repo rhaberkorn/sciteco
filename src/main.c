@@ -29,6 +29,10 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+#ifdef HAVE_SYS_CAPSICUM_H
+#include <sys/capsicum.h>
+#endif
+
 #include "sciteco.h"
 #include "file-utils.h"
 #include "cmdline.h"
@@ -106,6 +110,7 @@ static gchar *teco_eval_macro = NULL;
 static gboolean teco_mung_file = FALSE;
 static gboolean teco_mung_profile = TRUE;
 static gchar *teco_fake_cmdline = NULL;
+static gboolean teco_sandbox = FALSE;
 static gboolean teco_8bit_clean = FALSE;
 
 static gchar *
@@ -125,6 +130,9 @@ teco_process_options(gchar ***argv)
 		{"fake-cmdline", 0, G_OPTION_FLAG_HIDDEN,
 		 G_OPTION_ARG_STRING, &teco_fake_cmdline,
 		 "Emulate key presses in batch mode (for debugging)", "keys"},
+		{"sandbox", 0, G_OPTION_FLAG_HIDDEN,
+		 G_OPTION_ARG_NONE, &teco_sandbox,
+		 "Sandbox application (for debugging)"},
 		{"8bit", '8', 0, G_OPTION_ARG_NONE, &teco_8bit_clean,
 		 "Use ANSI encoding by default and disable automatic EOL conversion"},
 		{NULL}
@@ -335,6 +343,16 @@ main(int argc, char **argv)
 	 * All remaining arguments in argv are arguments
 	 * to the macro or munged file.
 	 */
+
+#ifdef HAVE_CAP_ENTER
+	/*
+	 * In the sandbox, we cannot access files or execute external processes.
+	 * Effectively, munging won't work, so you can pass macros only via
+	 * --eval or --fake-cmdline.
+	 */
+	if (G_UNLIKELY(teco_sandbox))
+		cap_enter();
+#endif
 
 	if (teco_8bit_clean)
 		/* equivalent to 16,4ED but executed earlier */

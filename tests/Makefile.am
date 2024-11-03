@@ -39,3 +39,6 @@ AUTOTEST = $(AUTOM4TE) --language=autotest
 $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/package.m4
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
+
+# For manually running "infinite monkey"-style tests.
+EXTRA_DIST += monkey-parse.apl monkey-test.apl
