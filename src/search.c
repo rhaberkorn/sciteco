@@ -271,7 +271,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				pattern->data += len;
 				pattern->len -= len;
 				*state = TECO_SEARCH_STATE_START;
-				return g_regex_escape_string(str.data, str.len);
+				return g_regex_escape_string(str.data ? : "", str.len);
 			}
 			break;
 		}

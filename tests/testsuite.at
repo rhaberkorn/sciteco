@@ -177,6 +177,11 @@ AT_CHECK([$SCITECO -e ":@S/foo/\"S(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e ":@N/foo/\"S(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Search for one of characters in uninitialized Q-Register])
+# Register "a" exists, but it's string part is yet uninitialized.
+AT_CHECK([$SCITECO -e ":@S/^EGa/\"S(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
 AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
