@@ -2,7 +2,7 @@
 ⍝ Calculate frequency distribution of the characters/glyphs in a given number of input files.
 ⍝ This will be the input for monkey-test.apl.
 Files ← 4↓⎕ARG
-Data ← 19 ⎕CR ∊⎕FIO['read_file']¨Files
+Data ← 19 ⎕CR ∊⎕FIO.read_file¨Files
 
 ∇ Dist←GetDist Data; i; C
   ⍝Dist ← 38 ⌷CR ↑⍴Data ⍝ associative array

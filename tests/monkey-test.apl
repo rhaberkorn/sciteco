@@ -27,27 +27,27 @@ GenArg  ← {(⍵ ? $3000)~0 27}
 Escape ← {"'",(∊{⍺,"'\\''",⍵}/(⍵≠"'") ⊂ ⍵),"'"}
 
 ⍝ File WriteFile Contents
-WriteFile ← {⊣⍵ ⎕FIO['fwrite_UNI'] Hnd ← "w" ⎕FIO['fopen'] ⍺ ⋄ ⊣⎕FIO['fclose'] Hnd; Hnd}
+WriteFile ← {⊣⍵ ⎕FIO.fwrite_UNI Hnd ← "w" ⎕FIO.fopen ⍺ ⋄ ⊣⎕FIO.fclose Hnd; Hnd}
 
-∇ Sig←Arg Exec Macro; Hnd; Data; Stdout
+∇ Sig←Arg Exec Macro; Hnd; Data; Stdout; WSTATUS
   ⍝ FIXME: We cannot currently mung files in --sandbox mode.
   ⍝ To support that, we would effectively have to add a test compilation unit,
   ⍝ in which case we could just generate the test macro in C code as well.
   Macro ← "EI",Arg,(⎕UCS 27),"J ",Macro
   ⍝ We can generate loops by accident, but they should all be interruptible with SIGINT.
   ⍝ If the process needs to be killed, this is also considered a fatal issue.
-  Hnd ← ⎕FIO['popen'] "timeout --signal SIGINT --kill-after 2 2 ",SciTECO," --sandbox --eval ",(Escape Macro)," 2>&1"
+  Hnd ← ⎕FIO.popen "timeout --signal SIGINT --kill-after 2 2 ",SciTECO," --sandbox --eval ",(Escape Macro)," 2>&1"
 
   Stdout ← ""
 ReadStdout:
-  Stdout ← Stdout,Data ← ⎕UCS (⎕FIO['fread'] Hnd)
+  Stdout ← Stdout,Data ← ⎕UCS (⎕FIO.fread Hnd)
 →(0≤↑Data)/ReadStdout
 
 Cleanup:
   ⍝⎕ ← Stdout
   ⍝ Extract WTERMSIG()
   ⍝ FIXME: This may work only on FreeBSD
-  Sig ← $7F ⊤∧ (⎕FIO['pclose'] Hnd)
+  Sig ← WSTATUS × $7F≠WSTATUS ← $7F ⊤∧ (⎕FIO.pclose Hnd)
   Sig≠0 →→ "monkey-bug.tec" WriteFile Macro ⋄ ⍞ ← Stdout ←←
 ∇
 
