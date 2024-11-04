@@ -110,6 +110,7 @@ mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
 	 PKG_CONFIG_LIBDIR=/usr/i686-w64-mingw32/lib/pkgconfig \
 	 ./configure --host=i686-w64-mingw32 build=i386-pc-linux-gnu \
 	             --prefix=/usr \
+	             --with-scitecodatadir=. \
 	             --enable-static-executables \
 	             --disable-dependency-tracking \
 		     --with-interface=$(MINGW_UI) \
@@ -122,11 +123,11 @@ mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
 		install-strip DESTDIR=`pwd`/temp-install
 	rm -rf $(SCITECO_DIR)/
 	mkdir temp-bin/
-	cp -r temp-install/usr/bin/* temp-install/usr/share/sciteco/* \
+	cp -r temp-install/usr/bin/* \
 	      temp-install/usr/share/doc/sciteco/* \
 	   temp-bin/
 	cp @srcdir@/win32.teco_ini temp-bin/.teco_ini || \
-		cp temp-install/usr/share/sciteco/sample.teco_ini \
+		cp temp-install/usr/bin/sample.teco_ini \
 		   temp-bin/.teco_ini
 	cp @srcdir@/COPYING @srcdir@/ChangeLog temp-bin/
 	rm -rf temp-install/

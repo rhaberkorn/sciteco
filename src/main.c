@@ -77,15 +77,15 @@ volatile sig_atomic_t teco_interrupted = FALSE;
  * program's directory.
  */
 static inline gchar *
-teco_get_default_config_path(const gchar *program)
+teco_get_default_config_path(void)
 {
-	return g_path_get_dirname(program);
+	return teco_file_get_program_path();
 }
 
 #elif defined(G_OS_UNIX) && !defined(__HAIKU__)
 
 static inline gchar *
-teco_get_default_config_path(const gchar *program)
+teco_get_default_config_path(void)
 {
 	return g_strdup(g_get_home_dir());
 }
@@ -99,7 +99,7 @@ teco_get_default_config_path(const gchar *program)
  * with config files.
  */
 static inline gchar *
-teco_get_default_config_path(const gchar *program)
+teco_get_default_config_path(void)
 {
 	return g_strdup(g_get_user_config_dir());
 }
@@ -210,7 +210,7 @@ teco_process_options(gchar ***argv)
 }
 
 static void
-teco_initialize_environment(const gchar *program)
+teco_initialize_environment(void)
 {
 	g_autoptr(GError) error = NULL;
 	gchar *abs_path;
@@ -252,14 +252,11 @@ teco_initialize_environment(const gchar *program)
 	/*
 	 * Initialize $SCITECOCONFIG and $SCITECOPATH
 	 */
-	g_autofree gchar *default_configpath = teco_get_default_config_path(program);
+	g_autofree gchar *default_configpath = teco_get_default_config_path();
 	g_setenv("SCITECOCONFIG", default_configpath, FALSE);
-#ifdef G_OS_WIN32
-	g_autofree gchar *default_scitecopath = g_build_filename(default_configpath, "lib", NULL);
-	g_setenv("SCITECOPATH", default_scitecopath, FALSE);
-#else
-	g_setenv("SCITECOPATH", SCITECOLIBDIR, FALSE);
-#endif
+	g_autofree gchar *datadir = teco_file_get_datadir();
+	g_autofree gchar *default_libdir = g_build_filename(datadir, "lib", NULL);
+	g_setenv("SCITECOPATH", default_libdir, FALSE);
 
 	/*
 	 * $SCITECOCONFIG and $SCITECOPATH may still be relative.
@@ -389,7 +386,7 @@ main(int argc, char **argv)
 	/* current working directory ("$") */
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_workingdir_new());
 	/* environment defaults and registers */
-	teco_initialize_environment(argv_utf8[0]);
+	teco_initialize_environment();
 
 	teco_qreg_table_t local_qregs;
 	teco_qreg_table_init(&local_qregs, TRUE);

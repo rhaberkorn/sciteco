@@ -51,6 +51,7 @@
 #include "sciteco.h"
 #include "error.h"
 #include "string-utils.h"
+#include "file-utils.h"
 #include "cmdline.h"
 #include "qreg.h"
 #include "ring.h"
@@ -1124,6 +1125,8 @@ teco_interface_event_loop(GError **error)
 	}
 	g_assert(scitecoconfig.data != NULL);
 
+	g_autofree gchar *datadir = teco_file_get_datadir();
+
 	/*
 	 * Initialize the CSS variable provider and the CSS provider
 	 * for the included fallback.css.
@@ -1138,14 +1141,7 @@ teco_interface_event_loop(GError **error)
 	if (!g_file_test(user_css_file, G_FILE_TEST_IS_REGULAR)) {
 		/* use fallback CSS */
 		g_free(user_css_file);
-		/*
-		 * FIXME: See above for icons.
-		 */
-#ifdef G_OS_WIN32
-		user_css_file = g_build_filename(scitecoconfig.data, "fallback.css", NULL);
-#else
-		user_css_file = g_build_filename(SCITECODATADIR, "fallback.css", NULL);
-#endif
+		user_css_file = g_build_filename(datadir, "fallback.css", NULL);
 	}
 
 	GtkCssProvider *user_css_provider = gtk_css_provider_new();
@@ -1170,15 +1166,10 @@ teco_interface_event_loop(GError **error)
 	/*
 	 * FIXME: This is necessary so that the icon themes are found in the same
 	 * directory as sciteco.exe.
-	 * This fails of course when $SCITECOCONFIG is changed.
-	 * We should perhaps always use the absolute path of sciteco.exe.
-	 * If you want to install SciTECO differently, you can still set
-	 * $XDG_DATA_DIRS.
-	 *
-	 * FIXME FIXME FIXME: This is also currently broken.
 	 */
-	//g_autofree char *theme_path = g_build_filename(scitecoconfig.data, "icons");
-	//gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
+	g_autofree gchar *program_path = teco_file_get_program_path();
+	g_autofree gchar *theme_path = g_build_filename(program_path, "icons", NULL);
+	gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), theme_path);
 #else
 	/*
 	 * Load icons for the GTK window.
@@ -1186,17 +1177,16 @@ teco_interface_event_loop(GError **error)
 	 * as a resource will be used by default.
 	 */
 	static const gchar *icon_files[] = {
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-48.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-32.png",
-		SCITECODATADIR G_DIR_SEPARATOR_S "sciteco-16.png"
+		"sciteco-48.png", "sciteco-32.png", "sciteco-16.png"
 	};
 	GList *icon_list = NULL;
 
 	for (gint i = 0; i < G_N_ELEMENTS(icon_files); i++) {
-		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_files[i], NULL);
+		g_autofree gchar *icon_file = g_build_filename(datadir, icon_files[i], NULL);
+		GdkPixbuf *icon_pixbuf = gdk_pixbuf_new_from_file(icon_file, NULL);
 
 		/* fail silently if there's a problem with one of the icons */
-		if (icon_pixbuf)
+		if (G_LIKELY(icon_pixbuf != NULL))
 			icon_list = g_list_append(icon_list, icon_pixbuf);
 	}
 

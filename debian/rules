@@ -31,11 +31,15 @@ endif
 
 build build-arch build-indep: build-curses-stamp build-gtk-stamp;
 
+# NOTE: The datadir will be relative to the binary location at runtime.
+# This makes the binary relocateable, which is important when creating
+# AppImages from the Debian packages.
 build-curses-stamp:
 	dh_testdir
 	rm -rf build-curses
 	dh_auto_configure -Bbuild-curses -- \
-	                  --with-interface=ncurses
+	                  --with-interface=ncurses \
+	                  --with-scitecodatadir=../share/sciteco
 	dh_auto_build -Bbuild-curses
 	dh_auto_test -Bbuild-curses
 	touch $@
@@ -47,7 +51,8 @@ build-gtk-stamp:
 	rm -rf build-gtk
 	dh_auto_configure -Bbuild-gtk -- \
 	                  --program-prefix=g \
-	                  --with-interface=gtk
+	                  --with-interface=gtk \
+	                  --with-scitecodatadir=../share/sciteco
 # NOTE: Since the Gtk+ version of SciTECO is called during the build,
 # we need an XServer which may be missing on the build server.
 # That's why we use xvfb.

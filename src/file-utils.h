@@ -68,6 +68,18 @@ teco_file_normalize_path(gchar *path)
 
 gboolean teco_file_is_visible(const gchar *path);
 
+/**
+ * Get absolute path of the program executable.
+ *
+ * This may return the current working directory on
+ * unsupported platforms.
+ *
+ * @return Newly-allocated path.
+ */
+gchar *teco_file_get_program_path(void);
+
+gchar *teco_file_get_datadir(void);
+
 gchar *teco_file_expand_path(const gchar *path);
 
 /**

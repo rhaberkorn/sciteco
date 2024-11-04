@@ -19,6 +19,7 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,10 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+
+#ifdef G_OS_UNIX
+#include <dlfcn.h>
+#endif
 
 #include "sciteco.h"
 #include "qreg.h"
@@ -178,6 +183,86 @@ teco_file_is_visible(const gchar *path)
 #endif /* !G_OS_UNIX */
 
 #endif /* !G_OS_WIN32 */
+
+#ifdef G_OS_WIN32
+
+gchar *
+teco_file_get_program_path(void)
+{
+	TCHAR buf[MAX_PATH];
+	if (!GetModuleFileNameW(NULL, buf, G_N_ELEMENTS(buf))
+		return g_get_current_dir();
+	g_autofree gchar *exe = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
+	return g_path_get_dirname(exe);
+}
+
+#elif defined(__linux__)
+
+gchar *
+teco_file_get_program_path(void)
+{
+	gchar buf[PATH_MAX];
+	ssize_t len = readlink("/proc/self/exe", buf, sizeof(buf)-1);
+	if (G_UNLIKELY(len < 0))
+		/* almost certainly wrong */
+		return g_get_current_dir();
+	buf[len] = '\0';
+
+	return g_path_get_dirname(buf);
+}
+
+#elif defined(G_OS_UNIX)
+
+/*
+ * At least works on FreeBSD, even though it also has
+ * sysctl(KERN_PROC_PATHNAME).
+ * We assume it works on all other UNIXes as well.
+ */
+gchar *
+teco_file_get_program_path(void)
+{
+	Dl_info info;
+	return dladdr(teco_file_get_program_path, &info)
+		? g_path_get_dirname(info.dli_fname) : g_get_current_dir();
+}
+
+#else /* !G_OS_WIN32 && !__linux__ && !G_OS_UNIX */
+
+/*
+ * This is almost guaranteed to be wrong,
+ * meaning that SciTECO cannot be made relocatable on these platforms.
+ * It may be worth evaluating argv[0] on these platforms.
+ */
+gchar *
+teco_file_get_program_path(void)
+{
+	return g_get_current_dir();
+}
+
+#endif
+
+/**
+ * Get the datadir.
+ *
+ * By default it is hardcoded to an absolute path at
+ * build time.
+ * However, you can also build relocateable binaries
+ * where the datadir is relative to the program's executable.
+ *
+ * @note Beginning with glib v2.58, we could directly use
+ * g_canonicalize_filename().
+ */
+gchar *
+teco_file_get_datadir(void)
+{
+	if (g_path_is_absolute(SCITECODATADIR))
+		return g_strdup(SCITECODATADIR);
+
+	/* relocateable binary - datadir is relative to binary */
+	g_autofree gchar *program_path = teco_file_get_program_path();
+	g_autofree gchar *datadir = g_build_filename(program_path, SCITECODATADIR, NULL);
+	return teco_file_get_absolute_path(datadir);
+}
 
 /**
  * Perform tilde expansion on a file name or path.

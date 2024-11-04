@@ -466,11 +466,6 @@ Features:
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
- * Linux: Relocatable binaries instead of hardcoding the library path.
-   This makes it possible to run builds installed via
-   `make install DESTDIR=...` and will aid in creating AppImages.
-   Currently we have to define "union: true" and consequently
-   the root directory is not what we would expect.
  * sample.teco_ini: Support opening files on certain lines
    (filename:line).
    Theoretically, this could also be added to the <EB> syntax,

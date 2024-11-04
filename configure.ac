@@ -173,8 +173,11 @@ AC_CHECK_FUNCS([memset setlocale strchr strrchr fstat sscanf], , [
 # glib defines G_OS_UNIX instead...
 case $host in
 *-*-linux* | *-*-*bsd* | *-*-darwin* | *-*-cygwin* | *-*-haiku*)
-	AC_CHECK_FUNCS([realpath fchown dup dup2 getpid open read kill mmap], , [
+	AC_CHECK_FUNCS([realpath readlink fchown dup dup2 getpid open read kill mmap], , [
 		AC_MSG_ERROR([Missing libc function])
+	])
+	AC_SEARCH_LIBS(dladdr, [dl], , [
+		AC_MSG_ERROR([No library providing dladdr()!])
 	])
 	;;
 esac
@@ -183,10 +186,17 @@ esac
 # Config options
 #
 
+# NOTE: This can be relative to the binary location for relocateable builds.
 AC_ARG_WITH(scitecodatadir,
 	AS_HELP_STRING([--with-scitecodatadir=PATH],
 	               [Installation directory of data [default=DATADIR/sciteco]]),
-	[scitecodatadir=$withval], [scitecodatadir=$datadir/$PACKAGE])
+	[scitecodatadir_rel=$withval], [scitecodatadir_rel=$datadir/$PACKAGE])
+AC_SUBST(scitecodatadir_rel)
+# The Automake installation directory needs to be absolute, though:
+case "$scitecodatadir_rel" in
+/*) scitecodatadir="$scitecodatadir_rel";;
+*)  scitecodatadir="$bindir/$scitecodatadir_rel";;
+esac
 AC_SUBST(scitecodatadir)
 # SciTECO library macro directory
 scitecolibdir=$scitecodatadir/lib
@@ -194,8 +204,7 @@ AC_SUBST(scitecolibdir)
 
 # These paths can be changed at install-time and
 # should not be written into config.h:
-AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(scitecodatadir)\"' \
-                          -D'SCITECOLIBDIR=\"\$(scitecolibdir)\"'"
+AM_CPPFLAGS="$AM_CPPFLAGS -D'SCITECODATADIR=\"\$(scitecodatadir_rel)\"'"
 
 # FIXME: It does not really make sense to have this configurable.
 # It would make more sense to allow linking against an externally-provided

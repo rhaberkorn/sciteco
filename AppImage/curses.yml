@@ -1,10 +1,5 @@
 app: sciteco-curses
 
-# We currently use paths hardcoded at build-time.
-# Alternatively, it would be possible to customize the AppRun script or
-# add a wrapper that sets $SCITECOPATH.
-union: true
-
 ingredients:
   packages:
     - sciteco-curses
