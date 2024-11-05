@@ -190,7 +190,7 @@ gchar *
 teco_file_get_program_path(void)
 {
 	TCHAR buf[MAX_PATH];
-	if (!GetModuleFileNameW(NULL, buf, G_N_ELEMENTS(buf))
+	if (!GetModuleFileNameW(NULL, buf, G_N_ELEMENTS(buf)))
 		return g_get_current_dir();
 	g_autofree gchar *exe = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
 	return g_path_get_dirname(exe);
