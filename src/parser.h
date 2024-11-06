@@ -301,8 +301,9 @@ teco_machine_init(teco_machine_t *ctx, teco_state_t *initial, gboolean must_undo
 static inline void
 teco_machine_reset(teco_machine_t *ctx, teco_state_t *initial)
 {
-	if (ctx->current != initial)
-		teco_undo_ptr(ctx->current) = initial;
+	if (ctx->must_undo && ctx->current != initial)
+		teco_undo_ptr(ctx->current);
+	ctx->current = initial;
 }
 
 gboolean teco_machine_input(teco_machine_t *ctx, gunichar chr, GError **error);

@@ -52,8 +52,6 @@ TECO_DEFINE_UNDO_OBJECT_OWN(parameters, teco_search_parameters_t, /* don't delet
  */
 static teco_search_parameters_t teco_search_parameters;
 
-static teco_machine_qregspec_t *teco_search_qreg_machine = NULL;
-
 static gboolean
 teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 {
@@ -62,10 +60,6 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 	                                         teco_interface_get_codepage());
-
-	if (G_UNLIKELY(!teco_search_qreg_machine))
-		teco_search_qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals,
-		                                                     ctx->parent.must_undo);
 
 	teco_undo_object_parameters_push(&teco_search_parameters);
 	teco_search_parameters.dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
@@ -139,6 +133,7 @@ typedef enum {
  *                The pointer is modified and always left after
  *                the last character used, so it may point to the
  *                terminating null byte after the call.
+ * @param qreg_machine State machine for parsing Q-Regs (^EGq).
  * @param codepage The codepage of pattern.
  * @param escape_default Whether to treat single characters
  *                       as classes or not.
@@ -154,6 +149,7 @@ typedef enum {
  */
 static gchar *
 teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
+                  teco_machine_qregspec_t *qreg_machine,
                   guint codepage, gboolean escape_default, GError **error)
 {
 	while (pattern->len > 0) {
@@ -250,7 +246,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				len = 1;
 				chr = *pattern->data;
 			}
-			switch (teco_machine_qregspec_input(teco_search_qreg_machine,
+			switch (teco_machine_qregspec_input(qreg_machine,
 			                                    chr, &reg, NULL, error)) {
 			case TECO_MACHINE_QREGSPEC_ERROR:
 				return NULL;
@@ -262,7 +258,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
 				continue;
 
 			case TECO_MACHINE_QREGSPEC_DONE:
-				teco_machine_qregspec_reset(teco_search_qreg_machine);
+				teco_machine_qregspec_reset(qreg_machine);
 
 				g_auto(teco_string_t) str = {NULL, 0};
 				if (!reg->vtable->get_string(reg, &str.data, &str.len, NULL, error))
@@ -308,6 +304,7 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
  *                successfully scanned character, so it can be
  *                called recursively. It may also point to the
  *                terminating null byte after the call.
+ * @param qreg_machine State machine for parsing Q-Regs (^EGq).
  * @param codepage The codepage of pattern.
  * @param single_expr Whether to scan a single pattern
  *                    expression or an arbitrary sequence.
@@ -316,7 +313,8 @@ teco_class2regexp(teco_search_state_t *state, teco_string_t *pattern,
  *         Must be freed with g_free().
  */
 static gchar *
-teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr, GError **error)
+teco_pattern2regexp(teco_string_t *pattern, teco_machine_qregspec_t *qreg_machine,
+                    guint codepage, gboolean single_expr, GError **error)
 {
 	teco_search_state_t state = TECO_SEARCH_STATE_START;
 	g_auto(teco_string_t) re = {NULL, 0};
@@ -340,7 +338,9 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 		 * as classes, so we do not convert them to regexp
 		 * classes unnecessarily.
 		 */
-		g_autofree gchar *temp = teco_class2regexp(&state, pattern, codepage, FALSE, error);
+		g_autofree gchar *temp;
+		temp = teco_class2regexp(&state, pattern, qreg_machine,
+		                         codepage, FALSE, error);
 		if (!temp)
 			return NULL;
 
@@ -395,7 +395,9 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 
 		case TECO_SEARCH_STATE_NOT: {
 			state = TECO_SEARCH_STATE_START;
-			g_autofree gchar *temp = teco_class2regexp(&state, pattern, codepage, TRUE, error);
+			g_autofree gchar *temp;
+			temp = teco_class2regexp(&state, pattern, qreg_machine,
+			                         codepage, TRUE, error);
 			if (!temp)
 				return NULL;
 			if (!*temp)
@@ -431,7 +433,9 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 
 		case TECO_SEARCH_STATE_MANY: {
 			/* consume exactly one pattern element */
-			g_autofree gchar *temp = teco_pattern2regexp(pattern, codepage, TRUE, error);
+			g_autofree gchar *temp;
+			temp = teco_pattern2regexp(pattern, qreg_machine,
+			                           codepage, TRUE, error);
 			if (!temp)
 				return NULL;
 			if (!*temp)
@@ -457,7 +461,9 @@ teco_pattern2regexp(teco_string_t *pattern, guint codepage, gboolean single_expr
 				state = TECO_SEARCH_STATE_START;
 				break;
 			default: {
-				g_autofree gchar *temp = teco_pattern2regexp(pattern, codepage, TRUE, error);
+				g_autofree gchar *temp;
+				temp = teco_pattern2regexp(pattern, qreg_machine,
+				                           codepage, TRUE, error);
 				if (!temp)
 					return NULL;
 				if (!*temp)
@@ -620,14 +626,17 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	    !search_reg->vtable->set_integer(search_reg, TECO_FAILURE, error))
 		return FALSE;
 
+	g_autoptr(teco_machine_qregspec_t) qreg_machine;
+	qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals, FALSE);
+
 	g_autoptr(GRegex) re = NULL;
 	teco_string_t pattern = *str;
 	g_autofree gchar *re_pattern;
 	/* NOTE: teco_pattern2regexp() modifies str pointer */
-	re_pattern = teco_pattern2regexp(&pattern, ctx->expectstring.machine.codepage, FALSE, error);
+	re_pattern = teco_pattern2regexp(&pattern, qreg_machine,
+	                                 ctx->expectstring.machine.codepage, FALSE, error);
 	if (!re_pattern)
 		return FALSE;
-	teco_machine_qregspec_reset(teco_search_qreg_machine);
 #ifdef DEBUG
 	g_printf("REGEXP: %s\n", re_pattern);
 #endif
@@ -832,10 +841,6 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 	                                         teco_interface_get_codepage());
-
-	if (G_UNLIKELY(!teco_search_qreg_machine))
-		teco_search_qreg_machine = teco_machine_qregspec_new(TECO_QREG_REQUIRED, ctx->qreg_table_locals,
-		                                                     ctx->parent.must_undo);
 
 	teco_undo_object_parameters_push(&teco_search_parameters);
 	teco_search_parameters.dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
