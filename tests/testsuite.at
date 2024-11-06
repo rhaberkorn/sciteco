@@ -234,6 +234,10 @@ AT_SETUP([Rub out of empty forward kill])
 AT_CHECK([$SCITECO_CMDLINE "@I/F/ J @I/X/ @FK/F/{-6D} Z-2\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Searches from macro calls])
+AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Number stack])

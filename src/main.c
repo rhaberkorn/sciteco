@@ -462,11 +462,9 @@ main(int argc, char **argv)
 			teco_error_add_frame_toplevel();
 			goto error;
 		}
-		goto cleanup;
-	}
-
-	if (!teco_interface_event_loop(&error))
+	} else if (!teco_interface_event_loop(&error)) {
 		goto error;
+	}
 
 	teco_machine_main_clear(&teco_cmdline.machine);
 	memset(&teco_cmdline.machine, 0, sizeof(teco_cmdline.machine));
