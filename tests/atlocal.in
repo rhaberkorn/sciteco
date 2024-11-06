@@ -17,6 +17,8 @@ SCITECO_CMDLINE="$SCITECO --no-profile --fake-cmdline"
 # is used.
 SCITECOPATH="@abs_top_srcdir@/lib"
 
+GREP="@GREP@"
+
 # Glib debug options
 G_SLICE=debug-blocks
 G_ENABLE_DIAGNOSTIC=1

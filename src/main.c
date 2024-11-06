@@ -457,6 +457,10 @@ main(int argc, char **argv)
 	teco_machine_main_init(&teco_cmdline.machine, &local_qregs, TRUE);
 
 	if (G_UNLIKELY(teco_fake_cmdline != NULL)) {
+		/*
+		 * NOTE: Most errors are already catched at a higher level,
+		 * so you cannot rely on the exit code to detect them.
+		 */
 		if (!teco_cmdline_keypress(teco_fake_cmdline, strlen(teco_fake_cmdline), &error) &&
 		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
 			teco_error_add_frame_toplevel();

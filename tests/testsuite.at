@@ -227,19 +227,27 @@ AT_SETUP([Jump to beginning of macro])
 AT_CHECK([$SCITECO -e "%a-2\"< F< ' Qa-2\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+#
+# Command-line editing bugs.
+#
 # NOTE: It would generally be possible to use control codes like ^H (8)
 # and ^W (23) for rubout as well, but this is tricky to write in a portable manner.
 # Therefore we usally use the push/pop command-line commands { and }.
+# NOTE: Most errors are not reported in exit codes - you must check stderr.
+#
 AT_SETUP([Rub out string append])
-AT_CHECK([$SCITECO_CMDLINE "@I/XXX/ H:Xa{-4D} :Qa-0\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO_CMDLINE "@I/XXX/ H:Xa{-4D} :Qa-0\"N(0/0)'"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Rub out of empty forward kill])
-AT_CHECK([$SCITECO_CMDLINE "@I/F/ J @I/X/ @FK/F/{-6D} Z-2\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO_CMDLINE "@I/F/ J @I/X/ @FK/F/{-6D} Z-2\"N(0/0)'"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Searches from macro calls])
-AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_BANNER([Known Bugs])
