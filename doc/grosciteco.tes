@@ -234,7 +234,7 @@ EBN[input]
 
   !cmd.C!
     :M#sw 0A-^^u"=
-      C 16 :M#giU.w 
+      C 16 \U.w  W
     |
       .(:M#sa).X.w 0Q[glyphs.Q.w]U.w
     '
