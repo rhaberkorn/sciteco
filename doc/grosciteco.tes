@@ -54,7 +54,7 @@ EBN[input]
 1U[default-style]
 @[style]{ [.l
   U.l Q[font]-Q[default-style]"N
-    .-Q.lESSTARTSTYLING Q[font],Q.lESSETSTYLING
+    .-Q.lU.l Q.lESSTARTSTYLING Q[font],(-Q.l)ESSETSTYLING
   '
 ].l }
 
