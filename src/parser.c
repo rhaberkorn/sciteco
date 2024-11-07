@@ -216,6 +216,13 @@ teco_execute_macro(const gchar *macro, gsize macro_len,
 		                     teco_loop_stack->len - macro_machine.loop_stack_fp);
 	}
 
+	if (G_UNLIKELY(teco_goto_skip_label.len > 0)) {
+		g_autofree gchar *label_printable = teco_string_echo(teco_goto_skip_label.data, teco_goto_skip_label.len);
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Label \"%s\" not found", label_printable);
+		goto error_attach;
+	}
+
 	if (G_UNLIKELY(teco_loop_stack->len > macro_machine.loop_stack_fp)) {
 		const teco_loop_context_t *ctx = &g_array_index(teco_loop_stack, teco_loop_context_t, teco_loop_stack->len-1);
 		/* ctx->pc points to the character after the loop start command */
@@ -224,13 +231,6 @@ teco_execute_macro(const gchar *macro, gsize macro_len,
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 		                    "Unterminated loop");
 		goto error_cleanup;
-	}
-
-	if (G_UNLIKELY(teco_goto_skip_label.len > 0)) {
-		g_autofree gchar *label_printable = teco_string_echo(teco_goto_skip_label.data, teco_goto_skip_label.len);
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Label \"%s\" not found", label_printable);
-		goto error_attach;
 	}
 
 	/*
