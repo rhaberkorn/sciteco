@@ -126,6 +126,15 @@ EBN[input]
           %[ttstart]>
         ]*
         L F<
+      !cmd.xXsciteco_startstyling!
+        [* EB 0:M[move] U[stylestart] ]*
+        L F<
+      !cmd.xXsciteco_setstyling!
+        C :M#giU.s
+        [* EB 0:M[move]
+          Q[stylestart]ESSTARTSTYLING Q.s,(-Q[stylestart])ESSETSTYLING
+        ]*
+        L F<
       !cmd.xXtty!
       !cmd.xXdevtag!
         L F<

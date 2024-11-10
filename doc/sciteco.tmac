@@ -55,6 +55,17 @@
 .  nr LL \\n[.l]u
 ..
 .
+.\" Starts a block to manually assign a Scintilla style id.
+.de SCITECO_STARTSTYLING
+.  device sciteco_startstyling
+..
+.
+.\" Assign Scintilla style $1 to block beginning with SCITECO_STARTSTYLING.
+.\" This overwrites all other styles!
+.de SCITECO_SETSTYLING
+.  device sciteco_setstyling:\\$1
+..
+.
 .\"
 .\" Effectively disable paragraph filling in man pages.
 .\" Word wrapping will be performed by Scintilla.
@@ -63,7 +74,7 @@
 .\" for ms, mdoc, man
 .nr LL \n[.l]u
 .
-.\" set title length for man pages
+.\" set title length for man and ms
 .nr LT 90n
 .
 .\"
