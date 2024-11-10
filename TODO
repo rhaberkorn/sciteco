@@ -149,12 +149,19 @@ Known Bugs:
    Automatically running EF EB...$ in the "save" hook could
    also have unwanted side effects.
  * session.vcs does not properly work in MSYS2 environments.
+ * Win32: Unicode CI tests sometimes spuriously fail due to
+   "Command line contains characters that are not supported
+   in the active code page (1252)."
+   Apparently I am not the only user with this bug.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
    immediate editing commands similar to tab-expansion.
    Avoids having to make LF a magic character in insertion
    commands.
+   Perhaps more flexible would be adding key macro states for
+   insert commands with default escape chars.
+   Then this could be part of fnkeys.tes.
  * :$ and :$$ to pop/return only single values
  * allow top-level macros to influence the proces return code.
    This can be used in macros to call $$ or ^C akin to exit(1).
@@ -396,12 +403,17 @@ Features:
    Backup files should NOT be hidden and the timeout should be
    configurable (EJ?).
  * Error handling in SciTECO macros: Allow throwing errors with
-   e.g. [n]EE<description>$ where n is an error code, defaulting
+   e.g. [n]ET<description>$ where n is an error code, defaulting
    to 0 and description is the error string - there could be code-specific
    defaults. All internal error classes use defined codes.
    Errors could be catched using a structured try-catch-like construct
    or by defining an error handling label.
    Macros may retrieve the code and string of the last error.
+ * Backtracking execution semantics, bringing the power of SNOBOL
+   (and more!).
+   This can be a variant of a structured error handling construct.
+   This will also require managing our own function call stack.
+   See https://github.com/rhaberkorn/sciteco/issues/26#issuecomment-2449983076
  * Once we have our own function call stack,
    it will be possible, although not trivial, to add support for
    user-definable macros that accept string arguments, eg.
@@ -529,6 +541,8 @@ Features:
    the library handle and creates the "APL" lexer.
    There would also have to be some kind of SCI_NAMEDSTYLE wrapper,
    so we can look up style ids by name (specifically for Scintillua).
+ * Lexilla: Could also add an APL lexer to Lexilla.
+   APL has very simple lexical rules.
  * ^^ in string building expanding to a single caret is not
    consistent. Perhaps we should allow only ^Q^ as a way to insert a
    single caret?
@@ -552,6 +566,12 @@ Features:
    In the easiest case there could simply be 2 Q-Reg namespaces:
    ^F... for filenames and ^E... for extensions.
    The numeric part could be used to store the codepoints.
+ * It would be good if we could somehow run the testsuite
+   with --valgrind during CI (Ubuntu).
+   This did not work out of the box.
+ * session.tes: Perhaps persist the search-replace registers "-" and "_".
+   Ideally we would also persist any manually configured lexer,
+   but we cannot easily store the current buffer's lexer.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -559,8 +579,6 @@ Optimizations:
    in interactive mode. Also, some scripts like grosciteco.tes
    make use of styling in batch mode. So this would have to be
    requested explicitly per ED flag or command line option.
- * teco_interface_cmdline_update() should be called only once
-   after inserting an entire command line macro.
  * There should be a common error code for null-byte tests
    instead of TECO_ERROR_FAILED.
  * teco_string_append() could be optimized by ORing a padding
@@ -577,7 +595,8 @@ Optimizations:
  * Avoid Scintilla Undo actions entirely.
    This will make undo token creation of deletions harder,
    since we must first query the text to be reinserted again,
-   but will probably save lots of memory.
+   but will probably save lots of memory and one huge source
+   of bugs.
  * Newer GCC and C23 features:
    * Perhaps teco_bool_t usage could be simplified using
      __attribute__((hardbool)).

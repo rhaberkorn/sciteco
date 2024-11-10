@@ -271,6 +271,7 @@ EBN[input]
 
   !cmd.C!
     :M#sw 0A-^^u"=
+      !* FIXME: This can be CuXXXX_XXXX (decomposed, eg. for cyrillic й) *!
       C 16 \U.w  W
     |
       .(:M#sa).X.w 0Q[glyphs.Q.w]U.w
