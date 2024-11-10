@@ -194,8 +194,8 @@ AC_ARG_WITH(scitecodatadir,
 AC_SUBST(scitecodatadir_rel)
 # The Automake installation directory needs to be absolute, though:
 case "$scitecodatadir_rel" in
-/*) scitecodatadir="$scitecodatadir_rel";;
-*)  scitecodatadir="$bindir/$scitecodatadir_rel";;
+.*) scitecodatadir="$bindir/$scitecodatadir_rel";;
+*)  scitecodatadir="$scitecodatadir_rel";;
 esac
 AC_SUBST(scitecodatadir)
 # SciTECO library macro directory
