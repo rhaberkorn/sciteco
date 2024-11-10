@@ -132,6 +132,16 @@ Marks the end of an area that must be formatted in a
 monospaced font.
 The optional \fBSP\fP keyword may be specified to skip one
 line vertically (via troff's \fB.sp\fP request).
+.TQ
+\fB.SCITECO_STARTSTYLING\fP
+.SCITECO_TOPIC .SCITECO_STARTSTYLING SCITECO_STARTSTYLING
+Marks the beginning of a block for manual Scintilla styling.
+.TQ
+\fB.SCITECO_SETSTYLING\fP \fIstyle\fP
+.SCITECO_TOPIC .SCITECO_SETSTYLING SCITECO_SETSTYLING
+Assign the given Scintilla style number to the block beginning with
+.BR .SCITECO_STARTSTYLING .
+This style must have been configured in a custom macro.
 .
 .LP
 These public macros will be ignored if \(lqsciteco.tmac\(rq
@@ -157,7 +167,7 @@ a \*(ST macro package with a man page called
 .RS
 .SCITECO_TT
 .EX
-groff -Z -Tascii -man -M@scitecodatadir@ -msciteco \\
+groff -Z -Kutf-8 -Tutf8 -man -M@scitecodatadir@ -msciteco \\
       great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
 grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.woman.tec \\
                great-macro.tes.7sciteco.intermediate
@@ -173,7 +183,11 @@ to make the files accessible in \*(ST's online-help system.
 .
 .SH BUGS
 .
+.LP
 \fBgrosciteco\fP is quite slow, although this is a \*(ST issue.
+.LP
+The \fBpic\fP(1) preprocessor is poorly supported and diacritics
+may not be rendered properly.
 .
 .
 .SH SEE ALSO

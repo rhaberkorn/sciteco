@@ -572,6 +572,10 @@ Features:
  * session.tes: Perhaps persist the search-replace registers "-" and "_".
    Ideally we would also persist any manually configured lexer,
    but we cannot easily store the current buffer's lexer.
+ * grosciteco: Does not currently support diacritics.
+   This is because Groff decomposes characters in intermediate output.
+   Either we have to consult devutf8/R or use wrap g_unichar_compose().
+   This will be important once we want to localize documentation.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
