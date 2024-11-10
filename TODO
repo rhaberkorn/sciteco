@@ -149,10 +149,6 @@ Known Bugs:
    Automatically running EF EB...$ in the "save" hook could
    also have unwanted side effects.
  * session.vcs does not properly work in MSYS2 environments.
- * Win32: Unicode CI tests sometimes spuriously fail due to
-   "Command line contains characters that are not supported
-   in the active code page (1252)."
-   Apparently I am not the only user with this bug.
 
 Features:
  * Auto-indention could be implemented via context-sensitive

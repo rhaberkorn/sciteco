@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <locale.h>
+#include <wchar.h>
 
 #include <glib.h>
 #include <glib/gprintf.h>
@@ -299,8 +300,20 @@ teco_sigint_handler(int signal)
 	teco_interrupted = TRUE;
 }
 
+#ifdef G_OS_WIN32
+/*
+ * We are linking with -municode, since MinGW could otherwise
+ * fail trying to convert Unicode command lines into the system locale.
+ * We still don't use argv since g_win32_get_command_line() returns
+ * an UTF-8 version.
+ * The alternative would be compiling in a manifest.
+ */
+int
+wmain(int argc, wchar_t **argv)
+#else
 int
 main(int argc, char **argv)
+#endif
 {
 	g_autoptr(GError) error = NULL;
 

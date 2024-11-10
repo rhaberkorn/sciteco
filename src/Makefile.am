@@ -86,8 +86,12 @@ sciteco_LDADD = $(sciteco_minimal_LDADD)
 # see above
 nodist_EXTRA_sciteco_SOURCES = fuck-this-shit.cpp
 
-# For MinGW: Compile in resource (contains the icon)
 if WIN32
+# Prevent MinGW from failing on non-Unicode command lines that cannot
+# be converted into the system code page.
+AM_LDFLAGS += -municode
+
+# Compile in resource (contains the icon)
 sciteco_SOURCES += sciteco.rc
 .rc.o:
 	@RC@ $< $@
