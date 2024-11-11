@@ -566,8 +566,13 @@ Features:
    with --valgrind during CI (Ubuntu).
    This did not work out of the box.
  * session.tes: Perhaps persist the search-replace registers "-" and "_".
+   Unfortunately, there is currently no way to reliably escape their
+   contents in the generated .teco_session.
    Ideally we would also persist any manually configured lexer,
    but we cannot easily store the current buffer's lexer.
+ * session.tes: Could mung a .teco_ini in the VCS directory as well.
+   This is only really useful once we can elegantly append to various
+   ED hooks.
  * grosciteco: Does not currently support diacritics.
    This is because Groff decomposes characters in intermediate output.
    Either we have to consult devutf8/R or use wrap g_unichar_compose().
