@@ -1,3 +1,9 @@
+sciteco (2.1.1-0) unstable; urgency=low
+
+  * new upstream version v2.1.1
+
+ -- Robin Haberkorn <robin.haberkorn@googlemail.com>  Sun, 17 Nov 2024 14:26:22 +0300
+
 sciteco (2.1.0-0) unstable; urgency=low
 
   * new upstream version v2.1.0
