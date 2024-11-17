@@ -149,6 +149,9 @@ Known Bugs:
    Automatically running EF EB...$ in the "save" hook could
    also have unwanted side effects.
  * session.vcs does not properly work in MSYS2 environments.
+ * At least the GTK version with --xembed is prone to unexpected
+   crashes. Interestingly, while this does leave orphaned savepoint
+   files around, it does not produce a core dump.
 
 Features:
  * Auto-indention could be implemented via context-sensitive
@@ -301,7 +304,12 @@ Features:
      the bounds. Either the semantics of m,n:S should be changed
      or an FB command with classic TECO semantics should be
      introduced.
-   * ^S (-(length) of last referenced string), ^Y as .+^S,.
+   * ^S (-(length) of last referenced string), ^Y as .+^S,. at the time
+     of the search.
+     As an extension, n^Y should be overloaded to return the n-th
+     subpattern (^E[...]).
+     Analogous, there should be ^E0-9 string building constructs
+     for referencing subpatterns.
    * ^Q convert line arg into character arg
    * ^A, T and stdio in general
    * nA returned -1 in case of invalid positions (similar to SciTECO's ^E)

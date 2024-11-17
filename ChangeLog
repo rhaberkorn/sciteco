@@ -6,6 +6,59 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
+Version 2.1.1
+~~~~~~~~~~~~~
+
+eff7233 session.tes: store the current tab style (width and hard-tabs).
+        Also, it now handles filenames containing ASCII 27.
+b016f78 if a macro ends without finding a goto label, always throw a 'Label "..." not found' error
+cdd0133,
+2406e37,
+9cce7d2 Fully support relocatable binaries, which improves Linux AppImages.
+        The root (/) directory will now longer look strange when browsed from AppImages.
+        This might also fix AppImage execution under some environments (at the very least
+        FreeBSD's Linuxulator is now supported).
+4b05f26 fixed assertions in ^EGq search construct for Q-Registers with uninitialized string cells
+be230b5,
+ff2d137 Fixed invalid memory access when executing the F< command.
+        This was an issue only when jumping to the beginning of the macro.
+5f14184 Search commands: fixed the Q-Reg spec machine used for implementing ^EGq (match one of characters in Q-Register).
+        This will now always use the correct local Q-Register table and we might
+        have even fixed crashes.
+6d882a3 <N> (search all): fixed crashes before invocations of <S> (closes #26).
+        Also, the string argument codepage is now properly initialized.
+5f0c391 PDCurses: filter out bogus double keypresses in combination with CTRL (refs #20)
+9242405,
+cd4528a,
+0ce3b52 Added hidden --fake-cmdline parameter for testing command-line editing.
+        You can also use this to prepare reproduceable test cases in bug reports.
+427092d Fixed rubbing out <:Xq>, <:^Uq> and other append-to-register operations.
+        This has only been broken in v2.1.0.
+a29382e,
+7e37a97 GTK/Win32: fixed clipboard retrieval. It was inserting bogus trailing nulls.
+abfbeb1 fixed EOL conversion on UTF-8 texts
+e69e7c9 <EC>: fixed some ^C interruptions on Win32.
+        This remains broken, though.
+0f740ee,
+e9bef20 <EC>: fixed insertion of data garbage (invalid reads) and omissions
+3b3bc07 <EC>: fixed race conditions and problems when creating and terminating process groups on Win32.
+        This fixes occasional <EC> failures.
+8fedd52 Fixed false positive "Editing local registers in macro calls" errors.
+        This also fixes the solarized.toggle (F5) macro when using the Solarized color scheme.
+62b124e,
+3742537 Curses: italic and underline styles are now supported.
+        This does not work for the INDIC_PLAIN indicator style.
+        Also, the underline style is not currently supported by color.set.
+0ddb6a8 grosciteco.tes(1): mention new macros, changed command lines and restrictions
+f5c6c1d grosciteco: basic support for GNU pic graphics
+1498c13 grosciteco: support .SCITECO_STARTSTYLING and .SCITECO_SETSTYLING macros
+d3a91fc grosciteco: fixed the CuXXXX postprocessor command, ie. insertion of characters by unicode,
+        ie. typesetting of most non-latin text.
+        We still don't support decomposed characters, though.
+9a6c16a grosciteco: fixed styling of multi-byte text (ie. non-latin characters)
+730567b grosciteco: added some more quote glyphs
+2bbc584 grosciteco: support the "pc" (centered dot) glyph
+
 Version 2.1.0
 ~~~~~~~~~~~~~
 
