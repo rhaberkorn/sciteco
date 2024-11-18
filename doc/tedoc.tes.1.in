@@ -53,7 +53,7 @@ A man-page template, i.e. a man-page with the \fBTEDOC\fP
 request.
 .IP "\fIsources...\fP"
 An arbitrary number of source code files to scan through.
-The comments are extracted in document order, ie. from the
+The comments are extracted in document order, i.e. from the
 first comment in the first source file to the last comment
 in the last source file specified.
 .

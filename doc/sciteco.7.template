@@ -159,7 +159,7 @@ codes, which is a subset of Unicode.
 \# editing commands from key macros.
 Since the \*(ST parser is Unicode-aware, this does not exclude
 using Unicode glyphs wherever a single character is expected,
-ie. \fB^^\fIx\fR and \fBU\fIq\fR works with arbitrary Unicode glyphs.
+i.e. \fB^^\fIx\fR and \fBU\fIq\fR works with arbitrary Unicode glyphs.
 All \*(ST macros must be in valid UTF-8.
 .
 .SS Key Macros
@@ -1017,7 +1017,7 @@ T}
 .SCITECO_TT_END SP
 .LP
 .SCITECO_TOPIC associativity
-All binary operators are \fIleft-associative\fP, ie. associate
+All binary operators are \fIleft-associative\fP, i.e. associate
 from left to right, in \*(ST.
 .SCITECO_TOPIC ( ) brackets
 Round brackets may be used for grouping expressions to override
@@ -1025,7 +1025,7 @@ operator precedence and associativity.
 For instance, since \(lq\fB^/\fP\(rq, \(lq\fB/\fP\(rq and \(lq\fB*\fP\(rq
 all have the same precedence, the expression \(lq1 ^/ 2 / 3 * 4\(rq is
 equivalent to \(lq(((1 ^/ 2) / 3) * 4)\(rq.
-The opening bracket also represents an argument barrier, ie. the first
+The opening bracket also represents an argument barrier, i.e. the first
 command after the opening bracket does not see and cannot pop any
 arguments from the stack.
 This may be useful for mixing commands with arithmetic expressions.
@@ -1319,7 +1319,7 @@ but this may be changed using modifiers.
 If enabled, string arguments may contain special string building characters
 for instance to embed other strings or to quote the argument terminator.
 The detection of the end of a string is aware of string building characters,
-ie. string building constructs may contain the current terminator.
+i.e. string building constructs may contain the current terminator.
 String building may be enabled or disabled by default for a command.
 In interactive mode the command is often executed as soon as it
 has been completely specified and updates to the string arguments

@@ -65,7 +65,7 @@ Features
   the command line, making it harder to write incorrect interactive macros.
   Context-sensitive immediate editing commands also make it much harder to destroy a day's
   work by accident than in classic TECOs.
-  Also, SciTECO supports many types of context-sensitive auto-completions (ie. the Tab-key):
+  Also, SciTECO supports many types of context-sensitive auto-completions (i.e. the Tab-key):
   Q-Register names, file names, directories, goto labels, help topics...
 * Command rubout: SciTECO can undo almost every side effect, including file writes
   (`EW` command).

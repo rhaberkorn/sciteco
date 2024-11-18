@@ -314,7 +314,7 @@ teco_file_expand_path(const gchar *path)
  *                  If G_FILE_TEST_EXISTS, both files and directories are completed.
  *                  If G_FILE_TEST_IS_DIR, only directories will be completed.
  * @param insert String to initialize with the autocompletion.
- * @return TRUE if the completion was unambiguous (eg. command can be terminated).
+ * @return TRUE if the completion was unambiguous (e.g. command can be terminated).
  */
 gboolean
 teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_t *insert)

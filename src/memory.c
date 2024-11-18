@@ -102,7 +102,7 @@
  *
  * @par Size of the program break
  * There is also the old-school technique of calculating the size
- * of the program break, ie. the effective size of the DATA segment.
+ * of the program break, i.e. the effective size of the DATA segment.
  * This works under the assumption that all allocations are
  * performed by extending the program break, as is __traditionally__
  * done by malloc() and friends.
@@ -156,7 +156,7 @@
  *   but obviously won't work for shared libraries.
  * - The portable dlsym() could be used to look up the original
  *   library symbol, but it may and does call malloc functions,
- *   eg. calloc() on glibc.
+ *   e.g. calloc() on glibc.
  *   Some people work around this using bootstrap makeshift allocators
  *   used only during dlsym().
  *   __In other words, there is no way to portably and reliably
@@ -169,7 +169,7 @@
  *   Otherwise the measurement is not precise and there can even
  *   be underruns. Thus we'd have to guard against underruns.
  * - Unfortunately, it is undefined whether the "usable" size of
- *   a heap object can change unwittingly, ie. not by malloc() or
+ *   a heap object can change unwittingly, i.e. not by malloc() or
  *   realloc() on that same heap object, but for instance after a
  *   neighbouring heap object is freed.
  *   If this can happen, free() on that heap object might subtract
@@ -245,7 +245,7 @@
  *   optimization.
  * - This approach has the same disadvantages as wrapping malloc() because
  *   of the unreliability of malloc_usable_size().
- *   Furthermore, all allocations by glib (eg. g_strdup()) will be missed.
+ *   Furthermore, all allocations by glib (e.g. g_strdup()) will be missed.
  *
  * @par Directly measuring the resident memory size
  * It is of course possible to query the program's RSS via OS APIs.
@@ -280,7 +280,7 @@
  * If disabled, we try to directly measure memory consumption using
  * OS APIs.
  * Polling of the RSS takes place in a dedicated thread that is started
- * on demand and paused whenever the main thread is idle (eg. waits for
+ * on demand and paused whenever the main thread is idle (e.g. waits for
  * user input), so we don't waste cycles.
  */
 

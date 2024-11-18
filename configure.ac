@@ -341,7 +341,7 @@ case $INTERFACE in
 
 		# This is detectable at runtime on PDCursesMod using PDC_get_version().
 		# "Classic" PDCurses however does not allow runtime or compile-time checks for
-		# discerning eg. WinCon from SDL.
+		# discerning e.g. WinCon from SDL.
 		if [[ $INTERFACE = pdcurses-gui ]]; then
 			AC_DEFINE(PDCURSES_GUI, 1, [PDCurses with GUI window])
 		fi
@@ -423,7 +423,7 @@ if [[ $malloc_replacement = yes ]]; then
 	AC_DEFINE(HAVE_MALLOC_TRIM, 1, [Define to 1 if you have the `malloc_trim' function.])
 else
 	# NOTE: We don't check for malloc_footprint() since even if existing,
-	# it cannot be guaranteed to work (eg. as in dlmalloc with HAVE_MORECORE=1).
+	# it cannot be guaranteed to work (e.g. as in dlmalloc with HAVE_MORECORE=1).
 	AC_CHECK_HEADERS([malloc.h malloc_np.h])
 	AC_CHECK_FUNCS([malloc_trim], [
 		AC_CHECK_DECLS([malloc_trim], , , [

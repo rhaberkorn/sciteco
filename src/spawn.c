@@ -711,7 +711,7 @@ teco_spawn_stdin_watch_cb(GIOChannel *chan, GIOCondition condition, gpointer dat
 	/*
 	 * This cares about automatic EOL conversion and
 	 * returns the number of consumed bytes.
-	 * If it can only write a part of the EOL sequence (ie. CR of CRLF)
+	 * If it can only write a part of the EOL sequence (i.e. CR of CRLF)
 	 * it may return a short byte count (possibly 0) which ensures that
 	 * we do not yet remove the source.
 	 */

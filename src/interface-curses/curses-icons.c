@@ -38,7 +38,7 @@ typedef struct {
  * The following icons have initially been adapted from exa,
  * but icons have since been added and removed.
  *
- * They require fonts with additional symbols, eg.
+ * They require fonts with additional symbols, e.g.
  * Nerd Fonts (https://www.nerdfonts.com/).
  *
  * They MUST be kept presorted, so we can perform binary searches.

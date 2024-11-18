@@ -122,7 +122,7 @@ Ctrl+\fIX\fP, but can also be typed with a caret (\fC^\fP).
 .    TD
 \*[CTRL LF]
 .    TD
-Line Feed, ie. Enter/Return key
+Line Feed, i.e. Enter/Return key
 .  TR bgc=grey90
 .    TD colspan=4
 For instance:
@@ -157,7 +157,7 @@ Exit, but only if no buffer is \(lqdirty\(rq (unsaved)
 .    TD
 \fC-EX\fP\*($$
 .    TD
-Exit even if buffer is \(lqdirty\(rq, ie. discarding all unsaved changes.
+Exit even if buffer is \(lqdirty\(rq, i.e. discarding all unsaved changes.
 .  TRX
 .    TD
 \fC:EX\fP\*($$
@@ -235,7 +235,7 @@ Finish (close) current buffer, discarding all unsaved changes.
 .    TD
 \fCFG\fIpath\fR\*$
 .    TD
-Go to folder \fIpath\fP, ie. change working directory.
+Go to folder \fIpath\fP, i.e. change working directory.
 .  TRX
 .    TD
 .      CI 0EE
@@ -435,7 +435,7 @@ Move to the beginning of next line.
 .    TD
 .      CI "" n L
 .    TD
-Move fordware \fIn\fP lines.
+Move forward \fIn\fP lines.
 .  TRX
 .    TD
 .      CI 0L
@@ -525,17 +525,17 @@ Discard command-line, storing it in \fIq\fP.
 .    TD
 \fCS\fItext\*$
 .    TD
-Search for next ocurrence of \fItext\fP.
+Search for next occurrence of \fItext\fP.
 .  TRX
 .    TD
 \fC-S\fItext\*$
 .    TD
-Search for previous ocurrence of \fItext\fP.
+Search for previous occurrence of \fItext\fP.
 .  TRX
 .    TD
 \fIn\fCS\fItext\*$
 .    TD
-Search for \fIn\fP-th ocurrence of \fItext\fP.
+Search for \fIn\fP-th occurrence of \fItext\fP.
 .  TRX
 .    TD
 \fCS\*$
@@ -545,12 +545,12 @@ Repeat last search (pattern from Q-Register \fC_\fP).
 .    TD
 \fCN\fItext\*$
 .    TD
-Search for next ocurrence of \fItext\fP across all buffers.
+Search for next occurrence of \fItext\fP across all buffers.
 .  TRX
 .    TD
 \fCFR\fIfrom\*$\fIto\*$
 .    TD
-Find next ocurrence of \fIfrom\fP and replace it with \fIto\fP.
+Find next occurrence of \fIfrom\fP and replace it with \fIto\fP.
 .  TRX
 .    TD
 \fCFR\*($$
@@ -560,17 +560,17 @@ Repeat the last search-replace operation (\fC_\fP and \fC-\fP).
 .    TD
 \fC<FR\fIfrom\*$\fIto\*$\fC;>\fP
 .    TD
-Find and replace all ocurrences in buffer beginning at current position.
+Find and replace all occurrences in buffer beginning at current position.
 .  TRX
 .    TD
 \fCFK\fItext\*$
 .    TD
-Find and kill (delete) up to first ocurrence of \fItext\fP.
+Find and kill (delete) up to first occurrence of \fItext\fP.
 .  TRX
 .    TD
 \fCFD\fItext\*$
 .    TD
-Find and delete first ocurrence of \fItext\fP.
+Find and delete first occurrence of \fItext\fP.
 .ETB
 .
 .TBLX "Control Flow" width='45% 55%'
@@ -645,7 +645,7 @@ Matches any character not in \fIclass\fP.
 .    TD
 \*[CTRL ^E]\fCM\fIpattern\fP
 .    TD
-Matches many ocurrences of \fIpattern\fP.
+Matches many occurrences of \fIpattern\fP.
 .  TRX
 .    TD
 \*[CTRL ^E]\fCG\fIq\fP

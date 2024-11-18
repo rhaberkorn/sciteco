@@ -42,7 +42,7 @@ TECO_DEFINE_UNDO_SCALAR(gconstpointer);
  * An undo token.
  *
  * Undo tokens are generated to revert any
- * changes to the editor state, ie. they
+ * changes to the editor state, i.e. they
  * define an action to take upon rubout.
  *
  * Undo tokens are organized into an undo stack.

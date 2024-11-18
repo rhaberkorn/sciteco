@@ -286,7 +286,7 @@ gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx,
  *
  * As a special exception, you can and must specify a
  * Lexilla lexer name as a string argument for the \fBSCI_SETILEXER\fP
- * message, ie. in order to load a Lexilla lexer
+ * message, i.e. in order to load a Lexilla lexer
  * (this works similar to the old \fBSCI_SETLEXERLANGUAGE\fP message).
  *
  * .BR Warning :

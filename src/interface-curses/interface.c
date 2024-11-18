@@ -98,7 +98,7 @@
 #if defined(NCURSES_UNIX) || defined(NETBSD_CURSES)
 /**
  * Whether Curses works on a real or pseudo TTY
- * (ie. classic use with terminal emulators on Unix)
+ * (i.e. classic use with terminal emulators on Unix)
  */
 #define CURSES_TTY
 #endif

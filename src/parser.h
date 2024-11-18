@@ -186,7 +186,7 @@ struct teco_state_t {
 	teco_state_process_edit_cmd_cb_t process_edit_cmd_cb;
 
 	/**
-	 * Whether this state is a start state (ie. not within any
+	 * Whether this state is a start state (i.e. not within any
 	 * escape sequence etc.).
 	 * This is separate of TECO_KEYMACRO_MASK_START which is set
 	 * only in the main machine's start states.
@@ -432,7 +432,7 @@ typedef struct {
 } teco_machine_scintilla_t;
 
 typedef enum {
-	/** Normal parsing - ie. execute while parsing */
+	/** Normal parsing - i.e. execute while parsing */
 	TECO_MODE_NORMAL = 0,
 	/** Parse, but don't execute until reaching not-yet-defined Goto-label */
 	TECO_MODE_PARSE_ONLY_GOTO,
@@ -448,7 +448,7 @@ typedef enum {
 struct teco_machine_main_t {
 	teco_machine_t parent;
 
-	/** Program counter, ie. pointer to the next character in the current macro frame */
+	/** Program counter, i.e. pointer to the next character in the current macro frame */
 	gsize macro_pc;
 
 	/**
