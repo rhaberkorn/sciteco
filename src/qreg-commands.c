@@ -626,11 +626,13 @@ teco_state_increaseqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg
 	return &teco_state_start;
 }
 
-/*$ % %q increment
- * [n]%q -> q+n -- Increase Q-Register integer
+/*$ % %q increment decrement
+ * [n]%q -> q+n -- Increase or decrease Q-Register integer
+ * -%q -> q-1
  *
  * Add <n> to the integer part of register <q>, returning
  * its new value.
+ * If <n> is omitted, the sign prefix is implied.
  * <q> will be defined if it does not exist.
  */
 TECO_DEFINE_STATE_EXPECTQREG(teco_state_increaseqreg,

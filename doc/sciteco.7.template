@@ -952,7 +952,7 @@ success or failure.
 Booleans are also integers but unlike in ordinary (sane) languages
 where 0 represent false and other values represent true,
 in \*(ST negative values (smaller than zero) represent success
-and non-negative values (smaller than or equal zero) represent
+and non-negative values (larger than or equal to zero) represent
 failure.
 Therefore \*(ST booleans may be negated by performing a
 binary (bit by bit) negation for instance using the
