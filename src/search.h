@@ -16,7 +16,11 @@
  */
 #pragma once
 
+#include <glib.h>
+
 #include "parser.h"
+
+void teco_state_control_search_mode(teco_machine_main_t *ctx, GError **error);
 
 TECO_DECLARE_STATE(teco_state_search);
 TECO_DECLARE_STATE(teco_state_search_all);

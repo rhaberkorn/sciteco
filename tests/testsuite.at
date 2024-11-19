@@ -95,6 +95,8 @@ AT_SETUP([Searches])
 # You also cannot search for a single ASCII 5 using Caret+E.
 # 2 additional ^Q are translated to a single ^Q and interpreted at the search-pattern layer.
 AT_CHECK([$SCITECO -e "@I/^Q\05/ J @:S/^Q^Q^Q\05/\"F(0/0)'"], 0, ignore, ignore)
+# Canse-sensitive search
+AT_CHECK([$SCITECO -e "@I/XXX/J -^X @:S/xxx/\"S(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Editing local registers in macro calls])

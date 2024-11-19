@@ -52,6 +52,34 @@ TECO_DEFINE_UNDO_OBJECT_OWN(parameters, teco_search_parameters_t, /* don't delet
  */
 static teco_search_parameters_t teco_search_parameters;
 
+static teco_bool_t teco_search_mode = TECO_FAILURE; /* case-insensitive */
+
+/*$ ^X search-mode
+ * mode^X -- Set or get search mode flag
+ * -^X
+ * ^X -> mode
+ *
+ * The search mode is interpreted as a TECO boolean.
+ * A true value (smaller than zero) configures case-sensitive searches,
+ * while a false value (larger than or equal to zero) configures case-insensitive
+ * searches.
+ * "-^X" is equivalent to "-1^X" and also enables case-sensitive searches.
+ * Searches are case-insensitive by default.
+ */
+void
+teco_state_control_search_mode(teco_machine_main_t *ctx, GError **error)
+{
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+	if (!teco_expressions_args() && teco_num_sign > 0) {
+		teco_expressions_push(teco_search_mode);
+	} else {
+		teco_undo_int(teco_search_mode);
+		if (!teco_expressions_pop_num_calc(&teco_search_mode, teco_num_sign, error))
+			return;
+	}
+}
+
 static gboolean
 teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 {
@@ -599,7 +627,10 @@ static gboolean
 teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gsize new_chars, GError **error)
 {
 	/* FIXME: Should G_REGEX_OPTIMIZE be added under certain circumstances? */
-	GRegexCompileFlags flags = G_REGEX_CASELESS | G_REGEX_MULTILINE | G_REGEX_DOTALL;
+	GRegexCompileFlags flags = G_REGEX_MULTILINE | G_REGEX_DOTALL;
+
+	if (teco_is_failure(teco_search_mode))
+		flags |= G_REGEX_CASELESS;
 
 	/* this is set in teco_state_search_initial() */
 	if (ctx->expectstring.machine.codepage != SC_CP_UTF8) {

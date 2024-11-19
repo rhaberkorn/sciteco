@@ -1835,7 +1835,8 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},
 		['R']  = {&teco_state_start, teco_state_control_radix},
-		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes}
+		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes},
+		['X']  = {&teco_state_start, teco_state_control_search_mode}
 	};
 
 	/*

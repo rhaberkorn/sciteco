@@ -324,10 +324,7 @@ Features:
    (request of N.M.).
    Could be called <_> (a global-search variant in classic TECO).
  * Shortcut for cutting into Q-Register. Typing 10Xq10K is very
-   annoying to type. We could use the @ modifier 10@Xq or
-   define a new command, like ^X (search-mode flag in classic
-   TECO). On the other hand, a search mode setting would be
-   useful in SciTECO as well!
+   annoying to type. We could use the @ modifier 10@Xq.
    FX would be available as well, but is perhaps best reserved
    for some mmenonics.
    An elegant alternative might be to introduce single-character
