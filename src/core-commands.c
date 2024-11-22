@@ -1741,7 +1741,7 @@ teco_state_control_decimal(teco_machine_main_t *ctx, GError **error)
  * radix^R -- Set and get radix
  * ^R -> radix
  *
- * Set current radix to arbitrary value <radix>.
+ * Set current radix to any value <radix> larger than or equal to 2.
  * If <radix> is omitted, the command instead
  * returns the current radix.
  *
@@ -1764,11 +1764,6 @@ teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 			return;
 		teco_expressions_push(radix);
 	} else {
-		/*
-		 * FIXME: We should restrict the allowed values.
-		 * 0^R 23\ crashes for instance.
-		 * The ^R register should consequently also be "special".
-		 */
 		if (!teco_expressions_pop_num_calc(&radix, 0, error) ||
 		    !qreg->vtable->undo_set_integer(qreg, error) ||
 		    !qreg->vtable->set_integer(qreg, radix, error))

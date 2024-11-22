@@ -399,6 +399,32 @@ teco_qreg_plain_new(const gchar *name, gsize len)
 }
 
 static gboolean
+teco_qreg_radix_set_integer(teco_qreg_t *qreg, teco_int_t value, GError **error)
+{
+	if (value < 2) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "Invalid radix");
+		return FALSE;
+	}
+
+	qreg->integer = value;
+	return TRUE;
+}
+
+/** @static @memberof teco_qreg_t */
+static teco_qreg_t *
+teco_qreg_radix_new(void)
+{
+	static teco_qreg_vtable_t vtable = TECO_INIT_QREG(
+		.set_integer = teco_qreg_radix_set_integer
+	);
+
+	teco_qreg_t *qreg = teco_qreg_new(&vtable, "\x12", 1); /* ^R */
+	qreg->integer = 10;
+	return qreg;
+}
+
+static gboolean
 teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 {
 	g_auto(teco_string_t) str = {NULL, 0};
@@ -913,8 +939,7 @@ teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo)
 	/* search mode ("^X") */
 	teco_qreg_table_insert(table, teco_qreg_plain_new("\x18", 1));
 	/* numeric radix ("^R") */
-	table->radix = teco_qreg_plain_new("\x12", 1);
-	table->radix->vtable->set_integer(table->radix, 10, NULL);
+	table->radix = teco_qreg_radix_new();
 	teco_qreg_table_insert(table, table->radix);
 }
 
