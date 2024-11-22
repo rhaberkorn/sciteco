@@ -52,8 +52,6 @@ TECO_DEFINE_UNDO_OBJECT_OWN(parameters, teco_search_parameters_t, /* don't delet
  */
 static teco_search_parameters_t teco_search_parameters;
 
-static teco_bool_t teco_search_mode = TECO_FAILURE; /* case-insensitive */
-
 /*$ ^X search-mode
  * mode^X -- Set or get search mode flag
  * -^X
@@ -65,17 +63,29 @@ static teco_bool_t teco_search_mode = TECO_FAILURE; /* case-insensitive */
  * searches.
  * "-^X" is equivalent to "-1^X" and also enables case-sensitive searches.
  * Searches are case-insensitive by default.
+ *
+ * An alternative way to access the search mode is via the "^X" local Q-Register.
+ * Consequently, the search mode is local to the current macro invocation frame,
+ * unless the macro call was colon-modified.
  */
 void
 teco_state_control_search_mode(teco_machine_main_t *ctx, GError **error)
 {
 	if (!teco_expressions_eval(FALSE, error))
 		return;
+
+	teco_qreg_t *reg = teco_qreg_table_find(ctx->qreg_table_locals, "\x18", 1); /* ^X */
+	g_assert(reg != NULL);
+	teco_bool_t search_mode;
+
 	if (!teco_expressions_args() && teco_num_sign > 0) {
-		teco_expressions_push(teco_search_mode);
+		if (!reg->vtable->get_integer(reg, &search_mode, error))
+			return;
+		teco_expressions_push(search_mode);
 	} else {
-		teco_undo_int(teco_search_mode);
-		if (!teco_expressions_pop_num_calc(&teco_search_mode, teco_num_sign, error))
+		if (!teco_expressions_pop_num_calc(&search_mode, teco_num_sign, error) ||
+		    !reg->vtable->undo_set_integer(reg, error) ||
+		    !reg->vtable->set_integer(reg, search_mode, error))
 			return;
 	}
 }
@@ -629,7 +639,12 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	/* FIXME: Should G_REGEX_OPTIMIZE be added under certain circumstances? */
 	GRegexCompileFlags flags = G_REGEX_MULTILINE | G_REGEX_DOTALL;
 
-	if (teco_is_failure(teco_search_mode))
+	teco_qreg_t *reg = teco_qreg_table_find(ctx->qreg_table_locals, "\x18", 1); /* ^X */
+	g_assert(reg != NULL);
+	teco_bool_t search_mode;
+	if (!reg->vtable->get_integer(reg, &search_mode, error))
+		return FALSE;
+	if (teco_is_failure(search_mode))
 		flags |= G_REGEX_CASELESS;
 
 	/* this is set in teco_state_search_initial() */

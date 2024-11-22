@@ -144,9 +144,16 @@ struct teco_qreg_table_t {
 	 * b) The top-level local register table.
 	 */
 	gboolean must_undo;
+
+	/**
+	 * The radix register in this local Q-Register table or NULL.
+	 * This is an optimization to avoid frequent table lookups.
+	 */
+	teco_qreg_t *radix;
 };
 
 void teco_qreg_table_init(teco_qreg_table_t *table, gboolean must_undo);
+void teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo);
 
 /** @memberof teco_qreg_table_t */
 static inline teco_qreg_t *

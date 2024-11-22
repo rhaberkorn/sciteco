@@ -19,6 +19,7 @@
 #include <glib.h>
 
 #include "sciteco.h"
+#include "qreg.h"
 #include "undo.h"
 
 /**
@@ -101,14 +102,6 @@ teco_set_num_sign(gint sign)
 	teco_undo_gint(teco_num_sign) = sign;
 }
 
-extern gint teco_radix;
-
-static inline void
-teco_set_radix(gint r)
-{
-	teco_undo_gint(teco_radix) = r;
-}
-
 void teco_expressions_push_int(teco_int_t number);
 
 /** Push characters of a C-string. */
@@ -123,7 +116,7 @@ teco_int_t teco_expressions_peek_num(guint index);
 teco_int_t teco_expressions_pop_num(guint index);
 gboolean teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error);
 
-void teco_expressions_add_digit(gunichar digit);
+void teco_expressions_add_digit(gunichar digit, teco_qreg_t *radix);
 
 void teco_expressions_push_op(teco_operator_t op);
 gboolean teco_expressions_push_calc(teco_operator_t op, GError **error);
@@ -155,8 +148,8 @@ gboolean teco_expressions_brace_close(GError **error);
 
 void teco_expressions_clear(void);
 
-/** Maximum size required to format a number if teco_radix == 2 */
+/** Maximum size required to format a number if radix == 2 */
 #define TECO_EXPRESSIONS_FORMAT_LEN \
         (1 + sizeof(teco_int_t)*8 + 1)
 
-gchar *teco_expressions_format(gchar *buffer, teco_int_t number);
+gchar *teco_expressions_format(gchar *buffer, teco_int_t number, teco_qreg_t *radix);

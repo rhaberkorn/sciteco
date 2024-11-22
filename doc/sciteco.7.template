@@ -1417,7 +1417,7 @@ textual and numeric cells \(em they overwrite default operations
 with custom side-effects in order to support unique idioms.
 Some of the registers with special significance are initialized
 by \*(ST while others must be manually defined.
-The following list is an overview of all special global registers:
+The following list is an overview of all special \fIglobal\fP registers:
 .TP 2
 .SCITECO_TOPIC "search condition"
 .BR _ " (underscore)"
@@ -1583,6 +1583,24 @@ in the \fBED\fP flags (see subsection \fBBuffer Editing Hooks\fP).
 The numeric part of register \fBED\fP is currently unused and
 the register is not automatically initialized on startup.
 .LP
+Furthermore, \*(ST supports special local Q-Registers.
+The values of these properties will therefore be known at the beginning
+of macro calls (unless these calls are colon-modified).
+The following list is an overview of all special \fIlocal\fP registers:
+.TP 2
+.BR ^R " (CTRL+R)"
+The current radix as reported and configurable with the
+\fB^R\fP, \fB^O\fP and \fB^D\fP commands (10 by default).
+The string part of this register is currently unused.
+.TP
+.BR ^X " (CTRL+X)"
+The current search mode flag as set and reported by the
+.B ^X
+command.
+The default value of 0 means that searches are always
+case-insensitive at the beginning of macro calls.
+The string part of this register is currently unused.
+.LP
 Some commands may create and initialize new registers if
 necessary, while it is an error to access undefined registers
 for some other commands.
@@ -1602,14 +1620,23 @@ specifications:
 .BI . c
 Refers to a one character Q-Register.
 The one character name is upper-cased.
+All one character names except for \(lq.\(rq, \(lq^\(rq and \(lq#\(rq
+can be referenced this way.
 If lead by a dot, the name refers to a local Q-Register,
 otherwise to a global one.
+.TP
+.BI ^ c
+.TQ
+.BI .^ c
+Refers to a Q-Register, whose name is a single byte control code.
+Those can be typed with upcarets as well.
 .TP
 .BI # cc
 .TQ
 .BI .# cc
 Refers to a two character global or local Q-Register whose
 name is upper-cased.
+\# FIXME: Space characters could/should be disallowed here.
 .TP
 .BI [ name ]
 .TQ

@@ -654,7 +654,7 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 			return NULL;
 	} else {
 		g_auto(teco_qreg_table_t) table;
-		teco_qreg_table_init(&table, FALSE);
+		teco_qreg_table_init_locals(&table, FALSE);
 
 		if (!teco_qreg_execute(qreg, &table, error))
 			return NULL;
@@ -711,7 +711,8 @@ teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 			return NULL;
 	} else {
 		g_auto(teco_qreg_table_t) table;
-		teco_qreg_table_init(&table, FALSE);
+		teco_qreg_table_init_locals(&table, FALSE);
+
 		if (!teco_execute_file(filename, &table, error))
 			return NULL;
 	}

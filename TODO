@@ -31,16 +31,6 @@ Known Bugs:
    reverse of STYLE_DEFAULT.
    Perhaps we must call init_color() before initializing color pairs
    (currently done by Scinterm).
- * session.save should save and reset ^R. Perhaps ^R should be
-   mapped to a Q-Reg to allow [^R. Currently, saving the buffer session
-   fails if ^R != 10.
-   On the other hand, given that almost any macro depends on the
-   correct radix, __every__ portable macro would have to save the
-   old radix. Perhaps it's better to make the radix a property of the
-   current macro invocation frame and guarantee ^R == 10 at the beginning
-   of macros.
-   Since :M should probably inherit the radix, having a ^R register would
-   still be useful.
  * Saving another user's file will only preserve the user when run as root.
    Generally, it is hard to ensure that a) save point files can be created
    and b) the file mode and ownership of re-created files can be preserved.
@@ -582,6 +572,14 @@ Features:
    This is because Groff decomposes characters in intermediate output.
    Either we have to consult devutf8/R or use wrap g_unichar_compose().
    This will be important once we want to localize documentation.
+ * Search and replace registers ("-" and "_") should probably be local
+   to the current macro frame, so you don't have to save and restore
+   them all the time in portable macros.
+   This however means they should be in local Q-Registers which
+   is a significant deviation from DEC TECO.
+   Perhaps a few select local Q-Registers (-, _, ^X, ^R) should be
+   accessible with the global reg syntax as well, so G- is equivalent
+   to G.-?
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -598,7 +596,8 @@ Optimizations:
    roughly the same size.
    Should be tested on Windows, though.
  * commonly used (special) Q-Registers could be cached,
-   saving the q-reg table lookup
+   saving the q-reg table lookup.
+   This is already done with ^R (radix) in teco_qreg_table_t.
  * refactor search commands (create proper base class)
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().

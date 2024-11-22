@@ -893,6 +893,7 @@ teco_qreg_clipboard_new(const gchar *name)
 void
 teco_qreg_table_init(teco_qreg_table_t *table, gboolean must_undo)
 {
+	memset(table, 0, sizeof(*table));
 	rb3_reset_tree(&table->tree);
 	table->must_undo = must_undo;
 
@@ -901,6 +902,20 @@ teco_qreg_table_init(teco_qreg_table_t *table, gboolean must_undo)
 		teco_qreg_table_insert(table, teco_qreg_plain_new(&q, sizeof(q)));
 	for (gchar q = '0'; q <= '9'; q++)
 		teco_qreg_table_insert(table, teco_qreg_plain_new(&q, sizeof(q)));
+}
+
+/** @memberof teco_qreg_table_t */
+void
+teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo)
+{
+	teco_qreg_table_init(table, must_undo);
+
+	/* search mode ("^X") */
+	teco_qreg_table_insert(table, teco_qreg_plain_new("\x18", 1));
+	/* numeric radix ("^R") */
+	table->radix = teco_qreg_plain_new("\x12", 1);
+	table->radix->vtable->set_integer(table->radix, 10, NULL);
+	teco_qreg_table_insert(table, table->radix);
 }
 
 static inline void
@@ -1208,7 +1223,7 @@ teco_ed_hook(teco_ed_hook_t type, GError **error)
 	 * since it runs all destructors.
 	 */
 	g_auto(teco_qreg_table_t) locals;
-	teco_qreg_table_init(&locals, FALSE);
+	teco_qreg_table_init_locals(&locals, FALSE);
 
 	teco_qreg_t *qreg = teco_qreg_table_find(&teco_qreg_table_globals, "ED", 2);
 	if (!qreg) {
@@ -1297,6 +1312,7 @@ struct teco_machine_qregspec_t {
  */
 TECO_DECLARE_STATE(teco_state_qregspec_start);
 TECO_DECLARE_STATE(teco_state_qregspec_start_global);
+TECO_DECLARE_STATE(teco_state_qregspec_caret);
 TECO_DECLARE_STATE(teco_state_qregspec_firstchar);
 TECO_DECLARE_STATE(teco_state_qregspec_secondchar);
 TECO_DECLARE_STATE(teco_state_qregspec_string);
@@ -1364,10 +1380,10 @@ TECO_DEFINE_STATE(teco_state_qregspec_start,
 static teco_state_t *
 teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
 {
-	/*
-	 * FIXME: Disallow space characters?
-	 */
 	switch (chr) {
+	case '^':
+		return &teco_state_qregspec_caret;
+
 	case '#':
 		return &teco_state_qregspec_firstchar;
 
@@ -1395,6 +1411,25 @@ teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gunichar ch
 TECO_DEFINE_STATE(teco_state_qregspec_start_global,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_process_edit_cmd
 );
+
+static teco_state_t *
+teco_state_qregspec_caret_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)
+{
+	chr = teco_ascii_toupper(chr);
+	if (chr < '@' || chr > '_') {
+		teco_error_syntax_set(error, chr);
+		return NULL;
+	}
+
+	if (!ctx->parse_only) {
+		if (ctx->parent.must_undo)
+			undo__teco_string_truncate(&ctx->name, ctx->name.len);
+		teco_string_append_wc(&ctx->name, TECO_CTL_KEY(chr));
+	}
+	return teco_state_qregspec_done(ctx, error);
+}
+
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_qregspec_caret);
 
 static teco_state_t *
 teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gunichar chr, GError **error)

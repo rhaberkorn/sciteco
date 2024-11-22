@@ -176,7 +176,7 @@ teco_execute_macro(const gchar *macro, gsize macro_len,
 	teco_qreg_table_t macro_locals;
 
 	if (!qreg_table_locals)
-		teco_qreg_table_init(&macro_locals, FALSE);
+		teco_qreg_table_init_locals(&macro_locals, FALSE);
 
 	guint parent_brace_level = teco_brace_level;
 
@@ -670,7 +670,7 @@ teco_state_stringbuilding_ctle_num_input(teco_machine_stringbuilding_t *ctx, gun
 	 * NOTE: Numbers can always be safely formatted as null-terminated strings.
 	 */
 	gchar buffer[TECO_EXPRESSIONS_FORMAT_LEN];
-	const gchar *num = teco_expressions_format(buffer, value);
+	const gchar *num = teco_expressions_format(buffer, value, ctx->qreg_table_locals->radix);
 	teco_machine_stringbuilding_append(ctx, num, strlen(num));
 
 	return &teco_state_stringbuilding_start;

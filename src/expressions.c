@@ -23,6 +23,7 @@
 #include "sciteco.h"
 #include "error.h"
 #include "undo.h"
+#include "qreg.h"
 #include "expressions.h"
 
 /*
@@ -57,7 +58,6 @@ teco_expressions_precedence(teco_operator_t op)
 }
 
 gint teco_num_sign = 1;
-gint teco_radix = 10;
 
 void
 teco_expressions_push_int(teco_int_t number)
@@ -114,12 +114,20 @@ teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error)
 }
 
 void
-teco_expressions_add_digit(gunichar digit)
+teco_expressions_add_digit(gunichar digit, teco_qreg_t *qreg)
 {
+	/*
+	 * FIXME: We could just access qreg->integer here since
+	 * we can assume that "^R" is a plain register.
+	 */
+	assert(qreg != NULL);
+	teco_int_t radix = 10;
+	qreg->vtable->get_integer(qreg, &radix, NULL);
+
 	teco_int_t n = teco_expressions_args() > 0 ? teco_expressions_pop_num(0) : 0;
 
 	/* use g_unichar_digit_value()? */
-	teco_expressions_push(n*teco_radix + (n < 0 ? -1 : 1)*((gint)digit - '0'));
+	teco_expressions_push(n*radix + (n < 0 ? -1 : 1)*((gint)digit - '0'));
 }
 
 void
@@ -378,21 +386,26 @@ teco_expressions_clear(void)
  * @param buffer The output buffer of at least TECO_EXPRESSIONS_FORMAT_LEN characters.
  *               The output string will be null-terminated.
  * @param number The number to format.
+ * @param table The local Q-Register table that contains the appropriate radix register (^R).
  * @return A pointer into buffer to the beginning of the formatted number.
  */
 gchar *
-teco_expressions_format(gchar *buffer, teco_int_t number)
+teco_expressions_format(gchar *buffer, teco_int_t number, teco_qreg_t *qreg)
 {
+	assert(qreg != NULL);
+	teco_int_t radix = 10;
+	qreg->vtable->get_integer(qreg, &radix, NULL);
+
 	gchar *p = buffer + TECO_EXPRESSIONS_FORMAT_LEN;
 
 	teco_int_t v = ABS(number);
 
 	*--p = '\0';
 	do {
-		*--p = '0' + (v % teco_radix);
+		*--p = '0' + (v % radix);
 		if (*p > '9')
 			*p += 'A' - '9' - 1;
-	} while ((v /= teco_radix));
+	} while ((v /= radix));
 	if (number < 0)
 		*--p = '-';
 

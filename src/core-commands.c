@@ -196,7 +196,8 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 			return;
 
 		gchar buffer[TECO_EXPRESSIONS_FORMAT_LEN];
-		gchar *str = teco_expressions_format(buffer, value);
+		gchar *str = teco_expressions_format(buffer, value,
+		                                     ctx->qreg_table_locals->radix);
 		g_assert(*str != '\0');
 
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
@@ -207,6 +208,12 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 	} else {
+		teco_qreg_t *qreg = ctx->qreg_table_locals->radix;
+		assert(qreg != NULL);
+		teco_int_t radix;
+		if (!qreg->vtable->get_integer(qreg, &radix, error))
+			return;
+
 		uptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 		gchar c = (gchar)teco_interface_ssm(SCI_GETCHARAT, pos, 0);
 		teco_int_t v = 0;
@@ -219,11 +226,11 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 
 		for (;;) {
 			c = teco_ascii_toupper((gchar)teco_interface_ssm(SCI_GETCHARAT, pos, 0));
-			if (c >= '0' && c <= '0' + MIN(teco_radix, 10) - 1)
-				v = (v*teco_radix) + (c - '0');
+			if (c >= '0' && c <= '0' + MIN(radix, 10) - 1)
+				v = (v*radix) + (c - '0');
 			else if (c >= 'A' &&
-				 c <= 'A' + MIN(teco_radix - 10, 26) - 1)
-				v = (v*teco_radix) + 10 + (c - 'A');
+				 c <= 'A' + MIN(radix - 10, 26) - 1)
+				v = (v*radix) + 10 + (c - 'A');
 			else
 				break;
 
@@ -1164,7 +1171,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 */
 	case '0' ... '9':
 		if (ctx->mode == TECO_MODE_NORMAL)
-			teco_expressions_add_digit(chr);
+			teco_expressions_add_digit(chr, ctx->qreg_table_locals->radix);
 		return &teco_state_start;
 
 	case '*':
@@ -1710,7 +1717,11 @@ teco_state_control_exit(teco_machine_main_t *ctx, GError **error)
 static void
 teco_state_control_octal(teco_machine_main_t *ctx, GError **error)
 {
-	teco_set_radix(8);
+	teco_qreg_t *qreg = ctx->qreg_table_locals->radix;
+	assert(qreg != NULL);
+	if (!qreg->vtable->undo_set_integer(qreg, error) ||
+	    !qreg->vtable->set_integer(qreg, 8, NULL))
+		return;
 }
 
 /*$ ^D decimal
@@ -1719,7 +1730,11 @@ teco_state_control_octal(teco_machine_main_t *ctx, GError **error)
 static void
 teco_state_control_decimal(teco_machine_main_t *ctx, GError **error)
 {
-	teco_set_radix(10);
+	teco_qreg_t *qreg = ctx->qreg_table_locals->radix;
+	assert(qreg != NULL);
+	if (!qreg->vtable->undo_set_integer(qreg, error) ||
+	    !qreg->vtable->set_integer(qreg, 10, NULL))
+		return;
 }
 
 /*$ ^R radix
@@ -1729,19 +1744,35 @@ teco_state_control_decimal(teco_machine_main_t *ctx, GError **error)
  * Set current radix to arbitrary value <radix>.
  * If <radix> is omitted, the command instead
  * returns the current radix.
+ *
+ * An alternative way to access the radix is via the "^R" local Q-Register.
+ * Consequently, the radix is local to the current macro invocation frame,
+ * unless the macro call was colon-modified.
  */
 static void
 teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 {
 	if (!teco_expressions_eval(FALSE, error))
 		return;
+
+	teco_qreg_t *qreg = ctx->qreg_table_locals->radix;
+	assert(qreg != NULL);
+	teco_int_t radix;
+
 	if (!teco_expressions_args()) {
-		teco_expressions_push(teco_radix);
-	} else {
-		teco_int_t v;
-		if (!teco_expressions_pop_num_calc(&v, 0, error))
+		if (!qreg->vtable->get_integer(qreg, &radix, error))
 			return;
-		teco_set_radix(v);
+		teco_expressions_push(radix);
+	} else {
+		/*
+		 * FIXME: We should restrict the allowed values.
+		 * 0^R 23\ crashes for instance.
+		 * The ^R register should consequently also be "special".
+		 */
+		if (!teco_expressions_pop_num_calc(&radix, 0, error) ||
+		    !qreg->vtable->undo_set_integer(qreg, error) ||
+		    !qreg->vtable->set_integer(qreg, radix, error))
+			return;
 	}
 }
 

@@ -390,6 +390,11 @@ main(int argc, char **argv)
 	teco_qreg_view = teco_view_new();
 	teco_view_setup(teco_qreg_view);
 
+	/*
+	 * FIXME: "_" and "-" should perhaps be in the local Q-Reg table, so you don't
+	 * have to back them up on the Q-Reg stack in portable macros.
+	 * DEC TECO has them in the global table, though.
+	 */
 	/* search string and status register */
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("_", 1));
 	/* replacement string register */
@@ -402,7 +407,7 @@ main(int argc, char **argv)
 	teco_initialize_environment();
 
 	teco_qreg_table_t local_qregs;
-	teco_qreg_table_init(&local_qregs, TRUE);
+	teco_qreg_table_init_locals(&local_qregs, TRUE);
 
 	if (!teco_ring_edit_by_name(NULL, &error)) {
 		g_fprintf(stderr, "Error editing unnamed file: %s\n",
