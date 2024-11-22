@@ -461,6 +461,15 @@ teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar
 	case 'W': return &teco_state_stringbuilding_upper;
 	case 'E': return &teco_state_stringbuilding_ctle;
 	default:
+		if (chr < '@' || chr > '_') {
+			/*
+			 * If ^c wouldn't result in a control character,
+			 * insert these characters verbatim.
+			 */
+			if (ctx->result)
+				teco_string_append_c(ctx->result, '^');
+			break;
+		}
 		chr = TECO_CTL_KEY(chr);
 	}
 
