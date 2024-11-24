@@ -61,10 +61,10 @@ static teco_search_parameters_t teco_search_parameters;
  * A true value (smaller than zero) configures case-sensitive searches,
  * while a false value (larger than or equal to zero) configures case-insensitive
  * searches.
- * "-^X" is equivalent to "-1^X" and also enables case-sensitive searches.
+ * \(lq-^X\(rq is equivalent to \(lq-1^X\(rq and also enables case-sensitive searches.
  * Searches are case-insensitive by default.
  *
- * An alternative way to access the search mode is via the "^X" local Q-Register.
+ * An alternative way to access the search mode is via the \(lq^X\(rq local Q-Register.
  * Consequently, the search mode is local to the current macro invocation frame,
  * unless the macro call was colon-modified.
  */

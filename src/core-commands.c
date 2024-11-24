@@ -1745,7 +1745,7 @@ teco_state_control_decimal(teco_machine_main_t *ctx, GError **error)
  * If <radix> is omitted, the command instead
  * returns the current radix.
  *
- * An alternative way to access the radix is via the "^R" local Q-Register.
+ * An alternative way to access the radix is via the \(lq^R\(rq local Q-Register.
  * Consequently, the radix is local to the current macro invocation frame,
  * unless the macro call was colon-modified.
  */
