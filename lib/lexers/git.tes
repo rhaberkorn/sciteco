@@ -7,12 +7,10 @@
   :EN*/git-rebase-todoQ*
 }
 
-@[lexer.set.git]{
+@[lexer.set.git]{[:
   :M[color.comment],1M[color.set]
 
-  .U.p
   J< .-Z"= 1; '
     0A-#"= ESSTARTSTYLING 1,(Q.lESLINELENGTH)ESSETSTYLING '
   :L; %.l>
-  Q.pJ
-}
+]:}

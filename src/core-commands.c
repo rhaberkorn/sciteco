@@ -123,6 +123,8 @@ teco_state_start_comma(teco_machine_main_t *ctx, GError **error)
  * \(lq.\(rq pushes onto the stack, the current
  * position (also called <dot>) of the currently
  * selected buffer or Q-Register.
+ *
+ * <dot> is also available in Q-Register \(lq:\(rq.
  */
 static void
 teco_state_start_dot(teco_machine_main_t *ctx, GError **error)

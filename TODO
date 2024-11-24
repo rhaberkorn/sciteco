@@ -356,12 +356,8 @@ Features:
      cmdline.c can then directly operate on the Scintilla document.
    * A Scintilla view will allow syntax highlighting
  * command line could highlight dead branches (e.g. gray them out)
- * Add special Q-Register for dot:
-   Would simplify inserting dot with string building and saving/restoring
-   dot on the QReg stack.
-   Since [. is currently not valid and [[.] is cumbersome, there should be
-   a special syntactic workaround to allow [.. or perhaps we'll simply call
-   it :, so you can write [:
+ * Perhaps add a ^E register analogous to ":", but working with
+   byte offsets. This would mainly be useful in ^E\^E.
  * EL command could also be used to convert all EOLs in the current
    buffer.
  * nEL should perhaps dirtify the buffer, at least when automatic

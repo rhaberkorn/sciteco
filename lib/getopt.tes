@@ -18,15 +18,14 @@
  * there was a parsing error.
  *!
 [optstring]
-@[getopt]{
-  .U.d
+@[getopt]{ [:
   <
     .-Z"= 1; ' 0A-^^-"N :L; F< '
 
     1A-^^-"= K 1; '
 
     0U.i <
-      :Q[optstring]-Q.i"= Q.dJ 0 '
+      :Q[optstring]-Q.i"= ]: 0 '
       Q.iQ[optstring]U.c
 
       0U.#ar <
@@ -48,5 +47,4 @@
       '
     >
   >
-  Q.dJ
--1}
+]: -1}

@@ -398,6 +398,56 @@ teco_qreg_plain_new(const gchar *name, gsize len)
 	return teco_qreg_new(&vtable, name, len);
 }
 
+/* see also teco_state_start_jump() */
+static gboolean
+teco_qreg_dot_set_integer(teco_qreg_t *qreg, teco_int_t value, GError **error)
+{
+	gssize pos = teco_interface_glyphs2bytes(value);
+	if (pos < 0) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_MOVE,
+		                    "Attempt to move pointer off page when setting Q-Register \":\"");
+		return FALSE;
+	}
+
+	teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+	return TRUE;
+}
+
+static gboolean
+teco_qreg_dot_undo_set_integer(teco_qreg_t *qreg, GError **error)
+{
+	if (teco_current_doc_must_undo())
+		undo__teco_interface_ssm(SCI_GOTOPOS,
+		                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
+	return TRUE;
+}
+
+/* see also teco_state_start_dot() */
+static gboolean
+teco_qreg_dot_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **error)
+{
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	*ret = teco_interface_bytes2glyphs(pos);
+	return TRUE;
+}
+
+/** @static @memberof teco_qreg_t */
+teco_qreg_t *
+teco_qreg_dot_new(void)
+{
+	static teco_qreg_vtable_t vtable = TECO_INIT_QREG(
+		.set_integer = teco_qreg_dot_set_integer,
+		.undo_set_integer = teco_qreg_dot_undo_set_integer,
+		.get_integer = teco_qreg_dot_get_integer
+	);
+
+	/*
+	 * If we wanted to use ".", we'd have to either make this a local register
+	 * or add ".." as special syntax equivalent to [.].
+	 */
+	return teco_qreg_new(&vtable, ":", 1);
+}
+
 static gboolean
 teco_qreg_radix_set_integer(teco_qreg_t *qreg, teco_int_t value, GError **error)
 {

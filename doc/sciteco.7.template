@@ -1431,6 +1431,19 @@ Replacement string register.
 Its integer part is currently unused.
 It is initialized automatically on startup.
 .TP
+.B : " (colon)"
+The current document's position (dot).
+This changes dot when set as with the
+.B J
+and other movement commands.
+This allows you to change dot temporarily with the following idiom:
+.SCITECO_TT
+.EX
+[: ! ...change dot... ! ]:
+.SCITECO_TT_END
+.EE
+The string part of this register is currently unused.
+.TP
 .SCITECO_TOPIC filename
 .BR * " (asterisk)"
 File name (string part) and id (numeric part) of current

@@ -399,6 +399,8 @@ main(int argc, char **argv)
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("_", 1));
 	/* replacement string register */
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("-", 1));
+	/* current document's dot (":") */
+	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_dot_new());
 	/* current buffer name and number ("*") */
 	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_bufferinfo_new());
 	/* current working directory ("$") */

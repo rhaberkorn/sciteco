@@ -112,6 +112,7 @@ struct teco_qreg_t {
 };
 
 teco_qreg_t *teco_qreg_plain_new(const gchar *name, gsize len);
+teco_qreg_t *teco_qreg_dot_new(void);
 teco_qreg_t *teco_qreg_bufferinfo_new(void);
 teco_qreg_t *teco_qreg_workingdir_new(void);
 teco_qreg_t *teco_qreg_clipboard_new(const gchar *name);

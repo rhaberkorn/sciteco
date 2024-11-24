@@ -94,6 +94,7 @@ AT_SETUP([Q-Register stack])
 AT_CHECK([$SCITECO -e "[[a 23Ub ]]b Qb\"N(0/0)'"], 0, ignore, ignore)
 # FG will temporarily change the working directory to tests/testsuite.dir.
 AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "[[: @I/XXX/ ]]: .\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searches])
