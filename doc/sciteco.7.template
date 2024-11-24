@@ -1431,7 +1431,7 @@ Replacement string register.
 Its integer part is currently unused.
 It is initialized automatically on startup.
 .TP
-.B : " (colon)"
+.BR : " (colon)"
 The current document's position (dot).
 This changes dot when set as with the
 .B J
