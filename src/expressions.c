@@ -140,13 +140,17 @@ teco_expressions_push_op(teco_operator_t op)
 gboolean
 teco_expressions_push_calc(teco_operator_t op, GError **error)
 {
-	gint first = teco_expressions_first_op();
+	for (;;) {
+		gint first = teco_expressions_first_op();
 
-	/* calculate if op has lower precedence than op on stack */
-	if (first >= 0 &&
-	    teco_expressions_precedence(op) <= teco_expressions_precedence(teco_expressions_peek_op(first)) &&
-	    !teco_expressions_eval(FALSE, error))
-		return FALSE;
+		/* calculate if op has lower precedence than op on stack */
+		if (first < 0 ||
+		    teco_expressions_precedence(op) > teco_expressions_precedence(teco_expressions_peek_op(first)))
+			break;
+
+		if (!teco_expressions_calc(error))
+			return FALSE;
+	}
 
 	teco_expressions_push_op(op);
 	return TRUE;
