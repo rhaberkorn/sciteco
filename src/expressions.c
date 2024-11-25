@@ -337,10 +337,7 @@ teco_expressions_brace_open(void)
 gboolean
 teco_expressions_brace_return(guint keep_braces, guint args, GError **error)
 {
-	/*
-	 * FIXME: Allocating on the stack might be dangerous.
-	 */
-	teco_int_t return_numbers[args];
+	g_autofree teco_int_t *return_numbers = g_new(teco_int_t, args);
 
 	for (guint i = args; i; i--)
 		return_numbers[i-1] = teco_expressions_pop_num(0);
