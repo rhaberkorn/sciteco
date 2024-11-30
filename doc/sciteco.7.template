@@ -862,7 +862,7 @@ similar to the current Scintilla view.
 .SCITECO_TOPIC STYLE_CALLTIP
 The \fBSTYLE_CALLTIP\fP (38) style is also accessed by
 \*(ST to style the \fIpopup area\fP and is initialized
-to black on (light) blue by \*(ST.
+to black on white by \*(ST.
 .LP
 On curses user interfaces, only a selection of 16 terminal
 colors can be used, although it is possible to request changing
@@ -2348,11 +2348,11 @@ The same conventions are used elsewhere in this manual.
 .
 .SH COMPATIBILITY
 .
-\*(ST is not compatible to any particular TECO dialect
+\*(ST is not compatible with any particular TECO dialect,
 but is quite similar to
 .BR "Video TECO" .
 Most Video TECO and many Standard TECO programs should
-be portable with little to no changes.
+be portable with little or no changes.
 This manual mentions differences on several occasions.
 .
 .
