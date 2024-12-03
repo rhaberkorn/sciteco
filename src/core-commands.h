@@ -38,9 +38,18 @@ TECO_DECLARE_STATE(teco_state_ascii);
 TECO_DECLARE_STATE(teco_state_escape);
 TECO_DECLARE_STATE(teco_state_ecommand);
 
+typedef struct {
+	gsize from;	/*< start position in bytes */
+	gsize to;	/*< end position in bytes */
+} teco_range_t;
+
+extern guint teco_ranges_count;
+extern teco_range_t *teco_ranges;
+
 gboolean teco_state_insert_initial(teco_machine_main_t *ctx, GError **error);
 gboolean teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
                                    gsize new_chars, GError **error);
+teco_state_t *teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error);
 
 /* in cmdline.c */
 gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
@@ -57,7 +66,7 @@ gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machi
 	static teco_state_t * \
 	NAME##_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error) \
 	{ \
-		return &teco_state_start; /* nothing to be done when done */ \
+		return teco_state_insert_done(ctx, str, error); \
 	} \
 	TECO_DEFINE_STATE_EXPECTSTRING(NAME, \
 		.initial_cb = (teco_state_initial_cb_t)teco_state_insert_initial, \

@@ -201,9 +201,14 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 		gchar *str = teco_expressions_format(buffer, value,
 		                                     ctx->qreg_table_locals->radix);
 		g_assert(*str != '\0');
+		gsize len = strlen(str);
+
+		teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from + len;
+		teco_undo_guint(teco_ranges_count) = 1;
 
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-		teco_interface_ssm(SCI_ADDTEXT, strlen(str), (sptr_t)str);
+		teco_interface_ssm(SCI_ADDTEXT, len, (sptr_t)str);
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 		teco_ring_dirtify();
 
@@ -1836,6 +1841,103 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 	teco_expressions_push(res);
 }
 
+/**
+ * Number of buffer ranges in teco_ranges
+ * @fixme Should this be 1 from the very beginning, so 0^Y/^S never fail?
+ */
+guint teco_ranges_count = 0;
+/** Array of buffer ranges of the last matched substrings or the last text insertion */
+teco_range_t *teco_ranges = NULL;
+
+/*
+ * Make sure we always have space for at least one result,
+ * so we don't have to check for NULL everywhere.
+ */
+static void __attribute__((constructor))
+teco_ranges_init(void)
+{
+	teco_ranges = g_new0(teco_range_t, 1);
+}
+
+/*$ ^Y subexpression subpattern
+ * [n]^Y -> start, end -- Return range of last pattern match, subexpression or text insertion
+ *
+ * This command returns the buffer ranges of the subpatterns of the
+ * last pattern match (search command) or of the last text insertion.
+ * <n> specifies the number of the subpattern from left to right.
+ * The default value 0 specifies the entire matched pattern,
+ * while higher numbers refer to \fB^E[\fI...\fB]\fR subpatterns.
+ * \fB^Y\fP can also be used to return the buffer range of the
+ * last text insertion by any \*(ST command (\fBI\fP, \fBEI\fP, \fB^I\fP, \fBG\fIq\fR,
+ * \fB\\\fP, \fBEC\fP, \fBEN\fP, etc).
+ * In this case <n> is only allowed to be 0 or missing.
+ *
+ * For instance, \(lq^YXq\(rq copies the entire matched pattern or text
+ * insertion into register \fIq\fP.
+ */
+/*
+ * In DEC TECO, this is actually defined as ".+^S,.".
+ * The SciTECO version is more robust to moving dot afterwards, though,
+ * as it will always return the same buffer range.
+ */
+static void
+teco_state_control_last_range(teco_machine_main_t *ctx, GError **error)
+{
+	teco_int_t n;
+
+	if (!teco_expressions_pop_num_calc(&n, 0, error))
+		return;
+	if (n < 0 || n >= teco_ranges_count) {
+		teco_error_subpattern_set(error, "^Y");
+		return;
+	}
+
+	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].from));
+	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].to));
+}
+
+/*$ ^S
+ * [n]^S -> -length -- Return negative length of last pattern match, subexpression or text insertion
+ * -^S -> length
+ *
+ * Returns the negative length of the subpatterns of the last pattern match
+ * (search command) or of the last text insertion.
+ * <n> specifies the number of the subpattern from left to right
+ * and defaults to 0 (the entire pattern match or text insertion).
+ * \(lq^S\(rq is equivalent to \(lq^YU1U0 Q0-Q1\(rq.
+ * Without arguments, the sign prefix negates the result, i.e. returns the
+ * length of the entire matched pattern or text insertion.
+ *
+ * A common idiom \(lq^SC\(rq can be used for jumping to the
+ * beginning of the matched pattern or inserted string.
+ */
+static void
+teco_state_control_last_length(teco_machine_main_t *ctx, GError **error)
+{
+	teco_int_t n = 0;
+
+	/*
+	 * There is little use in supporting n^S for n != 0.
+	 * This is just for consistency with ^Y.
+	 */
+	if (teco_expressions_args() > 0 &&
+	    !teco_expressions_pop_num_calc(&n, 0, error))
+		return;
+	if (n < 0 || n >= teco_ranges_count) {
+		teco_error_subpattern_set(error, "^Y");
+		return;
+	}
+
+	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].from) -
+	                      teco_interface_bytes2glyphs(teco_ranges[n].to));
+}
+
+static void TECO_DEBUG_CLEANUP
+teco_ranges_cleanup(void)
+{
+	g_free(teco_ranges);
+}
+
 static teco_state_t *
 teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
@@ -1864,7 +1966,9 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['D']  = {&teco_state_start, teco_state_control_decimal},
 		['R']  = {&teco_state_start, teco_state_control_radix},
 		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes},
-		['X']  = {&teco_state_start, teco_state_control_search_mode}
+		['X']  = {&teco_state_start, teco_state_control_search_mode},
+		['Y']  = {&teco_state_start, teco_state_control_last_range},
+		['S']  = {&teco_state_start, teco_state_control_last_length}
 	};
 
 	/*
@@ -2785,6 +2889,9 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return TRUE;
 
+	teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_undo_guint(teco_ranges_count) = 1;
+
 	/*
 	 * Current document's encoding determines the behaviour of
 	 * string building constructs.
@@ -2859,6 +2966,15 @@ teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 
 	return TRUE;
+}
+
+teco_state_t *
+teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	if (ctx->mode == TECO_MODE_NORMAL)
+		teco_undo_gsize(teco_ranges[0].to) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
+	return &teco_state_start;
 }
 
 /*

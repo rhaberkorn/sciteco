@@ -116,6 +116,11 @@ AT_CHECK([$SCITECO -e "@I/XXX/J -^X @:S/xxx/\"S(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "-^X @^Um{^X} Mm-0\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Search and insertion ranges])
+AT_CHECK([$SCITECO -e "@I/XXYYZZ/^SC .\"N(0/0)' C @S/YY/^YU1U0 Q0-2\"N(0/0)' Q1-4\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@I/XXYYZZ/J @S/XX^E[[^EMY]]/ 1^YXa :Qa-2\"N(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Editing local registers in macro calls])
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)

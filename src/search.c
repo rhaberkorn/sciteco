@@ -480,7 +480,8 @@ teco_pattern2regexp(teco_string_t *pattern, teco_machine_qregspec_t *qreg_machin
 				/* a complete expression is strictly required */
 				return g_strdup("");
 
-			teco_string_append(&re, "(", 1);
+			/* don't capture this group - it's not included in ^Y */
+			teco_string_append(&re, "(?:", 3);
 			teco_string_append(&re, temp, strlen(temp));
 			teco_string_append(&re, ")+", 2);
 			state = TECO_SEARCH_STATE_START;
@@ -537,6 +538,27 @@ teco_pattern2regexp(teco_string_t *pattern, teco_machine_qregspec_t *qreg_machin
 	return g_steal_pointer(&re.data) ? : g_strdup("");
 }
 
+TECO_DEFINE_UNDO_OBJECT_OWN(ranges, teco_range_t *, g_free);
+
+#define teco_undo_ranges_own(VAR) \
+	(*teco_undo_object_ranges_push(&(VAR)))
+
+static teco_range_t *
+teco_get_ranges(const GMatchInfo *match_info, gsize offset, guint *count)
+{
+	*count = g_match_info_get_match_count(match_info);
+	teco_range_t *ranges = g_new(teco_range_t, *count);
+
+	for (gint i = 0; i < *count; i++) {
+		gint from, to;
+		g_match_info_fetch_pos(match_info, i, &from, &to);
+		ranges[i].from = offset+MAX(from, 0);
+		ranges[i].to = offset+MAX(to, 0);
+	}
+
+	return ranges;
+}
+
 static gboolean
 teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 {
@@ -554,7 +576,8 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 		return FALSE;
 	}
 
-	gint matched_from = -1, matched_to = -1;
+	guint num_ranges = 0;
+	teco_range_t *matched_ranges = NULL;
 
 	if (*count >= 0) {
 		while (g_match_info_matches(info) && --(*count)) {
@@ -570,22 +593,23 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 
 		if (!*count)
 			/* successful */
-			g_match_info_fetch_pos(info, 0,
-					       &matched_from, &matched_to);
+			matched_ranges = teco_get_ranges(info, from, &num_ranges);
 	} else {
 		/* only keep the last `count' matches, in a circular stack */
 		typedef struct {
-			gint from, to;
-		} teco_range_t;
+			guint num_ranges;
+			teco_range_t *ranges;
+		} teco_match_t;
 
-		gsize matched_size = sizeof(teco_range_t) * -*count;
+		guint matched_num = -*count;
+		gsize matched_size = sizeof(teco_match_t[matched_num]);
 
 		/*
 		 * matched_size could overflow.
 		 * NOTE: Glib 2.48 has g_size_checked_mul() which uses
 		 * compiler intrinsics.
 		 */
-		if (matched_size / sizeof(teco_range_t) != -*count)
+		if (matched_size / sizeof(teco_match_t) != matched_num)
 			/* guaranteed to fail either teco_memory_check() or g_malloc() */
 			matched_size = G_MAXSIZE;
 
@@ -598,13 +622,17 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 		if (!teco_memory_check(matched_size, error))
 			return FALSE;
 
-		g_autofree teco_range_t *matched = g_malloc(matched_size);
+		/*
+		 * NOTE: This needs to be deep-freed, which does not currently
+		 * happen automatically.
+		 */
+		g_autofree teco_match_t *matched = g_malloc0(matched_size);
 
 		gint matched_total = 0, i = 0;
 
 		while (g_match_info_matches(info)) {
-			g_match_info_fetch_pos(info, 0,
-					       &matched[i].from, &matched[i].to);
+			g_free(matched[i].ranges);
+			matched[i].ranges = teco_get_ranges(info, from, &matched[i].num_ranges);
 
 			/*
 			 * NOTE: The return boolean does NOT signal whether an error was generated.
@@ -612,6 +640,8 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 			g_match_info_next(info, &tmp_error);
 			if (tmp_error) {
 				g_propagate_error(error, tmp_error);
+				for (int i = 0; i < matched_num; i++)
+					g_free(matched[i].ranges);
 				return FALSE;
 			}
 
@@ -621,14 +651,23 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 		*count = MIN(*count + matched_total, 0);
 		if (!*count) {
 			/* successful -> i points to stack bottom */
-			matched_from = matched[i].from;
-			matched_to = matched[i].to;
+			num_ranges = matched[i].num_ranges;
+			matched_ranges = matched[i].ranges;
+			matched[i].ranges = NULL;
 		}
+
+		for (int i = 0; i < matched_num; i++)
+			g_free(matched[i].ranges);
 	}
 
-	if (matched_from >= 0 && matched_to >= 0)
+	if (matched_ranges) {
 		/* match success */
-		teco_interface_ssm(SCI_SETSEL, from+matched_from, from+matched_to);
+		teco_undo_ranges_own(teco_ranges) = matched_ranges;
+		teco_undo_guint(teco_ranges_count) = num_ranges;
+		g_assert(teco_ranges_count > 0);
+
+		teco_interface_ssm(SCI_SETSEL, matched_ranges[0].from, matched_ranges[0].to);
+	}
 
 	return TRUE;
 }

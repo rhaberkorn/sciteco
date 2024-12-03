@@ -299,6 +299,7 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 
 /*$ Q Qq query
  * Qq -> n -- Query Q-Register existence, its integer or string characters
+ * -Qq -> -n
  * <position>Qq -> character
  * :Qq -> -1 | size
  *
@@ -532,6 +533,10 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 
 	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
+
+	teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from + str.len;
+	teco_undo_guint(teco_ranges_count) = 1;
 
 	if (str.len > 0) {
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);

@@ -35,6 +35,7 @@
 #include "qreg.h"
 #include "ring.h"
 #include "error.h"
+#include "undo.h"
 #include "glob.h"
 
 /*
@@ -512,14 +513,19 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 		if (g_regex_match(pattern, filename, 0, NULL) &&
 		    (teco_test_mode == 0 || g_file_test(filename, file_flags))) {
 			if (!colon_modified) {
+				gsize len = strlen(filename);
+
+				teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+				teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from + len + 1;
+				teco_undo_guint(teco_ranges_count) = 1;
+
 				/*
 				 * FIXME: Filenames may contain linefeeds.
 				 * But if we add them null-terminated, they will be relatively hard to parse.
 				 */
+				filename[len] = '\n';
 				teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-				teco_interface_ssm(SCI_ADDTEXT, strlen(filename),
-				                   (sptr_t)filename);
-				teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)"\n");
+				teco_interface_ssm(SCI_ADDTEXT, len+1, (sptr_t)filename);
 				teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 			}
 
@@ -544,17 +550,23 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 		g_auto(teco_globber_t) globber;
 		teco_globber_init(&globber, pattern_str.data, file_flags);
 
+		teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from;
+		teco_undo_guint(teco_ranges_count) = 1;
+
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 
 		gchar *globbed_filename;
 		while ((globbed_filename = teco_globber_next(&globber))) {
+			gsize len = strlen(globbed_filename);
+			teco_ranges[0].to += len+1;
+
 			/*
 			 * FIXME: Filenames may contain linefeeds.
 			 * But if we add them null-terminated, they will be relatively hard to parse.
 			 */
-			teco_interface_ssm(SCI_ADDTEXT, strlen(globbed_filename),
-			                   (sptr_t)globbed_filename);
-			teco_interface_ssm(SCI_ADDTEXT, 1, (sptr_t)"\n");
+			globbed_filename[len] = '\n';
+			teco_interface_ssm(SCI_ADDTEXT, len+1, (sptr_t)globbed_filename);
 
 			g_free(globbed_filename);
 			matching = TRUE;

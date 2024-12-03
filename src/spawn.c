@@ -412,9 +412,14 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_spawn_ctx.start = teco_spawn_ctx.from;
 	g_main_loop_run(teco_spawn_ctx.mainloop);
-	if (!teco_spawn_ctx.register_argument)
+	if (!teco_spawn_ctx.register_argument) {
 		teco_interface_ssm(SCI_DELETERANGE, teco_spawn_ctx.from,
 		                   teco_spawn_ctx.to - teco_spawn_ctx.from);
+
+		teco_undo_gsize(teco_ranges[0].from) = teco_spawn_ctx.from;
+		teco_undo_gsize(teco_ranges[0].to) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		teco_undo_guint(teco_ranges_count) = 1;
+	}
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 
 	if (teco_spawn_ctx.register_argument) {
