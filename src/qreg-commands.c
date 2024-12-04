@@ -746,6 +746,14 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
+	/*
+	 * NOTE: "@" has syntactic significance in most contexts, so it's set
+	 * in parse-only mode.
+	 * Therefore, it must also be evaluated in parse-only mode, even though
+	 * it has no syntactic significance for Xq.
+	 */
+	gboolean modifier_at = teco_machine_main_eval_at(ctx);
+
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
@@ -806,16 +814,42 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 			return NULL;
 	}
 
+	if (!modifier_at || len == 0)
+		return &teco_state_start;
+
+	/*
+	 * If @-modified, cut into the register
+	 */
+	if (teco_current_doc_must_undo()) {
+		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+	}
+
+	/*
+	 * Should always generate an undo action.
+	 */
+	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+	teco_interface_ssm(SCI_DELETERANGE, from, len);
+	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
+	teco_ring_dirtify();
+
 	return &teco_state_start;
 }
 
 /*$ X Xq
- * [lines]Xq -- Copy into or append to Q-Register
+ * [lines]Xq -- Copy into or append or cut to Q-Register
  * -Xq
  * from,toXq
  * [lines]:Xq
  * -:Xq
  * from,to:Xq
+ * [lines]@Xq
+ * -@Xq
+ * from,to@Xq
+ * [lines]:@Xq
+ * -:@Xq
+ * from,to:@Xq
  *
  * Copy the next or previous number of <lines> from the buffer
  * into the Q-Register <q> string.
@@ -823,10 +857,15 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
  * If two arguments are specified, the characters beginning
  * at position <from> up to the character at position <to>
  * are copied.
- * The semantics of the arguments is analogous to the K
+ * The semantics of the arguments is analogous to the \fBK\fP
  * command's arguments.
- * If the command is colon-modified, the characters will be
+ *
+ * If the command is colon-modified (\fB:\fP), the characters will be
  * appended to the end of register <q> instead.
+ * If the command is at-modified (\fB@\fP), the text will be
+ * removed from the buffer after copying or appending to the
+ * Q-Register, thus performing a cut operation.
+ * The order of modifiers is as always insignificant.
  *
  * Register <q> will be created if it is undefined.
  */

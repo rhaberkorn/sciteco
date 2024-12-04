@@ -1253,7 +1253,9 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	case '@':
 		/*
 		 * @ modifier has syntactic significance, so set it even
-		 * in PARSE_ONLY* modes
+		 * in PARSE_ONLY* modes.
+		 * Unfortunately, it means that it must be evaluated and cleared
+		 * everywhere, even where it has no syntactic significance.
 		 */
 		if (ctx->parent.must_undo)
 			teco_undo_guint(ctx->__flags);

@@ -1330,7 +1330,9 @@ are handled interactively.
 .
 A command's behaviour or syntax may be influenced by so called
 modifiers written in front of commands.
-When specifying more than one modifier their order is insignificant.
+Their specific influence of a modifier always depends on the concrete
+command following it.
+When specifying more than one modifier, their order is insignificant.
 .LP
 .SCITECO_TOPIC : colon
 The colon (\fB:\fP) modifier usually prevents a command from
@@ -1345,8 +1347,9 @@ For instance if \(lq1000C\(rq would fail, \(lq1000:C\(rq will
 return 0 instead.
 .LP
 .SCITECO_TOPIC @ at
-The at (\fB@\fP) modifier allows the string termination character
-to be changed for individual commands.
+When put in front of a command with string arguments,
+the at (\fB@\fP) modifier always allows the string termination character
+to be changed for that particular command.
 The alternative termination character must be specified just before
 the first string argument.
 For instance:
@@ -1375,6 +1378,13 @@ The termination character can be \fIquoted\fP if you want to handle
 it like any regular character.
 For instance, you could write \(lqS^Q\fB$$\fP\(rq to search for the
 escape character itself.
+.LP
+The at (\fB@\fP) modifier may also sometimes be supported by commands,
+that do not accept string arguments.
+For instance, \fB@X\fIq\fR cuts text into Q-Register \fIq\fP.
+\# But there is no common semantics for @ on regular commands, yet.
+\# We may some day add @Mq/.../ for passing string arguments to macro calls,
+\# but it will be yet another special case.
 .
 .SH Q-REGISTERS
 .SCITECO_TOPIC Q-Register

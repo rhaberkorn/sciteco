@@ -332,6 +332,18 @@ teco_machine_main_eval_colon(teco_machine_main_t *ctx)
 	return TRUE;
 }
 
+gboolean
+teco_machine_main_eval_at(teco_machine_main_t *ctx)
+{
+	if (!ctx->modifier_at)
+		return FALSE;
+
+	if (ctx->parent.must_undo)
+		teco_undo_guint(ctx->__flags);
+	ctx->modifier_at = FALSE;
+	return TRUE;
+}
+
 teco_state_t *
 teco_machine_main_transition_input(teco_machine_main_t *ctx,
                                    teco_machine_main_transition_t *transitions,
@@ -935,11 +947,9 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 	 * String termination handling
 	 */
 	if (ctx->modifier_at) {
-		if (current->expectstring.last) {
-			if (ctx->parent.must_undo)
-				teco_undo_guint(ctx->__flags);
-			ctx->modifier_at = FALSE;
-		}
+		if (current->expectstring.last)
+			/* also clears the "@" modifier flag */
+			teco_machine_main_eval_at(ctx);
 
 		/*
 		 * FIXME: Exclude setting at least whitespace characters as the

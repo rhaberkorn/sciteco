@@ -504,6 +504,7 @@ void teco_machine_main_init(teco_machine_main_t *ctx,
                             gboolean must_undo);
 
 gboolean teco_machine_main_eval_colon(teco_machine_main_t *ctx);
+gboolean teco_machine_main_eval_at(teco_machine_main_t *ctx);
 
 gboolean teco_machine_main_step(teco_machine_main_t *ctx,
                                 const gchar *macro, gsize stop_pos, GError **error);
