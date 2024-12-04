@@ -6,7 +6,7 @@
 :EMQ[$SCITECOPATH]/getopt.tes
 
 @[format_header]{
-  FD--S .U.f :L"S.|Z'U.t Q.f,Q.tXa Q.f,Q.tD I^J
+  FD--S .,(:L"S.|Z')@Xa I^J
 
   EBQ#tm
   I\# GENERATED FROM Q.#sc (\.#sc):^J
@@ -23,19 +23,19 @@
     Qa"S
       Q.tJ
     |
-      .,Q.tXa .,Q.tD
+      .,Q.t@Xa
       I^J.B Qa^J
     '
   >
   J <
-    S[MC]; .U.t -S[ .,Q.t-1Xa .-1,Q.tD
+    S[[MC]]; 1Xa D
     I^J.RI [ Qa ]^J
   >
   J <FR->\(->;>
   J <
     SMCM[|MC];
     .U.t <-A"C|-A-|"N1;'' R>
-    .,Q.tXa .,Q.tD EQa
+    .,Q.t@Xa EQa
     <FR| | ;>
     EQ.[header]
     I^J.IR Qa^J
@@ -111,13 +111,13 @@ EJ-1<
     EQ.c
     <FS^J^J  ^J  ;>
     J <FS^J[S,]*[M[ ,	],]^J;>
-    J 0A-10"N X.[topics] K '
+    J 0A-10"N @X.[topics] '
     <0A-10"N 0A- "N 0A-9"N 1; ' ' ' D>
     ZJ <-A-10"N -A- "N -A-9"N 1; ' ' ' -D>
 
     !* extract header *!
     H:FD^J^J"F ZJ '
-    0,.X.[header] 0,.D
+    0,.@X.[header]
 
     EQ.[header]
     :M[format_header]

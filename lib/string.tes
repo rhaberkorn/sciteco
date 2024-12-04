@@ -16,7 +16,7 @@
 ! <i,j>M[exchange] - Exchange line at I with line at J (I < J), returning new J !
 @[exchange]{
   U.jU.i
-  Q.jJ X.xK
+  Q.jJ @X.x
   Q.iJ G.x .-Q.i%.j .-(X.xL.)%.j -K
   Q.jJ G.x
   Q.j
