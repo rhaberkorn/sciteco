@@ -39,6 +39,7 @@ typedef enum {
 	 * They will mainly be different in their error message.
 	 */
 	TECO_ERROR_SYNTAX,
+	TECO_ERROR_MODIFIER,
 	TECO_ERROR_ARGEXPECTED,
 	TECO_ERROR_CODEPOINT,
 	TECO_ERROR_MOVE,
@@ -71,6 +72,13 @@ teco_error_syntax_set(GError **error, gunichar chr)
 	g_autofree gchar *chr_printable = teco_string_echo(buf, g_unichar_to_utf8(chr, buf));
 	g_set_error(error, TECO_ERROR, TECO_ERROR_SYNTAX,
 	            "Syntax error \"%s\" (U+%04" G_GINT32_MODIFIER "X)", chr_printable, chr);
+}
+
+static inline void
+teco_error_modifier_set(GError **error, gchar modifier)
+{
+	g_set_error(error, TECO_ERROR, TECO_ERROR_MODIFIER,
+	            "Excess \"%c\"-modifier", modifier);
 }
 
 static inline void

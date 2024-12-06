@@ -1,7 +1,7 @@
 !* Python lexer *!
 
 @[lexer.test.python]{
-  _#!MpythonM[lexer.checkheader]"S -1 '
+  _#!Mpython:M[lexer.checkheader]"S -1 '
   :EN*.pyQ*"S -1 '
   :EN*.pywQ*"S -1 '
   :EN*.pyxQ*"S -1 '

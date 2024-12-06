@@ -256,7 +256,7 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	if (!teco_expressions_eval(FALSE, error))
 		return NULL;
 
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		/* Query Q-Register's existence or string size */
 		if (qreg) {
 			/* get_string() would return the size in bytes */
@@ -366,7 +366,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	if (!teco_expressions_eval(FALSE, error))
 		return NULL;
@@ -578,9 +578,9 @@ teco_state_setqreginteger_got_register(teco_machine_main_t *ctx, teco_qreg_t *qr
 		    !qreg->vtable->set_integer(qreg, v, error))
 			return NULL;
 
-		if (teco_machine_main_eval_colon(ctx))
+		if (teco_machine_main_eval_colon(ctx) > 0)
 			teco_expressions_push(TECO_SUCCESS);
-	} else if (teco_machine_main_eval_colon(ctx)) {
+	} else if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(TECO_FAILURE);
 	} else {
 		teco_error_argexpected_set(error, "U");
@@ -653,7 +653,7 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	if (ctx->mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		/* don't create new local Q-Registers if colon modifier is given */
 		if (!teco_qreg_execute(qreg, ctx->qreg_table_locals, error))
 			return NULL;
@@ -710,7 +710,7 @@ teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
 
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		/* don't create new local Q-Registers if colon modifier is given */
 		if (!teco_execute_file(filename, ctx->qreg_table_locals, error))
 			return NULL;
@@ -803,7 +803,7 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	};
 	teco_interface_ssm(SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
 
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		if (!qreg->vtable->append_string(qreg, str, len, error))
 			return NULL;
 	} else {

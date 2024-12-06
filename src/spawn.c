@@ -463,7 +463,7 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 		goto gerror;
 	}
 
-	if (teco_machine_main_eval_colon(ctx))
+	if (teco_machine_main_eval_colon(ctx) > 0)
 		teco_expressions_push(TECO_SUCCESS);
 
 	goto cleanup;

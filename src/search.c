@@ -686,6 +686,9 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	if (teco_is_failure(search_mode))
 		flags |= G_REGEX_CASELESS;
 
+	if (ctx->modifier_colon == 2)
+		flags |= G_REGEX_ANCHORED;
+
 	/* this is set in teco_state_search_initial() */
 	if (ctx->expectstring.machine.codepage != SC_CP_UTF8) {
 		/* single byte encoding */
@@ -835,7 +838,7 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
 	if (!search_reg->vtable->get_integer(search_reg, &search_state, error))
 		return FALSE;
 
-	if (teco_machine_main_eval_colon(ctx))
+	if (teco_machine_main_eval_colon(ctx) > 0)
 		teco_expressions_push(search_state);
 	else if (teco_is_failure(search_state) &&
 	         !teco_loop_stack->len /* not in loop */)
@@ -860,19 +863,20 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
 		##__VA_ARGS__ \
 	)
 
-/*$ S search pattern
- * S[pattern]$ -- Search for pattern
- * [n]S[pattern]$
+/*$ S search pattern compare
+ * [n]S[pattern]$ -- Search for pattern
  * -S[pattern]$
  * from,toS[pattern]$
- * :S[pattern]$ -> Success|Failure
  * [n]:S[pattern]$ -> Success|Failure
  * -:S[pattern]$ -> Success|Failure
  * from,to:S[pattern]$ -> Success|Failure
+ * [n]::S[pattern]$ -> Success|Failure
+ * -::S[pattern]$ -> Success|Failure
+ * from,to::S[pattern]$ -> Success|Failure
  *
  * Search for <pattern> in the current buffer/Q-Register.
  * Search order and range depends on the arguments given.
- * By default without any arguments, S will search forward
+ * By default without any arguments, \fBS\fP will search forward
  * from dot till file end.
  * The optional single argument specifies the occurrence
  * to search (1 is the first occurrence, 2 the second, etc.).
@@ -906,9 +910,22 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
  * .EX
  * <Sfoo$; ...>
  * .EE
- * Alternatively, S may be colon-modified in which case it returns
+ * Alternatively, \fBS\fP may be colon-modified in which case it returns
  * a condition boolean that may be directly evaluated by a
  * conditional or break-command.
+ *
+ * When modified with two colons, the search will be anchored in addition
+ * to returning a condition boolean, i.e. it can be used to perform a string
+ * comparison.
+ * \(lq::S\(rq without arguments compares the pattern against the current
+ * buffer position.
+ * With a single positive integer <n>, \(lq::S\(rq matches <n> repititions
+ * of the given pattern.
+ * With a negative integer <n>, \(lq::S\(rq will match the \fIn\fP-th last
+ * occurrence of the pattern from the beginning of the buffer
+ * (which is not really useful).
+ * With two integer arguments, \(lq::S\(rq compares the pattern against
+ * the corresponding part of the buffer.
  *
  * In interactive mode, searching will be performed immediately
  * (\(lqsearch as you type\(rq) highlighting matched text
@@ -996,12 +1013,12 @@ teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, G
  *
  * Search for <pattern> over buffer boundaries.
  * This command is similar to the regular search command
- * (S) but will continue to search for occurrences of
+ * (\fBS\fP) but will continue to search for occurrences of
  * pattern when the end or beginning of the current buffer
  * is reached.
  * Occurrences of <pattern> spanning over buffer boundaries
  * will not be found.
- * When searching forward N will start in the current buffer
+ * When searching forward \fBN\fP will start in the current buffer
  * at dot, continue with the next buffer in the ring searching
  * the entire buffer until it reaches the end of the buffer
  * ring, continue with the first buffer in the ring until
@@ -1009,7 +1026,7 @@ teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, G
  * beginning of the buffer up to its current dot.
  * Searching backwards does the reverse.
  *
- * N also differs from S in the interpretation of two arguments.
+ * \fBN\fP also differs from \fBS\fP in the interpretation of two arguments.
  * Using two arguments the search will be bounded between the
  * buffer with number <from>, up to the buffer with number
  * <to>.
@@ -1023,6 +1040,13 @@ teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, G
  * to search over buffer ring boundaries by specifying
  * buffer numbers greater than the number of buffers in the
  * ring.
+ */
+/*
+ * Since N inherits the double-colon semantics from S,
+ * f,t::N will match at the beginning of the given buffers.
+ * [n]::N will behave similar to [n]::S, but can search across
+ * buffer boundaries.
+ * This is probably not very useful in practice, so it's not documented.
  */
 TECO_DEFINE_STATE_SEARCH(teco_state_search_all,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_search_all_initial
@@ -1088,14 +1112,17 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
  * -:FK[pattern]$ -> Success|Failure
  * from,to:FK[pattern]$ -> Success|Failure
  *
- * FK searches for <pattern> just like the regular search
- * command (S) but when found deletes all text from dot
+ * \fBFK\fP searches for <pattern> just like the regular search
+ * command (\fBS\fP) but when found deletes all text from dot
  * up to but not including the found text instance.
  * When searching backwards the characters beginning after
  * the occurrence of <pattern> up to dot are deleted.
  *
  * In interactive mode, deletion is not performed
  * as-you-type but only on command termination.
+ */
+/*
+ * ::FK is possible but doesn't make much sense, so it's undocumented.
  */
 TECO_DEFINE_STATE_SEARCH(teco_state_search_kill);
 
@@ -1127,17 +1154,18 @@ teco_state_search_delete_done(teco_machine_main_t *ctx, const teco_string_t *str
 }
 
 /*$ FD
- * FD[pattern]$ -- Delete occurrence of pattern
- * [n]FD[pattern]$
+ * [n]FD[pattern]$ -- Delete occurrence of pattern
  * -FD[pattern]$
  * from,toFD[pattern]$
- * :FD[pattern]$ -> Success|Failure
  * [n]:FD[pattern]$ -> Success|Failure
  * -:FD[pattern]$ -> Success|Failure
  * from,to:FD[pattern]$ -> Success|Failure
+ * [n]::FD[pattern]$ -> Success|Failure
+ * -::FD[pattern]$ -> Success|Failure
+ * from,to::FD[pattern]$ -> Success|Failure
  *
  * Searches for <pattern> just like the regular search command
- * (S) but when found deletes the entire occurrence.
+ * (\fBS\fP) but when found deletes the entire occurrence.
  */
 TECO_DEFINE_STATE_SEARCH(teco_state_search_delete);
 
@@ -1187,22 +1215,23 @@ teco_state_replace_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 }
 
 /*$ FS
- * FS[pattern]$[string]$ -- Search and replace
- * [n]FS[pattern]$[string]$
+ * [n]FS[pattern]$[string]$ -- Search and replace
  * -FS[pattern]$[string]$
  * from,toFS[pattern]$[string]$
- * :FS[pattern]$[string]$ -> Success|Failure
  * [n]:FS[pattern]$[string]$ -> Success|Failure
  * -:FS[pattern]$[string]$ -> Success|Failure
  * from,to:FS[pattern]$[string]$ -> Success|Failure
+ * [n]::FS[pattern]$[string]$ -> Success|Failure
+ * -::FS[pattern]$[string]$ -> Success|Failure
+ * from,to::FS[pattern]$[string]$ -> Success|Failure
  *
  * Search for <pattern> just like the regular search command
- * (S) does but replace it with <string> if found.
+ * (\fBS\fP) does but replace it with <string> if found.
  * If <string> is empty, the occurrence will always be
- * deleted so \(lqFS[pattern]$$\(rq is similar to
+ * deleted so \(lqFS[pattern]\fB$$\fP\(rq is similar to
  * \(lqFD[pattern]$\(rq.
  * The global replace register is \fBnot\fP touched
- * by the FS command.
+ * by the \fBFS\fP command.
  *
  * In interactive mode, the replacement will be performed
  * immediately and interactively.
@@ -1291,20 +1320,21 @@ teco_state_replace_default_done(teco_machine_main_t *ctx, const teco_string_t *s
 }
 
 /*$ FR
- * FR[pattern]$[string]$ -- Search and replace with default
- * [n]FR[pattern]$[string]$
+ * [n]FR[pattern]$[string]$ -- Search and replace with default
  * -FR[pattern]$[string]$
  * from,toFR[pattern]$[string]$
- * :FR[pattern]$[string]$ -> Success|Failure
  * [n]:FR[pattern]$[string]$ -> Success|Failure
  * -:FR[pattern]$[string]$ -> Success|Failure
  * from,to:FR[pattern]$[string]$ -> Success|Failure
+ * [n]::FR[pattern]$[string]$ -> Success|Failure
+ * -::FR[pattern]$[string]$ -> Success|Failure
+ * from,to::FR[pattern]$[string]$ -> Success|Failure
  *
- * The FR command is similar to the FS command.
+ * The \fBFR\fP command is similar to the \fBFS\fP command.
  * It searches for <pattern> just like the regular search
- * command (S) and replaces the occurrence with <string>
- * similar to what FS does.
- * It differs from FS in the fact that the replacement
+ * command (\fBS\fP) and replaces the occurrence with <string>
+ * similar to what \fBFS\fP does.
+ * It differs from \fBFS\fP in the fact that the replacement
  * string is saved in the global replacement register
  * \(lq-\(rq.
  * If <string> is empty the string in the global replacement

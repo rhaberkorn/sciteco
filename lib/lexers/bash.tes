@@ -3,7 +3,7 @@
   internally !
 
 @[lexer.test.bash]{
-  _#!M[sh,bash,ksh]M[lexer.checkheader]"S -1 '
+  _#!M[sh,bash,ksh]:M[lexer.checkheader]"S -1 '
   :EN*.shQ*"S -1 '
   :EN*.bshQ*"S -1 '
   :EN*/configureQ*"S -1 '

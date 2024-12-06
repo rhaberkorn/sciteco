@@ -259,7 +259,7 @@ teco_state_start_loop_open(teco_machine_main_t *ctx, GError **error)
 	    !teco_expressions_pop_num_calc(&lctx.counter, -1, error))
 		return;
 	lctx.brace_level = teco_brace_level;
-	lctx.pass_through = teco_machine_main_eval_colon(ctx);
+	lctx.pass_through = teco_machine_main_eval_colon(ctx) > 0;
 
 	if (lctx.counter) {
 		/*
@@ -306,7 +306,7 @@ teco_state_start_loop_close(teco_machine_main_t *ctx, GError **error)
 		return;
 	}
 
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	/*
 	 * Colon-modified loop ends can be used to
@@ -387,7 +387,7 @@ teco_state_start_break(teco_machine_main_t *ctx, GError **error)
 	teco_bool_t rc;
 	if (!teco_expressions_pop_num_calc(&rc, v, error))
 		return;
-	if (teco_machine_main_eval_colon(ctx))
+	if (teco_machine_main_eval_colon(ctx) > 0)
 		rc = ~rc;
 
 	if (teco_is_success(rc))
@@ -544,9 +544,9 @@ teco_state_start_jump(teco_machine_main_t *ctx, GError **error)
 			                         teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0), 0);
 		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
 
-		if (teco_machine_main_eval_colon(ctx))
+		if (teco_machine_main_eval_colon(ctx) > 0)
 			teco_expressions_push(TECO_SUCCESS);
-	} else if (teco_machine_main_eval_colon(ctx)) {
+	} else if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(TECO_FAILURE);
 	} else {
 		teco_error_move_set(error, "J");
@@ -588,7 +588,7 @@ teco_state_start_move(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_move_chars(v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_move_set(error, "C");
@@ -613,7 +613,7 @@ teco_state_start_reverse(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_move_chars(-v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_move_set(error, "R");
@@ -664,7 +664,7 @@ teco_state_start_line(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_move_lines(v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_move_set(error, "L");
@@ -690,7 +690,7 @@ teco_state_start_back(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_move_lines(-v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_move_set(error, "B");
@@ -745,7 +745,7 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 	if (v < 0) {
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-		if (teco_machine_main_eval_colon(ctx))
+		if (teco_machine_main_eval_colon(ctx) > 0)
 			teco_expressions_push(TECO_SUCCESS);
 	} else {
 		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
@@ -841,7 +841,7 @@ teco_state_start_delete_words(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_delete_words(v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_words_set(error, "V");
@@ -866,7 +866,7 @@ teco_state_start_delete_words_back(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	teco_bool_t rc = teco_delete_words(-v);
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_words_set(error, "Y");
@@ -941,7 +941,7 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 		rc = teco_bool(len >= 0 && from >= 0 && to >= 0);
 	}
 
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(rc);
 	} else if (teco_is_failure(rc)) {
 		teco_error_range_set(error, cmd);
@@ -1251,6 +1251,10 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Modifiers
 	 */
 	case '@':
+		if (ctx->modifier_at) {
+			teco_error_modifier_set(error, '@');
+			return NULL;
+		}
 		/*
 		 * @ modifier has syntactic significance, so set it even
 		 * in PARSE_ONLY* modes.
@@ -1263,11 +1267,15 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		return &teco_state_start;
 
 	case ':':
-		if (ctx->mode == TECO_MODE_NORMAL) {
-			if (ctx->parent.must_undo)
-				teco_undo_guint(ctx->__flags);
-			ctx->modifier_colon = TRUE;
+		if (ctx->mode > TECO_MODE_NORMAL)
+			return &teco_state_start;
+		if (ctx->modifier_colon >= 2) {
+			teco_error_modifier_set(error, ':');
+			return NULL;
 		}
+		if (ctx->parent.must_undo)
+			teco_undo_guint(ctx->__flags);
+		ctx->modifier_colon++;
 		return &teco_state_start;
 
 	default:
@@ -1314,7 +1322,7 @@ teco_state_fcommand_loop_start(teco_machine_main_t *ctx, GError **error)
 
 	teco_loop_context_t *lctx = &g_array_index(teco_loop_stack, teco_loop_context_t,
 	                                           teco_loop_stack->len-1);
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	if (!lctx->pass_through) {
 		if (colon_modified) {
@@ -1816,7 +1824,7 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	if (!teco_expressions_args()) {
 		/*
@@ -2487,7 +2495,7 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 	if (teco_expressions_args() > 0) {
 		teco_int_t eol_mode;
 
-		if (teco_machine_main_eval_colon(ctx)) {
+		if (teco_machine_main_eval_colon(ctx) > 0) {
 			teco_int_t v1, v2;
 			if (!teco_expressions_pop_num_calc(&v1, 0, error))
 				return;
@@ -2533,7 +2541,7 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 			undo__teco_interface_ssm(SCI_SETEOLMODE,
 			                         teco_interface_ssm(SCI_GETEOLMODE, 0, 0), 0);
 		teco_interface_ssm(SCI_SETEOLMODE, eol_mode, 0);
-	} else if (teco_machine_main_eval_colon(ctx)) {
+	} else if (teco_machine_main_eval_colon(ctx) > 0) {
 		const gchar *eol_seq = teco_eol_get_seq(teco_interface_ssm(SCI_GETEOLMODE, 0, 0));
 		teco_expressions_push(eol_seq);
 	} else {
@@ -2644,7 +2652,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	guint old_cp = teco_interface_get_codepage();
 
@@ -2829,7 +2837,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 static void
 teco_state_ecommand_exit(teco_machine_main_t *ctx, GError **error)
 {
-	if (teco_machine_main_eval_colon(ctx)) {
+	if (teco_machine_main_eval_colon(ctx) > 0) {
 		if (!teco_ring_save_all_dirty_buffers(error))
 			return;
 	} else {

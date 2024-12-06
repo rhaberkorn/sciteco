@@ -466,7 +466,7 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 	GFileTest file_flags = G_FILE_TEST_EXISTS;
 
 	gboolean matching = FALSE;
-	gboolean colon_modified = teco_machine_main_eval_colon(ctx);
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
 
 	teco_int_t teco_test_mode;
 

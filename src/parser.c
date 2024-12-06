@@ -320,16 +320,17 @@ teco_machine_main_init(teco_machine_main_t *ctx, teco_qreg_table_t *qreg_table_l
 	teco_machine_stringbuilding_init(&ctx->expectstring.machine, '\e', qreg_table_locals, must_undo);
 }
 
-gboolean
+guint
 teco_machine_main_eval_colon(teco_machine_main_t *ctx)
 {
-	if (!ctx->modifier_colon)
-		return FALSE;
+	guint c = ctx->modifier_colon;
+	if (c == 0)
+		return 0;
 
 	if (ctx->parent.must_undo)
 		teco_undo_guint(ctx->__flags);
-	ctx->modifier_colon = FALSE;
-	return TRUE;
+	ctx->modifier_colon = 0;
+	return c;
 }
 
 gboolean

@@ -460,7 +460,12 @@ struct teco_machine_main_t {
 		struct {
 			teco_mode_t mode : 8;
 
-			bool modifier_colon : 1;
+			/** number of `:`-modifiers detected */
+			guint modifier_colon : 2;
+			/**
+			 * Whether the `@`-modifier has been detected.
+			 * This is tracked even in parse-only mode.
+			 */
 			bool modifier_at : 1;
 		};
 		guint __flags;
@@ -503,7 +508,7 @@ void teco_machine_main_init(teco_machine_main_t *ctx,
                             teco_qreg_table_t *qreg_table_locals,
                             gboolean must_undo);
 
-gboolean teco_machine_main_eval_colon(teco_machine_main_t *ctx);
+guint teco_machine_main_eval_colon(teco_machine_main_t *ctx);
 gboolean teco_machine_main_eval_at(teco_machine_main_t *ctx);
 
 gboolean teco_machine_main_step(teco_machine_main_t *ctx,

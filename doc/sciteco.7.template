@@ -1346,6 +1346,11 @@ boolean instead.
 For instance if \(lq1000C\(rq would fail, \(lq1000:C\(rq will
 return 0 instead.
 .LP
+.SCITECO_TOPIC ::
+Two colons (\fB::\fP) can sometimes further modify a command's behavior \(em
+currently it is used by the \fB::S\fP search comparison command.
+On all other commands it will behave like a single colon.
+.LP
 .SCITECO_TOPIC @ at
 When put in front of a command with string arguments,
 the at (\fB@\fP) modifier always allows the string termination character
