@@ -441,9 +441,6 @@ teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 		return &teco_state_start;
 	}
 
-	if (!teco_current_doc_undo_edit(error))
-		return NULL;
-
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
 	if (teco_globber_is_pattern(filename)) {
 		g_auto(teco_globber_t) globber;
@@ -451,13 +448,15 @@ teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 
 		gchar *globbed_filename;
 		while ((globbed_filename = teco_globber_next(&globber))) {
-			gboolean rc = teco_ring_edit(globbed_filename, error);
+			gboolean rc = teco_current_doc_undo_edit(error) &&
+			              teco_ring_edit(globbed_filename, error);
 			g_free(globbed_filename);
 			if (!rc)
 				return NULL;
 		}
 	} else {
-		if (!teco_ring_edit_by_name(*filename ? filename : NULL, error))
+		if (!teco_current_doc_undo_edit(error) ||
+		    !teco_ring_edit_by_name(*filename ? filename : NULL, error))
 			return NULL;
 	}
 
