@@ -107,7 +107,7 @@ local file_patterns = expand(props["file.patterns."..language])
 io.write([=[
 @[lexer.test.]=], language:lower(), [=[]{
 ]=])
-if shbang then io.write([=[  _#!M]=], shbang, [=[M[lexer.checkheader]"S -1 '
+if shbang then io.write([=[  _#!M]=], shbang, [=[:M[lexer.checkheader]"S -1 '
 ]=]) end
 local patterns = {}
 for pattern in file_patterns:gmatch("[^;]+") do

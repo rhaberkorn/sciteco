@@ -36,7 +36,7 @@
  *!
 
 @[HOME]{
-  ESLINEFROMPOSITIONESPOSITIONFROMLINE:U.p
+  0+.U.p
   Q.pU.l <Q.l-."U 1; ' Q.l-.AU.c Q.c- "N Q.c-9"N Q.lU.p 1; '' %.l>
   Q.pESGETCOLUMN,4EJ
   Q.p-.M#c
@@ -45,7 +45,7 @@
 1U[HOME]
 
 @[END]{
-  ESLINEFROMPOSITIONESGETLINEENDPOSITIONU.p
+  :-1ESGETLINEENDPOSITIONU.p
   Q.pESGETCOLUMN,4EJ
   Q.p:-.M#c
 }
@@ -54,7 +54,7 @@
 
 @[NPAGE]{
   0,4EJ
-  ESLINEFROMPOSITION+(ESLINESONSCREEN)
+  :-1+ESLINESONSCREEN
   ESPOSITIONFROMLINEU.p
   Q.p"< Z | Q.p: '-.M#c
 }
@@ -63,7 +63,7 @@
 
 @[PPAGE]{
   0,4EJ
-  ESLINEFROMPOSITION-(ESLINESONSCREEN)U.l
+  :-1-ESLINESONSCREENU.l
   Q.l"< 0 | Q.lESPOSITIONFROMLINE: '-.M#c
 }
 @[PPAGE]{(M[PPAGE]}
@@ -102,13 +102,13 @@
 1U[SRIGHT]
 
 @[UP]{
-  4EJ(ESLINEFROMPOSITION-1)ESFINDCOLUMN:-.M#c
+  4EJ,:-2ESFINDCOLUMN:-.M#c
 }
 @[UP]{(M[UP]}
 1U[UP]
 
 @[DOWN]{
-  4EJ(ESLINEFROMPOSITION+1)ESFINDCOLUMN:-.M#c
+  4EJ,:ESFINDCOLUMN:-.M#c
 }
 @[DOWN]{(M[DOWN]}
 1U[DOWN]

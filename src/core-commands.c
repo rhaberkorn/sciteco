@@ -1672,6 +1672,9 @@ teco_state_control_negate(teco_machine_main_t *ctx, GError **error)
 {
 	teco_int_t v;
 
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+
 	if (!teco_expressions_args()) {
 		teco_error_argexpected_set(error, "^_");
 		return;
@@ -1785,6 +1788,67 @@ teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 		    !qreg->vtable->undo_set_integer(qreg, error) ||
 		    !qreg->vtable->set_integer(qreg, radix, error))
 			return;
+	}
+}
+
+/*$ ^Q lines2glyphs glyphs2lines
+ * [n]^Q -> glyphs -- Convert between lines and glyph lengths or positions
+ * [position]:^Q -> line
+ *
+ * Converts between line and glyph arguments.
+ * It returns the number of glyphs between dot and the <n>-th next
+ * line (or previous line if <n> is negative).
+ * Consequently \(lq^QC\(rq is equivalent to \(lqL\(rq, but less efficient.
+ *
+ * If colon-modified, an absolute buffer position is converted to the line that
+ * contains this position, beginning with 1.
+ * Without arguments, \(lq:^Q\(rq returns the current line.
+ */
+/*
+ * FIXME: Perhaps there should be a way to convert an absolute line to an
+ * absolute position.
+ */
+static void
+teco_state_control_lines2glyphs(teco_machine_main_t *ctx, GError **error)
+{
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+
+	if (teco_machine_main_eval_colon(ctx)) {
+		gssize pos;
+
+		if (!teco_expressions_args()) {
+			pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		} else {
+			teco_int_t v;
+
+			if (!teco_expressions_pop_num_calc(&v, 0, error))
+				return;
+
+			pos = teco_interface_glyphs2bytes(v);
+			if (pos < 0) {
+				teco_error_range_set(error, "^Q");
+				return;
+			}
+		}
+
+		teco_expressions_push(teco_interface_ssm(SCI_LINEFROMPOSITION, pos, 0)+1);
+	} else {
+		teco_int_t v;
+
+		if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
+			return;
+
+		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		sptr_t line = teco_interface_ssm(SCI_LINEFROMPOSITION, pos, 0) + v;
+
+		if (!teco_validate_line(line)) {
+			teco_error_range_set(error, "^Q");
+			return;
+		}
+
+		sptr_t line_pos = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0);
+		teco_expressions_push(teco_interface_bytes2glyphs(line_pos) - teco_interface_bytes2glyphs(pos));
 	}
 }
 
@@ -1975,6 +2039,7 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},
 		['R']  = {&teco_state_start, teco_state_control_radix},
+		['Q']  = {&teco_state_start, teco_state_control_lines2glyphs},
 		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes},
 		['X']  = {&teco_state_start, teco_state_control_search_mode},
 		['Y']  = {&teco_state_start, teco_state_control_last_range},
