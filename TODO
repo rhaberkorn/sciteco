@@ -185,9 +185,10 @@ Features:
    If a number is a regular command that stops parsing at the
    first invalid character in the current radix, we could write
    hexadcimal constants like 16^R0BEEF^D (still clumsy...).
-   (On the other hand, the radix is runtime state and parsing
+   On the other hand, the radix is runtime state and parsing
    must not depend on runtime state in SciTECO to ensure
-   parseability of the language.)
+   parseability of the language.
+   (Perhaps ^H should go to a special hexadecimal number state.)
    * Furthermore, this opens the possibility of floating point
      numbers. The "." command does not take arguments, so it
      could be part of the number syntax. This disallows constructs
@@ -286,40 +287,40 @@ Features:
    * <I> doesn't have string building enabled in classic TECO.
      Changing this would perhaps be a change too radical.
      Also, we would then need a string-building variant like <:I>.
-   * ::S for string "comparisons" (anchored search) and
-     ::FS for anchored search-replace.
-     This is supposed to be an alias for .,.:FB which would be
-     .,.:S in SciTECO. Apparanetly, the bounded search is still
-     incompatible in SciTECO, as it is allowed to match beyond
-     the bounds. Either the semantics of m,n:S should be changed
-     or an FB command with classic TECO semantics should be
-     introduced.
-   * ^S (-(length) of last referenced string), ^Y as .+^S,. at the time
-     of the search.
-     As an extension, n^Y should be overloaded to return the n-th
-     subpattern (^E[...]).
-     Analogous, there should be ^E0-9 string building constructs
-     for referencing subpatterns.
-   * ^Q convert line arg into character arg
-   * ^A, T and stdio in general
+   * <FN> as a search-replace variant of <N>.
+   * FB for bounded search and FC for bounded search-replace.
+     One advantage in comparison to ::S
+     (which also supports arguments in SciTECO), would be the ability
+     to bound comparisons by line with n:FB.
+   * Searches can extend beyond the given bounds in DEC TECO
+     as long as they start within the range.
+     That's why ::S is equivalent to .,.:FB in DEC TECO.
+     In SciTECO, matches must currently be entirely within the given bounds,
+     just like in Video TECO.
+     The DEC behavior could be achieved by always searching till the end
+     of the buffer, but excluding all matches beyond the target range.
+   * ^A, :Gq, T and stdio in general
    * nA returned -1 in case of invalid positions (similar to SciTECO's ^E)
-     instead of failing.
+     instead of failing in DEC TECO.
+     The failing <A> command is inherited from Video TECO.
    * ^W was an immediate action command to repaint the screen.
      This could be a regular command to allow refreshing in long loops.
      Video TECO had ET for the same purpose.
      TECO 10 had a ^W regular command for case folding all strings,
      but I don't think it's worth supporting.
- * Search for beginning of string; i.e. a version of S that
-   leaves dot before the search string, similar to FK
-   (request of N.M.).
-   Could be called <_> (a global-search variant in classic TECO).
- * Shortcut for cutting into Q-Register. Typing 10Xq10K is very
-   annoying to type. We could use the @ modifier 10@Xq.
-   FX would be available as well, but is perhaps best reserved
-   for some mmenonics.
-   An elegant alternative might be to introduce single-character
-   stack operating commands for duplicating the last AND the last two
-   arguments. However, this will not help for cutting a number of lines.
+ * Perhaps there should be a command for converting absolute line numbers
+   to positions (i.e. ESPOSITIONFROMLINE$$:^E).
+   This should also include the opposite as currently supported by :^Q.
+   An advantage would also be that :^Q could be made to return -1 for invalid
+   line ranges as well.
+ * _pattern$ as equivalence to Spattern$^SC.
+   Well almost, since ^SC must not be executed in the failure case.
+ * String building construct for subpattern references: ^Yx
+   Perhaps support ^Y(x) as well.
+   Since this is mainly useful for search-replace commands,
+   we'd have to store the actual data in teco_range_t as the
+   matched pattern is removed from the buffer before inserting the replacement
+   string.
  * For symmetry, there should be a command for -W,
    eg. P. Macros and modifiers are obviously not a solution here
    since they're too long.
@@ -381,6 +382,12 @@ Features:
    For multi-window SciTECO to work properly, file locking is probably
    a must as it is otherwise too easy to confuse SciTECO if multiple
    instances open the same file.
+ * To faciliate data exchange between multiple SciTECO instances,
+   there may be a TCP/UNIX server mode that allows read-only access
+   to the Q-Register space of any running instance.
+   Clipboards are not flexible enough and not supported everywhere.
+   I am not sure how to elegantly address instances, though.
+   Especially without some kind of central name registry.
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
@@ -576,6 +583,14 @@ Features:
    Perhaps a few select local Q-Registers (-, _, ^X, ^R) should be
    accessible with the global reg syntax as well, so G- is equivalent
    to G.-?
+ * Real block comments (!* ... *!) that don't spam the goto tables.
+   TECO-64 has end of line comments beginning with !! as well.
+   We may want both as 0<...> cannot be used to comment out all sorts
+   of blocks as it necessarily drives the parser.
+ * `-` currently inverts the number sign in teco_state_start_minus().
+   So --1 == 1 and --C == C.
+   There is probably no need for this "feature" and an error
+   should be thrown instead on the second `-`.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -609,6 +624,16 @@ Optimizations:
    * Use `[[gnu::foo]]` instead of `__attribute__((foo))`.
    * The TECO_FOR_EACH() hack could be simplified at least marginally
      using __VA_OPT__().
+   * A few macros like TECO_CTL_KEY() could be turned into
+     constexpr functions.
+ * Compound literals could be abused for default values in the
+   Scintilla SSM functions. All the wrapper functions would have to be
+   turned into macros, though.
+   However, we cannot use macros in TECO_DEFINE_UNDO_CALL().
+   Also, we cannot nest such macros for some strange reason.
+ * We could save around 500 bytes in every teco_machine_main_transition_t
+   table (2kb in total) if we would wrap entries in a macro and decrement
+   32 (' ').
  * Parsing might be optimized with libc's Unicode handling
    functions and/or custom optimized versions.
  * The new Scintilla IDocumentEditable interface could be
@@ -642,6 +667,8 @@ Documentation:
    Furthermore, womanpages could contain "hypertext" links
    to help topics using special Troff markup and grosciteco support.
  * The command reference should include an overview.
+ * Command reference is poorly formatted.
+   tedoc.tes should be reviewed.
  * Write some tutorials for the Wiki, e.g. about paragraph
    reflowing...
    Object-oriented SciTECO ideoms etc. ;-)
@@ -649,6 +676,7 @@ Documentation:
    when used as the git editor, etc.
  * Perhaps there should be a Getting Started document,
    that is automatically opened by sample.teco_ini.
+ * People are demanding a Youtube tutorial.
  * The HTML manuals lack monospaced fonts.
    This is partly because an.tmac removes the Courier family
    in nroff mode, but it still doesn't work if you undo this.

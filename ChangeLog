@@ -6,6 +6,54 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
+Version 2.2.0
+~~~~~~~~~~~~~
+
+3f6572c Fixed crashes when rubbing out file open (EB) with glob patterns, i.e.
+        when <EB> would open more than one file.
+88d65fb Fixed potential stack overflows when pushing many values on the number stack
+        before breaking from loops with <;>.
+a61a81e Disallow setting the radix to values lower than 2.
+        This fixes potential crashes.
+bd87ff4 Implemented the ^Q command for converting between line and glyph positions.
+        :^Q returns the line number of a given absolute position or the current line.
+(!)e5884ab Support the ::S anchored search (string comparison) command.
+           This also enables anchored string-deletion (::FD) and anchored search-replace
+           commands (::FR and ::FS).
+           More than two colon-modifiers or more than one at-modifier are now considered errors.
+a93243b,
+4830868 Implemented <@Xq> command for cutting into registers.
+        This modifies the Xq behavior by deleting the selected text afterwards.
+3a823fb Implemented ^Y/^S commands for receiving pattern match/insertion ranges and lengths (refs #27).
+        E.g. you can store pattern matches into registers using ^YXq.
+        You can refer to ^E[...] subpatterns using n^Y (for n > 0).
+        Also, you can back up to the beginning of an inserting by adding ^SC immediately
+        after the insertion.
+        S...$^SC leaves dot before a matched pattern (if the search was successful).
+8490013,
+5597bc7 Fixed subtle operator precedence bug when combining higher and lower-precedence operators.
+61b811f String building: ^c (caret+c) does no longer expand to data garbage for non-control characters,
+        but to the literal caret, followed by c.
+        For instance, I^,$ inserts two characters now.
+23c90e3 Added special Q-Register ":" for accessing dot.
+        This allows the idiom [: ... ]: to temporarily move around.
+        Also, you can use the ^E\: string building construct to insert the current dot without
+        saving it into another Q-Register first.
+8905a33 lexer.auto/lexer.checkheader: use case-sensitive searches.
+        Should reduce false positives when determining the lexer for an UNIX script.
+(!)1cfe376 The search mode and current radix are mapped to __local__ Q-Registers ^X and ^R now. (refs #17)
+           This means that the radix is always 10 and searches are case-insensitive in ordinary macro calls
+           (Mq witout colon-modifier), i.e. you don't have to query and restore these properties in portable
+           macros to guard against changes in caller.
+           You can still write [.^X -^X ... ].^X to change the search mode flag temporarily, though.
+07b52f7 implemented search mode flag (^X): allow case-sensitive searches (closes #17)
+        -^X enables search sensitive searches, while 0^X restores the default case insensitive searches.
+11054d9 sciteco(7): fixed outdated information about the STYLE_CALLTIP default colors
+726847b,
+26e54b9,
+9610dce,
+52d66c5 minor documentation fixes
+
 Version 2.1.1
 ~~~~~~~~~~~~~
 
