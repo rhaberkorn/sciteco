@@ -575,13 +575,13 @@ teco_interface_init_screen(void)
 	if (isatty(1)) {
 		teco_interface.stdout_orig = dup(1);
 		g_assert(teco_interface.stdout_orig >= 0);
-		FILE *stdout_new = g_freopen("/dev/null", "a+", stdout);
+		G_GNUC_UNUSED FILE *stdout_new = g_freopen("/dev/null", "a+", stdout);
 		g_assert(stdout_new != NULL);
 	}
 	if (isatty(2)) {
 		teco_interface.stderr_orig = dup(2);
 		g_assert(teco_interface.stderr_orig >= 0);
-		FILE *stderr_new = g_freopen("/dev/null", "a+", stderr);
+		G_GNUC_UNUSED FILE *stderr_new = g_freopen("/dev/null", "a+", stderr);
 		g_assert(stderr_new != NULL);
 	}
 }
