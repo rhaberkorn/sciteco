@@ -1,5 +1,5 @@
 PORTNAME=	sciteco
-DISTVERSION=	2.1.1
+DISTVERSION=	2.2.0
 CATEGORIES=	editors textproc devel
 MASTER_SITES=	https://github.com/rhaberkorn/${PORTNAME}/releases/download/v${DISTVERSION}/ \
 		SOURCEFORGE/${PORTNAME}/v${DISTVERSION}/
@@ -11,23 +11,24 @@ WWW=		https://rhaberkorn.github.io/sciteco/
 LICENSE=	GPLv3+
 LICENSE_FILE=	${WRKSRC}/COPYING
 
-FLAVORS=	curses gtk
-FLAVOR?=	${FLAVORS:[1]}
-curses_PKGNAMESUFFIX=-curses
-gtk_PKGNAMESUFFIX=-gtk
+FLAVORS=		curses gtk
+FLAVOR?=		${FLAVORS:[1]}
+curses_PKGNAMESUFFIX=	-curses
+gtk_PKGNAMESUFFIX=	-gtk
 
 # As SciTECO uses itself during the build process,
 # it makes sense to compile it running under a dummy XServer.
 # This is both faster and works in headless environments as well.
-gtk_BUILD_DEPENDS=Xvfb:x11-servers/xorg-server@xvfb \
-		  xauth:x11/xauth mcookie:devel/util-linux
+gtk_BUILD_DEPENDS=	mcookie:devel/util-linux \
+			xauth:x11/xauth \
+			Xvfb:x11-servers/xorg-server@xvfb
 
-USES=		gmake pkgconfig compiler:c11 compiler:c++17-lang gnome groff
+USES=		compiler:c11 gmake gnome groff pkgconfig
 USE_GNOME=	glib20
 
-GNU_CONFIGURE=	yes
+GNU_CONFIGURE=		yes
 CONFIGURE_ARGS=
-CONFIGURE_OUTSOURCE=yes
+CONFIGURE_OUTSOURCE=	yes
 
 MAKEFILE=	GNUmakefile
 TEST_TARGET=	check
@@ -43,38 +44,39 @@ DATADIR=	${PREFIX}/share/gsciteco
 SUB_FILES=	pkg-message
 
 .if ${FLAVOR} == curses
-USES+=		ncurses
-CONFIGURE_ARGS+=--with-interface=ncurses
-PLIST_SUB+=	GTK="@comment " PROGRAM_PREFIX=""
+USES+=			ncurses
+CONFIGURE_ARGS+=	--with-interface=ncurses
+PLIST_SUB+=		GTK="@comment " \
+			PROGRAM_PREFIX=""
 .elif ${FLAVOR} == gtk
-USES+=		desktop-file-utils
+USES+=			desktop-file-utils
 # FIXME: To appease QA checks, we would have to
 # USE_GNOME+=cairo gdkpixbuf2 and
 # gtk_LIB_DEPENDS+=libharfbuzz.so:print/harfbuzz
-USE_GNOME+=	gtk30
-CONFIGURE_ARGS+=--with-interface=gtk --program-prefix=g \
-		--with-scitecodatadir="${DATADIR}"
-PLIST_SUB+=	GTK="" PROGRAM_PREFIX=g
+USE_GNOME+=		gtk30
+CONFIGURE_ARGS+=	--program-prefix=g \
+			--with-interface=gtk \
+			--with-scitecodatadir="${DATADIR}"
+PLIST_SUB+=		GTK="" \
+			PROGRAM_PREFIX=g
 .endif
 
-OPTIONS_DEFINE=	LEXILLA MALLOC_REPLACEMENT TECO_INTEGER_32
-OPTIONS_DEFAULT=LEXILLA
-OPTIONS_SUB=	yes
+OPTIONS_DEFINE=		LEXILLA MALLOC_REPLACEMENT TECO_INTEGER_32
+OPTIONS_DEFAULT=	LEXILLA
+OPTIONS_SUB=		yes
 
-LEXILLA_DESC=Build with Lexilla lexer support (larger)
-MALLOC_REPLACEMENT_DESC=Force replacement of system malloc()
-TECO_INTEGER_32_DESC=Use 32-bit TECO integers
+LEXILLA_DESC=			Build with Lexilla lexer support (larger)
+MALLOC_REPLACEMENT_DESC=	Force replacement of system malloc()
+TECO_INTEGER_32_DESC=		Use 32-bit TECO integers
 
-LEXILLA_CONFIGURE_OFF=--without-lexilla
-MALLOC_REPLACEMENT_CONFIGURE_ON=--enable-malloc-replacement
-TECO_INTEGER_32_CONFIGURE_ON=--with-teco-integer=32
+LEXILLA_CONFIGURE_OFF=			--without-lexilla
+MALLOC_REPLACEMENT_CONFIGURE_ON=	--enable-malloc-replacement
+TECO_INTEGER_32_CONFIGURE_ON=		--with-teco-integer=32
 
 .include <bsd.port.pre.mk>
 
 .if ${FLAVOR} == gtk
-# Run under Xvfb (see above).
-# This is done only now, since USES=gmake would overwrite MAKE_CMD.
-MAKE_CMD="${SCRIPTDIR}/xvfb-run.sh" ${GMAKE}
+MAKE_CMD=	${SH} ${FILESDIR}/xvfb-run.sh ${GMAKE}
 .endif
 
 post-install:
@@ -83,7 +85,7 @@ post-install:
 	${INSTALL_DATA} ${WRKSRC}/ico/sciteco-${SZ}.png \
 			${STAGEDIR}${PREFIX}/share/icons/hicolor/${SZ}x${SZ}/apps/sciteco.png
 .endfor
-	# To appease `make check-plist`:
+# To appease `make check-plist`:
 	${RM} ${STAGEDIR}${DATADIR}/*.png
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/applications
 	${INSTALL_DATA} ${WRKSRC}/src/sciteco.desktop \
