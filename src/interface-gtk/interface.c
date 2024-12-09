@@ -112,7 +112,7 @@ static void
 teco_view_scintilla_notify(ScintillaObject *sci, gint iMessage,
                            SCNotification *notify, gpointer user_data)
 {
-	teco_interface_process_notify(notify);
+	teco_view_process_notify((teco_view_t *)sci, notify);
 }
 
 teco_view_t *

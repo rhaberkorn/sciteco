@@ -102,6 +102,7 @@ Features
   different platforms.
 * Syntax highlighting, styles, line numbers, etc. thanks to Scintilla.
   Low-level Scintilla commands can also be accessed to extend SciTECO.
+  SciTECO even syntax highlights code, written in the SciTECO language itself.
 * A growing standard library of macros with frameworks for color schemes, syntax highlighting
   and buffer sessions.
   Optimized for hack-ability rather than completeness.

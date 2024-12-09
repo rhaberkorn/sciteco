@@ -106,6 +106,8 @@ Known Bugs:
    This feature would especially be important in order to support
    e.g. the SCI_SETPROPERTY message with two strings in order to
    set lexer properties.
+ * The lexer.sciteco.macrodef lexer property cannot currently
+   be set/disabled (see above).
  * Mac OS: The colors are screwed up with the terminal.tes color scheme
    (and with --no-profile) under Mac OS terminal emulators.
    This does not happen under Linux with Darling.
@@ -144,6 +146,7 @@ Known Bugs:
    files around, it does not produce a core dump.
 
 Features:
+ * Perhaps ^S should return a positive number after <FK>.
  * Auto-indention could be implemented via context-sensitive
    immediate editing commands similar to tab-expansion.
    Avoids having to make LF a magic character in insertion
@@ -202,8 +205,8 @@ Features:
      integer and floating point types internally.
      The operator decides how to interpret the arguments
      and the return type.
-   * Having a separate number parser state will simplify
-     number syntax highlighting.
+   * Having a separate number parser state will slightly simplify
+     number syntax highlighting (see teco_lexer_getstyle())..
  * Key macro masking flag for the beginning of the command
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
@@ -346,9 +349,6 @@ Features:
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.
- * TECO syntax highlighting.
-   This should now be relatively easy to implement by reusing
-   the parser.
  * multiline commandline
    * Perhaps use Scintilla view as mini buffer.
      This means patching Scintilla, so it does not break lines
@@ -591,6 +591,10 @@ Features:
    So --1 == 1 and --C == C.
    There is probably no need for this "feature" and an error
    should be thrown instead on the second `-`.
+ * The command line replacement register (Escape) should be automatically
+   syntax highlighted.
+   I am not sure however how that could be done without a special
+   ED hook.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.

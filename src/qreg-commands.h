@@ -20,6 +20,7 @@
 
 #include "sciteco.h"
 #include "parser.h"
+#include "lexer.h"
 #include "qreg.h"
 
 static inline void
@@ -55,6 +56,7 @@ gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_m
 		.initial_cb = (teco_state_initial_cb_t)teco_state_expectqreg_initial, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectqreg_process_edit_cmd, \
+		.style = SCE_SCITECO_QREG, \
 		.expectqreg.type = TECO_QREG_REQUIRED, \
 		.expectqreg.got_register_cb = NAME##_got_register, /* always required */ \
 		##__VA_ARGS__ \

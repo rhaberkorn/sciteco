@@ -110,11 +110,3 @@ teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 	g_vfprintf(stream, fmt, ap);
 	fputc('\n', stream);
 }
-
-void
-teco_interface_process_notify(SCNotification *notify)
-{
-#ifdef DEBUG
-	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
-#endif
-}

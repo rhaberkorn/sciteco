@@ -73,6 +73,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/rebol.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/rust.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/scheme.tes
+%%LEXILLA%%%%DATADIR%%/lib/lexers/sciteco.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/specman.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/spice.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/swift.tes

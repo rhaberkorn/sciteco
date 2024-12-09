@@ -27,6 +27,7 @@
 #include "goto.h"
 #include "undo.h"
 #include "qreg.h"
+#include "lexer.h"
 
 /*
  * Forward Declarations
@@ -203,6 +204,12 @@ struct teco_state_t {
 	teco_keymacro_mask_t keymacro_mask : 8;
 
 	/**
+	 * Scintilla style to apply to all input characters in this state
+	 * when syntax highlighting SciTECO code.
+	 */
+	teco_style_t style : 8;
+
+	/**
 	 * Additional state-dependent callbacks and settings.
 	 * This wastes some bytes compared to other techniques for extending teco_state_t
 	 * but this is acceptable since there is only a limited number of constant instances.
@@ -241,6 +248,7 @@ gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent
 		.process_edit_cmd_cb = teco_state_process_edit_cmd, \
 		.is_start = FALSE, \
 		.keymacro_mask = TECO_KEYMACRO_MASK_DEFAULT, \
+		.style = SCE_SCITECO_DEFAULT, \
 		##__VA_ARGS__ \
 	}
 
@@ -441,7 +449,9 @@ typedef enum {
 	/** Parse, but don't execute until reaching end of conditional or its else-clause */
 	TECO_MODE_PARSE_ONLY_COND,
 	/** Parse, but don't execute until reaching the very end of conditional */
-	TECO_MODE_PARSE_ONLY_COND_FORCE
+	TECO_MODE_PARSE_ONLY_COND_FORCE,
+	/** Parse, but don't execute until end of macro (for Scintilla lexing) */
+	TECO_MODE_LEXING
 } teco_mode_t;
 
 /** @extends teco_machine_t */
@@ -568,6 +578,7 @@ gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectstring_process_edit_cmd, \
 		.keymacro_mask = TECO_KEYMACRO_MASK_STRING, \
+		.style = SCE_SCITECO_STRING, \
 		.expectstring.string_building = TRUE, \
 		.expectstring.last = TRUE, \
 		.expectstring.process_cb = NULL,	/* do nothing */ \

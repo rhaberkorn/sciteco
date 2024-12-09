@@ -27,6 +27,7 @@
 #include "string-utils.h"
 #include "expressions.h"
 #include "parser.h"
+#include "lexer.h"
 #include "core-commands.h"
 #include "undo.h"
 #include "goto.h"
@@ -90,7 +91,8 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 }
 
 TECO_DEFINE_STATE(teco_state_label,
-	.initial_cb = (teco_state_initial_cb_t)teco_state_label_initial
+	.initial_cb = (teco_state_initial_cb_t)teco_state_label_initial,
+	.style = SCE_SCITECO_LABEL
 );
 
 static teco_state_t *

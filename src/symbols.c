@@ -321,8 +321,13 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 
 	sptr_t lParam = 0;
 
+	if (ctx->scintilla.iMessage == SCI_SETILEXER &&
+	    !teco_string_cmp(str, "sciteco", 7)) {
+		/* perform lexing in the container (see teco_lexer_style()) */
+		lParam = 0;
+	}
 #ifdef HAVE_LEXILLA
-	if (ctx->scintilla.iMessage == SCI_SETILEXER) {
+	else if (ctx->scintilla.iMessage == SCI_SETILEXER) {
 		if (teco_string_contains(str, '\0')) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
 			                    "Lexer name must not contain null-byte.");
@@ -336,9 +341,9 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 			            "Lexilla lexer \"%s\" not found.", lexer);
 			return NULL;
 		}
-	} else
+	}
 #endif
-	if (str->len > 0) {
+	else if (str->len > 0) {
 		/*
 		 * NOTE: There may even be messages that read strings
 		 * with embedded nulls.

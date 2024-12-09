@@ -31,6 +31,7 @@
 #include "expressions.h"
 #include "ring.h"
 #include "parser.h"
+#include "lexer.h"
 #include "symbols.h"
 #include "search.h"
 #include "spawn.h"
@@ -1293,7 +1294,8 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_start,
 	.end_of_macro_cb = NULL, /* Allowed at the end of a macro! */
 	.is_start = TRUE,
-	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE,
+	.style = SCE_SCITECO_COMMAND
 );
 
 /*$ F<
@@ -1450,7 +1452,9 @@ teco_state_fcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_fcommand);
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_fcommand,
+	.style = SCE_SCITECO_COMMAND
+);
 
 static void
 teco_undo_change_dir_action(gchar **dir, gboolean run)
@@ -1657,7 +1661,9 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	return &teco_state_start;
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_condcommand);
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_condcommand,
+	.style = SCE_SCITECO_OPERATOR
+);
 
 /*$ ^_ negate
  * n^_ -> ~n -- Binary negation
@@ -2055,7 +2061,9 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_control);
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_control,
+	.style = SCE_SCITECO_COMMAND
+);
 
 static teco_state_t *
 teco_state_ascii_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
@@ -2956,7 +2964,9 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_ecommand);
+TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_ecommand,
+	.style = SCE_SCITECO_COMMAND
+);
 
 gboolean
 teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)

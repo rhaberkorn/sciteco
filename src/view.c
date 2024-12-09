@@ -46,6 +46,7 @@
 #include "qreg.h"
 #include "eol.h"
 #include "memory.h"
+#include "lexer.h"
 #include "view.h"
 
 /** @memberof teco_view_t */
@@ -635,4 +636,16 @@ teco_view_get_character(teco_view_t *ctx, gsize pos, gsize len)
 	 * suffice if TECO_INTEGER == 32.
 	 */
 	return (gint32)g_utf8_get_char_validated(buf, -1);
+}
+
+void
+teco_view_process_notify(teco_view_t *ctx, SCNotification *notify)
+{
+#ifdef DEBUG
+	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
+#endif
+
+	if (notify->nmhdr.code == SCN_STYLENEEDED)
+		/* Lexing in the container: only used for SciTECO */
+		teco_lexer_style(ctx, notify->position);
 }

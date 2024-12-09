@@ -276,7 +276,7 @@ teco_xterm_version(void)
 static void
 teco_view_scintilla_notify(void *sci, int iMessage, SCNotification *notify, void *user_data)
 {
-	teco_interface_process_notify(notify);
+	teco_view_process_notify((teco_view_t *)sci, notify);
 }
 
 teco_view_t *

@@ -1,0 +1,20 @@
+!* SciTECO syntax highlighting *!
+
+@[lexer.test.sciteco]{
+  _#!Msciteco:M[lexer.checkheader]"S -1 '
+  :EN*.tesQ*"S -1 '
+  :EN*.tecQ*"S -1 '
+  :EN*.teco_iniQ*
+}
+
+@[lexer.set.sciteco]{
+  ESSETILEXERsciteco
+  !*:M[color.keyword],1M[color.set]*!
+  :M[color.operator],2M[color.set]
+  :M[color.variable],3M[color.set]
+  :M[color.string],4M[color.set]
+  :M[color.number],5M[color.set]
+  :M[color.comment],6M[color.set] !* labels *!
+  :M[color.comment],7M[color.set]
+  :M[color.error],8M[color.set]
+}
