@@ -60,6 +60,16 @@ as follows:
                          libglib2.0-dev libncurses-dev libgtk-3-dev \
                          groff doxygen
 
+The same on Fedora:
+
+  $ sudo dnf install git gcc gcc-c++ make pkg-config autoconf automake libtool \
+                     glib2-devel ncurses-devel gtk3-devel groff doxygen
+
+And on FreeBSD:
+
+  $ sudo pkg install git gmake pkgconfig autoconf automake libtool \
+                     glib gtk3 groff doxygen
+
 Building from Source Tar Ball or Repository
 ===========================================
 
