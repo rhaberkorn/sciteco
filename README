@@ -134,6 +134,16 @@ we currently only provide *experimental* ncurses builds.
 If everything fails, you can try building from source.
 See [`INSTALL`](https://github.com/rhaberkorn/sciteco/blob/master/INSTALL) for more details.
 
+Community
+=========
+
+* Report [bugs via Github](https://github.com/rhaberkorn/sciteco/issues)
+  if you can (or write an E-Mail to the author).
+* You can also use [Github Discussions](https://github.com/rhaberkorn/sciteco/discussions)
+  for asking questions.
+* We are also present in the [alt.lang.teco](news:alt.lang.teco) Usenet group,
+  but it is not restricted to SciTECO.
+
 Additional Documentation
 ========================
 
