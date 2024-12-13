@@ -2,7 +2,7 @@
 
 ! Match Q-Reg "_" against beginning of current doc's first line !
 @[lexer.checkheader]{
-  0,(1ESPOSITIONFROMLINE:)::S
+  [: 0,(1ESPOSITIONFROMLINE:)::S ]:
 }
 
 @[lexer.auto]{
