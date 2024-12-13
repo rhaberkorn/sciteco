@@ -8,7 +8,7 @@
 }
 
 @[lexer.set.sciteco]{
-  ESSETILEXERsciteco
+  1ESSETIDENTIFIER
   !*:M[color.keyword],1M[color.set]*!
   :M[color.operator],2M[color.set]
   :M[color.variable],3M[color.set]

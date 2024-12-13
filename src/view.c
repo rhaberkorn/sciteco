@@ -645,7 +645,14 @@ teco_view_process_notify(teco_view_t *ctx, SCNotification *notify)
 	g_printf("SCINTILLA NOTIFY: code=%d\n", notify->nmhdr.code);
 #endif
 
-	if (notify->nmhdr.code == SCN_STYLENEEDED)
-		/* Lexing in the container: only used for SciTECO */
+	/*
+	 * Lexing in the container: only used for SciTECO.
+	 *
+	 * The "identifier" is abused to enable/disable lexing.
+	 * It could be extended later on for several internal lexers.
+	 * The alternative would be an ILexer5 wrapper, written in C++.
+	 */
+	if (notify->nmhdr.code == SCN_STYLENEEDED &&
+	    teco_view_ssm(ctx, SCI_GETIDENTIFIER, 0, 0) != 0)
 		teco_lexer_style(ctx, notify->position);
 }
