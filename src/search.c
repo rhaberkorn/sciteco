@@ -1075,18 +1075,24 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 	if (teco_search_parameters.dot < dot) {
 		/* kill forwards */
 		sptr_t anchor = teco_interface_ssm(SCI_GETANCHOR, 0, 0);
+		gsize len = anchor - teco_search_parameters.dot;
 
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS, dot, 0);
 		teco_interface_ssm(SCI_GOTOPOS, anchor, 0);
 
-		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot,
-		                   anchor - teco_search_parameters.dot);
+		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot, len);
 
 		/* NOTE: An undo action is not always created. */
 		if (teco_current_doc_must_undo() &&
 		    teco_search_parameters.dot != anchor)
 			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+
+		/* fix up ranges (^Y) */
+		for (guint i = 0; i < teco_ranges_count; i++) {
+			teco_ranges[i].from -= len;
+			teco_ranges[i].to -= len;
+		}
 	} else {
 		/* kill backwards */
 		teco_interface_ssm(SCI_DELETERANGE, dot, teco_search_parameters.dot - dot);
