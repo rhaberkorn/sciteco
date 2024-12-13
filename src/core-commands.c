@@ -2198,7 +2198,8 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_escape,
 	 * when it comes to function key macro masking.
 	 */
 	.is_start = TRUE,
-	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE,
+	.style = SCE_SCITECO_COMMAND
 );
 
 /*$ EF close
