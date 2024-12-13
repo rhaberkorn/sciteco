@@ -1113,7 +1113,7 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
  * from,to:FK[pattern]$ -> Success|Failure
  *
  * \fBFK\fP searches for <pattern> just like the regular search
- * command (\fBS\fP) but when found deletes all text from dot
+ * command (\fBS\fP) but when found, deletes all text from dot
  * up to but not including the found text instance.
  * When searching backwards the characters beginning after
  * the occurrence of <pattern> up to dot are deleted.

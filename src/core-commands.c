@@ -1990,6 +1990,8 @@ teco_state_control_last_range(teco_machine_main_t *ctx, GError **error)
  *
  * A common idiom \(lq^SC\(rq can be used for jumping to the
  * beginning of the matched pattern or inserted string.
+ * Since the result is always negative, you can use \(lq^SR\(rq
+ * to skip the matched pattern after \fBFK\fP.
  */
 static void
 teco_state_control_last_length(teco_machine_main_t *ctx, GError **error)

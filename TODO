@@ -146,7 +146,6 @@ Known Bugs:
    files around, it does not produce a core dump.
 
 Features:
- * Perhaps ^S should return a positive number after <FK>.
  * Auto-indention could be implemented via context-sensitive
    immediate editing commands similar to tab-expansion.
    Avoids having to make LF a magic character in insertion
