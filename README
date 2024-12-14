@@ -114,14 +114,15 @@ There are prebuilt binary packages and source bundles for your convenience:
 
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
+* [FreeBSD port](https://www.freshports.org/editors/sciteco/)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
-* Users of OpenWrt may try to install the
-  [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
-* Yocto/OpenEmbedded users should try the
-  [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
 * [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
   for Windows users.
+* Yocto/OpenEmbedded users should try the
+  [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
+* Users of OpenWrt may try to install the
+  [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
 
 These releases may be quite outdated and not all of them are provided or tested by the author.
 So you may also try out the [nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
@@ -142,7 +143,7 @@ Community
   if you can (or write an E-Mail to the author).
 * You can also use [Github Discussions](https://github.com/rhaberkorn/sciteco/discussions)
   for asking questions.
-* We are also present in the [alt.lang.teco](news:alt.lang.teco) Usenet group,
+* We are also present in the [alt.lang.teco](https://newsgrouper.org.uk/alt.lang.teco) Usenet group,
   but it is not restricted to SciTECO.
 
 Additional Documentation
