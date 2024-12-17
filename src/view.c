@@ -206,8 +206,23 @@ teco_view_set_representations(teco_view_t *ctx)
 gboolean
 teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **error)
 {
+	gboolean ret = TRUE;
+
 	g_auto(teco_eol_reader_t) reader;
 	teco_eol_reader_init_gio(&reader, channel);
+
+	/*
+	 * Temporarily disable the line character index.
+	 * This tremendously speeds up reading UTF-8 documents.
+	 * The reason is, that UTF-8 consistency checks are rather
+	 * costly. Also, when reading in chunks of 1024 bytes,
+	 * we can very well add incomplete UTF-8 sequences,
+	 * resulting in unnecessary recalculations of the line index.
+	 */
+	guint cp = teco_view_get_codepage(ctx);
+	if (cp == SC_CP_UTF8)
+		teco_interface_ssm(SCI_RELEASELINECHARACTERINDEX,
+		                   SC_LINECHARACTERINDEX_UTF32, 0);
 
 	teco_view_ssm(ctx, SCI_BEGINUNDOACTION, 0, 0);
 	teco_view_ssm(ctx, SCI_CLEARALL, 0, 0);
@@ -222,8 +237,9 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 	struct stat stat_buf = {.st_size = 0};
 	if (!fstat(g_io_channel_unix_get_fd(channel), &stat_buf) &&
 	    stat_buf.st_size > 0) {
-		if (!teco_memory_check(stat_buf.st_size, error))
-			goto error;
+		ret = teco_memory_check(stat_buf.st_size, error);
+		if (!ret)
+			goto cleanup;
 		teco_view_ssm(ctx, SCI_ALLOCATE, stat_buf.st_size, 0);
 	}
 
@@ -235,8 +251,10 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		teco_string_t str;
 
 		GIOStatus rc = teco_eol_reader_convert(&reader, &str.data, &str.len, error);
-		if (rc == G_IO_STATUS_ERROR)
-			goto error;
+		if (rc == G_IO_STATUS_ERROR) {
+			ret = FALSE;
+			goto cleanup;
+		}
 		if (rc == G_IO_STATUS_EOF)
 			break;
 
@@ -246,12 +264,14 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		 * Even if we checked initially, knowing the file size,
 		 * Scintilla could allocate much more bytes.
 		 */
-		if (!teco_memory_check(0, error))
-			goto error;
+		ret = teco_memory_check(0, error);
+		if (!ret)
+			goto cleanup;
 
 		if (G_UNLIKELY(teco_interface_is_interrupted())) {
 			teco_error_interrupted_set(error);
-			goto error;
+			ret = FALSE;
+			goto cleanup;
 		}
 	}
 
@@ -272,12 +292,14 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		teco_interface_msg(TECO_MSG_WARNING,
 		                   "Inconsistent EOL styles normalized");
 
+cleanup:
 	teco_view_ssm(ctx, SCI_ENDUNDOACTION, 0, 0);
-	return TRUE;
 
-error:
-	teco_view_ssm(ctx, SCI_ENDUNDOACTION, 0, 0);
-	return FALSE;
+	if (cp == SC_CP_UTF8)
+		teco_interface_ssm(SCI_ALLOCATELINECHARACTERINDEX,
+		                   SC_LINECHARACTERINDEX_UTF32, 0);
+
+	return ret;
 }
 
 /**
