@@ -85,8 +85,6 @@ post-install:
 	${INSTALL_DATA} ${WRKSRC}/ico/sciteco-${SZ}.png \
 			${STAGEDIR}${PREFIX}/share/icons/hicolor/${SZ}x${SZ}/apps/sciteco.png
 .endfor
-# To appease `make check-plist`:
-	${RM} ${STAGEDIR}${DATADIR}/*.png
 	${MKDIR} ${STAGEDIR}${PREFIX}/share/applications
 	${INSTALL_DATA} ${WRKSRC}/src/sciteco.desktop \
 			${STAGEDIR}${PREFIX}/share/applications/sciteco.desktop
