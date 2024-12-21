@@ -34,7 +34,7 @@ dist_scitecodata_DATA = sciteco.tmac
 # FIXME: This will patch the hash-bang line repeatedly.
 install-exec-hook:
 	$(SCITECO_FULL) -e "@EB'$(DESTDIR)$(bindir)/*.tes' 1U* \
-	                    EJ-1<%*^[ 0,L.@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
+	                    EJ-1<%*^[ 0,^Q::@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
 	                    :EX"
 
 womendir = $(scitecolibdir)/women
