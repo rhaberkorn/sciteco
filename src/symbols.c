@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <glib.h>
+#include <gmodule.h>
 
 #include <Scintilla.h>
 #ifdef HAVE_LEXILLA
@@ -288,6 +289,27 @@ gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx,
  * Lexilla lexer name as a string argument for the \fBSCI_SETILEXER\fP
  * message, i.e. in order to load a Lexilla lexer
  * (this works similar to the old \fBSCI_SETLEXERLANGUAGE\fP message).
+ * If the lexer name contains a null-byte, the second string
+ * argument is split into two:
+ * Up until the null-byte, the path of an external lexer library
+ * (shared library or DLL) is expected,
+ * that implements the Lexilla protocol.
+ * The \(lq.so\(rq or \(lq.dll\(rq extension is optional.
+ * The concrete lexer name is the remaining of the string after
+ * the null-byte.
+ * This allows you to use lexers from external lexer libraries
+ * like Scintillua.
+ * When detecting Scintillua, \*(ST will automatically pass down
+ * the \fBSCITECO_SCINTILLUA_LEXERS\fP environment variable as
+ * the \(lqscintillua.lexers\(rq library property for specifying
+ * the location of Scintillua's Lua lexer files.
+ *
+ * In order to facilitate the use of Scintillua lexers, the semantics
+ * of \fBSCI_NAMEOFSTYLE\fP have also been changed.
+ * Instead of returning the name for a given style id, it now
+ * returns the style id when given the name of a style in the
+ * second string argument of \fBES\fP, i.e. it allows you
+ * to look up style ids by name.
  *
  * .BR Warning :
  * Almost all Scintilla messages may be dispatched using
@@ -321,24 +343,94 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 
 	sptr_t lParam = 0;
 
-#ifdef HAVE_LEXILLA
-	if (ctx->scintilla.iMessage == SCI_SETILEXER) {
+	if (ctx->scintilla.iMessage == SCI_NAMEOFSTYLE) {
+		/*
+		 * FIXME: This customized version of SCI_NAMEOFSTYLE could be avoided
+		 * if we had a way to call Scintilla messages that return strings into
+		 * Q-Registers.
+		 */
 		if (teco_string_contains(str, '\0')) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-			                    "Lexer name must not contain null-byte.");
+			                    "Style name must not contain null-byte.");
 			return NULL;
 		}
 
-		const gchar *lexer = str->data ? : "";
-		lParam = (sptr_t)CreateLexer(lexer);
+		/*
+		 * FIXME: Should we cache the name to style id?
+		 */
+		guint count = teco_interface_ssm(SCI_GETNAMEDSTYLES, 0, 0);
+		for (guint id = 0; id < count; id++) {
+			gchar style[128] = "";
+			teco_interface_ssm(SCI_NAMEOFSTYLE, id, (sptr_t)style);
+			if (!teco_string_cmp(str, style, strlen(style))) {
+				teco_expressions_push(id);
+				return &teco_state_start;
+			}
+		}
+
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Style name \"%s\" not found.", str->data ? : "");
+		return NULL;
+	}
+#ifdef HAVE_LEXILLA
+	else if (ctx->scintilla.iMessage == SCI_SETILEXER) {
+		CreateLexerFn CreateLexerFn = CreateLexer;
+
+		const gchar *lexer = memchr(str->data ? : "", '\0', str->len);
+		if (lexer) {
+			/* external lexer */
+			lexer++;
+
+			/*
+			 * NOTE: The same module can be opened multiple times.
+			 * They are internally reference counted.
+			 */
+			GModule *module = g_module_open(str->data, G_MODULE_BIND_LAZY);
+			if (!module) {
+				teco_error_module_set(error, "Error opening lexer module");
+				return NULL;
+			}
+
+			GetNameSpaceFn GetNameSpaceFn;
+			SetLibraryPropertyFn SetLibraryPropertyFn;
+
+			if (!g_module_symbol(module, LEXILLA_GETNAMESPACE, (gpointer *)&GetNameSpaceFn) ||
+			    !g_module_symbol(module, LEXILLA_SETLIBRARYPROPERTY, (gpointer *)&SetLibraryPropertyFn) ||
+			    !g_module_symbol(module, LEXILLA_CREATELEXER, (gpointer *)&CreateLexerFn)) {
+				teco_error_module_set(error, "Cannot find lexer function");
+				return NULL;
+			}
+
+			if (!g_strcmp0(GetNameSpaceFn(), "scintillua")) {
+				/*
+				 * Scintillua's lexer directory must be configured before calling CreateLexer().
+				 *
+				 * FIXME: In Scintillua distributions, the lexers are usually contained in the
+				 * same directory as the prebuilt shared libraries.
+				 * Perhaps we should default scintillua.lexers to the dirname in str->data?
+				 */
+				teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECO_SCINTILLUA_LEXERS", 26);
+				if (reg) {
+					teco_string_t dir;
+					if (!reg->vtable->get_string(reg, &dir.data, &dir.len, NULL, error))
+						return NULL;
+					SetLibraryPropertyFn("scintillua.lexers", dir.data ? : "");
+				}
+			}
+		} else {
+			/* Lexilla lexer */
+			lexer = str->data ? : "";
+		}
+
+		lParam = (sptr_t)CreateLexerFn(lexer);
 		if (!lParam) {
 			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Lexilla lexer \"%s\" not found.", lexer);
+			            "Lexer \"%s\" not found.", lexer);
 			return NULL;
 		}
-	} else
+	}
 #endif
-	if (str->len > 0) {
+	else if (str->len > 0) {
 		/*
 		 * NOTE: There may even be messages that read strings
 		 * with embedded nulls.

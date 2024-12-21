@@ -17,6 +17,7 @@
 #pragma once
 
 #include <glib.h>
+#include <gmodule.h>
 
 #include "sciteco.h"
 #include "string-utils.h"
@@ -53,6 +54,7 @@ typedef enum {
 	TECO_ERROR_MEMLIMIT,
 	TECO_ERROR_CLIPBOARD,
 	TECO_ERROR_WIN32,
+	TECO_ERROR_MODULE,
 
 	/** Interrupt current operation */
 	TECO_ERROR_INTERRUPTED,
@@ -163,6 +165,13 @@ teco_error_win32_set(GError **error, const gchar *prefix, gint err)
 	g_set_error(error, TECO_ERROR, TECO_ERROR_WIN32, "%s: %s", prefix, msg);
 }
 #endif
+
+static inline void
+teco_error_module_set(GError **error, const gchar *prefix)
+{
+	g_set_error(error, TECO_ERROR, TECO_ERROR_MODULE, "%s: %s",
+	            prefix, g_module_error());
+}
 
 static inline void
 teco_error_interrupted_set(GError **error)

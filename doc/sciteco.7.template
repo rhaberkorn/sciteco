@@ -2383,9 +2383,14 @@ Scintilla messages and other documentation:
 Scintilla
 .UE
 .TP
-Scinterm manual, documenting the mapping of \(lqRGB\(rq values to terminal colors on curses user interfaces:
-.UR http://foicica.com/scinterm/manual.html
-Scinterm manual
+Scinterm website, documenting the mapping of \(lqRGB\(rq values to terminal colors on curses user interfaces:
+.UR https://orbitalquark.github.io/scinterm/
+Scinterm website
+.UE
+.TP
+Scintillua manual, detailing usage of Lua-based Scintilla lexers:
+.UR https://orbitalquark.github.io/scintillua/manual.html
+Scintillua manual
 .UE
 .TP
 Suitable terminal fonts for icon support in Curses (see \fBED\fP flags):
