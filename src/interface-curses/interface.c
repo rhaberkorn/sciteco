@@ -1723,10 +1723,10 @@ teco_interface_event_loop_iter(void)
 		 */
 		keybuf[keybuf_i++] = key;
 		gsize len = keybuf_i;
-		gunichar cp = g_utf8_get_char_validated(keybuf, len);
-		if (keybuf_i >= sizeof(keybuf) || cp != (gunichar)-2)
+		gint32 cp = *keybuf ? g_utf8_get_char_validated(keybuf, len) : 0;
+		if (keybuf_i >= sizeof(keybuf) || cp != -2)
 			keybuf_i = 0;
-		if ((gint32)cp < 0)
+		if (cp < 0)
 			/* incomplete or invalid */
 			return;
 		switch (teco_cmdline_keymacro(keybuf, len, error)) {
