@@ -104,8 +104,12 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 
 	teco_style_t style = SCE_SCITECO_DEFAULT;
 
-	gint32 chr = g_utf8_get_char_validated(macro+machine->macro_pc,
-	                                       max_len-machine->macro_pc);
+	/*
+	 * g_utf8_get_char_validated() sometimes(?) returns -2 for "\0".
+	 */
+	gint32 chr = macro[machine->macro_pc]
+			? g_utf8_get_char_validated(macro+machine->macro_pc,
+			                            max_len-machine->macro_pc) : 0;
 	if (chr < 0) {
 		/*
 		 * Invalid UTF-8 byte sequence:

@@ -657,7 +657,7 @@ teco_view_get_character(teco_view_t *ctx, gsize pos, gsize len)
 	 * The sign bit in UCS-4/UTF-32 is unused, so this will even
 	 * suffice if TECO_INTEGER == 32.
 	 */
-	return (gint32)g_utf8_get_char_validated(buf, -1);
+	return *buf ? (gint32)g_utf8_get_char_validated(buf, -1) : 0;
 }
 
 void

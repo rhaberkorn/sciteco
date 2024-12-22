@@ -539,7 +539,7 @@ teco_qreg_external_get_character(teco_qreg_t *qreg, teco_int_t position,
 	 * The sign bit in UCS-4/UTF-32 is unused, so this will even
 	 * suffice if TECO_INTEGER == 32.
 	 */
-	*chr = (gint32)g_utf8_get_char_validated(p, -1);
+	*chr = *p ? (gint32)g_utf8_get_char_validated(p, -1) : 0;
 	return TRUE;
 }
 
