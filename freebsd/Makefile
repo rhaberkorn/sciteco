@@ -73,6 +73,8 @@ LEXILLA_CONFIGURE_OFF=			--without-lexilla
 MALLOC_REPLACEMENT_CONFIGURE_ON=	--enable-malloc-replacement
 TECO_INTEGER_32_CONFIGURE_ON=		--with-teco-integer=32
 
+WITH_LTO=	yes
+
 .include <bsd.port.pre.mk>
 
 .if ${FLAVOR} == gtk
