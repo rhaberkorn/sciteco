@@ -6,10 +6,6 @@ Tasks:
 Known Bugs:
  * Gtk sometimes allows scrolling with the mouse when it shouldn't.
    All mouse events should currently be blocked.
- * Editing very large files, or at least files with very long lines, is painstakingly slow.
-   Try for instance openrussian-custom-2023-10-09.sql.
-   For some strange reason, this affects both Curses and GTK.
-   In UTF-8 mode, this doesn't even load anytime soon.
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:
@@ -453,7 +449,7 @@ Features:
    Furthermore, it may not be trivial to detect such dangling
    Else/End-If statements as the parser state does not tell us enough.
    There is nothing that makes code after a successful If-condition
-   special. Even if we always incresed the nest_level, that
+   special. Even if we always increased the nest_level, that
    variable does not discern Ifs and Whiles.
  * Possible Nightly Build improvements (and therefore releases):
    * Build 32-bit Ubuntu packages
@@ -481,7 +477,6 @@ Features:
    Other editors use the +line[,col] syntax (see nano).
  * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
- * Case-sensitive search command (modifier or flag).
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions
    when exceeding the memory limit.
    This however requires special system settings.
@@ -528,12 +523,10 @@ Features:
    Also, parsers are not fully embeddable right now.
    At the same time, it would need access to the view/document it's
    supposed to style. Tricky, but not impossible.
- * Support external lexers.
-   Eg. @ES/SCI_SETILEXER/scintillua:APL/
-   automatically loads libscintillua.so or scintillua.dll, caches
-   the library handle and creates the "APL" lexer.
-   There would also have to be some kind of SCI_NAMEDSTYLE wrapper,
-   so we can look up style ids by name (specifically for Scintillua).
+ * A generic Scintillua lexer could be added if we supported setting
+   lexer properties and if there was a way to retrieve SCI_PRIVATELEXERCALL(1, str).
+   Perhaps there should be an @EPq/SCI.../ call.
+   See "Lexer Detection" in https://orbitalquark.github.io/scintillua/manual.html
  * Lexilla: Could also add an APL lexer to Lexilla.
    APL has very simple lexical rules.
  * ^^ in string building expanding to a single caret is not
@@ -594,6 +587,17 @@ Features:
    syntax highlighted.
    I am not sure however how that could be done without a special
    ED hook.
+ * Instead of defaulting to nothing in the absence of ~/.teco_ini,
+   we should load the installed sample.teco_ini, which
+   gives a more user-friendly experience.
+ * Don't automatically install the icons unless on GTK.
+   If necessary, they can be extracted from the source tree by
+   the OS-specific build system and installed as application icons.
+   The DATADIR/*.png icons are only always required on Gtk.
+   See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=276492#c19
+ * NLS (Native Language Support). I could at least add German and Russian.
+   There aren't many localizable strings in SciTECO.
+   Should be optional.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -646,9 +650,9 @@ Optimizations:
    so we would need a small wrapper to call it from C world.
  * Perhaps replace glib with gnulib. Could improve
    portability and reduce binary size on platforms where
-   I have to ship the glib shared library.
-   Also we could control memory allocations more tightly.
-   We could also make use of the fnmatch and canonicalize
+   I currently have to ship the glib shared library.
+   Also, we could control memory allocations more tightly.
+   We could also make use of the "fnmatch" and "canonicalize"
    modules.
    On the other hand, this imports tons of sh*t into the
    repository and chains us to Autotools.
@@ -661,6 +665,10 @@ Optimizations:
    are defined.
    But how to even test for glibc's ptmalloc?
    Linux could use musl as well for instance.
+ * Resolve Coverity Scan issues.
+   If this turns out to be useful, perhaps we can automatically
+   upload builds via CI?
+   https://scan.coverity.com/projects/rhaberkorn-sciteco
 
 Documentation:
  * Doxygen docs could be deployed on Github pages
@@ -677,9 +685,10 @@ Documentation:
    Object-oriented SciTECO ideoms etc. ;-)
  * What to do with `--xembed`: tabbed, st
    when used as the git editor, etc.
- * Perhaps there should be a Getting Started document,
-   that is automatically opened by sample.teco_ini.
  * People are demanding a Youtube tutorial.
+ * Vimtutor like tutorial. Could be a woman-page.
+   Perhaps sciteco-tutorial would copy the files to /tmp and
+   open them always with sample.teco_ini.
  * The HTML manuals lack monospaced fonts.
    This is partly because an.tmac removes the Courier family
    in nroff mode, but it still doesn't work if you undo this.
