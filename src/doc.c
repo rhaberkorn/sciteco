@@ -176,7 +176,8 @@ teco_doc_undo_set_string(teco_doc_t *ctx)
  * @param str Pointer to a variable to hold the return string.
  *            It can be NULL if you are interested only in the string's length.
  *            Strings must be freed via g_free().
- * @param len Where to store the string's length (mandatory).
+ * @param len Where to store the string's length or NULL
+ *            if that information is not necessary.
  * @param codepage Where to store the document's codepage or NULL
  *                 if that information is not necessary.
  *

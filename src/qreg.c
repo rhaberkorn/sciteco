@@ -665,9 +665,6 @@ teco_qreg_bufferinfo_append_string(teco_qreg_t *qreg, const gchar *str, gsize le
 	return FALSE;
 }
 
-/*
- * NOTE: The `string` component is currently unused on the "*" register.
- */
 static gboolean
 teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
                                 guint *codepage, GError **error)
@@ -684,7 +681,8 @@ teco_qreg_bufferinfo_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	/*
 	 * NOTE: teco_file_normalize_path() does not change the size of the string.
 	 */
-	*len = teco_ring_current->filename ? strlen(teco_ring_current->filename) : 0;
+	if (len)
+		*len = teco_ring_current->filename ? strlen(teco_ring_current->filename) : 0;
 	if (codepage)
 		 *codepage = teco_default_codepage();
 	return TRUE;
@@ -775,7 +773,8 @@ teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	 * the return value for str == NULL is still correct.
 	 */
 	gchar *dir = g_get_current_dir();
-	*len = strlen(dir);
+	if (len)
+		*len = strlen(dir);
 	if (str)
 		*str = teco_file_normalize_path(dir);
 	else
@@ -919,11 +918,12 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 	                                &str_converted.len, error) == G_IO_STATUS_ERROR)
 		return FALSE;
 
+	if (len)
+		*len = str_converted.len;
 	if (str)
 		*str = str_converted.data;
 	else
 		teco_string_clear(&str_converted);
-	*len = str_converted.len;
 	if (codepage)
 		*codepage = teco_default_codepage();
 

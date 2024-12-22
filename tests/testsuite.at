@@ -244,6 +244,15 @@ AT_CHECK([$SCITECO -e '@I/^E@a/'], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e '@I/^ENa/'], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Setting special Q-Registers with EU])
+# NOTE: The clipboard registers also suffered from this, but the test suite
+# should not influence the clipboard (and it's not in Curses anyway).
+#
+# Should fail, but not crash
+AT_CHECK([$SCITECO -e '@EU*""'], 1, ignore, ignore)
+AT_CHECK([$SCITECO -e '@EU$"."'], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Empty help topic])
 AT_CHECK([$SCITECO -e '@?//'], 1, ignore, ignore)
 AT_CLEANUP
