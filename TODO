@@ -590,11 +590,6 @@ Features:
  * Instead of defaulting to nothing in the absence of ~/.teco_ini,
    we should load the installed sample.teco_ini, which
    gives a more user-friendly experience.
- * Don't automatically install the icons unless on GTK.
-   If necessary, they can be extracted from the source tree by
-   the OS-specific build system and installed as application icons.
-   The DATADIR/*.png icons are only always required on Gtk.
-   See https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=276492#c19
  * NLS (Native Language Support). I could at least add German and Russian.
    There aren't many localizable strings in SciTECO.
    Should be optional.

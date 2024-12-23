@@ -11,11 +11,13 @@ dist_scitecodata_DATA = sample.teco_ini
 
 EXTRA_DIST = README TODO
 
+if INTERFACE_GTK
 # Only the lower resolution PNG icons are installed as they are
 # required by the GTK UI.
-# Other uses are left to the distro package manager.
+# Other icons might be required for OS/distro-specific packaging.
 dist_scitecodata_DATA += ico/sciteco-16.png ico/sciteco-32.png \
                          ico/sciteco-48.png
+endif
 EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
 EXTRA_DIST += win32/loaders.cache

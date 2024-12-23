@@ -100,7 +100,7 @@ Features
   across all supported platforms. Gtk+ builds allow further customization using CSS.
   The user interface is kept minimalistic and is consistent in spirit across the
   different platforms.
-* Syntax highlighting, styles, line numbers, etc. thanks to Scintilla.
+* Syntax highlighting, styles, line numbers, etc. thanks to Scintilla, Lexilla and Scintillua.
   Low-level Scintilla commands can also be accessed to extend SciTECO.
   SciTECO even syntax highlights code, written in the SciTECO language itself.
 * A growing standard library of macros with frameworks for color schemes, syntax highlighting
