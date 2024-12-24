@@ -1,6 +1,6 @@
-! Lexer configuration and styles (ED hook) !
+!* Lexer configuration and styles (ED hook) *!
 
-! Match Q-Reg "_" against beginning of current doc's first line !
+!* Match Q-Reg "_" against beginning of current doc's first line *!
 @[lexer.checkheader]{
   [: 0,(1ESPOSITIONFROMLINE:)::S ]:
 }
@@ -16,7 +16,7 @@
   [_
 }
 
-! Automatically mung all the lexers and add them to "lexer.auto" !
+!* Automatically mung all the lexers and add them to "lexer.auto" *!
 [*
   EQ.[lexers]
   [_ 1ENQ[$SCITECOPATH]/lexers/*.tes ]_ J

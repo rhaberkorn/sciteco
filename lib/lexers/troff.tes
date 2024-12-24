@@ -69,8 +69,10 @@
   2ESSETKEYWORDSel nop
   !* Requests and commands, initiating ignore blocks *!
   3ESSETKEYWORDSig
-  !* Requests and commands with end-macros.
-     Mom macros alias MAC to de. *!
+  !*
+   * Requests and commands with end-macros.
+   * Mom macros alias MAC to de.
+   *!
   4ESSETKEYWORDSam am1 de de1 MAC
 
   :M[color.keyword],1M[color.set]
@@ -79,7 +81,7 @@
   :M[color.operator],4M[color.set]
   :M[color.string],5M[color.set]
   :M[color.comment],6M[color.set]
-  !*:M[color.comment],7M[color.set]*!
+  !!:M[color.comment],7M[color.set]
   7U.i 20<:M[color.variable],%.iM[color.set]>
   :M[color.preproc2],17M[color.set]
 }

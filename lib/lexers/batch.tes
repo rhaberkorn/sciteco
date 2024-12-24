@@ -1,4 +1,4 @@
-! DOS, Windows, OS/2 Batch Files !
+!* DOS, Windows, OS/2 Batch Files *!
 
 @[lexer.test.batch]{
   :EN*.batQ*"S -1 '
@@ -15,9 +15,9 @@
     color copy defined else not start
   :M[color.comment],1M[color.set]
   :M[color.keyword],2M[color.set]
-  :M[color.target],3M[color.set] ! Labels !
-  :M[color.preproc],4M[color.set] ! Hide Cmd @ !
-  :M[color.preproc2],5M[color.set] ! External Cmd !
+  :M[color.target],3M[color.set] !* Labels *!
+  :M[color.preproc],4M[color.set] !* Hide Cmd @ *!
+  :M[color.preproc2],5M[color.set] !* External Cmd *!
   :M[color.variable],6M[color.set]
   :M[color.operator],7M[color.set]
 }

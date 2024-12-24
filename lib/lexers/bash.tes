@@ -1,6 +1,8 @@
-! Unix Shell
-  It's called bash.tes only because SciTE calls it this way
-  internally !
+!*
+ * Unix Shell
+ * It's called bash.tes only because SciTE calls it this way
+ * internally
+ *!
 
 @[lexer.test.bash]{
   _#!M[sh,bash,ksh]:M[lexer.checkheader]"S -1 '
@@ -35,8 +37,8 @@
   :M[color.string],5M[color.set]
   :M[color.string],6M[color.set]
   :M[color.operator],7M[color.set]
-  :M[color.target],8M[color.set] ! Identifiers, e.g. FOO=... !
+  :M[color.target],8M[color.set] !* Identifiers, e.g. FOO=... *!
   :M[color.variable],9M[color.set]
   :M[color.variable],10M[color.set]
-  :M[color.string2],11M[color.set] ! Backticks !
+  :M[color.string2],11M[color.set] !* Backticks *!
 }

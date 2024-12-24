@@ -1,10 +1,10 @@
-! <r,g,b>M[color.rgb] -> Scintilla color !
+!* <r,g,b>M[color.rgb] -> Scintilla color *!
 @[color.rgb]{
   U.bU.gU.r
   (Q.r # Q.g*256 # Q.b*256*256)
 }
 
-! These 8 colors should be available on every system !
+!* These 8 colors should be available on every system *!
 000,000,000:M[color.rgb]U[color.black]
 128,000,000:M[color.rgb]U[color.red]
 000,128,000:M[color.rgb]U[color.green]
@@ -14,7 +14,7 @@
 000,128,128:M[color.rgb]U[color.cyan]
 192,192,192:M[color.rgb]U[color.white]
 
-! Light color variants, might not be available on every terminal  !
+!* Light color variants, might not be available on every terminal *!
 064,064,064:M[color.rgb]U[color.lblack]
 255,000,000:M[color.rgb]U[color.lred]
 000,255,000:M[color.rgb]U[color.lgreen]
@@ -24,7 +24,7 @@
 000,255,255:M[color.rgb]U[color.lcyan]
 255,255,255:M[color.rgb]U[color.lwhite]
 
-! <[[flags,]bg,]fg,style>M[color.set] !
+!* <[[flags,]bg,]fg,style>M[color.set] *!
 @[color.set]{
   U.s U.f "~0'U.b "~0'U.h
   Q.f,Q.sESSTYLESETFORE
@@ -33,9 +33,9 @@
   Q.h&2,Q.sESSTYLESETITALIC
 }
 
-! Reset all styles and setup the standard ones !
+!* Reset all styles and setup the standard ones *!
 @[color.init]{
-  ! Default text colors !
+  !* Default text colors *!
   :M[color.default],32M[color.set]
   ESSTYLECLEARALL
   :M[color.linenumber],33M[color.set]
@@ -44,9 +44,9 @@
   1ESSETCARETLINEVISIBLE
   Q[color.selfore],1ESSETSELFORE
   Q[color.selback],1ESSETSELBACK
-  ! Calltips and popup windows !
+  !* Calltips and popup windows *!
   :M[color.calltip],38M[color.set]
-  ! Set up brace lightning !
+  !* Set up brace lightning *!
   :M[color.bracelight],34M[color.set]
   :M[color.error],35M[color.set]
 }

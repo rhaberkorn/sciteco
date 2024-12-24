@@ -1,4 +1,4 @@
-! Default terminal color scheme !
+!* Default terminal color scheme *!
 [color.default]    0,Q[color.black],Q[color.white] 
 [color.linenumber] 0,Q[color.black],Q[color.white] 
 Q[color.black]U[color.caretline]
@@ -19,16 +19,16 @@ Q[color.white]U[color.selback]
 [color.variable] 1,Q[color.black],Q[color.lblue]    
 [color.error]    1,Q[color.black],Q[color.lred]     
 
-! Makes only sense for Makefiles !
+!* Makes only sense for Makefiles *!
 [color.target]   1,Q[color.black],Q[color.lyellow]  
 
-! Makes only sense for Patch/Diff files !
+!* Makes only sense for Patch/Diff files *!
 [color.deletion] 0,Q[color.black],Q[color.red]      
 [color.addition] 0,Q[color.black],Q[color.green]    
 [color.change]   0,Q[color.black],Q[color.yellow]   
 
-! For highlighting braces !
+!* For highlighting braces *!
 [color.bracelight] 0,Q[color.white],Q[color.black]  
 
-! Style the Q-Register view !
+!* Style the Q-Register view *!
 [* EQ.b :M[color.init] ]*

@@ -33,6 +33,9 @@
 #include "goto.h"
 #include "goto-commands.h"
 
+TECO_DECLARE_STATE(teco_state_blockcomment);
+TECO_DECLARE_STATE(teco_state_eolcomment);
+
 teco_string_t teco_goto_skip_label = {NULL, 0};
 
 static gboolean
@@ -46,16 +49,18 @@ teco_state_label_initial(teco_machine_main_t *ctx, GError **error)
  * NOTE: The comma is theoretically not allowed in a label
  * (see <O> syntax), but is accepted anyway since labels
  * are historically used as comments.
- *
- * TODO: Add support for "true" comments of the form !* ... *!
- * This would be almost trivial to implement, but if we don't
- * want any (even temporary) overhead for comments at all, we need
- * to add a new parser state.
- * I'm unsure whether !-signs should be allowed within comments.
+ * SciTECO has true block and EOL comments, though as well.
  */
 static teco_state_t *
 teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
+	if (!ctx->goto_label.len) {
+		switch (chr) {
+		case '*': return &teco_state_blockcomment;	/* `!*` */
+		case '!': return &teco_state_eolcomment;	/* `!!` */
+		}
+	}
+
 	if (chr == '!') {
 		/*
 		 * NOTE: If the label already existed, its PC will be restored
@@ -84,6 +89,12 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		return &teco_state_start;
 	}
 
+	/*
+	 * The goto label is collected in parse-only mode as well
+	 * since we could jump into a currently dead branch later.
+	 *
+	 * FIXME: Theoretically, we could avoid that at least in TECO_MODE_LEXING.
+	 */
 	if (ctx->parent.must_undo)
 		undo__teco_string_truncate(&ctx->goto_label, ctx->goto_label.len);
 	teco_string_append_wc(&ctx->goto_label, chr);
@@ -171,3 +182,40 @@ gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_goto,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_goto_process_edit_cmd
 );
+
+/*
+ * True comments:
+ * They don't add entries to the goto table.
+ *
+ * NOTE: This still needs some special handling in the Scintilla lexer
+ * (for syntax highlighting) since comments always start with `!`.
+ */
+#define TECO_DEFINE_STATE_COMMENT(NAME, ...) \
+	TECO_DEFINE_STATE(NAME, \
+		.style = SCE_SCITECO_COMMENT, \
+		##__VA_ARGS__ \
+	)
+
+static teco_state_t *
+teco_state_blockcomment_star_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
+{
+	return chr == '!' ? &teco_state_start : &teco_state_blockcomment;
+}
+
+TECO_DEFINE_STATE_COMMENT(teco_state_blockcomment_star);
+
+static teco_state_t *
+teco_state_blockcomment_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
+{
+	return chr == '*' ? &teco_state_blockcomment_star : &teco_state_blockcomment;
+}
+
+TECO_DEFINE_STATE_COMMENT(teco_state_blockcomment);
+
+static teco_state_t *
+teco_state_eolcomment_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
+{
+	return chr == '\n' ? &teco_state_start : &teco_state_eolcomment;
+}
+
+TECO_DEFINE_STATE_COMMENT(teco_state_eolcomment);

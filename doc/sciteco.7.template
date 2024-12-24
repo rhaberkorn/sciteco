@@ -2085,7 +2085,8 @@ Labels are symbolic and are defined with the following syntax:
 .br
 .BI ! label !
 .br
-Whereas \fIlabel\fP is an arbitrary string.
+Whereas \fIlabel\fP is an arbitrary non-empty string.
+Labels however cannot practically begin with an asterisk sign (*).
 String building is not performed on \fIlabel\fP, i.e. it is used
 verbatim.
 When a label is encountered, it is cached in a macro-invocation level
@@ -2094,9 +2095,36 @@ Therefore every macro invocation has its own label namespace and gotos
 to a label have constant complexity once a label has been parsed.
 Terminating a macro execution (or command line) fails if a label that
 is jumped to has not been defined.
+Labels are also historically used as comments in TECO code.
+.
+.SS Comments
 .SCITECO_TOPIC comment
-Labels also have another important role in \*(ST \(em they are used
-as comments.
+.
+In addition to labels and unlike most classic TECO dialects,
+\*(ST also supports true comments.
+True comments are parsed faster than labels and do not
+take up memory in goto tables.
+.SCITECO_TOPIC "block comment"
+One form of comments is the block comment:
+.br
+.BI !* comment *!
+.br
+Single exclamation marks (!) can be embedded in the \fIcomment\fP if they are not
+following asterisk signs (unlike in goto-labels).
+Block comments can span multiple lines.
+They are analoguous to C's
+.BI /* ... */
+comments.
+.LP
+.SCITECO_TOPIC "EOL comment"
+The second form of real comments are end-of-line comments,
+which are analogous to C++'s \fB//\fP comments:
+.br
+.BI !! comment
+.LP
+The idiom \(lq0<\fIcommands\fP>\(rq
+is also sometimes useful to comment out large blocks of \*(ST code.
+However, all \fIcommands\fP must still be syntactically correct.
 .
 .SS Loops
 .SCITECO_TOPIC < > loop

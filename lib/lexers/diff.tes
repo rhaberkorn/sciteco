@@ -1,4 +1,4 @@
-! Patch/Diff Files !
+!* Patch/Diff Files *!
 
 @[lexer.test.diff]{
   :EN*.diffQ*"S -1 '
@@ -8,9 +8,9 @@
 @[lexer.set.diff]{
   ESSETILEXERdiff
   :M[color.comment],1M[color.set]
-  :M[color.keyword],2M[color.set] ! Command !
-  :M[color.preproc],3M[color.set] ! Source/Dest !
-  :M[color.operator],4M[color.set] ! Position @@ !
+  :M[color.keyword],2M[color.set] !* Command *!
+  :M[color.preproc],3M[color.set] !* Source/Dest *!
+  :M[color.operator],4M[color.set] !* Position @@ *!
   :M[color.deletion],5M[color.set]
   :M[color.addition],6M[color.set]
   :M[color.change],7M[color.set]

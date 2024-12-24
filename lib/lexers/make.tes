@@ -1,4 +1,4 @@
-! Makefile Lexing !
+!* Makefile Lexing *!
 
 @[lexer.test.make]{
   :EN*/MakefileQ*"S -1 '

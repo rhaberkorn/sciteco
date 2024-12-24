@@ -41,7 +41,7 @@
   0ESSETKEYWORDS
     Q[lexer.c.basekeywords] _Alignas _Alignof _Atomic
     _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local
-  ! Doxygen keywords !
+  !* Doxygen keywords *!
   2ESSETKEYWORDSQ[lexer.c.doxygenkeywords]
   :M[color.comment],1M[color.set]
   :M[color.comment],2M[color.set]

@@ -1,7 +1,9 @@
-! String utility macros !
+!* String utility macros *!
 
-! <pos1,pos2>M[symcasecmp] - Compare symbol at pos1 with symbol at pos2 (caseless)
-  this case-folds to lower case so "_"<"A" which is compatible with g_ascii_strcasecmp() !
+!*
+ * <pos1,pos2>M[symcasecmp] - Compare symbol at pos1 with symbol at pos2 (caseless)
+ * this case-folds to lower case so "_"<"A" which is compatible with g_ascii_strcasecmp()
+ *!
 @[symcasecmp]{
   U.2U.1 -.%.1 -.%.2
   @.#lo{
@@ -13,7 +15,7 @@
   Q.c
 }
 
-! <i,j>M[exchange] - Exchange line at I with line at J (I < J), returning new J !
+!* <i,j>M[exchange] - Exchange line at I with line at J (I < J), returning new J *!
 @[exchange]{
   U.jU.i
   Q.jJ @X.x
@@ -22,7 +24,7 @@
   Q.j
 }
 
-! <i,j>M[qsort] - Sort lines beginning at I until J using Quicksort algorithm !
+!* <i,j>M[qsort] - Sort lines beginning at I until J using Quicksort algorithm *!
 @[qsort]{
   U.rU.l
 

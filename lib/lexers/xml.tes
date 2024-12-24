@@ -1,4 +1,4 @@
-! Lexing for XML and its applications !
+!* Lexing for XML and its applications *!
 
 @[lexer.test.xml]{
   :EN*.xmlQ*"S -1 '
@@ -16,20 +16,20 @@
 @[lexer.set.xml]{
   ESSETILEXERxml
   0ESSETKEYWORDS 
-  ! DTD keywords !
+  !* DTD keywords *!
   5ESSETKEYWORDS
     ELEMENT DOCTYPE ATTLIST ENTITY NOTATION
-  :M[color.keyword],1M[color.set] ! Tags !
-  :M[color.keyword],2M[color.set] ! Tags !
-  :M[color.variable],3M[color.set] ! Attributes !
-  :M[color.variable],4M[color.set] ! Attributes !
+  :M[color.keyword],1M[color.set] !* Tags *!
+  :M[color.keyword],2M[color.set] !* Tags *!
+  :M[color.variable],3M[color.set] !* Attributes *!
+  :M[color.variable],4M[color.set] !* Attributes *!
   :M[color.number],5M[color.set]
   :M[color.string],6M[color.set]
   :M[color.string],7M[color.set]
   :M[color.comment],9M[color.set]
-  :M[color.preproc],10M[color.set] ! Entities !
-  :M[color.keyword],11M[color.set] ! Tag Ends /> !
-  :M[color.preproc2],12M[color.set] ! PI !
-  :M[color.preproc2],13M[color.set] ! PI !
-  :M[color.string2],14M[color.set] ! CDATA !
+  :M[color.preproc],10M[color.set] !* Entities *!
+  :M[color.keyword],11M[color.set] !* Tag Ends /> *!
+  :M[color.preproc2],12M[color.set] !* PI *!
+  :M[color.preproc2],13M[color.set] !* PI *!
+  :M[color.string2],14M[color.set] !* CDATA *!
 }

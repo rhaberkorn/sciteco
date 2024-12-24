@@ -1,4 +1,4 @@
-! AUTO-GENERATED FROM SCITE PROPERTY SET !
+!* AUTO-GENERATED FROM SCITE PROPERTY SET *!
 
 @[lexer.test.lout]{
   :EN*.ltQ*
@@ -23,7 +23,7 @@
     @SysPrependGraphic @Target @Null @PageLabel @Galley @ForceGalley @LInput @Split @Tag @Key
     @Optimize @Merge @Enclose @Begin @End @Moment @Second @Minute @Hour @Day @Month @Year
     @Century @WeekDay @YearDay @DaylightSaving @SetContext @GetContext
-  ! NOTE: carets are doubled to escape them !
+  !* NOTE: carets are doubled to escape them *!
   1ESSETKEYWORDS
     &&& && & ^^// ^^/ ^^|| ^^| ^^& // / || |
   2ESSETKEYWORDS

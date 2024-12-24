@@ -1,18 +1,18 @@
-! TECO.INI !
+!* TECO.INI *!
 
-! Set default terminal color scheme !
+!* Set default terminal color scheme *!
 EMQ[$SCITECOPATH]/color.tes
 :EMQ[$SCITECOPATH]/colors/terminal.tes
 
-! Load lexer and buffer session libraries !
+!* Load lexer and buffer session libraries *!
 EMQ[$SCITECOPATH]/lexer.tes
 EMQ[$SCITECOPATH]/session.tes
 
-! Automatic lexing and session management using ED hooks !
+!* Automatic lexing and session management using ED hooks *!
 @#ED{
   Oadd,edit,close,quit
   !add!
-    ! Add code here to execute when a document is added !
+    !* Add code here to execute when a document is added *!
     :Q*+1Oedit
     32,0ED
 
@@ -21,7 +21,7 @@ EMQ[$SCITECOPATH]/session.tes
 
     M[lexer.auto]
 
-    ! Set up margins !
+    !* Set up margins *!
     [_:M[lexer.test.woman]]_"F
       33ESTEXTWIDTH9U.w
       5*Q.w,0ESSETMARGINWIDTHN
@@ -29,52 +29,58 @@ EMQ[$SCITECOPATH]/session.tes
     '
 
     0,32ED
-    ! fall through !
+    !* fall through *!
 
   !edit!
-    ! Add code here to execute when a document is edited !
+    !* Add code here to execute when a document is edited *!
     ESGETCOLUMN,4EJ
     
 
   !close!
-    ! Add code here to execute when a document is closed !
+    !* Add code here to execute when a document is closed *!
     
 
   !quit!
-    ! Add code here to execute when SciTECO quits !
+    !* Add code here to execute when SciTECO quits *!
     M[session.save]
 }
 0,32ED
 
-! Uncomment to enable automatic case folding !
-! 0,8ED !
+!* Uncomment to enable automatic case folding *!
+!!0,8ED
 
-! Tweak the default font name and size.
-  The size unit is 1pt/100 !
-! [lexer.font]Monospace 1300U[lexer.font] !
+!* 
+ * Tweak the default font name and size.
+ * The size unit is 1pt/100
+ *!
+!![lexer.font]Monospace 1300U[lexer.font]
 
-! Enable default function key macros !
+!* Enable default function key macros *!
 EMQ[$SCITECOPATH]/fnkeys.tes
 
-! Uncomment if terminal supports OSC-52 clipboards !
-! 0,256ED !
+!* Uncomment if terminal supports OSC-52 clipboards *!
+!!0,256ED
 
-! Uncomment to enable Unicode icons in the Curses UI !
-! 0,512ED !
+!* Uncomment to enable Unicode icons in the Curses UI *!
+!!0,512ED
 
-! Uncomment to tweak the memory limit !
-! 500*1000*1000,2EJ !
+!* Uncomment to tweak the memory limit *!
+!!500*1000*1000,2EJ
 
-! If files are given on the command-line, open them
-  and disable session saving.
-  Otherwise open a buffer session. !
+!*
+ * If files are given on the command-line, open them
+ * and disable session saving.
+ * Otherwise open a buffer session.
+ *!
 Z"=
-  ! Uncomment to use a separate session per VCS repository or
-    working copy (see session.tes): !
-  ! M[session.vcs] !
+  !*
+   * Uncomment to use a separate session per VCS repository or
+   * working copy (see session.tes):
+   *!
+  !!M[session.vcs]
   M[session.load]
 |
-  [session.path] ! disables session saving !
+  [session.path] !* disables session saving *!
   [.f
     <:L;R 0X.f [* EBN.f ]* L>
   ].f

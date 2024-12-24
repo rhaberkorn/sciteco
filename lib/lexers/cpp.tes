@@ -12,7 +12,7 @@
   :EN*.hppQ*"S -1 '
   :EN*.hxxQ*"S -1 '
   :EN*.ippQ*"S -1 '
-  !*:EN*.mmQ*"S -1 '*!
+  !!:EN*.mmQ*"S -1 '
   :EN*.smaQ*"S -1 '
   :EN*.inoQ*
 }
@@ -25,7 +25,7 @@
     explicit export friend mutable namespace new not not_eq operator or or_eq
     private protected public reinterpret_cast static_cast template this
     throw try typeid typename using virtual xor xor_eq
-  ! Doxygen keywords !
+  !* Doxygen keywords *!
   2ESSETKEYWORDSQ[lexer.c.doxygenkeywords]
   :M[color.comment],1M[color.set]
   :M[color.comment],2M[color.set]

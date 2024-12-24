@@ -1,4 +1,9 @@
-!* Git commit and rebase messages *!
+!*
+ * Git commit and rebase messages
+ *
+ * NOTE: This is not a real lexer.
+ * It only styles the document once.
+ *!
 
 @[lexer.test.git]{
   :EN*/COMMIT_EDITMSGQ*"S -1 '

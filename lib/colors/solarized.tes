@@ -26,14 +26,14 @@
   147,161,161:M[color.rgb],14,3EJ Q[color.lcyan]   U[color.base1]
   238,232,213:M[color.rgb],07,3EJ Q[color.white]   U[color.base2]
   253,246,227:M[color.rgb],15,3EJ Q[color.lwhite]  U[color.base3]
-  181,137,000:M[color.rgb],03,3EJ ! yellow !
+  181,137,000:M[color.rgb],03,3EJ !* yellow *!
   203,075,022:M[color.rgb],09,3EJ Q[color.lred]    U[color.orange]
-  220,050,047:M[color.rgb],01,3EJ ! red !
-  211,054,130:M[color.rgb],05,3EJ ! magenta !
+  220,050,047:M[color.rgb],01,3EJ !* red *!
+  211,054,130:M[color.rgb],05,3EJ !* magenta *!
   108,113,196:M[color.rgb],13,3EJ Q[color.lmagenta]U[color.violet]
-  038,139,210:M[color.rgb],04,3EJ ! blue !
-  042,161,152:M[color.rgb],06,3EJ ! cyan !
-  133,153,000:M[color.rgb],02,3EJ ! green !
+  038,139,210:M[color.rgb],04,3EJ !* blue *!
+  042,161,152:M[color.rgb],06,3EJ !* cyan *!
+  133,153,000:M[color.rgb],02,3EJ !* green *!
 |
   000,043,054:M[color.rgb]U[color.base03]
   007,054,066:M[color.rgb]U[color.base02]
@@ -75,15 +75,15 @@
   [color.variable] 0,Q[color.base3],Q[color.blue]     
   [color.error]    1,Q[color.base3],Q[color.red]      
 
-  ! Makes only sense for Makefiles (FIXME) !
+  !* Makes only sense for Makefiles (FIXME) *!
   [color.target]   1,Q[color.base3],Q[color.yellow]   
 
-  ! Makes only sense for Patch/Diff files !
+  !* Makes only sense for Patch/Diff files *!
   [color.deletion] 0,Q[color.base2],Q[color.red]      
   [color.addition] 0,Q[color.base2],Q[color.green]    
   [color.change]   0,Q[color.base2],Q[color.yellow]   
 
-  ! For highlighting braces !
+  !* For highlighting braces *!
   [color.bracelight] 0,Q[color.base00],Q[color.base3] 
 }
 
@@ -108,26 +108,26 @@
   [color.variable] 0,Q[color.base03],Q[color.blue]    
   [color.error]    1,Q[color.base03],Q[color.red]     
 
-  ! Makes only sense for Makefiles (FIXME) !
+  !* Makes only sense for Makefiles (FIXME) *!
   [color.target]   1,Q[color.base03],Q[color.yellow]  
 
-  ! Makes only sense for Patch/Diff files !
+  !* Makes only sense for Patch/Diff files *!
   [color.deletion] 0,Q[color.base02],Q[color.red]     
   [color.addition] 0,Q[color.base02],Q[color.green]   
   [color.change]   0,Q[color.base02],Q[color.yellow]  
 
-  ! For highlighting braces !
+  !* For highlighting braces *!
   [color.bracelight] 0,Q[color.base0],Q[color.base03] 
 }
 
 Q[solarized.light]"T :M[solarized.light] | :M[solarized.dark] '
-! Style the Q-Register view !
+!* Style the Q-Register view *!
 [* EQ.b :M[color.init] ]*
 
 @[solarized.toggle]{
   Q[solarized.light]U[solarized.light]
   Q[solarized.light]"T :M[solarized.light] | :M[solarized.dark] '
-  ! restyle all buffers and update Q-Reg view !
+  !* restyle all buffers and update Q-Reg view *!
   [*
     EJ<%.bEB M[lexer.auto]>
     EQ.b :M[color.init]

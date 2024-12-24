@@ -575,10 +575,6 @@ Features:
    Perhaps a few select local Q-Registers (-, _, ^X, ^R) should be
    accessible with the global reg syntax as well, so G- is equivalent
    to G.-?
- * Real block comments (!* ... *!) that don't spam the goto tables.
-   TECO-64 has end of line comments beginning with !! as well.
-   We may want both as 0<...> cannot be used to comment out all sorts
-   of blocks as it necessarily drives the parser.
  * `-` currently inverts the number sign in teco_state_start_minus().
    So --1 == 1 and --C == C.
    There is probably no need for this "feature" and an error

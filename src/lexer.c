@@ -19,6 +19,8 @@
 #include "config.h"
 #endif
 
+#include <string.h>
+
 #include <glib.h>
 
 #include "sciteco.h"
@@ -39,20 +41,12 @@ teco_lexer_getstyle(teco_view_t *view, teco_machine_main_t *machine,
 	 * FIXME: What about ^* and ^/?
 	 * They are currently highlighted as commands.
 	 */
-	if (machine->parent.current->keymacro_mask & TECO_KEYMACRO_MASK_START) {
-		switch (chr) {
-		case '0'...'9':
+	if (machine->parent.current->keymacro_mask & TECO_KEYMACRO_MASK_START &&
+	    chr <= 0xFF) {
+		if (g_ascii_isdigit(chr))
 			style = SCE_SCITECO_NUMBER;
-			break;
-		case '+':
-		case '-':
-		case '*':
-		case '/':
-		case '#':
-		case '&':
+		else if (strchr("+-*/#&", chr))
 			style = SCE_SCITECO_OPERATOR;
-			break;
-		}
 	}
 
 	/*
@@ -64,10 +58,7 @@ teco_lexer_getstyle(teco_view_t *view, teco_machine_main_t *machine,
 		/*
 		 * Probably a syntax error, so the erroneous symbol
 		 * is highlighted and we reset the parser's state machine.
-		 */
-		style = SCE_SCITECO_INVALID;
-
-		/*
+		 *
 		 * FIXME: Perhaps we should simply reset the state to teco_state_start?
 		 */
 		gsize macro_pc = machine->macro_pc;
@@ -75,9 +66,22 @@ teco_lexer_getstyle(teco_view_t *view, teco_machine_main_t *machine,
 		teco_machine_main_init(machine, NULL, FALSE);
 		machine->mode = TECO_MODE_LEXING;
 		machine->macro_pc = macro_pc;
-	} else if (machine->parent.current->style == SCE_SCITECO_LABEL) {
-		/* don't highlight the leading `!` as SCE_SCITECO_COMMAND */
-		style = SCE_SCITECO_LABEL;
+
+		return SCE_SCITECO_INVALID;
+	}
+
+	/*
+	 * Don't highlight the leading `!` in comments as SCE_SCITECO_COMMAND.
+	 * True comments also begin with `!`, so make sure they are highlighted
+	 * already from the second character.
+	 * This is then extended back by one character in teco_lexer_step().
+	 */
+	switch (machine->parent.current->style) {
+	case SCE_SCITECO_COMMENT:
+	case SCE_SCITECO_LABEL:
+		return machine->parent.current->style;
+	default:
+		break;
 	}
 
 	return style;
@@ -100,7 +104,7 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 		return;
 	}
 
-	gsize old_pc = machine->macro_pc;
+	gssize old_pc = machine->macro_pc;
 
 	teco_style_t style = SCE_SCITECO_DEFAULT;
 
@@ -139,6 +143,13 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 	}
 
 	*cur_col += machine->macro_pc - old_pc;
+
+	/*
+	 * True comments begin with `!*` or `!!`, but only the second character gets
+	 * the correct style by default, so we extend it backwards.
+	 */
+	if (style == SCE_SCITECO_COMMENT)
+		old_pc--;
 
 	teco_view_ssm(view, SCI_STARTSTYLING, start+old_pc, 0);
 	teco_view_ssm(view, SCI_SETSTYLING, machine->macro_pc-old_pc, style);

@@ -1,4 +1,4 @@
-! CMake Lexing !
+!* CMake Lexing *!
 
 @[lexer.test.cmake]{
   :EN*/CMakeLists.txtQ*"S -1 '
@@ -8,7 +8,7 @@
 
 @[lexer.set.cmake]{
   ESSETILEXERcmake
-  ! Commands !
+  !* Commands *!
   0ESSETKEYWORDS
     add_custom_command add_custom_target add_definitions add_dependencies
     add_executable add_library add_subdirectory add_test aux_source_directory build_command
@@ -25,7 +25,7 @@
     site_name source_group string subdir_depends subdirs target_link_libraries try_compile
     try_run use_mangled_mesa utility_source variable_requires vtk_make_instantiator
     vtk_wrap_java vtk_wrap_python vtk_wrap_tcl while write_file
-  ! Special command arguments !
+  !* Special command arguments *!
   1ESSETKEYWORDS
     ABSOLUTE ABSTRACT ADDITIONAL_MAKE_CLEAN_FILES ALL AND APPEND ARGS ASCII
     BEFORE CACHE CACHE_VARIABLES CLEAR COMMAND COMMANDS COMMAND_NAME COMMENT COMPARE
