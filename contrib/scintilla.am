@@ -26,7 +26,7 @@ MAKE_SCINTILLA = $(MAKE) -C @top_builddir@/contrib/scintilla/bin \
                  srcdir=@SCINTERM_PATH@ basedir=@SCINTILLA_PATH@ \
                  scintilla=$(LIBSCINTILLA) \
                  CXXFLAGS='@SCINTILLA_CXXFLAGS@' \
-                 CURSES_FLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @NCURSES_CFLAGS@'
+                 CURSES_FLAGS='@PDCURSES_CFLAGS@ @XCURSES_CFLAGS@ @CURSES_CFLAGS@'
 endif
 
 # Pass toolchain configuration to Scintilla.

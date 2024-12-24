@@ -4,6 +4,10 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
+ * Does not build on the FreeBSD build servers (Poudriere).
+   https://github.com/freebsd/poudriere/issues/1195
+   We probably need a new upstream release.
+ * SunOS/OmniOS: There are groff build errors.
  * Gtk sometimes allows scrolling with the mouse when it shouldn't.
    All mouse events should currently be blocked.
  * PDCurses/WinGUI: There is still some flickering, but it got better
