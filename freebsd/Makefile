@@ -33,6 +33,10 @@ CONFIGURE_OUTSOURCE=	yes
 MAKEFILE=	GNUmakefile
 TEST_TARGET=	check
 
+# SciTECO uses an install-exec-hook to fix up hash-bang lines.
+# This is broken by the default 0555 mode.
+BINMODE=	755
+
 # NOTE: Unlike on Debian, we cannot build a sciteco-common package.
 # FreeBSD does not yet support subpackages.
 # Therefore both flavors will install totally independant
