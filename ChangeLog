@@ -6,6 +6,41 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
+Version 2.3.0
+~~~~~~~~~~~~~
+
+38d1f4c session.tes now supports the Fossil VCS (session.fossil) for setting up
+        buffer sessions per Fossil repository.
+be23c9d Subversion/SVN support in session.tes (session.svn) now requires at least
+        Subversion v1.9.
+96ce8f0,
+caed2e4 Added AX_WITH_CURSES for more robust ncurses checks.
+        Should fix ./configure on Solaris-derived systems (OmniOS, OpenIndiana, ...).
+(!)ef897b4 Introduced true block and EOL comments:
+           !* block comment *! and !! EOL comment
+           You don't necessarily have to update your scripts since labels can still be
+           used as comments.
+e5d1253 Curses: don't install unnecessary PNG icons
+8aa8c05 Curses: fixed inserting null-byte (^@) by pressing Ctrl+@
+c293f72 Fixed crashes while setting special Q-Registers with EU (string-building characters).
+        E.g. fixes @EU*"" and @EU$"...".
+c174f9b Support external Scintilla lexer libraries and Scintillua in particular.
+        SciTECO does not ship with lexer scripts for Scintillua, though.
+        See https://github.com/rhaberkorn/sciteco/wiki/Integrating-Scintillua
+fb0d60c updated Scintilla to v5.5.4: contains a few optimizations
+715d7e1 sped up opening very large UTF-8 files
+cb1cb61 Fixed the initial dot after opening a file, whose syntax highlighting is
+        determined by a hash-bang line.
+        Has been broken since v2.2.0.
+8c2cac3 fixed ^Y after FK...$: take the deleted text into account
+e2313a7 documented the FK...$^SR idiom
+6cd143f,
+a673abe,
+6dcb454,
+7871c54,
+244a54a implemented Scintilla lexer for SciTECO code, i.e. TECO syntax highlighting
+d654d0a fixed some compiler warnings when building with --disable-debug
+
 Version 2.2.0
 ~~~~~~~~~~~~~
 
