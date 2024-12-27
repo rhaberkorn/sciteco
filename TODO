@@ -453,13 +453,11 @@ Features:
    special. Even if we always increased the nest_level, that
    variable does not discern Ifs and Whiles.
  * Possible Nightly Build improvements (and therefore releases):
-   * Build 32-bit Ubuntu packages
    * Push nightly builds into the Ubuntu PPA.
      We should probably create a new PPA sciteco-nightly.
      A new private key has already been registered on Launchpad and
      Github. We just need to integrate with CI.
      See also https://github.com/marketplace/actions/import-gpg
-   * 64-bit Windows builds
    * Mac OS Arm64 builds either separately or via universal binary.
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
