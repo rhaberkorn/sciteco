@@ -170,7 +170,7 @@ jobs:
         git commit -a -m "update ${{ github.sha }}"
         git push -u origin +HEAD:gh-pages
 
-  win32-curses:
+  win64-curses:
     runs-on: windows-2019
 
     defaults:
@@ -267,7 +267,7 @@ jobs:
   # However the Curses version may be linked statically, while Gtk+3 cannot be
   # linked statically on Windows (at least MSYS does not provide
   # static libraries) and would draw in libglib, libintl, libiconv etc. anyway.
-  win32-gtk:
+  win64-gtk:
     runs-on: windows-2019
 
     defaults:
@@ -291,8 +291,8 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel mingw-x86_64-i686-autotools mingw-x86_64-i686-toolchain
-        mingw-x86_64-i686-glib2 mingw-x86_64-i686-gtk3 mingw-x86_64-i686-librsvg
+        base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain
+        mingw-w64-x86_64-glib2 mingw-w64-x86_64-gtk3 mingw-w64-x86_64-librsvg
         groff
 
     - name: Configure Build
