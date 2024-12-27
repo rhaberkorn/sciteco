@@ -85,6 +85,20 @@ ppa : debian-source
 	 dput ppa:robin-haberkorn/sciteco *.changes; \
 	)
 
+# This is for testing FreeBSD port builds with Poudriere.
+# We cannot build binary packages this way and there is little
+# sense in distributing them.
+#
+# NOTE: This assumes that a fitting jail and ports tree has already
+# been set up.
+# We do nothing to sync the ports tree with our mirror of
+# the FreeBSD port's Makefile (freebsd/Makefile) or to supply Poudriere
+# with a recent tarball of SciTECO.
+POUDRIERE_JAIL ?= 141amd64
+poudriere:
+	poudriere testport -j $(POUDRIERE_JAIL) -o editors/sciteco@curses
+	poudriere testport -j $(POUDRIERE_JAIL) -o editors/sciteco@gtk
+
 # Create Windows release.
 # Assumes a correctly installed glib (with pkgconfig script)
 # and static linking of all dependant libraries (no DLLs are
