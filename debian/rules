@@ -41,7 +41,7 @@ build-curses-stamp:
 	                  --with-interface=ncurses \
 	                  --with-scitecodatadir=../share/sciteco
 	dh_auto_build -Bbuild-curses
-	dh_auto_test -Bbuild-curses
+	dh_auto_test -Bbuild-curses --no-parallel
 	touch $@
 
 # NOTE: This does not depend on install-curses-stamp and uses
@@ -57,7 +57,7 @@ build-gtk-stamp:
 # we need an XServer which may be missing on the build server.
 # That's why we use xvfb.
 	xvfb-run -a dh_auto_build -Bbuild-gtk
-	xvfb-run -a dh_auto_test -Bbuild-gtk
+	xvfb-run -a dh_auto_test -Bbuild-gtk --no-parallel
 	touch $@
 
 install:
