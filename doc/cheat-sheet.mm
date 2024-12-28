@@ -31,6 +31,9 @@ A full language description can be found in
 .\" The $ is added to standardize the height of all boxes
 .\" (as it stretches above and below the base line).
 .\" NOTE: This does not work in arguments to .TD!
+.\" NOTE: It would ne nice to round the corners (as in Scintilla/Gtk's
+.\" rendition of character representations), but there are no filled
+.\" rounded polygons in Groff.
 .ds FILLSTR \
 \R!@wd \w'\\$3$'-\w'$'!\
 \h'.1m'\
@@ -102,7 +105,7 @@ They are case-insensitive.
 .      I n
 .    TD
 Some integer, often optional (1 or 0 by default).
-You can write \fC-\fP instead of \fC-1\fP.
+You can write \fC\-\fP instead of \fC\-1\fP.
 .  TR bgc=grey90
 .    TD
 .      I text
@@ -126,7 +129,7 @@ Line Feed, i.e. Enter/Return key
 .  TR bgc=grey90
 .    TD colspan=4
 For instance:
-\fC-C\fP \(== \fC-1C\fP \(== \fCR\fP \(DI
+\fC\-C\fP \(== \fC\-1C\fP \(== \fCR\fP \(DI
 \fCQa\fP \(== \fCQ[A]\fP \(DI
 \fCQ#ab\fP \(== \fCQ[AB]\fP \(DI
 Ctrl+I \(== \*[CTRL ^I] \(== \*[CTRL TAB] \(DI
@@ -155,7 +158,7 @@ Redo (Rubin): First \*[CTRL ^G], then Backspace, \*[CTRL ^W]...
 Exit, but only if no buffer is \(lqdirty\(rq (unsaved)
 .  TRX
 .    TD
-\fC-EX\fP\*($$
+\fC\-EX\fP\*($$
 .    TD
 Exit even if buffer is \(lqdirty\(rq, i.e. discarding all unsaved changes.
 .  TRX
@@ -168,7 +171,7 @@ Exit, saving all \(lqdirty\(rq buffers.
 .TBLX "Files" width='30% 70%'
 .  TRX
 .    TD
-\fCEB\fIfile\fR\*$
+\fCEB\fI\^file\^\fR\*$
 .    TD
 Edit buffer or open new \fIfile\fP (glob pattern).
 Files, that did not exist on disk, will not be created until you save them.
@@ -202,9 +205,9 @@ Select \fIn\fP-th buffer in ring.
 Select next buffer in ring.
 .  TRX
 .    TD
-\fC-%*\*$
+\fC\-%*\*$
 .    TD
-Select pevious buffer in ring.
+Select previous buffer in ring.
 .  TRX
 .    TD
 .      CI EJU*
@@ -218,7 +221,7 @@ Write (save) current buffer under its current name.
 Does not work on the unnamed buffer.
 .  TRX
 .    TD
-\fCEW\fIfile\fR\*$
+\fCEW\fI\^file\^\*$
 .    TD
 Save current buffer under new name \fIfile\fP (Save As).
 .  TRX
@@ -228,12 +231,12 @@ Save current buffer under new name \fIfile\fP (Save As).
 Finish (close) current buffer.
 .  TRX
 .    TD
-.      CI -EF
+.      CI \-EF
 .    TD
 Finish (close) current buffer, discarding all unsaved changes.
 .  TRX
 .    TD
-\fCFG\fIpath\fR\*$
+\fCFG\fI\^path\^\fR\*$
 .    TD
 Go to folder \fIpath\fP, i.e. change working directory.
 .  TRX
@@ -251,7 +254,7 @@ Set single byte ASCII mode.
 .TBLX "Text Insertion" width='30% 70%'
 .  TRX
 .    TD
-\fCI\fItext\*$
+\fCI\fItext\^\*$
 .    TD
 Insert \fItext\fP into buffer.
 .  TRX
@@ -266,11 +269,11 @@ Insert single caret (\fC^\fP).
 Insert \*$ (ASCII 27).
 .  TRX
 .    TD
-\*[CTRL TAB]\fItext\*$
+\*[CTRL TAB]\fI\^text\^\*$
 .    TD
 Insert \fItext\fP with leading tab/indentation.
 See also
-.pdfhref W -D https://github.com/rhaberkorn/sciteco/wiki/Useful-Macros#indent-code-block -A . \fIn\fCM#it\fP
+.pdfhref W -D https://github.com/rhaberkorn/sciteco/wiki/Useful-Macros#indent-code-block -A . \fIn\^\fCM#it\fP
 .ETB
 .
 .TBLX "Text Deletion" width='30% 70%'
@@ -353,7 +356,7 @@ Copy next \fIn\fP lines into Q-Register \fIq\fP.
 Append next \fIn\fP lines to Q-Register \fIq\fP.
 .  TRX
 .    TD
-.      CI "" n X q\|n K
+.      CI "" n @X q
 .    TD
 Cut next \fIn\fP lines into Q-Register \fIq\fP.
 .  TRX
@@ -374,19 +377,19 @@ Copy line into clipboard. See also
 Get (paste) Q-Register \fIq\fP at current position.
 .  TRX
 .    TD
-\fCI\fI...\*[CTRL ^E]\fCQ\fIq
+\fCI\fI...\*[CTRL ^E]\fCQ\fI\^q
 .    TD
 Paste Q-Register \fIq\fP while inserting text.
 .ig END
 .  TRX
 .    TD
-\fCE%\fIq\|file\*$
+\fCE%\fIq\|file\^\*$
 .    TD
 Save Q-Register \fIq\fP into \fIfile\fP.
 .END
 .  TRX
 .    TD
-\fCEQ\fIq\*$
+\fCEQ\fI\^q\^\*$
 .    TD
 Edit Q-Register \fIq\fP as a text buffer.
 .ig END
@@ -475,17 +478,17 @@ to move around with cursor keys!
 .TBLX "External Programs" width='42% 58%'
 .  TRX
 .    TD
-\fCEC\fIcommand\*$
+\fCEC\fI\^command\^\*$
 .    TD
 Insert output of \fIcommand\fP.
 .  TRX
 .    TD
-\fIn\fCEC\fIcommand\*$
+\fIn\fCEC\fI\^command\^\*$
 .    TD
 Filter next \fIn\fP lines through \fIcommand\fP.
 .  TRX
 .    TD
-\fCHEC\fIcommand\*$
+\fCHEC\fI\^command\^\*$
 .    TD
 Filter whole buffer through \fIcommand\fP.
 .  TRX
@@ -498,12 +501,12 @@ Sort next \fIn\fP lines (UNIX).
 .TBLX "Macros" width='42% 58%'
 .  TRX
 .    TD
-\fC@\*[CTRL ^U]\fIq\fP{\fImacro\fP}
+\fC@\*[CTRL ^U]\fI\^q\fP{\fImacro\fP}
 .    TD
 Define \fImacro\fP in Q-Register \fIq\fP.
 .  TRX
 .    TD
-.      CI M q
+.      CI M \^q
 .    TD
 Call macro in Q-Register \fIq\fP.
 .  TRX
@@ -520,20 +523,25 @@ Discard command-line, storing it in \fIq\fP.
 .
 .MC (u;(\nW-0.5c)/3) 0.25c \" 3 columns
 .
-.TBLX "Search & Replace" width='45% 55%'
+.TBLX "Search & Replace" width='47% 53%'
 .  TRX
 .    TD
-\fCS\fItext\*$
+\fCS\fItext\^\*$
 .    TD
 Search for next occurrence of \fItext\fP.
 .  TRX
 .    TD
-\fC-S\fItext\*$
+\fCS\fItext\^\*[CTRL $^S]\fCC
+.    TD
+Search for beginning of \fItext\fP.
+.  TRX
+.    TD
+\fC\-S\fItext\^\*$
 .    TD
 Search for previous occurrence of \fItext\fP.
 .  TRX
 .    TD
-\fIn\fCS\fItext\*$
+\fIn\fCS\fItext\^\*$
 .    TD
 Search for \fIn\fP-th occurrence of \fItext\fP.
 .  TRX
@@ -543,37 +551,37 @@ Search for \fIn\fP-th occurrence of \fItext\fP.
 Repeat last search (pattern from Q-Register \fC_\fP).
 .  TRX
 .    TD
-\fCN\fItext\*$
+\fCN\fItext\^\*$
 .    TD
 Search for next occurrence of \fItext\fP across all buffers.
 .  TRX
 .    TD
-\fCFR\fIfrom\*$\fIto\*$
+\fCFR\fI\^from\^\*$\fI\^to\^\*$
 .    TD
 Find next occurrence of \fIfrom\fP and replace it with \fIto\fP.
 .  TRX
 .    TD
 \fCFR\*($$
 .    TD
-Repeat the last search-replace operation (\fC_\fP and \fC-\fP).
+Repeat the last search-replace operation (\fC_\fP and \fC\-\fP).
 .  TRX
 .    TD
-\fC<FR\fIfrom\*$\fIto\*$\fC;>\fP
+\fC<FR\fI\^from\^\*$\fI\^to\^\*$\fC;>\fP
 .    TD
 Find and replace all occurrences in buffer beginning at current position.
 .  TRX
 .    TD
-\fCFK\fItext\*$
+\fCFK\fItext\^\*$
 .    TD
 Find and kill (delete) up to first occurrence of \fItext\fP.
 .  TRX
 .    TD
-\fCFD\fItext\*$
+\fCFD\fItext\^\*$
 .    TD
 Find and delete first occurrence of \fItext\fP.
 .ETB
 .
-.TBLX "Control Flow" width='45% 55%'
+.TBLX "Control Flow" width='47% 53%'
 .  TRX
 .    TD
 .      CI < commands >
@@ -595,10 +603,10 @@ For instance, to add \fC#\fP in front of the next 10 lines:
 \fC0L10<I#\*$L>\fP
 .ETB
 .
-.TBLX "Help" width='45% 55%'
+.TBLX "Help" width='47% 53%'
 .  TRX
 .    TD
-\fC?\fItopic\*$
+\fC?\fItopic\^\*$
 .    TD
 Search help for \fItopic\fP (may be command).
 .ig END \" not yet supported
@@ -638,17 +646,17 @@ Matches any alphabetic characters.
 Matches any digit.
 .  TRX
 .    TD
-\*[CTRL ^N]\fIclass\fP
+\*[CTRL ^N]\fI\^class\fP
 .    TD
 Matches any character not in \fIclass\fP.
 .  TRX
 .    TD
-\*[CTRL ^E]\fCM\fIpattern\fP
+\*[CTRL ^E]\fCM\fI\^pattern\fP
 .    TD
 Matches many occurrences of \fIpattern\fP.
 .  TRX
 .    TD
-\*[CTRL ^E]\fCG\fIq\fP
+\*[CTRL ^E]\fCG\fI\^q\fP
 .    TD
 Matches any character in Q-Register \fIq\fP.
 .  TRX
@@ -660,13 +668,13 @@ Matches \fIp\*<1\*>\fP or \fIp\*<2\*>\fP.
 .    TD colspan=2
 To remove all trailing whitespace characters, you could type:
 .br
-\fCJ<FR\*[CTRL LF^E]M\*[CTRL ^E][\0,\*[CTRL TAB]]\*[CTRL $LF$];>
+\fCJ<FR\*[CTRL ^E]M\*[CTRL ^E][\0,\*[CTRL TAB]]\*[CTRL LF$LF$];>
 .ETB
 .
 .TBLX "String Building" width='40% 60%'
 .  TRX
 .    TD
-\*[CTRL ^E]\fCQ\fIq
+\*[CTRL ^E]\fCQ\fI\^q
 .    TD
 Expand to string contents of Q-Register \fIq\fP.
 .  TRX
@@ -681,7 +689,7 @@ Expand to integer contents of Q-Register \fIq\fP.
 Expand to character represented by codepoint in Q-Register \fIq\fP.
 .  TRX
 .    TD
-\*[CTRL ^Q]\fIx
+\*[CTRL ^Q]\fI\^x
 .    TD
 Quote (escape) the following character \fIx\fP.
 .  TRX
@@ -742,12 +750,12 @@ Also try Shift+Delete if \fCfnkeys.tes\fP is loaded.
 Assign number \fIn\fP to Q-Register \fIq\fP.
 .  TRX
 .    TD
-.      CI -U q
+.      CI \-U q
 .    TD
 Assign -1 to Q-Register \fIq\fP.
 .  TRX
 .    TD
-.      CI Q q
+.      CI Q \^q
 .    TD
 Query (get) integer from Q-Register \fIq\fP.
 .  TRX
@@ -762,12 +770,12 @@ Add \fIn\fP to Q-Register \fIq\fP and return new value.
 Increase Q-Register \fIq\fP and return new value.
 .  TRX
 .    TD
-.      CI -% q
+.      CI \-% q
 .    TD
 Decrease Q-Register \fIq\fP and return new value.
 .  TRX
 .    TD
-\*[CTRL ^^]\fIx
+\*[CTRL ^^]\fI\^x
 .    TD
 Codepoint of character \fIx\fP.
 .  TRX
@@ -792,7 +800,7 @@ Insert integer \fIn\fP into buffer at current position.
 Add \fIn\fP to number at current position in buffer.
 .  TRX
 .    TD
-\fIn\*[CTRL ^_]
+\fIn\^\*[CTRL ^_]
 .    TD
 Binary negate \fIn\fP \(em negate TECO boolean.
 .  TRX
@@ -807,7 +815,7 @@ These are independent.
 Setting a number does not change the string part!
 .ETB
 .
-.TBLX "Syntax Highlighting (lexers.tes)" width='60% 40%'
+.TBLX "Syntax Highlighting (lexers.tes)" width='61% 39%'
 .  TRX
 .    TD
 .      CI M[lexer.set. name ]
