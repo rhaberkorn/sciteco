@@ -356,8 +356,7 @@ case $INTERFACE in
 	;;
 
 gtk)
-	# gmodule is required by Scintilla.
-	PKG_CHECK_MODULES(LIBGTK, [gtk+-3.0 >= 3.12 gmodule-2.0], [
+	PKG_CHECK_MODULES(LIBGTK, [gtk+-3.0 >= 3.12], [
 		CFLAGS="$CFLAGS $LIBGTK_CFLAGS"
 		CXXFLAGS="$CXXFLAGS $LIBGTK_CFLAGS"
 		LIBS="$LIBS $LIBGTK_LIBS"
