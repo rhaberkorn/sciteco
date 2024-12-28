@@ -1,5 +1,9 @@
 # Screenshots
 
+## v2.3.0
+
+![FreeBSD/Gtk+3, SciTECO syntax highlighting](https://sciteco.sf.net/screenshots/v2.3.0-freebsd-gtk.png "FreeBSD/Gtk+3, SciTECO syntax highlighting")
+
 ## v2.1.0
 
 ![FreeBSD/Gtk+3, Unicode editing and spell checking](https://sciteco.sf.net/screenshots/v2.1.0-freebsd-gtk.png "FreeBSD/Gtk+3, Unicode editing and spell checking")
