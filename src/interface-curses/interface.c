@@ -781,11 +781,11 @@ teco_interface_restore_batch(void)
 	 */
 #ifdef CURSES_TTY
 	if (teco_interface.stdout_orig >= 0) {
-		int fd = dup2(teco_interface.stdout_orig, 1);
+		G_GNUC_UNUSED int fd = dup2(teco_interface.stdout_orig, 1);
 		g_assert(fd == 1);
 	}
 	if (teco_interface.stderr_orig >= 0) {
-		int fd = dup2(teco_interface.stderr_orig, 2);
+		G_GNUC_UNUSED int fd = dup2(teco_interface.stderr_orig, 2);
 		g_assert(fd == 2);
 	}
 #endif

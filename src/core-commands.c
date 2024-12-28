@@ -2767,7 +2767,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		}
 	}
 
-	teco_int_t dot_glyphs;
+	teco_int_t dot_glyphs = 0;
 	if (colon_modified) {
 		sptr_t dot_bytes = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 		dot_glyphs = teco_interface_bytes2glyphs(dot_bytes);
