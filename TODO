@@ -466,14 +466,6 @@ Features:
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
- * sample.teco_ini: Support opening files on certain lines
-   (filename:line).
-   Theoretically, this could also be added to the <EB> syntax,
-   although the colon character is allowed in filenames under Windows.
-   In principe there is little need for that in interactive mode,
-   but it would ease opening filenames copied from compiler errors
-   or grep -n results.
-   Other editors use the +line[,col] syntax (see nano).
  * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions

@@ -91,6 +91,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/xml.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/yaml.tes
 %%DATADIR%%/lib/lexers/woman.tes
+%%DATADIR%%/lib/opener.tes
 %%DATADIR%%/lib/session.tes
 %%DATADIR%%/lib/string.tes
 %%DATADIR%%/lib/women/grosciteco.tes.1.woman

@@ -21,7 +21,7 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .OP "--no-profile"
 .OP "-8|--8bit"
 .RI [ "UI option .\|.\|." ]
-.OP "--"
+.OP "--|-S"
 .RI [ script ]
 .RI [ "argument .\|.\|." ]
 .YS
@@ -86,7 +86,9 @@ In any case the current buffer position (called
 .IR dot )
 is left at the beginning of the buffer.
 Optionally \(lq\-\-\(rq might be used to explicitly separate \*(ST options and
-macro arguments.
+macro arguments, but is never passed down as a macro argument.
+Since it's sometimes useful to pass down \(rq\-\-\(rq to the profile macro,
+you can use \(lq\-S\(rq, which is equivalent to \(lq\-\- \-\-\(rq.
 .
 .LP
 If the munged macro does not request program termination using the
@@ -155,7 +157,14 @@ the first non-option argument.
 The profile will usually set up various Scintilla and \*(ST options,
 configure syntax highlighting,
 define commonly used macros and open files specified as arguments to \*(ST.
-It will usually leave the editor in interactive mode.
+The recommended command-line processor from \(lqopener.tes\(rq allows
+opening files on specific lines or lines and columns
+(\fB+\fIline\fR[\fB,\fIcolumn\fR] \fIfilename\fP or
+\fIfilename\fB:\fIline\fR[\fB:\fIcolumn\fR][\fB:\fR]).
+This special syntax can be inhibited by prefixing the files names with the
+special \(lq\-S\(rq separator.
+.LP
+The profile macro will usually leave the editor in interactive mode.
 Profile execution can be suppressed with the
 .B \-\-no\-profile
 option.
@@ -289,12 +298,6 @@ on Windows.
 On all other platforms (including UNIX/Linux) this variable
 defaults to the standard library installation path at
 .BR "@scitecolibdir@" .
-.TP
-.SCITECO_TOPIC "$SCITECO_SCINTILLUA_LEXERS"
-.B SCITECO_SCINTILLUA_LEXERS
-The Scintillua \(lqlexers/\(rq directory.
-This is passed as the \(lqscintillua.lexers\(rq library property when
-loading a Scintillua lexer via the \fBSCI_SETILEXER\fP Scintilla message.
 .
 .LP
 The \fBHOME\fP, \fBSCITECOCONFIG\fP and \fBSCITECOPATH\fP environment
@@ -321,9 +324,16 @@ environment before initializing Curses, so these variables
 can be modified in the profile macro.
 .
 .LP
+.SCITECO_TOPIC "$GTK_CSD"
 On GTK+, you may turn off the infamous client-side window decorations
 by setting the environment variable \fBGTK_CSD\fP to \(lq0\(rq.
 .
+.LP
+.SCITECO_TOPIC "$SCITECO_SCINTILLUA_LEXERS"
+The \fBSCITECO_SCINTILLUA_LEXERS\fP environment variable specifies
+the Scintillua \(lqlexers/\(rq directory.
+This is passed as the \(lqscintillua.lexers\(rq library property when
+loading a Scintillua lexer via the \fBSCI_SETILEXER\fP Scintilla message.
 .
 .SH SIGNALS
 .

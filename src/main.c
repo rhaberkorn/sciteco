@@ -141,7 +141,7 @@ teco_process_options(gchar ***argv)
 
 	g_autoptr(GError) error = NULL;
 
-	g_autoptr(GOptionContext) options = g_option_context_new("[--] [SCRIPT] [ARGUMENT...]");
+	g_autoptr(GOptionContext) options = g_option_context_new("[--|-S] [SCRIPT] [ARGUMENT...]");
 
 	g_option_context_set_summary(
 		options,
@@ -168,9 +168,17 @@ teco_process_options(gchar ***argv)
 	 * in many situations.
 	 * It is also strictly required to make hash-bang lines like
 	 * #!/usr/bin/sciteco -m
-	 * work.
+	 * work (without additional --).
 	 */
 	g_option_context_set_strict_posix(options, TRUE);
+
+	/*
+	 * The first unknown parameter will be left in argv and
+	 * terminates option parsing (see above).
+	 * This means we can use "-S" as an alternative to "--",
+	 * that is always preserved and passed down to the macro.
+	 */
+	g_option_context_set_ignore_unknown_options(options, TRUE);
 
 	if (!g_option_context_parse_strv(options, argv, &error)) {
 		g_fprintf(stderr, "Option parsing failed: %s\n",
@@ -178,17 +186,30 @@ teco_process_options(gchar ***argv)
 		exit(EXIT_FAILURE);
 	}
 
-	/*
-	 * GOption will NOT remove "--" if followed by an
-	 * option-argument, which may interfer with scripts
-	 * doing their own option handling and interpreting "--".
-	 *
-	 * NOTE: This is still true if we're parsing in GNU-mode
-	 * and "--" is not the first non-option argument as in
-	 * sciteco foo -- -C bar.
-	 */
-	if ((*argv)[0] && !g_strcmp0((*argv)[1], "--"))
+	if ((*argv)[0] && !g_strcmp0((*argv)[1], "-S")) {
+		/* translate -S to --, this is always passed down */
+		(*argv)[1][1] = '-';
+	} else if ((*argv)[0] && !g_strcmp0((*argv)[1], "--")) {
+		/*
+		 * GOption will NOT remove "--" if followed by an
+		 * option-argument, which may interfer with scripts
+		 * doing their own option handling and interpreting "--".
+		 * Otherwise, GOption will always remove "--".
+		 *
+		 * NOTE: This is still true if we're parsing in GNU-mode
+		 * and "--" is not the first non-option argument as in
+		 * sciteco foo -- -C bar.
+		 */
 		g_free(teco_strv_remove(*argv, 1));
+	} else if ((*argv)[0] && (*argv)[1] && *(*argv)[1] == '-') {
+		/*
+		 * GOption does not remove "--" if it is followed by "-",
+		 * so if the first parameter starts with "-", we know it's
+		 * not a known built-in parameter.
+		 */
+		g_fprintf(stderr, "Unknown option \"%s\"\n", (*argv)[1]);
+		exit(EXIT_FAILURE);
+	}
 
 	gchar *mung_filename = NULL;
 

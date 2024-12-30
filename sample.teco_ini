@@ -7,6 +7,7 @@ EMQ[$SCITECOPATH]/color.tes
 !* Load lexer and buffer session libraries *!
 EMQ[$SCITECOPATH]/lexer.tes
 EMQ[$SCITECOPATH]/session.tes
+EMQ[$SCITECOPATH]/opener.tes
 
 !* Automatic lexing and session management using ED hooks *!
 @#ED{
@@ -81,8 +82,5 @@ Z"=
   M[session.load]
 |
   [session.path] !* disables session saving *!
-  [.f
-    <:L;R 0X.f [* EBN.f ]* L>
-  ].f
-  -EF
+  M[opener] -EF
 '

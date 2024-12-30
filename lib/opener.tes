@@ -1,0 +1,37 @@
+!*$
+ * M[opener] -- Open a number of files from the current buffer
+ *
+ * This is usually the unnamed buffer as initialized from the command line.
+ * It supports both the +line[,column] and filename:line[:column] syntaxes.
+ * Since this may make it hard to open files with certain file names, all
+ * filenames after "--" are interpreted verbatim.
+ *!
+@[opener]{
+  <.-Z;
+    !* --/-S stops processing of special arguments *!
+    0A--"= 1A--"= 2A-10"=
+      L <:L;R 0X.f [* EBN.f ]* L> 1;
+    '''
+
+    1U.l 1U.c
+    !* +line[,column] *!
+    0A-+"=
+      C 0A"D \U.l W 0A-,"= C \U.c ' 0A-10"=L' '
+    '
+
+    !* filename:line[:column][:] *!
+    LR -A-:"=R' <-A"DR|1;'> -A-:"=
+      \U.a R <-A"DR|1;'> -A-:"=
+        \U.l Q.aU.c R
+      |
+        Q.aU.l 1U.c
+      '
+    |
+      LR
+    '
+
+    0X.f [*
+      EBN.f Q.c-1,Q.l-1ESFINDCOLUMN:J
+    ]*
+  L>
+}
