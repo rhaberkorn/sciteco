@@ -2,9 +2,12 @@ News
 ====
 
 <span class="nf nf-md-new_box"></span>
-FreeBSD is the first operating system that adds an official [port/package for SciTECO](https://www.freshports.org/editors/sciteco/).
-But you will probably have to wait a few months until you can just `pkg install sciteco-curses`
-if you are following the quarterly branches.
+There is now an [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/sciteco)
+thanks to user Celeste.
 
 <span class="nf nf-md-new_box"></span>
-Join our new [IRC chatroom](https://web.libera.chat/#sciteco): #sciteco at irc.libera.chat
+FreeBSD is the first operating system that adds an official [port/package for SciTECO](https://www.freshports.org/editors/sciteco/).
+But it's still not in the package registry...
+
+<span class="nf nf-md-new_box"></span>
+Join our [IRC chatroom](https://web.libera.chat/#sciteco): #sciteco at irc.libera.chat

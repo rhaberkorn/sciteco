@@ -4,7 +4,6 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * Solaris/OmniOS: There are groff build errors.
  * Gtk sometimes allows scrolling with the mouse when it shouldn't.
    All mouse events should currently be blocked.
  * PDCurses/WinGUI: There is still some flickering, but it got better
@@ -137,7 +136,12 @@ Known Bugs:
    commands for ALL of the Scintilla messages involved.
    Automatically running EF EB...$ in the "save" hook could
    also have unwanted side effects.
+ * Solaris/OmniOS: There are groff build errors.
  * session.vcs does not properly work in MSYS2 environments.
+ * The Windows GTK version no longer works under Wine:
+   "Failed to translate keypress (keycode: 88) for group 0 (00000409) because we could not load the layout."
+   Also, all Windows builds have problems executing ECdir$ (under Wine!).
+   See also https://github.com/fontforge/fontforge/issues/5031#issuecomment-1143098230
  * At least the GTK version with --xembed is prone to unexpected
    crashes. Interestingly, while this does leave orphaned savepoint
    files around, it does not produce a core dump.
@@ -574,6 +578,12 @@ Features:
    syntax highlighted.
    I am not sure however how that could be done without a special
    ED hook.
+ * SciTECO syntax highlighting improvements:
+   * The { } escapes should be styled as SCE_SCITECO_OPERATOR.
+   * There should be two SCE_SCITECO_STRING[12] styles and second
+     string arguments could be styled SCE_SCITECO_STRING2.
+   * Alternatively, string building constructs could be styled with the
+     alternate string style.
  * Instead of defaulting to nothing in the absence of ~/.teco_ini,
    we should load the installed sample.teco_ini, which
    gives a more user-friendly experience.

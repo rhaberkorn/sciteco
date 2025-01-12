@@ -118,6 +118,7 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [FreeBSD port](https://www.freshports.org/editors/sciteco/)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
+* [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/sciteco)
 * [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
   for Windows users.
 * Yocto/OpenEmbedded users should try the
