@@ -241,6 +241,60 @@ teco_file_get_program_path(void)
 
 #endif
 
+#ifdef G_OS_WIN32
+
+/*
+ * Definitions from the DDK's ntifs.h.
+ */
+#define FileCaseSensitiveInformation 71
+
+static gboolean
+teco_file_is_case_sensitive(const gchar *path)
+{
+	g_autofree gunichar2 *path_utf16 = g_utf8_to_utf16(path, -1, NULL, NULL, NULL);
+	HANDLE hnd = CreateFileW(path_utf16, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0, NULL,
+	                         OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (hnd == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	/*
+	 * NOTE: This requires Windows 10, version 1803 or later.
+	 * FIXME: But even then, this is relying on undocumented behavior!
+	 * If unavailable we just assume the platform-default case-insensitivity.
+	 */
+	FILE_CASE_SENSITIVE_INFORMATION info = {0};
+	GetFileInformationByHandleEx(hnd, FileCaseSensitiveInformation, &info, sizeof(info));
+	CloseHandle(hnd);
+	return info.Flags & FILE_CS_FLAG_CASE_SENSITIVE_DIR;
+}
+
+#elif defined(G_OS_UNIX) && defined(_PC_CASE_SENSITIVE)
+
+/*
+ * This is supported at least on Mac OS.
+ *
+ * NOTE: If the selector is not supported, -1 is returned and we also assume case-sensitivity.
+ */
+static inline gboolean
+teco_file_is_case_sensitive(const gchar *path)
+{
+	return pathconf(path, _PC_CASE_SENSITIVE);
+}
+
+#else /* !G_OS_WIN32 && (!G_OS_UNIX || !_PC_CASE_SENSITIVE) */
+
+/*
+ * FIXME: The only way to query this on Linux and FreeBSD would be to
+ * hardcode "case-insensitive" file systems.
+ */
+static inline gboolean
+teco_file_is_case_sensitive(const gchar *path)
+{
+	return TRUE;
+}
+
+#endif
+
 /**
  * Get the datadir.
  *
@@ -334,10 +388,15 @@ teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_
 	gsize dirname_len = teco_file_get_dirname_len(filename_expanded);
 	g_autofree gchar *dirname = g_strndup(filename_expanded, dirname_len);
 	gchar *basename = filename_expanded + dirname_len;
+	gsize basename_len = strlen(basename);
 
 	g_autoptr(GDir) dir = g_dir_open(dirname_len ? dirname : ".", 0, NULL);
 	if (!dir)
 		return FALSE;
+
+	/* Whether the directory has case-sensitive entries */
+	gboolean case_sensitive = teco_file_is_case_sensitive(dirname_len ? dirname : ".");
+	teco_string_diff_t string_diff = case_sensitive ? teco_string_diff : teco_string_casediff;
 
 	/*
 	 * On Windows, both forward and backslash
@@ -356,9 +415,12 @@ teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_
 	guint files_len = 0;
 	gsize prefix_len = 0;
 
-	const gchar *cur_basename;
-	while ((cur_basename = g_dir_read_name(dir))) {
-		if (!g_str_has_prefix(cur_basename, basename))
+	teco_string_t cur_basename;
+	while ((cur_basename.data = (gchar *)g_dir_read_name(dir))) {
+		cur_basename.len = strlen(cur_basename.data);
+
+		if (string_diff(&cur_basename, basename, basename_len) != basename_len)
+			/* basename is not a prefix of cur_basename */
 			continue;
 
 		/*
@@ -366,8 +428,8 @@ teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_
 		 * Reserving one byte at the end of the filename ensures we can easily
 		 * append the directory separator without reallocations.
 		 */
-		gchar *cur_filename = g_malloc(strlen(dirname)+strlen(cur_basename)+2);
-		strcat(strcpy(cur_filename, dirname), cur_basename);
+		gchar *cur_filename = g_malloc(strlen(dirname)+cur_basename.len+2);
+		strcat(strcpy(cur_filename, dirname), cur_basename.data);
 
 		/*
 		 * NOTE: This avoids g_file_test() for G_FILE_TEST_EXISTS
@@ -391,8 +453,8 @@ teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_
 			other_file.data = (gchar *)g_slist_next(files)->data + filename_len;
 			other_file.len = strlen(other_file.data);
 
-			gsize len = teco_string_diff(&other_file, cur_filename + filename_len,
-			                             strlen(cur_filename) - filename_len);
+			gsize len = string_diff(&other_file, cur_filename + filename_len,
+			                        strlen(cur_filename) - filename_len);
 			if (len < prefix_len)
 				prefix_len = len;
 		} else {
