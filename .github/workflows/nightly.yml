@@ -110,9 +110,12 @@ jobs:
         #PKG_CONFIG_PATH: /usr/local/opt/ncurses/lib/pkgconfig
       # NOTE: This will not result in a fully statically-linked binary,
       # but the more we get rid off, the better.
+      # NOTE: Making the binary relocatable means it can be installed into non-root directories
+      # with `installer -pkg -target`.
       run: |
         autoreconf -i
-        ./configure --with-interface=ncurses --enable-static-executables --enable-html-manual
+        ./configure --with-interface=ncurses --enable-static-executables --enable-html-manual \
+                    --with-scitecodatadir=../share/sciteco
 
     - name: make
       run: make -j 2
