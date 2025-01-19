@@ -470,7 +470,6 @@ Features:
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
- * <:EF> for saving and closing a buffer, similar to <:EX>.
  * Bash completions.
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions
    when exceeding the memory limit.

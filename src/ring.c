@@ -577,3 +577,61 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * characters are enabled by default.
  */
 TECO_DEFINE_STATE_EXPECTFILE(teco_state_save_file);
+
+/*$ EF close
+ * [bool]EF -- Remove buffer from ring
+ * -EF
+ * :EF
+ *
+ * Removes buffer from buffer ring, effectively
+ * closing it.
+ * If the buffer is dirty (modified), EF will yield
+ * an error.
+ * <bool> may be a specified to enforce closing dirty
+ * buffers.
+ * If it is a Failure condition boolean (negative),
+ * the buffer will be closed unconditionally.
+ * If <bool> is absent, the sign prefix (1 or -1) will
+ * be implied, so \(lq-EF\(rq will always close the buffer.
+ *
+ * When colon-modified, <bool> is ignored and \fBEF\fP
+ * will save the buffer before closing.
+ * The file is always written, unlike \(lq:EX\(rq which
+ * saves only dirty buffers.
+ * This can fail of course, e.g. when called on the unnamed
+ * buffer.
+ *
+ * It is noteworthy that EF will be executed immediately in
+ * interactive mode but can be rubbed out at a later time
+ * to reopen the file.
+ * Closed files are kept in memory until the command line
+ * is terminated.
+ */
+void
+teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
+{
+	if (teco_qreg_current) {
+		const teco_string_t *name = &teco_qreg_current->head.name;
+		g_autofree gchar *name_printable = teco_string_echo(name->data, name->len);
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Q-Register \"%s\" currently edited", name_printable);
+		return;
+	}
+
+	if (teco_machine_main_eval_colon(ctx) > 0) {
+		if (!teco_buffer_save(teco_ring_current, NULL, error))
+			return;
+	} else {
+		teco_int_t v;
+		if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
+			return;
+		if (teco_is_failure(v) && teco_ring_current->dirty) {
+			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+			            "Buffer \"%s\" is dirty",
+				    teco_ring_current->filename ? : "(Unnamed)");
+			return;
+		}
+	}
+
+	teco_ring_close(error);
+}
