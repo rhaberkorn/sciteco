@@ -21,6 +21,8 @@ script:
   - sed -i -e 's@gsciteco@sciteco@g' sciteco-curses.desktop
   - echo 'Terminal=true' >>sciteco-curses.desktop
   - wget -O sciteco.png -c "https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco-256.png"
+  - mkdir -p ./usr/share/metainfo/
+  - wget -O ./usr/share/metainfo/sciteco-curses.appdata.xml -c "https://raw.githubusercontent.com/rhaberkorn/sciteco/master/AppImage/sciteco-curses.appdata.xml"
   # Thinning: These documentation files are pointless.
   # SciTECO comes with its own online help system.
   - rm -rf ./usr/share/doc ./usr/share/man

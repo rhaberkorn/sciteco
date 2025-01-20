@@ -23,6 +23,8 @@ script:
   - mv ./usr/share/applications/sciteco.desktop ./sciteco-gtk.desktop
   - cp ./usr/share/icons/hicolor/256x256/apps/sciteco.png ./sciteco.png
   - rm -rf ./usr/share/icons
+  - mkdir -p ./usr/share/metainfo/
+  - wget -O ./usr/share/metainfo/sciteco-gtk.appdata.xml -c "https://raw.githubusercontent.com/rhaberkorn/sciteco/master/AppImage/sciteco-gtk.appdata.xml"
   # Thinning: These documentation files are pointless.
   # SciTECO comes with its own online help system.
   - rm -rf ./usr/share/doc ./usr/share/man

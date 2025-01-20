@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>sciteco-gtk</id>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0+</project_license>
+	<name>SciTECO</name>
+	<summary>Scintilla-based Text Editor and Corrector (GTK 3 UI)</summary>
+	<description><p>
+		SciTECO is an interactive TECO dialect, similar to Video TECO.
+		It also adds features from classic Standard TECO-11,
+		and incorporates many unique new ideas.
+		It is geared towards UNIX-like operating systems but also natively
+		supports Microsoft Windows NT.
+	</p><p>
+		This app contains the GTK+ 3 (graphical) version of SciTECO.
+	</p></description>
+	<launchable type="desktop-id">sciteco-gtk.desktop</launchable>
+	<url type="homepage">https://rhaberkorn.github.io/sciteco/</url>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://sciteco.sf.net/screenshots/v2.3.0-freebsd-gtk.png</image>
+		</screenshot>
+	</screenshots>
+	<provides>
+		<id>sciteco-gtk.desktop</id>
+	</provides>
+</component>
