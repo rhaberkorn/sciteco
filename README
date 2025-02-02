@@ -57,6 +57,7 @@ Features
   by the standard library `fnkeys.tes`.
   In fact, all keys with printable representation and control keys can be remapped using
   key macros - and they can be context-sensitive as well!
+* Scriptable mouse support via the key macro mechanism (see also `fnkeys.tes`)
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters...
 * Interactivity: Immediate searching (similar to search-as-you-type) and

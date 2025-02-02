@@ -141,6 +141,28 @@ void teco_interface_popup_clear(void);
 /** @pure */
 gboolean teco_interface_is_interrupted(void);
 
+typedef struct {
+	enum {
+		TECO_MOUSE_PRESSED = 1,
+		TECO_MOUSE_RELEASED,
+		TECO_MOUSE_SCROLLUP,
+		TECO_MOUSE_SCROLLDOWN
+	} type;
+
+	guint x;	/*< X-coordinate relative to view */
+	guint y;	/*< Y-coordinate relative to view */
+
+	gint button;	/*< number of pressed mouse button or -1 */
+
+	enum {
+		TECO_MOUSE_SHIFT	= (1 << 0),
+		TECO_MOUSE_CTRL		= (1 << 1),
+		TECO_MOUSE_ALT		= (1 << 2)
+	} mods;
+} teco_mouse_t;
+
+extern teco_mouse_t teco_mouse;
+
 /** @pure main entry point */
 gboolean teco_interface_event_loop(GError **error);
 

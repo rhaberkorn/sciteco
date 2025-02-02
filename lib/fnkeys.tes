@@ -124,3 +124,71 @@
 1U[F9]
 @[F10]{(ESZOOMIN{-12D}}
 1U[F10]
+
+!*
+ * Mouse integration.
+ * Might be disabled unless bit 7 (64) is enabled in ED.
+ *
+ * Left click: Edit command line to jump to position.
+ * Ctrl+left click: Jump to beginning of line.
+ * Right click: Insert position or position range (when dragging).
+ * Double right click: insert range for word under cursor
+ * Ctrl+right click: Insertion beginning of line
+ * Scroll wheel: scrolls (faster with shift)
+ * Ctrl+scroll wheel: zoom (GTK-only)
+ *!
+@[MOUSE]{
+  -2EJESCHARPOSITIONFROMPOINTU.p
+  -4EJ&2"N Q.pESLINEFROMPOSITIONESPOSITIONFROMLINEU.p '
+  1,Q.pESWORDSTARTPOSITION:U.#ws
+  1,Q.pESWORDENDPOSITION:U.#we
+  Q.p:U.p
+
+  -EJOpressed,released,scrollup,scrolldown
+  !pressed!
+    !* left click *!
+    -3EJ-1"= Q.p-.M#c !* not reached *! '
+    { -9D
+      !* right click *!
+      -3EJ-3"= Q.p"U I(\.p ' '
+      !* middle click *!
+      -3EJ-2"= :Q~"U I(g~) ' '
+    }
+  !released!
+    { -9D
+      -3EJ-3"= Q.p"U
+        !* right click *!
+        <-A-("=1;'R> \U.o
+        Q.o-Q.p"=
+          .-1"> -2A-)"=
+            R <-A-("=1;'R>
+            \-Q.p"=
+              !* double right-click *!
+              .,ZD I\.#ws,\.#we
+            '
+          ' '
+          ZJ I)
+        |
+          Q.o-Q.p"> Q.o,Q.p U.oU.p '
+          !* right drag *!
+          .,ZD I\.o,\.p)
+        '
+      ' '
+    }
+  !scrollup!
+    -4EJ&2"=
+      -4EJ&1"=-1|-2',0ESLINESCROLL
+    |
+      ESZOOMIN
+    '
+    {-9D}
+  !scrolldown!
+    -4EJ&2"=
+      -4EJ&1"=1|2',0ESLINESCROLL
+    |
+      ESZOOMOUT
+    '
+    {-9D}
+}
+@[MOUSE]{(M[MOUSE]}
+1U[MOUSE]

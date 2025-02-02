@@ -2221,37 +2221,50 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_escape,
  * Without any argument ED returns the current flags.
  *
  * Currently, the following flags are used by \*(ST:
- *   - 4: If enabled, prefer raw single-byte ANSI encoding
- *     for all new buffers and registers.
- *     This does not change the encoding of any existing
- *     buffers and any initialized default register when set via
- *     \fBED\fP, so you might want to launch \*(ST with \fB--8bit\fP.
- *   - 8: Enable/disable automatic folding of case-insensitive
- *     command characters during interactive key translation.
- *     The case of letter keys is inverted, so one or two
- *     character commands will typically be inserted upper-case,
- *     but you can still press Shift to insert lower-case letters.
- *     Case-insensitive Q-Register specifications are not
- *     case folded.
- *     This is thought to improve the readability of the command
- *     line macro.
- *   - 16: Enable/disable automatic translation of end of
- *     line sequences to and from line feed.
- *     Disabling this flag allows 8-bit clean loading and saving
- *     of files.
- *   - 32: Enable/Disable buffer editing hooks
- *     (via execution of macro in global Q-Register \(lqED\(rq)
- *   - 128: Enable/Disable enforcement of UNIX98
- *     \(lq/bin/sh\(rq emulation for operating system command
- *     executions
- *   - 256: Enable/Disable OSC-52 clipboard support.
- *     Must only be enabled if the terminal emulator is configured
- *     properly.
- *   - 512: Enable/Disable Unicode icons in the Curses UI.
- *     This requires a capable font, like the ones provided
- *     by the \(lqNerd Fonts\(rq project.
- *     Changes to this flag in interactive mode may not become
- *     effective immediately.
+ * .IP 4: 5
+ * If enabled, prefer raw single-byte ANSI encoding
+ * for all new buffers and registers.
+ * This does not change the encoding of any existing
+ * buffers and any initialized default register when set via
+ * \fBED\fP, so you might want to launch \*(ST with \fB--8bit\fP.
+ * .IP 8:
+ * Enable/disable automatic folding of case-insensitive
+ * command characters during interactive key translation.
+ * The case of letter keys is inverted, so one or two
+ * character commands will typically be inserted upper-case,
+ * but you can still press Shift to insert lower-case letters.
+ * Case-insensitive Q-Register specifications are not
+ * case folded.
+ * This is thought to improve the readability of the command
+ * line macro.
+ * .IP 16:
+ * Enable/disable automatic translation of end of
+ * line sequences to and from line feed.
+ * Disabling this flag allows 8-bit clean loading and saving
+ * of files.
+ * .IP 32:
+ * Enable/Disable buffer editing hooks
+ * (via execution of macro in global Q-Register \(lqED\(rq)
+ * .IP 64:
+ * .SCITECO_TOPIC mouse
+ * Enable/Disable processing and delivery of mouse events in
+ * the Curses UI.
+ * If enabled, the terminal emulator's default mouse behavior
+ * may be inhibited.
+ * .IP 128:
+ * Enable/Disable enforcement of UNIX98
+ * \(lq/bin/sh\(rq emulation for operating system command
+ * executions
+ * .IP 256:
+ * Enable/Disable OSC-52 clipboard support.
+ * Must only be enabled if the terminal emulator is configured
+ * properly.
+ * .IP 512:
+ * Enable/Disable Unicode icons in the Curses UI.
+ * This requires a capable font, like the ones provided
+ * by the \(lqNerd Fonts\(rq project.
+ * Changes to this flag in interactive mode may not become
+ * effective immediately.
  *
  * The features controlled thus are discribed in other sections
  * of this manual.
@@ -2277,9 +2290,10 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
 
 /*$ EJ properties
  * [key]EJ -> value -- Get and set system properties
- * -EJ -> value
  * value,keyEJ
  * rgb,color,3EJ
+ * -EJ -> event
+ * -2EJ -> y, x
  *
  * This command may be used to get and set system
  * properties.
@@ -2293,16 +2307,16 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * write-only or read-only.
  *
  * The following property keys are defined:
- * .IP 0 4
+ * .IP 0: 4
  * The current user interface: 1 for Curses, 2 for GTK
  * (\fBread-only\fP)
- * .IP 1
+ * .IP 1:
  * The current numbfer of buffers: Also the numeric id
  * of the last buffer in the ring. This is implied if
  * no argument is given, so \(lqEJ\(rq returns the number
  * of buffers in the ring.
  * (\fBread-only\fP)
- * .IP 2
+ * .IP 2:
  * The current memory limit in bytes.
  * This limit helps to prevent dangerous out-of-memory
  * conditions (e.g. resulting from infinite loops) by
@@ -2328,7 +2342,7 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * this happens you may have to clear your command-line
  * first.
  * Memory limiting is enabled by default.
- * .IP 3
+ * .IP 3:
  * This \fBwrite-only\fP property allows redefining the
  * first 16 entries of the terminal color palette \(em a
  * feature required by some
@@ -2369,17 +2383,60 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * on exit the author is aware of is \fBxterm\fP(1) and
  * the Linux console driver.
  * You have been warned. Good luck.
- * .IP 4
+ * .IP 4:
  * The column after the last horizontal movement.
  * This is only used by \fBfnkeys.tes\fP and is similar to the Scintilla-internal
  * setting \fBSCI_CHOOSECARETX\fP.
  * Unless most other settings, this is on purpose not restored on rubout,
  * so it "survives" command line replacements.
+ * .
+ * .IP -1:
+ * Type of the last mouse event (\fBread-only\fP).
+ * One of the following values will be returned:
+ * .RS
+ * .  IP 1: 4
+ * Some button has been pressed
+ * .  IP 2:
+ * Some button has been released
+ * .  IP 3:
+ * Scroll up
+ * .  IP 4:
+ * Scroll down
+ * .RE
+ * .IP -2:
+ * Coordinates of the mouse pointer relative to the Scintilla view
+ * at the time of the last mouse event.
+ * This is in pixels or cells depending on the UI.
+ * First the Y coordinate is pushed, followed by the X coordinate,
+ * allowing you to pass them on directly to the \fBSCI_POSITIONFROMPOINT\fP
+ * and similar Scintilla messages using the \fBES\fP command.
+ * (\fBread-only\fP)
+ * .IP -3:
+ * Number of the mouse button involved in the last mouse event, beginning with 1.
+ * Can be -1 if the button cannot be determined or is irrelevant.
+ * (\fBread-only\fP)
+ * .IP -4:
+ * Bit mask describing the key modifiers at the time of the last
+ * mouse event (\fBread-only\fP).
+ * Currently, the following flags are used:
+ * .RS
+ * .  IP 1: 4
+ * Shift key
+ * .  IP 2:
+ * Control key (CTRL)
+ * .  IP 4:
+ * Alt key
+ * .RE
  */
 static void
 teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 {
 	enum {
+		EJ_MOUSE_MODS = -4,
+		EJ_MOUSE_BUTTON,
+		EJ_MOUSE_COORD,
+		EJ_MOUSE_TYPE,
+
 		EJ_USER_INTERFACE = 0,
 		EJ_BUFFERS,
 		EJ_MEMORY_LIMIT,
@@ -2442,6 +2499,21 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 	 * Get property
 	 */
 	switch (property) {
+	case EJ_MOUSE_TYPE:
+		teco_expressions_push(teco_mouse.type);
+		break;
+	case EJ_MOUSE_COORD:
+		/* can be passed down to @ES/POSITIONFROMPOINT// */
+		teco_expressions_push(teco_mouse.y);
+		teco_expressions_push(teco_mouse.x);
+		break;
+	case EJ_MOUSE_BUTTON:
+		teco_expressions_push(teco_mouse.button);
+		break;
+	case EJ_MOUSE_MODS:
+		teco_expressions_push(teco_mouse.mods);
+		break;
+
 	case EJ_USER_INTERFACE:
 		/*
 		 * FIXME: Replace INTERFACE_* macros with
