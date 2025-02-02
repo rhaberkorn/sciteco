@@ -89,7 +89,7 @@ enum {
 	TECO_ED_AUTOCASEFOLD	= (1 << 3),
 	TECO_ED_AUTOEOL		= (1 << 4),
 	TECO_ED_HOOKS		= (1 << 5),
-	//TECO_ED_MOUSEKEY	= (1 << 6),
+	TECO_ED_MOUSEKEY	= (1 << 6),
 	TECO_ED_SHELLEMU	= (1 << 7),
 	TECO_ED_OSC52		= (1 << 8),
 	TECO_ED_ICONS		= (1 << 9)

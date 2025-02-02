@@ -53,6 +53,7 @@
  * Some macros in term.h interfere with our code.
  */
 #undef lines
+#undef buttons
 #endif
 
 #include <Scintilla.h>
@@ -685,6 +686,15 @@ teco_interface_init_interactive(GError **error)
 #ifdef CURSES_TTY
 	if (!g_getenv("ESCDELAY"))
 		set_escdelay(25);
+#endif
+
+	/*
+	 * Disables click-detection.
+	 * If we'd want to discern PRESSED and CLICKED events,
+	 * we'd have to emulate the same feature on GTK.
+	 */
+#if NCURSES_MOUSE_VERSION >= 2
+	mouseinterval(0);
 #endif
 
 	/*
@@ -1584,9 +1594,92 @@ teco_interface_refresh(void)
 	doupdate();
 }
 
+#if NCURSES_MOUSE_VERSION >= 2
+
+#define BUTTON_NUM(X) \
+	(BUTTON##X##_PRESSED | BUTTON##X##_RELEASED | \
+	 BUTTON##X##_CLICKED | BUTTON##X##_DOUBLE_CLICKED | BUTTON##X##_TRIPLE_CLICKED)
+#define BUTTON_EVENT(X) \
+	(BUTTON1_##X | BUTTON2_##X | BUTTON3_##X | BUTTON4_##X | BUTTON5_##X)
+
+static gboolean
+teco_interface_getmouse(void)
+{
+	MEVENT event;
+	WINDOW *current = teco_view_get_window(teco_interface_current_view);
+
+	/*
+	 * Return mouse coordinates relative to the view.
+	 * They will be in characters, but that's what SCI_POSITIONFROMPOINT
+	 * expects on Scinterm anyway.
+	 */
+	if (getmouse(&event) != OK ||
+	    !wmouse_trafo(current, &event.y, &event.x, FALSE))
+		/* no event inside of current view */
+		return FALSE;
+
+	/*
+	 * NOTE: There will only be one of the button bits
+	 * set in bstate, so we don't loose information translating
+	 * them to enums.
+	 *
+	 * At least on ncurses, we don't always get a RELEASED event.
+	 * It instead sends only REPORT_MOUSE_POSITION,
+	 * so make sure not to overwrite teco_mouse.button in this case.
+	 */
+	if (event.bstate & BUTTON_NUM(4))
+		/* scroll up - there will be no RELEASED event */
+		teco_mouse.type = TECO_MOUSE_SCROLLUP;
+	else if (event.bstate & BUTTON_NUM(5))
+		/* scroll down - there will be no RELEASED event */
+		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
+	else if (event.bstate & BUTTON_EVENT(RELEASED))
+		teco_mouse.type = TECO_MOUSE_RELEASED;
+	else if (event.bstate & BUTTON_EVENT(PRESSED))
+		teco_mouse.type = TECO_MOUSE_PRESSED;
+	else
+		/* can also be REPORT_MOUSE_POSITION */
+		teco_mouse.type = TECO_MOUSE_RELEASED;
+
+	teco_mouse.x = event.x;
+	teco_mouse.y = event.y;
+
+	if (event.bstate & BUTTON_NUM(1))
+		teco_mouse.button = 1;
+	else if (event.bstate & BUTTON_NUM(2))
+		teco_mouse.button = 2;
+	else if (event.bstate & BUTTON_NUM(3))
+		teco_mouse.button = 3;
+	else if (!(event.bstate & REPORT_MOUSE_POSITION))
+		teco_mouse.button = -1;
+
+	teco_mouse.mods = 0;
+	if (event.bstate & BUTTON_SHIFT)
+		teco_mouse.mods |= TECO_MOUSE_SHIFT;
+	if (event.bstate & BUTTON_CTRL)
+		teco_mouse.mods |= TECO_MOUSE_CTRL;
+	if (event.bstate & BUTTON_ALT)
+		teco_mouse.mods |= TECO_MOUSE_ALT;
+
+	return TRUE;
+}
+
+#endif /* NCURSES_MOUSE_VERSION >= 2 */
+
 static gint
 teco_interface_blocking_getch(void)
 {
+#if NCURSES_MOUSE_VERSION >= 2
+	/*
+	 * FIXME: REPORT_MOUSE_POSITION is necessary at least on
+	 * ncurses, so that BUTTONX_RELEASED events are reported.
+	 * It does NOT report every cursor movement, though.
+	 * What does PDCurses do?
+	 */
+	mousemask(teco_ed & TECO_ED_MOUSEKEY
+			? ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION : 0, NULL);
+#endif
+
 	/* no special <CTRL/C> handling */
 	raw();
 	nodelay(teco_interface.input_pad, FALSE);
@@ -1696,6 +1789,15 @@ teco_interface_event_loop_iter(void)
 	FN(CLOSE);
 #undef FNS
 #undef FN
+
+#if NCURSES_MOUSE_VERSION >= 2
+	case KEY_MOUSE:
+		/* ANY of the mouse events */
+		if (teco_interface_getmouse() &&
+		    !teco_cmdline_keymacro("MOUSE", -1, error))
+			return;
+		break;
+#endif
 
 	/*
 	 * Control keys and keys with printable representation

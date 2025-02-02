@@ -68,8 +68,8 @@ static void teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str,
 static void teco_interface_size_allocate_cb(GtkWidget *widget,
                                             GdkRectangle *allocation,
                                             gpointer user_data);
-static gboolean teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event,
-                                              gpointer user_data);
+static gboolean teco_interface_input_cb(GtkWidget *widget, GdkEvent *event,
+                                        gpointer user_data);
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
                                                 gpointer user_data);
 static gboolean teco_interface_sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
@@ -133,16 +133,12 @@ teco_view_new(void)
 	 * This disables mouse and key events on this view.
 	 * For some strange reason, masking events on
 	 * the event box does NOT work.
-	 *
-	 * NOTE: Scroll events are still allowed - scrolling
-	 * is currently not under direct control of SciTECO
-	 * (i.e. it is OK the side effects of scrolling are not
-	 * tracked).
 	 */
 	gtk_widget_set_can_focus(GTK_WIDGET(sci), FALSE);
 	gint events = gtk_widget_get_events(GTK_WIDGET(sci));
-	events &= ~(GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK);
-	events &= ~(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
+	events &= ~(GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+	            GDK_SCROLL_MASK |
+	            GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
 	gtk_widget_set_events(GTK_WIDGET(sci), events);
 
 	g_signal_connect(sci, SCINTILLA_NOTIFY,
@@ -240,7 +236,7 @@ teco_interface_init(void)
 			 G_CALLBACK(teco_interface_window_delete_cb), NULL);
 
 	g_signal_connect(teco_interface.window, "key-press-event",
-			 G_CALLBACK(teco_interface_key_pressed_cb), NULL);
+			 G_CALLBACK(teco_interface_input_cb), NULL);
 
 	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
@@ -315,6 +311,18 @@ teco_interface_init(void)
 
 	g_signal_connect(teco_interface.event_box_widget, "size-allocate",
 			 G_CALLBACK(teco_interface_size_allocate_cb), NULL);
+
+	gint events = gtk_widget_get_events(teco_interface.event_box_widget);
+	events |= GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+	          GDK_SCROLL_MASK;
+	gtk_widget_set_events(teco_interface.event_box_widget, events);
+
+	g_signal_connect(teco_interface.event_box_widget, "button-press-event",
+			 G_CALLBACK(teco_interface_input_cb), NULL);
+	g_signal_connect(teco_interface.event_box_widget, "button-release-event",
+			 G_CALLBACK(teco_interface_input_cb), NULL);
+	g_signal_connect(teco_interface.event_box_widget, "scroll-event",
+			 G_CALLBACK(teco_interface_input_cb), NULL);
 
 	teco_interface.message_bar_widget = gtk_info_bar_new();
 	gtk_widget_set_name(teco_interface.message_bar_widget, "sciteco-message-bar");
@@ -977,7 +985,7 @@ teco_interface_get_ansi_key(GdkEventKey *event)
 static gboolean
 teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 {
-	const teco_view_t *last_view = teco_interface_current_view;
+	g_assert(event->type == GDK_KEY_PRESS);
 
 	switch (event->keyval) {
 	case GDK_KEY_Escape:
@@ -1105,8 +1113,75 @@ teco_interface_handle_key_press(GdkEventKey *event, GError **error)
 		gtk_im_context_filter_keypress(teco_interface.input_method, event);
 	}
 
-	teco_interface_refresh(teco_interface_current_view != last_view);
 	return TRUE;
+}
+
+static gboolean
+teco_interface_handle_mouse_button(GdkEventButton *event, GError **error)
+{
+	switch (event->type) {
+	case GDK_BUTTON_PRESS:
+		teco_mouse.type = TECO_MOUSE_PRESSED;
+		break;
+	case GDK_BUTTON_RELEASE:
+	default:
+		teco_mouse.type = TECO_MOUSE_RELEASED;
+		break;
+	}
+
+	teco_mouse.x = event->x;
+	teco_mouse.y = event->y;
+	teco_mouse.button = event->button;
+
+	teco_mouse.mods = 0;
+	if (event->state & GDK_SHIFT_MASK)
+		teco_mouse.mods |= TECO_MOUSE_SHIFT;
+	if (event->state & GDK_CONTROL_MASK)
+		teco_mouse.mods |= TECO_MOUSE_CTRL;
+	/*
+	 * NOTE: GTK returns MOD1 *without* SHIFT for ALT.
+	 */
+	if ((event->state & (GDK_MOD1_MASK | GDK_SHIFT_MASK)) == GDK_MOD1_MASK)
+		teco_mouse.mods |= TECO_MOUSE_ALT;
+
+	return teco_cmdline_keymacro("MOUSE", -1, error);
+}
+
+static gboolean
+teco_interface_handle_scroll(GdkEventScroll *event, GError **error)
+{
+	g_assert(event->type == GDK_SCROLL);
+
+	/*
+	 * FIXME: Do we have to support GDK_SCROLL_SMOOTH?
+	 */
+	switch (event->direction) {
+	case GDK_SCROLL_UP:
+		teco_mouse.type = TECO_MOUSE_SCROLLUP;
+		break;
+	case GDK_SCROLL_DOWN:
+		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
+		break;
+	default:
+		return TRUE;
+	}
+
+	teco_mouse.x = event->x;
+	teco_mouse.y = event->y;
+	teco_mouse.button = -1;
+
+	teco_mouse.mods = 0;
+	if (event->state & GDK_SHIFT_MASK)
+		teco_mouse.mods |= TECO_MOUSE_SHIFT;
+	if (event->state & GDK_CONTROL_MASK)
+		teco_mouse.mods |= TECO_MOUSE_CTRL;
+	/*
+	 * NOTE: GTK returns MOD1 *without* SHIFT for ALT.
+	 */
+	if ((event->state & (GDK_MOD1_MASK | GDK_SHIFT_MASK)) == GDK_MOD1_MASK)
+		teco_mouse.mods |= TECO_MOUSE_ALT;
+
+	return teco_cmdline_keymacro("MOUSE", -1, error);
 }
 
 gboolean
@@ -1274,15 +1349,16 @@ teco_interface_size_allocate_cb(GtkWidget *widget,
 }
 
 static gboolean
-teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
 	static gboolean recursed = FALSE;
 	g_autoptr(GError) error = NULL;
 
 #ifdef DEBUG
-	g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
-		 event->string, *event->string,
-		 event->state & GDK_SHIFT_MASK, event->state & GDK_CONTROL_MASK);
+	if (event->type == GDK_KEY_PRESS)
+		g_printf("KEY \"%s\" (%d) SHIFT=%d CNTRL=%d\n",
+			 event->key.string, *event->key.string,
+			 event->key.state & GDK_SHIFT_MASK, event->key.state & GDK_CONTROL_MASK);
 #endif
 
 	if (recursed) {
@@ -1295,8 +1371,9 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		 * during execution, but the current implementation is
 		 * probably easier.
 		 */
-		if (event->state & GDK_CONTROL_MASK &&
-		    gdk_keyval_to_upper(event->keyval) == GDK_KEY_C)
+		if (event->type == GDK_KEY_PRESS &&
+		    event->key.state & GDK_CONTROL_MASK &&
+		    gdk_keyval_to_upper(event->key.keyval) == GDK_KEY_C)
 			/*
 			 * Handle asynchronous interruptions if CTRL+C is pressed.
 			 * If the execution thread is currently blocking,
@@ -1305,7 +1382,7 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 			teco_interrupted = TRUE;
 		else
 			g_queue_push_tail(teco_interface.event_queue,
-			                  gdk_event_copy((GdkEvent *)event));
+			                  gdk_event_copy(event));
 
 		return TRUE;
 	}
@@ -1314,7 +1391,7 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 
 	teco_memory_start_limiting();
 
-	g_queue_push_tail(teco_interface.event_queue, gdk_event_copy((GdkEvent *)event));
+	g_queue_push_tail(teco_interface.event_queue, gdk_event_copy(event));
 
 	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
 
@@ -1333,11 +1410,28 @@ teco_interface_key_pressed_cb(GtkWidget *widget, GdkEventKey *event, gpointer us
 		 * the Curses UI.
 		 */
 		gdk_window_freeze_updates(top_window);
+		const teco_view_t *last_view = teco_interface_current_view;
 
 		teco_interrupted = FALSE;
-		teco_interface_handle_key_press(&event->key, &error);
+		switch (event->type) {
+		case GDK_KEY_PRESS:
+			teco_interface_handle_key_press(&event->key, &error);
+			break;
+		case GDK_BUTTON_PRESS:
+		case GDK_2BUTTON_PRESS:
+		case GDK_3BUTTON_PRESS:
+		case GDK_BUTTON_RELEASE:
+			teco_interface_handle_mouse_button(&event->button, &error);
+			break;
+		case GDK_SCROLL:
+			teco_interface_handle_scroll(&event->scroll, &error);
+			break;
+		default:
+			g_assert_not_reached();
+		}
 		teco_interrupted = FALSE;
 
+		teco_interface_refresh(teco_interface_current_view != last_view);
 		gdk_window_thaw_updates(top_window);
 
 		if (g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
@@ -1374,7 +1468,7 @@ teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event, gpointer 
 	close_event->key.window = gtk_widget_get_parent_window(widget);
 	close_event->key.keyval = GDK_KEY_Close;
 
-	return teco_interface_key_pressed_cb(widget, &close_event->key, NULL);
+	return teco_interface_input_cb(widget, close_event, NULL);
 }
 
 static gboolean
@@ -1386,5 +1480,5 @@ teco_interface_sigterm_handler(gpointer user_data)
 	g_autoptr(GdkEvent) close_event = gdk_event_new(GDK_KEY_PRESS);
 	close_event->key.keyval = GDK_KEY_Close;
 
-	return teco_interface_key_pressed_cb(teco_interface.window, &close_event->key, NULL);
+	return teco_interface_input_cb(teco_interface.window, close_event, NULL);
 }

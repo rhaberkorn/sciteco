@@ -43,6 +43,9 @@ TECO_DEFINE_UNDO_CALL(teco_interface_ssm, unsigned int, uptr_t, sptr_t);
 TECO_DEFINE_UNDO_CALL(teco_interface_info_update_qreg, const teco_qreg_t *);
 TECO_DEFINE_UNDO_CALL(teco_interface_info_update_buffer, const teco_buffer_t *);
 
+/** Last mouse event */
+teco_mouse_t teco_mouse = {0};
+
 typedef struct {
 	teco_string_t str;
 	gchar name[];

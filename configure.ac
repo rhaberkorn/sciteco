@@ -335,6 +335,10 @@ case $INTERFACE in
 			AC_DEFINE(PDC_FORCE_UTF8, 1, [PDCursesMod forces use of UTF8])
 		])
 
+		AC_CHECK_FUNC([has_mouse], [
+			AC_DEFINE(PDC_NCMOUSE, 1, [PDCurses built with ncurses mouse API])
+		])
+
 		# This is detectable at runtime on PDCursesMod using PDC_get_version().
 		# "Classic" PDCurses however does not allow runtime or compile-time checks for
 		# discerning e.g. WinCon from SDL.

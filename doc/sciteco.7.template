@@ -300,6 +300,15 @@ The default action is \fBnot\fP performed when
 \(lq^KCLOSE\(rq has merely been masked out in the
 current parser state (see below).
 .TP
+.SCITECO_TOPIC ^KMOUSE
+.B ^KMOUSE
+Mouse event occurred.
+This may not be delivered unless bit 7 (64) is set in the
+\fBED\fP flags.
+You can use \fBEJ\fP with negative keys to retrieve
+the event type, mouse coordinates and other information
+about the last mouse event.
+.TP
 .BI ^K x
 Any other key with printable representation and all control codes
 are looked up with a \(lq^K\(rq prefix.
