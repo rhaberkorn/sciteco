@@ -1573,13 +1573,6 @@ static void
 teco_interface_refresh(void)
 {
 	/*
-	 * Scintilla has been patched to avoid any automatic scrolling since that
-	 * has been benchmarked to be a very costly operation.
-	 * Instead we do it only once after every keypress.
-	 */
-	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-
-	/*
 	 * Info window is updated very often which is very
 	 * costly, especially when using PDC_set_title(),
 	 * so we redraw it here, where the overhead does
@@ -1723,6 +1716,9 @@ teco_interface_event_loop_iter(void)
 			? teco_interface_blocking_getch()
 			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
 
+	const teco_view_t *last_view = teco_interface_current_view;
+	sptr_t last_pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
 	switch (key) {
 	case ERR:
 		/* shouldn't really happen */
@@ -1842,6 +1838,14 @@ teco_interface_event_loop_iter(void)
 		}
 	}
 
+	/*
+	 * Scintilla has been patched to avoid any automatic scrolling since that
+	 * has been benchmarked to be a very costly operation.
+	 * Instead we do it only once after every keypress.
+	 */
+	if (teco_interface_current_view != last_view ||
+	    last_pos != teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
+		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_refresh();
 }
 
@@ -1857,6 +1861,7 @@ teco_interface_event_loop(GError **error)
 	static const teco_cmdline_t empty_cmdline; // FIXME
 	teco_interface_cmdline_update(&empty_cmdline);
 	teco_interface_msg_clear();
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_refresh();
 
 #ifdef EMCURSES
