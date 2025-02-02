@@ -270,6 +270,14 @@ AT_SETUP([Jump to beginning of macro])
 AT_CHECK([$SCITECO -e "%a-2\"< F< ' Qa-2\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Gotos and labels])
+# Not a label redefinition, there must not even be a warning.
+AT_CHECK([$SCITECO -e '2<!foo!>'], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Warning:" stderr])
+# Will print a warning about label redefinition, though...
+AT_CHECK([$SCITECO -e "!foo! Qa\"S^C' !foo! Qa\"S(0/0)' -Ua @O/foo/"], 0, ignore, ignore)
+AT_CLEANUP
+
 #
 # Command-line editing bugs.
 #

@@ -78,53 +78,26 @@ teco_goto_table_dump(teco_goto_table_t *ctx)
 }
 #endif
 
-/** @memberof teco_goto_table_t */
-gssize
+/**
+ * Remove label from goto table.
+ *
+ * @param ctx Goto table
+ * @param name Label name
+ * @param len Length of label name
+ * @return TRUE if the label existed and was removed
+ *
+ * @memberof teco_goto_table_t
+ */
+gboolean
 teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len)
 {
-	gssize existing_pc = -1;
-
 	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
-	if (label) {
-		existing_pc = label->pc;
-		rb3_unlink_and_rebalance(&label->head.head);
-		teco_goto_label_free(label);
-	}
+	if (!label)
+		return FALSE;
 
-	return existing_pc;
-}
-
-/** @memberof teco_goto_table_t */
-gssize
-teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len)
-{
-	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
-	return label ? label->pc : -1;
-}
-
-/** @memberof teco_goto_table_t */
-gssize
-teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc)
-{
-	if (pc < 0)
-		return teco_goto_table_remove(ctx, name, len);
-
-	gssize existing_pc = -1;
-
-	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
-	if (label) {
-		existing_pc = label->pc;
-		label->pc = pc;
-	} else {
-		label = teco_goto_label_new(name, len, pc);
-		teco_rb3str_insert(&ctx->tree, TRUE, &label->head);
-	}
-
-#ifdef DEBUG
-	teco_goto_table_dump(ctx);
-#endif
-
-	return existing_pc;
+	rb3_unlink_and_rebalance(&label->head.head);
+	teco_goto_label_free(label);
+	return TRUE;
 }
 
 /*
@@ -135,39 +108,77 @@ teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize
  */
 typedef struct {
 	teco_goto_table_t *table;
-	gssize pc;
 	gsize len;
 	gchar name[];
-} teco_goto_table_undo_set_t;
+} teco_goto_table_undo_remove_t;
 
 static void
-teco_goto_table_undo_set_action(teco_goto_table_undo_set_t *ctx, gboolean run)
+teco_goto_table_undo_remove_action(teco_goto_table_undo_remove_t *ctx, gboolean run)
 {
-	if (run) {
-		teco_goto_table_set(ctx->table, ctx->name, ctx->len, ctx->pc);
+	if (!run)
+		return;
+
+	G_GNUC_UNUSED gboolean removed = teco_goto_table_remove(ctx->table, ctx->name, ctx->len);
+	g_assert(removed == TRUE);
 #ifdef DEBUG
-		teco_goto_table_dump(ctx->table);
+	teco_goto_table_dump(ctx->table);
 #endif
-	}
 }
 
 /** @memberof teco_goto_table_t */
 void
-teco_goto_table_undo_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gssize pc)
+teco_goto_table_undo_remove(teco_goto_table_t *ctx, const gchar *name, gsize len)
 {
 	if (!ctx->must_undo)
 		return;
 
-	teco_goto_table_undo_set_t *token;
-	token = teco_undo_push_size((teco_undo_action_t)teco_goto_table_undo_set_action,
+	teco_goto_table_undo_remove_t *token;
+	token = teco_undo_push_size((teco_undo_action_t)teco_goto_table_undo_remove_action,
 	                            sizeof(*token) + len);
 	if (token) {
 		token->table = ctx;
-		token->pc = pc;
 		token->len = len;
 		if (name)
 			memcpy(token->name, name, len);
 	}
+}
+
+/** @memberof teco_goto_table_t */
+gssize
+teco_goto_table_find(teco_goto_table_t *ctx, const gchar *name, gsize len)
+{
+	teco_goto_label_t *label = (teco_goto_label_t *)teco_rb3str_find(&ctx->tree, TRUE, name, len);
+	return label ? label->pc : -1;
+}
+
+/**
+ * Insert label into goto table.
+ *
+ * @param ctx Goto table
+ * @param name Label name
+ * @param len Length of label name
+ * @param pc Program counter of the new label
+ * @return The program counter of any label of the same name
+ *   or -1. The label is inserted only if there is no label in the
+ *   table already.
+ *
+ * @memberof teco_goto_table_t
+ */
+gssize
+teco_goto_table_set(teco_goto_table_t *ctx, const gchar *name, gsize len, gsize pc)
+{
+	gssize existing_pc = teco_goto_table_find(ctx, name, len);
+	if (existing_pc >= 0)
+		return existing_pc;
+
+	teco_goto_label_t *label = teco_goto_label_new(name, len, pc);
+	teco_rb3str_insert(&ctx->tree, TRUE, &label->head);
+
+#ifdef DEBUG
+	teco_goto_table_dump(ctx);
+#endif
+
+	return -1;
 }
 
 /** @memberof teco_goto_table_t */

@@ -2078,7 +2078,7 @@ The most basic flow control command in \*(ST is the Go-to command.
 Since it is really an ordinary command, exceptional only in setting
 the program counter and influencing parsing, it is described in this
 document's command reference.
-\*(ST may do simple unconditional and computed gotos.
+\*(ST can perform simple unconditional and computed gotos.
 .LP
 .SCITECO_TOPIC label
 Labels are symbolic and are defined with the following syntax:
@@ -2093,9 +2093,14 @@ When a label is encountered, it is cached in a macro-invocation level
 specific goto table if it is not in there already.
 Therefore every macro invocation has its own label namespace and gotos
 to a label have constant complexity once a label has been parsed.
+\# The table lookup is not constant of course.
 Terminating a macro execution (or command line) fails if a label that
 is jumped to has not been defined.
 Labels are also historically used as comments in TECO code.
+That's why \*(ST allows several identical labels in the same scope \(em
+goto commands will always jump to the first occurrance of the label.
+In case of label redefinition, a warning will be printed, so you are
+encouraged to use \(lqtrue\(rq comments as described below.
 .
 .SS Comments
 .SCITECO_TOPIC comment
