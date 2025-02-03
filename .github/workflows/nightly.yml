@@ -52,8 +52,8 @@ jobs:
       if: matrix.os == 'ubuntu-20.04'
       run: |
         cd AppImage
-        wget -O pkg2appimage.AppImage \
-                "https://github.com/AppImageCommunity/pkg2appimage/releases/download/continuous/pkg2appimage--x86_64.AppImage"
+        gh release download -R AppImageCommunity/pkg2appimage -O pkg2appimage.AppImage \
+                            -p 'pkg2appimage-*-x86_64.AppImage' continuous
         chmod +x pkg2appimage.AppImage
         ./pkg2appimage.AppImage curses.yml
         mv out/*.AppImage ../sciteco-curses_nightly_x86_64.AppImage
