@@ -200,11 +200,32 @@ teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr)
 	wmove(ctx->window, bar_y, cols-1);
 	wattron(ctx->window, A_REVERSE);
 	wvline(ctx->window, ' ', bar_height);
+}
+
+void
+teco_curses_info_popup_scroll_page(teco_curses_info_popup_t *ctx)
+{
+	gint lines = getmaxy(stdscr);
+	gint pad_lines = getmaxy(ctx->pad);
+	gint popup_lines = MIN(pad_lines + 1, lines - 1);
 
 	/* progress scroll position */
 	ctx->pad_first_line += popup_lines - 1;
 	/* wrap on last shown page */
 	ctx->pad_first_line %= pad_lines;
+	if (pad_lines - ctx->pad_first_line < popup_lines - 1)
+		/* show last page */
+		ctx->pad_first_line = pad_lines - (popup_lines - 1);
+}
+
+void
+teco_curses_info_popup_scroll(teco_curses_info_popup_t *ctx, gint delta)
+{
+	gint lines = getmaxy(stdscr);
+	gint pad_lines = getmaxy(ctx->pad);
+	gint popup_lines = MIN(pad_lines + 1, lines - 1);
+
+	ctx->pad_first_line = MAX(ctx->pad_first_line+delta, 0);
 	if (pad_lines - ctx->pad_first_line < popup_lines - 1)
 		/* show last page */
 		ctx->pad_first_line = pad_lines - (popup_lines - 1);

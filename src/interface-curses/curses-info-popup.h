@@ -49,6 +49,9 @@ void teco_curses_info_popup_add(teco_curses_info_popup_t *ctx, teco_popup_entry_
                                 const gchar *name, gsize name_len, gboolean highlight);
 
 void teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr);
+void teco_curses_info_popup_scroll_page(teco_curses_info_popup_t *ctx);
+void teco_curses_info_popup_scroll(teco_curses_info_popup_t *ctx, gint delta);
+
 static inline bool
 teco_curses_info_popup_is_shown(teco_curses_info_popup_t *ctx)
 {

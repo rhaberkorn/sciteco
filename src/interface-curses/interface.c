@@ -1489,6 +1489,8 @@ teco_interface_popup_show(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
 
+	if (teco_curses_info_popup_is_shown(&teco_interface.popup))
+		teco_curses_info_popup_scroll_page(&teco_interface.popup);
 	teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
 }
 
@@ -1599,15 +1601,29 @@ static gboolean
 teco_interface_getmouse(void)
 {
 	MEVENT event;
-	WINDOW *current = teco_view_get_window(teco_interface_current_view);
 
 	/*
 	 * Return mouse coordinates relative to the view.
 	 * They will be in characters, but that's what SCI_POSITIONFROMPOINT
 	 * expects on Scinterm anyway.
 	 */
-	if (getmouse(&event) != OK ||
-	    !wmouse_trafo(current, &event.y, &event.x, FALSE))
+	if (getmouse(&event) != OK)
+		return FALSE;
+	if (teco_curses_info_popup_is_shown(&teco_interface.popup) &&
+	    wmouse_trafo(teco_interface.popup.window, &event.y, &event.x, FALSE)) {
+		if (event.bstate & BUTTON_NUM(4))
+			teco_curses_info_popup_scroll(&teco_interface.popup, -1);
+		else if (event.bstate & BUTTON_NUM(5))
+			teco_curses_info_popup_scroll(&teco_interface.popup, 1);
+
+		short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
+		short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
+		teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
+
+		return FALSE; /* FIXME */
+	}
+	WINDOW *current = teco_view_get_window(teco_interface_current_view);
+	if (!wmouse_trafo(current, &event.y, &event.x, FALSE))
 		/* no event inside of current view */
 		return FALSE;
 
