@@ -4,8 +4,8 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * Gtk sometimes allows scrolling with the mouse when it shouldn't.
-   All mouse events should currently be blocked.
+ * ?^E$ does not scroll automatically
+ * Rubout EQ{$ ?^E$  -- Q-reg view is not restored
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:
@@ -41,6 +41,11 @@ Known Bugs:
    We need something based on a non-backtracking Thompson's NFA with Unicode (UTF-8), see
    https://swtch.com/~rsc/regexp/
    Basically only RE2 would check all the boxes.
+   RE2 doesn't have a native C API, so we would also have to import the
+   https://github.com/marcomaggi/cre2/ wrapper.
+   re2 should be an optional dependency, so we can still build against the
+   glib APIs.
+   Optionally, I could build a PCRE-compatible wrapper for Rust's regex crate.
  * It is still possible to crash SciTECO using recursive functions,
    since they map to the C program's call stack.
    It is perhaps best to use another stack of
@@ -234,12 +239,6 @@ Features:
    keys and Alt and Ctrl modifiers.
    See also https://stackoverflow.com/questions/31379824/how-to-get-control-characters-for-ctrlleft-from-terminfo-in-zsh
    https://gist.github.com/rkumar/1237091
- * Mouse support. Not that hard to implement. Mouse events
-   use a pseudo key macro as in Curses.
-   Using some special command, macros can query the current
-   mouse state (this maps to an Interface method).
-   This should be configurable via an ED flag as it changes
-   the behavior of the terminal.
  * Support loading from stdin (--stdin) and writing to
    the current buffer to stdout on exit (--stdout).
    This will make it easy to write command line filters,
@@ -346,6 +345,8 @@ Features:
    The problem is, this won't work so easily once we use a Scintilla
    minibuffer everywhere.
    Gtk could at the very least use the hourglass cursor.
+ * Gtk: Change the cursor when hovering over popup entries.
+   The text area should have the "I" beam unless we're busy.
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.
@@ -388,6 +389,11 @@ Features:
    Clipboards are not flexible enough and not supported everywhere.
    I am not sure how to elegantly address instances, though.
    Especially without some kind of central name registry.
+ * Generic clipboard support via optional libclipboard support.
+   This would mainly benefit the ncurses version, especially when enabling
+   mouse support.
+   But it may be beneficial to support it on all other Curses-variants
+   and on Gtk as well.
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
@@ -465,8 +471,9 @@ Features:
    * Mac OS Arm64 builds either separately or via universal binary.
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
- * Get into appimage.github.io and AppImageHub.
-   See https://github.com/AppImage/appimage.github.io/pull/3402
+ * A pkgsrc port could be based on the FreeBSD port and would benefit
+   NetBSD, Mac OS, but can also be used on practically all other
+   UNIX-like platforms.
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
@@ -477,9 +484,13 @@ Features:
  * Auto-completions customization via external programs.
    This among other things could be used to integrate LSPs-driven
    autocompletions.
- * Whereever we take buffer positions (nJ; n,mD; nQ...),
+ * Wherever we take buffer positions (nJ; n,mD; nQ...),
    negative numbers could refer to the end of the buffer or
    Q-Register string.
+ * Wherever we take a buffer range (e.g. n,mD), we could relax
+   the requirement that n < m and automatically sort the indexes.
+   In this case, right-click+drag would no longer have to sort the buffer
+   pointers.
  * Support extended operators like in TECO-64:
    https://github.com/fpjohnston/TECO-64/blob/master/doc/oper.md
    However, instead of introducing a separate parser state, better
@@ -534,6 +545,7 @@ Features:
    There are two ways this could be implemented:
    * Either all sorts of commands automatically iconv
      from/to the configured encoding.
+     This would be very difficult and inefficient.
    * Or we iconv once to UTF-8 when loading the file
      and iconv back when saving.
      This is probably easier but means, you have to
@@ -542,6 +554,10 @@ Features:
      We could say that nEB...$ specifies the code page
      if the string argument is nonempty.
      On the other hand, iconv uses symbolic identifiers.
+     Perhaps there should be FBfilename$codepage$ and EEcodepage$ commands
+     or an "EE" Q-Register.
+     Unfortunately, glib or POSIX iconv() doesn't return a list of
+     supported codepages, that could be used for auto-completions.
  * Perhaps the Unicode "icons" should be configurable via TECO.
    In the easiest case there could simply be 2 Q-Reg namespaces:
    ^F... for filenames and ^E... for extensions.
@@ -583,9 +599,14 @@ Features:
      string arguments could be styled SCE_SCITECO_STRING2.
    * Alternatively, string building constructs could be styled with the
      alternate string style.
+   * Erroneous constructs could be highlighted up to the previous
+     start state. E.g. when redefining labels, the entire label would be
+     highlighted.
  * Instead of defaulting to nothing in the absence of ~/.teco_ini,
    we should load the installed sample.teco_ini, which
    gives a more user-friendly experience.
+   Or perhaps even simpler, should the profile be missing, just log
+   a warning on startup.
  * NLS (Native Language Support). I could at least add German and Russian.
    There aren't many localizable strings in SciTECO.
    Should be optional.
@@ -648,6 +669,11 @@ Optimizations:
    On the other hand, this imports tons of sh*t into the
    repository and chains us to Autotools.
  * Does it make sense to import glib-2.0.m4?
+ * MinGW might now support weak symbols which would be useful
+   in interface.c to provide some default functions and avoid
+   a little bit of preprocessor madness in the implementations.
+   However, weak symbols might still be unsupported on other
+   potential targets.
  * According to ChatGPT (sic) the glibc and jemalloc malloc_usable_size()
    do not change during the lifetime of an object,
    although this is an implementation detail.
@@ -660,6 +686,18 @@ Optimizations:
    If this turns out to be useful, perhaps we can automatically
    upload builds via CI?
    https://scan.coverity.com/projects/rhaberkorn-sciteco
+ * <1;> and similar commands could be sped up if we cached the loop
+   end PC in teco_loop_context_t.
+ * Instead of introducing a streaming byte code compiler with all
+   of its consequences and complications, we could translate
+   macros into special strings where all whitespace characters,
+   comments and labels are stripped.
+   Every parser input byte has a second byte/word which stores
+   the length of the symbol (including stripped bytes) in the source
+   macro. This information is used to retrieve source macro locations
+   in case of errors.
+   Also, this "hint" word could cache PCs of <|> and <'>.
+   On the downside, this scheme does not allow all kinds of optimizations.
 
 Documentation:
  * Doxygen docs could be deployed on Github pages
