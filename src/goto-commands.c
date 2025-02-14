@@ -157,7 +157,10 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 }
 
 /* in cmdline.c */
-gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
+gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                          gunichar chr, GError **error);
+gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
+                                           GError **error);
 
 /*$ O
  * Olabel$ -- Go to label
@@ -186,7 +189,8 @@ gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine
  * terminate the command-line.
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_goto,
-	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_goto_process_edit_cmd
+	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_goto_process_edit_cmd,
+	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_goto_insert_completion
 );
 
 /*

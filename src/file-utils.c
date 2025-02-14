@@ -483,7 +483,7 @@ teco_file_auto_complete(const gchar *filename, GFileTest file_test, teco_string_
 			                         strlen((gchar *)file->data), is_buffer);
 		}
 
-		teco_interface_popup_show();
+		teco_interface_popup_show(filename ? strlen(filename) : 0);
 	}
 
 	/*

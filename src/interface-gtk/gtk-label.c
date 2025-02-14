@@ -269,3 +269,9 @@ teco_gtk_label_set_text(TecoGtkLabel *self, const gchar *str, gssize len)
 
 	gtk_label_set_text(GTK_LABEL(self), plaintext);
 }
+
+const teco_string_t *
+teco_gtk_label_get_text(TecoGtkLabel *self)
+{
+	return &self->string;
+}

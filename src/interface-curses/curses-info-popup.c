@@ -200,11 +200,79 @@ teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr)
 	wmove(ctx->window, bar_y, cols-1);
 	wattron(ctx->window, A_REVERSE);
 	wvline(ctx->window, ' ', bar_height);
+}
+
+/**
+ * Find the entry at the given character coordinates.
+ *
+ * @param ctx The popup widget to look up
+ * @param y The pointer's Y position, relative to the popup's window
+ * @param x The pointer's X position, relative to the popup's window
+ * @return Pointer to the entry's string under the pointer or NULL.
+ *   This string is owned by the popup and is only valid until the
+ *   popup is cleared.
+ *
+ * @note This must match the calculations in teco_curses_info_popup_init_pad().
+ */
+const teco_string_t *
+teco_curses_info_popup_getentry(teco_curses_info_popup_t *ctx, gint y, gint x)
+{
+	int cols = getmaxx(stdscr);	/**! screen width */
+	gint pad_cols;			/**! entry columns */
+	gint pad_colwidth;		/**! width per entry column */
+
+	/*
+	 * With Unicode icons enabled, we reserve 2 characters at the beginning and one
+	 * after the filename/directory.
+	 * Otherwise 2 characters after the entry.
+	 */
+	gint reserve = teco_ed & TECO_ED_ICONS ? 2+1 : 2;
+	pad_colwidth = MIN(ctx->longest + reserve, cols - 2);
+
+	/* pad_cols = floor((cols - 2) / pad_colwidth) */
+	pad_cols = (cols - 2) / pad_colwidth;
+
+	gint cur_col = 0;
+	for (teco_stailq_entry_t *cur = ctx->list.first; cur != NULL; cur = cur->next) {
+		teco_popup_entry_t *entry = (teco_popup_entry_t *)cur;
+		gint cur_line = cur_col/pad_cols + 1;
+
+		if (cur_line > ctx->pad_first_line+y)
+			break;
+		if (cur_line == ctx->pad_first_line+y &&
+		    x > (cur_col % pad_cols)*pad_colwidth && x <= ((cur_col % pad_cols)+1)*pad_colwidth)
+			return &entry->name;
+
+		cur_col++;
+	}
+
+	return NULL;
+}
+
+void
+teco_curses_info_popup_scroll_page(teco_curses_info_popup_t *ctx)
+{
+	gint lines = getmaxy(stdscr);
+	gint pad_lines = getmaxy(ctx->pad);
+	gint popup_lines = MIN(pad_lines + 1, lines - 1);
 
 	/* progress scroll position */
 	ctx->pad_first_line += popup_lines - 1;
 	/* wrap on last shown page */
 	ctx->pad_first_line %= pad_lines;
+	if (pad_lines - ctx->pad_first_line < popup_lines - 1)
+		/* show last page */
+		ctx->pad_first_line = pad_lines - (popup_lines - 1);
+}
+
+void
+teco_curses_info_popup_scroll(teco_curses_info_popup_t *ctx, gint delta)
+{
+	gint lines = getmaxy(stdscr);
+	gint pad_lines = getmaxy(ctx->pad);
+	gint popup_lines = MIN(pad_lines + 1, lines - 1);
+
+	ctx->pad_first_line = MAX(ctx->pad_first_line+delta, 0);
 	if (pad_lines - ctx->pad_first_line < popup_lines - 1)
 		/* show last page */
 		ctx->pad_first_line = pad_lines - (popup_lines - 1);

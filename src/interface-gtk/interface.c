@@ -70,6 +70,8 @@ static void teco_interface_size_allocate_cb(GtkWidget *widget,
                                             gpointer user_data);
 static gboolean teco_interface_input_cb(GtkWidget *widget, GdkEvent *event,
                                         gpointer user_data);
+static void teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len,
+                                            gpointer user_data);
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
                                                 gpointer user_data);
 static gboolean teco_interface_sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
@@ -194,6 +196,7 @@ static struct {
 	GtkIMContext *input_method;
 
 	GtkWidget *popup_widget;
+	gsize popup_prefix_len;
 
 	GtkWidget *current_view_widget;
 
@@ -381,6 +384,8 @@ teco_interface_init(void)
 	 */
 	teco_interface.popup_widget = teco_gtk_info_popup_new();
 	gtk_widget_set_name(teco_interface.popup_widget, "sciteco-info-popup");
+	g_signal_connect(teco_interface.popup_widget, "clicked",
+	                 G_CALLBACK(teco_interface_popup_clicked_cb), NULL);
 	gtk_overlay_add_overlay(GTK_OVERLAY(overlay_widget), teco_interface.popup_widget);
 	g_signal_connect(overlay_widget, "get-child-position",
 	                 G_CALLBACK(teco_gtk_info_popup_get_position_in_overlay), NULL);
@@ -754,12 +759,16 @@ teco_interface_popup_add(teco_popup_entry_type_t type, const gchar *name, gsize 
 }
 
 void
-teco_interface_popup_show(void)
+teco_interface_popup_show(gsize prefix_len)
 {
-	if (gtk_widget_get_visible(teco_interface.popup_widget))
-		teco_gtk_info_popup_scroll_page(TECO_GTK_INFO_POPUP(teco_interface.popup_widget));
-	else
-		gtk_widget_show(teco_interface.popup_widget);
+	teco_interface.popup_prefix_len = prefix_len;
+	gtk_widget_show(teco_interface.popup_widget);
+}
+
+void
+teco_interface_popup_scroll(void)
+{
+	teco_gtk_info_popup_scroll_page(TECO_GTK_INFO_POPUP(teco_interface.popup_widget));
 }
 
 gboolean
@@ -1349,7 +1358,6 @@ static gboolean
 teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
 	static gboolean recursed = FALSE;
-	g_autoptr(GError) error = NULL;
 
 #ifdef DEBUG
 	if (event->type == GDK_KEY_PRESS)
@@ -1393,6 +1401,8 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
 
 	do {
+		g_autoptr(GError) error = NULL;
+
 		/*
 		 * The event queue might be filled when pressing keys when SciTECO
 		 * is busy executing code.
@@ -1459,6 +1469,28 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 
 	recursed = FALSE;
 	return TRUE;
+}
+
+static void
+teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len, gpointer user_data)
+{
+	g_assert(len >= teco_interface.popup_prefix_len);
+	const teco_string_t insert = {str+teco_interface.popup_prefix_len, len-teco_interface.popup_prefix_len};
+	teco_machine_t *machine = &teco_cmdline.machine.parent;
+
+	const teco_view_t *last_view = teco_interface_current_view;
+
+	/*
+	 * NOTE: It shouldn't really be necessary to catch TECO_ERROR_QUIT here.
+	 * A auto completion should never result in program termination.
+	 */
+	if (machine->current->insert_completion_cb &&
+	    !machine->current->insert_completion_cb(machine, &insert, NULL))
+		return;
+	teco_interface_popup_clear();
+	teco_interface_cmdline_update(&teco_cmdline);
+
+	teco_interface_refresh(teco_interface_current_view != last_view);
 }
 
 static gboolean

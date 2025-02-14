@@ -27,6 +27,7 @@ G_DECLARE_FINAL_TYPE(TecoGtkLabel, teco_gtk_label, TECO, GTK_LABEL, GtkLabel)
 GtkWidget *teco_gtk_label_new(const gchar *str, gssize len);
 
 void teco_gtk_label_set_text(TecoGtkLabel *self, const gchar *str, gssize len);
+const teco_string_t *teco_gtk_label_get_text(TecoGtkLabel *self);
 
 void teco_gtk_label_parse_string(const gchar *str, gssize len,
                                  PangoColor *fg, guint16 fg_alpha,

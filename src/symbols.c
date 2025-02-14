@@ -155,7 +155,7 @@ teco_symbol_list_auto_complete(teco_symbol_list_t *ctx, const gchar *symbol, tec
 			                         strlen(entry->data), FALSE);
 		}
 
-		teco_interface_popup_show();
+		teco_interface_popup_show(symbol_len);
 	}
 
 	return glist_len == 1;
@@ -252,7 +252,10 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 }
 
 /* in cmdline.c */
-gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                                       gunichar key, GError **error);
+gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
+                                                        GError **error);
 
 /*$ ES scintilla message
  * -- Send Scintilla message
@@ -332,6 +335,7 @@ gboolean teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx,
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_scintilla_symbols,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_scintilla_symbols_process_edit_cmd,
+	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_scintilla_symbols_insert_completion,
 	.expectstring.last = FALSE
 );
 

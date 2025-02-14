@@ -1445,11 +1445,15 @@ teco_state_qregspec_start_input(teco_machine_qregspec_t *ctx, gunichar chr, GErr
 }
 
 /* in cmdline.c */
-gboolean teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx,
+                                              gunichar key, GError **error);
+gboolean teco_state_qregspec_insert_completion(teco_machine_qregspec_t *ctx, const teco_string_t *str,
+                                               GError **error);
 
 TECO_DEFINE_STATE(teco_state_qregspec_start,
 	.is_start = TRUE,
-	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_process_edit_cmd
+	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_process_edit_cmd,
+	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_qregspec_insert_completion
 );
 
 static teco_state_t *
@@ -1585,9 +1589,12 @@ teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gunichar chr, GEr
 /* in cmdline.c */
 gboolean teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx,
                                                      gunichar key, GError **error);
+gboolean teco_state_qregspec_string_insert_completion(teco_machine_qregspec_t *ctx, const teco_string_t *str,
+                                                      GError **error);
 
 TECO_DEFINE_STATE(teco_state_qregspec_string,
-	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_string_process_edit_cmd
+	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_qregspec_string_process_edit_cmd,
+	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_qregspec_string_insert_completion
 );
 
 /** @static @memberof teco_machine_qregspec_t */

@@ -314,7 +314,10 @@ teco_state_help_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 }
 
 /* in cmdline.c */
-gboolean teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
+gboolean teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                          gunichar chr, GError **error);
+gboolean teco_state_help_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
+                                           GError **error);
 
 /*$ "?" help
  * ?[topic]$ -- Get help for topic
@@ -384,5 +387,6 @@ gboolean teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_help,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_help_initial,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_help_process_edit_cmd,
+	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_help_insert_completion,
 	.expectstring.string_building = FALSE
 );

@@ -48,6 +48,7 @@ GRegex *teco_globber_compile_pattern(const gchar *pattern);
 
 /* in cmdline.c */
 gboolean teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_expectglob_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTGLOB
@@ -58,6 +59,8 @@ gboolean teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_m
 	TECO_DEFINE_STATE_EXPECTFILE(NAME, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectglob_process_edit_cmd, \
+		.insert_completion_cb = (teco_state_insert_completion_cb_t) \
+		                        teco_state_expectglob_insert_completion, \
 		##__VA_ARGS__ \
 	)
 

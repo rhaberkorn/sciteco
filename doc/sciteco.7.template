@@ -303,7 +303,7 @@ current parser state (see below).
 .SCITECO_TOPIC ^KMOUSE
 .B ^KMOUSE
 Mouse event occurred.
-This may not be delivered unless bit 7 (64) is set in the
+This will not be delivered on Curses unless bit 7 (64) is set in the
 \fBED\fP flags.
 You can use \fBEJ\fP with negative keys to retrieve
 the event type, mouse coordinates and other information
@@ -755,10 +755,12 @@ Global and local Q-Registers are not affected by command line termination.
 .SS Auto Completion
 .
 .SCITECO_TOPIC autocomplete
-The immediate editing commands that perform auto-completions, do
+The immediate editing commands, that perform auto-completions, do
 so in a manner similar to Posix shells.
 Upon first invocation they try to fully or partially complete the file
 name (or token).
+If the token can be fully completed, the current command or Q-Register
+specification will also usually be terminated automatically.
 If no completion can be performed, the invocation will display a
 list of file names (or tokens) that begin with the token to complete
 in \*(ST's popup area.
@@ -769,6 +771,15 @@ If the immediate editing command is invoked again, the next page
 of file names or tokens is displayed in the popup area.
 I.e. it is possible to cycle through long lists of possible
 auto-completions.
+.LP
+You can also scroll through the popup area with the mouse wheel.
+Furthermore, you can click on entries in the popup area with the
+mouse in order to fully complete them.
+Often this will also automatically terminate the current command or
+Q-Register specification, just like an unambiguous completion via
+immediate editing commands.
+On Curses, mouse events are not processed unless bit 7 (64) is set
+in the \fBED\fP flags.
 .LP
 When completing file names, hidden files are not considered for
 completion unless a prefix of the hidden file's name has already
@@ -788,6 +799,13 @@ e.g. by using a forward-slash in the file name or by prefixing
 file names with \(lq./\(rq.
 This is useful for writing cross-platform \*(ST macros (see
 .BR "FILE NAMES AND DIRECTORIES" ).
+.LP
+File name completions are case-sensitive or insensitive depending
+on operating system defaults.
+On some operating systems \*(ST can determine the case-sensitivity
+of individual directories as well.
+\# Should be supported on Mac OS and newer versions of Windows,
+\# but it's still untested.
 .LP
 Note that completions take place after string building and
 tilde-expansion is also performed by file name completions,

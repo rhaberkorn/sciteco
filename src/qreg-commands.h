@@ -37,7 +37,10 @@ gboolean teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error)
 teco_state_t *teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                                gunichar key, GError **error);
+gboolean teco_state_expectqreg_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
+                                                 GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTQREG
@@ -56,6 +59,8 @@ gboolean teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_m
 		.initial_cb = (teco_state_initial_cb_t)teco_state_expectqreg_initial, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectqreg_process_edit_cmd, \
+		.insert_completion_cb = (teco_state_insert_completion_cb_t) \
+		                        teco_state_expectqreg_insert_completion, \
 		.style = SCE_SCITECO_QREG, \
 		.expectqreg.type = TECO_QREG_REQUIRED, \
 		.expectqreg.got_register_cb = NAME##_got_register, /* always required */ \

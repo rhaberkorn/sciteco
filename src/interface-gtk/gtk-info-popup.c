@@ -53,6 +53,8 @@ struct _TecoGtkInfoPopup {
 	gboolean frozen;
 };
 
+static guint teco_gtk_info_popup_clicked_signal;
+
 static gboolean teco_gtk_info_popup_scroll_event(GtkWidget *widget, GdkEventScroll *event);
 static void teco_gtk_info_popup_show(GtkWidget *widget);
 static void teco_gtk_info_popup_vadjustment_changed(GtkAdjustment *vadjustment, GtkWidget *scrollbar);
@@ -82,6 +84,31 @@ teco_gtk_info_popup_class_init(TecoGtkInfoPopupClass *klass)
 	GTK_WIDGET_CLASS(klass)->scroll_event = teco_gtk_info_popup_scroll_event;
 	GTK_WIDGET_CLASS(klass)->show = teco_gtk_info_popup_show;
 	G_OBJECT_CLASS(klass)->finalize = teco_gtk_info_popup_finalize;
+
+	teco_gtk_info_popup_clicked_signal =
+			g_signal_new("clicked", G_TYPE_FROM_CLASS(klass),
+			             G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+			             0, NULL, NULL, NULL,
+			             G_TYPE_NONE, 2, G_TYPE_STRING, G_TYPE_ULONG);
+}
+
+static void
+teco_gtk_info_popup_activated_cb(GtkFlowBox *box, GtkFlowBoxChild *child, gpointer user_data)
+{
+	TecoGtkInfoPopup *popup = TECO_GTK_INFO_POPUP(user_data);
+
+	/*
+	 * Find the TecoGtkLabel in the flow box child.
+	 */
+	GtkWidget *hbox = gtk_bin_get_child(GTK_BIN(child));
+	g_autoptr(GList) child_list = gtk_container_get_children(GTK_CONTAINER(hbox));
+	GList *entry;
+	for (entry = child_list; entry != NULL && !TECO_IS_GTK_LABEL(entry->data); entry = g_list_next(entry));
+	g_assert(entry != NULL);
+	const teco_string_t *str = teco_gtk_label_get_text(TECO_GTK_LABEL(entry->data));
+
+	g_signal_emit(popup, teco_gtk_info_popup_clicked_signal, 0,
+	              str->data, (gulong)str->len);
 }
 
 static void
@@ -106,6 +133,8 @@ teco_gtk_info_popup_init(TecoGtkInfoPopup *self)
 	                 G_CALLBACK(teco_gtk_info_popup_vadjustment_changed), scrollbar);
 
 	self->flow_box = gtk_flow_box_new();
+	g_signal_connect(self->flow_box, "child-activated",
+	                 G_CALLBACK(teco_gtk_info_popup_activated_cb), self);
 	/* take as little height as necessary */
 	gtk_orientable_set_orientation(GTK_ORIENTABLE(self->flow_box),
 	                               GTK_ORIENTATION_HORIZONTAL);
@@ -311,12 +340,6 @@ teco_gtk_info_popup_idle_add(TecoGtkInfoPopup *self, teco_popup_entry_type_t typ
 	gtk_widget_set_halign(label, GTK_ALIGN_START);
 	gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
 
-	/*
-	 * FIXME: This makes little sense once we've got mouse support.
-	 * But for the time being, it's a useful setting.
-	 */
-	gtk_label_set_selectable(GTK_LABEL(label), TRUE);
-
 	switch (type) {
 	case TECO_POPUP_PLAIN:
 		gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_START);
@@ -417,12 +440,10 @@ teco_gtk_info_popup_scroll_page(TecoGtkInfoPopup *self)
 		 * Adjust this so only complete entries are shown.
 		 * Effectively, this rounds down to the line height.
 		 */
-		GList *child_list = gtk_container_get_children(GTK_CONTAINER(self->flow_box));
-		if (child_list) {
+		g_autoptr(GList) child_list = gtk_container_get_children(GTK_CONTAINER(self->flow_box));
+		if (child_list)
 			new_value -= (gint)new_value %
 			             gtk_widget_get_allocated_height(GTK_WIDGET(child_list->data));
-			g_list_free(child_list);
-		}
 
 		/* clip to the maximum possible value */
 		new_value = MIN(new_value, gtk_adjustment_get_upper(adj));

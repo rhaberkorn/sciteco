@@ -23,6 +23,7 @@
 #include <curses.h>
 
 #include "list.h"
+#include "string-utils.h"
 #include "interface.h"
 
 typedef struct {
@@ -49,6 +50,10 @@ void teco_curses_info_popup_add(teco_curses_info_popup_t *ctx, teco_popup_entry_
                                 const gchar *name, gsize name_len, gboolean highlight);
 
 void teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr);
+const teco_string_t *teco_curses_info_popup_getentry(teco_curses_info_popup_t *ctx, gint y, gint x);
+void teco_curses_info_popup_scroll_page(teco_curses_info_popup_t *ctx);
+void teco_curses_info_popup_scroll(teco_curses_info_popup_t *ctx, gint delta);
+
 static inline bool
 teco_curses_info_popup_is_shown(teco_curses_info_popup_t *ctx)
 {
@@ -58,8 +63,10 @@ teco_curses_info_popup_is_shown(teco_curses_info_popup_t *ctx)
 static inline void
 teco_curses_info_popup_noutrefresh(teco_curses_info_popup_t *ctx)
 {
-	if (ctx->window)
-		wnoutrefresh(ctx->window);
+	if (!ctx->window)
+		return;
+	redrawwin(ctx->window);
+	wnoutrefresh(ctx->window);
 }
 
 void teco_curses_info_popup_clear(teco_curses_info_popup_t *ctx);

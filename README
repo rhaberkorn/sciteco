@@ -44,7 +44,7 @@ master branch and between releases until version 3.0 is released.__
 Features
 ========
 
-* Supports most of the [Video TECO](http://www.copters.com/teco.html) commands
+* Supports most of the [Video TECO](http://www.copters.com/teco.html) commands.
 * Improved parser compared to classic TECOs, making SciTECO
   more similar to other imperative languages.
 * Operator precedence in arithmetic expressions and an argument stack that may be modified
@@ -57,7 +57,8 @@ Features
   by the standard library `fnkeys.tes`.
   In fact, all keys with printable representation and control keys can be remapped using
   key macros - and they can be context-sensitive as well!
-* Scriptable mouse support via the key macro mechanism (see also `fnkeys.tes`)
+* There is scriptable mouse support via the key macro mechanism (see also `fnkeys.tes`).
+  Autocompletion popups can also be scrolled and clicked.
 * Many TECO-11 features, like that most commands have a colon-modified form, string-building
   characters, exotic match characters...
 * Interactivity: Immediate searching (similar to search-as-you-type) and

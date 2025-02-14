@@ -143,7 +143,7 @@ teco_rb3str_auto_complete(teco_rb3str_tree_t *tree, gboolean case_sensitive,
 			                         cur->key.data, cur->key.len, FALSE);
 		}
 
-		teco_interface_popup_show();
+		teco_interface_popup_show(str_len);
 	}
 
 	return prefixed_entries == 1;

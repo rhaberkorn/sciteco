@@ -614,7 +614,7 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 		 */
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -642,6 +642,16 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 	 * rubs out the entire string command.
 	 */
 	return teco_state_process_edit_cmd(parent_ctx, NULL, key, error);
+}
+
+gboolean
+teco_state_stringbuilding_insert_completion(teco_machine_stringbuilding_t *ctx, const teco_string_t *str, GError **error)
+{
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(ctx, str->data, str->len, &str_escaped);
+	if (!str->len || !G_IS_DIR_SEPARATOR(str->data[str->len-1]))
+		teco_string_append_c(&str_escaped, ' ');
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
 }
 
 gboolean
@@ -681,6 +691,14 @@ teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
 	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
 	return stringbuilding_current->process_edit_cmd_cb(&stringbuilding_ctx->parent, &ctx->parent, key, error);
+}
+
+gboolean
+teco_state_expectstring_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+	teco_state_t *stringbuilding_current = stringbuilding_ctx->parent.current;
+	return stringbuilding_current->insert_completion_cb(&stringbuilding_ctx->parent, str, error);
 }
 
 gboolean
@@ -778,7 +796,7 @@ teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -801,6 +819,20 @@ teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
+teco_state_expectfile_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	if ((!str->len || !G_IS_DIR_SEPARATOR(str->data[str->len-1])) &&
+	    ctx->expectstring.nesting == 1)
+		teco_string_append_wc(&str_escaped,
+		                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
+}
+
+gboolean
 teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
@@ -820,7 +852,7 @@ teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -855,6 +887,21 @@ teco_state_expectglob_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
+teco_state_expectglob_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	g_autofree gchar *pattern_escaped = teco_globber_escape_pattern(str->data);
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, pattern_escaped, strlen(pattern_escaped), &str_escaped);
+	if ((!str->len || !G_IS_DIR_SEPARATOR(str->data[str->len-1])) &&
+	    ctx->expectstring.nesting == 1)
+		teco_string_append_wc(&str_escaped,
+		                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
+}
+
+gboolean
 teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
@@ -874,7 +921,7 @@ teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -898,6 +945,19 @@ teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *
 }
 
 gboolean
+teco_state_expectdir_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	/*
+	 * FIXME: We might terminate the command in case of leaf directories.
+	 */
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
+}
+
+gboolean
 teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	g_assert(ctx->expectqreg != NULL);
@@ -910,6 +970,18 @@ teco_state_expectqreg_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t 
 }
 
 gboolean
+teco_state_expectqreg_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	g_assert(ctx->expectqreg != NULL);
+	/*
+	 * NOTE: teco_machine_qregspec_t is private, so we downcast to teco_machine_t.
+	 * Otherwise, we'd have to move this callback into qreg.c.
+	 */
+	teco_state_t *expectqreg_current = ((teco_machine_t *)ctx->expectqreg)->current;
+	return expectqreg_current->insert_completion_cb((teco_machine_t *)ctx->expectqreg, str, error);
+}
+
+gboolean
 teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	switch (key) {
@@ -919,7 +991,7 @@ teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -945,6 +1017,12 @@ teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_
 }
 
 gboolean
+teco_state_qregspec_insert_completion(teco_machine_qregspec_t *ctx, const teco_string_t *str, GError **error)
+{
+	return teco_cmdline_insert(str->data, str->len, error);
+}
+
+gboolean
 teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = teco_machine_qregspec_get_stringbuilding(ctx);
@@ -967,7 +1045,7 @@ teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_m
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -982,6 +1060,17 @@ teco_state_qregspec_string_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_m
 	}
 
 	return stringbuilding_current->process_edit_cmd_cb(&stringbuilding_ctx->parent, (teco_machine_t *)ctx, key, error);
+}
+
+gboolean
+teco_state_qregspec_string_insert_completion(teco_machine_qregspec_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = teco_machine_qregspec_get_stringbuilding(ctx);
+
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	teco_string_append_c(&str_escaped, ']');
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
 }
 
 gboolean
@@ -1003,14 +1092,14 @@ teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *pa
 			break;
 
 		/*
-		 * In the EC command, <TAB> completes files just like ^T
+		 * In the EC command, <TAB> completes files just like ^G<TAB>.
 		 *
 		 * TODO: Implement shell-command completion by iterating
 		 * executables in $PATH
 		 */
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -1049,7 +1138,7 @@ teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_mac
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -1075,6 +1164,17 @@ teco_state_scintilla_symbols_process_edit_cmd(teco_machine_main_t *ctx, teco_mac
 }
 
 gboolean
+teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	teco_string_append_c(&str_escaped, ',');
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
+}
+
+gboolean
 teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
@@ -1094,7 +1194,7 @@ teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -1122,6 +1222,20 @@ teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 }
 
 gboolean
+teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	/*
+	 * FIXME: This does not escape `,`. Cannot be escaped via ^Q currently?
+	 */
+	teco_string_append_c(&str_escaped, ',');
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
+}
+
+gboolean
 teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
 {
 	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
@@ -1141,7 +1255,7 @@ teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 
 		if (teco_interface_popup_is_shown()) {
 			/* cycle through popup pages */
-			teco_interface_popup_show();
+			teco_interface_popup_scroll();
 			return TRUE;
 		}
 
@@ -1161,6 +1275,19 @@ teco_state_help_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *paren
 	}
 
 	return stringbuilding_current->process_edit_cmd_cb(&stringbuilding_ctx->parent, &ctx->parent, key, error);
+}
+
+gboolean
+teco_state_help_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_machine_stringbuilding_t *stringbuilding_ctx = &ctx->expectstring.machine;
+
+	g_auto(teco_string_t) str_escaped;
+	teco_machine_stringbuilding_escape(stringbuilding_ctx, str->data, str->len, &str_escaped);
+	if (ctx->expectstring.nesting == 1)
+		teco_string_append_wc(&str_escaped,
+		                      ctx->expectstring.machine.escape_char == '{' ? '}' : ctx->expectstring.machine.escape_char);
+	return teco_cmdline_insert(str_escaped.data, str_escaped.len, error);
 }
 
 /*

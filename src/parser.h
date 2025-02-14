@@ -110,6 +110,7 @@ typedef gboolean (*teco_state_refresh_cb_t)(teco_machine_t *ctx, GError **error)
 typedef gboolean (*teco_state_end_of_macro_cb_t)(teco_machine_t *ctx, GError **error);
 typedef gboolean (*teco_state_process_edit_cmd_cb_t)(teco_machine_t *ctx, teco_machine_t *parent_ctx,
                                                      gunichar key, GError **error);
+typedef gboolean (*teco_state_insert_completion_cb_t)(teco_machine_t *ctx, const teco_string_t *str, GError **error);
 
 typedef enum {
 	TECO_KEYMACRO_MASK_START		= (1 << 0),
@@ -187,6 +188,19 @@ struct teco_state_t {
 	teco_state_process_edit_cmd_cb_t process_edit_cmd_cb;
 
 	/**
+	 * Insert completion after clicking an entry in the popup
+	 * window.
+	 *
+	 * All implementations of this method are currently
+	 * defined in cmdline.c.
+	 *
+	 * It can be NULL if not required.
+	 *
+	 * @fixme Perhaps move all implementations to interface.c.
+	 */
+	teco_state_insert_completion_cb_t insert_completion_cb;
+
+	/**
 	 * Whether this state is a start state (i.e. not within any
 	 * escape sequence etc.).
 	 * This is separate of TECO_KEYMACRO_MASK_START which is set
@@ -241,11 +255,12 @@ gboolean teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent
 #define TECO_DEFINE_STATE(NAME, ...) \
 	/** @ingroup states */ \
 	teco_state_t NAME = { \
-		.initial_cb = NULL,	/* do nothing */ \
+		.initial_cb = NULL,		/* do nothing */ \
 		.input_cb = (teco_state_input_cb_t)NAME##_input, /* always required */ \
-		.refresh_cb = NULL,	/* do nothing */ \
+		.refresh_cb = NULL,		/* do nothing */ \
 		.end_of_macro_cb = teco_state_end_of_macro, \
 		.process_edit_cmd_cb = teco_state_process_edit_cmd, \
+		.insert_completion_cb = NULL,	/* do nothing */ \
 		.is_start = FALSE, \
 		.keymacro_mask = TECO_KEYMACRO_MASK_DEFAULT, \
 		.style = SCE_SCITECO_DEFAULT, \
@@ -552,7 +567,10 @@ teco_state_t *teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar c
 gboolean teco_state_expectstring_refresh(teco_machine_main_t *ctx, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                                  gunichar key, GError **error);
+gboolean teco_state_expectstring_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
+                                                   GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTSTRING
@@ -577,6 +595,8 @@ gboolean teco_state_expectstring_process_edit_cmd(teco_machine_main_t *ctx, teco
 		.refresh_cb = (teco_state_refresh_cb_t)teco_state_expectstring_refresh, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectstring_process_edit_cmd, \
+		.insert_completion_cb = (teco_state_insert_completion_cb_t) \
+		                        teco_state_expectstring_insert_completion, \
 		.keymacro_mask = TECO_KEYMACRO_MASK_STRING, \
 		.style = SCE_SCITECO_STRING, \
 		.expectstring.string_building = TRUE, \
@@ -591,6 +611,7 @@ gboolean teco_state_expectfile_process(teco_machine_main_t *ctx, const teco_stri
 
 /* in cmdline.c */
 gboolean teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_expectfile_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTFILE
@@ -601,12 +622,15 @@ gboolean teco_state_expectfile_process_edit_cmd(teco_machine_main_t *ctx, teco_m
 	TECO_DEFINE_STATE_EXPECTSTRING(NAME, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectfile_process_edit_cmd, \
+		.insert_completion_cb = (teco_state_insert_completion_cb_t) \
+		                        teco_state_expectfile_insert_completion, \
 		.expectstring.process_cb = teco_state_expectfile_process, \
 		##__VA_ARGS__ \
 	)
 
 /* in cmdline.c */
 gboolean teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
+gboolean teco_state_expectdir_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str, GError **error);
 
 /**
  * @interface TECO_DEFINE_STATE_EXPECTDIR
@@ -617,5 +641,7 @@ gboolean teco_state_expectdir_process_edit_cmd(teco_machine_main_t *ctx, teco_ma
 	TECO_DEFINE_STATE_EXPECTFILE(NAME, \
 		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
 		                       teco_state_expectdir_process_edit_cmd, \
+		.insert_completion_cb = (teco_state_insert_completion_cb_t) \
+		                        teco_state_expectdir_insert_completion, \
 		##__VA_ARGS__ \
 	)

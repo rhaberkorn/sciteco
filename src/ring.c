@@ -413,7 +413,7 @@ teco_state_edit_file_initial(teco_machine_main_t *ctx, GError **error)
 			                         strlen(filename), cur == teco_ring_current);
 		}
 
-		teco_interface_popup_show();
+		teco_interface_popup_show(0);
 	} else if (id > 0) {
 		allow_filename = FALSE;
 		if (!teco_current_doc_undo_edit(error) ||

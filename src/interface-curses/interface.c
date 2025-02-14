@@ -356,6 +356,7 @@ static struct {
 	GQueue *input_queue;
 
 	teco_curses_info_popup_t popup;
+	gsize popup_prefix_len;
 
 	/**
 	 * GError "thrown" by teco_interface_event_loop_iter().
@@ -1480,7 +1481,7 @@ teco_interface_popup_add(teco_popup_entry_type_t type, const gchar *name, gsize 
 }
 
 void
-teco_interface_popup_show(void)
+teco_interface_popup_show(gsize prefix_len)
 {
 	if (!teco_interface.cmdline_window)
 		/* batch mode */
@@ -1489,7 +1490,19 @@ teco_interface_popup_show(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
 
+	teco_interface.popup_prefix_len = prefix_len;
 	teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
+}
+
+void
+teco_interface_popup_scroll(void)
+{
+	if (!teco_interface.cmdline_window)
+		/* batch mode */
+		return;
+
+	teco_curses_info_popup_scroll_page(&teco_interface.popup);
+	teco_interface_popup_show(teco_interface.popup_prefix_len);
 }
 
 gboolean
@@ -1583,6 +1596,11 @@ teco_interface_refresh(void)
 	teco_view_noutrefresh(teco_interface_current_view);
 	wnoutrefresh(teco_interface.msg_window);
 	wnoutrefresh(teco_interface.cmdline_window);
+	/*
+	 * FIXME: Why do we have to redrawwin() the popup window
+	 * to keep it on the screen?
+	 * Perhaps something is causing a redraw of the entire Scinterm view.
+	 */
 	teco_curses_info_popup_noutrefresh(&teco_interface.popup);
 	doupdate();
 }
@@ -1596,20 +1614,59 @@ teco_interface_refresh(void)
 	(BUTTON1_##X | BUTTON2_##X | BUTTON3_##X | BUTTON4_##X | BUTTON5_##X)
 
 static gboolean
-teco_interface_getmouse(void)
+teco_interface_getmouse(GError **error)
 {
 	MEVENT event;
-	WINDOW *current = teco_view_get_window(teco_interface_current_view);
+
+	if (getmouse(&event) != OK)
+		return TRUE;
+
+	if (teco_curses_info_popup_is_shown(&teco_interface.popup) &&
+	    wmouse_trafo(teco_interface.popup.window, &event.y, &event.x, FALSE)) {
+		/*
+		 * NOTE: Not all curses variants report the RELEASED event,
+		 * but may also return REPORT_MOUSE_POSITION.
+		 * So we might react to all button presses as well.
+		 */
+		if (event.bstate & (BUTTON1_RELEASED | REPORT_MOUSE_POSITION)) {
+			teco_machine_t *machine = &teco_cmdline.machine.parent;
+			const teco_string_t *insert = teco_curses_info_popup_getentry(&teco_interface.popup, event.y, event.x);
+
+			if (insert && machine->current->insert_completion_cb) {
+				/* successfully clicked popup item */
+				const teco_string_t insert_suffix = {insert->data + teco_interface.popup_prefix_len,
+				                                     insert->len - teco_interface.popup_prefix_len};
+				if (!machine->current->insert_completion_cb(machine, &insert_suffix, error))
+					return FALSE;
+
+				teco_interface_popup_clear();
+				teco_interface_msg_clear();
+				teco_interface_cmdline_update(&teco_cmdline);
+			}
+
+			return TRUE;
+		}
+		if (event.bstate & BUTTON_NUM(4))
+			teco_curses_info_popup_scroll(&teco_interface.popup, -1);
+		else if (event.bstate & BUTTON_NUM(5))
+			teco_curses_info_popup_scroll(&teco_interface.popup, +1);
+
+		short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
+		short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
+		teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
+
+		return TRUE;
+	}
 
 	/*
 	 * Return mouse coordinates relative to the view.
 	 * They will be in characters, but that's what SCI_POSITIONFROMPOINT
 	 * expects on Scinterm anyway.
 	 */
-	if (getmouse(&event) != OK ||
-	    !wmouse_trafo(current, &event.y, &event.x, FALSE))
+	WINDOW *current = teco_view_get_window(teco_interface_current_view);
+	if (!wmouse_trafo(current, &event.y, &event.x, FALSE))
 		/* no event inside of current view */
-		return FALSE;
+		return TRUE;
 
 	/*
 	 * NOTE: There will only be one of the button bits
@@ -1654,7 +1711,7 @@ teco_interface_getmouse(void)
 	if (event.bstate & BUTTON_ALT)
 		teco_mouse.mods |= TECO_MOUSE_ALT;
 
-	return TRUE;
+	return teco_cmdline_keymacro("MOUSE", -1, error);
 }
 
 #endif /* NCURSES_MOUSE_VERSION >= 2 */
@@ -1789,8 +1846,7 @@ teco_interface_event_loop_iter(void)
 #if NCURSES_MOUSE_VERSION >= 2
 	case KEY_MOUSE:
 		/* ANY of the mouse events */
-		if (teco_interface_getmouse() &&
-		    !teco_cmdline_keymacro("MOUSE", -1, error))
+		if (!teco_interface_getmouse(error))
 			return;
 		break;
 #endif

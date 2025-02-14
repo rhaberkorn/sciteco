@@ -132,7 +132,9 @@ typedef enum {
 void teco_interface_popup_add(teco_popup_entry_type_t type,
                               const gchar *name, gsize name_len, gboolean highlight);
 /** @pure */
-void teco_interface_popup_show(void);
+void teco_interface_popup_show(gsize prefix_len);
+/** @pure */
+void teco_interface_popup_scroll(void);
 /** @pure */
 gboolean teco_interface_popup_is_shown(void);
 /** @pure */
