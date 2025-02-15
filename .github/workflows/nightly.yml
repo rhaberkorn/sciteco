@@ -50,6 +50,8 @@ jobs:
     - name: Build AppImages
       # Should always be on the oldest supported Ubuntu
       if: matrix.os == 'ubuntu-20.04'
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         cd AppImage
         gh release download -R AppImageCommunity/pkg2appimage -O pkg2appimage.AppImage \
