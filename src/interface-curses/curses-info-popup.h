@@ -65,7 +65,14 @@ teco_curses_info_popup_noutrefresh(teco_curses_info_popup_t *ctx)
 {
 	if (!ctx->window)
 		return;
-	redrawwin(ctx->window);
+	/*
+	 * NOTE: Scinterm always redraws its window, which is
+	 * equivalent to touching it, even if it didn't change.
+	 * Consequently, wnoutrefresh() will always copy it to newscr.
+	 * We must therefore always redraw the popup as well, so it
+	 * will still overlap the Scintilla view.
+	 */
+	touchwin(ctx->window);
 	wnoutrefresh(ctx->window);
 }
 

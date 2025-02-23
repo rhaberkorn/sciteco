@@ -711,6 +711,11 @@ teco_interface_init_interactive(GError **error)
 	noecho();
 	/* Scintilla draws its own cursor */
 	curs_set(0);
+	/*
+	 * This has also been observed to reduce flickering
+	 * in teco_interface_refresh().
+	 */
+	leaveok(stdscr, TRUE);
 
 	teco_interface.info_window = newwin(1, 0, 0, 0);
 	teco_interface.msg_window = newwin(1, 0, LINES - 2, 0);
@@ -1519,8 +1524,7 @@ teco_interface_popup_clear(void)
 	 * PDCurses will not redraw all windows that may be
 	 * overlapped by the popup window correctly - at least
 	 * not the info window.
-	 * The Scintilla window is apparently always touched by
-	 * scintilla_noutrefresh().
+	 * The Scintilla window is always touched by scintilla_noutrefresh().
 	 * Actually we would expect this to be necessary on any curses,
 	 * but ncurses doesn't require this.
 	 */
@@ -1596,11 +1600,6 @@ teco_interface_refresh(void)
 	teco_view_noutrefresh(teco_interface_current_view);
 	wnoutrefresh(teco_interface.msg_window);
 	wnoutrefresh(teco_interface.cmdline_window);
-	/*
-	 * FIXME: Why do we have to redrawwin() the popup window
-	 * to keep it on the screen?
-	 * Perhaps something is causing a redraw of the entire Scinterm view.
-	 */
 	teco_curses_info_popup_noutrefresh(&teco_interface.popup);
 	doupdate();
 }
