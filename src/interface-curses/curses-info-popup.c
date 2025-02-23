@@ -213,6 +213,7 @@ teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr)
  *   popup is cleared.
  *
  * @note This must match the calculations in teco_curses_info_popup_init_pad().
+ *   But we could perhaps also cache these values.
  */
 const teco_string_t *
 teco_curses_info_popup_getentry(teco_curses_info_popup_t *ctx, gint y, gint x)
@@ -220,6 +221,9 @@ teco_curses_info_popup_getentry(teco_curses_info_popup_t *ctx, gint y, gint x)
 	int cols = getmaxx(stdscr);	/**! screen width */
 	gint pad_cols;			/**! entry columns */
 	gint pad_colwidth;		/**! width per entry column */
+
+	if (y == 0)
+		return NULL;
 
 	/*
 	 * With Unicode icons enabled, we reserve 2 characters at the beginning and one
