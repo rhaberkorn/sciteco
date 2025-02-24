@@ -1126,9 +1126,13 @@ teco_interface_handle_mouse_button(GdkEventButton *event, GError **error)
 		teco_mouse.type = TECO_MOUSE_PRESSED;
 		break;
 	case GDK_BUTTON_RELEASE:
-	default:
 		teco_mouse.type = TECO_MOUSE_RELEASED;
 		break;
+	case GDK_2BUTTON_PRESS:
+	case GDK_3BUTTON_PRESS:
+	default:
+		/* delivered in addition to GDK_BUTTON_PRESS */
+		return TRUE;
 	}
 
 	teco_mouse.x = event->x;
