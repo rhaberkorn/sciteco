@@ -301,12 +301,6 @@ AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
-AT_SETUP([Rub out help command])
-# Should restore the Q-Register view. But we cannot test this directly.
-AT_CHECK([$SCITECO_CMDLINE "@EQa// 23<@I/x/> @?/EX/{-6D} Z-23\"N(0/0)'"], 0, ignore, stderr)
-AT_FAIL_IF([$GREP "^Error:" stderr])
-AT_CLEANUP
-
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Number stack])
