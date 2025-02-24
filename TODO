@@ -4,8 +4,9 @@ Tasks:
    "edit" hook.
 
 Known Bugs:
- * ?^E$ does not scroll automatically
- * Rubout EQ{$ ?^E$  -- Q-reg view is not restored
+ * ?^E$ does not scroll automatically on GTK.
+   This is apparently since the buffer is newly added to the ring
+   and the view is not yet realized.
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:

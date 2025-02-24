@@ -289,13 +289,13 @@ teco_state_help_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 		return NULL;
 	}
 
-	teco_ring_undo_edit();
 	/*
 	 * ED hooks with the default lexer framework
 	 * will usually load the styling SciTECO script
 	 * when editing the buffer for the first time.
 	 */
-	if (!teco_ring_edit(topic->filename, error))
+	if (!teco_current_doc_undo_edit(error) ||
+	    !teco_ring_edit(topic->filename, error))
 		return NULL;
 
 	/*
