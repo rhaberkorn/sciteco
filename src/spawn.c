@@ -129,11 +129,13 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 		teco_string_t comspec;
 		if (!reg->vtable->get_string(reg, &comspec.data, &comspec.len, NULL, error))
 			return NULL;
+		if (teco_string_contains(&comspec, '\0')) {
+			teco_string_clear(&comspec);
+			teco_error_qregcontainsnull_set(error, "$COMSPEC", 8, FALSE);
+			return NULL;
+		}
 
 		argv = g_new(gchar *, 5);
-		/*
-		 * FIXME: What if $COMSPEC contains null-bytes?
-		 */
 		argv[0] = comspec.data;
 		argv[1] = g_strdup("/q");
 		argv[2] = g_strdup("/c");
@@ -148,11 +150,13 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 		teco_string_t shell;
 		if (!reg->vtable->get_string(reg, &shell.data, &shell.len, NULL, error))
 			return NULL;
+		if (teco_string_contains(&shell, '\0')) {
+			teco_string_clear(&shell);
+			teco_error_qregcontainsnull_set(error, "$SHELL", 6, FALSE);
+			return NULL;
+		}
 
 		argv = g_new(gchar *, 4);
-		/*
-		 * FIXME: What if $SHELL contains null-bytes?
-		 */
 		argv[0] = shell.data;
 		argv[1] = g_strdup("-c");
 		argv[2] = g_strdup(cmdline);
