@@ -1580,10 +1580,10 @@ The existence of a clipboard register can thus be checked
 in macros to determine whether getting and modifying that
 particular clipboard is supported natively.
 .br
+\*(ST supports two ways of driving the clipboard on ncurses.
 .SCITECO_TOPIC OSC-52 xterm
-\*(ST does \fBnot\fP generally support clipboards on ncurses,
-but has special support for OSC-52 escape sequences, as were
-introduced by sufficiently recent versions of
+First of all, there is built-in support for OSC-52 escape sequences,
+as were introduced by sufficiently recent versions of
 .BR xterm (1)
 and have since been adopted by several other terminal emulators.
 Since the operability of OSC-52 clipboards cannot be tested
@@ -1593,6 +1593,7 @@ configured.
 .BR xterm (1)
 for instance must be configured for allowing
 the \fISetSelection\fP and \fIGetSelection\fP window operations.
+It is nevertheless observed to be a very buggy and unreliable feature.
 If running under
 .BR xterm (1),
 \*(ST will still check whether the XTerm version is sufficient.
@@ -1601,10 +1602,16 @@ Other terminal emulators like Kitty may ask for permission to read the
 clipboard (\fBread-clipboard-ask\fP).
 This is not supported by \*(ST and must be disabled
 (use \fBread-clipboard\fP instead).
-.SCITECO_TOPIC xclip
-If native clipboard support is unavailable, users may
-still fall back to using external tools like \fBxclip\fP(1)
-with the \fBEC\fP command.
+.br
+Alternatively, if OSC-52 clipboards are disabled, you can set the
+\fB$SCITECO_CLIPBOARD_SET\fP and \fB$SCITECO_CLIPBOARD_GET\fP
+environment variables (or corresponding Q-Registers) to shell
+commands, that receive the clipboard
+contents on stdin and output the requested clipboard on stdout.
+This allows integrating with various windowing environments.
+See \fBENVIRONMENT\fP in
+.BR sciteco (1)
+for more details.
 .br
 Setting the string part of a clipboard register will set that
 clipboard. \*(ST will perform automatic EOL-translation according

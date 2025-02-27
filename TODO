@@ -390,11 +390,6 @@ Features:
    Clipboards are not flexible enough and not supported everywhere.
    I am not sure how to elegantly address instances, though.
    Especially without some kind of central name registry.
- * Generic clipboard support via optional libclipboard support.
-   This would mainly benefit the ncurses version, especially when enabling
-   mouse support.
-   But it may be beneficial to support it on all other Curses-variants
-   and on Gtk as well.
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.

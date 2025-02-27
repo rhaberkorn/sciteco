@@ -324,6 +324,30 @@ environment before initializing Curses, so these variables
 can be modified in the profile macro.
 .
 .LP
+.SCITECO_TOPIC "$SCITECO_CLIPBOARD_SET" "$SCITECO_CLIPBOARD_GET"
+On ncurses, in addition to the OSC-52 protocol, you can use external
+processes to drive the built-in clipboard Q-Registers (\(lq~\(rq and so on).
+For that you can set the \fBSCITECO_CLIPBOARD_SET\fP and \fBSCITECO_CLIPBOARD_GET\fP
+environment variables or their corresponding Q-Registers to shell commands,
+that receive the clipboard contents on stdin or output the requested clipboard on stdout.
+In the configured commands, the string \(lq{}\(rq is replaced with a single
+letter code of the clipboard to set:
+\(lqc\(rq, \(lqp\(rq or \(lqs\(rq as in the clipboard register names.
+The given commands will always be executed by \fB/bin/sh\fP, regardless of
+the \fBSHELL\fP environment variable or
+the value of bit 8 (128) in the \fBED\fP flags.
+The spawned processes also do not currently inherit the environment from the
+Q-Register environment variables, i.e. you cannot change the process environment
+via \*(ST code.
+\# That would only be possible by rewriting everything with GSpawn.
+.SCITECO_TOPIC xclip
+See
+.B @scitecodatadir@/sample.teco_ini
+for an example of how to integrate the X11 clipboard via
+.BR xclip (1).
+Integrating with Wayland and the Mac OS clipboards is of course also possible.
+.
+.LP
 .SCITECO_TOPIC "$GTK_CSD"
 On GTK+, you may turn off the infamous client-side window decorations
 by setting the environment variable \fBGTK_CSD\fP to \(lq0\(rq.

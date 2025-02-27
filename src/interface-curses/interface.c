@@ -44,6 +44,10 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+#ifdef G_OS_UNIX
+#include <sys/wait.h>
+#endif
+
 #include <curses.h>
 
 #ifdef HAVE_TIGETSTR
@@ -1263,39 +1267,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	return TRUE;
 }
 
-#elif defined(CURSES_TTY)
-
-static void
-teco_interface_init_clipboard(void)
-{
-	/*
-	 * At least on XTerm, there are escape sequences
-	 * for modifying the clipboard (OSC-52).
-	 * This is not standardized in terminfo, so we add special
-	 * XTerm support here. Unfortunately, it is pretty hard to find out
-	 * whether clipboard operations will actually work.
-	 * XTerm must be at least at v203 and the corresponding window operations
-	 * must be enabled.
-	 * There is no way to find out if they are but we must
-	 * not register the clipboard registers if they aren't.
-	 * Still, XTerm clipboards are broken with Unicode characters.
-	 * Also, there are other terminal emulators supporting OSC-52,
-	 * so the XTerm version is only checked if the terminal identifies as XTerm.
-	 * Also, a special clipboard ED flag must be set by the user.
-	 *
-	 * NOTE: Apparently there is also a terminfo entry Ms, but it's probably
-	 * not worth using it since it won't always be set and even if set, does not
-	 * tell you whether the terminal will actually answer to the escape sequence or not.
-	 */
-	if (!(teco_ed & TECO_ED_OSC52) ||
-	    (teco_xterm_version() >= 0 && teco_xterm_version() < 203))
-		return;
-
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("P"));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("S"));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("C"));
-}
+#elif defined(G_OS_UNIX) && defined(CURSES_TTY)
 
 static inline gchar
 get_selection_by_name(const gchar *name)
@@ -1310,9 +1282,48 @@ get_selection_by_name(const gchar *name)
 	return g_ascii_tolower(*name) ? : 'c';
 }
 
-gboolean
-teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
-                             GError **error)
+/*
+ * OSC-52 clipboard implementation.
+ *
+ * At least on XTerm, there are escape sequences
+ * for modifying the clipboard (OSC-52).
+ * This is not standardized in terminfo, so we add special
+ * XTerm support here. Unfortunately, it is pretty hard to find out
+ * whether clipboard operations will actually work.
+ * XTerm must be at least at v203 and the corresponding window operations
+ * must be enabled.
+ * There is no way to find out if they are but we must
+ * not register the clipboard registers if they aren't.
+ * Still, XTerm clipboards are broken with Unicode characters.
+ * Also, there are other terminal emulators supporting OSC-52,
+ * so the XTerm version is only checked if the terminal identifies as XTerm.
+ * Also, a special clipboard ED flag must be set by the user.
+ *
+ * NOTE: Apparently there is also a terminfo entry Ms, but it's probably
+ * not worth using it since it won't always be set and even if set, does not
+ * tell you whether the terminal will actually answer to the escape sequence or not.
+ *
+ * This is a rarely used feature and could theoretically also be handled
+ * by the $SCITECO_CLIPBOARD_SET/GET feature.
+ * Unfortunately, there is no readily available command-line utility allowing both
+ * copying and pasting via OSC-52.
+ * That's really the only reason we keep built-in OSC-52 clipboard support.
+ *
+ * FIXME: This is the only thing here requiring CURSES_TTY.
+ * On the other hand, there is hardly any non-PDCurses on UNIX, which is not
+ * on a TTY, so we shouldn't be loosing much by requiring both.
+ */
+
+static inline gboolean
+teco_interface_osc52_is_enabled(void)
+{
+	return teco_ed & TECO_ED_OSC52 &&
+	       (teco_xterm_version() < 0 || teco_xterm_version() >= 203);
+}
+
+static gboolean
+teco_interface_osc52_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
+                                   GError **error)
 {
 	fputs("\e]52;", teco_interface.screen_tty);
 	fputc(get_selection_by_name(name), teco_interface.screen_tty);
@@ -1351,8 +1362,8 @@ teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
 	return TRUE;
 }
 
-gboolean
-teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError **error)
+static gboolean
+teco_interface_osc52_get_clipboard(const gchar *name, gchar **str, gsize *len, GError **error)
 {
 	gboolean ret = TRUE;
 
@@ -1446,7 +1457,167 @@ cleanup:
 	return ret;
 }
 
-#else /* !PDCURSES && !CURSES_TTY */
+/*
+ * Implementation using external processes.
+ *
+ * NOTE: This could be done with the portable GSpawn API as well,
+ * but this implementation is much simpler.
+ * We don't really need it on Windows anyway as long as we are using
+ * only PDCurses.
+ * This might only be of interest on Windows if building for the Win32 version
+ * of ncurses.
+ * As a downside, compared to GSpawn, this cannot inherit the environment
+ * variables from the global Q-Register table.
+ */
+
+static void
+teco_interface_init_clipboard(void)
+{
+	if (!teco_interface_osc52_is_enabled() &&
+	    (!teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECO_CLIPBOARD_SET", 22) ||
+	     !teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECO_CLIPBOARD_GET", 22)))
+		return;
+
+	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
+	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("P"));
+	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("S"));
+	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("C"));
+}
+
+gboolean
+teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
+                             GError **error)
+{
+	if (teco_interface_osc52_is_enabled())
+		return teco_interface_osc52_set_clipboard(name, str, str_len, error);
+
+	static const gchar *reg_name = "$SCITECO_CLIPBOARD_SET";
+
+	teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, reg_name, strlen(reg_name));
+	if (!reg) {
+		/* Q-Register could have been removed in the meantime */
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Cannot set clipboard. %s is undefined.", reg_name);
+		return FALSE;
+	}
+
+	g_auto(teco_string_t) command;
+	if (!reg->vtable->get_string(reg, &command.data, &command.len, NULL, error))
+		return FALSE;
+	if (teco_string_contains(&command, '\0')) {
+		teco_error_qregcontainsnull_set(error, reg_name, strlen(reg_name), FALSE);
+		return FALSE;
+	}
+
+	gchar *sel = g_strstr_len(command.data, command.len, "{}");
+	if (sel) {
+		*sel++ = ' ';
+		*sel = get_selection_by_name(name);
+	}
+
+	FILE *pipe = popen(command.data, "w");
+	if (!pipe) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Cannot spawn process from %s", reg_name);
+		return FALSE;
+	}
+
+	size_t len = fwrite(str, 1, str_len, pipe);
+
+	int status = pclose(pipe);
+	if (status < 0 || !WIFEXITED(status)) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Error reaping process from %s", reg_name);
+		return FALSE;
+	}
+	if (WEXITSTATUS(status) != 0) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Process from %s returned with exit code %d",
+		            reg_name, WEXITSTATUS(status));
+		return FALSE;
+	}
+
+	if (len < str_len) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Error writing to process from %s", reg_name);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+gboolean
+teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError **error)
+{
+	if (teco_interface_osc52_is_enabled())
+		return teco_interface_osc52_get_clipboard(name, str, len, error);
+
+	static const gchar *reg_name = "$SCITECO_CLIPBOARD_GET";
+
+	teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, reg_name, strlen(reg_name));
+	if (!reg) {
+		/* Q-Register could have been removed in the meantime */
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Cannot get clipboard. %s is undefined.", reg_name);
+		return FALSE;
+	}
+
+	g_auto(teco_string_t) command;
+	if (!reg->vtable->get_string(reg, &command.data, &command.len, NULL, error))
+		return FALSE;
+	if (teco_string_contains(&command, '\0')) {
+		teco_error_qregcontainsnull_set(error, reg_name, strlen(reg_name), FALSE);
+		return FALSE;
+	}
+
+	gchar *sel = g_strstr_len(command.data, command.len, "{}");
+	if (sel) {
+		*sel++ = ' ';
+		*sel = get_selection_by_name(name);
+	}
+
+	FILE *pipe = popen(command.data, "r");
+	if (!pipe) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Cannot spawn process from %s", reg_name);
+		return FALSE;
+	}
+
+	gchar buffer[1024];
+	size_t read_len;
+
+	g_auto(teco_string_t) ret = {NULL, 0};
+
+	do {
+		read_len = fread(buffer, 1, sizeof(buffer), pipe);
+		teco_string_append(&ret, buffer, read_len);
+	} while (read_len == sizeof(buffer));
+
+	int status = pclose(pipe);
+	if (status < 0 || !WIFEXITED(status)) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Error reaping process from %s", reg_name);
+		return FALSE;
+	}
+	/*
+	 * You may have to add a `|| true` for instance to xclip if it
+	 * could fail for empty selections.
+	 */
+	if (WEXITSTATUS(status) != 0) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Process from %s returned with exit code %d",
+		            reg_name, WEXITSTATUS(status));
+		return FALSE;
+	}
+
+	*str = ret.data;
+	*len = ret.len;
+	memset(&ret, 0, sizeof(ret));
+
+	return TRUE;
+}
+
+#else /* !PDCURSES && !G_OS_UNIX && !CURSES_TTY */
 
 static void
 teco_interface_init_clipboard(void)
