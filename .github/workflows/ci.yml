@@ -53,6 +53,16 @@ jobs:
     - name: Build Source Tarball
       run: make dist
 
+    # Once all tests are successful, post into the IRC channel.
+    - name: Post into IRC channel
+      if: ${{ github.event_type == 'push' && matrix.os == 'ubuntu-22.04' }}
+      run: |
+        (echo "NICK git-bot"
+         echo "USER git-bot 8 * : git-bot"
+         echo "JOIN #sciteco"
+         git log --pretty="format:PRIVMSG #sciteco %h %s" --reverse ${{ github.event.before }}..${{ github.event.after }}
+         echo "QUIT") | ncat --ssl irc.libera.chat 6697
+
   macos:
     runs-on: macos-latest
 
