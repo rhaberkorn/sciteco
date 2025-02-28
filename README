@@ -51,6 +51,7 @@ Features
   by the user (commands may have more than two arguments)
 * Extended Q-Register namespace (arbitrary strings): Can be used to build libraries and
   can be abused as a data structure.
+* Quick access to the system clipboard via special `~` registers, even on ncurses!
 * Make use of your keyboard's function keys by assigning them to strings inserted into
   the command stream.
   This also enables navigating with function keys (e.g. cursor keys) as demonstrated

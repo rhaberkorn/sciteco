@@ -174,7 +174,7 @@ Exit, saving all \(lqdirty\(rq buffers.
 \fCEB\fI\^file\^\fR\*$
 .    TD
 Edit buffer or open new \fIfile\fP (glob pattern).
-Files, that did not exist on disk, will not be created until you save them.
+\#Files, that did not exist on disk, will not be created until you save them.
 .  TRX
 .    TD
 \fCEB*.c\*$
@@ -190,7 +190,7 @@ Edit the unnamed buffer.
 .      CI 0EB
 .    TD
 Show buffer ring/list.
-You can specify a filename afterwards to open a file.
+You can type or click a filename afterwards.
 .  TRX
 .    TD
 \fIn\fCEB\fR\*$
@@ -236,6 +236,11 @@ Finish (close) current buffer.
 Finish (close) current buffer, discarding all unsaved changes.
 .  TRX
 .    TD
+.      CI :EF
+.    TD
+Finish (close) current buffer, saving it if it is \(lqdirty\(rq.
+.  TRX
+.    TD
 \fCFG\fI\^path\^\fR\*$
 .    TD
 Go to folder \fIpath\fP, i.e. change working directory.
@@ -246,7 +251,7 @@ Go to folder \fIpath\fP, i.e. change working directory.
 Set single byte ASCII mode.
 .  TRX
 .    TD colspan=2
-\fBTip:\fP You can use the Tab-key for autocompleting filenames and paths.
+\fBTip:\fP You can use the Tab-key and mouse for autocompleting filenames and paths.
 .ETB
 .
 .NCOL
@@ -368,8 +373,14 @@ Copy whole buffer into Q-Register \fIq\fP.
 .    TD
 .      CI X\(ti
 .    TD
-Copy line into clipboard. See also
-.pdfhref W -D https://github.com/rhaberkorn/sciteco/wiki/Useful-Macros#copypaste-from-clipboard -A . \fCM#xc\fP
+Copy line into clipboard.
+.ig END
+.  TRX
+.    TD
+.      CI G\(ti
+.    TD
+Paste from clipboard.
+.END
 .  TRX
 .    TD
 .      CI G q
@@ -472,7 +483,7 @@ Jump to end of buffer.
 .  TRX
 .    TD colspan=2
 \fBTip:\fP Enable the \fCfnkeys.tes\fP module in \fC.teco_ini\fP
-to move around with cursor keys!
+to move around with cursor keys and mouse!
 .ETB
 .
 .TBLX "External Programs" width='42% 58%'
@@ -618,7 +629,7 @@ Search help by word at current position in buffer.
 .END
 .  TRX
 .    TD colspan=2
-\fBTip:\fP You can use the Tab-key for autocompleting topics.
+\fBTip:\fP You can use the Tab-key and mouse for autocompleting topics.
 .ETB
 .
 .NCOL
@@ -823,7 +834,7 @@ Setting a number does not change the string part!
 Set lexer (syntax highlighting) for language \fIname\fP.
 .  TRX
 .    TD colspan=2
-\fBTip:\fP You can use the Tab-key for autocompleting long Q-Register
+\fBTip:\fP You can use the Tab-key and mouse for autocompleting long Q-Register
 names (and therefore Lexer names).
 .ETB
 \# EOF
