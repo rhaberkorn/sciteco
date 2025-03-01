@@ -60,6 +60,8 @@
 
 //#define DEBUG
 
+static gboolean teco_interface_busy_timeout_cb(gpointer user_data);
+static void teco_interface_event_box_realized_cb(GtkWidget *widget, gpointer user_data);
 static void teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                                     GdkRectangle *allocation,
                                                     gpointer user_data);
@@ -312,6 +314,8 @@ teco_interface_init(void)
 	gtk_box_pack_start(GTK_BOX(overlay_vbox), teco_interface.event_box_widget,
 	                   TRUE, TRUE, 0);
 
+	g_signal_connect(teco_interface.event_box_widget, "realize",
+			 G_CALLBACK(teco_interface_event_box_realized_cb), NULL);
 	g_signal_connect(teco_interface.event_box_widget, "size-allocate",
 			 G_CALLBACK(teco_interface_size_allocate_cb), NULL);
 
@@ -400,6 +404,17 @@ teco_interface_init(void)
 	teco_cmdline_t empty_cmdline;
 	memset(&empty_cmdline, 0, sizeof(empty_cmdline));
 	teco_interface_cmdline_update(&empty_cmdline);
+}
+
+static void
+teco_interface_set_cursor(GtkWidget *widget, const gchar *name)
+{
+	GdkWindow *window = gtk_widget_get_window(widget);
+	g_assert(window != NULL);
+	GdkDisplay *display = gdk_window_get_display(window);
+
+	g_autoptr(GdkCursor) cursor = name ? gdk_cursor_new_from_name(display, name) : NULL;
+	gdk_window_set_cursor(window, cursor);
 }
 
 GOptionGroup *
@@ -1332,6 +1347,29 @@ teco_interface_cleanup(void)
  */
 
 /**
+ * Called some time after processing an input event in order to show
+ * business.
+ *
+ * The delay avoids cursor flickering during normal typing.
+ *
+ * @fixme It would be nicer to set the cursor for the entire window,
+ * but that would apparently require another GtkEventBox, spanning everything.
+ */
+static gboolean
+teco_interface_busy_timeout_cb(gpointer user_data)
+{
+	teco_interface_set_cursor(teco_interface.event_box_widget, "wait");
+	return G_SOURCE_REMOVE;
+}
+
+static void
+teco_interface_event_box_realized_cb(GtkWidget *widget, gpointer user_data)
+{
+	/* It's only now safe to get the GdkWindow. */
+	teco_interface_set_cursor(widget, "text");
+}
+
+/**
  * Called when the commandline widget is resized.
  * This should ensure that the caret jumps to the middle of the command line,
  * imitating the behaviour of the current Curses command line.
@@ -1397,6 +1435,10 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 	}
 
 	recursed = TRUE;
+
+	GSource *busy_timeout = g_timeout_source_new(500); /* ms */
+	g_source_set_callback(busy_timeout, teco_interface_busy_timeout_cb, NULL, NULL);
+	g_source_attach(busy_timeout, NULL);
 
 	teco_memory_start_limiting();
 
@@ -1470,6 +1512,10 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 	} while (!g_queue_is_empty(teco_interface.event_queue));
 
 	teco_memory_stop_limiting();
+
+	g_source_destroy(busy_timeout);
+	g_source_unref(busy_timeout);
+	teco_interface_set_cursor(teco_interface.event_box_widget, "text");
 
 	recursed = FALSE;
 	return TRUE;

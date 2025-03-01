@@ -345,9 +345,7 @@ Features:
    Perhaps blinking or invisible?
    The problem is, this won't work so easily once we use a Scintilla
    minibuffer everywhere.
-   Gtk could at the very least use the hourglass cursor.
- * Gtk: Change the cursor when hovering over popup entries.
-   The text area should have the "I" beam unless we're busy.
+   Gtk already sets the "wait" cursor when busy.
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.

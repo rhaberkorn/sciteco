@@ -47,6 +47,7 @@ struct _TecoGtkInfoPopup {
 	GtkAdjustment *hadjustment, *vadjustment;
 
 	GtkWidget *flow_box;
+	GdkCursor *cursor; /*< pointer/hand cursor */
 	GStringChunk *chunk;
 	teco_stailq_head_t list;
 	guint idle_id;
@@ -73,6 +74,9 @@ teco_gtk_info_popup_finalize(GObject *obj_self)
 	teco_stailq_entry_t *entry;
 	while ((entry = teco_stailq_remove_head(&self->list)))
 		g_free(entry);
+
+	if (self->cursor)
+		g_object_unref(self->cursor);
 
 	/* chain up to parent class */
 	G_OBJECT_CLASS(teco_gtk_info_popup_parent_class)->finalize(obj_self);
@@ -354,6 +358,16 @@ teco_gtk_info_popup_idle_add(TecoGtkInfoPopup *self, teco_popup_entry_type_t typ
 
 	gtk_widget_show_all(hbox);
 	gtk_container_add(GTK_CONTAINER(self->flow_box), hbox);
+
+	GtkWidget *flow_box_child = gtk_widget_get_parent(hbox);
+	g_assert(GTK_IS_FLOW_BOX_CHILD(flow_box_child));
+	GdkWindow *window = gtk_widget_get_window(flow_box_child);
+	g_assert(window != NULL);
+
+	if (G_UNLIKELY(!self->cursor))
+		/* we only initialize it now after guaranteed widget realization */
+		self->cursor = gdk_cursor_new_from_name(gdk_window_get_display(window), "pointer");
+	gdk_window_set_cursor(window, self->cursor);
 }
 
 static gboolean
