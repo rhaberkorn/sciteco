@@ -480,6 +480,10 @@ teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * area.
  * Naturally this only has any effect in interactive
  * mode.
+ * Note that you can also click on these entries \(em
+ * if mouse support is enabled \(em to immediately switch
+ * to any file in the buffer ring just like with any
+ * other popup.
  *
  * <file> may also be a glob pattern, in which case
  * all regular files matching the pattern are opened/edited.
