@@ -67,9 +67,6 @@ static void teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
                                                     gpointer user_data);
 static void teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str,
                                              gpointer user_data);
-static void teco_interface_size_allocate_cb(GtkWidget *widget,
-                                            GdkRectangle *allocation,
-                                            gpointer user_data);
 static gboolean teco_interface_input_cb(GtkWidget *widget, GdkEvent *event,
                                         gpointer user_data);
 static void teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len,
@@ -106,56 +103,88 @@ teco_bgr2rgb(guint32 bgr)
 	return GUINT32_SWAP_LE_BE(bgr) >> 8;
 }
 
-/*
- * NOTE: The teco_view_t pointer is reused to directly
- * point to the ScintillaObject.
- * This saves one heap object per view.
- */
+struct _TecoView {
+	ScintillaObject parent_instance;
+	/** current size allocation */
+	GdkRectangle allocation;
+};
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(ScintillaObject, g_object_unref);
+
+#define TECO_TYPE_VIEW teco_view_get_type()
+G_DECLARE_FINAL_TYPE(TecoView, teco_view, TECO, VIEW, ScintillaObject)
+
+G_DEFINE_TYPE(TecoView, teco_view, SCINTILLA_TYPE_OBJECT)
 
 static void
-teco_view_scintilla_notify(ScintillaObject *sci, gint iMessage,
-                           SCNotification *notify, gpointer user_data)
+teco_view_scintilla_notify_cb(ScintillaObject *sci, gint iMessage, SCNotification *notify)
 {
-	teco_view_process_notify((teco_view_t *)sci, notify);
+	teco_view_process_notify((teco_view_t *)TECO_VIEW(sci), notify);
+}
+
+/**
+ * Called when the view is size allocated.
+ *
+ * This especially ensures that the caret is visible after startup and when
+ * opening files on specific lines.
+ * It's important to scroll the caret only when the size actually changes,
+ * so we do not interfere with mouse scrolling.
+ * That callback is invoked even if the size does not change, so that's why
+ * we have to store the current allocation in teco_view_t.
+ * Calling it once is unfortunately not sufficient since the window size
+ * can change during startup.
+ */
+static void
+teco_view_size_allocate_cb(GtkWidget *widget, GdkRectangle *allocation)
+{
+	/* chain to parent class */
+	GTK_WIDGET_CLASS(teco_view_parent_class)->size_allocate(widget, allocation);
+
+	TecoView *view = TECO_VIEW(widget);
+
+	if (allocation->width == view->allocation.width && allocation->height == view->allocation.height)
+		return;
+	teco_view_ssm((teco_view_t *)view, SCI_SCROLLCARET, 0, 0);
+	memcpy(&view->allocation, allocation, sizeof(view->allocation));
 }
 
 teco_view_t *
 teco_view_new(void)
 {
-	ScintillaObject *sci = SCINTILLA(scintilla_new());
+	TecoView *ctx = TECO_VIEW(g_object_new(TECO_TYPE_VIEW, NULL));
 	/*
 	 * We don't want the object to be destroyed
 	 * when it is removed from the vbox.
 	 */
-	g_object_ref_sink(sci);
+	g_object_ref_sink(ctx);
 
-	scintilla_set_id(sci, 0);
+	scintilla_set_id(SCINTILLA(ctx), 0);
 
-	gtk_widget_set_size_request(GTK_WIDGET(sci), 500, 300);
+	gtk_widget_set_size_request(GTK_WIDGET(ctx), 500, 300);
 
 	/*
 	 * This disables mouse and key events on this view.
 	 * For some strange reason, masking events on
 	 * the event box does NOT work.
 	 */
-	gtk_widget_set_can_focus(GTK_WIDGET(sci), FALSE);
-	gint events = gtk_widget_get_events(GTK_WIDGET(sci));
+	gtk_widget_set_can_focus(GTK_WIDGET(ctx), FALSE);
+	gint events = gtk_widget_get_events(GTK_WIDGET(ctx));
 	events &= ~(GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
 	            GDK_SCROLL_MASK |
 	            GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
-	gtk_widget_set_events(GTK_WIDGET(sci), events);
+	gtk_widget_set_events(GTK_WIDGET(ctx), events);
 
-	g_signal_connect(sci, SCINTILLA_NOTIFY,
-			 G_CALLBACK(teco_view_scintilla_notify), NULL);
-
-	return (teco_view_t *)sci;
+	return (teco_view_t *)ctx;
 }
 
-static inline GtkWidget *
-teco_view_get_widget(teco_view_t *ctx)
+static void
+teco_view_class_init(TecoViewClass *klass)
 {
-	return GTK_WIDGET(ctx);
+	SCINTILLA_CLASS(klass)->notify = teco_view_scintilla_notify_cb;
+	GTK_WIDGET_CLASS(klass)->size_allocate = teco_view_size_allocate_cb;
 }
+
+static void teco_view_init(TecoView *self) {}
 
 sptr_t
 teco_view_ssm(teco_view_t *ctx, unsigned int iMessage, uptr_t wParam, sptr_t lParam)
@@ -166,7 +195,7 @@ teco_view_ssm(teco_view_t *ctx, unsigned int iMessage, uptr_t wParam, sptr_t lPa
 void
 teco_view_free(teco_view_t *ctx)
 {
-	g_object_unref(teco_view_get_widget(ctx));
+	g_object_unref(ctx);
 }
 
 static struct {
@@ -316,8 +345,6 @@ teco_interface_init(void)
 
 	g_signal_connect(teco_interface.event_box_widget, "realize",
 			 G_CALLBACK(teco_interface_event_box_realized_cb), NULL);
-	g_signal_connect(teco_interface.event_box_widget, "size-allocate",
-			 G_CALLBACK(teco_interface_size_allocate_cb), NULL);
 
 	gint events = gtk_widget_get_events(teco_interface.event_box_widget);
 	events |= GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
@@ -365,7 +392,7 @@ teco_interface_init(void)
 	/* we will forward key events, so the view should only react to text insertion */
 	teco_view_ssm(teco_interface.cmdline_view, SCI_CLEARALLCMDKEYS, 0, 0);
 
-	GtkWidget *cmdline_widget = teco_view_get_widget(teco_interface.cmdline_view);
+	GtkWidget *cmdline_widget = GTK_WIDGET(teco_interface.cmdline_view);
 	gtk_widget_set_name(cmdline_widget, "sciteco-cmdline");
 	g_signal_connect(cmdline_widget, "size-allocate",
 	                 G_CALLBACK(teco_interface_cmdline_size_allocate_cb), NULL);
@@ -908,7 +935,7 @@ teco_interface_set_css_variables(teco_view_t *view)
 	 * This cannot be done via CSS or Scintilla messages.
 	 * Currently, it is always exactly one line high in order to mimic the Curses UI.
 	 */
-	gtk_widget_set_size_request(teco_view_get_widget(teco_interface.cmdline_view), -1, text_height);
+	gtk_widget_set_size_request(GTK_WIDGET(teco_interface.cmdline_view), -1, text_height);
 }
 
 static void
@@ -942,7 +969,7 @@ teco_interface_refresh(gboolean current_view_changed)
 			gtk_container_remove(GTK_CONTAINER(teco_interface.event_box_widget),
 			                     teco_interface.current_view_widget);
 
-		teco_interface.current_view_widget = teco_view_get_widget(teco_interface_current_view);
+		teco_interface.current_view_widget = GTK_WIDGET(teco_interface_current_view);
 
 		gtk_container_add(GTK_CONTAINER(teco_interface.event_box_widget),
 		                  teco_interface.current_view_widget);
@@ -1382,20 +1409,6 @@ teco_interface_cmdline_size_allocate_cb(GtkWidget *widget,
 	              CARET_SLOP | CARET_EVEN, allocation->width/2);
 }
 
-static void
-teco_interface_size_allocate_cb(GtkWidget *widget,
-                                GdkRectangle *allocation, gpointer user_data)
-{
-	static gboolean scrolled = FALSE;
-
-	/*
-	 * This especially ensures that the caret is visible after startup.
-	 */
-	if (G_UNLIKELY(!scrolled))
-		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-	scrolled = TRUE;
-}
-
 static gboolean
 teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
@@ -1492,8 +1505,7 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		 * has been benchmarked to be a very costly operation.
 		 * Instead we do it only once after every keypress.
 		 */
-		if (teco_interface_current_view != last_view ||
-		    last_pos != teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
+		if (last_pos != teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
 			teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 
 		gdk_window_thaw_updates(top_window);
