@@ -4,25 +4,55 @@
   (Q.r # Q.g*256 # Q.b*256*256)
 }
 
-!* These 8 colors should be available on every system *!
-000,000,000:M[color.rgb]U[color.black]
-128,000,000:M[color.rgb]U[color.red]
-000,128,000:M[color.rgb]U[color.green]
-128,128,000:M[color.rgb]U[color.yellow]
-000,000,128:M[color.rgb]U[color.blue]
-128,000,128:M[color.rgb]U[color.magenta]
-000,128,128:M[color.rgb]U[color.cyan]
-192,192,192:M[color.rgb]U[color.white]
+0EJ-1"=
+  !*
+   * The Curses RGB values are hardcoded by Scinterm
+   * and do not necessarily correspond to the renditions by
+   * terminal emulators.
+   *!
+  !* These 8 colors should be available on every system *!
+  000,000,000:M[color.rgb]U[color.black]
+  128,000,000:M[color.rgb]U[color.red]
+  000,128,000:M[color.rgb]U[color.green]
+  128,128,000:M[color.rgb]U[color.yellow]
+  000,000,128:M[color.rgb]U[color.blue]
+  128,000,128:M[color.rgb]U[color.magenta]
+  000,128,128:M[color.rgb]U[color.cyan]
+  192,192,192:M[color.rgb]U[color.white]
 
-!* Light color variants, might not be available on every terminal *!
-064,064,064:M[color.rgb]U[color.lblack]
-255,000,000:M[color.rgb]U[color.lred]
-000,255,000:M[color.rgb]U[color.lgreen]
-255,255,000:M[color.rgb]U[color.lyellow]
-000,000,255:M[color.rgb]U[color.lblue]
-255,000,255:M[color.rgb]U[color.lmagenta]
-000,255,255:M[color.rgb]U[color.lcyan]
-255,255,255:M[color.rgb]U[color.lwhite]
+  !* Light color variants, might not be available on every terminal *!
+  064,064,064:M[color.rgb]U[color.lblack]
+  255,000,000:M[color.rgb]U[color.lred]
+  000,255,000:M[color.rgb]U[color.lgreen]
+  255,255,000:M[color.rgb]U[color.lyellow]
+  000,000,255:M[color.rgb]U[color.lblue]
+  255,000,255:M[color.rgb]U[color.lmagenta]
+  000,255,255:M[color.rgb]U[color.lcyan]
+  255,255,255:M[color.rgb]U[color.lwhite]
+|
+  !*
+   * The GTK RGB values are the ones used by common terminal
+   * emulators. This should ensure that color schemes based
+   * on the 16 default colors look similar on Curses and GTK.
+   *!
+  000,000,000:M[color.rgb]U[color.black]
+  205,000,000:M[color.rgb]U[color.red]
+  000,205,000:M[color.rgb]U[color.green]
+  205,205,000:M[color.rgb]U[color.yellow]
+  000,000,238:M[color.rgb]U[color.blue]
+  205,000,205:M[color.rgb]U[color.magenta]
+  000,205,205:M[color.rgb]U[color.cyan]
+  229,229,229:M[color.rgb]U[color.white]
+
+  127,127,127:M[color.rgb]U[color.lblack]
+  255,000,000:M[color.rgb]U[color.lred]
+  000,255,000:M[color.rgb]U[color.lgreen]
+  255,255,000:M[color.rgb]U[color.lyellow]
+  092,092,255:M[color.rgb]U[color.lblue]
+  255,000,255:M[color.rgb]U[color.lmagenta]
+  000,255,255:M[color.rgb]U[color.lcyan]
+  255,255,255:M[color.rgb]U[color.lwhite]
+'
 
 !* <[[flags,]bg,]fg,style>M[color.set] *!
 @[color.set]{
