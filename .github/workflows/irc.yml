@@ -1,0 +1,33 @@
+# After every push with successful CI,
+# post the commits since the last successful CI into the IRC channel.
+name: IRC Post
+
+on:
+  workflow_run:
+    workflows: ['Continuous Integration']
+    types: [completed]
+    branches: master
+
+jobs:
+  irc:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+    - name: Git Clone
+      uses: actions/checkout@v4.1.6
+    - name: Install Build Dependencies
+      run: sudo apt-get install -y ncat
+    - name: Get last successful commit
+      uses: nrwl/last-successful-commit-action@v1
+      id: last_successful_commit
+      with:
+        branch: 'master'
+        workflow_id: 'ci.yml'
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: IRC Connection
+      run: |
+        (echo "NICK git-bot"
+         echo "USER git-bot 8 * : git-bot"
+         echo "JOIN #sciteco"
+         git log --pretty="format:PRIVMSG #sciteco %h %s" --reverse ${{ steps.last_successful_commit.outputs.commit_hash }}..HEAD
+         echo "QUIT") | ncat --ssl irc.libera.chat 6697

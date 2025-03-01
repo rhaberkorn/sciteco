@@ -3,23 +3,6 @@ name: Continuous Integration
 on: [push, pull_request]
 
 jobs:
-  # Only for posting into the IRC channel.
-  # FIXME: Perhaps we should do this only after all of CI is successful and
-  # include all commits since the last successful CI run?
-  irc:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Git Clone
-      uses: actions/checkout@v4.1.6
-    - name: Post into IRC channel
-      if: ${{ github.event_name == 'push' }}
-      run: |
-        (echo "NICK git-bot"
-         echo "USER git-bot 8 * : git-bot"
-         echo "JOIN #sciteco"
-         git log --pretty="format:PRIVMSG #sciteco %h %s" --reverse ${{ github.event.before }}..${{ github.event.after }}
-         echo "QUIT") | ncat --ssl irc.libera.chat 6697
-
   ubuntu:
     strategy:
       matrix:
