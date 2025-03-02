@@ -104,7 +104,7 @@ poudriere:
 # and static linking of all dependant libraries (no DLLs are
 # added to the zip).
 # If a win32.teco_ini exists, it is added to the release
-# instead of sample.teco_ini.
+# instead of fallback.teco_ini.
 # This also adds gspawn-win32-helper-console.exe to the archive
 # which is required by the glib spawn functions.
 # If we ever build a non-console version on Windows,
@@ -141,7 +141,7 @@ mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
 	      temp-install/usr/share/doc/sciteco/* \
 	   temp-bin/
 	cp @srcdir@/win32.teco_ini temp-bin/.teco_ini || \
-		cp temp-install/usr/bin/sample.teco_ini \
+		cp temp-install/usr/bin/fallback.teco_ini \
 		   temp-bin/.teco_ini
 	cp @srcdir@/COPYING @srcdir@/ChangeLog temp-bin/
 	rm -rf temp-install/

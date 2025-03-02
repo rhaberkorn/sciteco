@@ -14,6 +14,7 @@ Vcs-Git: git://github.com/rhaberkorn/sciteco.git
 Package: sciteco-curses
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, sciteco-common (= ${source:Version})
+Suggests: xclip
 Description: Scintilla-based Text Editor and Corrector (curses)
  SciTECO is an interactive TECO dialect, similar to Video TECO.
  It also adds features from classic Standard TECO-11,

@@ -102,7 +102,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%DATADIR%%/lib/women/sciteco.7.woman.tec
 %%DATADIR%%/lib/women/tedoc.tes.1.woman
 %%DATADIR%%/lib/women/tedoc.tes.1.woman.tec
-%%DATADIR%%/sample.teco_ini
+%%DATADIR%%/fallback.teco_ini
 %%DATADIR%%/sciteco.tmac
 %%GTK%%%%DATADIR%%/sciteco-16.png
 %%GTK%%%%DATADIR%%/sciteco-32.png

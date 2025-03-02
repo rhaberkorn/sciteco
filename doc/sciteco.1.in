@@ -152,7 +152,11 @@ option is absent, \*(ST will mung
 On UNIX/Linux, the default profile is at
 .I ~/.teco_ini
 (see \fBENVIRONMENT\fP).
-It will consequently not expect a \fIscript\fP file name as
+If the per-user profile is missing, \*(ST falls back to
+.IR @scitecodatadir@/fallback.teco_ini .
+Without
+.BR \-\-mung ,
+a \fIscript\fP file name will consequently not be expected as
 the first non-option argument.
 The profile will usually set up various Scintilla and \*(ST options,
 configure syntax highlighting,
@@ -342,7 +346,7 @@ via \*(ST code.
 \# That would only be possible by rewriting everything with GSpawn.
 .SCITECO_TOPIC xclip
 See
-.B @scitecodatadir@/sample.teco_ini
+.B @scitecodatadir@/fallback.teco_ini
 for an example of how to integrate the X11 clipboard via
 .BR xclip (1).
 Integrating with Wayland and the Mac OS clipboards is of course also possible.
@@ -398,8 +402,9 @@ program termination or user-programmed behaviour.
 .B $SCITECOCONFIG/.teco_ini
 Default profile macro.
 .TP
-.B @scitecodatadir@/sample.teco_ini
-Sample profile macro configuring commonly used run-time options,
+.SCITECO_TOPIC "fallback.teco_ini"
+.B @scitecodatadir@/fallback.teco_ini
+Fallback profile macro configuring commonly used run-time options,
 syntax highlighting, session handling
 and opening files specified on the command line.
 .TP

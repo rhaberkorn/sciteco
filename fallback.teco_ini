@@ -65,9 +65,11 @@ EMQ[$SCITECOPATH]/fnkeys.tes
 !* Uncomment if terminal emulator supports OSC-52 clipboards *!
 !!0,256ED
 
-!* For integrating with xclip on ncurses *!
-[$SCITECO_CLIPBOARD_SET]xclip -in -selection {}
-[$SCITECO_CLIPBOARD_GET]xclip -out -selection {} || true
+:Q[$DISPLAY]">
+  !* For integrating with xclip on ncurses *!
+  [$SCITECO_CLIPBOARD_SET]xclip -in -selection {}
+  [$SCITECO_CLIPBOARD_GET]xclip -out -selection {} || true
+'
 
 !* Uncomment to enable Unicode icons in the Curses UI *!
 !!0,512ED

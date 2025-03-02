@@ -7,7 +7,7 @@ MAYBE_DLMALLOC = contrib/dlmalloc
 endif
 SUBDIRS = lib $(MAYBE_DLMALLOC) contrib/rb3ptr src doc tests
 
-dist_scitecodata_DATA = sample.teco_ini
+dist_scitecodata_DATA = fallback.teco_ini
 
 EXTRA_DIST = README TODO
 

@@ -124,7 +124,7 @@ Known Bugs:
    which is correct. Without --incremental even the formatting is broken.
    This could well be a Git bug.
  * Margins, identions and the like are not configured on the unnamed
-   buffer by sample.teco_ini.
+   buffer by fallback.teco_ini.
    And this is probably correct.
    However when saving a new unnamed file for the first time,
    nothing will change either and it's tricky to apply the correct
@@ -308,6 +308,8 @@ Features:
      Video TECO had ET for the same purpose.
      TECO 10 had a ^W regular command for case folding all strings,
      but I don't think it's worth supporting.
+ * n:"x to leave <n> on the stack (i.e. only peek). This simplifies
+   expressions like Qa"N Qa ...
  * Perhaps there should be a command for converting absolute line numbers
    to positions (i.e. ESPOSITIONFROMLINE$$:^E).
    This should also include the opposite as currently supported by :^Q.
@@ -593,11 +595,6 @@ Features:
    * Erroneous constructs could be highlighted up to the previous
      start state. E.g. when redefining labels, the entire label would be
      highlighted.
- * Instead of defaulting to nothing in the absence of ~/.teco_ini,
-   we should load the installed sample.teco_ini, which
-   gives a more user-friendly experience.
-   Or perhaps even simpler, should the profile be missing, just log
-   a warning on startup.
  * NLS (Native Language Support). I could at least add German and Russian.
    There aren't many localizable strings in SciTECO.
    Should be optional.
@@ -708,7 +705,7 @@ Documentation:
  * People are demanding a Youtube tutorial.
  * Vimtutor like tutorial. Could be a woman-page.
    Perhaps sciteco-tutorial would copy the files to /tmp and
-   open them always with sample.teco_ini.
+   open them always with fallback.teco_ini.
  * The HTML manuals lack monospaced fonts.
    This is partly because an.tmac removes the Courier family
    in nroff mode, but it still doesn't work if you undo this.

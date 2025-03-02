@@ -465,11 +465,33 @@ main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if (!mung_filename && teco_mung_profile)
+	if (!mung_filename && teco_mung_profile) {
 		/* NOTE: Still safe to use g_getenv() */
 		mung_filename = g_build_filename(g_getenv("SCITECOCONFIG"), INI_FILE, NULL);
+		if (!g_file_test(mung_filename, G_FILE_TEST_IS_REGULAR)) {
+			g_autofree gchar *datadir = teco_file_get_datadir();
+			gchar *fallback = g_build_filename(datadir, "fallback.teco_ini", NULL);
+			if (g_file_test(fallback, G_FILE_TEST_IS_REGULAR)) {
+				teco_interface_msg(TECO_MSG_WARNING,
+				                   "Profile \"%s\" not found: Falling back to \"%s\".",
+				                   mung_filename, fallback);
+				g_free(mung_filename);
+				mung_filename = fallback;
+			} else {
+				teco_interface_msg(TECO_MSG_WARNING,
+				                   "No profile found to mung.");
+				g_free(mung_filename);
+				g_free(fallback);
+				mung_filename = NULL;
+			}
+		}
+	}
 
-	if (mung_filename && g_file_test(mung_filename, G_FILE_TEST_IS_REGULAR)) {
+	if (mung_filename) {
+		/*
+		 * NOTE: Theoretically there is a small timeframe when the file could
+		 * disappear, in which case there will be an error.
+		 */
 		if (!teco_execute_file(mung_filename, &local_qregs, &error) &&
 		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT))
 			goto error;

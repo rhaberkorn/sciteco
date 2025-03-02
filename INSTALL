@@ -134,7 +134,7 @@ To install SciTECO, type something like:
 
   $ sudo make install
 
-You are recommended to use the included "sample.teco_ini" as a starting
+You are recommended to use the included "fallback.teco_ini" as a starting
 point for your profile. On UNIX, you can copy it to your $HOME directory
 at "~/.teco_ini" while on Windows, it should be in the same directory
 as `sciteco.exe` unless you adapt the $SCITECOCONFIG variable.
