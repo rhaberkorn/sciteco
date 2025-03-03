@@ -169,8 +169,7 @@ a \*(ST macro package with a man page called
 .EX
 groff -Z -Kutf-8 -Tutf8 -man -M@scitecodatadir@ -msciteco \\
       great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
-grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.woman.tec \\
-               great-macro.tes.7sciteco.intermediate
+grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.intermediate
 .SCITECO_TT_END
 .EE
 .RE
