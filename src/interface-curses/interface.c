@@ -176,14 +176,29 @@ static gint teco_xterm_version(void) G_GNUC_UNUSED;
 
 /**
  * Curses attribute for the color combination
- * `f` (foreground) and `b` (background)
  * according to the color pairs initialized by
  * Scinterm.
- * NOTE: This depends on the global variable
- * `COLORS` and is thus not a constant expression.
+ * This is equivalent to Scinterm's internal term_color_attr().
+ *
+ * @param fg foreground color
+ * @param bg background color
+ * @return curses attribute
  */
-#define SCI_COLOR_ATTR(f, b) \
-	((attr_t)COLOR_PAIR(SCI_COLOR_PAIR(f, b)))
+static inline attr_t
+teco_color_attr(gshort fg, gshort bg)
+{
+	if (has_colors())
+		return COLOR_PAIR(SCI_COLOR_PAIR(fg, bg));
+
+	/*
+	 * Basic support for monochrome terminals:
+	 * Every background, that is not black is assumed to be a
+	 * dark-on-bright area, rendered in reverse.
+	 * This will at least work with the terminal.tes
+	 * color scheme.
+	 */
+	return bg != COLOR_BLACK ? A_REVERSE : 0;
+}
 
 /**
  * Translate a Scintilla-compatible RGB color value
@@ -881,7 +896,7 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 	}
 
 	wmove(teco_interface.msg_window, 0, 0);
-	wbkgdset(teco_interface.msg_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	wbkgdset(teco_interface.msg_window, ' ' | teco_color_attr(fg, bg));
 	vw_printw(teco_interface.msg_window, fmt, ap);
 	wclrtoeol(teco_interface.msg_window);
 }
@@ -895,7 +910,7 @@ teco_interface_msg_clear(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 
-	wbkgdset(teco_interface.msg_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	wbkgdset(teco_interface.msg_window, ' ' | teco_color_attr(fg, bg));
 	werase(teco_interface.msg_window);
 }
 
@@ -1007,7 +1022,7 @@ teco_interface_draw_info(void)
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 
 	wmove(teco_interface.info_window, 0, 0);
-	wbkgdset(teco_interface.info_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	wbkgdset(teco_interface.info_window, ' ' | teco_color_attr(fg, bg));
 
 	const gchar *info_type_str;
 
@@ -1177,7 +1192,7 @@ teco_interface_draw_cmdline(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
 
-	wbkgdset(teco_interface.cmdline_window, ' ' | SCI_COLOR_ATTR(fg, bg));
+	wbkgdset(teco_interface.cmdline_window, ' ' | teco_color_attr(fg, bg));
 	werase(teco_interface.cmdline_window);
 	mvwaddch(teco_interface.cmdline_window, 0, 0, '*' | A_BOLD);
 	copywin(teco_interface.cmdline_pad, teco_interface.cmdline_window,
@@ -1667,7 +1682,7 @@ teco_interface_popup_show(gsize prefix_len)
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
 
 	teco_interface.popup_prefix_len = prefix_len;
-	teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
+	teco_curses_info_popup_show(&teco_interface.popup, teco_color_attr(fg, bg));
 }
 
 void
@@ -1823,7 +1838,7 @@ teco_interface_getmouse(GError **error)
 
 		short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
 		short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
-		teco_curses_info_popup_show(&teco_interface.popup, SCI_COLOR_ATTR(fg, bg));
+		teco_curses_info_popup_show(&teco_interface.popup, teco_color_attr(fg, bg));
 
 		return TRUE;
 	}
