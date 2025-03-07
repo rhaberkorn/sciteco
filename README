@@ -119,11 +119,15 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Github Releases](https://github.com/rhaberkorn/sciteco/releases)
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [FreeBSD port](https://www.freshports.org/editors/sciteco/)
+  [![FreeBSD port](https://repology.org/badge/version-for-repo/freebsd/sciteco-curses.svg?header=PACKAGE)](https://repology.org/project/sciteco-curses/versions)
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
+  [![AUR package](https://repology.org/badge/version-for-repo/aur/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
 * [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/sciteco)
+  [![Alpine Linux Edge package](https://repology.org/badge/version-for-repo/alpine_edge/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
 * [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
-  for Windows users.
+  for Windows users
+  [![Chocolatey package](https://repology.org/badge/version-for-repo/chocolatey/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
 * Yocto/OpenEmbedded users should try the
   [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
 * Users of OpenWrt may try to install the
