@@ -151,6 +151,7 @@ static const teco_curses_icon_t teco_icons_ext[] = {
 	{"editorconfig",	0xe615}, /*  */
 	{"ejs",			0xe618}, /*  */
 	{"elm",			0xe62c}, /*  */
+	{"eml",			0xf01ee}, /* 󰇮 */
 	{"env",			0xf462}, /*  */
 	{"eot",			0xf031}, /*  */
 	{"epub",		0xe28a}, /*  */

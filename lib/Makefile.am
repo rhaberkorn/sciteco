@@ -102,6 +102,7 @@ dist_lexer_DATA += lexers/verilog.tes \
                    lexers/asciidoc.tes \
                    lexers/troff.tes \
                    lexers/git.tes \
-                   lexers/sciteco.tes
+                   lexers/sciteco.tes \
+                   lexers/email.tes
 
 endif

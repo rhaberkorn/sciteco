@@ -1,0 +1,34 @@
+!*
+ * E-Mail messages with signatures and quotes.
+ *
+ * NOTE: This is not a real lexer.
+ * It only styles the document once.
+ *!
+
+@[lexer.test.email]{
+  :EN*.emlQ*
+}
+
+@[lexer.set.email]{[:
+  78ESSETEDGECOLUMN 1ESSETWRAPMODE
+  !!1ESSETEDGEMODE
+
+  :M[color.comment],1M[color.set]
+  :M[color.preproc],2M[color.set]
+  :M[color.preproc2],3M[color.set]
+
+  ZU.z
+  ZJ [_-:S^J-- ^J]_"S !* signatures *!
+    4R .U.z
+    ESSTARTSTYLING 1,(:-)ESSETSTYLING
+  '
+
+  J< .-Q.z"= 1; '
+    0A->"= !* quotes *!
+      U.s
+      <:C; 0A- "N 1; '> .-Q.z"= 1; '
+      Q.sESSTARTSTYLING
+      (0A->"=3|2'),(Q.lESLINELENGTH)ESSETSTYLING
+    '
+  :L; %.l>
+]:}
