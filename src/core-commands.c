@@ -758,50 +758,42 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+/*
+ * FIXME: would be nice to do this with constant amount of
+ * editor messages. E.g. by using custom algorithm accessing
+ * the internal document buffer.
+ */
 static teco_bool_t
 teco_delete_words(teco_int_t n)
 {
-	sptr_t pos, size;
-
 	if (!n)
 		return TECO_SUCCESS;
 
-	pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	size = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-	/*
-	 * FIXME: would be nice to do this with constant amount of
-	 * editor messages. E.g. by using custom algorithm accessing
-	 * the internal document buffer.
-	 */
+	sptr_t pos, start_pos, end_pos;
+	pos = start_pos = end_pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
 	if (n > 0) {
 		while (n--) {
-			sptr_t size = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
-			teco_interface_ssm(SCI_DELWORDRIGHTEND, 0, 0);
-			if (size == teco_interface_ssm(SCI_GETLENGTH, 0, 0))
-				break;
+			sptr_t old_pos = end_pos;
+			end_pos = teco_interface_ssm(SCI_WORDENDPOSITION, end_pos, FALSE);
+			end_pos = teco_interface_ssm(SCI_WORDENDPOSITION, end_pos, TRUE);
+			if (end_pos == old_pos)
+				return TECO_FAILURE;
 		}
 	} else {
-		n *= -1;
-		while (n--) {
-			sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-			//teco_interface_ssm(SCI_DELWORDLEFTEND, 0, 0);
-			teco_interface_ssm(SCI_WORDLEFTEND, 0, 0);
-			if (pos == teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
-				break;
-			teco_interface_ssm(SCI_DELWORDRIGHTEND, 0, 0);
+		while (n++) {
+			sptr_t old_pos = start_pos;
+			start_pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, start_pos, TRUE);
+			start_pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, start_pos, FALSE);
+			if (start_pos == old_pos)
+				return TECO_FAILURE;
 		}
 	}
-	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 
-	if (n >= 0) {
-		if (size != teco_interface_ssm(SCI_GETLENGTH, 0, 0)) {
-			teco_interface_ssm(SCI_UNDO, 0, 0);
-			teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-		}
-		return TECO_FAILURE;
-	}
-	g_assert(size != teco_interface_ssm(SCI_GETLENGTH, 0, 0));
+	g_assert(start_pos < end_pos);
+	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+	teco_interface_ssm(SCI_DELETERANGE, start_pos, end_pos-start_pos);
+	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
 
 	if (teco_current_doc_must_undo()) {
 		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
