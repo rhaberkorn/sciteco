@@ -13,6 +13,8 @@
 }
 
 @[lexer.set.git]{[:
+  1ESSETWRAPMODE
+
   :M[color.comment],1M[color.set]
 
   J< .-Z"= 1; '

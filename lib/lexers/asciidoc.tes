@@ -6,6 +6,8 @@
 }
 
 @[lexer.set.asciidoc]{
+  1ESSETWRAPMODE
+
   ESSETILEXERasciidoc
   1,1ESSTYLESETBOLD
   1,2ESSTYLESETBOLD

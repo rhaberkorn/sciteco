@@ -6,6 +6,8 @@
 }
 
 @[lexer.set.markdown]{
+  1ESSETWRAPMODE
+
   ESSETILEXERmarkdown
   1,2ESSTYLESETBOLD
   1,3ESSTYLESETBOLD
