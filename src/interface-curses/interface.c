@@ -167,12 +167,16 @@ static gint teco_xterm_version(void) G_GNUC_UNUSED;
  * Returns the curses `COLOR_PAIR` for the given curses foreground and background `COLOR`s.
  * This is used simply to enumerate every possible color combination.
  * Note: only 256 combinations are possible due to curses portability.
- * Note: This references the global curses variable `COLORS` and is not a constant expression.
- * @param f The curses foreground `COLOR`.
- * @param b The curses background `COLOR`.
- * @return int number for defining a curses `COLOR_PAIR`.
+ *
+ * @param fg The curses foreground `COLOR`.
+ * @param bg The curses background `COLOR`.
+ * @return number for defining a curses `COLOR_PAIR`.
  */
-#define SCI_COLOR_PAIR(f, b) ((b) * ((COLORS < 16) ? 8 : 16) + (f) + 1)
+static inline gshort
+teco_color_pair(gshort fg, gshort bg)
+{
+	return bg * (COLORS < 16 ? 8 : 16) + fg + 1;
+}
 
 /**
  * Curses attribute for the color combination
@@ -188,7 +192,7 @@ static inline attr_t
 teco_color_attr(gshort fg, gshort bg)
 {
 	if (has_colors())
-		return COLOR_PAIR(SCI_COLOR_PAIR(fg, bg));
+		return COLOR_PAIR(teco_color_pair(fg, bg));
 
 	/*
 	 * Basic support for monochrome terminals:
@@ -1121,7 +1125,7 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
-	wcolor_set(teco_interface.cmdline_pad, SCI_COLOR_PAIR(fg, bg), NULL);
+	wcolor_set(teco_interface.cmdline_pad, teco_color_pair(fg, bg), NULL);
 
 	/* format effective command line */
 	teco_interface.cmdline_len =
