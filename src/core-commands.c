@@ -699,6 +699,37 @@ teco_state_start_back(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+/*
+ * FIXME: would be nice to do this with constant amount of
+ * editor messages. E.g. by using custom algorithm accessing
+ * the internal document buffer.
+ */
+static gboolean
+teco_find_words(gsize *pos, teco_int_t n)
+{
+	if (n > 0) {
+		while (n--) {
+			sptr_t old_pos = *pos;
+			*pos = teco_interface_ssm(SCI_WORDENDPOSITION, *pos, FALSE);
+			*pos = teco_interface_ssm(SCI_WORDENDPOSITION, *pos, TRUE);
+			if (*pos == old_pos)
+				return FALSE;
+		}
+
+		return TRUE;
+	}
+
+	while (n++) {
+		sptr_t old_pos = *pos;
+		*pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, *pos, TRUE);
+		*pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, *pos, FALSE);
+		if (*pos == old_pos)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 /*$ W word
  * [n]W -- Move dot by words
  * -W
@@ -727,70 +758,35 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 		return;
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
-	/*
-	 * FIXME: would be nice to do this with constant amount of
-	 * editor messages. E.g. by using custom algorithm accessing
-	 * the internal document buffer.
-	 */
-	unsigned int msg = SCI_WORDRIGHTEND;
-	if (v < 0) {
-		v *= -1;
-		msg = SCI_WORDLEFTEND;
-	}
-	while (v--) {
-		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		teco_interface_ssm(msg, 0, 0);
-		if (pos == teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
-			break;
-	}
-	if (v < 0) {
-		if (teco_current_doc_must_undo())
-			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-		if (teco_machine_main_eval_colon(ctx) > 0)
-			teco_expressions_push(TECO_SUCCESS);
-	} else {
-		teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-		if (!teco_machine_main_eval_colon(ctx)) {
+	gsize word_pos = pos;
+	if (!teco_find_words(&word_pos, v)) {
+		if (!teco_machine_main_eval_colon(ctx))
 			teco_error_move_set(error, "W");
-			return;
-		}
-		teco_expressions_push(TECO_FAILURE);
+		else
+			teco_expressions_push(TECO_FAILURE);
+		return;
 	}
+
+	if (teco_current_doc_must_undo())
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+	teco_interface_ssm(SCI_GOTOPOS, word_pos, 0);
+	if (teco_machine_main_eval_colon(ctx) > 0)
+		teco_expressions_push(TECO_SUCCESS);
 }
 
-/*
- * FIXME: would be nice to do this with constant amount of
- * editor messages. E.g. by using custom algorithm accessing
- * the internal document buffer.
- */
-static teco_bool_t
+static gboolean
 teco_delete_words(teco_int_t n)
 {
 	if (!n)
-		return TECO_SUCCESS;
+		return TRUE;
 
-	sptr_t pos, start_pos, end_pos;
-	pos = start_pos = end_pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
-	if (n > 0) {
-		while (n--) {
-			sptr_t old_pos = end_pos;
-			end_pos = teco_interface_ssm(SCI_WORDENDPOSITION, end_pos, FALSE);
-			end_pos = teco_interface_ssm(SCI_WORDENDPOSITION, end_pos, TRUE);
-			if (end_pos == old_pos)
-				return TECO_FAILURE;
-		}
-	} else {
-		while (n++) {
-			sptr_t old_pos = start_pos;
-			start_pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, start_pos, TRUE);
-			start_pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, start_pos, FALSE);
-			if (start_pos == old_pos)
-				return TECO_FAILURE;
-		}
-	}
+	gsize start_pos = pos, end_pos = pos;
+	if (!teco_find_words(n > 0 ? &end_pos : &start_pos, n))
+		return FALSE;
+	g_assert(start_pos <= end_pos);
 
-	g_assert(start_pos < end_pos);
 	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 	teco_interface_ssm(SCI_DELETERANGE, start_pos, end_pos-start_pos);
 	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
@@ -801,7 +797,7 @@ teco_delete_words(teco_int_t n)
 	}
 	teco_ring_dirtify();
 
-	return TECO_SUCCESS;
+	return TRUE;
 }
 
 /*$ V
@@ -833,10 +829,10 @@ teco_state_start_delete_words(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
 		return;
 
-	teco_bool_t rc = teco_delete_words(v);
+	gboolean rc = teco_delete_words(v);
 	if (teco_machine_main_eval_colon(ctx) > 0) {
-		teco_expressions_push(rc);
-	} else if (teco_is_failure(rc)) {
+		teco_expressions_push(teco_bool(rc));
+	} else if (!rc) {
 		teco_error_words_set(error, "V");
 		return;
 	}
@@ -858,10 +854,10 @@ teco_state_start_delete_words_back(teco_machine_main_t *ctx, GError **error)
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
 		return;
 
-	teco_bool_t rc = teco_delete_words(-v);
+	gboolean rc = teco_delete_words(-v);
 	if (teco_machine_main_eval_colon(ctx) > 0) {
-		teco_expressions_push(rc);
-	} else if (teco_is_failure(rc)) {
+		teco_expressions_push(teco_bool(rc));
+	} else if (!rc) {
 		teco_error_words_set(error, "Y");
 		return;
 	}

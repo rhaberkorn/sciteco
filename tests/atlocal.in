@@ -38,3 +38,6 @@ esac
 # Some platforms allow very large stack sizes, making it hard to test
 # against potential stack overflows.
 ulimit -s 8192
+
+# Test strings used by multiple test cases
+WORDS_EXAMPLE="navigating (words is useful"

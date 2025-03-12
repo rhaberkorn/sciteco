@@ -113,9 +113,15 @@ AT_SETUP([Convert between line and glyph positions])
 AT_CHECK([$SCITECO -e "@I/1^J2^J3/J 2^QC :^Q-3\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Moving by words])
+AT_CHECK([$SCITECO -e "Z= 3J 2W .-11\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+# FIXME: Sooner or later, there will be a shortcut for -W.
+AT_CHECK([$SCITECO -e "Z-4J -2W .-17\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Deleting words])
-AT_CHECK([$SCITECO -e "@I/deleting words is useful/3J 2V .-3\"N(0/0)' Z-13\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/deleting words is useful/3R 2Y .-14\"N(0/0)' Z-17\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "3J 2V .-3\"N(0/0)' Z-20\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "Z-4J 2Y .-17\"N(0/0)' Z-21\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searches])
