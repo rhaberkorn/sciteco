@@ -8,6 +8,10 @@
 }
 
 @[lexer.set.sciteco]{
+  2ESSETTABWIDTH
+  0ESSETUSETABS
+  !* FIXME: Change TAB representation *!
+
   1ESSETIDENTIFIER
   :M[color.keyword],1M[color.set]
   :M[color.operator],2M[color.set]
