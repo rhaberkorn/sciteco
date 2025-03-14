@@ -2248,7 +2248,7 @@ TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_escape,
  * Must only be enabled if the terminal emulator is configured
  * properly.
  * .IP 512:
- * Enable/Disable Unicode icons in the Curses UI.
+ * Enable/Disable Unicode icons and symbols in the Curses UI.
  * This requires a capable font, like the ones provided
  * by the \(lqNerd Fonts\(rq project.
  * Changes to this flag in interactive mode may not become

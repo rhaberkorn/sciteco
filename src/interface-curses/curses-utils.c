@@ -27,6 +27,7 @@
 
 #include "sciteco.h"
 #include "string-utils.h"
+#include "curses-icons.h"
 #include "curses-utils.h"
 
 /**
@@ -46,6 +47,7 @@
 guint
 teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 {
+	gint truncate_len = teco_ed & TECO_ED_ICONS ? 1 : 3;
 	int old_x, old_y;
 	gint chars_added = 0;
 
@@ -122,13 +124,21 @@ teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 	return getcurx(win) - old_x;
 
 truncate:
-	if (max_width >= 3) {
+	if (max_width >= truncate_len) {
 		/*
 		 * Truncate string
 		 */
-		wattron(win, A_UNDERLINE | A_BOLD);
-		mvwaddstr(win, old_y, old_x + max_width - 3, "...");
-		wattroff(win, A_UNDERLINE | A_BOLD);
+		wmove(win, old_y, old_x + max_width - truncate_len);
+		if (truncate_len == 3) {
+			wattron(win, A_UNDERLINE | A_BOLD);
+			waddstr(win, "...");
+			wattroff(win, A_UNDERLINE | A_BOLD);
+		} else {
+			g_assert(truncate_len == 1);
+			wattron(win, A_BOLD);
+			teco_curses_add_wc(win, TECO_CURSES_ICONS_ELLIPSIS);
+			wattroff(win, A_BOLD);
+		}
 	}
 
 	return getcurx(win) - old_x;
@@ -151,6 +161,7 @@ truncate:
 guint
 teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width)
 {
+	gint truncate_len = teco_ed & TECO_ED_ICONS ? 1 : 3;
 	int old_x = getcurx(win);
 
 	g_autofree gchar *filename_printable = teco_string_echo(filename, strlen(filename));
@@ -167,10 +178,10 @@ teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width)
 		 * necessary, which requires a widechar Curses variant.
 		 */
 		waddstr(win, filename_printable);
-	} else if (filename_len >= 3) {
+	} else if (filename_len >= truncate_len) {
 		const gchar *keep_post;
 		keep_post = g_utf8_offset_to_pointer(filename_printable + strlen(filename_printable),
-		                                     -max_width + 3);
+		                                     -max_width + truncate_len);
 
 #ifdef G_OS_WIN32
 		const gchar *keep_pre = g_path_skip_root(filename_printable);
@@ -180,9 +191,17 @@ teco_curses_format_filename(WINDOW *win, const gchar *filename, gint max_width)
 			keep_post += keep_pre - filename_printable;
 		}
 #endif
-		wattron(win, A_UNDERLINE | A_BOLD);
-		waddstr(win, "...");
-		wattroff(win, A_UNDERLINE | A_BOLD);
+
+		if (truncate_len == 3) {
+			wattron(win, A_UNDERLINE | A_BOLD);
+			waddstr(win, "...");
+			wattroff(win, A_UNDERLINE | A_BOLD);
+		} else {
+			g_assert(truncate_len == 1);
+			wattron(win, A_BOLD);
+			teco_curses_add_wc(win, TECO_CURSES_ICONS_ELLIPSIS);
+			wattroff(win, A_BOLD);
+		}
 		waddstr(win, keep_post);
 	}
 

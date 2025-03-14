@@ -18,11 +18,15 @@
 
 #include <glib.h>
 
-/**
- * Q-Register icon.
- * 0xf04cf would look more similar to the current Gtk icon.
- */
-#define TECO_CURSES_ICONS_QREG 0xe236 /*  */
+enum {
+	/**
+	 * Q-Register icon.
+	 * 0xf04cf would look more similar to the current Gtk icon.
+	 */
+	TECO_CURSES_ICONS_QREG = 0xe236, /*  */
+	/** Ellipsis used for truncating text */
+	TECO_CURSES_ICONS_ELLIPSIS = 0x2026 /* … */
+};
 
 gunichar teco_curses_icons_lookup_file(const gchar *filename);
 gunichar teco_curses_icons_lookup_dir(const gchar *dirname);
