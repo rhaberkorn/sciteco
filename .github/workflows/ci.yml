@@ -35,8 +35,8 @@ jobs:
         # Enable Adress Sanitizer only on ncurses.
         # Gtk produces a lot of false negatives.
         # This will improve the test suite quality, even without Valgrind.
-        CFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' }}
-        CXXFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' }}
+        CFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' || ' ' }}
+        CXXFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' || ' ' }}
         MALLOC_REPLACEMENT: ${{ matrix.interface == 'ncurses' && 'no' || 'check' }}
       run: |
         autoreconf -i
