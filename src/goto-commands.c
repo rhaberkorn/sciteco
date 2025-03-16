@@ -65,27 +65,25 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	if (chr == '!') {
 		gssize existing_pc = teco_goto_table_set(&ctx->goto_table, ctx->goto_label.data,
 		                                         ctx->goto_label.len, ctx->macro_pc);
-		if (existing_pc == ctx->macro_pc)
-			/* encountered the same label again */
-			return &teco_state_start;
-		if (existing_pc >= 0) {
+		if (existing_pc < 0) {
+			/* new label */
+			if (ctx->parent.must_undo)
+				teco_goto_table_undo_remove(&ctx->goto_table, ctx->goto_label.data, ctx->goto_label.len);
+
+			if (teco_goto_skip_label.len > 0 &&
+			    !teco_string_cmp(&ctx->goto_label, teco_goto_skip_label.data, teco_goto_skip_label.len)) {
+				teco_undo_string_own(teco_goto_skip_label);
+				memset(&teco_goto_skip_label, 0, sizeof(teco_goto_skip_label));
+
+				if (ctx->parent.must_undo)
+					teco_undo_guint(ctx->__flags);
+				ctx->mode = TECO_MODE_NORMAL;
+			}
+		} else if (existing_pc != ctx->macro_pc) {
 			g_autofree gchar *label_printable = teco_string_echo(ctx->goto_label.data,
 			                                                     ctx->goto_label.len);
 			teco_interface_msg(TECO_MSG_WARNING, "Ignoring goto label \"%s\" redefinition",
 			                   label_printable);
-			return &teco_state_start;
-		}
-		if (ctx->parent.must_undo)
-			teco_goto_table_undo_remove(&ctx->goto_table, ctx->goto_label.data, ctx->goto_label.len);
-
-		if (teco_goto_skip_label.len > 0 &&
-		    !teco_string_cmp(&ctx->goto_label, teco_goto_skip_label.data, teco_goto_skip_label.len)) {
-			teco_undo_string_own(teco_goto_skip_label);
-			memset(&teco_goto_skip_label, 0, sizeof(teco_goto_skip_label));
-
-			if (ctx->parent.must_undo)
-				teco_undo_guint(ctx->__flags);
-			ctx->mode = TECO_MODE_NORMAL;
 		}
 
 		if (ctx->parent.must_undo)
