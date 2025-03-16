@@ -433,9 +433,8 @@ main(int argc, char **argv)
 	teco_qreg_table_init_locals(&local_qregs, TRUE);
 
 	if (!teco_ring_edit_by_name(NULL, &error)) {
-		g_fprintf(stderr, "Error editing unnamed file: %s\n",
-		          error->message);
-		exit(EXIT_FAILURE);
+		g_prefix_error_literal(&error, "Error editing unnamed file: ");
+		goto cleanup;
 	}
 
 	/*
@@ -458,10 +457,12 @@ main(int argc, char **argv)
 		                        &local_qregs, &error) &&
 		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
 			teco_error_add_frame_toplevel();
-			goto error;
+			goto cleanup;
 		}
+		g_clear_error(&error);
+
 		if (!teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
-			goto error;
+			goto cleanup;
 		goto cleanup;
 	}
 
@@ -494,11 +495,12 @@ main(int argc, char **argv)
 		 */
 		if (!teco_execute_file(mung_filename, &local_qregs, &error) &&
 		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT))
-			goto error;
+			goto cleanup;
+		g_clear_error(&error);
 
 		if (teco_quit_requested) {
 			if (!teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
-				goto error;
+				goto cleanup;
 			goto cleanup;
 		}
 	}
@@ -527,10 +529,10 @@ main(int argc, char **argv)
 		if (!teco_cmdline_keypress(teco_fake_cmdline, strlen(teco_fake_cmdline), &error) &&
 		    !g_error_matches(error, TECO_ERROR, TECO_ERROR_QUIT)) {
 			teco_error_add_frame_toplevel();
-			goto error;
+			goto cleanup;
 		}
 	} else if (!teco_interface_event_loop(&error)) {
-		goto error;
+		goto cleanup;
 	}
 
 	teco_machine_main_clear(&teco_cmdline.machine);
@@ -548,7 +550,7 @@ main(int argc, char **argv)
 	teco_view_set_scintilla_undo(teco_qreg_view, FALSE);
 
 	if (!teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
-		goto error;
+		goto cleanup;
 
 cleanup:
 #ifndef NDEBUG
@@ -559,9 +561,11 @@ cleanup:
 	teco_view_free(teco_qreg_view);
 #endif
 	teco_interface_cleanup();
-	return 0;
 
-error:
-	teco_error_display_full(error);
-	return EXIT_FAILURE;
+	if (error != NULL) {
+		teco_error_display_full(error);
+		return EXIT_FAILURE;
+	}
+
+	return 0;
 }
