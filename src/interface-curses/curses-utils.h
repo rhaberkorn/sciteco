@@ -34,3 +34,20 @@ teco_curses_add_wc(WINDOW *win, gunichar chr)
 	gchar buf[6];
 	waddnstr(win, buf, g_unichar_to_utf8(chr, buf));
 }
+
+/**
+ * Clear from the current position until the end of the given
+ * curses window with the current \b foreground attributes.
+ * This is similar to wclrtobot(), but does not use the
+ * background attributes.
+ */
+static inline void
+teco_curses_clrtobot(WINDOW *win)
+{
+	int max_x, max_y;
+	getmaxyx(win, max_y, max_x);
+	if (getcurx(win)+1 < max_x)
+		whline(win, ' ', max_x - getcurx(win));
+	for (int y = getcury(win)+1; y <= max_y; y++)
+		mvwhline(win, y, 0, ' ', max_x);
+}

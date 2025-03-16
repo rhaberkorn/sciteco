@@ -98,7 +98,13 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 	 */
 	ctx->pad = newpad(pad_lines, cols - 2);
 
-	wbkgd(ctx->pad, ' ' | attr);
+	/*
+	 * NOTE: attr could contain A_REVERSE on monochrome terminals,
+	 * so we use foreground attributes instead of background attributes.
+	 * This way, we can cancel out the A_REVERSE if necessary.
+	 */
+	wattrset(ctx->pad, attr);
+	teco_curses_clrtobot(ctx->pad);
 
 	/*
 	 * cur_col is the row currently written.
@@ -113,7 +119,8 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 		wmove(ctx->pad, cur_line-1,
 		      (cur_col % pad_cols)*pad_colwidth);
 
-		wattrset(ctx->pad, entry->highlight ? A_BOLD : A_NORMAL);
+		if (entry->highlight)
+			wattron(ctx->pad, A_BOLD);
 
 		switch (entry->type) {
 		case TECO_POPUP_FILE:
@@ -136,6 +143,8 @@ teco_curses_info_popup_init_pad(teco_curses_info_popup_t *ctx, attr_t attr)
 			teco_curses_format_str(ctx->pad, entry->name.data, entry->name.len, -1);
 			break;
 		}
+
+		wattroff(ctx->pad, A_BOLD);
 
 		cur_col++;
 	}
@@ -167,7 +176,7 @@ teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr)
 	/* window covers message, scintilla and info windows */
 	ctx->window = newwin(popup_lines, 0, lines - 1 - popup_lines, 0);
 
-	wbkgdset(ctx->window, ' ' | attr);
+	wattrset(ctx->window, attr);
 
 	wborder(ctx->window,
 	        ACS_VLINE,
@@ -198,7 +207,7 @@ teco_curses_info_popup_show(teco_curses_info_popup_t *ctx, attr_t attr)
 	 * Instead, simply draw reverse blanks.
 	 */
 	wmove(ctx->window, bar_y, cols-1);
-	wattron(ctx->window, A_REVERSE);
+	wattrset(ctx->window, attr ^ A_REVERSE);
 	wvline(ctx->window, ' ', bar_height);
 }
 

@@ -899,8 +899,12 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 		break;
 	}
 
+	/*
+	 * NOTE: This is safe since we don't have to cancel out any A_REVERSE,
+	 * that could be set in the background attributes.
+	 */
 	wmove(teco_interface.msg_window, 0, 0);
-	wbkgdset(teco_interface.msg_window, ' ' | teco_color_attr(fg, bg));
+	wbkgdset(teco_interface.msg_window, teco_color_attr(fg, bg));
 	vw_printw(teco_interface.msg_window, fmt, ap);
 	wclrtoeol(teco_interface.msg_window);
 }
@@ -914,7 +918,7 @@ teco_interface_msg_clear(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 
-	wbkgdset(teco_interface.msg_window, ' ' | teco_color_attr(fg, bg));
+	wbkgdset(teco_interface.msg_window, teco_color_attr(fg, bg));
 	werase(teco_interface.msg_window);
 }
 
@@ -1026,7 +1030,7 @@ teco_interface_draw_info(void)
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 
 	wmove(teco_interface.info_window, 0, 0);
-	wbkgdset(teco_interface.info_window, ' ' | teco_color_attr(fg, bg));
+	wattrset(teco_interface.info_window, teco_color_attr(fg, bg));
 
 	const gchar *info_type_str;
 
@@ -1061,7 +1065,7 @@ teco_interface_draw_info(void)
 		g_assert_not_reached();
 	}
 
-	wclrtoeol(teco_interface.info_window);
+	teco_curses_clrtobot(teco_interface.info_window);
 
 	/*
 	 * Make sure the title will consist only of printable characters.
@@ -1125,7 +1129,7 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
-	wcolor_set(teco_interface.cmdline_pad, teco_color_pair(fg, bg), NULL);
+	wattrset(teco_interface.cmdline_pad, teco_color_attr(fg, bg));
 
 	/* format effective command line */
 	teco_interface.cmdline_len =
@@ -1141,6 +1145,8 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 	 * as command line, since we can then define a style
 	 * for rubbed out parts of the command line which will
 	 * be user-configurable.
+	 * The attributes, supported by the terminal can theoretically
+	 * be queried with term_attrs().
 	 */
 	wattron(teco_interface.cmdline_pad, A_UNDERLINE | A_BOLD);
 
@@ -1157,18 +1163,18 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 	 * Highlight cursor after effective command line
 	 * FIXME: This should use SCI_GETCARETFORE().
 	 */
+	attr_t attr = A_NORMAL;
+	short pair = 0;
 	if (teco_interface.cmdline_rubout_len) {
-		attr_t attr = 0;
-		short pair = 0;
-
 		wmove(teco_interface.cmdline_pad, 0, teco_interface.cmdline_len);
 		wattr_get(teco_interface.cmdline_pad, &attr, &pair, NULL);
 		wchgat(teco_interface.cmdline_pad, 1,
-		       (attr & A_UNDERLINE) | A_REVERSE, pair, NULL);
+		       (attr & (A_UNDERLINE | A_REVERSE)) ^ A_REVERSE, pair, NULL);
 	} else {
 		teco_interface.cmdline_len++;
-		wattroff(teco_interface.cmdline_pad, A_UNDERLINE | A_BOLD);
-		waddch(teco_interface.cmdline_pad, ' ' | A_REVERSE);
+		wattr_get(teco_interface.cmdline_pad, &attr, &pair, NULL);
+		wattr_set(teco_interface.cmdline_pad, (attr & ~(A_UNDERLINE | A_BOLD)) ^ A_REVERSE, pair, NULL);
+		waddch(teco_interface.cmdline_pad, ' ');
 	}
 
 	teco_interface_draw_cmdline();
@@ -1196,9 +1202,9 @@ teco_interface_draw_cmdline(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
 
-	wbkgdset(teco_interface.cmdline_window, ' ' | teco_color_attr(fg, bg));
-	werase(teco_interface.cmdline_window);
+	wattrset(teco_interface.cmdline_window, teco_color_attr(fg, bg));
 	mvwaddch(teco_interface.cmdline_window, 0, 0, '*' | A_BOLD);
+	teco_curses_clrtobot(teco_interface.cmdline_window);
 	copywin(teco_interface.cmdline_pad, teco_interface.cmdline_window,
 	        0, disp_offset, 0, 1, 0, disp_len, FALSE);
 }

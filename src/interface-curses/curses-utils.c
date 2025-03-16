@@ -48,9 +48,18 @@ guint
 teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 {
 	gint truncate_len = teco_ed & TECO_ED_ICONS ? 1 : 3;
-	int old_x, old_y;
 	gint chars_added = 0;
 
+	/*
+	 * The entire background might be in reverse, especially
+	 * on monochrome terminals.
+	 * In those cases, we have to __remove__ the A_REVERSE flag.
+	 */
+	attr_t attrs = A_NORMAL;
+	short pair = 0;
+	wattr_get(win, &attrs, &pair, NULL);
+
+	int old_x, old_y;
 	getyx(win, old_y, old_x);
 
 	if (max_width < 0)
@@ -72,37 +81,38 @@ teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 			chars_added++;
 			if (chars_added > max_width)
 				goto truncate;
-			waddch(win, '$' | A_REVERSE);
+			wattr_set(win, attrs ^ A_REVERSE, pair, NULL);
+			waddch(win, '$');
 			break;
 		case '\r':
 			chars_added += 2;
 			if (chars_added > max_width)
 				goto truncate;
-			waddch(win, 'C' | A_REVERSE);
-			waddch(win, 'R' | A_REVERSE);
+			wattr_set(win, attrs ^ A_REVERSE, pair, NULL);
+			waddstr(win, "CR");
 			break;
 		case '\n':
 			chars_added += 2;
 			if (chars_added > max_width)
 				goto truncate;
-			waddch(win, 'L' | A_REVERSE);
-			waddch(win, 'F' | A_REVERSE);
+			wattr_set(win, attrs ^ A_REVERSE, pair, NULL);
+			waddstr(win, "LF");
 			break;
 		case '\t':
 			chars_added += 3;
 			if (chars_added > max_width)
 				goto truncate;
-			waddch(win, 'T' | A_REVERSE);
-			waddch(win, 'A' | A_REVERSE);
-			waddch(win, 'B' | A_REVERSE);
+			wattr_set(win, attrs ^ A_REVERSE, pair, NULL);
+			waddstr(win, "TAB");
 			break;
 		default:
 			if (TECO_IS_CTL(*str)) {
 				chars_added += 2;
 				if (chars_added > max_width)
 					goto truncate;
-				waddch(win, '^' | A_REVERSE);
-				waddch(win, TECO_CTL_ECHO(*str) | A_REVERSE);
+				wattr_set(win, attrs ^ A_REVERSE, pair, NULL);
+				waddch(win, '^');
+				waddch(win, TECO_CTL_ECHO(*str));
 			} else {
 				chars_added++;
 				if (chars_added > max_width)
@@ -116,6 +126,8 @@ teco_curses_format_str(WINDOW *win, const gchar *str, gsize len, gint max_width)
 				waddnstr(win, str, clen);
 			}
 		}
+		/* restore original state of A_REVERSE */
+		wattr_set(win, attrs, pair, NULL);
 
 		str += clen;
 		len -= clen;
