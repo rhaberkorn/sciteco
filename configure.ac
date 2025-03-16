@@ -48,16 +48,17 @@ canonicalize() {
 
 # Checks for programs.
 #
+# FIXME: Check for -std=gnu11?
+AC_PROG_CC([cc gcc clang])
+AC_PROG_SED
+AC_PROG_GREP
+AC_PROG_INSTALL
+
 # Disable shared libraries by default (--disable-shared).
 # We don't install any library, so this __should__ not matter.
 # In reality Libtool builds unnecessary wrapper binaries on win32 (MinGW) without this.
 # These wrapper binaries do not handle UTF-8 properly and break the test suite.
 LT_INIT([disable-shared])
-# FIXME: Check for -std=gnu11?
-AC_PROG_CC
-AC_PROG_SED
-AC_PROG_GREP
-AC_PROG_INSTALL
 
 # Mainly because of Scintilla, which depends on
 # GNU Make.
@@ -72,7 +73,7 @@ if [[ x$ax_cv_gnu_make_command = x ]]; then
 fi
 
 # Additionally required by the Scintilla build process:
-AC_PROG_CXX
+AC_PROG_CXX([c++ g++ clang++])
 AX_CXX_COMPILE_STDCXX(17, noext, mandatory)
 AC_CHECK_TOOL(AR, ar)
 
