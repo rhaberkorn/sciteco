@@ -374,6 +374,7 @@ void
 teco_machine_main_clear(teco_machine_main_t *ctx)
 {
 	teco_goto_table_clear(&ctx->goto_table);
+	teco_string_clear(&ctx->expectstring.string);
 	teco_machine_stringbuilding_clear(&ctx->expectstring.machine);
 }
 
