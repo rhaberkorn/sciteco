@@ -7,9 +7,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-22.04]
-        # Enable Adress Sanitizer only on Clang.
-        # This will improve the test suite quality, even without Valgrind.
-        compiler: ['CC=gcc CXX=g++', '--disable-malloc-replacement CC=clang CXX=clang++ CFLAGS="-fsanitize=address -fno-omit-frame-pointer" CXXFLAGS="-fsanitize=address -fno-omit-frame-pointer"']
+        compiler: ['CC=gcc CXX=g++', 'CC=clang CXX=clang++']
         interface: [ncurses, gtk]
 
     # NOTE: The virtual environments already contain both GCC and Clang
@@ -33,10 +31,17 @@ jobs:
         groff doxygen
 
     - name: Configure Build
+      env:
+        # Enable Adress Sanitizer only on ncurses.
+        # Gtk produces a lot of false negatives.
+        # This will improve the test suite quality, even without Valgrind.
+        CFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' }}
+        CXXFLAGS: ${{ matrix.interface == 'ncurses' && '-fsanitize=address -fno-omit-frame-pointer' }}
+        MALLOC_REPLACEMENT: ${{ matrix.interface == 'ncurses' && 'no' || 'check' }}
       run: |
         autoreconf -i
         ./configure --with-interface=${{ matrix.interface }} --enable-debug --enable-html-manual \
-                    ${{ matrix.compiler }}
+                    --enable-malloc-replacement=$MALLOC_REPLACEMENT ${{ matrix.compiler }}
 
     # NOTE: xvfb-run emulates an XServer and is required when building
     # Gtk versions (since SciTECO calls itself during the build).
