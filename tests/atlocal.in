@@ -7,7 +7,7 @@ host=@host@
 SCITECO="@abs_top_builddir@/src/sciteco"
 
 if [ $at_arg_valgrind != false ]; then
-	SCITECO="valgrind --tool=memcheck --error-exitcode=66 $SCITECO"
+	SCITECO="valgrind --tool=memcheck --leak-check=full --error-exitcode=66 $SCITECO"
 fi
 
 # For testing command-line editing:
