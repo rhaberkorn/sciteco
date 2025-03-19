@@ -1708,6 +1708,8 @@ teco_machine_qregspec_auto_complete(teco_machine_qregspec_t *ctx, teco_string_t 
 void
 teco_machine_qregspec_free(teco_machine_qregspec_t *ctx)
 {
+	if (!ctx)
+		return;
 	teco_machine_stringbuilding_clear(&ctx->machine_stringbuilding);
 	teco_string_clear(&ctx->name);
 	g_free(ctx);

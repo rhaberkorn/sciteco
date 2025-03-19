@@ -287,6 +287,9 @@ AT_CHECK([$SCITECO -e '2<!foo!>'], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Warning:" stderr])
 # Will print a warning about label redefinition, though...
 AT_CHECK([$SCITECO -e "!foo! Qa\"S^C' !foo! Qa\"S(0/0)' -Ua @O/foo/"], 0, ignore, ignore)
+# This should not leak memory or cause memory corruptions when running under
+# Valgrind or Asan:
+AT_CHECK([$SCITECO_CMDLINE "!foo!{-5D}"], 0, ignore, stderr)
 AT_CLEANUP
 
 #

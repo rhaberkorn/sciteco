@@ -70,15 +70,14 @@ gpointer teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
  */
 /*
  * FIXME: Due to the requirements on the variable, we could be tempted to inline
- * references to it directly into the action()-function, saving the `ptr`
+ * references to it directly into the action()-function, getting rid of the `ptr`
  * in the undo token. This is however often practically not possible.
  * We could however add a variant for true global variables.
+ * Or perhaps just use TECO_DEFINE_UNDO_CALL() in these few cases.
  *
  * FIXME: Sometimes, the push-function is used only in a single compilation unit,
  * so it should be declared `static` or `static inline`.
  * Is it worth complicating our APIs in order to support that?
- *
- * FIXME: Perhaps better split this into TECO_DEFINE_UNDO_OBJECT() and TECO_DEFINE_UNDO_OBJECT_OWN()
  */
 #define __TECO_DEFINE_UNDO_OBJECT(NAME, TYPE, COPY, DELETE, DELETE_IF_DISABLED, DELETE_ON_RUN) \
 	typedef struct { \
@@ -125,24 +124,30 @@ gpointer teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
  *
  * @param NAME C identifier used for name mangling.
  * @param TYPE Type of variable to restore.
- * @param COPY A global function/expression to execute in order to copy VAR.
- *             If left empty, this is an identity operation and ownership
- *             of the variable is passed to the undo token.
- * @param DELETE A global function/expression to execute in order to destruct
- *               objects of TYPE. Leave empty if destruction is not necessary.
+ * @param COPY A global function/macro to execute in order to copy VAR.
+ *   If left empty, this is an identity operation and ownership
+ *   of the variable is passed to the undo token.
+ * @param DELETE A global function/macro to execute in order to destruct
+ *   objects of TYPE. Leave empty if destruction is not necessary.
  *
  * @ingroup undo_objects
  */
 #define TECO_DEFINE_UNDO_OBJECT(NAME, TYPE, COPY, DELETE) \
 	__TECO_DEFINE_UNDO_OBJECT(NAME, TYPE, COPY, DELETE, /* don't delete if disabled */, DELETE)
+
 /**
- * @fixme _OWN variants will invalidate the variable pointer, so perhaps
- * it will be clearer to have _SET variants instead.
+ * This is like TECO_DEFINE_UNDO_OBJECT(), but passes the ownership
+ * of the variable to the undo token.
+ *
+ * If DELETE is specified, this will invalidate the variable after calling the push-function.
+ * At undo-time however, it is expected to be valid.
+ * Therefore it is crucial to set the variable afterwards or at least to nullify it.
+ * The DELETE function may consequently have to deal with NULL pointers.
  *
  * @ingroup undo_objects
  */
 #define TECO_DEFINE_UNDO_OBJECT_OWN(NAME, TYPE, DELETE) \
-	__TECO_DEFINE_UNDO_OBJECT(NAME, TYPE, /* pass ownership */, DELETE, DELETE, /* don't delete if run */)
+	__TECO_DEFINE_UNDO_OBJECT(NAME, TYPE, /* pass ownership */, DELETE, DELETE, DELETE)
 
 /** @ingroup undo_objects */
 #define TECO_DECLARE_UNDO_OBJECT(NAME, TYPE) \
@@ -150,7 +155,7 @@ gpointer teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
 
 /** @ingroup undo_objects */
 #define TECO_DEFINE_UNDO_SCALAR(TYPE) \
-	TECO_DEFINE_UNDO_OBJECT_OWN(TYPE, TYPE, /* don't delete */)
+	TECO_DEFINE_UNDO_OBJECT(TYPE, TYPE, /* don't copy */, /* don't delete */)
 
 /** @ingroup undo_objects */
 #define TECO_DECLARE_UNDO_SCALAR(TYPE) \
@@ -211,13 +216,13 @@ TECO_DECLARE_UNDO_SCALAR(gconstpointer);
  * "constant" parameters.
  *
  * @param FNC Name of a global function or macro to execute.
- *            It must be a plain C identifier.
+ *   It must be a plain C identifier.
  * @param ... The parameter types of FNC (signature).
- *            Only the types without any variable names must be specified.
+ *   Only the types without any variable names must be specified.
  *
  * @fixme Sometimes, the push-function is used only in a single compilation unit,
- * so it should be declared `static` or `static inline`.
- * Is it worth complicating our APIs in order to support that?
+ *   so it should be declared `static` or `static inline`.
+ *   Is it worth complicating our APIs in order to support that?
  */
 #define TECO_DEFINE_UNDO_CALL(FNC, ...) \
 	typedef struct { \

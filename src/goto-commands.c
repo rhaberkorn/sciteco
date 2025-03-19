@@ -90,6 +90,8 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 			teco_undo_string_own(ctx->goto_label);
 		else
 			teco_string_clear(&ctx->goto_label);
+		memset(&ctx->goto_label, 0, sizeof(ctx->goto_label));
+
 		return &teco_state_start;
 	}
 

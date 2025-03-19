@@ -30,6 +30,7 @@ teco_state_expectqreg_reset(teco_machine_main_t *ctx)
 		teco_undo_qregspec_own(ctx->expectqreg);
 	else
 		teco_machine_qregspec_free(ctx->expectqreg);
+	ctx->expectqreg = NULL;
 }
 
 gboolean teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error);
