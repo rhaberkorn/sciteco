@@ -553,6 +553,9 @@ main(int argc, char **argv)
 		goto cleanup;
 
 cleanup:
+	if (error != NULL)
+		teco_error_display_full(error);
+
 #ifndef NDEBUG
 	teco_ring_cleanup();
 	teco_qreg_table_clear(&local_qregs);
@@ -562,10 +565,5 @@ cleanup:
 #endif
 	teco_interface_cleanup();
 
-	if (error != NULL) {
-		teco_error_display_full(error);
-		return EXIT_FAILURE;
-	}
-
-	return 0;
+	return error ? EXIT_FAILURE : EXIT_SUCCESS;
 }
