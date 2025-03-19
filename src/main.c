@@ -433,7 +433,7 @@ main(int argc, char **argv)
 	teco_qreg_table_init_locals(&local_qregs, TRUE);
 
 	if (!teco_ring_edit_by_name(NULL, &error)) {
-		g_prefix_error_literal(&error, "Error editing unnamed file: ");
+		g_prefix_error(&error, "Error editing unnamed file: ");
 		goto cleanup;
 	}
 
