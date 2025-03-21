@@ -1715,5 +1715,12 @@ teco_machine_qregspec_free(teco_machine_qregspec_t *ctx)
 	g_free(ctx);
 }
 
-TECO_DEFINE_UNDO_CALL(teco_machine_qregspec_free, teco_machine_qregspec_t *);
+static inline void
+teco_machine_qregspec_clear(teco_machine_qregspec_t **ctx)
+{
+	teco_machine_qregspec_free(*ctx);
+	*ctx = NULL;
+}
+
+TECO_DEFINE_UNDO_CALL(teco_machine_qregspec_clear, teco_machine_qregspec_t **);
 TECO_DEFINE_UNDO_OBJECT_OWN(qregspec, teco_machine_qregspec_t *, teco_machine_qregspec_free);

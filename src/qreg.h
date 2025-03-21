@@ -252,7 +252,7 @@ void teco_machine_qregspec_free(teco_machine_qregspec_t *ctx);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(teco_machine_qregspec_t, teco_machine_qregspec_free);
 
 /** @memberof teco_machine_qregspec_t */
-void undo__teco_machine_qregspec_free(teco_machine_qregspec_t *);
+void undo__teco_machine_qregspec_clear(teco_machine_qregspec_t **);
 TECO_DECLARE_UNDO_OBJECT(qregspec, teco_machine_qregspec_t *);
 
 #define teco_undo_qregspec_own(VAR) \

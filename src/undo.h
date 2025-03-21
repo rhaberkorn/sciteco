@@ -143,6 +143,7 @@ gpointer teco_undo_push_size(teco_undo_action_t action_cb, gsize size)
  * At undo-time however, it is expected to be valid.
  * Therefore it is crucial to set the variable afterwards or at least to nullify it.
  * The DELETE function may consequently have to deal with NULL pointers.
+ * Also, any other undo action must always leave the variable in a valid state.
  *
  * @ingroup undo_objects
  */

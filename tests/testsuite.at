@@ -310,6 +310,12 @@ AT_CHECK([$SCITECO_CMDLINE "@I/F/ J @I/X/ @FK/F/{-6D} Z-2\"N(0/0)'"], 0, ignore,
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
+AT_SETUP([Rub out Q-Register specifications])
+# This was causing memory corruptions, that would at least show up under Valgrind.
+AT_CHECK([$SCITECO_CMDLINE "GaGb{-4D}"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
+AT_CLEANUP
+
 AT_SETUP([Searches from macro calls])
 AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])

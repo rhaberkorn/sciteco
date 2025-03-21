@@ -45,7 +45,7 @@ teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error)
 	ctx->expectqreg = teco_machine_qregspec_new(current->expectqreg.type, ctx->qreg_table_locals,
 	                                            ctx->parent.must_undo);
 	if (ctx->parent.must_undo)
-		undo__teco_machine_qregspec_free(ctx->expectqreg);
+		undo__teco_machine_qregspec_clear(&ctx->expectqreg);
 	return TRUE;
 }
 
@@ -240,7 +240,7 @@ teco_state_queryqreg_initial(teco_machine_main_t *ctx, GError **error)
 	ctx->expectqreg = teco_machine_qregspec_new(type, ctx->qreg_table_locals,
 	                                            ctx->parent.must_undo);
 	if (ctx->parent.must_undo)
-		undo__teco_machine_qregspec_free(ctx->expectqreg);
+		undo__teco_machine_qregspec_clear(&ctx->expectqreg);
 	return TRUE;
 }
 
