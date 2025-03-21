@@ -43,10 +43,11 @@
 teco_symbol_list_t teco_symbol_list_scintilla = {NULL, 0};
 teco_symbol_list_t teco_symbol_list_scilexer = {NULL, 0};
 
-/*
- * FIXME: Could be static.
- */
-TECO_DEFINE_UNDO_OBJECT_OWN(scintilla_message, teco_machine_scintilla_t, /* don't delete */);
+/* FIXME: Could be static. */
+TECO_DEFINE_UNDO_SCALAR(teco_machine_scintilla_t);
+
+#define teco_undo_scintilla_message(VAR) \
+	(*teco_undo_object_teco_machine_scintilla_t_push(&(VAR)))
 
 /** @memberof teco_symbol_list_t */
 void
@@ -222,7 +223,7 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 	 * undo methods for the Scintilla types.
 	 */
 	if (ctx->parent.must_undo)
-		teco_undo_object_scintilla_message_push(&ctx->scintilla);
+		teco_undo_scintilla_message(ctx->scintilla);
 	memset(&ctx->scintilla, 0, sizeof(ctx->scintilla));
 
 	if ((str->len > 0 && !teco_scintilla_parse_symbols(&ctx->scintilla, str, error)) ||

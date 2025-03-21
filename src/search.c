@@ -45,7 +45,11 @@ typedef struct {
 	teco_buffer_t *from_buffer, *to_buffer;
 } teco_search_parameters_t;
 
-TECO_DEFINE_UNDO_OBJECT_OWN(parameters, teco_search_parameters_t, /* don't delete */);
+/* FIXME: Could be static. */
+TECO_DEFINE_UNDO_SCALAR(teco_search_parameters_t);
+
+#define teco_undo_search_parameters(VAR) \
+	(*teco_undo_object_teco_search_parameters_t_push(&(VAR)))
 
 /*
  * FIXME: Global state should be part of teco_machine_main_t
@@ -99,7 +103,7 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 	                                         teco_interface_get_codepage());
 
-	teco_undo_object_parameters_push(&teco_search_parameters);
+	teco_undo_search_parameters(teco_search_parameters);
 	teco_search_parameters.dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	teco_int_t v1, v2;
@@ -538,6 +542,7 @@ teco_pattern2regexp(teco_string_t *pattern, teco_machine_qregspec_t *qreg_machin
 	return g_steal_pointer(&re.data) ? : g_strdup("");
 }
 
+/* FIXME: Could be static. */
 TECO_DEFINE_UNDO_OBJECT_OWN(ranges, teco_range_t *, g_free);
 
 #define teco_undo_ranges_own(VAR) \
@@ -944,7 +949,7 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 	                                         teco_interface_get_codepage());
 
-	teco_undo_object_parameters_push(&teco_search_parameters);
+	teco_undo_search_parameters(teco_search_parameters);
 	teco_search_parameters.dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	teco_int_t v1, v2;
