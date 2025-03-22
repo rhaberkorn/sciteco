@@ -6,7 +6,7 @@ jobs:
   ubuntu:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04]
+        os: [ubuntu-20.04, ubuntu-24.04]
         compiler: ['CC=gcc CXX=g++', 'CC=clang CXX=clang++']
         interface: [ncurses, gtk]
 
