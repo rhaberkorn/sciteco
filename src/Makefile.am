@@ -44,6 +44,7 @@ libsciteco_base_la_SOURCES = main.c sciteco.h list.h \
                              ring.c ring.h \
                              parser.c parser.h \
                              core-commands.c core-commands.h \
+                             move-commands.c move-commands.h \
                              search.c search.h \
                              spawn.c spawn.h \
                              glob.c glob.h \
