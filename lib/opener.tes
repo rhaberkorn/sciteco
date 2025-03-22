@@ -16,7 +16,7 @@
     1U.l 1U.c
     !* +line[,column] *!
     0A-+"=
-      C 0A"D \U.l W 0A-,"= C \U.c ' 0A-10"=L' '
+      C 0A"D \U.l <0A"DC|1;'> 0A-,"= C \U.c ' 0A-10"=L' '
     '
 
     !* filename:line[:column][:] *!

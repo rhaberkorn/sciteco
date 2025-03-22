@@ -700,31 +700,97 @@ teco_state_start_back(teco_machine_main_t *ctx, GError **error)
 }
 
 /*
- * FIXME: would be nice to do this with constant amount of
- * editor messages. E.g. by using custom algorithm accessing
- * the internal document buffer.
+ * NOTE: This implementation has a constant/maximum number of Scintilla
+ * messages, compared to using SCI_WORDENDPOSITION.
+ * This pays out only beginning at n > 3, though.
+ * But most importantly SCI_WORDENDPOSITION(p, FALSE) does not actually skip
+ * over all non-word characters.
  */
 static gboolean
 teco_find_words(gsize *pos, teco_int_t n)
 {
+	if (!n)
+		return TRUE;
+
+	g_auto(teco_string_t) wchars;
+	wchars.len = teco_interface_ssm(SCI_GETWORDCHARS, 0, 0);
+	wchars.data = g_malloc(wchars.len + 1);
+	teco_interface_ssm(SCI_GETWORDCHARS, 0, (sptr_t)wchars.data);
+	wchars.data[wchars.len] = '\0';
+
+	sptr_t gap = teco_interface_ssm(SCI_GETGAPPOSITION, 0, 0);
+
 	if (n > 0) {
+		/* scan forward */
+		gsize len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
+		gsize range_len = gap > *pos ? gap - *pos : len - *pos;
+		if (!range_len)
+			return FALSE;
+		const gchar *buffer, *p;
+		p = buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, *pos, range_len);
+
 		while (n--) {
-			sptr_t old_pos = *pos;
-			*pos = teco_interface_ssm(SCI_WORDENDPOSITION, *pos, FALSE);
-			*pos = teco_interface_ssm(SCI_WORDENDPOSITION, *pos, TRUE);
-			if (*pos == old_pos)
-				return FALSE;
+			gboolean skip_word = TRUE;
+
+			for (;;) {
+				if (*pos == len)
+					/* end of document */
+					return n == 0;
+				if (p-buffer >= range_len) {
+					g_assert(*pos == gap);
+					range_len = len - gap;
+					p = buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, gap, range_len);
+				}
+				/*
+				 * FIXME: Is this safe or do we have to look up Unicode code points?
+				 */
+				if ((!teco_string_contains(&wchars, *p)) == skip_word) {
+					if (!skip_word)
+						break;
+					skip_word = !skip_word;
+					continue;
+				}
+				(*pos)++;
+				p++;
+			}
 		}
 
 		return TRUE;
 	}
 
+	/* scan backwards */
+	gsize range_len = gap < *pos ? *pos - gap : *pos;
+	if (!range_len)
+		return FALSE;
+	const gchar *buffer, *p;
+	buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, *pos - range_len, range_len);
+	p = buffer+range_len;
+
 	while (n++) {
-		sptr_t old_pos = *pos;
-		*pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, *pos, TRUE);
-		*pos = teco_interface_ssm(SCI_WORDSTARTPOSITION, *pos, FALSE);
-		if (*pos == old_pos)
-			return FALSE;
+		gboolean skip_word = FALSE;
+
+		for (;;) {
+			if (*pos == 0)
+				/* beginning of document */
+				return n == 0;
+			if (p == buffer) {
+				g_assert(*pos == gap);
+				range_len = *pos;
+				buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, 0, range_len);
+				p = buffer+range_len;
+			}
+			/*
+			 * FIXME: Is this safe or do we have to look up Unicode code points?
+			 */
+			if ((!teco_string_contains(&wchars, p[-1])) == skip_word) {
+				if (skip_word)
+					break;
+				skip_word = !skip_word;
+				continue;
+			}
+			(*pos)--;
+			p--;
+		}
 	}
 
 	return TRUE;
@@ -738,8 +804,8 @@ teco_find_words(gsize *pos, teco_int_t n)
  * Move dot <n> words forward.
  *   - If <n> is positive, dot is positioned at the beginning
  *     of the word <n> words after the current one.
- *   - If <n> is negative, dot is positioned at the end
- *     of the word <n> words before the current one.
+ *   - If <n> is negative, dot is positioned at the beginning
+ *     of the word, <-n> words before the current one.
  *   - If <n> is zero, dot is not moved.
  *
  * \(lqW\(rq uses Scintilla's definition of a word as
@@ -747,8 +813,9 @@ teco_find_words(gsize *pos, teco_int_t n)
  * .B SCI_SETWORDCHARS
  * message.
  *
- * Otherwise, the command's behaviour is analogous to
- * the \(lqC\(rq command.
+ * If the requested word would lie beyond the range of the
+ * buffer, the command yields an error.
+ * If colon-modified it instead returns a condition code.
  */
 static void
 teco_state_start_word(teco_machine_main_t *ctx, GError **error)
@@ -805,10 +872,12 @@ teco_delete_words(teco_int_t n)
  * -V
  * [n]:V -> Success|Failure
  *
- * Deletes the next <n> words until the end of the
+ * Deletes the next <n> words until the beginning of the
  * n'th word after the current one.
- * If <n> is negative, deletes up to end of the
- * n'th word before the current one.
+ * If <n> is negative, deletes up to the beginning of the
+ * word, <-n> words before the current one.
+ * \(lq-V\(rq in the middle of a word deletes until the beginning
+ * of the word.
  * If <n> is omitted, 1 or -1 is implied depending on the
  * sign prefix.
  *

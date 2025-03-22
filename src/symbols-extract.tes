@@ -15,7 +15,7 @@ EMQ[$SCITECOPATH]/string.tes
 LR 0X#ou 2LR 0X#in HK
 
 !* copy all defines in input file beginning with prefix *!
-EBN#in <S#defineS[Q[getopt.p]]; -SS :Xa> EF
+EBN#in <S#defineS[[Q[getopt.p]]M ]; 1:Xa 10:a> EF
 
 !* sort all defines *!
 Ga ZJB 0,.M[qsort] J
@@ -37,7 +37,7 @@ I/*
 
 static const teco_symbol_entry_t entries[] = {^J
 <
-  .,W.Xa 0KK
+  .,LR.Xa 0KK
   I#ifdef Qa^J^I{"Qa", Qa},^J#endif^J
 .-Z;>
 I};

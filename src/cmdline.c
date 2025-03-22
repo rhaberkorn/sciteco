@@ -509,6 +509,10 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 	case TECO_CTL_KEY('W'): { /* rubout/reinsert word */
 		teco_interface_popup_clear();
 
+		/*
+		 * NOTE: This must be consistent with teco_find_words():
+		 * Always delete to the beginning of the previous word.
+		 */
 		g_auto(teco_string_t) wchars;
 		wchars.len = teco_interface_ssm(SCI_GETWORDCHARS, 0, 0);
 		wchars.data = g_malloc(wchars.len + 1);

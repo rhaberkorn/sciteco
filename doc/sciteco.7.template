@@ -503,10 +503,11 @@ Non-empty string arguments
 .br
 (modifier \fIdisabled\fP)
 T};T{
-Rub out last word according to Scintilla's definition of a word
+Rub out to beginning of last word according to Scintilla's definition of a word
 as set by
 .SCITECO_TOPIC SCI_SETWORDCHARS
-.BR SCI_SETWORDCHARS .
+.BR SCI_SETWORDCHARS ,
+analogous to \fBY\fP command.
 T}
 \^;\^;\^;T{
 Miscelleaneous
