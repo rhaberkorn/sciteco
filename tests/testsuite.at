@@ -116,8 +116,7 @@ AT_CLEANUP
 AT_SETUP([Moving by words])
 AT_CHECK([$SCITECO -e "Z= 3J 2W .-18\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "@I/foo ^J bar/ JW .-6\"N(0/0)'"], 0, ignore, ignore)
-# FIXME: Sooner or later, there will be a shortcut for -W.
-AT_CHECK([$SCITECO -e "Z-4J -3W .-12\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "Z-4J 3P .-12\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Deleting words])

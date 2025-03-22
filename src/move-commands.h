@@ -28,7 +28,8 @@ void teco_state_start_reverse(teco_machine_main_t *ctx, GError **error);
 void teco_state_start_line(teco_machine_main_t *ctx, GError **error);
 void teco_state_start_back(teco_machine_main_t *ctx, GError **error);
 
-void teco_state_start_word(teco_machine_main_t *ctx, GError **error);
+void teco_state_start_words(teco_machine_main_t *ctx, GError **error);
+void teco_state_start_words_back(teco_machine_main_t *ctx, GError **error);
 
 void teco_state_start_delete_words(teco_machine_main_t *ctx, GError **error);
 void teco_state_start_delete_words_back(teco_machine_main_t *ctx, GError **error);

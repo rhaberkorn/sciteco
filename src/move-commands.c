@@ -316,7 +316,7 @@ teco_find_words(gsize *pos, teco_int_t n)
 }
 
 /*$ W word
- * [n]W -- Move dot by words
+ * [n]W -- Move dot <n> words forwards
  * -W
  * [n]:W -> Success|Failure
  *
@@ -337,7 +337,7 @@ teco_find_words(gsize *pos, teco_int_t n)
  * If colon-modified it instead returns a condition code.
  */
 void
-teco_state_start_word(teco_machine_main_t *ctx, GError **error)
+teco_state_start_words(teco_machine_main_t *ctx, GError **error)
 {
 	teco_int_t v;
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
@@ -348,6 +348,38 @@ teco_state_start_word(teco_machine_main_t *ctx, GError **error)
 	if (!teco_find_words(&word_pos, v)) {
 		if (!teco_machine_main_eval_colon(ctx))
 			teco_error_move_set(error, "W");
+		else
+			teco_expressions_push(TECO_FAILURE);
+		return;
+	}
+
+	if (teco_current_doc_must_undo())
+		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+	teco_interface_ssm(SCI_GOTOPOS, word_pos, 0);
+	if (teco_machine_main_eval_colon(ctx) > 0)
+		teco_expressions_push(TECO_SUCCESS);
+}
+
+/*$ P
+ * [n]P -- Move dot <n> words backwards
+ * -P
+ * [n]:P -> Success|Failure
+ *
+ * Move dot to the beginning of preceding words.
+ * It is equivalent to \(lq-nW\(rq.
+ */
+void
+teco_state_start_words_back(teco_machine_main_t *ctx, GError **error)
+{
+	teco_int_t v;
+	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
+		return;
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
+	gsize word_pos = pos;
+	if (!teco_find_words(&word_pos, -v)) {
+		if (!teco_machine_main_eval_colon(ctx))
+			teco_error_move_set(error, "P");
 		else
 			teco_expressions_push(TECO_FAILURE);
 		return;

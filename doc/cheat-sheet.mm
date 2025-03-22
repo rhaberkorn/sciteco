@@ -419,12 +419,12 @@ Read \fIfile\fP into Q-Register \fIq\fP.
 .    TD
 .      CI C
 .    TD
-Move one character forward.
+Move to next character.
 .  TRX
 .    TD
 .      CI "" n C
 .    TD
-Move \fIn\fP characters forward.
+Move \fIn\fP characters forwards.
 .  TRX
 .    TD
 .      CI R
@@ -439,17 +439,24 @@ Move \fIn\fP characters backwards (reverse).
 .    TD
 .      CI W
 .    TD
-Move to the beginning of next word.
+Move to next word.
+.  TRX
+.    TD
+.      CI P
+.    TD
+Move to previous word.
 .  TRX
 .    TD
 .      CI L
 .    TD
 Move to the beginning of next line.
+.ig END
 .  TRX
 .    TD
 .      CI "" n L
 .    TD
 Move forward \fIn\fP lines.
+.END
 .  TRX
 .    TD
 .      CI 0L
