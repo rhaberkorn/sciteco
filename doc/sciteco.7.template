@@ -514,8 +514,7 @@ Miscelleaneous
 .br
 (modifier \fIdisabled\fP)
 T};T{
-Rub out last command, i.e. rub out at least one character until
-a new command could begin.
+Rub out until the beginning of the last command, which is not a no-op (whitespace).
 T}
 T{
 Re-insert word/command
@@ -541,9 +540,8 @@ Miscelleaneous
 .br
 (modifier \fIenabled\fP)
 T};T{
-Re-insert next command from the rubbed-out command line,
-i.e. insert at least one character and repeat until
-a new command could begin.
+Re-insert next command from the rubbed-out command line
+including all subsequent no-ops (whitespace).
 T}
 T{
 .SCITECO_TOPIC ^U

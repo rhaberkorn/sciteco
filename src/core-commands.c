@@ -671,7 +671,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 
 	switch (chr) {
 	/*
-	 * No-ops:
+	 * No-ops (same as TECO_NOOPS):
 	 * These are explicitly not handled in teco_state_control,
 	 * so that we can potentially reuse the upcaret notations like ^J.
 	 */

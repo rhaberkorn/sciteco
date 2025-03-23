@@ -449,6 +449,11 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 	case TECO_CTL_KEY('W'): /* rubout/reinsert command */
 		teco_interface_popup_clear();
 
+		/*
+		 * This mimics the behavior of the `Y` command,
+		 * so it also rubs out no-op commands.
+		 * See also teco_find_words().
+		 */
 		if (teco_cmdline.modifier_enabled) {
 			/* reinsert command */
 			do {
@@ -456,12 +461,26 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 					return FALSE;
 			} while (!ctx->current->is_start &&
 			         teco_cmdline.effective_len < teco_cmdline.str.len);
-		} else {
-			/* rubout command */
-			do
-				teco_cmdline_rubout();
-			while (!ctx->current->is_start);
+
+			while (ctx->current->is_start &&
+			       teco_cmdline.effective_len < teco_cmdline.str.len &&
+			       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len]))
+				if (!teco_cmdline_rubin(error))
+					return FALSE;
+
+			return TRUE;
 		}
+
+		/* rubout command */
+		while (ctx->current->is_start &&
+		       teco_cmdline.effective_len > 0 &&
+		       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
+			teco_cmdline_rubout();
+
+		do
+			teco_cmdline_rubout();
+		while (!ctx->current->is_start);
+
 		return TRUE;
 
 #if !defined(INTERFACE_GTK) && defined(SIGTSTP)

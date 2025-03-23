@@ -22,6 +22,9 @@
 #include "parser.h"
 #include "string-utils.h"
 
+/** non-operational characters in teco_state_start */
+#define TECO_NOOPS " \f\r\n\v"
+
 /*
  * FIXME: Most of these states can probably be private/static
  * as they are only referenced from teco_state_start.
