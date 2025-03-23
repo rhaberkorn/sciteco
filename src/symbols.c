@@ -243,11 +243,6 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 			return NULL;
 		ctx->scintilla.iMessage = value;
 	}
-	if (!ctx->scintilla.wParam) {
-		if (!teco_expressions_pop_num_calc(&value, 0, error))
-			return NULL;
-		ctx->scintilla.wParam = value;
-	}
 
 	return &teco_state_scintilla_lparam;
 }
@@ -259,8 +254,11 @@ gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx
                                                         GError **error);
 
 /*$ ES scintilla message
- * -- Send Scintilla message
- * [lParam,][wParam,][message]ES[message][,wParam]$[lParam]$ -> result
+ * [lParam,][wParam,][message]ES$ -> result -- Send Scintilla message
+ * [lParam,][wParam]ES[message]$$ -> result
+ * [lParam]ES[message][,wParam]$$ -> result
+ * [wParam]ES[message]$[lParam]$ -> result
+ * [lParam]ES[message]$[wParam]^@[lParam]$ -> result
  *
  * Send Scintilla message with code specified by
  * <message>, <wParam> and <lParam>.
@@ -273,9 +271,15 @@ gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx
  * It is automatically null-terminated.
  * If the second string argument is empty, <lParam> is popped
  * from the stack instead.
+ * If the second string argument contains a null-byte (\fB^@\fP),
+ * both <wParam> and <lParam> are passed as null-terminated
+ * string pointers to Scintilla.
+ * If the second string ends in a null-byte, <lParam> is still
+ * popped from the stack.
  * Parameters popped from the stack may be omitted, in which
  * case 0 is implied.
- * The message's return value is pushed onto the stack.
+ * The message's return value is always pushed onto the stack
+ * (0 if the message has no documented return values).
  *
  * All messages defined by Scintilla (as C macros in Scintilla.h)
  * can be used by passing their name as a string to ES
@@ -283,7 +287,8 @@ gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx
  * The \(lqSCI_\(rq prefix may be omitted and message symbols
  * are case-insensitive.
  * Only the Lexilla style names (SCE_...)
- * may be used symbolically with the ES command as <wParam>.
+ * may be used symbolically with the ES command as <wParam> in
+ * the first string argument.
  * In interactive mode, symbols may be auto-completed by
  * pressing Tab.
  * String-building characters are by default interpreted
@@ -299,7 +304,7 @@ gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx
  * (shared library or DLL) is expected,
  * that implements the Lexilla protocol.
  * The \(lq.so\(rq or \(lq.dll\(rq extension is optional.
- * The concrete lexer name is the remaining of the string after
+ * The concrete lexer name is the remainder of the string after
  * the null-byte.
  * This allows you to use lexers from external lexer libraries
  * like Scintillua.
@@ -318,6 +323,8 @@ gboolean teco_state_scintilla_symbols_insert_completion(teco_machine_main_t *ctx
  * .BR Warning :
  * Almost all Scintilla messages may be dispatched using
  * this command.
+ * If called wrongly, you can easily crash the editor.
+ * Therefore it is not recommended to invoke ES interactively.
  * \*(ST does not keep track of the editor state changes
  * performed by these commands and cannot undo them.
  * You should never use it to change the editor state
@@ -458,12 +465,31 @@ teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *
 			return NULL;
 	} else if (str->len > 0) {
 		/*
-		 * NOTE: There may even be messages that read strings
-		 * with embedded nulls.
+		 * Theoretically, Scintilla could use null bytes from the string specified.
+		 * This could only be the case for messages where the string length is
+		 * passed in wParam. In practice however, there are no such messages,
+		 * we would possible want to call.
+		 * Therefore we pass the first null-terminated string as wParam,
+		 * which unlocks useful messages like
+		 * SCI_SETREPRESENTATIONS and SCI_SETPROPERTY.
 		 */
-		lParam = (sptr_t)str->data;
-	} else {
-		teco_int_t v;
+		const gchar *p = memchr(str->data, '\0', str->len);
+		if (p) {
+			ctx->scintilla.wParam = (uptr_t)str->data;
+			if (str->len > p - str->data + 1)
+				lParam = (sptr_t)(p+1);
+		} else {
+			lParam = (sptr_t)str->data;
+		}
+	}
+
+	teco_int_t v;
+	if (!ctx->scintilla.wParam) {
+		if (!teco_expressions_pop_num_calc(&v, 0, error))
+			return NULL;
+		ctx->scintilla.wParam = v;
+	}
+	if (!lParam) {
 		if (!teco_expressions_pop_num_calc(&v, 0, error))
 			return NULL;
 		lParam = v;

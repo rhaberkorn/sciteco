@@ -133,9 +133,9 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 		 * The curly braces will be styled like regular commands.
 		 *
 		 * FIXME: This will not work with nested macro definitions.
-		 * FIXME: This cannot currently be disabled since SCI_SETPROPERTY
-		 * cannot be accessed with ES.
-		 * We could only map it to an ED flag.
+		 * FIXME: This cannot currently be disabled, not even with SCI_SETPROPERTY.
+		 * We could only map it to an ED flag or
+		 * rewrite the lexer against the ILexer5 interface, which requires C++.
 		 */
 		if ((escape_char == '{' || machine->expectstring.machine.escape_char == '{') &&
 		    teco_view_ssm(view, SCI_GETPROPERTYINT, (uptr_t)"lexer.sciteco.macrodef", TRUE))
