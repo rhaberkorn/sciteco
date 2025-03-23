@@ -135,7 +135,7 @@ EBN[input]
     !cmd.xF!
       L F<
     !cmd.xX!
-      :M#sw .,1,.ESSCI_WORDENDPOSITIONX.w
+      :M#sw .U.x <0A-^^:"= 1; ' 0A-10"= 1; ' :C;> Q.x,.X.w
       Ocmd.xXQ.w
       !cmd.xXsciteco_topic!
         !*
