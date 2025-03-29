@@ -456,6 +456,14 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 		 */
 		if (teco_cmdline.modifier_enabled) {
 			/* reinsert command */
+			/* @ and : are not separate states, but practically belong to the command */
+			while (ctx->current->is_start &&
+			       teco_cmdline.effective_len < teco_cmdline.str.len &&
+			       (teco_cmdline.str.data[teco_cmdline.effective_len] == ':' ||
+			        teco_cmdline.str.data[teco_cmdline.effective_len] == '@'))
+				if (!teco_cmdline_rubin(error))
+					return FALSE;
+
 			do {
 				if (!teco_cmdline_rubin(error))
 					return FALSE;
@@ -480,6 +488,13 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 		do
 			teco_cmdline_rubout();
 		while (!ctx->current->is_start);
+
+		/* @ and : are not separate states, but practically belong to the command */
+		while (ctx->current->is_start &&
+		       teco_cmdline.effective_len > 0 &&
+		       (teco_cmdline.str.data[teco_cmdline.effective_len-1] == ':' ||
+		        teco_cmdline.str.data[teco_cmdline.effective_len-1] == '@'))
+			teco_cmdline_rubout();
 
 		return TRUE;
 

@@ -515,6 +515,7 @@ Miscelleaneous
 (modifier \fIdisabled\fP)
 T};T{
 Rub out until the beginning of the last command, which is not a no-op (whitespace).
+\(lq@\(rq and \(lq:\(rq modifiers are considered part of the command and also rubbed out.
 T}
 T{
 Re-insert word/command
@@ -542,6 +543,8 @@ Miscelleaneous
 T};T{
 Re-insert next command from the rubbed-out command line
 including all subsequent no-ops (whitespace).
+\(lq@\(rq and \(lq:\(rq modifiers are considered part of the command and
+also re-inserted.
 T}
 T{
 .SCITECO_TOPIC ^U
