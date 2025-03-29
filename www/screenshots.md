@@ -1,5 +1,9 @@
 # Screenshots
 
+## v2.4.0
+
+![FreeBSD/ncurses, VT240 emulation](https://sciteco.sf.net/screenshots/v2.4.0-freebsd-vt240.png "FreeBSD/ncurses, VT240 emulation")
+
 ## v2.3.0
 
 ![FreeBSD/Gtk+3, SciTECO syntax highlighting](https://sciteco.sf.net/screenshots/v2.3.0-freebsd-gtk.png "FreeBSD/Gtk+3, SciTECO syntax highlighting")
