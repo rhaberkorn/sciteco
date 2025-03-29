@@ -114,14 +114,14 @@ AT_CHECK([$SCITECO -e "@I/1^J2^J3/J 2^QC :^Q-3\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Moving by words])
-AT_CHECK([$SCITECO -e "Z= 3J 2W .-18\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/foo ^J bar/ JW .-6\"N(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "3J 2W @P .-17\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@I/foo ^J bar/ JW @W .-Z\"N(0/0)'"], 0, ignore, ignore)
 AT_CHECK([$SCITECO -e "Z-4J 3P .-12\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Deleting words])
-AT_CHECK([$SCITECO -e "3J 2V .-3\"N(0/0)' Z-13\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "Z-4J 2Y .-18\"N(0/0)' Z-22\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "3J 2V .-3\"N(0/0)' @V Z-11\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "Z-4J 2Y .-18\"N(0/0)' 2C @Y Z-19\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searches])

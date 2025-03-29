@@ -659,13 +659,9 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['R']  = {&teco_state_start, teco_state_start_reverse},
 		['L']  = {&teco_state_start, teco_state_start_line},
 		['B']  = {&teco_state_start, teco_state_start_back},
-		['W']  = {&teco_state_start, teco_state_start_words},
-		['P']  = {&teco_state_start, teco_state_start_words_back},
-		['V']  = {&teco_state_start, teco_state_start_delete_words},
-		['Y']  = {&teco_state_start, teco_state_start_delete_words_back},
-		['=']  = {&teco_state_start, teco_state_start_print},
 		['K']  = {&teco_state_start, teco_state_start_kill_lines},
 		['D']  = {&teco_state_start, teco_state_start_delete_chars},
+		['=']  = {&teco_state_start, teco_state_start_print},
 		['A']  = {&teco_state_start, teco_state_start_get}
 	};
 
@@ -768,6 +764,20 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 			break;
 		}
 		return &teco_state_start;
+
+	/*
+	 * Word movement and deletion commands.
+	 * These are not in the transitions table, so we can
+	 * evaluate the @-modifier.
+	 */
+	case 'w':
+	case 'W': return teco_state_start_words(ctx, "W", 1, error);
+	case 'p':
+	case 'P': return teco_state_start_words(ctx, "P", -1, error);
+	case 'v':
+	case 'V': return teco_state_start_delete_words(ctx, "V", 1, error);
+	case 'y':
+	case 'Y': return teco_state_start_delete_words(ctx, "Y", -1, error);
 
 	/*
 	 * Modifiers

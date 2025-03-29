@@ -135,7 +135,7 @@ EBN[input]
     !cmd.xF!
       L F<
     !cmd.xX!
-      :M#sw .U.x <0A-^^:"= 1; ' 0A-10"= 1; ' :C;> Q.x,.X.w
+      :M#sw .(@W).X.w
       Ocmd.xXQ.w
       !cmd.xXsciteco_topic!
         !*
@@ -272,7 +272,7 @@ EBN[input]
   !cmd.C!
     :M#sw 0A-^^u"=
       !* FIXME: This can be CuXXXX_XXXX (decomposed, e.g. for cyrillic й) *!
-      C 16 \U.w  LR
+      C 16 \U.w  @W
     |
       .(:M#sa).X.w 0Q[glyphs.Q.w]U.w
     '

@@ -33,6 +33,7 @@
 #include "ring.h"
 #include "undo.h"
 #include "error.h"
+#include "core-commands.h"
 #include "move-commands.h"
 
 /*$ J jump
@@ -218,15 +219,27 @@ teco_state_start_back(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*
- * NOTE: This implementation has a constant/maximum number of Scintilla
+/**
+ * Find the beginning or end of a word.
+ *
+ * This first skips word-characters, followed by non-word characters
+ * as configured by SCI_SETWORDCHARS.
+ * If end_of_word is TRUE, the order is swapped.
+ *
+ * @note This implementation has a constant/maximum number of Scintilla
  * messages, compared to using SCI_WORDENDPOSITION.
  * This pays out only beginning at n > 3, though.
  * But most importantly SCI_WORDENDPOSITION(p, FALSE) does not actually skip
  * over all non-word characters.
+ *
+ * @param pos Start position for search.
+ *  The result is also stored into this variable.
+ * @param n How many words to skip forwards or backwards.
+ * @param end_of_word Whether to search for the end or beginning of words.
+ * @return FALSE if there aren't enough words in the buffer.
  */
 static gboolean
-teco_find_words(gsize *pos, teco_int_t n)
+teco_find_words(gsize *pos, teco_int_t n, gboolean end_of_word)
 {
 	if (!n)
 		return TRUE;
@@ -249,7 +262,7 @@ teco_find_words(gsize *pos, teco_int_t n)
 		p = buffer = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, *pos, range_len);
 
 		while (n--) {
-			gboolean skip_word = TRUE;
+			gboolean skip_word = !end_of_word;
 
 			for (;;) {
 				if (*pos == len)
@@ -264,7 +277,7 @@ teco_find_words(gsize *pos, teco_int_t n)
 				 * FIXME: Is this safe or do we have to look up Unicode code points?
 				 */
 				if ((!teco_string_contains(&wchars, *p)) == skip_word) {
-					if (!skip_word)
+					if (skip_word == end_of_word)
 						break;
 					skip_word = !skip_word;
 					continue;
@@ -286,7 +299,7 @@ teco_find_words(gsize *pos, teco_int_t n)
 	p = buffer+range_len;
 
 	while (n++) {
-		gboolean skip_word = FALSE;
+		gboolean skip_word = end_of_word;
 
 		for (;;) {
 			if (*pos == 0)
@@ -302,7 +315,7 @@ teco_find_words(gsize *pos, teco_int_t n)
 			 * FIXME: Is this safe or do we have to look up Unicode code points?
 			 */
 			if ((!teco_string_contains(&wchars, p[-1])) == skip_word) {
-				if (skip_word)
+				if (skip_word != end_of_word)
 					break;
 				skip_word = !skip_word;
 				continue;
@@ -319,168 +332,150 @@ teco_find_words(gsize *pos, teco_int_t n)
  * [n]W -- Move dot <n> words forwards
  * -W
  * [n]:W -> Success|Failure
+ * [n]@W
+ * [n]:@W -> Success|Failure
  *
- * Move dot <n> words forward.
- *   - If <n> is positive, dot is positioned at the beginning
- *     of the word <n> words after the current one.
- *   - If <n> is negative, dot is positioned at the beginning
- *     of the word, <-n> words before the current one.
- *   - If <n> is zero, dot is not moved.
+ * If <n> is positive, move dot <n> words forwards by first skipping
+ * word characters, followed by non-word characters.
+ * If <n> is negative, move dot <-n> words backwards by first skipping
+ * non-word characters, followed by word characters.
+ * This leaves dot at the beginning of words as defined by the Scintilla
+ * message
+ * .BR SCI_SETWORDCHARS .
+ * If <n> is zero, dot is not moved.
+ * If <n> is omitted, 1 or -1 is implied depending on the sign prefix.
  *
- * \(lqW\(rq uses Scintilla's definition of a word as
- * configurable using the
- * .B SCI_SETWORDCHARS
- * message.
+ * The command is at-modified (\fB@\fP), the order of word vs. non-word
+ * character skipping is swapped, which leaves dot at the end of words.
+ * It is especially useful for jumping to the end of the current word.
  *
  * If the requested word would lie beyond the range of the
  * buffer, the command yields an error.
  * If colon-modified it instead returns a condition code.
  */
-void
-teco_state_start_words(teco_machine_main_t *ctx, GError **error)
-{
-	teco_int_t v;
-	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
-		return;
-	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-
-	gsize word_pos = pos;
-	if (!teco_find_words(&word_pos, v)) {
-		if (!teco_machine_main_eval_colon(ctx))
-			teco_error_move_set(error, "W");
-		else
-			teco_expressions_push(TECO_FAILURE);
-		return;
-	}
-
-	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-	teco_interface_ssm(SCI_GOTOPOS, word_pos, 0);
-	if (teco_machine_main_eval_colon(ctx) > 0)
-		teco_expressions_push(TECO_SUCCESS);
-}
-
 /*$ P
  * [n]P -- Move dot <n> words backwards
  * -P
  * [n]:P -> Success|Failure
+ * [n]@P
+ * [n]:@P -> Success|Failure
  *
- * Move dot to the beginning of preceding words.
- * It is equivalent to \(lq-nW\(rq.
+ * Move dot to the beginning of preceding words if <n> is positive.
+ * It is completely equivalent to \(lq-\fIn\fPW\(rq.
  */
-void
-teco_state_start_words_back(teco_machine_main_t *ctx, GError **error)
+teco_state_t *
+teco_state_start_words(teco_machine_main_t *ctx, const gchar *cmd, gint factor, GError **error)
 {
+	/*
+	 * NOTE: "@" has syntactic significance in most contexts, so it's set
+	 * in parse-only mode.
+	 * Therefore, it must also be evaluated in parse-only mode, even though
+	 * it has no syntactic significance for W.
+	 */
+	gboolean modifier_at = teco_machine_main_eval_at(ctx);
+
+	if (ctx->mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
+
 	teco_int_t v;
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
-		return;
+		return NULL;
+
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	gsize word_pos = pos;
-	if (!teco_find_words(&word_pos, -v)) {
-		if (!teco_machine_main_eval_colon(ctx))
-			teco_error_move_set(error, "P");
-		else
-			teco_expressions_push(TECO_FAILURE);
-		return;
+	gboolean rc = teco_find_words(&word_pos, factor*v, modifier_at);
+	if (rc) {
+		if (teco_current_doc_must_undo())
+			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+		teco_interface_ssm(SCI_GOTOPOS, word_pos, 0);
 	}
 
-	if (teco_current_doc_must_undo())
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-	teco_interface_ssm(SCI_GOTOPOS, word_pos, 0);
-	if (teco_machine_main_eval_colon(ctx) > 0)
-		teco_expressions_push(TECO_SUCCESS);
-}
-
-static gboolean
-teco_delete_words(teco_int_t n)
-{
-	if (!n)
-		return TRUE;
-
-	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-
-	gsize start_pos = pos, end_pos = pos;
-	if (!teco_find_words(n > 0 ? &end_pos : &start_pos, n))
-		return FALSE;
-	g_assert(start_pos <= end_pos);
-
-	teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
-	teco_interface_ssm(SCI_DELETERANGE, start_pos, end_pos-start_pos);
-	teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
-
-	if (teco_current_doc_must_undo()) {
-		undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
-		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
-	}
-	teco_ring_dirtify();
-
-	return TRUE;
-}
-
-/*$ V
- * [n]V -- Delete words forward
- * -V
- * [n]:V -> Success|Failure
- *
- * Deletes the next <n> words until the beginning of the
- * n'th word after the current one.
- * If <n> is negative, deletes up to the beginning of the
- * word, <-n> words before the current one.
- * \(lq-V\(rq in the middle of a word deletes until the beginning
- * of the word.
- * If <n> is omitted, 1 or -1 is implied depending on the
- * sign prefix.
- *
- * It uses Scintilla's definition of a word as configurable
- * using the
- * .B SCI_SETWORDCHARS
- * message.
- *
- * If the words to delete extend beyond the range of the
- * buffer, the command yields an error.
- * If colon-modified it instead returns a condition code.
- */
-void
-teco_state_start_delete_words(teco_machine_main_t *ctx, GError **error)
-{
-	teco_int_t v;
-
-	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
-		return;
-
-	gboolean rc = teco_delete_words(v);
 	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(teco_bool(rc));
 	} else if (!rc) {
-		teco_error_words_set(error, "V");
-		return;
+		teco_error_words_set(error, cmd);
+		return NULL;
 	}
+
+	return &teco_state_start;
 }
 
+/*$ V
+ * [n]V -- Delete words forwards
+ * -V
+ * [n]:V -> Success|Failure
+ * [n]@V
+ * [n]:@V -> Success|Failure
+ *
+ * If <n> is positive, deletes the next <n> words until the
+ * beginning of the \fIn\fP'th word after the current one.
+ * It is deleting exactly until the position that the equivalent
+ * .B W
+ * command would move to.
+ *
+ * \(lq@V\(rq is especially useful to remove the remainder of the
+ * current word.
+ */
 /*$ Y
  * [n]Y -- Delete word backwards
  * -Y
  * [n]:Y -> Success|Failure
+ * [n]@Y
+ * [n]:@Y -> Success|Failure
  *
- * Delete <n> words backward.
- * <n>Y is equivalent to \(lq-nV\(rq.
+ * If <n> is positive, deletes the preceding <n> words until the
+ * beginning of the \fIn\fP'th word before the current one.
+ * It is deleting exactly until the position that the equivalent
+ * .B P
+ * command would move to.
+ * Y is completely equivalent to \(lq-\fIn\fPV\(rq.
  */
-void
-teco_state_start_delete_words_back(teco_machine_main_t *ctx, GError **error)
+teco_state_t *
+teco_state_start_delete_words(teco_machine_main_t *ctx, const gchar *cmd, gint factor, GError **error)
 {
+	/*
+	 * NOTE: "@" has syntactic significance in most contexts, so it's set
+	 * in parse-only mode.
+	 * Therefore, it must also be evaluated in parse-only mode, even though
+	 * it has no syntactic significance for W.
+	 */
+	gboolean modifier_at = teco_machine_main_eval_at(ctx);
+
+	if (ctx->mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
+
 	teco_int_t v;
-
 	if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
-		return;
+		return NULL;
+	v *= factor;
 
-	gboolean rc = teco_delete_words(-v);
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
+	gsize start_pos = pos, end_pos = pos;
+	gboolean rc = teco_find_words(v > 0 ? &end_pos : &start_pos, v, modifier_at);
+	if (rc && start_pos != end_pos) {
+		g_assert(start_pos < end_pos);
+
+		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
+		teco_interface_ssm(SCI_DELETERANGE, start_pos, end_pos-start_pos);
+		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
+
+		if (teco_current_doc_must_undo()) {
+			undo__teco_interface_ssm(SCI_GOTOPOS, pos, 0);
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+		}
+		teco_ring_dirtify();
+	}
+
 	if (teco_machine_main_eval_colon(ctx) > 0) {
 		teco_expressions_push(teco_bool(rc));
 	} else if (!rc) {
-		teco_error_words_set(error, "Y");
-		return;
+		teco_error_words_set(error, cmd);
+		return NULL;
 	}
+
+	return &teco_state_start;
 }
 
 static gboolean
