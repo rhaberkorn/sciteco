@@ -333,8 +333,16 @@ AT_XFAIL_IF(true)
 AT_CLEANUP
 
 AT_SETUP([Dangling Else/End-If])
+# Should throw syntax errors.
 AT_CHECK([$SCITECO -e "'"], 1, ignore, ignore)
 AT_CHECK([$SCITECO -e "| (0/0) '"], 1, ignore, ignore)
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+AT_SETUP([Out-of-place modifiers])
+# NOTE: `J` does not currently support @-modifiers.
+# This should be a syntax error.
+AT_CHECK([$SCITECO -e "@I/foo^J/ @J Xa"], 1, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP
 

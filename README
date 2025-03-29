@@ -27,7 +27,7 @@ The Curses frontend is verified to work with [ncurses](https://www.gnu.org/softw
 [PDCursesMod](https://github.com/Bill-Gray/PDCursesMod) and
 [EMCurses](https://github.com/rhaberkorn/emcurses).
 All X/Open-compatible libraries should be supported.
-SVr4 curses without enhanced definitions are **not** supported.
+SVr4 curses without enhanced definitions is **not** supported.
 
 Linux, FreeBSD, [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 Windows (MinGW 32/64) ~~and [Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.

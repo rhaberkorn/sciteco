@@ -1,9 +1,13 @@
 Tasks:
- * Wiki page about creating and maintaining lexer configurations.
-   Also mention how to use the "lexer.test..." macros in the
-   "edit" hook.
+ * Have a look at TECO-86.
+ * ncurses: Is it possible to cancel out a background A_STANDOUT with A_REVERSE?
 
 Known Bugs:
+ * Excessively long lines slow down SciTECO too much, especially
+   when enabling SCI_SETWRAPMODE(SC_WRAP_CHAR).
+   In some cases, the internal redrawing blocks SciTECO forever.
+ * @ES/SCI_CLEARALLREPRESENTATIONS// does nothing.
+   Might be a Scintilla bug.
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:
@@ -78,6 +82,9 @@ Known Bugs:
  * The XTerm OSC-52 clipboard feature appears to garble Unicode characters.
    This is apparently an XTerm bug, probably due to 8-bit-uncleanliness.
    It was verified by `printf "\e]52;c;?\a"` on the command line.
+   Few terminal emulators support OSC-52 sufficiently well.
+   If there was an external tool to use with $SCITECO_CLIPBOARD_SET,
+   we might get rid of the internal implementation altogether.
  * Glib (error) messages are not integrated with SciTECO's
    logging system.
  * Gtk on Unix: On ^Z, we do not suspend properly. The window is still shown.
@@ -102,11 +109,10 @@ Known Bugs:
    This would also allow automatically mapping a part of the messages
    (property getters and setters) into the global Q-Reg space using
    special registers.
-   This feature would especially be important in order to support
-   e.g. the SCI_SETPROPERTY message with two strings in order to
-   set lexer properties.
  * The lexer.sciteco.macrodef lexer property cannot currently
-   be set/disabled (see above).
+   be set/disabled.
+   This doesn't even work with SCI_SETPROPERTY, probably since
+   we do lexing "in the container".
  * Mac OS: The colors are screwed up with the terminal.tes color scheme
    (and with --no-profile) under Mac OS terminal emulators.
    This does not happen under Linux with Darling.
@@ -255,11 +261,6 @@ Features:
    There could be a --print-path option, or with the --quiet
    and --stdout options, one could write:
    sciteco -qoe 'G[$SCITECOPATH]'
- * The C/C++ lexer supports preprocessor evaluation.
-   This is currently always enabled but there are no defines.
-   Could be added as a global reg to set up defines easily.
-   NOTE: This requires the SCI_SETPROPERTY message which
-   is currently unsupported by <ES>.
  * Now that we have redo/reinsertion:
    When ^G modifier is active, normal inserts could insert
    between effective and rubbed out command line - without
@@ -308,8 +309,28 @@ Features:
      Video TECO had ET for the same purpose.
      TECO 10 had a ^W regular command for case folding all strings,
      but I don't think it's worth supporting.
+   * MSUTECO for MS-DOS had ^P for giving the number of characters
+     until the next matching ( )  { }  [ ]  < >  " '.
+     However there is no single way to get brace skipping right,
+     so this might be prime candidate for a macro.
+   * There should be a string building character for including
+     a character by code. Currently, there is only ^EUq where
+     q must be set earlier.
+     This would be useful when searching in binary files or
+     to include Unicode characters by code point.
+     Unfortunately its syntax cannot depend on the string argument's
+     encoding, as that could confuse parse-only mode.
+     TECO-11 has ^E<nnn> for octal-only, which is extended by Video TECO
+     to support the typical strtoul() semantics.
+     This is probably what we want as well.
  * n:"x to leave <n> on the stack (i.e. only peek). This simplifies
    expressions like Qa"N Qa ...
+ * Perhaps there should be a pattern match construct for word characters
+   according to SCI_SETWORDCHARS.
+   Perhaps just reuse ^EC?
+   It might be problematic to depend on a global variable, though.
+ * The same would be useful for conditionals.
+   Perhaps redefine <"C> to match for all word chars.
  * Perhaps there should be a command for converting absolute line numbers
    to positions (i.e. ESPOSITIONFROMLINE$$:^E).
    This should also include the opposite as currently supported by :^Q.
@@ -323,9 +344,6 @@ Features:
    we'd have to store the actual data in teco_range_t as the
    matched pattern is removed from the buffer before inserting the replacement
    string.
- * For symmetry, there should be a command for -W,
-   eg. P. Macros and modifiers are obviously not a solution here
-   since they're too long.
  * Visual selections via `...'.
    Allows them to be used recursively (eg. as a tool in macros).
    Returns the buffer range.
@@ -353,8 +371,10 @@ Features:
      This means patching Scintilla, so it does not break lines
      on new line characters and we can use character representations
      (extend SCI_SETLINEENDTYPESALLOWED?).
+     Also, we cannot currently force ^I to be rendered with representations.
      cmdline.c can then directly operate on the Scintilla document.
    * A Scintilla view will allow syntax highlighting
+   * These Scintilla enhancements will also improve hex mode (M#hx).
  * command line could highlight dead branches (e.g. gray them out)
  * Perhaps add a ^E register analogous to ":", but working with
    byte offsets. This would mainly be useful in ^E\^E.
@@ -384,9 +404,10 @@ Features:
  * To faciliate data exchange between multiple SciTECO instances,
    there may be a TCP/UNIX server mode that allows read-only access
    to the Q-Register space of any running instance.
-   Clipboards are not flexible enough and not supported everywhere.
    I am not sure how to elegantly address instances, though.
    Especially without some kind of central name registry.
+ * Allow setting arbitrary X11 clipboards, perhaps by hooking into
+   the Q-Reg lookup and creating clipboard registers dynamically.
  * Touch restored save point files - should perhaps be configurable.
    This is important when working with Makefiles, as make looks
    at the modification times of files.
@@ -402,6 +423,9 @@ Features:
    Errors could be catched using a structured try-catch-like construct
    or by defining an error handling label.
    Macros may retrieve the code and string of the last error.
+   We will have to go through all the command implementations as well
+   since must no longer rely on undo token execution after
+   throwing errors.
  * Backtracking execution semantics, bringing the power of SNOBOL
    (and more!).
    This can be a variant of a structured error handling construct.
@@ -495,15 +519,6 @@ Features:
  * It should be possible to disable auto-completions of one-character
    register names, so that we can map the idention macro to M<TAB>.
  * Add a configure-switch for LTO (--enable-lto).
- * There should be a string building character for including
-   a character by code. Currently, there is only ^EUq where
-   q must be set earlier.
-   This would be useful when searching in binary files or
-   to include Unicode characters by code point.
-   Unfortunately its syntax cannot depend on the string argument's
-   encoding, as that could confuse parse-only mode.
-   Perhaps ^E!xxxx or overload ^Qx0123.
-   TECO-11 has ^Ennn (octal), but only for searching?
  * There should be a string building construct for escaping
    search patterns.
    Since string building is performed immediately before
@@ -521,8 +536,8 @@ Features:
    Also, parsers are not fully embeddable right now.
    At the same time, it would need access to the view/document it's
    supposed to style. Tricky, but not impossible.
- * A generic Scintillua lexer could be added if we supported setting
-   lexer properties and if there was a way to retrieve SCI_PRIVATELEXERCALL(1, str).
+ * A generic Scintillua lexer could be added if there was a way to retrieve
+   SCI_PRIVATELEXERCALL(1, str).
    Perhaps there should be an @EPq/SCI.../ call.
    See "Lexer Detection" in https://orbitalquark.github.io/scintillua/manual.html
  * Lexilla: Could also add an APL lexer to Lexilla.
@@ -598,6 +613,33 @@ Features:
  * NLS (Native Language Support). I could at least add German and Russian.
    There aren't many localizable strings in SciTECO.
    Should be optional.
+ * Customizable layout: It should be possible to configure special format
+   strings that are rendered into UI components, so people can customize
+   the look of SciTECO. E.g. the current info line could be reproduced with
+   a default like:
+   ^U[^L0]SciTECO ^XI <^XT> ^XF$
+   As a first step, customizing the window title might be the most useful,
+   as often, you don't need the "SciTECO - <Buffer>" prefix.
+ * Until we have customizeable layouts, it may make sense to hardcode
+   the current line+column in to the message line.
+ * With Unicode icon support, we might want to replace a few more
+   special symbols.
+   For instance, the "dirty" file symbol could be   or 󰓨 .
+ * The @ and : modifiers should probably be allowed only immediately in
+   front of commands in order to avoid possible bugs.
+   @ is always evaluated even in parse-only mode
+   since it has syntactic significance, so expressions like `Qa"S@'V`
+   make no sense -- `V` would always be @-modified.
+   : could theoretically be set conditionally but there is little reason
+   to do so.
+   Chances are you will set : accidentally on a command which doesn't support
+   it and it will affect the next one where you don't expect it.
+   Either @ and : should be separate states that whitelist all commands
+   that actually accept them; or we check the flag at the beginning
+   of the start state.
+ * There should perhaps be an immediate editing command to repeat the
+   last complete command.
+   For that to work, @ and : modifiers must be part of the command.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -616,6 +658,11 @@ Optimizations:
  * commonly used (special) Q-Registers could be cached,
    saving the q-reg table lookup.
    This is already done with ^R (radix) in teco_qreg_table_t.
+ * Q-Reg arrays ([array.^E\a]) could be optimized by nesting
+   RB trees. Each RB tree could contain an array, so the numeric
+   lookup would have O(1).
+   Unfortunately, worst case complexity is still O(log(n))
+   since you must still look up "array".
  * refactor search commands (create proper base class)
  * undo__teco_interface_ssm() could always include the check for
    teco_current_doc_must_undo().
@@ -686,6 +733,10 @@ Optimizations:
    in case of errors.
    Also, this "hint" word could cache PCs of <|> and <'>.
    On the downside, this scheme does not allow all kinds of optimizations.
+ * The manual cleanup in main() could be avoided by using destructor
+   priorities, so we can call the interface cleanup last.
+   Unfortunately, destructor-priorities are not supported on all targets.
+   atexit() callbacks are apparently called before the destructors.
 
 Documentation:
  * Doxygen docs could be deployed on Github pages
@@ -697,9 +748,8 @@ Documentation:
  * The command reference should include an overview.
  * Command reference is poorly formatted.
    tedoc.tes should be reviewed.
- * Write some tutorials for the Wiki, e.g. about paragraph
-   reflowing...
-   Object-oriented SciTECO ideoms etc. ;-)
+ * Write some tutorials for the Wiki, e.g. about
+   object-oriented SciTECO ideoms etc. ;-)
  * What to do with `--xembed`: tabbed, st
    when used as the git editor, etc.
  * People are demanding a Youtube tutorial.
@@ -709,3 +759,9 @@ Documentation:
  * The HTML manuals lack monospaced fonts.
    This is partly because an.tmac removes the Courier family
    in nroff mode, but it still doesn't work if you undo this.
+ * sciteco(1) should contain command examples.
+ * Keyboard view with the SciTECO commands on each key.
+   Could perhaps be generated with gpic.
+ * Wiki page about creating and maintaining lexer configurations.
+   Also mention how to use the "lexer.test..." macros in the
+   "edit" hook.
