@@ -20,9 +20,10 @@
     '
 
     !* filename:line[:column][:] *!
-    LR -A-:"=R' <-A"DR|1;'> -A-:"=
-      \U.a R <-A"DR|1;'> -A-:"=
-        \U.l Q.aU.c R
+    LR -A-:"=R'
+    0U.p <-%.pA"D|1;'> Q.pA-:"=
+      Q.p+1C \U.a R 0U.p <-%.pA"D|1;'> Q.pA-:"=
+        Q.p+1C \U.l Q.aU.c R
       |
         Q.aU.l 1U.c
       '
