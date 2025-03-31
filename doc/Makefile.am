@@ -41,18 +41,23 @@ womendir = $(scitecolibdir)/women
 
 women_DATA = grosciteco.tes.1.woman grosciteco.tes.1.woman.tec
 CLEANFILES = grosciteco.tes.1.intermediate
+EXTRA_DIST = grosciteco.tes.1.in
 
 women_DATA += tedoc.tes.1.woman tedoc.tes.1.woman.tec
 CLEANFILES += tedoc.tes.1.intermediate
+EXTRA_DIST += tedoc.tes.1.in
 
 women_DATA += sciteco.1.woman sciteco.1.woman.tec
 CLEANFILES += sciteco.1.intermediate
+EXTRA_DIST += sciteco.1.in
 
 women_DATA += sciteco.7.woman sciteco.7.woman.tec
-CLEANFILES += sciteco.7.intermediate
+CLEANFILES += sciteco.7.intermediate sciteco.7.in sciteco.7.htbl
+EXTRA_DIST += sciteco.7.template
 
 women_DATA += tutorial.woman tutorial.woman.tec
 CLEANFILES += tutorial.intermediate
+EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
 
@@ -69,19 +74,7 @@ CLEANFILES += $(women_DATA)
 tutorial.intermediate : tutorial.ms sciteco.tmac
 	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< >$@
 
-man_MANS = grosciteco.tes.1
-EXTRA_DIST = grosciteco.tes.1.in
-
-man_MANS += tedoc.tes.1
-EXTRA_DIST += tedoc.tes.1.in
-
-man_MANS += sciteco.1
-EXTRA_DIST += sciteco.1.in
-
-man_MANS += sciteco.7
-EXTRA_DIST += sciteco.7.template
-CLEANFILES += sciteco.7.in sciteco.7.htbl
-
+man_MANS = grosciteco.tes.1 tedoc.tes.1 sciteco.1 sciteco.7
 CLEANFILES += $(man_MANS)
 
 dist_noinst_SCRIPTS = htbl.tes
