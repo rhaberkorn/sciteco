@@ -40,23 +40,23 @@ install-exec-hook:
 womendir = $(scitecolibdir)/women
 
 women_DATA = grosciteco.tes.1.woman grosciteco.tes.1.woman.tec
-CLEANFILES = grosciteco.tes.1.intermediate
+CLEANFILES = grosciteco.tes.1 grosciteco.tes.1.intermediate
 EXTRA_DIST = grosciteco.tes.1.in
 
 women_DATA += tedoc.tes.1.woman tedoc.tes.1.woman.tec
-CLEANFILES += tedoc.tes.1.intermediate
+CLEANFILES += tedoc.tes.1 tedoc.tes.1.intermediate
 EXTRA_DIST += tedoc.tes.1.in
 
 women_DATA += sciteco.1.woman sciteco.1.woman.tec
-CLEANFILES += sciteco.1.intermediate
+CLEANFILES += sciteco.1 sciteco.1.intermediate
 EXTRA_DIST += sciteco.1.in
 
 women_DATA += sciteco.7.woman sciteco.7.woman.tec
-CLEANFILES += sciteco.7.intermediate sciteco.7.in sciteco.7.htbl
+CLEANFILES += sciteco.7 sciteco.7.intermediate sciteco.7.in sciteco.7.htbl
 EXTRA_DIST += sciteco.7.template
 
 women_DATA += tutorial.woman tutorial.woman.tec
-CLEANFILES += tutorial.intermediate
+CLEANFILES += tutorial.ms tutorial.intermediate
 EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
@@ -75,7 +75,6 @@ tutorial.intermediate : tutorial.ms sciteco.tmac
 	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< >$@
 
 man_MANS = grosciteco.tes.1 tedoc.tes.1 sciteco.1 sciteco.7
-CLEANFILES += $(man_MANS)
 
 dist_noinst_SCRIPTS = htbl.tes
 
