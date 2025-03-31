@@ -1,0 +1,317 @@
+.\" This tutorial document is opened by default if there is no buffer session.
+.\" It should assume no prior knowledge of TECO and is optimized for
+.\" rendering within SciTECO.
+.\" We assume a minimum 80x24 character display,
+.\" so the most important information should fit into the first 21 lines.
+.\"
+.\" FIXME: grosciteco will output Unicode characters, so this won't look
+.\" good on legacy non-Unicode terminals.
+.\"
+.\" FIXME: You cannot use .PP for paragraphs since the woman.tes
+.\" lexer sets the wrap-indent mode.
+.\" This could be made conditional, though.
+.\" We could also extend grosciteco to change the wrap-indent mode.
+.
+.ds ST \fB@PACKAGE_NAME@\fP
+.
+.\" When processed with grosciteco, we include raw control characters,
+.\" so they will be rendered in the usual character representation
+.\" style by SciTECO.
+.ie dSCITECO_TOPIC \{\
+.  ds $  \[char27]
+.  ds $$ \[char27]\[char27]
+.\}
+.el \{\
+.  \" FIXME: When rendering for HTML and PDF, we could reproduce reverse
+.  \" text as well.
+.  ds $  \fB$\fP
+.  ds $$ \fB$$\fP
+.\}
+.
+.nr DI 4n \" 4 char indentation for code samples
+.
+.\" The entire document is monospaced as users are supposed to
+.\" navigate through it and perhaps even modify it inplace.
+.SCITECO_TT
+.SCITECO_TOPIC tutorial
+.
+.\" FIXME: Perhaps include a cool ASCII art logo?
+.\" This will take up precious space, though.
+.\" It's important to fit the most important information
+.\" on the first page.
+.
+.nr VS 0 \" no vertical spacing
+.NH 1
+Tutorial
+.nr VS 3p \" FIXME: Why exactly this value?
+.
+.LP
+It seems, you are launching \*(ST for the first time.
+\*(ST is an unique interactive text editor and programming language.
+This tutorial guides you through the bare essentials of the editor.
+Try the examples directly on this document.
+.
+.NH 2
+Get me out of here!
+.
+.LP
+To exit the editor, just type the characters \fBex\fP,
+followed by two escape key presses.
+\#This would be equivalent to Vi's \(lq:q\(rq command.
+Escape key presses produce ASCII 27 characters, which are echoed as \(lq\*$\(rq.
+TECO commands are \fIcase-insensitive\fP.
+In the remainder of this document, command examples are therefore formatted as follows:
+.
+.ID
+\fBEX\fP\*($$
+.DE
+.
+.NH 2
+Navigation
+.
+.LP
+To set the cursor to the next line, type the \fPL\fP command,
+which will eventually scroll the document.
+You should also be able to use cursor movement keys.
+Perhaps you can even scroll using your mouse's scroll wheel.
+\# It's important that everything until this paragraph fit into the first 21 lines,
+\# i.e. the first 24 line screen.
+.
+.LP
+To move back one line, type the \fBB\fP command.
+\fBB\fP is \fB-L\fP!
+\fBC\fP moves one character to the right and \fBR\fP
+moves in the reverse direction, i.e. one character to the left.
+\fBR\fP is \fB-C\fP.
+\fBJ\fP jumps to the beginning of the document and \fBZJ\fP to the end.
+Using cursor movement or mouse buttons updates the movement
+commands in the command line (the line at the bottom of the screen after \fB*\fP).
+.
+.NH 2
+Insertion
+.
+.LP
+To insert the string \(lqHello world!\(rq type the following:
+.
+.ID
+\fBI\fPHello world!\*$
+.DE
+.
+.LP
+Try pressing the backspace key repeatedly \(em the inserted text will vanish.
+This is called \fIrubout\fP and it works for \fIall\fP commands.
+You are not actually editing the document, but the command line.
+The commands are executed on the fly \(em you don't have to press Enter
+as in all other programming language prompts.
+Also try pressing CTRL+W to rub out entire words or commands.
+While the \fBI\fP command may resemble Vi, \*(ST is \fInot\fP a modal editor.
+There is no \(lqinsert\(rq mode, you are merely providing a string argument
+to the interactively executed \fBI\fP command.
+.
+.NH 2
+Deletion
+.
+.LP
+Rubout may be used to undo text insertions, but you can also explicitly
+delete lines using the \fBK\fP command.
+\fBD\fP deletes individual characters.
+\fB-K\fP deletes the previous line and \fB-D\fP the previous character.
+If you changed this document, \(lqEX\*($$\(rq will refuse to exit the editor.
+Use the following command instead to discard all changes:
+.
+.ID
+\fB-EX\fP\*($$
+.DE
+.
+.NH 2
+Saving
+.
+.LP
+You should \fBnot\fP save any changes to this document.
+\# FIXME: It should be read-only in the first place!
+Instead, let's save it to a local file (save as):
+.
+.ID
+\fBEW\fP~/test.txt\*$
+.DE
+.
+.LP
+If you exit now, next time you start \*(ST, this file is restored and you can
+continue right where you left off.
+To write out the current document without changing its name, just type:
+.
+.ID
+\fBEW\fP\*$
+.DE
+.
+.LP
+Remember, you can type CTRL+W to undo even the file write and restore the
+previous state of the file.
+.
+.NH 2
+Loading
+.
+.LP
+To open files from your operating system's shell, specify them after
+the \(lq@PACKAGE@\(rq command.
+For instance to open exactly one file on an UNIX-like system:
+.
+.ID
+$ @PACKAGE@ ~/test.txt
+.DE
+.
+.LP
+When called this way, \*(ST does not maintain \fIsessions\fP,
+i.e. will not restore this file when started without arguments.
+In order to open another file from within \*(ST, try the following
+command:
+.
+.ID
+\fBEB\fPnew-file.txt\*$
+.DE
+.
+.LP
+This can be an existing or new file or even be open already \(em
+you will always edit the given file afterwards.
+You can use the Tab key to auto-complete file names, just like
+in a typical UNIX shell!
+Of course, you can press CTRL+W to revert opening the file.
+.
+.NH 2
+Search and replace
+.
+.LP
+To search for a string beginning at the current position,
+try something like this:
+.
+.ID
+\fBS\fPsome string\*$
+.DE
+.
+\# FIXME: There is apparenly a page break here.
+\# Can probably be fixed in sciteco.tmac.
+.LP
+To find \(lqsome string\(rq and replace it with \(lqanother string\(rq,
+you could write:
+.
+.ID
+\fBFR\fPsome string\*$another string\*$
+.DE
+.
+.LP
+If you omit either of the string arguments, the previous value is used,
+so \fBS\fP\*$ repeats the last search and \fBFR\fP\*($$ repeats the last
+search-replace operation.
+.
+.NH 2
+Q-Registers
+.
+.LP
+The equivalent of variables are called \fIQ-registers\fP.
+You can among many other things store the next 10 lines into
+the register \(lqA\(rq:
+.
+.ID
+10\fBX\fPa
+.DE
+.
+.LP
+Leave away the number to copy the next line only.
+Actually, most commands accept optional number arguments.
+To insert (get) the contents of register \(lqA\(rq use the command
+\fBG\fPa.
+Register \(lq~\(rq is the main system clipboard, so \(lqX~\(rq
+copies into, while \(lqG~\(rq pastes the clipboard.
+This however might not work out of the box if you are running the ncurses
+version of \*(ST.
+.
+.NH 2
+Programming
+.
+.LP
+\*(ST is an editor \fIand\fP a structured turing complete
+programming language.
+It recognizes complex control flow commands and subroutines
+(macros) for automating text editing tasks.
+This tutorial will not go into detail, but here's an example
+of performing a search-replace operation on the entire buffer:
+.
+.ID
+\fBJ <FR\fPhere's\*$here is\*$\fB;>\fP
+.DE
+.
+.NH 2
+Customize
+.
+.LP
+If you haven't done so already, copy the global
+@scitecodatadir@/fallback.teco_ini to your home directory and edit
+it to customize \*(ST's behavior:
+.
+.ID
+$ cp @scitecodatadir@/fallback.teco_ini ~/.teco_ini
+$ @PACKAGE@ ~/.teco_ini
+.DE
+.
+.LP
+This is a profile script in the \*(ST language, that is executed 
+by default every time you launch \*(ST.
+If you made a mistake editing it and \*(ST refuses to start,
+you can always skip loading the profile and use \*(ST commands
+to fix up the profile script:
+.
+.ID
+$ @PACKAGE@ --no-profile
+.DE
+.
+.NH 2
+Further reading
+.
+.LP
+There is a lot more to learn if you would like to become a
+\(lqmoby munger\(rq.
+Consult or even print the official Cheat Sheet to extend your
+\(lqvocabulary\(rq of \*(ST commands:
+.
+.ID 0
+https://sciteco.sf.net/manuals/cheat-sheet.pdf
+.DE
+.
+.LP
+Navigate to the beginning of the line with the URL and type
+\fBX~\fP to copy it into the system clipboard.
+For more details on the \*(ST language, consult the
+\fBsciteco\fP(7) man page.
+\fBsciteco\fP(1) documents \*(ST as an application
+(command-line arguments, environment variables and so on).
+These man pages are also available on the website in HTML format,
+but you can also read them right now from within \*(ST
+by using the \(lq?\(rq command.
+To open the language reference, type:
+.
+.ID
+\fB?\fPlanguage\*$
+.DE
+.
+.LP
+If you want to read the tutorial at any later time, just
+type \fB?\fPtutorial\*$.
+You may also want to have a look at the Wiki and FAQ:
+.
+.ID 0
+https://github.com/rhaberkorn/sciteco/wiki
+.DE
+.
+.LP
+If you cannot find a solution to your problem,
+you can of course open an Issue or Discussion on \*(ST's
+Github page.
+We are also happy to help out on the official IRC
+channel:
+Join #sciteco at irc.libera.chat.
+.
+.LP
+Merry munging!
+.
+.br
+.SCITECO_TT_END

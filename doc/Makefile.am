@@ -51,6 +51,9 @@ CLEANFILES += sciteco.1.intermediate
 women_DATA += sciteco.7.woman sciteco.7.woman.tec
 CLEANFILES += sciteco.7.intermediate
 
+women_DATA += tutorial.woman tutorial.woman.tec
+CLEANFILES += tutorial.intermediate
+
 CLEANFILES += $(women_DATA)
 
 # NOTE: *.intermediate files are only generated since SciTECO scripts
@@ -62,6 +65,9 @@ CLEANFILES += $(women_DATA)
 
 %.intermediate : % sciteco.tmac
 	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -man -M@srcdir@ -msciteco $< >$@
+
+tutorial.intermediate : tutorial.ms sciteco.tmac
+	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< >$@
 
 man_MANS = grosciteco.tes.1
 EXTRA_DIST = grosciteco.tes.1.in
