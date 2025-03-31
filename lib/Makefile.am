@@ -16,7 +16,10 @@ lexerdir = $(scitecolibdir)/lexers
 # This lexer is responsible for styling
 # womanpages and is thus useful even when omitting
 # the syntax highlighting lexers.
-dist_lexer_DATA = lexers/woman.tes
+dist_lexer_DATA = lexers/woman.tes \
+                  lexers/git.tes \
+                  lexers/sciteco.tes \
+                  lexers/email.tes
 
 if LEXILLA
 
@@ -100,9 +103,6 @@ dist_lexer_DATA += lexers/verilog.tes \
                    lexers/yaml.tes \
                    lexers/markdown.tes \
                    lexers/asciidoc.tes \
-                   lexers/troff.tes \
-                   lexers/git.tes \
-                   lexers/sciteco.tes \
-                   lexers/email.tes
+                   lexers/troff.tes
 
 endif
