@@ -1,4 +1,4 @@
-!* AUTO-GENERATED FROM SCITE PROPERTY SET *!
+!* Assembler x86/x64 *!
 
 @[lexer.test.asm]{
   :EN*.asmQ*
@@ -171,9 +171,17 @@
     vfnmadd231pd vfnmsub132ss vfnmsub213ss vfnmsub231ss vfnmsub132ps vfnmsub213ps
     vfnmsub231ps vfnmsub132sd vfnmsub213sd vfnmsub231sd vfnmsub132pd vfnmsub213pd
     vfnmsub231pd
+  :M[color.comment],1M[color.set]
+  :M[color.number],2M[color.set]
   :M[color.string],3M[color.set]
   :M[color.operator],4M[color.set]
+  !!:M[color.variable],5M[color.set]
   :M[color.keyword],6M[color.set]
+  :M[color.keyword],7M[color.set]
+  :M[color.preproc],9M[color.set]
+  :M[color.preproc2],10M[color.set]
   :M[color.comment],11M[color.set]
   :M[color.string2],12M[color.set]
+  :M[color.keyword],14M[color.set]
+  :M[color.comment],15M[color.set]
 }
