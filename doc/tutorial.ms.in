@@ -29,6 +29,12 @@
 .\}
 .
 .nr DI 4n \" 4 char indentation for code samples
+.nr DD 1v
+.nr PD 1v
+.\" fixes excess space under examples in some Groff versions
+.am DE
+.  ns
+..
 .
 .\" The entire document is monospaced as users are supposed to
 .\" navigate through it and perhaps even modify it inplace.
