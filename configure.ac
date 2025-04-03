@@ -387,11 +387,11 @@ AC_ARG_WITH(teco-integer,
 AC_SUBST(TECO_INTEGER)
 AC_DEFINE_UNQUOTED(TECO_INTEGER, $TECO_INTEGER, [Storage size of TECO integers])
 
-AC_ARG_ENABLE(html-manual,
-	AS_HELP_STRING([--enable-html-manual],
+AC_ARG_ENABLE(html-docs,
+	AS_HELP_STRING([--enable-html-docs],
 		       [Generate and install HTML manuals using Groff [default=no]]),
-	[html_man=$enableval], [html_man=no])
-AM_CONDITIONAL(BUILD_HTMLMAN, [test $html_man = yes])
+	[html_docs=$enableval], [html_docs=no])
+AM_CONDITIONAL(BUILD_HTMLDOCS, [test $html_docs = yes])
 
 AC_ARG_ENABLE(bootstrap,
 	AS_HELP_STRING([--disable-bootstrap],

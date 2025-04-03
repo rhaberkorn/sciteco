@@ -1,7 +1,7 @@
 #!/usr/local/bin/sciteco -m
 !*
  * Generate the website at https://rhaberkorn.github.io/sciteco
- * This reuses content from Markdown documents and the manpages.
+ * This reuses content from Markdown and grohtml-generated documents.
  * Everything else is cross-linked to Sourceforge.
  * It must currently be run from the www/ subdirectory of an in-tree-build.
  * The HTML manuals must be in ../doc.
@@ -78,41 +78,48 @@ EBscreenshots.html HK
   M[footer]
 EW
 
-[manpage-header]
+[grohtml-header]
   <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
   <div class="grohtml">
 
 EB../doc/sciteco.1.html
   S<body>S<h1  L 0,.K
-  [title]sciteco(1) M[header] G[manpage-header]
+  [title]sciteco(1) M[header] G[grohtml-header]
   FD<hr>S</body> .,ZK
   M[footer]
 EWsciteco.1.html
 
 EB../doc/sciteco.7.html
   S<body>S<h1  L 0,.K
-  [title]sciteco(7) M[header] G[manpage-header]
+  [title]sciteco(7) M[header] G[grohtml-header]
   FD<hr>S</body> .,ZK
   M[footer]
 EWsciteco.7.html
 
 !*
- * These manpages are not in the header bar, but still postprocessed
- * for consinstency.
+ * These grohtml-generated documents are not in the header bar,
+ * but still postprocessed for consinstency.
  *!
 
 EB../doc/grosciteco.tes.1.html
   S<body>S<h1  L 0,.K
-  [title]grosciteco.tes(1) M[header] G[manpage-header]
+  [title]grosciteco.tes(1) M[header] G[grohtml-header]
   FD<hr>S</body> .,ZK
   M[footer]
 EWgrosciteco.tes.1.html
 
 EB../doc/tedoc.tes.1.html
   S<body>S<h1  L 0,.K
-  [title]tedoc.tes(1) M[header] G[manpage-header]
+  [title]tedoc.tes(1) M[header] G[grohtml-header]
   FD<hr>S</body> .,ZK
   M[footer]
 EWtedoc.tes.1.html
+
+EB../doc/tutorial.html
+  S<body>S<h1  L 0,.K
+  [title]Tutorial M[header] G[grohtml-header]
+  FD<hr>S</body> .,ZK
+  M[footer]
+EWtutorial.html
 
 EX

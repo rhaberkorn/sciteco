@@ -116,7 +116,7 @@ jobs:
       # with `installer -pkg -target`.
       run: |
         autoreconf -i
-        ./configure --with-interface=ncurses --enable-static-executables --enable-html-manual \
+        ./configure --with-interface=ncurses --enable-static-executables --enable-html-docs \
                     --with-scitecodatadir=../share/sciteco
 
     - name: make
@@ -222,11 +222,11 @@ jobs:
         autoreconf -i
         mkdir build-wingui build-wincon
         (cd build-wingui
-         ../configure --with-interface=pdcurses-gui --enable-html-manual --program-prefix=g \
+         ../configure --with-interface=pdcurses-gui --enable-html-docs --program-prefix=g \
                       --with-scitecodatadir=. \
                       PDCURSES_LIBS="-lpdcurses_wingui -lgdi32 -lcomdlg32 -lwinmm")
         (cd build-wincon
-         ../configure --with-interface=pdcurses --enable-html-manual \
+         ../configure --with-interface=pdcurses --enable-html-docs \
                       --with-scitecodatadir=. \
                       PDCURSES_LIBS="-lpdcurses_wincon -lgdi32 -lwinmm")
 
@@ -308,7 +308,7 @@ jobs:
         LDFLAGS: -flto
       run: |
         autoreconf -i
-        ./configure --with-interface=gtk --enable-html-manual \
+        ./configure --with-interface=gtk --enable-html-docs \
                     --with-scitecodatadir=.
 
     - name: make

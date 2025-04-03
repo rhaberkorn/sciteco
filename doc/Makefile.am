@@ -78,9 +78,9 @@ man_MANS = grosciteco.tes.1 tedoc.tes.1 sciteco.1 sciteco.7
 
 dist_noinst_SCRIPTS = htbl.tes
 
-if BUILD_HTMLMAN
+if BUILD_HTMLDOCS
 html_DATA = grosciteco.tes.1.html tedoc.tes.1.html \
-            sciteco.1.html sciteco.7.html
+            sciteco.1.html sciteco.7.html tutorial.html
 CLEANFILES += $(html_DATA)
 endif
 
@@ -92,6 +92,9 @@ endif
 SUFFIXES += .htbl .html
 .htbl.html:
 	@GROFF@ -wall -Thtml -man $< >$@
+
+.ms.html:
+	@GROFF@ -wall -Thtml -ms $< >$@
 
 # FIXME: We may want to build the cheat sheet automatically.
 # This would require a full Groff installation, though.

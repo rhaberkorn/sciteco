@@ -129,7 +129,7 @@ mingw-binary : @PACKAGE@-@PACKAGE_VERSION@-win32.zip
 	             --disable-dependency-tracking \
 		     --with-interface=$(MINGW_UI) \
 		     --disable-bootstrap \
-		     --enable-html-manual \
+		     --enable-html-docs \
 		     CFLAGS="-g -O3 -flto" CXXFLAGS="-g -O3 -flto" \
 	             LDFLAGS="-flto"; \
 	)
