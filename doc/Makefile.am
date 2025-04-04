@@ -89,11 +89,10 @@ endif
 %.htbl : % htbl.tes
 	$(SCITECO_FULL) -m -- @srcdir@/htbl.tes $< $@
 
-SUFFIXES += .htbl .html
-.htbl.html:
+%.html : %.htbl
 	@GROFF@ -wall -Thtml -man $< >$@
 
-.ms.html:
+%.html : %.ms
 	@GROFF@ -wall -Thtml -ms $< >$@
 
 # FIXME: We may want to build the cheat sheet automatically.
