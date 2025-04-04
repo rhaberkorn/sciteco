@@ -308,6 +308,10 @@ This will not be delivered on Curses unless bit 7 (64) is set in the
 You can use \fBEJ\fP with negative keys to retrieve
 the event type, mouse coordinates and other information
 about the last mouse event.
+Dot is \fInot\fP automatically scrolled into the view when processing
+mouse events, so you can customize scrolling and even have dot leaving the
+visible area.
+You can manually scroll dot into the view by calling \fBSCI_SCROLLCARET\fP.
 .TP
 .BI ^K x
 Any other key with printable representation and all control codes

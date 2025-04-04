@@ -179,14 +179,14 @@
     -4EJ&2"=
       -4EJ&1"=-1|-2',0ESLINESCROLL
     |
-      ESZOOMIN
+      ESZOOMIN ESSCROLLCARET
     '
     {-9D}
   !scrolldown!
     -4EJ&2"=
       -4EJ&1"=1|2',0ESLINESCROLL
     |
-      ESZOOMOUT
+      ESZOOMOUT ESSCROLLCARET
     '
     {-9D}
 }

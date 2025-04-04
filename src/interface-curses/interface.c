@@ -1968,9 +1968,6 @@ teco_interface_event_loop_iter(void)
 			? teco_interface_blocking_getch()
 			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
 
-	const teco_view_t *last_view = teco_interface_current_view;
-	sptr_t last_pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-
 	switch (key) {
 	case ERR:
 		/* shouldn't really happen */
@@ -2093,9 +2090,13 @@ teco_interface_event_loop_iter(void)
 	 * Scintilla has been patched to avoid any automatic scrolling since that
 	 * has been benchmarked to be a very costly operation.
 	 * Instead we do it only once after every keypress.
+	 *
+	 * The only exception is mouse events, so you can scroll the view manually
+	 * in the ^KMOUSE macro, allowing dot to be outside of the view.
 	 */
-	if (teco_interface_current_view != last_view ||
-	    last_pos != teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0))
+#if NCURSES_MOUSE_VERSION >= 2
+	if (key != KEY_MOUSE)
+#endif
 		teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 	teco_interface_refresh();
 }
