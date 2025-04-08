@@ -1364,7 +1364,7 @@ are handled interactively.
 .SCITECO_TOPIC modifiers
 .
 A command's behaviour or syntax may be influenced by so called
-modifiers written in front of commands.
+modifiers written immediately in front of commands.
 Their specific influence of a modifier always depends on the concrete
 command following it.
 When specifying more than one modifier, their order is insignificant.
@@ -1383,8 +1383,8 @@ return 0 instead.
 .LP
 .SCITECO_TOPIC ::
 Two colons (\fB::\fP) can sometimes further modify a command's behavior \(em
-currently it is used by the \fB::S\fP search comparison command.
-On all other commands it will behave like a single colon.
+currently it is used by the \fB::S\fP search comparison command
+and a few related search-and-replace operations.
 .LP
 .SCITECO_TOPIC @ at
 When put in front of a command with string arguments,
@@ -1422,6 +1422,8 @@ escape character itself.
 The at (\fB@\fP) modifier may also sometimes be supported by commands,
 that do not accept string arguments.
 For instance, \fB@X\fIq\fR cuts text into Q-Register \fIq\fP.
+In front of word movement and deletion commands (e.g. \fBW\fP),
+it toggles the order of word vs. non-word characters that are skipped or deleted.
 \# But there is no common semantics for @ on regular commands, yet.
 \# We may some day add @Mq/.../ for passing string arguments to macro calls,
 \# but it will be yet another special case.

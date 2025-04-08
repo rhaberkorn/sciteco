@@ -355,6 +355,13 @@ teco_machine_main_transition_input(teco_machine_main_t *ctx,
 		return NULL;
 	}
 
+	if ((ctx->modifier_at && !transitions[chr].modifier_at) ||
+	    (ctx->mode == TECO_MODE_NORMAL &&
+	     ctx->modifier_colon > transitions[chr].modifier_colon)) {
+		teco_error_modifier_set(error, chr);
+		return NULL;
+	}
+
 	if (ctx->mode == TECO_MODE_NORMAL && transitions[chr].transition_cb) {
 		/*
 		 * NOTE: We could also just let transition_cb return a boolean...

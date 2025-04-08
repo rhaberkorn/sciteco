@@ -77,10 +77,10 @@ teco_error_syntax_set(GError **error, gunichar chr)
 }
 
 static inline void
-teco_error_modifier_set(GError **error, gchar modifier)
+teco_error_modifier_set(GError **error, gchar chr)
 {
 	g_set_error(error, TECO_ERROR, TECO_ERROR_MODIFIER,
-	            "Excess \"%c\"-modifier", modifier);
+	            "Unexpected modifier on <%c>", chr);
 }
 
 static inline void

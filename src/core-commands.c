@@ -620,24 +620,36 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		 */
 		['$']  = {&teco_state_escape},
 		['!']  = {&teco_state_label},
-		['O']  = {&teco_state_goto},
-		['^']  = {&teco_state_control},
-		['F']  = {&teco_state_fcommand},
+		['O']  = {&teco_state_goto,
+		          .modifier_at = TRUE},
+		['^']  = {&teco_state_control,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['F']  = {&teco_state_fcommand,
+		          .modifier_at = TRUE, .modifier_colon = 2},
 		['"']  = {&teco_state_condcommand},
-		['E']  = {&teco_state_ecommand},
-		['I']  = {&teco_state_insert_building},
-		['?']  = {&teco_state_help},
-		['S']  = {&teco_state_search},
-		['N']  = {&teco_state_search_all},
+		['E']  = {&teco_state_ecommand,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['I']  = {&teco_state_insert_building,
+		          .modifier_at = TRUE},
+		['?']  = {&teco_state_help,
+		          .modifier_at = TRUE},
+		['S']  = {&teco_state_search,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['N']  = {&teco_state_search_all,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 
 		['[']  = {&teco_state_pushqreg},
 		[']']  = {&teco_state_popqreg},
 		['G']  = {&teco_state_getqregstring},
-		['Q']  = {&teco_state_queryqreg},
-		['U']  = {&teco_state_setqreginteger},
+		['Q']  = {&teco_state_queryqreg,
+		          .modifier_colon = 1},
+		['U']  = {&teco_state_setqreginteger,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 		['%']  = {&teco_state_increaseqreg},
-		['M']  = {&teco_state_macro},
-		['X']  = {&teco_state_copytoqreg},
+		['M']  = {&teco_state_macro,
+		          .modifier_colon = 1},
+		['X']  = {&teco_state_copytoqreg,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 
 		/*
 		 * Arithmetics
@@ -660,9 +672,12 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		/*
 		 * Control Structures (loops)
 		 */
-		['<']  = {&teco_state_start, teco_state_start_loop_open},
-		['>']  = {&teco_state_start, teco_state_start_loop_close},
-		[';']  = {&teco_state_start, teco_state_start_break},
+		['<']  = {&teco_state_start, teco_state_start_loop_open,
+		          .modifier_colon = 1},
+		['>']  = {&teco_state_start, teco_state_start_loop_close,
+		          .modifier_colon = 1},
+		[';']  = {&teco_state_start, teco_state_start_break,
+		          .modifier_colon = 1},
 
 		/*
 		 * Command-line Editing
@@ -673,13 +688,20 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		/*
 		 * Commands
 		 */
-		['J']  = {&teco_state_start, teco_state_start_jump},
-		['C']  = {&teco_state_start, teco_state_start_move},
-		['R']  = {&teco_state_start, teco_state_start_reverse},
-		['L']  = {&teco_state_start, teco_state_start_line},
-		['B']  = {&teco_state_start, teco_state_start_back},
-		['K']  = {&teco_state_start, teco_state_start_kill_lines},
-		['D']  = {&teco_state_start, teco_state_start_delete_chars},
+		['J']  = {&teco_state_start, teco_state_start_jump,
+		          .modifier_colon = 1},
+		['C']  = {&teco_state_start, teco_state_start_move,
+		          .modifier_colon = 1},
+		['R']  = {&teco_state_start, teco_state_start_reverse,
+		          .modifier_colon = 1},
+		['L']  = {&teco_state_start, teco_state_start_line,
+		          .modifier_colon = 1},
+		['B']  = {&teco_state_start, teco_state_start_back,
+		          .modifier_colon = 1},
+		['K']  = {&teco_state_start, teco_state_start_kill_lines,
+		          .modifier_colon = 1},
+		['D']  = {&teco_state_start, teco_state_start_delete_chars,
+		          .modifier_colon = 1},
 		['=']  = {&teco_state_start, teco_state_start_print},
 		['A']  = {&teco_state_start, teco_state_start_get}
 	};
@@ -695,6 +717,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	case '\r':
 	case '\n':
 	case '\v':
+		if (ctx->modifier_at ||
+		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+			teco_error_modifier_set(error, chr);
+			return NULL;
+		}
 		return &teco_state_start;
 
 	/*$ 0 1 2 3 4 5 6 7 8 9 digit number
@@ -714,6 +741,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * current radix - this may be changed in the future.
 	 */
 	case '0' ... '9':
+		if (ctx->modifier_at ||
+		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+			teco_error_modifier_set(error, chr);
+			return NULL;
+		}
 		if (ctx->mode == TECO_MODE_NORMAL)
 			teco_expressions_add_digit(chr, ctx->qreg_table_locals->radix);
 		return &teco_state_start;
@@ -731,6 +763,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		break;
 
 	case '<':
+		if (ctx->modifier_at) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_MODIFIER,
+			                    "Unexpected modifier on loop start");
+			return NULL;
+		}
 		if (ctx->mode != TECO_MODE_PARSE_ONLY_LOOP)
 			break;
 		if (ctx->parent.must_undo)
@@ -739,6 +776,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		return &teco_state_start;
 
 	case '>':
+		if (ctx->modifier_at) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_MODIFIER,
+			                    "Unexpected modifier on loop end");
+			return NULL;
+		}
 		if (ctx->mode != TECO_MODE_PARSE_ONLY_LOOP)
 			break;
 		if (!ctx->nest_level) {
@@ -756,6 +798,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Control Structures (conditionals)
 	 */
 	case '|':
+		if (ctx->modifier_at ||
+		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+			teco_error_modifier_set(error, '|');
+			return NULL;
+		}
 		if (ctx->parent.must_undo)
 			teco_undo_guint(ctx->__flags);
 		if (ctx->mode == TECO_MODE_PARSE_ONLY_COND && !ctx->nest_level)
@@ -766,6 +813,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		return &teco_state_start;
 
 	case '\'':
+		if (ctx->modifier_at ||
+		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+			teco_error_modifier_set(error, '\'');
+			return NULL;
+		}
 		switch (ctx->mode) {
 		case TECO_MODE_PARSE_ONLY_COND:
 		case TECO_MODE_PARSE_ONLY_COND_FORCE:
@@ -788,6 +840,11 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Word movement and deletion commands.
 	 * These are not in the transitions table, so we can
 	 * evaluate the @-modifier.
+	 *
+	 * All of these commands support both : and @-modifiers.
+	 *
+	 * FIXME: This will currently accept two colons as well,
+	 * but should accept only one colon modifier.
 	 */
 	case 'w':
 	case 'W': return teco_state_start_words(ctx, "W", 1, error);
@@ -978,17 +1035,24 @@ teco_state_fcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		/*
 		 * Simple transitions
 		 */
-		['K']  = {&teco_state_search_kill},
-		['D']  = {&teco_state_search_delete},
-		['S']  = {&teco_state_replace},
-		['R']  = {&teco_state_replace_default},
-		['G']  = {&teco_state_changedir},
+		['K']  = {&teco_state_search_kill,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		['D']  = {&teco_state_search_delete,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['S']  = {&teco_state_replace,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['R']  = {&teco_state_replace_default,
+		          .modifier_at = TRUE, .modifier_colon = 2},
+		['G']  = {&teco_state_changedir,
+		          .modifier_at = TRUE},
 
 		/*
 		 * Loop Flow Control
 		 */
-		['<']  = {&teco_state_start, teco_state_fcommand_loop_start},
-		['>']  = {&teco_state_start, teco_state_fcommand_loop_end},
+		['<']  = {&teco_state_start, teco_state_fcommand_loop_start,
+		          .modifier_colon = 1},
+		['>']  = {&teco_state_start, teco_state_fcommand_loop_end,
+		          .modifier_colon = 1},
 
 		/*
 		 * Conditional Flow Control
@@ -1513,8 +1577,10 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		/*
 		 * Simple transitions
 		 */
-		['I']  = {&teco_state_insert_indent},
-		['U']  = {&teco_state_ctlucommand},
+		['I']  = {&teco_state_insert_indent,
+		          .modifier_at = TRUE},
+		['U']  = {&teco_state_ctlucommand,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 		['^']  = {&teco_state_ascii},
 		['[']  = {&teco_state_escape},
 
@@ -1533,8 +1599,10 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},
 		['R']  = {&teco_state_start, teco_state_control_radix},
-		['Q']  = {&teco_state_start, teco_state_control_lines2glyphs},
-		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes},
+		['Q']  = {&teco_state_start, teco_state_control_lines2glyphs,
+		          .modifier_colon = 1},
+		['E']  = {&teco_state_start, teco_state_control_glyphs2bytes,
+		          .modifier_colon = 1},
 		['X']  = {&teco_state_start, teco_state_control_search_mode},
 		['Y']  = {&teco_state_start, teco_state_control_last_range},
 		['S']  = {&teco_state_start, teco_state_control_last_length}
@@ -2447,27 +2515,41 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		/*
 		 * Simple Transitions
 		 */
-		['%']  = {&teco_state_epctcommand},
-		['B']  = {&teco_state_edit_file},
-		['C']  = {&teco_state_execute},
-		['G']  = {&teco_state_egcommand},
+		['%']  = {&teco_state_epctcommand,
+		          .modifier_at = TRUE},
+		['B']  = {&teco_state_edit_file,
+		          .modifier_at = TRUE},
+		['C']  = {&teco_state_execute,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		['G']  = {&teco_state_egcommand,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 		['I']  = {&teco_state_insert_nobuilding},
-		['M']  = {&teco_state_macrofile},
-		['N']  = {&teco_state_glob_pattern},
-		['S']  = {&teco_state_scintilla_symbols},
-		['Q']  = {&teco_state_eqcommand},
-		['U']  = {&teco_state_eucommand},
-		['W']  = {&teco_state_save_file},
+		['M']  = {&teco_state_macrofile,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		['N']  = {&teco_state_glob_pattern,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		['S']  = {&teco_state_scintilla_symbols,
+		          .modifier_at = TRUE},
+		['Q']  = {&teco_state_eqcommand,
+		          .modifier_at = TRUE},
+		['U']  = {&teco_state_eucommand,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		['W']  = {&teco_state_save_file,
+		          .modifier_at = TRUE},
 
 		/*
 		 * Commands
 		 */
-		['F']  = {&teco_state_start, teco_state_ecommand_close},
+		['F']  = {&teco_state_start, teco_state_ecommand_close,
+		          .modifier_colon = 1},
 		['D']  = {&teco_state_start, teco_state_ecommand_flags},
 		['J']  = {&teco_state_start, teco_state_ecommand_properties},
-		['L']  = {&teco_state_start, teco_state_ecommand_eol},
-		['E']  = {&teco_state_start, teco_state_ecommand_encoding},
-		['X']  = {&teco_state_start, teco_state_ecommand_exit}
+		['L']  = {&teco_state_start, teco_state_ecommand_eol,
+		          .modifier_colon = 1},
+		['E']  = {&teco_state_start, teco_state_ecommand_encoding,
+		          .modifier_colon = 1},
+		['X']  = {&teco_state_start, teco_state_ecommand_exit,
+		          .modifier_colon = 1},
 	};
 
 	/*

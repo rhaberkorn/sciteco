@@ -544,8 +544,27 @@ gboolean teco_execute_macro(const gchar *macro, gsize macro_len,
 gboolean teco_execute_file(const gchar *filename, teco_qreg_table_t *qreg_table_locals, GError **error);
 
 typedef const struct {
+	/** next state after receiving the input character */
 	teco_state_t *next;
+	/**
+	 * Optional function to call during the state transition.
+	 *
+	 * It is called only in normal execution mode.
+	 */
 	void (*transition_cb)(teco_machine_main_t *ctx, GError **error);
+	/**
+	 * Maximum number of `:` modifiers, that \b can be set on the input character.
+	 *
+	 * Colon modifiers are completely ignored in parse-only modes.
+	 */
+	guint modifier_colon : 2;
+	/**
+	 * TRUE if `@`-modifier \b can be set on the input character.
+	 *
+	 * Since `@` has syntactic significance,
+	 * it is checked even in parse-only mode.
+	 */
+	bool modifier_at : 1;
 } teco_machine_main_transition_t;
 
 /*
