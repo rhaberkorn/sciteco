@@ -13,6 +13,15 @@ fi
 # For testing command-line editing:
 SCITECO_CMDLINE="$SCITECO --no-profile --fake-cmdline"
 
+# Control characters for testing immediate editing commands with $SCITECO_CMDLINE.
+# Often, we can use {...} for testing rubout, but sometimes this is not enough.
+# Directly embedding escapes into strings is not portable.
+# Theoretically, we could directly embed control codes, but for the time being
+# I am trying to keep non-TECO sources clean of non-printable characters.
+RUBOUT=`printf '\8'`
+RUBOUT_WORD=`printf '\27'`
+ESCAPE=`printf '\33'`
+
 # Make sure that the standard library from the source package
 # is used.
 SCITECOPATH="@abs_top_srcdir@/lib"

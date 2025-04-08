@@ -446,56 +446,22 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 		}
 		return TRUE;
 
-	case TECO_CTL_KEY('W'): /* rubout/reinsert command */
+	case TECO_CTL_KEY('W'): /* rubout/reinsert construct */
 		teco_interface_popup_clear();
 
-		/*
-		 * This mimics the behavior of the `Y` command,
-		 * so it also rubs out no-op commands.
-		 * See also teco_find_words().
-		 */
 		if (teco_cmdline.modifier_enabled) {
-			/* reinsert command */
-			/* @ and : are not separate states, but practically belong to the command */
-			while (ctx->current->is_start &&
-			       teco_cmdline.effective_len < teco_cmdline.str.len &&
-			       (teco_cmdline.str.data[teco_cmdline.effective_len] == ':' ||
-			        teco_cmdline.str.data[teco_cmdline.effective_len] == '@'))
-				if (!teco_cmdline_rubin(error))
-					return FALSE;
-
+			/* reinsert construct */
 			do {
 				if (!teco_cmdline_rubin(error))
 					return FALSE;
 			} while (!ctx->current->is_start &&
 			         teco_cmdline.effective_len < teco_cmdline.str.len);
-
-			while (ctx->current->is_start &&
-			       teco_cmdline.effective_len < teco_cmdline.str.len &&
-			       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len]))
-				if (!teco_cmdline_rubin(error))
-					return FALSE;
-
-			return TRUE;
+		} else {
+			/* rubout construct */
+			do
+				teco_cmdline_rubout();
+			while (!ctx->current->is_start);
 		}
-
-		/* rubout command */
-		while (ctx->current->is_start &&
-		       teco_cmdline.effective_len > 0 &&
-		       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
-			teco_cmdline_rubout();
-
-		do
-			teco_cmdline_rubout();
-		while (!ctx->current->is_start);
-
-		/* @ and : are not separate states, but practically belong to the command */
-		while (ctx->current->is_start &&
-		       teco_cmdline.effective_len > 0 &&
-		       (teco_cmdline.str.data[teco_cmdline.effective_len-1] == ':' ||
-		        teco_cmdline.str.data[teco_cmdline.effective_len-1] == '@'))
-			teco_cmdline_rubout();
-
 		return TRUE;
 
 #if !defined(INTERFACE_GTK) && defined(SIGTSTP)
@@ -531,6 +497,69 @@ teco_state_caseinsensitive_process_edit_cmd(teco_machine_t *ctx, teco_machine_t 
 		                             : g_unichar_tolower(key);
 
 	return teco_state_process_edit_cmd(ctx, parent_ctx, key, error);
+}
+
+gboolean
+teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error)
+{
+	switch (key) {
+	case TECO_CTL_KEY('W'): /* rubout/reinsert command */
+		teco_interface_popup_clear();
+
+		/*
+		 * This mimics the behavior of the `Y` command,
+		 * so it also rubs out no-op commands.
+		 * See also teco_find_words().
+		 */
+		if (teco_cmdline.modifier_enabled) {
+			/* reinsert command */
+			/* @ and : are not separate states, but practically belong to the command */
+			while (ctx->parent.current->is_start &&
+			       teco_cmdline.effective_len < teco_cmdline.str.len &&
+			       (teco_cmdline.str.data[teco_cmdline.effective_len] == ':' ||
+			        teco_cmdline.str.data[teco_cmdline.effective_len] == '@'))
+				if (!teco_cmdline_rubin(error))
+					return FALSE;
+
+			do {
+				if (!teco_cmdline_rubin(error))
+					return FALSE;
+			} while (!ctx->parent.current->is_start &&
+			         teco_cmdline.effective_len < teco_cmdline.str.len);
+
+			while (ctx->parent.current->is_start &&
+			       teco_cmdline.effective_len < teco_cmdline.str.len &&
+			       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len]))
+				if (!teco_cmdline_rubin(error))
+					return FALSE;
+
+			return TRUE;
+		}
+
+		/* rubout command */
+		while (ctx->parent.current->is_start &&
+		       teco_cmdline.effective_len > 0 &&
+		       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
+			teco_cmdline_rubout();
+
+		do
+			teco_cmdline_rubout();
+		while (!ctx->parent.current->is_start);
+
+		/*
+		 * @ and : are not separate states, but practically belong to the command.
+		 * We cannot rely on the last character though, since it might
+		 * be part of another command.
+		 */
+		while (ctx->parent.current->is_start &&
+		       (ctx->modifier_at || ctx->modifier_colon) &&
+		       teco_cmdline.effective_len > 0)
+			teco_cmdline_rubout();
+
+		return TRUE;
+	}
+
+	return teco_state_caseinsensitive_process_edit_cmd(&ctx->parent, parent_ctx, key, error);
 }
 
 gboolean
@@ -678,6 +707,10 @@ teco_state_stringbuilding_start_process_edit_cmd(teco_machine_stringbuilding_t *
 	 * Chaining to the parent (embedding) state machine's handler
 	 * makes sure that ^W at the beginning of the string argument
 	 * rubs out the entire string command.
+	 *
+	 * FIXME: This does not rub out modifiers in front of
+	 * string commands since this callback could be used in recursively
+	 * embedded string building machines as well.
 	 */
 	return teco_state_process_edit_cmd(parent_ctx, NULL, key, error);
 }
@@ -1050,6 +1083,10 @@ teco_state_qregspec_process_edit_cmd(teco_machine_qregspec_t *ctx, teco_machine_
 	 * the state machine. In particular ^W would crash.
 	 * This also makes sure that commands like <EQ> are completely
 	 * rub out via ^W.
+	 *
+	 * FIXME: This does not rub out modifiers in front of
+	 * Q-Reg commands since this callback could be used in recursively
+	 * embedded Q-Reg specification machines as well.
 	 */
 	return teco_state_process_edit_cmd(parent_ctx, NULL, key, error);
 }

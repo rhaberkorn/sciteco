@@ -198,6 +198,23 @@ AT_CHECK([$SCITECO -e "@EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 
 AT_CHECK([$SCITECO -e "0,128ED @EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+#
+# Command-line editing.
+#
+# This either uses the portable $RUBOUT and $RUBOUT_WORD variables or
+# we use the push/pop command-line commands { and } from start states.
+#
+# NOTE: Most errors are not reported in exit codes - you must check stderr.
+#
+AT_SETUP([Rub out with immediate editing commands])
+# Must rub out @, but not the colon from the Q-Reg specification.
+AT_CHECK([$SCITECO_CMDLINE "Q:@I/XXX/  ${RUBOUT_WORD}{Z-2\"N(0/0)'}"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
+# Should not rub out @ and : characters.
+AT_CHECK([$SCITECO_CMDLINE "@I/ @:foo  ${RUBOUT_WORD}/ Z-3\"N(0/0)'"], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
+AT_CLEANUP
+
 AT_BANNER([Regression Tests])
 
 AT_SETUP([Glob patterns with character classes])
@@ -293,12 +310,8 @@ AT_CHECK([$SCITECO_CMDLINE "!foo!{-5D}"], 0, ignore, stderr)
 AT_CLEANUP
 
 #
-# Command-line editing bugs.
-#
-# NOTE: It would generally be possible to use control codes like ^H (8)
-# and ^W (23) for rubout as well, but this is tricky to write in a portable manner.
-# Therefore we usally use the push/pop command-line commands { and }.
-# NOTE: Most errors are not reported in exit codes - you must check stderr.
+# Command-line editing regressions:
+# See above for rules.
 #
 AT_SETUP([Rub out string append])
 AT_CHECK([$SCITECO_CMDLINE "@I/XXX/ H:Xa{-4D} :Qa-0\"N(0/0)'"], 0, ignore, stderr)
@@ -362,5 +375,12 @@ AT_SETUP([Recursion overflow])
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.
 AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+AT_SETUP([Rub out from empty string argument])
+# Should rub out the modifiers as well.
+AT_CHECK([$SCITECO_CMDLINE ":@^Ua/${RUBOUT_WORD}{Z\"N(0/0)'}"], 0, ignore, stderr)
+AT_CHECK([$GREP "^Error:" stderr], 0, ignore ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP

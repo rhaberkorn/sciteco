@@ -47,6 +47,25 @@
 #include "move-commands.h"
 #include "core-commands.h"
 
+gboolean teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                             gunichar key, GError **error);
+
+/**
+ * @class TECO_DEFINE_STATE_COMMAND
+ * @implements TECO_DEFINE_STATE_CASEINSENSITIVE
+ * @ingroup states
+ *
+ * Base state for everything that is the beginning of a one or two
+ * letter command.
+ */
+#define TECO_DEFINE_STATE_COMMAND(NAME, ...) \
+	TECO_DEFINE_STATE_CASEINSENSITIVE(NAME, \
+		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
+		                       teco_state_command_process_edit_cmd, \
+		.style = SCE_SCITECO_COMMAND, \
+		##__VA_ARGS__ \
+	)
+
 static teco_state_t *teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
 /*
@@ -822,11 +841,10 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_start,
+TECO_DEFINE_STATE_COMMAND(teco_state_start,
 	.end_of_macro_cb = NULL, /* Allowed at the end of a macro! */
 	.is_start = TRUE,
-	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE,
-	.style = SCE_SCITECO_COMMAND
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
 
 /*$ F<
@@ -983,9 +1001,7 @@ teco_state_fcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_fcommand,
-	.style = SCE_SCITECO_COMMAND
-);
+TECO_DEFINE_STATE_COMMAND(teco_state_fcommand);
 
 static void
 teco_undo_change_dir_action(gchar **dir, gboolean run)
@@ -1192,7 +1208,7 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	return &teco_state_start;
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_condcommand,
+TECO_DEFINE_STATE_COMMAND(teco_state_condcommand,
 	.style = SCE_SCITECO_OPERATOR
 );
 
@@ -1533,9 +1549,7 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_control,
-	.style = SCE_SCITECO_COMMAND
-);
+TECO_DEFINE_STATE_COMMAND(teco_state_control);
 
 static teco_state_t *
 teco_state_ascii_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
@@ -1661,15 +1675,14 @@ teco_state_escape_end_of_macro(teco_machine_t *ctx, GError **error)
 	return teco_expressions_discard_args(error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_escape,
+TECO_DEFINE_STATE_COMMAND(teco_state_escape,
 	.end_of_macro_cb = teco_state_escape_end_of_macro,
 	/*
 	 * The state should behave like teco_state_start
 	 * when it comes to function key macro masking.
 	 */
 	.is_start = TRUE,
-	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE,
-	.style = SCE_SCITECO_COMMAND
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
 
 /*$ ED flags
@@ -2464,9 +2477,7 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 	                                          teco_ascii_toupper(chr), error);
 }
 
-TECO_DEFINE_STATE_CASEINSENSITIVE(teco_state_ecommand,
-	.style = SCE_SCITECO_COMMAND
-);
+TECO_DEFINE_STATE_COMMAND(teco_state_ecommand);
 
 gboolean
 teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)

@@ -518,6 +518,8 @@ Miscelleaneous
 .br
 (modifier \fIdisabled\fP)
 T};T{
+\# Strictly speaking, it only does that from the start state.
+\# At the beginning of strings or Q-reg specs, it only erases until the start state.
 Rub out until the beginning of the last command, which is not a no-op (whitespace).
 \(lq@\(rq and \(lq:\(rq modifiers are considered part of the command and also rubbed out.
 T}
