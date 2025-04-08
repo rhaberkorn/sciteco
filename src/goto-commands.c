@@ -193,11 +193,15 @@ TECO_DEFINE_STATE_EXPECTSTRING(teco_state_goto,
 	.insert_completion_cb = (teco_state_insert_completion_cb_t)teco_state_goto_insert_completion
 );
 
-/*
+/**
+ * @interface TECO_DEFINE_STATE_COMMENT
+ * @implements TECO_DEFINE_STATE
+ * @ingroup states
+ *
  * True comments:
  * They don't add entries to the goto table.
  *
- * NOTE: This still needs some special handling in the Scintilla lexer
+ * @note This still needs some special handling in the Scintilla lexer
  * (for syntax highlighting) since comments always start with `!`.
  */
 #define TECO_DEFINE_STATE_COMMENT(NAME, ...) \
