@@ -147,7 +147,10 @@
   -EJOpressed,released,scrollup,scrolldown
   !pressed!
     !* left click *!
-    -3EJ-1"= Q.p-.M#c !* not reached *! '
+    -3EJ-1"=
+      Q.pESGETCOLUMN,4EJ
+      Q.p-.M#c !* not reached *!
+    '
     { -9D
       !* right click *!
       -3EJ-3"= Q.p"U I(\.p ' '
@@ -177,14 +180,14 @@
     }
   !scrollup!
     -4EJ&2"=
-      -4EJ&1"=-1|-2',0ESLINESCROLL
+      -4EJ&1"=-2|-4',0ESLINESCROLL
     |
       ESZOOMIN ESSCROLLCARET
     '
     {-9D}
   !scrolldown!
     -4EJ&2"=
-      -4EJ&1"=1|2',0ESLINESCROLL
+      -4EJ&1"=2|4',0ESLINESCROLL
     |
       ESZOOMOUT ESSCROLLCARET
     '
