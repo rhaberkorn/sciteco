@@ -399,11 +399,11 @@ teco_expressions_format(gchar *buffer, teco_int_t number, teco_qreg_t *qreg)
 
 	gchar *p = buffer + TECO_EXPRESSIONS_FORMAT_LEN;
 
-	teco_int_t v = ABS(number);
+	teco_int_t v = number;
 
 	*--p = '\0';
 	do {
-		*--p = '0' + (v % radix);
+		*--p = '0' + ABS(v % radix);
 		if (*p > '9')
 			*p += 'A' - '9' - 1;
 	} while ((v /= radix));

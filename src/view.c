@@ -612,6 +612,7 @@ teco_view_glyphs2bytes_relative(teco_view_t *ctx, gsize pos, teco_int_t n)
 {
 	if (!n)
 		return pos;
+	/* NOTE: Does not work for n == G_MININT64. */
 	if (ABS(n) > TECO_RELATIVE_LIMIT)
 		return teco_view_glyphs2bytes(ctx, teco_view_bytes2glyphs(ctx, pos) + n);
 

@@ -117,6 +117,15 @@ AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ig
 AT_CHECK([$SCITECO -e "[[: @I/XXX/ ]]: .\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Formatting numbers])
+# MAXINT32/MININT32: should always work.
+AT_CHECK([$SCITECO -e "$MAXINT32\\ J::@S/$MAXINT32/\"F(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "$MININT32\\ J::@S/$MININT32/\"F(0/0)'"], 0, ignore, ignore)
+AT_SKIP_IF([test $TECO_INTEGER -lt 64])
+AT_CHECK([$SCITECO -e "$MAXINT64\\ J::@S/$MAXINT64/\"F(0/0)'"], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "$MININT64\\ J::@S/$MININT64/\"F(0/0)'"], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Convert between line and glyph positions])
 AT_CHECK([$SCITECO -e "@I/1^J2^J3/J 2^QC :^Q-3\"N(0/0)'"], 0, ignore, ignore)
 AT_CLEANUP
