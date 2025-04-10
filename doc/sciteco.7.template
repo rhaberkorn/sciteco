@@ -2323,7 +2323,7 @@ in portable macros.
 This is not the case, for instance when working with environment
 registers.
 .TP
-.SCITECO_TOPIC """S" """T"
+.SCITECO_TOPIC """S" """T" success true
 .IB n \(dqS
 .TQ
 .IB n \(dqT
@@ -2332,7 +2332,7 @@ success (or truth).
 Therefore it is equivalent to a check for less than
 zero (negative).
 .TP
-.SCITECO_TOPIC """F" """U"
+.SCITECO_TOPIC """F" """U" failure false
 .IB n \(dqF
 .TQ
 .IB n \(dqU
@@ -2341,17 +2341,19 @@ failure (or falsehood).
 Therefore it is equivalent to a check for greater than
 or equal to zero (non-negative).
 .TP
-.SCITECO_TOPIC """E" """="
+.SCITECO_TOPIC """E" """=" equal
 .IB n \(dqE
 .TQ
 .IB n \(dq=
 Applies if \fIn\fP equals zero.
 .br
-To check two values \fIa\fP and \fIb\fP for equality you
-will commonly write:
-.IB a - b \(dq=
+The classic idiom for checking two values \fIa\fP and \fIb\fP for equality is
+.IB a - b \(dq=\c
+, but writing
+.IB a ^# b \(dq=
+(XOR operator) is faster.
 .TP
-.SCITECO_TOPIC """G" """>"
+.SCITECO_TOPIC """G" """>" greater
 .IB n \(dqG
 .TQ
 .IB n \(dq>
@@ -2361,7 +2363,7 @@ To check if a value \fIa\fP is greater than a value \fIb\fP you
 will commonly write:
 .IB a - b \(dq>
 .TP
-.SCITECO_TOPIC """L" """<"
+.SCITECO_TOPIC """L" """<" lesser
 .IB n \(dqL
 .TQ
 .IB n \(dq<
@@ -2371,13 +2373,15 @@ To check if a value \fIa\fP is less than a value \fIb\fP you
 will commonly write:
 .IB a - b \(dq<
 .TP
-.SCITECO_TOPIC """N"
+.SCITECO_TOPIC """N" unequal
 .IB n \(dqN
 Applies if \fIn\fP is not zero.
 .br
-To check two values \fIa\fP and \fIb\fP for inequality you
-will commonly write:
-.IB a - b \(dqN
+The classic idiom for checking two values \fIa\fP and \fIb\fP for inequality is
+.IB a - b \(dqN\c
+, but writing
+.IB a ^# b \(dqN
+(XOR operator) is faster.
 .TP
 .SCITECO_TOPIC """R"
 .IB n \(dqR
