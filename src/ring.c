@@ -397,7 +397,7 @@ static gboolean allow_filename = FALSE;
 static gboolean
 teco_state_edit_file_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	teco_int_t id;
@@ -427,7 +427,7 @@ teco_state_edit_file_initial(teco_machine_main_t *ctx, GError **error)
 static teco_state_t *
 teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (!allow_filename) {
@@ -524,7 +524,7 @@ TECO_DEFINE_STATE_EXPECTGLOB(teco_state_edit_file,
 static teco_state_t *
 teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);

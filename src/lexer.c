@@ -64,7 +64,7 @@ teco_lexer_getstyle(teco_view_t *view, teco_machine_main_t *machine,
 		gsize macro_pc = machine->macro_pc;
 		teco_machine_main_clear(machine);
 		teco_machine_main_init(machine, NULL, FALSE);
-		machine->mode = TECO_MODE_LEXING;
+		machine->flags.mode = TECO_MODE_LEXING;
 		machine->macro_pc = macro_pc;
 
 		return SCE_SCITECO_INVALID;
@@ -164,7 +164,7 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 
 	if (style != SCE_SCITECO_INVALID &&
 	    machine->parent.current->keymacro_mask & TECO_KEYMACRO_MASK_START &&
-	    !machine->modifier_at)
+	    !machine->flags.modifier_at)
 		/* clean parser state */
 		*safe_col = *cur_col;
 }
@@ -206,12 +206,12 @@ teco_lexer_style(teco_view_t *view, gsize end)
 
 	g_auto(teco_machine_main_t) machine;
 	teco_machine_main_init(&machine, NULL, FALSE);
-	machine.mode = TECO_MODE_LEXING;
+	machine.flags.mode = TECO_MODE_LEXING;
 
 	/* for lexing the contents of @^Uq{...} */
 	g_auto(teco_machine_main_t) macrodef_machine;
 	teco_machine_main_init(&macrodef_machine, NULL, FALSE);
-	macrodef_machine.mode = TECO_MODE_LEXING;
+	macrodef_machine.flags.mode = TECO_MODE_LEXING;
 
 	g_assert(start_col >= 0);
 	guint col = start_col;

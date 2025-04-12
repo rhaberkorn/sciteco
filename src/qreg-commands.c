@@ -58,7 +58,7 @@ teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **err
 	teco_qreg_table_t *table;
 
 	switch (teco_machine_qregspec_input(ctx->expectqreg, chr,
-	                                    ctx->mode == TECO_MODE_NORMAL ? &qreg : NULL, &table, error)) {
+	                                    ctx->flags.mode == TECO_MODE_NORMAL ? &qreg : NULL, &table, error)) {
 	case TECO_MACHINE_QREGSPEC_ERROR:
 		return NULL;
 	case TECO_MACHINE_QREGSPEC_MORE:
@@ -81,7 +81,7 @@ teco_state_pushqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	return ctx->mode == TECO_MODE_NORMAL &&
+	return ctx->flags.mode == TECO_MODE_NORMAL &&
 	       !teco_qreg_stack_push(qreg, error) ? NULL : &teco_state_start;
 }
 
@@ -99,7 +99,7 @@ teco_state_popqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	return ctx->mode == TECO_MODE_NORMAL &&
+	return ctx->flags.mode == TECO_MODE_NORMAL &&
 	       !teco_qreg_stack_pop(qreg, error) ? NULL : &teco_state_start;
 }
 
@@ -143,7 +143,7 @@ teco_state_loadqreg_done(teco_machine_main_t *ctx, const teco_string_t *str, GEr
 	teco_machine_qregspec_get_results(ctx->expectqreg, &qreg, &table);
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (str->len > 0) {
@@ -198,7 +198,7 @@ teco_state_saveqreg_done(teco_machine_main_t *ctx, const teco_string_t *str, GEr
 	teco_machine_qregspec_get_results(ctx->expectqreg, &qreg, NULL);
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
@@ -231,7 +231,7 @@ teco_state_queryqreg_initial(teco_machine_main_t *ctx, GError **error)
 	 * required Q-Registers.
 	 * In parse-only mode, the type does not matter.
 	 */
-	teco_qreg_type_t type = ctx->modifier_colon ? TECO_QREG_OPTIONAL : TECO_QREG_REQUIRED;
+	teco_qreg_type_t type = ctx->flags.modifier_colon ? TECO_QREG_OPTIONAL : TECO_QREG_REQUIRED;
 
 	/*
 	 * NOTE: We have to allocate a new instance always since `expectqreg`
@@ -250,7 +250,7 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (!teco_expressions_eval(FALSE, error))
@@ -363,7 +363,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	teco_machine_qregspec_get_results(ctx->expectqreg, &qreg, NULL);
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
@@ -482,7 +482,7 @@ TECO_DEFINE_STATE_EXPECTQREG(teco_state_eucommand,
 static gboolean
 teco_state_setqregstring_building_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	teco_qreg_t *qreg;
@@ -526,7 +526,7 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	g_auto(teco_string_t) str = {NULL, 0};
@@ -566,7 +566,7 @@ teco_state_setqreginteger_got_register(teco_machine_main_t *ctx, teco_qreg_t *qr
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (!teco_expressions_eval(FALSE, error))
@@ -616,7 +616,7 @@ teco_state_increaseqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_int_t value, add;
@@ -650,7 +650,7 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (teco_machine_main_eval_colon(ctx) > 0) {
@@ -705,7 +705,7 @@ TECO_DEFINE_STATE_EXPECTQREG(teco_state_macro);
 static teco_state_t *
 teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
@@ -754,7 +754,7 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	 */
 	gboolean modifier_at = teco_machine_main_eval_at(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	gssize from, len; /* in bytes */

@@ -18,7 +18,6 @@
 #include "config.h"
 #endif
 
-#include <stdbool.h>
 #include <string.h>
 
 #include <glib.h>
@@ -1354,18 +1353,10 @@ error_add_frame:
 struct teco_machine_qregspec_t {
 	teco_machine_t parent;
 
-	/**
-	 * Aliases bitfield with an integer.
-	 * This allows teco_undo_guint(__flags),
-	 * while still supporting easy-to-access flags.
-	 */
-	union {
-		struct {
-			teco_qreg_type_t type : 8;
-			bool parse_only : 1;
-		};
-		guint __flags;
-	};
+	struct teco_machine_qregspec_flags_t {
+		teco_qreg_type_t type : 8;
+		guint parse_only : 1;
+	} flags;
 
 	/** Local Q-Register table of the macro invocation frame. */
 	teco_qreg_table_t *qreg_table_locals;
@@ -1374,6 +1365,7 @@ struct teco_machine_qregspec_t {
 	/*
 	 * FIXME: Does it make sense to allow nested braces?
 	 * Perhaps it's sufficient to support ^Q].
+	 * We might also want to include it in the bitfield above.
 	 */
 	gint nesting;
 	teco_string_t name;
@@ -1381,6 +1373,12 @@ struct teco_machine_qregspec_t {
 	teco_qreg_t *result;
 	teco_qreg_table_t *result_table;
 };
+
+typedef struct teco_machine_qregspec_flags_t teco_machine_qregspec_flags_t;
+TECO_DEFINE_UNDO_SCALAR(teco_machine_qregspec_flags_t);
+
+#define teco_undo_qregspec_flags(VAR) \
+	(*teco_undo_object_teco_machine_qregspec_flags_t_push(&(VAR)))
 
 /*
  * FIXME: All teco_state_qregspec_* states could be static?
@@ -1398,12 +1396,12 @@ static teco_state_t *teco_state_qregspec_start_global_input(teco_machine_qregspe
 static teco_state_t *
 teco_state_qregspec_done(teco_machine_qregspec_t *ctx, GError **error)
 {
-	if (ctx->parse_only)
+	if (ctx->flags.parse_only)
 		return &teco_state_qregspec_start;
 
 	ctx->result = teco_qreg_table_find(ctx->result_table, ctx->name.data, ctx->name.len);
 
-	switch (ctx->type) {
+	switch (ctx->flags.type) {
 	case TECO_QREG_REQUIRED:
 		if (!ctx->result) {
 			teco_error_invalidqreg_set(error, ctx->name.data, ctx->name.len,
@@ -1473,7 +1471,7 @@ teco_state_qregspec_start_global_input(teco_machine_qregspec_t *ctx, gunichar ch
 		return &teco_state_qregspec_string;
 	}
 
-	if (!ctx->parse_only) {
+	if (!ctx->flags.parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
 		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
@@ -1500,7 +1498,7 @@ teco_state_qregspec_caret_input(teco_machine_qregspec_t *ctx, gunichar chr, GErr
 		return NULL;
 	}
 
-	if (!ctx->parse_only) {
+	if (!ctx->flags.parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
 		teco_string_append_wc(&ctx->name, TECO_CTL_KEY(chr));
@@ -1516,7 +1514,7 @@ teco_state_qregspec_firstchar_input(teco_machine_qregspec_t *ctx, gunichar chr, 
 	/*
 	 * FIXME: Disallow space characters?
 	 */
-	if (!ctx->parse_only) {
+	if (!ctx->flags.parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
 		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
@@ -1534,7 +1532,7 @@ teco_state_qregspec_secondchar_input(teco_machine_qregspec_t *ctx, gunichar chr,
 	/*
 	 * FIXME: Disallow space characters?
 	 */
-	if (!ctx->parse_only) {
+	if (!ctx->flags.parse_only) {
 		if (ctx->parent.must_undo)
 			undo__teco_string_truncate(&ctx->name, ctx->name.len);
 		teco_string_append_wc(&ctx->name, g_unichar_toupper(chr));
@@ -1572,7 +1570,7 @@ teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gunichar chr, GEr
 		}
 	}
 
-	if (!ctx->parse_only && ctx->parent.must_undo)
+	if (!ctx->flags.parse_only && ctx->parent.must_undo)
 		undo__teco_string_truncate(&ctx->name, ctx->name.len);
 
 	/*
@@ -1580,7 +1578,7 @@ teco_state_qregspec_string_input(teco_machine_qregspec_t *ctx, gunichar chr, GEr
 	 * as the target string.
 	 */
 	if (!teco_machine_stringbuilding_input(&ctx->machine_stringbuilding, chr,
-	                                       ctx->parse_only ? NULL : &ctx->name, error))
+	                                       ctx->flags.parse_only ? NULL : &ctx->name, error))
 		return NULL;
 
 	return &teco_state_qregspec_string;
@@ -1606,7 +1604,7 @@ teco_machine_qregspec_new(teco_qreg_type_t type, teco_qreg_table_t *locals, gboo
 	 */
 	teco_machine_qregspec_t *ctx = g_new0(teco_machine_qregspec_t, 1);
 	teco_machine_init(&ctx->parent, &teco_state_qregspec_start, must_undo);
-	ctx->type = type;
+	ctx->flags.type = type;
 	ctx->qreg_table_locals = locals;
 	teco_machine_stringbuilding_init(&ctx->machine_stringbuilding, '[', locals, must_undo);
 	ctx->result_table = &teco_qreg_table_globals;
@@ -1622,7 +1620,7 @@ teco_machine_qregspec_reset(teco_machine_qregspec_t *ctx)
 	if (ctx->parent.must_undo) {
 		teco_undo_string_own(ctx->name);
 		teco_undo_gint(ctx->nesting);
-		teco_undo_guint(ctx->__flags);
+		teco_undo_qregspec_flags(ctx->flags);
 	} else {
 		teco_string_clear(&ctx->name);
 	}
@@ -1655,7 +1653,7 @@ teco_machine_qregspec_status_t
 teco_machine_qregspec_input(teco_machine_qregspec_t *ctx, gunichar chr,
                             teco_qreg_t **result, teco_qreg_table_t **result_table, GError **error)
 {
-	ctx->parse_only = result == NULL;
+	ctx->flags.parse_only = result == NULL;
 
 	if (!teco_machine_input(&ctx->parent, chr, error))
 		return TECO_MACHINE_QREGSPEC_ERROR;

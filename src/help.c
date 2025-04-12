@@ -258,7 +258,7 @@ teco_help_cleanup(void)
 static gboolean
 teco_state_help_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	/*
@@ -273,7 +273,7 @@ teco_state_help_initial(teco_machine_main_t *ctx, GError **error)
 static teco_state_t *
 teco_state_help_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (teco_string_contains(str, '\0')) {

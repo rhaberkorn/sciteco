@@ -552,7 +552,7 @@ teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *pa
 		 * be part of another command.
 		 */
 		while (ctx->parent.current->is_start &&
-		       (ctx->modifier_at || ctx->modifier_colon) &&
+		       (ctx->flags.modifier_at || ctx->flags.modifier_colon) &&
 		       teco_cmdline.effective_len > 0)
 			teco_cmdline_rubout();
 
@@ -1375,7 +1375,7 @@ teco_state_save_cmdline_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode != TECO_MODE_NORMAL)
+	if (ctx->flags.mode != TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (!qreg->vtable->undo_set_string(qreg, error) ||

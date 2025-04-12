@@ -97,7 +97,7 @@ teco_state_control_search_mode(teco_machine_main_t *ctx, GError **error)
 static gboolean
 teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
@@ -691,7 +691,7 @@ teco_state_search_process(teco_machine_main_t *ctx, const teco_string_t *str, gs
 	if (teco_is_failure(search_mode))
 		flags |= G_REGEX_CASELESS;
 
-	if (ctx->modifier_colon == 2)
+	if (ctx->flags.modifier_colon == 2)
 		flags |= G_REGEX_ANCHORED;
 
 	/* this is set in teco_state_search_initial() */
@@ -813,7 +813,7 @@ failure:
 static teco_state_t *
 teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
@@ -943,7 +943,7 @@ TECO_DEFINE_STATE_SEARCH(teco_state_search);
 static gboolean
 teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
@@ -1000,7 +1000,7 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 static teco_state_t *
 teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode <= TECO_MODE_NORMAL &&
+	if (ctx->flags.mode <= TECO_MODE_NORMAL &&
 	    (!teco_state_search_done(ctx, str, error) ||
 	     !teco_ed_hook(TECO_ED_HOOK_EDIT, error)))
 		return NULL;
@@ -1060,7 +1060,7 @@ TECO_DEFINE_STATE_SEARCH(teco_state_search_all,
 static teco_state_t *
 teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
@@ -1140,7 +1140,7 @@ TECO_DEFINE_STATE_SEARCH(teco_state_search_kill);
 static teco_state_t *
 teco_state_search_delete_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
@@ -1183,7 +1183,7 @@ TECO_DEFINE_STATE_SEARCH(teco_state_search_delete);
 static gboolean
 teco_state_replace_insert_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode == TECO_MODE_NORMAL)
+	if (ctx->flags.mode == TECO_MODE_NORMAL)
 		teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 		                                         teco_interface_get_codepage());
 	return TRUE;
@@ -1210,7 +1210,7 @@ TECO_DEFINE_STATE_EXPECTSTRING(teco_state_replace_ignore);
 static teco_state_t *
 teco_state_replace_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_replace_ignore;
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);
@@ -1259,7 +1259,7 @@ TECO_DEFINE_STATE_SEARCH(teco_state_replace,
 static teco_state_t *
 teco_state_replace_default_insert_done_overwrite(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_qreg_t *replace_reg = teco_qreg_table_find(&teco_qreg_table_globals, "-", 1);
@@ -1292,7 +1292,7 @@ TECO_DEFINE_STATE_INSERT(teco_state_replace_default_insert,
 static teco_state_t *
 teco_state_replace_default_ignore_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL ||
+	if (ctx->flags.mode > TECO_MODE_NORMAL ||
 	    !str->len)
 		return &teco_state_start;
 
@@ -1315,7 +1315,7 @@ TECO_DEFINE_STATE_EXPECTSTRING(teco_state_replace_default_ignore);
 static teco_state_t *
 teco_state_replace_default_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_replace_default_ignore;
 
 	teco_qreg_t *search_reg = teco_qreg_table_find(&teco_qreg_table_globals, "_", 1);

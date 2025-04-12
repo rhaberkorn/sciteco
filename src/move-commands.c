@@ -374,7 +374,7 @@ teco_state_start_words(teco_machine_main_t *ctx, const gchar *cmd, gint factor, 
 	 */
 	gboolean modifier_at = teco_machine_main_eval_at(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_int_t v;
@@ -442,7 +442,7 @@ teco_state_start_delete_words(teco_machine_main_t *ctx, const gchar *cmd, gint f
 	 */
 	gboolean modifier_at = teco_machine_main_eval_at(ctx);
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_int_t v;

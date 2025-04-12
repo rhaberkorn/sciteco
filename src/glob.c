@@ -310,7 +310,7 @@ teco_globber_compile_pattern(const gchar *pattern)
 static teco_state_t *
 teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_glob_filename;
 
 	if (str->len > 0) {
@@ -460,7 +460,7 @@ TECO_DEFINE_STATE_EXPECTGLOB(teco_state_glob_pattern,
 static teco_state_t *
 teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	GFileTest file_flags = G_FILE_TEST_EXISTS;

@@ -171,7 +171,7 @@ teco_parse_shell_command_line(const gchar *cmdline, GError **error)
 static gboolean
 teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	/*
@@ -260,7 +260,7 @@ teco_state_execute_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 #endif
 	                                 G_SPAWN_STDERR_TO_DEV_NULL;
 
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	if (teco_spawn_ctx.from < 0)
@@ -618,7 +618,7 @@ teco_state_egcommand_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	if (ctx->mode <= TECO_MODE_NORMAL)
+	if (ctx->flags.mode <= TECO_MODE_NORMAL)
 		teco_undo_ptr(teco_spawn_ctx.register_argument) = qreg;
 	return &teco_state_execute;
 }

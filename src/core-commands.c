@@ -299,8 +299,8 @@ teco_state_start_loop_open(teco_machine_main_t *ctx, GError **error)
 	} else {
 		/* skip to end of loop */
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		ctx->mode = TECO_MODE_PARSE_ONLY_LOOP;
+			teco_undo_flags(ctx->flags);
+		ctx->flags.mode = TECO_MODE_PARSE_ONLY_LOOP;
 	}
 }
 
@@ -427,8 +427,8 @@ teco_state_start_break(teco_machine_main_t *ctx, GError **error)
 
 	/* skip to end of loop */
 	if (ctx->parent.must_undo)
-		teco_undo_guint(ctx->__flags);
-	ctx->mode = TECO_MODE_PARSE_ONLY_LOOP;
+		teco_undo_flags(ctx->flags);
+	ctx->flags.mode = TECO_MODE_PARSE_ONLY_LOOP;
 }
 
 /*$ "{" "}"
@@ -717,8 +717,8 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	case '\r':
 	case '\n':
 	case '\v':
-		if (ctx->modifier_at ||
-		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+		if (ctx->flags.modifier_at ||
+		    (ctx->flags.mode == TECO_MODE_NORMAL && ctx->flags.modifier_colon)) {
 			teco_error_modifier_set(error, chr);
 			return NULL;
 		}
@@ -741,12 +741,12 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * current radix - this may be changed in the future.
 	 */
 	case '0' ... '9':
-		if (ctx->modifier_at ||
-		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+		if (ctx->flags.modifier_at ||
+		    (ctx->flags.mode == TECO_MODE_NORMAL && ctx->flags.modifier_colon)) {
 			teco_error_modifier_set(error, chr);
 			return NULL;
 		}
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			teco_expressions_add_digit(chr, ctx->qreg_table_locals->radix);
 		return &teco_state_start;
 
@@ -763,12 +763,12 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		break;
 
 	case '<':
-		if (ctx->modifier_at) {
+		if (ctx->flags.modifier_at) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_MODIFIER,
 			                    "Unexpected modifier on loop start");
 			return NULL;
 		}
-		if (ctx->mode != TECO_MODE_PARSE_ONLY_LOOP)
+		if (ctx->flags.mode != TECO_MODE_PARSE_ONLY_LOOP)
 			break;
 		if (ctx->parent.must_undo)
 			teco_undo_gint(ctx->nest_level);
@@ -776,17 +776,17 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		return &teco_state_start;
 
 	case '>':
-		if (ctx->modifier_at) {
+		if (ctx->flags.modifier_at) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_MODIFIER,
 			                    "Unexpected modifier on loop end");
 			return NULL;
 		}
-		if (ctx->mode != TECO_MODE_PARSE_ONLY_LOOP)
+		if (ctx->flags.mode != TECO_MODE_PARSE_ONLY_LOOP)
 			break;
 		if (!ctx->nest_level) {
 			if (ctx->parent.must_undo)
-				teco_undo_guint(ctx->__flags);
-			ctx->mode = TECO_MODE_NORMAL;
+				teco_undo_flags(ctx->flags);
+			ctx->flags.mode = TECO_MODE_NORMAL;
 		} else {
 			if (ctx->parent.must_undo)
 				teco_undo_gint(ctx->nest_level);
@@ -798,33 +798,33 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Control Structures (conditionals)
 	 */
 	case '|':
-		if (ctx->modifier_at ||
-		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+		if (ctx->flags.modifier_at ||
+		    (ctx->flags.mode == TECO_MODE_NORMAL && ctx->flags.modifier_colon)) {
 			teco_error_modifier_set(error, '|');
 			return NULL;
 		}
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		if (ctx->mode == TECO_MODE_PARSE_ONLY_COND && !ctx->nest_level)
-			ctx->mode = TECO_MODE_NORMAL;
-		else if (ctx->mode == TECO_MODE_NORMAL)
+			teco_undo_flags(ctx->flags);
+		if (ctx->flags.mode == TECO_MODE_PARSE_ONLY_COND && !ctx->nest_level)
+			ctx->flags.mode = TECO_MODE_NORMAL;
+		else if (ctx->flags.mode == TECO_MODE_NORMAL)
 			/* skip to end of conditional; skip ELSE-part */
-			ctx->mode = TECO_MODE_PARSE_ONLY_COND;
+			ctx->flags.mode = TECO_MODE_PARSE_ONLY_COND;
 		return &teco_state_start;
 
 	case '\'':
-		if (ctx->modifier_at ||
-		    (ctx->mode == TECO_MODE_NORMAL && ctx->modifier_colon)) {
+		if (ctx->flags.modifier_at ||
+		    (ctx->flags.mode == TECO_MODE_NORMAL && ctx->flags.modifier_colon)) {
 			teco_error_modifier_set(error, '\'');
 			return NULL;
 		}
-		switch (ctx->mode) {
+		switch (ctx->flags.mode) {
 		case TECO_MODE_PARSE_ONLY_COND:
 		case TECO_MODE_PARSE_ONLY_COND_FORCE:
 			if (!ctx->nest_level) {
 				if (ctx->parent.must_undo)
-					teco_undo_guint(ctx->__flags);
-				ctx->mode = TECO_MODE_NORMAL;
+					teco_undo_flags(ctx->flags);
+				ctx->flags.mode = TECO_MODE_NORMAL;
 			} else {
 				if (ctx->parent.must_undo)
 					teco_undo_gint(ctx->nest_level);
@@ -859,7 +859,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Modifiers
 	 */
 	case '@':
-		if (ctx->modifier_at) {
+		if (ctx->flags.modifier_at) {
 			teco_error_modifier_set(error, '@');
 			return NULL;
 		}
@@ -870,20 +870,20 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		 * everywhere, even where it has no syntactic significance.
 		 */
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		ctx->modifier_at = TRUE;
+			teco_undo_flags(ctx->flags);
+		ctx->flags.modifier_at = TRUE;
 		return &teco_state_start;
 
 	case ':':
-		if (ctx->mode > TECO_MODE_NORMAL)
+		if (ctx->flags.mode > TECO_MODE_NORMAL)
 			return &teco_state_start;
-		if (ctx->modifier_colon >= 2) {
+		if (ctx->flags.modifier_colon >= 2) {
 			teco_error_modifier_set(error, ':');
 			return NULL;
 		}
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		ctx->modifier_colon++;
+			teco_undo_flags(ctx->flags);
+		ctx->flags.modifier_colon++;
 		return &teco_state_start;
 
 	default:
@@ -995,8 +995,8 @@ teco_state_fcommand_loop_end(teco_machine_main_t *ctx, GError **error)
 	if (teco_loop_stack->len < old_len) {
 		/* skip to end of loop */
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		ctx->mode = TECO_MODE_PARSE_ONLY_LOOP;
+			teco_undo_flags(ctx->flags);
+		ctx->flags.mode = TECO_MODE_PARSE_ONLY_LOOP;
 	}
 }
 
@@ -1008,8 +1008,8 @@ teco_state_fcommand_cond_end(teco_machine_main_t *ctx, GError **error)
 {
 	/* skip to end of conditional, also including any else-clause */
 	if (ctx->parent.must_undo)
-		teco_undo_guint(ctx->__flags);
-	ctx->mode = TECO_MODE_PARSE_ONLY_COND_FORCE;
+		teco_undo_flags(ctx->flags);
+	ctx->flags.mode = TECO_MODE_PARSE_ONLY_COND_FORCE;
 }
 
 /*$ F|
@@ -1024,8 +1024,8 @@ teco_state_fcommand_cond_else(teco_machine_main_t *ctx, GError **error)
 {
 	/* skip to ELSE-part or end of conditional */
 	if (ctx->parent.must_undo)
-		teco_undo_guint(ctx->__flags);
-	ctx->mode = TECO_MODE_PARSE_ONLY_COND;
+		teco_undo_flags(ctx->flags);
+	ctx->flags.mode = TECO_MODE_PARSE_ONLY_COND;
 }
 
 static teco_state_t *
@@ -1091,7 +1091,7 @@ teco_undo_change_dir_to_current(void)
 static teco_state_t *
 teco_state_changedir_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	g_autofree gchar *dir = teco_file_expand_path(str->data);
@@ -1165,7 +1165,7 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	teco_int_t value = 0;
 	gboolean result = TRUE;
 
-	switch (ctx->mode) {
+	switch (ctx->flags.mode) {
 	case TECO_MODE_PARSE_ONLY_COND:
 	case TECO_MODE_PARSE_ONLY_COND_FORCE:
 		if (ctx->parent.must_undo)
@@ -1195,65 +1195,65 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 
 	switch (teco_ascii_toupper(chr)) {
 	case '~':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = !teco_expressions_args();
 		break;
 	case 'A':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_isalpha(value);
 		break;
 	case 'C':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_isalnum(value) ||
 			         value == '.' || value == '$' || value == '_';
 		break;
 	case 'D':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_isdigit(value);
 		break;
 	case 'I':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = G_IS_DIR_SEPARATOR(value);
 		break;
 	case 'S':
 	case 'T':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = teco_is_success(value);
 		break;
 	case 'F':
 	case 'U':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = teco_is_failure(value);
 		break;
 	case 'E':
 	case '=':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = value == 0;
 		break;
 	case 'G':
 	case '>':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = value > 0;
 		break;
 	case 'L':
 	case '<':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = value < 0;
 		break;
 	case 'N':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = value != 0;
 		break;
 	case 'R':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_isalnum(value);
 		break;
 	case 'V':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_islower(value);
 		break;
 	case 'W':
-		if (ctx->mode == TECO_MODE_NORMAL)
+		if (ctx->flags.mode == TECO_MODE_NORMAL)
 			result = g_unichar_isupper(value);
 		break;
 	default:
@@ -1265,8 +1265,8 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	if (!result) {
 		/* skip to ELSE-part or end of conditional */
 		if (ctx->parent.must_undo)
-			teco_undo_guint(ctx->__flags);
-		ctx->mode = TECO_MODE_PARSE_ONLY_COND;
+			teco_undo_flags(ctx->flags);
+		ctx->flags.mode = TECO_MODE_PARSE_ONLY_COND;
 	}
 
 	return &teco_state_start;
@@ -1622,7 +1622,7 @@ TECO_DEFINE_STATE_COMMAND(teco_state_control);
 static teco_state_t *
 teco_state_ascii_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
-	if (ctx->mode == TECO_MODE_NORMAL)
+	if (ctx->flags.mode == TECO_MODE_NORMAL)
 		teco_expressions_push(chr);
 
 	return &teco_state_start;
@@ -1695,7 +1695,7 @@ teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * or a dollar character.
 	 */
 	if (chr == '\e' || chr == '$') {
-		if (ctx->mode > TECO_MODE_NORMAL)
+		if (ctx->flags.mode > TECO_MODE_NORMAL)
 			return &teco_state_start;
 
 		ctx->parent.current = &teco_state_start;
@@ -1727,7 +1727,7 @@ teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Additionally, this command may be written as a single
 	 * dollar character.
 	 */
-	if (ctx->mode == TECO_MODE_NORMAL &&
+	if (ctx->flags.mode == TECO_MODE_NORMAL &&
 	    !teco_expressions_discard_args(error))
 		return NULL;
 	return teco_state_start_input(ctx, chr, error);
@@ -2565,7 +2565,7 @@ TECO_DEFINE_STATE_COMMAND(teco_state_ecommand);
 gboolean
 teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
@@ -2650,7 +2650,7 @@ teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
 teco_state_t *
 teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode == TECO_MODE_NORMAL)
+	if (ctx->flags.mode == TECO_MODE_NORMAL)
 		teco_undo_gsize(teco_ranges[0].to) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	return &teco_state_start;
@@ -2696,7 +2696,7 @@ TECO_DEFINE_STATE_INSERT(teco_state_insert_nobuilding,
 static gboolean
 teco_state_insert_indent_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
 	if (!teco_state_insert_initial(ctx, error))

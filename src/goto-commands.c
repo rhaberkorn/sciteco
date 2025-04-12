@@ -76,8 +76,8 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 				memset(&teco_goto_skip_label, 0, sizeof(teco_goto_skip_label));
 
 				if (ctx->parent.must_undo)
-					teco_undo_guint(ctx->__flags);
-				ctx->mode = TECO_MODE_NORMAL;
+					teco_undo_flags(ctx->flags);
+				ctx->flags.mode = TECO_MODE_NORMAL;
 			}
 		} else if (existing_pc != ctx->macro_pc) {
 			g_autofree gchar *label_printable = teco_string_echo(ctx->goto_label.data,
@@ -115,7 +115,7 @@ TECO_DEFINE_STATE(teco_state_label,
 static teco_state_t *
 teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	teco_int_t value;
@@ -148,8 +148,8 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 			undo__teco_string_truncate(&teco_goto_skip_label, 0);
 			teco_string_init(&teco_goto_skip_label, label.data, label.len);
 			if (ctx->parent.must_undo)
-				teco_undo_guint(ctx->__flags);
-			ctx->mode = TECO_MODE_PARSE_ONLY_GOTO;
+				teco_undo_flags(ctx->flags);
+			ctx->flags.mode = TECO_MODE_PARSE_ONLY_GOTO;
 		}
 	}
 

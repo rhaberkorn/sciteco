@@ -123,7 +123,7 @@ teco_machine_main_step(teco_machine_main_t *ctx, const gchar *macro, gsize stop_
 
 #ifdef DEBUG
 		g_printf("EXEC(%d): input='%C' (U+%04" G_GINT32_MODIFIER "X), state=%p, mode=%d\n",
-			 ctx->macro_pc, chr, chr, ctx->parent.current, ctx->mode);
+			 ctx->macro_pc, chr, chr, ctx->parent.current, ctx->flags.mode);
 #endif
 
 		ctx->macro_pc = g_utf8_next_char(macro+ctx->macro_pc) - macro;
@@ -306,6 +306,8 @@ teco_execute_file(const gchar *filename, teco_qreg_table_t *qreg_table_locals, G
 	return TRUE;
 }
 
+TECO_DEFINE_UNDO_SCALAR(teco_machine_main_flags_t);
+
 void
 teco_machine_main_init(teco_machine_main_t *ctx, teco_qreg_table_t *qreg_table_locals,
                        gboolean must_undo)
@@ -323,25 +325,25 @@ teco_machine_main_init(teco_machine_main_t *ctx, teco_qreg_table_t *qreg_table_l
 guint
 teco_machine_main_eval_colon(teco_machine_main_t *ctx)
 {
-	guint c = ctx->modifier_colon;
+	guint c = ctx->flags.modifier_colon;
 	if (c == 0)
 		return 0;
 
 	if (ctx->parent.must_undo)
-		teco_undo_guint(ctx->__flags);
-	ctx->modifier_colon = 0;
+		teco_undo_flags(ctx->flags);
+	ctx->flags.modifier_colon = 0;
 	return c;
 }
 
 gboolean
 teco_machine_main_eval_at(teco_machine_main_t *ctx)
 {
-	if (!ctx->modifier_at)
+	if (!ctx->flags.modifier_at)
 		return FALSE;
 
 	if (ctx->parent.must_undo)
-		teco_undo_guint(ctx->__flags);
-	ctx->modifier_at = FALSE;
+		teco_undo_flags(ctx->flags);
+	ctx->flags.modifier_at = FALSE;
 	return TRUE;
 }
 
@@ -355,14 +357,14 @@ teco_machine_main_transition_input(teco_machine_main_t *ctx,
 		return NULL;
 	}
 
-	if ((ctx->modifier_at && !transitions[chr].modifier_at) ||
-	    (ctx->mode == TECO_MODE_NORMAL &&
-	     ctx->modifier_colon > transitions[chr].modifier_colon)) {
+	if ((ctx->flags.modifier_at && !transitions[chr].modifier_at) ||
+	    (ctx->flags.mode == TECO_MODE_NORMAL &&
+	     ctx->flags.modifier_colon > transitions[chr].modifier_colon)) {
 		teco_error_modifier_set(error, chr);
 		return NULL;
 	}
 
-	if (ctx->mode == TECO_MODE_NORMAL && transitions[chr].transition_cb) {
+	if (ctx->flags.mode == TECO_MODE_NORMAL && transitions[chr].transition_cb) {
 		/*
 		 * NOTE: We could also just let transition_cb return a boolean...
 		 */
@@ -944,7 +946,7 @@ teco_machine_stringbuilding_clear(teco_machine_stringbuilding_t *ctx)
 gboolean
 teco_state_expectstring_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->mode == TECO_MODE_NORMAL)
+	if (ctx->flags.mode == TECO_MODE_NORMAL)
 		teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
 		                                         teco_default_codepage());
 	return TRUE;
@@ -958,7 +960,7 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 	/*
 	 * String termination handling
 	 */
-	if (ctx->modifier_at) {
+	if (ctx->flags.modifier_at) {
 		if (current->expectstring.last)
 			/* also clears the "@" modifier flag */
 			teco_machine_main_eval_at(ctx);
@@ -1049,7 +1051,7 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 	 * NOTE: Since we only ever append to `string`, this is more efficient
 	 * than teco_undo_string(ctx->expectstring.string).
 	 */
-	if (ctx->mode == TECO_MODE_NORMAL && ctx->parent.must_undo)
+	if (ctx->flags.mode == TECO_MODE_NORMAL && ctx->parent.must_undo)
 		undo__teco_string_truncate(&ctx->expectstring.string, ctx->expectstring.string.len);
 
 	/*
@@ -1057,11 +1059,11 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 	 */
 	gsize old_len = ctx->expectstring.string.len;
 	if (current->expectstring.string_building) {
-		teco_string_t *str = ctx->mode == TECO_MODE_NORMAL
+		teco_string_t *str = ctx->flags.mode == TECO_MODE_NORMAL
 						? &ctx->expectstring.string : NULL;
 		if (!teco_machine_stringbuilding_input(&ctx->expectstring.machine, chr, str, error))
 			return NULL;
-	} else if (ctx->mode == TECO_MODE_NORMAL) {
+	} else if (ctx->flags.mode == TECO_MODE_NORMAL) {
 		teco_string_append_wc(&ctx->expectstring.string, chr);
 	}
 

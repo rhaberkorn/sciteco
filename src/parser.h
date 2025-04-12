@@ -16,8 +16,6 @@
  */
 #pragma once
 
-#include <stdbool.h>
-
 #include <glib.h>
 
 #include <Scintilla.h>
@@ -52,7 +50,7 @@ typedef struct {
 	 * a signed integer, it's ok steal one
 	 * bit for the pass_through flag.
 	 */
-	bool pass_through : 1;
+	guint pass_through : 1;
 } teco_loop_context_t;
 
 extern GArray *teco_loop_stack;
@@ -77,8 +75,8 @@ void undo__remove_index__teco_loop_stack(guint);
  * FIXME: Maybe use TECO_DECLARE_VTABLE_METHOD()?
  */
 typedef const struct {
-	bool string_building : 1;
-	bool last : 1;
+	guint string_building : 1;
+	guint last : 1;
 
 	/**
 	 * Called repeatedly to process chunks of input and give interactive feedback.
@@ -206,7 +204,7 @@ struct teco_state_t {
 	 * This is separate of TECO_KEYMACRO_MASK_START which is set
 	 * only in the main machine's start states.
 	 */
-	bool is_start : 1;
+	guint is_start : 1;
 	/**
 	 * Key macro mask.
 	 * This is not a bitmask since it is compared with values set
@@ -476,25 +474,17 @@ struct teco_machine_main_t {
 	/** Program counter, i.e. pointer to the next character in the current macro frame */
 	gsize macro_pc;
 
-	/**
-	 * Aliases bitfield with an integer.
-	 * This allows teco_undo_guint(__flags),
-	 * while still supporting easy-to-access flags.
-	 */
-	union {
-		struct {
-			teco_mode_t mode : 8;
+	struct teco_machine_main_flags_t {
+		teco_mode_t mode : 8;
 
-			/** number of `:`-modifiers detected */
-			guint modifier_colon : 2;
-			/**
-			 * Whether the `@`-modifier has been detected.
-			 * This is tracked even in parse-only mode.
-			 */
-			bool modifier_at : 1;
-		};
-		guint __flags;
-	};
+		/** number of `:`-modifiers detected */
+		guint modifier_colon : 2;
+		/**
+		 * Whether the `@`-modifier has been detected.
+		 * This is tracked even in parse-only mode.
+		 */
+		guint modifier_at : 1;
+	} flags;
 
 	/** The nesting level of braces */
 	guint brace_level;
@@ -528,6 +518,12 @@ struct teco_machine_main_t {
 		teco_machine_scintilla_t	scintilla;
 	};
 };
+
+typedef struct teco_machine_main_flags_t teco_machine_main_flags_t;
+TECO_DECLARE_UNDO_SCALAR(teco_machine_main_flags_t);
+
+#define teco_undo_flags(VAR) \
+	(*teco_undo_object_teco_machine_main_flags_t_push(&(VAR)))
 
 void teco_machine_main_init(teco_machine_main_t *ctx,
                             teco_qreg_table_t *qreg_table_locals,
@@ -564,7 +560,7 @@ typedef const struct {
 	 * Since `@` has syntactic significance,
 	 * it is checked even in parse-only mode.
 	 */
-	bool modifier_at : 1;
+	guint modifier_at : 1;
 } teco_machine_main_transition_t;
 
 /*

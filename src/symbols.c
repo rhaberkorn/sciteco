@@ -214,7 +214,7 @@ teco_scintilla_parse_symbols(teco_machine_scintilla_t *scintilla, const teco_str
 static teco_state_t *
 teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_scintilla_lparam;
 
 	/*
@@ -426,7 +426,7 @@ teco_create_lexer(const teco_string_t *str, GError **error)
 static teco_state_t *
 teco_state_scintilla_lparam_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
 	sptr_t lParam = 0;
