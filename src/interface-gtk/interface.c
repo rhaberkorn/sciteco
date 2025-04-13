@@ -910,6 +910,11 @@ teco_interface_get_ansi_key(GdkEventKey *event)
 	if (cp && cp < 0x80)
 		return cp;
 
+	const gchar *name = gdk_keyval_name(event->keyval);
+	if (name && g_str_has_prefix(name, "dead_"))
+		/* we won't find the non-dead keyval anyway */
+		return 0;
+
 	GdkKeymap *map = gdk_keymap_get_for_display(gdk_window_get_display(event->window));
 	g_autofree GdkKeymapKey *keys = NULL;
 	g_autofree guint *keyvals = NULL;
