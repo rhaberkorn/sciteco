@@ -1847,9 +1847,9 @@ teco_interface_getmouse(GError **error)
 			return TRUE;
 		}
 		if (event.bstate & BUTTON_NUM(4))
-			teco_curses_info_popup_scroll(&teco_interface.popup, -1);
+			teco_curses_info_popup_scroll(&teco_interface.popup, -2);
 		else if (event.bstate & BUTTON_NUM(5))
-			teco_curses_info_popup_scroll(&teco_interface.popup, +1);
+			teco_curses_info_popup_scroll(&teco_interface.popup, +2);
 
 		short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
 		short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_CALLTIP, 0));
