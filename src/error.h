@@ -107,8 +107,8 @@ teco_error_move_set(GError **error, const gchar *cmd)
 static inline void
 teco_error_words_set(GError **error, const gchar *cmd)
 {
-	g_set_error(error, TECO_ERROR, TECO_ERROR_MOVE,
-	            "Not enough words to delete with <%s>", cmd);
+	g_set_error(error, TECO_ERROR, TECO_ERROR_WORDS,
+	            "Not enough words to perform <%s>", cmd);
 }
 
 static inline void
