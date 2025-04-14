@@ -444,6 +444,55 @@ It may also be used as a template for
 .BR $SCITECOCONFIG/.teco_css .
 .
 .
+.SH EXAMPLES
+.
+.LP
+Without any argument, \*(ST will open the last editor session
+(see \(lqsession.tes\(rq).
+To edit one or more files, just specify them on the command line:
+.RS
+.SCITECO_TT
+.EX
+@PACKAGE@ main.c
+.SCITECO_TT_END
+.EE
+.RE
+.
+.LP
+You can specify which line to open either before or after the file name:
+.RS
+.SCITECO_TT
+.EX
+@PACKAGE@ +70 main.c error.c:23
+.SCITECO_TT_END
+.EE
+.RE
+.
+.LP
+If the program fails to start up after editing 
+.B $SCITECOCONFIG/.teco_ini
+or after upgrading \*(ST, you can prevent loading the profile macro:
+.RS
+.SCITECO_TT
+.EX
+@PACKAGE@ --no-profile
+.SCITECO_TT_END
+.EE
+.RE
+.
+.LP
+After startup of the interactive mode, use the \(lqEB~/.teco_ini\fB$\fP\(rq
+command to load and fix up the profile macro.
+In order to execute a stand-alone script or custom profile macro:
+.RS
+.SCITECO_TT
+.EX
+@PACKAGE@ -m script.tes
+.SCITECO_TT_END
+.EE
+.RE
+.
+.
 .SH SEE ALSO
 .
 .TP
