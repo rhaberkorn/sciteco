@@ -1388,6 +1388,7 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		gdk_window_freeze_updates(top_window);
 
 		const teco_view_t *last_view = teco_interface_current_view;
+		sptr_t last_vpos = teco_interface_ssm(SCI_GETFIRSTVISIBLELINE, 0, 0);
 
 		teco_interrupted = FALSE;
 		switch (event->type) {
@@ -1412,13 +1413,18 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		/*
 		 * Scintilla has been patched to avoid any automatic scrolling since that
 		 * has been benchmarked to be a very costly operation.
-		 * Instead we do it only once after every keypress.
+		 * Instead we do it only once after almost every keypress.
+		 * If possible, the vertical scrolling position is preserved, which helps
+		 * for instance if the buffer contents are deleted and restored later on.
 		 *
 		 * The only exception is mouse events, so you can scroll the view manually
 		 * in the ^KMOUSE macro, allowing dot to be outside of the view.
 		 */
-		if (event->type == GDK_KEY_PRESS)
+		if (event->type == GDK_KEY_PRESS) {
+			if (teco_interface_current_view == last_view)
+				teco_interface_ssm(SCI_SETFIRSTVISIBLELINE, last_vpos, 0);
 			teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
+		}
 
 		gdk_window_thaw_updates(top_window);
 
