@@ -2074,7 +2074,12 @@ teco_interface_event_loop_iter(void)
 		/* ANY of the mouse events */
 		if (!teco_interface_getmouse(error))
 			return;
-		break;
+		/*
+		 * Do not auto-scroll on mouse events, so you can scroll the view manually
+		 * in the ^KMOUSE macro, allowing dot to be outside of the view.
+		 */
+		teco_interface_refresh();
+		return;
 #endif
 
 	/*
@@ -2126,17 +2131,7 @@ teco_interface_event_loop_iter(void)
 	 * Instead we do it only once after almost every keypress.
 	 * If possible, the vertical scrolling position is preserved, which helps
 	 * for instance if the buffer contents are deleted and restored later on.
-	 *
-	 * The only exception is mouse events, so you can scroll the view manually
-	 * in the ^KMOUSE macro, allowing dot to be outside of the view.
 	 */
-#if NCURSES_MOUSE_VERSION >= 2
-	if (key == KEY_MOUSE) {
-		teco_interface_refresh();
-		return;
-	}
-#endif
-
 	if (teco_interface_current_view == last_view)
 		teco_interface_ssm(SCI_SETFIRSTVISIBLELINE, last_vpos, 0);
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
