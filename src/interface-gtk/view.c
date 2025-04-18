@@ -97,9 +97,20 @@ teco_view_new(void)
 	gtk_widget_set_can_focus(GTK_WIDGET(ctx), FALSE);
 	gint events = gtk_widget_get_events(GTK_WIDGET(ctx));
 	events &= ~(GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
-	            GDK_SCROLL_MASK |
+	            GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK | GDK_TOUCH_MASK |
+#ifdef GDK_VERSION_3_18
+	            GDK_TOUCHPAD_GESTURE_MASK |
+#endif
+#ifdef GDK_VERSION_3_22
+	            GDK_TABLET_PAD_MASK |
+#endif
 	            GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK);
 	gtk_widget_set_events(GTK_WIDGET(ctx), events);
+
+	/*
+	 * Disables drag and drop interaction.
+	 */
+	gtk_drag_dest_unset(GTK_WIDGET(ctx));
 
 	return (teco_view_t *)ctx;
 }
