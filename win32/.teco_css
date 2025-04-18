@@ -1,0 +1,12 @@
+@import "fallback.css";
+
+/*
+ * Windows distributions use the default Gtk theme which
+ * references the Segoe UI font.
+ * It doesn't have a small-caps variant and there are apparently no native
+ * small-caps fonts preinstalled on Windows.
+ * This avoids warnings on startup.
+ */
+.type-label {
+        font-variant: normal;
+}

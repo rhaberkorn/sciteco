@@ -329,10 +329,8 @@ jobs:
         cp /mingw64/bin/{sciteco.exe,grosciteco.tes,tedoc.tes} ./
         # datadir is relative to bindir
         cp -r /mingw64/bin/{lib,*.tmac} ./
-        # FIXME: Maybe there should be a separate win32/.teco_ini with
-        # a few pre-enabled settings?
         cp /mingw64/bin/fallback.teco_ini .teco_ini
-        cp /mingw64/bin/fallback.css .teco_css
+        cp /mingw64/bin/fallback.css ../win32/.teco_css .
         cp -r /mingw64/share/doc/sciteco/* ./
         cp ../COPYING ../ChangeLog ./
         cp /mingw64/bin/gspawn-win64-helper*.exe ./
