@@ -103,7 +103,7 @@ io.write("!* AUTO-GENERATED FROM SCITE PROPERTY SET *!\n\n")
 
 -- print [lexer.test...] macro
 local shbang = expand(props["shbang."..language])
-local file_patterns = expand(props["file.patterns."..language])
+local file_patterns = expand(props["filter."..language]):match("^[^|]*|(.*)|$")
 io.write([=[
 @[lexer.test.]=], language:lower(), [=[]{
 ]=])
