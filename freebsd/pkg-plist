@@ -30,6 +30,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/cobol.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/cpp.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/cs.tes
+%%LEXILLA%%%%DATADIR%%/lib/lexers/css.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/d.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/devicetree.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/diff.tes
