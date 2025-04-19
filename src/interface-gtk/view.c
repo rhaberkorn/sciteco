@@ -91,8 +91,12 @@ teco_view_new(void)
 
 	/*
 	 * This disables mouse and key events on this view.
-	 * For some strange reason, masking events on
+	 *
+	 * FIXME: For some strange reason, masking events on
 	 * the event box does NOT work.
+	 * This might have been a bug in GdkWindow stacking
+	 * when swapping out the GtkEventBox's child.
+	 * Still, better be on the safe side.
 	 */
 	gtk_widget_set_can_focus(GTK_WIDGET(ctx), FALSE);
 	gint events = gtk_widget_get_events(GTK_WIDGET(ctx));

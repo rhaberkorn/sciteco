@@ -876,9 +876,15 @@ teco_interface_refresh(gboolean current_view_changed)
 
 		teco_interface.current_view_widget = GTK_WIDGET(teco_interface_current_view);
 
+		/*
+		 * NOTE: The hiding helps to ensure the correct GdkWindow
+		 * ordering, which is important at least for setting the
+		 * mouse cursors.
+		 */
+		gtk_widget_hide(teco_interface.event_box_widget);
 		gtk_container_add(GTK_CONTAINER(teco_interface.event_box_widget),
 		                  teco_interface.current_view_widget);
-		gtk_widget_show(teco_interface.current_view_widget);
+		gtk_widget_show_all(teco_interface.event_box_widget);
 	}
 }
 
