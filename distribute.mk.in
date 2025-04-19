@@ -94,10 +94,11 @@ ppa : debian-source
 # We do nothing to sync the ports tree with our mirror of
 # the FreeBSD port's Makefile (freebsd/Makefile) or to supply Poudriere
 # with a recent tarball of SciTECO.
-POUDRIERE_JAIL ?= 141amd64
+POUDRIERE_JAIL ?= 142amd64
+POUDRIERE_BRANCH ?= quarterly
 poudriere:
-	poudriere testport -j $(POUDRIERE_JAIL) -o editors/sciteco@curses
-	poudriere testport -j $(POUDRIERE_JAIL) -o editors/sciteco@gtk
+	poudriere testport -j $(POUDRIERE_JAIL) -b $(POUDRIERE_BRANCH) -o editors/sciteco@curses
+	poudriere testport -j $(POUDRIERE_JAIL) -b $(POUDRIERE_BRANCH) -o editors/sciteco@gtk
 
 # Create Windows release.
 # Assumes a correctly installed glib (with pkgconfig script)
