@@ -1,13 +1,21 @@
 Tasks:
  * Have a look at TECO-86.
- * ncurses: Is it possible to cancel out a background A_STANDOUT with A_REVERSE?
 
 Known Bugs:
+ * The current horizontal position (set by 4EJ via SCI_GETCOLUMN) is
+   often wrong, i.e. pressing the up-cursor key can get you into the
+   wrong column.
+   Character representations obviously take always one column.
+   This would have to be fixed in Scintilla's SCI_GETCOLUMN.
  * Excessively long lines slow down SciTECO too much, especially
    when enabling SCI_SETWRAPMODE(SC_WRAP_CHAR).
    In some cases, the internal redrawing blocks SciTECO forever.
  * @ES/SCI_CLEARALLREPRESENTATIONS// does nothing.
    Might be a Scintilla bug.
+ * PDCurses/Wincon does not report button released events.
+   We try to work around this with click detection,
+   but it still behaves a bit oddly.
+   See https://github.com/Bill-Gray/PDCursesMod/issues/330
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:
@@ -156,6 +164,14 @@ Known Bugs:
    files around, it does not produce a core dump.
 
 Features:
+ * Gtk: special key macros for drag-and-drop interactions?
+ * opener.tes should try to center the opened line
+   (SCI_SETFIRSTVISIBLELINE).
+ * Rubout of SCI_GOTOPOS could also restore the vertical
+   scrolling position (SCI_SETFIRSTVISIBLELINE).
+   So e.g. rubbing out ZJ restores the exact view.
+   On the other hand, this would disallow scrolling via
+   repeated Ls, followed by their rubout.
  * Auto-indention could be implemented via context-sensitive
    immediate editing commands similar to tab-expansion.
    Avoids having to make LF a magic character in insertion
@@ -200,7 +216,16 @@ Features:
    On the other hand, the radix is runtime state and parsing
    must not depend on runtime state in SciTECO to ensure
    parseability of the language.
-   (Perhaps ^H should go to a special hexadecimal number state.)
+   We could use the @ modifier though, so a hexadecimal constant
+   must always begin with @0-@9.
+   @1e\ would be enough to insert the escape character.
+   If the number starts with a non-decimal digit, you will have to
+   prefix it with 0, as in @0FF. If it is followed by a command A-F,
+   you can add an additional space or even brace the expression as in
+   `@0FF A` or `(@0FF)A`.
+   The same could be done with a caret: `^0FF`.
+   Alternatively, ^P would still be available as a single-key-press
+   hex-constant prefix.
    * Furthermore, this opens the possibility of floating point
      numbers. The "." command does not take arguments, so it
      could be part of the number syntax. This disallows constructs
@@ -213,9 +238,12 @@ Features:
    * SciTECO could also be "dynamically" typed by using
      integer and floating point types internally.
      The operator decides how to interpret the arguments
-     and the return type.
+     and the return type. This is good since we'd need less operators
+     and it's good to keep true integers around.
    * Having a separate number parser state will slightly simplify
-     number syntax highlighting (see teco_lexer_getstyle())..
+     number syntax highlighting (see teco_lexer_getstyle()).
+ * ^H as shortcut for 16^R. ^H is backspace, but it won't be
+   necessary to type very often.
  * Key macro masking flag for the beginning of the command
    line. May be useful e.g. for solarized's F5 key (i.e. function
    key macros that need to terminate the command line as they
@@ -434,7 +462,7 @@ Features:
  * Once we have our own function call stack,
    it will be possible, although not trivial, to add support for
    user-definable macros that accept string arguments, eg.
-   EMq<param>$
+   EMq<param>$ or @Mq/param/
    This will have to switch back and forth between the macro and
    the invoking frame supplying the macro (similar to a coroutine).
    In the most simple case, a special command returns the next character
@@ -447,6 +475,12 @@ Features:
    macros. The same construct would also be useful with
    non-interactive commands as a way to store the supplied parameter
    using EU for instance.
+ * If we will never allow @Mq/foo/ for passing arguments to macros,
+   we might at least make the state of the @ modifier (and the number
+   of : modifiers) available to the macro, e.g. via a special
+   EJ flag.
+   This will also make it possible to detect whether the macro is
+   a local call (whether is has its own local Q-Reg table).
  * Emscripten nodejs port.
    This may be a viable way to run SciTECO "cross"-platform, at least
    for evaluation... on UNIX-like systems in absence of prebuilt binaries.
@@ -512,6 +546,10 @@ Features:
    https://github.com/fpjohnston/TECO-64/blob/master/doc/oper.md
    However, instead of introducing a separate parser state, better
    use operators like ~=, ~< etc.
+   * Alternatively, `~` might be a good choice as a shorter alternative
+     to XOR, allowing for the idiom `Qa~Qb"=` when checking for equality
+     that is faster than using `-` and works for floats as well.
+ * ^& could be a NAND operator.
  * Perhaps ignore whitespace after @ as does TECO-64.
    There is little benefit in using spaces or tabs as string delimiters,
    but ignoring whitespace may increase readability. Eg.
@@ -578,9 +616,14 @@ Features:
    contents in the generated .teco_session.
    Ideally we would also persist any manually configured lexer,
    but we cannot easily store the current buffer's lexer.
- * session.tes: Could mung a .teco_ini in the VCS directory as well.
-   This is only really useful once we can elegantly append to various
-   ED hooks.
+ * session.tes: Could mung a .teco_ini in the VCS/session directory as well.
+   It should also do so if opening files from the command line.
+   Unfortunately, this requires a reliable way to check for the equality
+   of two directories, so that we do not accidentally mung ~/.teco_ini.
+ * session.tes: determine session.path by recursively descending from
+   the current directory to the root, but only if session.vcs fails.
+   This means you could create sessions in arbitrary directories
+   but setting session.path once.
  * grosciteco: Does not currently support diacritics.
    This is because Groff decomposes characters in intermediate output.
    Either we have to consult devutf8/R or use wrap g_unichar_compose().
@@ -624,22 +667,20 @@ Features:
    the current line+column in to the message line.
  * With Unicode icon support, we might want to replace a few more
    special symbols.
-   For instance, the "dirty" file symbol could be   or 󰓨 .
- * The @ and : modifiers should probably be allowed only immediately in
-   front of commands in order to avoid possible bugs.
-   @ is always evaluated even in parse-only mode
-   since it has syntactic significance, so expressions like `Qa"S@'V`
-   make no sense -- `V` would always be @-modified.
-   : could theoretically be set conditionally but there is little reason
-   to do so.
-   Chances are you will set : accidentally on a command which doesn't support
-   it and it will affect the next one where you don't expect it.
-   Either @ and : should be separate states that whitelist all commands
-   that actually accept them; or we check the flag at the beginning
-   of the start state.
+   For instance, the "dirty" file symbol could be   or 󰓨  or 󱠦 .
  * There should perhaps be an immediate editing command to repeat the
    last complete command.
-   For that to work, @ and : modifiers must be part of the command.
+ * Read-only buffers.
+ * Lexers should uniformly avoid the color.variable style, except in
+   languages that make a difference between names and variables,
+   i.e. typically shell-like languages with "$var" constructs.
+ * Install autocompletion scripts. They will have to be preprocessed,
+   though. See also
+   https://github.com/rhaberkorn/sciteco/wiki/Shell-auto-completions
+ * There should perhaps we a --revision siteconfig option, to pass
+   in a Git revision, that's printed by `sciteco --help`.
+   But it would have to work with tarballs as well, so it has to be
+   written into a separate header, that can be distributed.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -685,6 +726,9 @@ Optimizations:
    turned into macros, though.
    However, we cannot use macros in TECO_DEFINE_UNDO_CALL().
    Also, we cannot nest such macros for some strange reason.
+ * If GCC would give guarantees on the memory layout of bitfields with
+   `struct __attribute__((packed))`, we may use bitfields instead of
+   flag enums e.g. for teco_ed, where the position of bits must be known.
  * We could save around 500 bytes in every teco_machine_main_transition_t
    table (2kb in total) if we would wrap entries in a macro and decrement
    32 (' ').
@@ -753,15 +797,22 @@ Documentation:
  * What to do with `--xembed`: tabbed, st
    when used as the git editor, etc.
  * People are demanding a Youtube tutorial.
- * Vimtutor like tutorial. Could be a woman-page.
-   Perhaps sciteco-tutorial would copy the files to /tmp and
-   open them always with fallback.teco_ini.
  * The HTML manuals lack monospaced fonts.
    This is partly because an.tmac removes the Courier family
    in nroff mode, but it still doesn't work if you undo this.
- * sciteco(1) should contain command examples.
  * Keyboard view with the SciTECO commands on each key.
    Could perhaps be generated with gpic.
  * Wiki page about creating and maintaining lexer configurations.
    Also mention how to use the "lexer.test..." macros in the
    "edit" hook.
+ * The man pages could include verbatim control characters
+   when processed with grosciteco, so they will be rendered
+   with the usual character representations when displayed
+   within SciTECO.
+   In fact, we could use post-processor-specific hacks to
+   achieve reverse text on HTML and PDF output as well.
+   However, this would require tedoc-support as well.
+ * The cheat sheet could be built by default now and
+   installed along with other documents.
+   Then however we'd have to tweak it, so the CI-generated
+   file always looks good.

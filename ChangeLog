@@ -6,8 +6,120 @@ using a prebuilt binary) are included.
 Entries marked with "(!)" might break macro portability
 compared to the preceding release.
 
-Version 2.3.0
-~~~~~~~~~~~~~
+Version 2.4.0 (2025-04-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+628c73d Fixed occasional rubout bugs, especially related to restoring
+        the `@` modifier state. This has only been observed on 64-bit Windows,
+        but possibly existed since v2.0.0.
+c462509 fixed formatting of the smallest possible integer with `\`
+fb2ba9d,
+(!)7c0e4fb `@` and `:` are now allowed only immediately in front of
+           commands that will really interpet them.
+           They are no longer implicitly passed on to the next command.
+b391858,
+9f334bb,
+d23b44f,
+2440499,
+1425572,
+e9c9a4b,
+6afa02a Added tutorial document, which is automatically loaded on the first invocation.
+        It's also available via the website.
+9e101ec the ES command (send Scintilla message) now supports passing both wParam
+        and lParam as null-terminated strings
+33f7165,
+257a0bf fixed leaking data on rubout
+2b92178 fixed leaking partially built string arguments in case of errors
+06e48c3 fixed memory leak when seeing an existing label (exactly the same or redefinition)
+cefe7e6 sciteco lexer: enable 2-char soft tabs by default.
+        This means that <TAB> and M#it now indent with 2 char tabs by default
+        in SciTECO source files.
+d6aaaab improved the "asm" (x86 assembly) lexer
+3cf370b added CSS lexer configuration
+7d29ae8 added SQL lexer configuration
+edad78b Asciidoc, Markdown and Git lexers: enable word wrapping by default
+bdf35b8 Added "email" lexer for writing mails.
+        This is useful when using SciTECO as an email editor, for instance with the
+        Aerc mail client.
+ca0d765 Added `@W`, `@P`, `@V` and `@Y` command variants:
+        They swap the order of skipping to non-word characters, followed by word characters
+        for forward movements/deletions.
+44307bd,
+62a9c8d,
+e066864 The CTRL+W immediate editing command now mimics `Y` more closely and also rubs out no-op
+        commands (whitespace), followed by the command including all @- and :-modifiers.
+f4114ae,
+867d22e,
+541bee1,
+(!!)7bcd3d8 All word movement and deletion commands (W, P, V, Y) now behave similarily:
+            They first move over or delete word-characters (as defined by SCI_SETWORDCHARS)
+            and then skip non-word characters.
+            This can potentially break a lot of macros.
+ab35f66 added `P` command as a reverse form of `W`
+ccf9ee2,
+376da1e fixed rubbing out `?` (help) after editing a Q-Register
+1b907da Without ~/.teco_ini, we now automatically mung a fallback.teco_ini
+        (previously: sample.teco_ini).
+        Fresh installations are therefore much user-friendlier.
+91fa165 GTK/win32: fixed fonts and therefore pango warnings on startup (closes #7)
+816d2a3 GTK: prevent drag-and-drop interaction and block more possibly dangerous touch and scroll events
+4254346 GTK: do not attempt automatic ANSI key translation for dead keys.
+        This fixes entering caret on some systems and keyboard layouts.
+38ae2e4 GTK: always scroll caret when window size changes.
+        Should make sure that files and help topics are always in view.
+29f1dea,
+2e601e3 GTK: set the mouse cursor on the Scintilla view to signal busyness and on the popup entries
+5d5a204 GTK: improved the RGB values of the 16 default colors.
+        Everything is a bit brighter now.
+f421c8f ncurses: implemented clipboard support via external processes
+        ($SCITECO_CLIPBOARD_SET and $SCITECO_CLIPBOARD_GET)
+327d749,
+8d8d62a,
+a7207d8 ncurses: support monochrome terminals
+24b08da Curses: use special ellipsis symbol instead of "..." when truncating strings
+        Even though it's not a Nerd Fonts glyph, it is only done if ED&512.
+f545bf9 Curses: only show scroll bars when the document is large enough
+08a7f8f,
+e895930 Curses: fixed flickering when scrolling through the auto-completion popup
+        (or generally when keeping it on screen even unchanged)
+29fe0a1 Try to preserve the vertical scrolling position.
+        This improves e.g. the M#cf (clang-format) macro.
+d2f759a,
+980dcda dot is not automatically scrolled into view when processing button scroll events
+1208193,
+5b54cd8,
+53dfbfe,
+428dafa support mouse interaction with popup windows (scrolling and clicking)
+8cc704b,
+72aa210,
+00dd536,
+b87c567 Implemented mouse support via special ^KMOUSE key macros and <EJ> with negative keys.
+        You can process left, right, middle clicks and scroll events.
+        fnkeys.tes provides a macro for jumping by left mouse click and
+        inserting a buffer position by right click.
+        Double right click inserts the range of the selected word and the
+        range can also be dragged.
+a338e1a EC/EG command: now for null bytes in $COMSPEC/$SHELL
+(!)583eddc labels can no longer be redefined, but it's a warning now,
+           so you can still use them as comments like in classic TECO
+1a1baeb support :EF for saving a file before closing it
+eddc89a file and directory auto completions are now case-insensitive on Windows and Mac OS,
+        at least in case-insensitive directories
+f700268,
+e2eff00 support +line[,column] and filename:line[:column] syntaxes when
+        opening files (opener.tes)
+9b3a91e,
+a94d803 minor sciteco(1) and sciteco(7) manpage improvements
+45cb7da Cheat sheet: Mentioned @Xq, S...$^SC, mouse support and :EF
+064f05f provide Ubuntu 24.04 releases as well
+a1aa851 Mac OS releases are relocatable now, so it should be possible
+        to install it into non-root directories.
+566a05d,
+a2ef990 Windows releases are now provided only in 64-bit.
+        32-bit binaries can still be manually built, though.
+
+Version 2.3.0 (2024-12-25)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 38d1f4c session.tes now supports the Fossil VCS (session.fossil) for setting up
         buffer sessions per Fossil repository.
@@ -41,8 +153,8 @@ a673abe,
 244a54a implemented Scintilla lexer for SciTECO code, i.e. TECO syntax highlighting
 d654d0a fixed some compiler warnings when building with --disable-debug
 
-Version 2.2.0
-~~~~~~~~~~~~~
+Version 2.2.0 (2024-12-09)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 3f6572c Fixed crashes when rubbing out file open (EB) with glob patterns, i.e.
         when <EB> would open more than one file.
@@ -89,8 +201,8 @@ a93243b,
 9610dce,
 52d66c5 minor documentation fixes
 
-Version 2.1.1
-~~~~~~~~~~~~~
+Version 2.1.1 (2024-11-17)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 eff7233 session.tes: store the current tab style (width and hard-tabs).
         Also, it now handles filenames containing ASCII 27.
@@ -142,8 +254,8 @@ d3a91fc grosciteco: fixed the CuXXXX postprocessor command, ie. insertion of cha
 730567b grosciteco: added some more quote glyphs
 2bbc584 grosciteco: support the "pc" (centered dot) glyph
 
-Version 2.1.0
-~~~~~~~~~~~~~
+Version 2.1.0 (2024-10-16)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 7413b9c Fixed memory leak when replacing command lines.
         Even cursor movements via function keys (fnkeys.tes) were constantly leaking memory.
@@ -279,8 +391,8 @@ f1fec09 fixed ]$ and ]~ (pop from Q-Reg stack to special Q-Registers).
         The idiom [$ FG...$ ]$ to change the working directory temporarily now works.
         Similarily you can now write [~ ^U~...$ ]~ to change the clipboard temporarily.
 
-Version 2.0.0
-~~~~~~~~~~~~~
+Version 2.0.0 (2023-06-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 b65c64a don't set up any margins or indention settings on the unnamed buffer in sample.teco_ini
 aa2e96a,
@@ -474,8 +586,8 @@ b65eee0 support specialized ^W (rub out part of file name) immediate editing com
 c98a2cd restrict globbing in the EB command to regular files.
 bae8cd7 The <EN> command now allows matching file names and checking file types.
 
-Version 0.6.4
-~~~~~~~~~~~~~
+Version 0.6.4 (2015-03-18)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 18fe073 added PDCURSES_LIBS ./configure variable to overwrite the check for PDCurses
 537b7b5 preliminary support for ncurses/win32. This port is not well
@@ -768,7 +880,7 @@ de616e3 Fixed compilation of the GTK+ interface
 c5c24b0 updated lexer config: CMake and XML lexing
 6f7694e Fixed building on non-C locales (Thanks to Martin Roedel!)
 
-Version 0.5
-~~~~~~~~~~~
+Version 0.5 (2013-03-20)
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 initial release
