@@ -5,12 +5,19 @@
   [: 0,(1ESPOSITIONFROMLINE:)::S ]:
 }
 
+!*
+ * The monospaced font for source code and
+ * figures in woman-pages.
+ *!
+[lexer.font]Monospace
+1200U[lexer.font]
+
 @[lexer.auto]{
   -
-  0EJ-1"> :Q[lexer.font]">
+  0EJ-1">
     32ESSTYLESETFONTQ[lexer.font]
     Q[lexer.font],32ESSTYLESETSIZEFRACTIONAL
-  ' '
+  '
   :M[color.init]
   :Q*"=  '
   [_

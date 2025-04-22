@@ -54,7 +54,7 @@ EMQ[$SCITECOPATH]/opener.tes
  * Tweak the default font name and size.
  * The size unit is 1pt/100
  *!
-!![lexer.font]Monospace 1300U[lexer.font]
+!![lexer.font]Monospace 1200U[lexer.font]
 !![lexer.woman.font]Serif
 
 !* Enable default function key macros *!
