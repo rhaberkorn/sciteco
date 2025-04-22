@@ -55,6 +55,7 @@ EMQ[$SCITECOPATH]/opener.tes
  * The size unit is 1pt/100
  *!
 !![lexer.font]Monospace 1300U[lexer.font]
+!![lexer.woman.font]Serif
 
 !* Enable default function key macros *!
 EMQ[$SCITECOPATH]/fnkeys.tes

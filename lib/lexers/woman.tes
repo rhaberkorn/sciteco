@@ -10,11 +10,17 @@
   :EN*.womanQ*
 }
 
+!*
+ * Font used for body text in woman pages.
+ * This can be a variable-width font.
+ *!
+[lexer.woman.font]Serif
+
 @[lexer.set.woman]{
   1ESSETWRAPMODE
   1ESSETWRAPINDENTMODE
   10,1#4ESSETYCARETPOLICY
-  0EJ-1"> 32ESSTYLESETFONTSerif :M[color.init] '
+  0EJ-1"> 32ESSTYLESETFONTQ[lexer.woman.font] :M[color.init] '
 
   1:EN*Q*.tec"S EMQ*.tec '
 }
