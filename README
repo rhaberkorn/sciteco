@@ -123,7 +123,7 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Ubuntu PPA](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
   [![AUR package](https://repology.org/badge/version-for-repo/aur/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
-* [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/sciteco)
+* [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/community/x86_64/sciteco)
   [![Alpine Linux Edge package](https://repology.org/badge/version-for-repo/alpine_edge/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
 * [Chocolatey package](https://community.chocolatey.org/packages/SciTECO)
   for Windows users
