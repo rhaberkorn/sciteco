@@ -117,6 +117,12 @@
 1U[CLOSE]
 
 !*
+ * F1 toggles __all__ folds.
+ *!
+@[F1]{(2ESFOLDALL{-14D}}
+1U[F1]
+
+!*
  * Zoom with F9/F10 if function keys are enabled.
  * This is automatically rubbed out.
  *!
@@ -136,9 +142,26 @@
  * Ctrl+right click: Insertion beginning of line
  * Scroll wheel: scrolls (faster with shift)
  * Ctrl+scroll wheel: zoom (GTK-only)
+ *
+ * Also, you can click on the folding margin to toggle folds.
  *!
 @[MOUSE]{
   -2EJESCHARPOSITIONFROMPOINTU.p
+
+  -2EJU.x ESGETMARGINLEFTU.r
+  ESGETMARGINS<
+    Q.rU.l Q.iESGETMARGINWIDTHN%.r
+    Q.x-Q.l+1"> Q.x-Q.r"< !* mouse within margin i *!
+      Q.iESGETMARGINMASKN&(-33554432)"N !* folding margin *!
+        -EJ-2"= !* mouse released *!
+          Q.pESLINEFROMPOSITIONESTOGGLEFOLD
+          {-9D}
+        '
+      '
+      1; !* handle like click in text area *!
+    ' '
+  %.i>
+
   -4EJ&2"N Q.pESLINEFROMPOSITIONESPOSITIONFROMLINEU.p '
   1,Q.pESWORDSTARTPOSITION:U.#ws
   1,Q.pESWORDENDPOSITION:U.#we

@@ -79,4 +79,11 @@
   !* Set up brace lightning *!
   :M[color.bracelight],34M[color.set]
   :M[color.error],35M[color.set]
+
+  !* Configure fold margin *!
+  :M[color.linenumber]U.fU.b
+  Q.b,1ESSETFOLDMARGINCOLOUR Q.b,1ESSETFOLDMARGINHICOLOUR
+  10000++,30ESMARKERDEFINE Q.f,30ESMARKERSETFORE Q.b,30ESMARKERSETBACK
+  10000+-,31ESMARKERDEFINE Q.f,31ESMARKERSETFORE Q.b,31ESMARKERSETBACK
+  (2^*30 # 2^*31),2ESSETMARGINMASKN 0,2ESSETMARGINTYPEN
 }
