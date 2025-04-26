@@ -15,9 +15,10 @@
 
     1U.l 1U.c
     !* +line[,column] *!
-    0A-+"=
-      C 0A"D \U.l <0A"DC|1;'> 0A-,"= C \U.c ' 0A-10"=L' '
-    '
+    0A-+"= C 0A"D
+      \U.l <0A"DC|1;'> 0A-,"= C \U.c <0A"DC|1;'> '
+      0A-10"= 2LR Oopen '
+    ' '
 
     !* filename:line[:column][:] *!
     LR -A-:"=R'
@@ -31,6 +32,7 @@
       LR
     '
 
+  !open!
     0X.f [*
       EBN.f Q.c-1,Q.l-1ESFINDCOLUMN:J
     ]*

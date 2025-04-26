@@ -24,7 +24,7 @@ ESCAPE=`printf '\33'`
 
 # Make sure that the standard library from the source package
 # is used.
-SCITECOPATH="@abs_top_srcdir@/lib"
+export SCITECOPATH="@abs_top_srcdir@/lib"
 
 TECO_INTEGER=@TECO_INTEGER@
 
@@ -36,17 +36,17 @@ MININT64=-9223372036854775808
 GREP="@GREP@"
 
 # Glib debug options
-G_SLICE=debug-blocks
-G_ENABLE_DIAGNOSTIC=1
+export G_SLICE=debug-blocks
+export G_ENABLE_DIAGNOSTIC=1
 
 # For the Unicode tests - makes sure that UTF-8 characters
 # are accepted on command lines.
 case $host in
 *-*-darwin*)
-	LC_ALL=`defaults read -g AppleLocale | @SED@ 's/@.*$//g'`.UTF-8
+	export LC_ALL=`defaults read -g AppleLocale | @SED@ 's/@.*$//g'`.UTF-8
 	;;
 *)
-	LC_ALL=C.UTF-8
+	export LC_ALL=C.UTF-8
 	;;
 esac
 

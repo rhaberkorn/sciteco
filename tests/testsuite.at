@@ -19,7 +19,7 @@ AT_ARG_OPTION([valgrind],
 # Single round brackets also have to be replaced with the
 # quadrigraphs @{:@ and @:}@.
 
-AT_BANNER([Features])
+AT_BANNER([Language features])
 
 AT_SETUP([Number stack])
 AT_CHECK([$SCITECO -e "2%a,%a - 3\"N(0/0)'"], 0, ignore, ignore)
@@ -241,6 +241,18 @@ AT_FAIL_IF([$GREP "^Error:" stderr])
 # Should not rub out @ and : characters.
 AT_CHECK([$SCITECO_CMDLINE "@I/ @:foo  ${RUBOUT_WORD}/ Z-3\"N(0/0)'"], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
+AT_CLEANUP
+
+AT_BANNER([Standard library])
+
+AT_SETUP([Command line opener])
+AT_DATA([data.123], [0123456789
+9876543210
+])
+AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF .-13\"N(0/0)'" +2,3 data.123], 0, ignore, ignore)
+AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF .-11\"N(0/0)'" data.123:2], 0, ignore, ignore)
+# `-S` stops processing of special arguments
+AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF EJ-2\"N(0/0)'" -S +1 data.123], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Regression Tests])
