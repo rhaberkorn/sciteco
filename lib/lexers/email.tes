@@ -21,14 +21,25 @@
   ZJ [_-:S^J-- ^J]_"S !* signatures *!
     4R .U.z
     ESSTARTSTYLING 1,(:-)ESSETSTYLING
+
+    !* the signature is foldable *!
+    ESLINEFROMPOSITIONU.l
+    1024#(2^*13),Q.lESSETFOLDLEVEL
+    <:L; 1025,%.lESSETFOLDLEVEL>
   '
 
+  0U.l
   J< .-Q.z"= 1; '
-    0A->"= !* quotes *!
-      U.s
-      <:C; 0A- "N 1; '> .-Q.z"= 1; '
+    U.s
+    0U.q <0A->"N1;' %.q <:C; 0A- "N 1; '>>
+
+    Q.q"> !* quotes *!
       Q.sESSTARTSTYLING
-      (0A->"=3|2'),(Q.lESLINELENGTH)ESSETSTYLING
+      (Q.q-1">3|2'),(Q.lESLINELENGTH)ESSETSTYLING
+
+      !* first line with higher quote level: will be the header *!
+      (Q.l-1ESGETLINESTATE)-Q.q"< (1024+Q.q-1)#(2^*13) | (1024+Q.q) ',Q.lESSETFOLDLEVEL
+      Q.q,Q.lESSETLINESTATE
     '
   :L; %.l>
 ]:}

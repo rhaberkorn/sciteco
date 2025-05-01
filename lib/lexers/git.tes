@@ -18,6 +18,13 @@
   :M[color.comment],1M[color.set]
 
   J< .-Z"= 1; '
-    0A-#"= ESSTARTSTYLING 1,(Q.lESLINELENGTH)ESSETSTYLING '
+    0A-#"=
+      ESSTARTSTYLING 1,(Q.lESLINELENGTH)ESSETSTYLING
+
+      !* only the first line gets the fold level header *!
+      -2ESGETSTYLEINDEXAT-1"N 1024#(2^*13) | 1025 ',Q.lESSETFOLDLEVEL
+    '
+    !* empty line *!
+    0A-10"= 1024#(2^*12),Q.lESSETFOLDLEVEL '
   :L; %.l>
 ]:}
