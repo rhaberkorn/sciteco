@@ -66,6 +66,29 @@
 .  device sciteco_setstyling:\\$1
 ..
 .
+.\" Set the fold level of the current line __and__ all following lines.
+.\" This could be called at the beginning of chapters and sections.
+.de SCITECO_FOLDLEVEL
+.  device sciteco_foldlevel:\\$1
+..
+.
+.\" man-page specific extensions.
+.\" FIXME: Is there a reliable way to detect the man-page macros?
+.if dan \{\
+.  rn SH SH-orig
+.  de SH
+.    SH-orig
+.    SCITECO_FOLDLEVEL 1
+.    nop \\$*
+.  .
+.  rn SS SS-orig
+.  de SS
+.    SS-orig
+.    SCITECO_FOLDLEVEL 2
+.    nop \\$*
+.  .
+.\}
+.
 .\"
 .\" Effectively disable paragraph filling in man pages.
 .\" Word wrapping will be performed by Scintilla.

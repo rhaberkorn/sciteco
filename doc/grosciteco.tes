@@ -169,6 +169,12 @@ EBN[input]
           Q[stylestart]ESSTARTSTYLING Q.s,(-Q[stylestart])ESSETSTYLING
         ]*
         L F<
+      !cmd.xXsciteco_foldlevel!
+        C :M#giU.[foldlevel]
+        [* EB 0:M[move]
+          Q.[foldlevel],(ESLINEFROMPOSITION)ESSETLINESTATE
+        ]*
+        L F<
       !cmd.xXtty!
       !cmd.xXdevtag!
         L F<
@@ -340,6 +346,30 @@ J 0U#cs 0U#cd
   '
   QsU#cs .U#cd
 :C;>
+
+!*
+ * The fold level is stored in the line state since it is set
+ * while the document is not fully built yet.
+ *!
+J 0U#li 0U[cur.fl] 0U[last.line]
+ESGETLINECOUNT<
+  Q#liESGETLINESTATEU#fl
+  Q#fl"N
+    Q[cur.fl]"N
+      Q#li-Q[last.line]Ux
+      1024%[cur.fl]
+      @:EU[styles]{\[last.line]U.l \x<\[cur.fl],Q.lESSETFOLDLEVEL %.l>^J}
+    '
+    Q#li+1U[last.line] Q#flU[cur.fl]
+    (1024+Q#fl-1)#(2^*13)U#fl
+    @:EU[styles]{\#fl,\#liESSETFOLDLEVEL^J}
+  '
+%#li>
+Q[cur.fl]"N
+  Q#li-Q[last.line]Ux
+  1024%[cur.fl]
+  @:EU[styles]{\[last.line]U.l \x<\[cur.fl],Q.lESSETFOLDLEVEL %.l>^J}
+'
 
 !*
  * Save the clear-text part of the document into <output-woman>

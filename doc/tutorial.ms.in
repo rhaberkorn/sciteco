@@ -58,6 +58,7 @@ This tutorial guides you through the bare essentials of the editor.
 Try the examples directly on this document.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Get me out of here!
 .
 .LP
@@ -73,6 +74,7 @@ In the remainder of this document, command examples are therefore formatted as f
 .DE
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Navigation
 .
 .LP
@@ -94,6 +96,7 @@ Using cursor movement or mouse buttons updates the movement
 commands in the command line (the line at the bottom of the screen after \fB*\fP).
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Insertion
 .
 .LP
@@ -115,6 +118,7 @@ There is no \(lqinsert\(rq mode, you are merely providing a string argument
 to the interactively executed \fBI\fP command.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Deletion
 .
 .LP
@@ -130,6 +134,7 @@ Use the following command instead to discard all changes:
 .DE
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Saving
 .
 .LP
@@ -155,6 +160,7 @@ Remember, you can type CTRL+W to undo even the file write and restore the
 previous state of the file.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Loading
 .
 .LP
@@ -184,6 +190,7 @@ in a typical UNIX shell!
 Of course, you can press CTRL+W to revert opening the file.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Search and replace
 .
 .LP
@@ -210,6 +217,7 @@ so \fBS\fP\*$ repeats the last search and \fBFR\fP\*($$ repeats the last
 search-replace operation.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Q-Registers
 .
 .LP
@@ -232,6 +240,7 @@ This however might not work out of the box if you are running the ncurses
 version of \*(ST.
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Programming
 .
 .LP
@@ -247,6 +256,7 @@ of performing a search-replace operation on the entire buffer:
 .DE
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Customize
 .
 .LP
@@ -271,6 +281,7 @@ $ @PACKAGE@ --no-profile
 .DE
 .
 .NH 2
+.SCITECO_FOLDLEVEL 1
 Further reading
 .
 .LP
