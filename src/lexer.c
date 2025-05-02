@@ -126,13 +126,38 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 		machine->macro_pc = g_utf8_next_char(macro+machine->macro_pc) - macro;
 
 		gunichar escape_char = machine->expectstring.machine.escape_char;
+		guint fold_level = SC_FOLDLEVELBASE+machine->expectstring.nesting-1+
+		                   (escape_char == '{' ? 1 : 0);
+
 		style = teco_lexer_getstyle(view, machine, chr);
+
+		/*
+		 * Apply folding. This currently folds only {...} string arguments
+		 * and all its embedded braces.
+		 * We could fold loops and IF-statements as well, but that would
+		 * require manually keeping track of the nesting in parse-only mode,
+		 * which should better be in the parser itself.
+		 *
+		 * FIXME: You cannot practically disable folding via properties.
+		 */
+		if (teco_view_ssm(view, SCI_GETPROPERTYINT, (uptr_t)"fold", TRUE)) {
+			guint next_fold_level = SC_FOLDLEVELBASE+machine->expectstring.nesting-1+
+			                        (machine->expectstring.machine.escape_char == '{' ? 1 : 0);
+
+			if (next_fold_level > fold_level)
+				/* `chr` opened a {...} string argument */
+				teco_view_ssm(view, SCI_SETFOLDLEVEL, *cur_line,
+				              fold_level | SC_FOLDLEVELHEADERFLAG);
+			else if (!*cur_col)
+				teco_view_ssm(view, SCI_SETFOLDLEVEL, *cur_line, fold_level);
+		}
 
 		/*
 		 * Optionally style @^Uq{ ... } contents like macro definitions.
 		 * The curly braces will be styled like regular commands.
 		 *
-		 * FIXME: This will not work with nested macro definitions.
+		 * FIXME: This works only for top-level macro definitions,
+		 * not for embedded definitions.
 		 * FIXME: This cannot currently be disabled, not even with SCI_SETPROPERTY.
 		 * We could only map it to an ED flag or
 		 * rewrite the lexer against the ILexer5 interface, which requires C++.
