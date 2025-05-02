@@ -1416,6 +1416,8 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		teco_interrupted = FALSE;
 
 		teco_interface_refresh(teco_interface_current_view != last_view);
+		/* always expand folds, even after mouse clicks */
+		teco_interface_unfold();
 		/*
 		 * Scintilla has been patched to avoid any automatic scrolling since that
 		 * has been benchmarked to be a very costly operation.
@@ -1429,9 +1431,6 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		if (event->type == GDK_KEY_PRESS) {
 			if (teco_interface_current_view == last_view)
 				teco_interface_ssm(SCI_SETFIRSTVISIBLELINE, last_vpos, 0);
-			/* also unfold automatically */
-			sptr_t dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-			teco_interface_ssm(SCI_ENSUREVISIBLE, teco_interface_ssm(SCI_LINEFROMPOSITION, dot, 0), 0);
 			teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 		}
 

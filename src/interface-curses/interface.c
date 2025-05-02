@@ -2078,6 +2078,7 @@ teco_interface_event_loop_iter(void)
 		 * Do not auto-scroll on mouse events, so you can scroll the view manually
 		 * in the ^KMOUSE macro, allowing dot to be outside of the view.
 		 */
+		teco_interface_unfold();
 		teco_interface_refresh();
 		return;
 #endif
@@ -2134,9 +2135,7 @@ teco_interface_event_loop_iter(void)
 	 */
 	if (teco_interface_current_view == last_view)
 		teco_interface_ssm(SCI_SETFIRSTVISIBLELINE, last_vpos, 0);
-	/* also unfold automatically */
-	sptr_t dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-	teco_interface_ssm(SCI_ENSUREVISIBLE, teco_interface_ssm(SCI_LINEFROMPOSITION, dot, 0), 0);
+	teco_interface_unfold();
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 
 	teco_interface_refresh();

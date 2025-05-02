@@ -93,6 +93,14 @@ teco_interface_ssm(unsigned int iMessage, uptr_t wParam, sptr_t lParam)
  */
 void undo__teco_interface_ssm(unsigned int, uptr_t, sptr_t);
 
+/** Expand folds, so that dot is always visible. */
+static inline void
+teco_interface_unfold(void)
+{
+	sptr_t dot = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_interface_ssm(SCI_ENSUREVISIBLE, teco_interface_ssm(SCI_LINEFROMPOSITION, dot, 0), 0);
+}
+
 /** @pure */
 void teco_interface_info_update_qreg(const teco_qreg_t *reg);
 /** @pure */
