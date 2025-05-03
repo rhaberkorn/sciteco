@@ -1,7 +1,12 @@
 Tasks:
  * Have a look at TECO-86.
+ * VEDIT and PMATE for MS-DOS
 
 Known Bugs:
+ * Gtk: The control characters in tutorial.woman are still styled with
+   the variable-width font since its rendered in STYLE_CONTROLCHAR (36),
+   which is reset in woman.tes.
+   Perhaps it should always be in lexer.font.
  * The current horizontal position (set by 4EJ via SCI_GETCOLUMN) is
    often wrong, i.e. pressing the up-cursor key can get you into the
    wrong column.
@@ -164,7 +169,20 @@ Known Bugs:
    files around, it does not produce a core dump.
 
 Features:
+ * Should we support *.sgml files with the HTML lexer?
+   Old Docbook documents are sometimes SGML based.
+ * Folding support: Perhaps there should also be builtin commands
+   [:]F+ and [:]F-
  * Gtk: special key macros for drag-and-drop interactions?
+   This could be used to send the tabs of one SciTECO process into another
+   instance and close the sender instance.
+ * The opposite is also useful and could be done now already:
+   A macro that takes the current buffer (or a buffer range?)
+   and opens a new SciTECO instance with it. If successful, the
+   given buffer is removed from the ring.
+   This would work with the Curses version as well.
+   Could we also send tabs into an existing SciTECO instance?
+   Would probably require some kind of server...
  * opener.tes should try to center the opened line
    (SCI_SETFIRSTVISIBLELINE).
  * Rubout of SCI_GOTOPOS could also restore the vertical
@@ -242,6 +260,7 @@ Features:
      and it's good to keep true integers around.
    * Having a separate number parser state will slightly simplify
      number syntax highlighting (see teco_lexer_getstyle()).
+   * The first application of floats could be for U[lexer.font].
  * ^H as shortcut for 16^R. ^H is backspace, but it won't be
    necessary to type very often.
  * Key macro masking flag for the beginning of the command
@@ -303,7 +322,8 @@ Features:
  * some missing useful VideoTECO/TECO-11 commands and unnecessary
    incompatibilities:
    * EF with buffer id
-   * ER command: read file into current buffer at dot
+   * ER command: read file(s) into current buffer at dot.
+     Video TECO accepts a glob pattern here.
    * nEW to save a buffer by id
    * EI is used to open an indirect macro file in classic TECO.
      EM should thus be renamed EI.
@@ -351,6 +371,15 @@ Features:
      TECO-11 has ^E<nnn> for octal-only, which is extended by Video TECO
      to support the typical strtoul() semantics.
      This is probably what we want as well.
+   * Video TECO's <EC> updates the display when reading from
+     long running processes. This might be useful as well, at least
+     when detecting interactive invocation.
+     But perhaps there should rather be a global configurable delay/refresh
+     that could be considered by all loops etc.
+   * Video TECO: EQq...$ accepts glob patterns and reads
+     all files into the register. But we probably won't want to have that.
+   * :EB -> Bool on VT.
+   * Video TECO: EV as an alias for EB, but create read-only buffer.
  * n:"x to leave <n> on the stack (i.e. only peek). This simplifies
    expressions like Qa"N Qa ...
  * Perhaps there should be a pattern match construct for word characters
@@ -781,6 +810,8 @@ Optimizations:
    priorities, so we can call the interface cleanup last.
    Unfortunately, destructor-priorities are not supported on all targets.
    atexit() callbacks are apparently called before the destructors.
+ * Are there any numerical warnings we could activate?
+   There have been quite some bugs due to numeric issues.
 
 Documentation:
  * Doxygen docs could be deployed on Github pages
@@ -816,3 +847,14 @@ Documentation:
    installed along with other documents.
    Then however we'd have to tweak it, so the CI-generated
    file always looks good.
+ * We probably do not declare FOSS licenses properly.
+   Except for the Debian package.
+   Should all the licenses be mentioned in COPYING as well?
+   We definitely have to ship licensing information in the binary
+   distributions, so adding everything to COPYING would be easiest.
+   On the other side, in binary distros we have to include licenses
+   for all the shipped DLLs as well.
+ * sciteco(7) should document the difference between state
+   controlled by the SciTECO language and other state (scroll
+   position, window size, folding) and what that all means
+   for writing robust macros.
