@@ -1698,6 +1698,18 @@ teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		if (ctx->flags.mode > TECO_MODE_NORMAL)
 			return &teco_state_start;
 
+		/*
+		 * This check is not crucial, but it would be impossible to apply the new
+		 * command line with `}` after command-line termination.
+		 */
+		if (G_UNLIKELY(ctx == &teco_cmdline.machine &&
+		               teco_qreg_current && !teco_string_cmp(&teco_qreg_current->head.name, "\e", 1))) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			                    "Not allowed to terminate command-line while "
+			                    "editing command-line replacement register");
+			return NULL;
+		}
+
 		ctx->parent.current = &teco_state_start;
 		if (!teco_expressions_eval(FALSE, error))
 			return NULL;

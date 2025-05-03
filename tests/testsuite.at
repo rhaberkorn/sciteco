@@ -250,6 +250,11 @@ AT_CHECK([$SCITECO_CMDLINE "@I/ @:foo  ${RUBOUT_WORD}/ Z-3\"N(0/0)'"], 0, ignore
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
+AT_SETUP([Command-line termination while editing replacement register])
+AT_CHECK([$SCITECO_CMDLINE '{$$}'], 0, ignore, stderr)
+AT_FAIL_IF([! $GREP "^Error:" stderr])
+AT_CLEANUP
+
 AT_BANNER([Standard library])
 
 AT_SETUP([Command line opener])
