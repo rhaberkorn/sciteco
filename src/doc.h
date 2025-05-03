@@ -33,6 +33,8 @@
  */
 typedef struct teco_doc_scintilla_t teco_doc_scintilla_t;
 
+TECO_DECLARE_UNDO_OBJECT(doc_scintilla, teco_doc_scintilla_t *);
+
 /**
  * A Scintilla document.
  *
@@ -108,7 +110,7 @@ void teco_doc_exchange(teco_doc_t *ctx, teco_doc_t *other);
 static inline void
 teco_doc_undo_exchange(teco_doc_t *ctx)
 {
-	teco_undo_ptr(ctx->doc);
+	teco_undo_object_doc_scintilla_push(&ctx->doc);
 	teco_doc_undo_reset(ctx);
 }
 

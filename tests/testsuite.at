@@ -1,6 +1,8 @@
 AT_INIT
 AT_COLOR_TESTS
 
+# Will usually be called as
+# make chek TESTSUITEFLAGS=--valgrind
 AT_ARG_OPTION([valgrind],
 	AS_HELP_STRING([--valgrind], [Run tests under Valgrind (memcheck)]))
 
@@ -10,7 +12,7 @@ AT_ARG_OPTION([valgrind],
 # idiom "(0/0)" to enforce a "Division by zero" error
 # whenever we want to fail.
 #
-# NOTE: Square brackets are significant for M4 but
+# NOTE: Square brackets are the current quote characters for M4 but
 # often required in TECO code as well.
 # We therefore use double brackets [[ ... ]]
 # (translated to [ ... ]) in simple cases where balanced
@@ -18,6 +20,11 @@ AT_ARG_OPTION([valgrind],
 # quadrigraphs (@<:@ and @:>@) in all other cases.
 # Single round brackets also have to be replaced with the
 # quadrigraphs @{:@ and @:}@.
+#
+# FIXME: Can we use changequote() to simplify that or will it
+# confuse all of Autotest's macros?
+# We might also write new M4 macros that care about
+# shell escaping (or writing out all test cases into files).
 
 AT_BANNER([Language features])
 
@@ -373,6 +380,14 @@ AT_SETUP([Restore flags after rub out])
 # Must throw an error if the @ flag is restored properly.
 AT_CHECK([$SCITECO_CMDLINE '0@W{-D}C'], 0, ignore, stderr)
 AT_FAIL_IF([! $GREP "^Error:" stderr])
+AT_CLEANUP
+
+AT_SETUP([Rub out stack operations in macro calls])
+# This was causing memory corruptions, that would at least show up under Valgrind.
+AT_CHECK([$SCITECO_CMDLINE '@^Um{[[.a]].b}Mm{-2D}'], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
+AT_CHECK([$SCITECO_CMDLINE '[[.a@^Um{]].b}Mm{-2D}'], 0, ignore, stderr)
+AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Searches from macro calls])
