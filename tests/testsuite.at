@@ -2,7 +2,7 @@ AT_INIT
 AT_COLOR_TESTS
 
 # Will usually be called as
-# make chek TESTSUITEFLAGS=--valgrind
+# make check TESTSUITEFLAGS=--valgrind
 AT_ARG_OPTION([valgrind],
 	AS_HELP_STRING([--valgrind], [Run tests under Valgrind (memcheck)]))
 
@@ -12,151 +12,175 @@ AT_ARG_OPTION([valgrind],
 # idiom "(0/0)" to enforce a "Division by zero" error
 # whenever we want to fail.
 #
-# NOTE: Square brackets are the current quote characters for M4 but
-# often required in TECO code as well.
-# We therefore use double brackets [[ ... ]]
-# (translated to [ ... ]) in simple cases where balanced
-# brackets are required in TECO code as well and
-# quadrigraphs (@<:@ and @:>@) in all other cases.
-# Single round brackets also have to be replaced with the
-# quadrigraphs @{:@ and @:}@.
-#
-# FIXME: Can we use changequote() to simplify that or will it
-# confuse all of Autotest's macros?
-# We might also write new M4 macros that care about
-# shell escaping (or writing out all test cases into files).
+# NOTE: By convention, we double quote the SciTECO test case
+# snippets, ie. put them between [[ and ]].
+# The advantage is that single brackets are preserved and do not
+# have to be written as quadrigraphs.
+# Single brackets must still be balanced, so if you need an unbalanced
+# opening or closing bracket, you can add a ![! or !]! TECO comment
+# to balance the braces from the viewpoint of M4.
+# Round braces are preserved and do not have to be balanced.
+# Most test cases can use the TE_CHECK() macro below, which takes
+# care of escaping shell constructs.
+# Effectively, you can put arbitrary TECO code into TE_CHECK([[...]])
+# calls and only have to take additional actions in case of unbalanced
+# square brackets.
+
+m4_define([TE_CHECK], [
+	AT_CHECK([$SCITECO --eval ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
+])
+m4_define([TE_CHECK_CMDLINE], [
+	AT_CHECK([$SCITECO --no-profile --fake-cmdline ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
+])
+
+# Control characters for testing immediate editing commands with TE_CHECK_CMDLINE().
+# Often, we can use {...} for testing rubout, but sometimes this is not enough.
+# Theoretically, we could directly embed control codes, but for the time being
+# I am trying to keep non-TECO sources clean of non-printable characters.
+m4_define([TE_ESCAPE], [m4_format([%c], 27)])
+m4_define([TE_RUBOUT], [m4_format([%c], 8)])
+m4_define([TE_RUBOUT_WORD], [m4_format([%c], 23)])
 
 AT_BANNER([Language features])
 
 AT_SETUP([Number stack])
-AT_CHECK([$SCITECO -e "2%a,%a - 3\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[2%a,%a - 3"N(0/0)']], 0, ignore, ignore)
 # It's not quite clear what would be the best semantics for comma:
 # a) Superfluous commas as in ",," or "(1,)" should be an error.
 # b) Superfluous commas should be ignored which is effectively what we do now.
 #    Even then it might be advisable to treat (1,) like (1).
 # c) The empty "list" element is equivalent to 0, so
 #    "1,,2" is equivalent to "1,0,2" and (1,) to (1,0).
-AT_CHECK([$SCITECO -e "(1,) \"~|(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "1,(2)=="], 0, ignore, ignore)
+TE_CHECK([[(1,) "~|(0/0)']], 0, ignore, ignore)
+TE_CHECK([[1,(2)==]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Radix])
-AT_CHECK([$SCITECO -e "0^R"], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e "0U.^R"], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e "23 (2^R)\^D .-5\"N(0/0)"], 0, ignore, ignore)
+TE_CHECK([[0^R]], 1, ignore, ignore)
+TE_CHECK([[0U.^R]], 1, ignore, ignore)
+TE_CHECK([[23 (2^R)\^D .-5"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Exponentiation])
-AT_CHECK([$SCITECO -e "-1^*0  - (-1)\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "-1^*-5 - (-1)\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "0^*-5="], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e "0^*0   - 1\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "1^*-5  - 1\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "2^*-5  - 0\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[-1^*0  - (-1)"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[-1^*-5 - (-1)"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[0^*-5=]], 1, ignore, ignore)
+TE_CHECK([[0^*0   - 1"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[1^*-5  - 1"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[2^*-5  - 0"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Missing left operand])
-AT_CHECK([$SCITECO -e '+23='], 1, ignore, ignore)
+TE_CHECK([[+23=]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Operator precedence])
-AT_CHECK([$SCITECO -e "(10-2-3)-5\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "(1-6*5)+29\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "(1-6*5-1)+30\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "(1-6*5-1*2*2)+33\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[(10-2-3)-5"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[(1-6*5)+29"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[(1-6*5-1)+30"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[(1-6*5-1*2*2)+33"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Modifiers])
-AT_CHECK([$SCITECO -e '@:W$ :@W$'], 0, ignore, ignore)
+TE_CHECK([[@:W$ :@W$]], 0, ignore, ignore)
 # Detect invalid modifiers
-AT_CHECK([$SCITECO -e '@J'], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e ': '], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e '::C$'], 1, ignore, ignore)
+TE_CHECK([[@J]], 1, ignore, ignore)
+TE_CHECK([[: ]], 1, ignore, ignore)
+TE_CHECK([[::C$]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Closing loops at the correct macro level])
-AT_CHECK([$SCITECO -e '@^Ua{>} <Ma'], 1, ignore, ignore)
+TE_CHECK([[@^Ua{>} <Ma]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Braces in loops])
-AT_CHECK([$SCITECO -e "1<23@{:@42>"], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e "1<23(1;)> \"~|(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[1<23(42>]], 1, ignore, ignore)
+TE_CHECK([[1<23(1;)> "~|(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Pass-through loops])
 # NOTE: This requires the <=>, so that values get consumed from the stack.
 # More elegant would be a command for popping exactly one argument like <:$>.
-AT_CHECK([$SCITECO -e "1,2,3,-1:<\"~1;'%a=> Qa-6\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "1,2,3,-1:<\"~1;'%a= F>(0/0)> Qa-6\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "3<%a:>-3\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "3<%a :F>(0/0):>-3\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[1,2,3,-1:<"~1;'%a=> Qa-6"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[1,2,3,-1:<"~1;'%a= F>(0/0)> Qa-6"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[3<%a:>-3"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[3<%a :F>(0/0):>-3"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([String arguments])
-AT_CHECK([$SCITECO -e $'Ifoo^Q\e(0/0)\e'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '@I"foo^Q"(0/0)"'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '@I{foo{bar}foo^Q{(0/0)}'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '@Ia^EQa(0/0)a'], 0, ignore, ignore)
+TE_CHECK([[Ifoo^Q]]TE_ESCAPE[[(0/0)]]TE_ESCAPE, 0, ignore, ignore)
+TE_CHECK([[@I"foo^Q"(0/0)"]], 0, ignore, ignore)
+TE_CHECK([[@I{foo{bar}foo^Q{(0/0)}]], 0, ignore, ignore)
+TE_CHECK([[@Ia^EQa(0/0)a]], 0, ignore, ignore)
 # TODO: String building characters
 AT_CLEANUP
 
 AT_SETUP([Q-Register definitions])
-AT_CHECK([$SCITECO -e '0Ua'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U.a'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U.^X'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U#ab'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U.#ab'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U[[AB]]'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U.[[AB]]'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '0U[[AB^Q@:>@(0/0)]]'], 0, ignore, ignore)
+TE_CHECK([[0Ua]], 0, ignore, ignore)
+TE_CHECK([[0U.a]], 0, ignore, ignore)
+TE_CHECK([[0U.^X]], 0, ignore, ignore)
+TE_CHECK([[0U#ab]], 0, ignore, ignore)
+TE_CHECK([[0U.#ab]], 0, ignore, ignore)
+TE_CHECK([[0U[AB] ]], 0, ignore, ignore)
+TE_CHECK([[0U.[AB] ]], 0, ignore, ignore)
+TE_CHECK([[![! 0U[AB^Q](0/0)] ]], 0, ignore, ignore)
 # TODO: String building in Q-Register definitions
 AT_CLEANUP
 
 AT_SETUP([Copy, append and cut to Q-Registers])
-AT_CHECK([$SCITECO -e "@I/12^J123/J Xa :Xa L-:@Xa :Qa-9\"N(0/0)' Z-3\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/ABCDE/ 1,4Xa 0,3:Xa 3,5:@Xa :Qa-8\"N(0/0)' Z-3\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@I/12^J123/J Xa :Xa L-:@Xa :Qa-9"N(0/0)' Z-3"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/ABCDE/ 1,4Xa 0,3:Xa 3,5:@Xa :Qa-8"N(0/0)' Z-3"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Q-Register stack])
-AT_CHECK([$SCITECO -e "[[a 23Ub ]]b Qb\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[ [a 23Ub ]b Qb"N(0/0)']], 0, ignore, ignore)
 # FG will temporarily change the working directory to tests/testsuite.dir.
-AT_CHECK([$SCITECO -e "[[\$ @FG'..' ]]\$ :Q\$-1Q\$-^^r\"=(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "[[: @I/XXX/ ]]: .\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[ [$ @FG'..' ]$ :Q$-1Q$-^^r"=(0/0)']], 0, ignore, ignore)
+TE_CHECK([[ [: @I/XXX/ ]: ."N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
+
+m4_define([TE_MAXINT32], [2147483647])
+m4_define([TE_MININT32], [-2147483648])
+m4_define([TE_MAXINT64], [9223372036854775807])
+m4_define([TE_MININT64], [-9223372036854775808])
 
 AT_SETUP([Formatting numbers])
 # MAXINT32/MININT32: should always work.
-AT_CHECK([$SCITECO -e "$MAXINT32\\ J::@S/$MAXINT32/\"F(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "$MININT32\\ J::@S/$MININT32/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK(TE_MAXINT32[[\ J::@S/]]TE_MAXINT32[[/"F(0/0)']], 0, ignore, ignore)
+TE_CHECK(TE_MININT32[[\ J::@S/]]TE_MININT32[[/"F(0/0)']], 0, ignore, ignore)
 AT_SKIP_IF([test $TECO_INTEGER -lt 64])
-AT_CHECK([$SCITECO -e "$MAXINT64\\ J::@S/$MAXINT64/\"F(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "$MININT64\\ J::@S/$MININT64/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK(TE_MAXINT64[[\ J::@S/]]TE_MAXINT64[[/"F(0/0)']], 0, ignore, ignore)
+TE_CHECK(TE_MININT64[[\ J::@S/]]TE_MININT64[[/"F(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 # This should always work, at least on systems with a two's complement
 # representation of negative integers.
 # We will probably never meet anything else, but at least we check.
 AT_SETUP([Integer comparisons])
-AT_CHECK([$SCITECO -e "($MAXINT32)-($MAXINT32)\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "($MININT32)-($MININT32)\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[(]]TE_MAXINT32[[)-(]]TE_MAXINT32[[)"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[(]]TE_MININT32[[)-(]]TE_MININT32[[)"N(0/0)']], 0, ignore, ignore)
 AT_SKIP_IF([test $TECO_INTEGER -lt 64])
-AT_CHECK([$SCITECO -e "($MAXINT64)-($MAXINT64)\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "($MININT64)-($MININT64)\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[(]]TE_MAXINT64[[)-(]]TE_MAXINT64[[)"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[(]]TE_MININT64[[)-(]]TE_MININT64[[)"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Convert between line and glyph positions])
-AT_CHECK([$SCITECO -e "@I/1^J2^J3/J 2^QC :^Q-3\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@I/1^J2^J3/J 2^QC :^Q-3"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Moving by words])
-AT_CHECK([$SCITECO -e "3J 2W @P .-17\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/foo ^J bar/ JW @W .-Z\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "Z-4J 3P .-12\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_DATA([words-example.txt], [[navigating (words is useful
+]])
+TE_CHECK([[@EB'words-example.txt' 3J 2W @P .-17"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/foo ^J bar/ JW @W .-Z"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@EB'words-example.txt' Z-4J 3P .-12"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Deleting words])
-AT_CHECK([$SCITECO -e "3J 2V .-3\"N(0/0)' @V Z-11\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "Z-4J 2Y .-18\"N(0/0)' 2C @Y Z-19\"N(0/0)'" "$WORDS_EXAMPLE"], 0, ignore, ignore)
+AT_DATA([words-example.txt], [[navigating (words is useful
+]])
+TE_CHECK([[@EB'words-example.txt' 3J 2V .-3"N(0/0)' @V Z-11"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@EB'words-example.txt' Z-4J 2Y .-18"N(0/0)' 2C @Y Z-19"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searches])
@@ -164,73 +188,73 @@ AT_SETUP([Searches])
 # by a 2nd character. It can be quoted, but cannot be written as Caret+E.
 # You also cannot search for a single ASCII 5 using Caret+E.
 # 2 additional ^Q are translated to a single ^Q and interpreted at the search-pattern layer.
-AT_CHECK([$SCITECO -e "@I/^Q\05/ J @:S/^Q^Q^Q\05/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK(m4_format([[@I/^Q%c/ J @:S/^Q^Q^Q%c/"F(0/0)']], 5, 5), 0, ignore, ignore)
 # Canse-sensitive search
-AT_CHECK([$SCITECO -e "@I/XXX/J -^X @:S/xxx/\"S(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@I/XXX/J -^X @:S/xxx/"S(0/0)']], 0, ignore, ignore)
 # Search mode should be local to the macro frame.
-AT_CHECK([$SCITECO -e "-^X @^Um{^X} Mm-0\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/XYZ/ J ::@S/X/\"F(0/0)' H::@S/Z/\"S(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[-^X @^Um{^X} Mm-0"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/XYZ/ J ::@S/X/"F(0/0)' H::@S/Z/"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Search and insertion ranges])
-AT_CHECK([$SCITECO -e "@I/XXYYZZ/^SC .\"N(0/0)' C @S/YY/^YU1U0 Q0-2\"N(0/0)' Q1-4\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/XXYYZZ/J @S/XX^E[[^EMY]]/ 1^YXa :Qa-2\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@I/XXYYZZ/^SC ."N(0/0)' C @S/YY/^YU1U0 Q0-2"N(0/0)' Q1-4"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/XXYYZZ/J @S/XX^E[^EMY]/ 1^YXa :Qa-2"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Editing local registers in macro calls])
-AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//} :Ma @^U.x/FOO/'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '@^Ua{@EQ.x//}  Ma @^U.x/FOO/'], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e '@^Ua{@EQ.x// Mb Q*U*} Ma'], 0, ignore, ignore)
+TE_CHECK([[@^Ua{@EQ.x//} :Ma @^U.x/FOO/]], 0, ignore, ignore)
+TE_CHECK([[@^Ua{@EQ.x//}  Ma @^U.x/FOO/]], 1, ignore, ignore)
+TE_CHECK([[@^Ua{@EQ.x// Mb Q*U*} Ma]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Loading files into Q-Registers])
-AT_CHECK([$SCITECO -e "@I/../ @EW/loadqreg.txt/ @EQa/loadqreg.txt/ :Qa-2\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@I/../ @EW/loadqreg.txt/ @EQa/loadqreg.txt/ :Qa-2"N(0/0)']], 0, ignore, ignore)
 # Does the same as FG..$. Afterwards, the parent directory should be shorter.
-AT_CHECK([$SCITECO -e ":Q\$Ul @EQ\$/loadqreg.txt/ :Q\$-Ql+1\">(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[:Q$Ul @EQ$/loadqreg.txt/ :Q$-Ql+1">(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Saving Q-Registers contents to files])
-AT_CHECK([$SCITECO -e "@^Ua/test/ @E%a/saveqreg.txt/ @EB/saveqreg.txt/ Z-4\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@E%\$/saveqreg.txt/ @EB/saveqreg.txt/ Z-:Q\$\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@^Ua/test/ @E%a/saveqreg.txt/ @EB/saveqreg.txt/ Z-4"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@E%$/saveqreg.txt/ @EB/saveqreg.txt/ Z-:Q$"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([8-bit cleanliness])
-AT_CHECK([$SCITECO -e "0@I//J 0A\"N(0/0)' :@S/^@/\"F(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4\"N(0/0)' Ga Z-4\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "0EE 129@I// -A-129\"N(0/0)' HXa @EQa// EE\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -8e "129@:^Ua// 0Qa-129\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "1EE 167Ua @I/^EUa/ .-1\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -8e "194Ua Qa@I//J :@S/^EUa/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[0@I//J 0A"N(0/0)' :@S/^@/"F(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4"N(0/0)' Ga Z-4"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[0EE 129@I// -A-129"N(0/0)' HXa @EQa// EE"N(0/0)']], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -8e "129@:^Ua// 0Qa-129\"N(0/0)'"]], 0, ignore, ignore)
+TE_CHECK([[1EE 167Ua @I/^EUa/ .-1"N(0/0)']], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -8e "194Ua Qa@I//J :@S/^EUa/\"F(0/0)'"]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Unicode])
-AT_CHECK([$SCITECO -e "8594@I/Здравствуй, мир!/ Z-17\"N(0/0)' J0A-8594\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "8594@^Ua/Здравствуй, мир!/ :Qa-17\"N(0/0)' 0Qa-8594\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/Здравствуй, мир!/ JW .-12\"N(0/0)' ^E-22\"N(0/0)' 204:EE .-12\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@I/TEST/ @EW/юникод.txt/"], 0, ignore, ignore)
-AT_CHECK([test -f юникод.txt], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "^^ß-223\"N(0/0) 23Uъ Q[Ъ]-23\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@O/метка/ !метка!"], 0, ignore, ignore)
+TE_CHECK([[8594@I/Здравствуй, мир!/ Z-17"N(0/0)' J0A-8594"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[8594@^Ua/Здравствуй, мир!/ :Qa-17"N(0/0)' 0Qa-8594"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/Здравствуй, мир!/ JW .-12"N(0/0)' ^E-22"N(0/0)' 204:EE .-12"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/TEST/ @EW/юникод.txt/]], 0, ignore, ignore)
+AT_CHECK([[test -f юникод.txt]], 0, ignore, ignore)
+TE_CHECK([[^^ß-223"N(0/0)' 23Uъ Q[Ъ]-23"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@O/метка/ !метка!]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])
-AT_CHECK([$SCITECO -e "@EB'${srcdir}/autoeol-input.txt' EL-2\"N(0/0)' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt'"],
+TE_CHECK([[@EB'^EQ[$srcdir]/autoeol-input.txt' EL-2"N(0/0)' 2LR 13@I'' 0EL @EW'autoeol-sciteco.txt']],
          0, ignore, ignore)
-AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@EB'autoeol-sciteco.txt' EL-0\"N(0/0)' 2EL @EW''"], 0, ignore, ignore)
-AT_CHECK([cmp autoeol-sciteco.txt ${srcdir}/autoeol-input.txt], 0, ignore, ignore)
+AT_CHECK([[cmp autoeol-sciteco.txt ${srcdir}/autoeol-output.txt]], 0, ignore, ignore)
+TE_CHECK([[@EB'autoeol-sciteco.txt' EL-0"N(0/0)' 2EL @EW'']], 0, ignore, ignore)
+AT_CHECK([[cmp autoeol-sciteco.txt ${srcdir}/autoeol-input.txt]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting])
-AT_CHECK([$SCITECO -e "50*1000*1000,2EJ <@<:@a>"], 1, ignore, ignore)
+TE_CHECK([[50*1000*1000,2EJ <[a> !]!]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Execute external command])
 # TODO: It would be a better test to generate a random number of bytes.
 # Unfortunately, neither $RANDOM, shuf nor jot are portable.
 # So we have to wait until SciTECO supports a random number generator.
-AT_CHECK([$SCITECO -e "@EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "0,128ED @EC'dd if=/dev/zero bs=512 count=1' Z= Z-512\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[@EC'dd if=/dev/zero bs=512 count=1' Z= Z-512"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[0,128ED @EC'dd if=/dev/zero bs=512 count=1' Z= Z-512"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 #
@@ -243,15 +267,15 @@ AT_CLEANUP
 #
 AT_SETUP([Rub out with immediate editing commands])
 # Must rub out @, but not the colon from the Q-Reg specification.
-AT_CHECK([$SCITECO_CMDLINE "Q:@I/XXX/  ${RUBOUT_WORD}{Z-2\"N(0/0)'}"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[Q:@I/XXX/  ]]TE_RUBOUT_WORD[[{Z-2"N(0/0)'}]], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 # Should not rub out @ and : characters.
-AT_CHECK([$SCITECO_CMDLINE "@I/ @:foo  ${RUBOUT_WORD}/ Z-3\"N(0/0)'"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[@I/ @:foo  ]]TE_RUBOUT_WORD[[/ Z-3"N(0/0)']], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Command-line termination while editing replacement register])
-AT_CHECK([$SCITECO_CMDLINE '{$$}'], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[{$$}]], 0, ignore, stderr)
 AT_FAIL_IF([! $GREP "^Error:" stderr])
 AT_CLEANUP
 
@@ -261,67 +285,67 @@ AT_SETUP([Command line opener])
 AT_DATA([data.123], [0123456789
 9876543210
 ])
-AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF .-13\"N(0/0)'" +2,3 data.123], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF .-11\"N(0/0)'" data.123:2], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-13\"N(0/0)'" +2,3 data.123]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-11\"N(0/0)'" data.123:2]], 0, ignore, ignore)
 # `-S` stops processing of special arguments
-AT_CHECK([$SCITECO -e "@EM'^EQ[[\$SCITECOPATH]]/opener.tes' M[[opener]] -EF EJ-2\"N(0/0)'" -S +1 data.123], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF EJ-2\"N(0/0)'" -S +1 data.123]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Regression Tests])
 
 AT_SETUP([Glob patterns with character classes])
 # Also checks closing brackets as part of the character set.
-AT_CHECK([$SCITECO -e ":@EN/*.[[@:>@ch]]/foo.h/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[![! :@EN/*.[]ch]/foo.h/"F(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Glob patterns with unclosed trailing brackets])
-AT_CHECK([$SCITECO -e ":@EN/*.@<:@h/foo.@<:@h/\"F(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[:@EN/*.[h/foo.[h/"F(0/0)' !]]!]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Searching with large counts])
 # Even though the search will be unsuccessful, it will not be considered
 # a proper error, so the process return code is still 0.
-AT_CHECK([$SCITECO -e "2147483647@S/foo/"], 0, ignore, ignore)
+TE_CHECK([[2147483647@S/foo/]], 0, ignore, ignore)
 # Will always break the memory limit which is considered an error.
-AT_CHECK([$SCITECO -e "-2147483648@S/foo/"], 1, ignore, ignore)
+TE_CHECK([[-2147483648@S/foo/]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Search on new empty document])
-AT_CHECK([$SCITECO -e ":@S/foo/\"S(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e ":@N/foo/\"S(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[:@S/foo/"S(0/0)']], 0, ignore, ignore)
+TE_CHECK([[:@N/foo/"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Search for one of characters in uninitialized Q-Register])
 # Register "a" exists, but it's string part is yet uninitialized.
-AT_CHECK([$SCITECO -e ":@S/^EGa/\"S(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[:@S/^EGa/"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Search accesses wrong Q-Register table])
-AT_CHECK([$SCITECO -e '@^U.#xx/123/ @^Um{:@S/^EG.#xx/$} :Mm Mm'], 1, ignore, ignore)
+TE_CHECK([[@^U.#xx/123/ @^Um{:@S/^EG.#xx/$} :Mm Mm]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
-AT_CHECK([$SCITECO -e "50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero'"], 1, ignore, ignore)
+TE_CHECK([[50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero']], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting during file reading])
-AT_CHECK([dd if=/dev/zero of=big-file.txt bs=1000 count=50000], 0, ignore, ignore)
-AT_CHECK([$SCITECO -8e "50*1000*1000,2EJ @EB'big-file.txt'"], 1, ignore, ignore)
+AT_CHECK([[dd if=/dev/zero of=big-file.txt bs=1000 count=50000]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -8e '50*1000*1000,2EJ @EB"big-file.txt"']], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Q-Register stack cleanup])
-AT_CHECK([$SCITECO -e '@<:@a'], 0, ignore, ignore)
+TE_CHECK([[ [a !]!]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Uninitialized "_"-register])
-AT_CHECK([$SCITECO -e ":@S//\"S(0/0)'"], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e ":@EN///\"S(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[:@S//"S(0/0)']], 0, ignore, ignore)
+TE_CHECK([[:@EN///"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Uninitialized Q-Register in string building])
-AT_CHECK([$SCITECO -e '@I/^E@a/'], 0, ignore, ignore)
-AT_CHECK([$SCITECO -e '@I/^ENa/'], 0, ignore, ignore)
+TE_CHECK([[@I/^E@a/]], 0, ignore, ignore)
+TE_CHECK([[@I/^ENa/]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Setting special Q-Registers with EU])
@@ -329,36 +353,36 @@ AT_SETUP([Setting special Q-Registers with EU])
 # should not influence the clipboard (and it's not in Curses anyway).
 #
 # Should fail, but not crash
-AT_CHECK([$SCITECO -e '@EU*""'], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e '@EU$"."'], 0, ignore, ignore)
+TE_CHECK([[@EU*""]], 1, ignore, ignore)
+TE_CHECK([[@EU$"."]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Empty help topic])
-AT_CHECK([$SCITECO -e '@?//'], 1, ignore, ignore)
+TE_CHECK([[@?//]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Empty lexer name])
-AT_CHECK([$SCITECO -e '@ES/SETILEXER//'], 1, ignore, ignore)
+TE_CHECK([[@ES/SETILEXER//]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Empty command string])
-AT_CHECK([$SCITECO -e '@EC//'], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e '@EGa//'], 1, ignore, ignore)
+TE_CHECK([[@EC//]], 1, ignore, ignore)
+TE_CHECK([[@EGa//]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Jump to beginning of macro])
-AT_CHECK([$SCITECO -e "%a-2\"< F< ' Qa-2\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[%a-2"< F< ' Qa-2"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Gotos and labels])
 # Not a label redefinition, there must not even be a warning.
-AT_CHECK([$SCITECO -e '2<!foo!>'], 0, ignore, stderr)
+TE_CHECK([[2<!foo!>]], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Warning:" stderr])
 # Will print a warning about label redefinition, though...
-AT_CHECK([$SCITECO -e "!foo! Qa\"S^C' !foo! Qa\"S(0/0)' -Ua @O/foo/"], 0, ignore, ignore)
+TE_CHECK([[!foo! Qa"S^C' !foo! Qa"S(0/0)' -Ua @O/foo/]], 0, ignore, ignore)
 # This should not leak memory or cause memory corruptions when running under
 # Valgrind or Asan:
-AT_CHECK([$SCITECO_CMDLINE "!foo!{-5D}"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[!foo!{-5D}]], 0, ignore, stderr)
 AT_CLEANUP
 
 #
@@ -366,37 +390,37 @@ AT_CLEANUP
 # See above for rules.
 #
 AT_SETUP([Rub out string append])
-AT_CHECK([$SCITECO_CMDLINE "@I/XXX/ H:Xa{-4D} :Qa-0\"N(0/0)'"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[@I/XXX/ H:Xa{-4D} :Qa-0"N(0/0)']], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Rub out of empty forward kill])
-AT_CHECK([$SCITECO_CMDLINE "@I/F/ J @I/X/ @FK/F/{-6D} Z-2\"N(0/0)'"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[@I/F/ J @I/X/ @FK/F/{-6D} Z-2"N(0/0)']], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Rub out Q-Register specifications])
 # This was causing memory corruptions, that would at least show up under Valgrind.
-AT_CHECK([$SCITECO_CMDLINE "GaGb{-4D}"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[GaGb{-4D}]], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Restore flags after rub out])
 # Must throw an error if the @ flag is restored properly.
-AT_CHECK([$SCITECO_CMDLINE '0@W{-D}C'], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[0@W{-D}C]], 0, ignore, stderr)
 AT_FAIL_IF([! $GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Rub out stack operations in macro calls])
 # This was causing memory corruptions, that would at least show up under Valgrind.
-AT_CHECK([$SCITECO_CMDLINE '@^Um{[[.a]].b}Mm{-2D}'], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[@^Um{[.a].b}Mm{-2D}]], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
-AT_CHECK([$SCITECO_CMDLINE '[[.a@^Um{]].b}Mm{-2D}'], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[[.a@^Um{].b}Mm{-2D}]], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
 AT_SETUP([Searches from macro calls])
-AT_CHECK([$SCITECO_CMDLINE "@^Um{:@S/XXX/} :Mm\"S(0/0)' Mm\"S(0/0)'"], 0, ignore, stderr)
+TE_CHECK_CMDLINE([[@^Um{:@S/XXX/} :Mm"S(0/0)' Mm"S(0/0)']], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
@@ -407,14 +431,14 @@ AT_SETUP([Number stack])
 # will be replaced with proper number parser states, which will also allow for
 # floating point constants.
 # With the current parser, it is hard to even interpret the following code correctly...
-AT_CHECK([$SCITECO -e "(12)3 - 3\"N(0/0)'"], 0, ignore, ignore)
+TE_CHECK([[(12)3 - 3"N(0/0)']], 0, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
 AT_SETUP([Dangling Else/End-If])
 # Should throw syntax errors.
-AT_CHECK([$SCITECO -e "'"], 1, ignore, ignore)
-AT_CHECK([$SCITECO -e "| (0/0) '"], 1, ignore, ignore)
+TE_CHECK([[']], 1, ignore, ignore)
+TE_CHECK([[| (0/0) ']], 1, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
@@ -425,7 +449,7 @@ AT_CLEANUP
 ## Should no longer dump core.
 ## It could fail because the memory limit is exceeed,
 ## but not in this case since the match string isn't too large.
-#AT_CHECK([$SCITECO -e '100000<@I"X">J @S"^EM^X"'], 0, ignore, ignore)
+#TE_CHECK([[100000<@I"X">J @S"^EM^X"]], 0, ignore, ignore)
 #AT_XFAIL_IF(true)
 #AT_CLEANUP
 
@@ -433,13 +457,13 @@ AT_SETUP([Recursion overflow])
 # Should no longer dump core.
 # It could fail because the memory limit is exceeed,
 # but not in this case since we limit the recursion.
-AT_CHECK([$SCITECO -e "@^Um{U.a Q.a-100000\"<%.aMm'} 0Mm"], 0, ignore, ignore)
+TE_CHECK([[@^Um{U.a Q.a-100000"<%.aMm'} 0Mm]], 0, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP
 
 AT_SETUP([Rub out from empty string argument])
 # Should rub out the modifiers as well.
-AT_CHECK([$SCITECO_CMDLINE ":@^Ua/${RUBOUT_WORD}{Z\"N(0/0)'}"], 0, ignore, stderr)
-AT_CHECK([$GREP "^Error:" stderr], 0, ignore ignore)
+TE_CHECK_CMDLINE([[:@^Ua/]]TE_RUBOUT_WORD[[{Z"N(0/0)'}]], 0, ignore, stderr)
+AT_CHECK([[$GREP "^Error:" stderr]], 0, ignore ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP

@@ -10,28 +10,14 @@ if [ $at_arg_valgrind != false ]; then
 	SCITECO="valgrind --tool=memcheck --leak-check=full --error-exitcode=66 $SCITECO"
 fi
 
-# For testing command-line editing:
-SCITECO_CMDLINE="$SCITECO --no-profile --fake-cmdline"
-
-# Control characters for testing immediate editing commands with $SCITECO_CMDLINE.
-# Often, we can use {...} for testing rubout, but sometimes this is not enough.
-# Directly embedding escapes into strings is not portable.
-# Theoretically, we could directly embed control codes, but for the time being
-# I am trying to keep non-TECO sources clean of non-printable characters.
-RUBOUT=`printf '\8'`
-RUBOUT_WORD=`printf '\27'`
-ESCAPE=`printf '\33'`
-
 # Make sure that the standard library from the source package
 # is used.
 export SCITECOPATH="@abs_top_srcdir@/lib"
 
-TECO_INTEGER=@TECO_INTEGER@
+# Some test cases may access files from the tests/ source directory.
+export srcdir
 
-MAXINT32=2147483647
-MININT32=-2147483648
-MAXINT64=9223372036854775807
-MININT64=-9223372036854775808
+TECO_INTEGER=@TECO_INTEGER@
 
 GREP="@GREP@"
 
@@ -54,6 +40,3 @@ esac
 # Some platforms allow very large stack sizes, making it hard to test
 # against potential stack overflows.
 ulimit -s 8192
-
-# Test strings used by multiple test cases
-WORDS_EXAMPLE="navigating (words is useful"
