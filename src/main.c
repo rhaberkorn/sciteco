@@ -35,6 +35,7 @@
 #endif
 
 #include "sciteco.h"
+#include "expressions.h"
 #include "file-utils.h"
 #include "cmdline.h"
 #include "interface.h"
@@ -337,6 +338,7 @@ main(int argc, char **argv)
 #endif
 {
 	g_autoptr(GError) error = NULL;
+	teco_int_t ret = EXIT_SUCCESS;
 
 #ifdef DEBUG_PAUSE
 	/* Windows debugging hack (see above) */
@@ -461,7 +463,8 @@ main(int argc, char **argv)
 		}
 		g_clear_error(&error);
 
-		if (!teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
+		if (!teco_expressions_pop_num_calc(&ret, EXIT_SUCCESS, &error) ||
+		    !teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
 			goto cleanup;
 		goto cleanup;
 	}
@@ -499,7 +502,8 @@ main(int argc, char **argv)
 		g_clear_error(&error);
 
 		if (teco_quit_requested) {
-			if (!teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
+			if (!teco_expressions_pop_num_calc(&ret, EXIT_SUCCESS, &error) ||
+			    !teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
 				goto cleanup;
 			goto cleanup;
 		}
@@ -553,8 +557,10 @@ main(int argc, char **argv)
 		goto cleanup;
 
 cleanup:
-	if (error != NULL)
+	if (error != NULL) {
 		teco_error_display_full(error);
+		ret = EXIT_FAILURE;
+	}
 
 #ifndef NDEBUG
 	teco_ring_cleanup();
@@ -565,5 +571,5 @@ cleanup:
 #endif
 	teco_interface_cleanup();
 
-	return error ? EXIT_FAILURE : EXIT_SUCCESS;
+	return ret;
 }

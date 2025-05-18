@@ -223,7 +223,12 @@ Execute \(lqsciteco --help\(rq for more details.
 .SCITECO_TOPIC status
 .
 \*(ST will return a non-null exit code if an error occurred during
-batch mode processing.
+batch mode processing \(em usually 1 on UNIX.
+Otherwise the top value on the numeric stack will determine
+the process' exit code as if passed to libc's
+.BR exit (3)
+function.
+On UNIX systems only numbers between 0 and 255 may be meaningfull.
 .
 .
 .SH ENVIRONMENT

@@ -1320,7 +1320,7 @@ teco_state_control_xor(teco_machine_main_t *ctx, GError **error)
 }
 
 /*$ ^C exit
- * ^C -- Exit program immediately
+ * [n]^C -- Exit program immediately
  *
  * Lets the top-level macro return immediately
  * regardless of the current macro invocation frame.
@@ -1332,6 +1332,10 @@ teco_state_control_xor(teco_machine_main_t *ctx, GError **error)
  * interactive mode is never started, so it behaves
  * effectively just like \(lq-EX\fB$$\fP\(rq
  * (when executed in the top-level macro at least).
+ *
+ * Any numeric parameter is returned by the process
+ * as its exit status.
+ * By default, the success code is returned.
  *
  * The \fBquit\fP hook is still executed.
  */
@@ -1678,6 +1682,9 @@ teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 	 * Returning from the top-level macro in batch mode
 	 * will exit the program or start up interactive mode depending
 	 * on whether program exit has been requested.
+	 * If \fB$$\fP exits the program, any remaining numeric parameter
+	 * is returned by the process as its exit status.
+	 * By default, the success code is returned.
 	 * \(lqEX\fB$$\fP\(rq is thus a common idiom to exit
 	 * prematurely.
 	 *
