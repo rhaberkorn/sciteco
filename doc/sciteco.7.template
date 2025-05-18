@@ -982,6 +982,7 @@ The integer storage size may be changed at \*(ST build time
 however.
 In this specific build, integers are @TECO_INTEGER@-bit.
 .LP
+.SCITECO_TOPIC bool boolean
 Some commands expect or return booleans, most often signifying
 success or failure.
 Booleans are also integers but unlike in ordinary (sane) languages
