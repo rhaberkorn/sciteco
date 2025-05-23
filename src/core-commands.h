@@ -39,6 +39,8 @@ TECO_DECLARE_STATE(teco_state_condcommand);
 TECO_DECLARE_STATE(teco_state_control);
 TECO_DECLARE_STATE(teco_state_ascii);
 TECO_DECLARE_STATE(teco_state_escape);
+TECO_DECLARE_STATE(teco_state_ctlc);
+TECO_DECLARE_STATE(teco_state_ctlc_control);
 TECO_DECLARE_STATE(teco_state_ecommand);
 
 typedef struct {

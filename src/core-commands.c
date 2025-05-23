@@ -55,8 +55,8 @@ gboolean teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_mach
  * @implements TECO_DEFINE_STATE_CASEINSENSITIVE
  * @ingroup states
  *
- * Base state for everything that is the beginning of a one or two
- * letter command.
+ * Base state for everything where part of a one or two letter command
+ * is accepted.
  */
 #define TECO_DEFINE_STATE_COMMAND(NAME, ...) \
 	TECO_DEFINE_STATE_CASEINSENSITIVE(NAME, \
@@ -67,6 +67,7 @@ gboolean teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_mach
 	)
 
 static teco_state_t *teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
+static teco_state_t *teco_state_ctlc_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
 /*
  * NOTE: This needs some extra code in teco_state_start_input().
@@ -1319,39 +1320,6 @@ teco_state_control_xor(teco_machine_main_t *ctx, GError **error)
 	teco_expressions_push_calc(TECO_OP_XOR, error);
 }
 
-/*$ ^C exit
- * [n]^C -- Exit program immediately
- *
- * Lets the top-level macro return immediately
- * regardless of the current macro invocation frame.
- * This command is only allowed in batch mode,
- * so it is not invoked accidentally when using
- * the CTRL+C immediate editing command to
- * interrupt long running operations.
- * When using \fB^C\fP in a munged file,
- * interactive mode is never started, so it behaves
- * effectively just like \(lq-EX\fB$$\fP\(rq
- * (when executed in the top-level macro at least).
- *
- * Any numeric parameter is returned by the process
- * as its exit status.
- * By default, the success code is returned.
- *
- * The \fBquit\fP hook is still executed.
- */
-static void
-teco_state_control_exit(teco_machine_main_t *ctx, GError **error)
-{
-	if (teco_undo_enabled) {
-		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-		                    "<^C> not allowed in interactive mode");
-		return;
-	}
-
-	teco_quit_requested = TRUE;
-	g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
-}
-
 /*$ ^O octal
  * ^O -- Set radix to 8 (octal)
  */
@@ -1587,6 +1555,7 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		          .modifier_at = TRUE, .modifier_colon = 1},
 		['^']  = {&teco_state_ascii},
 		['[']  = {&teco_state_escape},
+		['C']  = {&teco_state_ctlc},
 
 		/*
 		 * Additional numeric operations
@@ -1599,7 +1568,6 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		/*
 		 * Commands
 		 */
-		['C']  = {&teco_state_start, teco_state_control_exit},
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},
 		['R']  = {&teco_state_start, teco_state_control_radix},
@@ -1646,6 +1614,79 @@ teco_state_ascii_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
  */
 TECO_DEFINE_STATE(teco_state_ascii);
 
+/*$ ^[^[ ^[$ $$ ^C terminate return
+ * [a1,a2,...]$$ -- Terminate command line or return from macro
+ * [a1,a2,...]^[$
+ * [a1,a2,...]^C
+ *
+ * Returns from the current macro invocation.
+ * This will pass control to the calling macro immediately
+ * and is thus faster than letting control reach the macro's end.
+ * Also, direct arguments to \fB$$\fP will be left on the expression
+ * stack when the macro returns.
+ * \fB$$\fP closes loops automatically and is thus safe to call
+ * from loop bodies.
+ * Furthermore, it has defined semantics when executed
+ * from within braced expressions:
+ * All braces opened in the current macro invocation will
+ * be closed and their values discarded.
+ * Only the direct arguments to \fB$$\fP will be kept.
+ *
+ * Returning from the top-level macro in batch mode
+ * will exit the program or start up interactive mode depending
+ * on whether program exit has been requested.
+ * If \fB$$\fP exits the program, any remaining numeric parameter
+ * is returned by the process as its exit status.
+ * By default, the success code is returned.
+ * \(lqEX\fB$$\fP\(rq is thus a common idiom to exit
+ * prematurely.
+ *
+ * In interactive mode, returning from the top-level macro
+ * (i.e. typing \fB$$\fP at the command line) has the
+ * effect of command line termination.
+ * The arguments to \fB$$\fP are currently not used
+ * when terminating a command line \(em the new command line
+ * will always start with a clean expression stack.
+ *
+ * \fB^C\fP cannot be typed directly on the command-line
+ * as it could be inserted accidentally after interrupting
+ * operations with CTRL+C.
+ *
+ * The first \fIescape\fP of \fB$$\fP may be typed either
+ * as an escape character (ASCII 27), in up-arrow mode
+ * (e.g. \fB^[$\fP) or as a dollar character \(em the
+ * second character must be either a real escape character
+ * or a dollar character.
+ */
+/*
+ * FIXME: Analogous to ^C^C, we could support ^[^[ typed with carets only
+ * at the expense of yet another parser state.
+ */
+static teco_state_t *
+teco_return(teco_machine_main_t *ctx, GError **error)
+{
+	g_assert(ctx->flags.mode == TECO_MODE_NORMAL);
+
+	/*
+	 * This check is not crucial, but a return command would
+	 * terminate the command line and it would be impossible to apply the new
+	 * command line with `}` after command-line termination.
+	 */
+	if (G_UNLIKELY(ctx == &teco_cmdline.machine &&
+	               teco_qreg_current && !teco_string_cmp(&teco_qreg_current->head.name, "\e", 1))) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "Not allowed to terminate command-line while "
+		                    "editing command-line replacement register");
+		return NULL;
+	}
+
+	ctx->parent.current = &teco_state_start;
+	if (!teco_expressions_eval(FALSE, error))
+		return NULL;
+	teco_error_return_set(error, teco_expressions_args());
+	return NULL;
+}
+
 /*
  * The Escape state is special, as it implements
  * a kind of "lookahead" for the ^[ command (discard all
@@ -1662,67 +1703,9 @@ TECO_DEFINE_STATE(teco_state_ascii);
 static teco_state_t *
 teco_state_escape_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
-	/*$ ^[^[ ^[$ $$ terminate return
-	 * [a1,a2,...]$$ -- Terminate command line or return from macro
-	 * [a1,a2,...]^[$
-	 *
-	 * Returns from the current macro invocation.
-	 * This will pass control to the calling macro immediately
-	 * and is thus faster than letting control reach the macro's end.
-	 * Also, direct arguments to \fB$$\fP will be left on the expression
-	 * stack when the macro returns.
-	 * \fB$$\fP closes loops automatically and is thus safe to call
-	 * from loop bodies.
-	 * Furthermore, it has defined semantics when executed
-	 * from within braced expressions:
-	 * All braces opened in the current macro invocation will
-	 * be closed and their values discarded.
-	 * Only the direct arguments to \fB$$\fP will be kept.
-	 *
-	 * Returning from the top-level macro in batch mode
-	 * will exit the program or start up interactive mode depending
-	 * on whether program exit has been requested.
-	 * If \fB$$\fP exits the program, any remaining numeric parameter
-	 * is returned by the process as its exit status.
-	 * By default, the success code is returned.
-	 * \(lqEX\fB$$\fP\(rq is thus a common idiom to exit
-	 * prematurely.
-	 *
-	 * In interactive mode, returning from the top-level macro
-	 * (i.e. typing \fB$$\fP at the command line) has the
-	 * effect of command line termination.
-	 * The arguments to \fB$$\fP are currently not used
-	 * when terminating a command line \(em the new command line
-	 * will always start with a clean expression stack.
-	 *
-	 * The first \fIescape\fP of \fB$$\fP may be typed either
-	 * as an escape character (ASCII 27), in up-arrow mode
-	 * (e.g. \fB^[$\fP) or as a dollar character \(em the
-	 * second character must be either a real escape character
-	 * or a dollar character.
-	 */
-	if (chr == '\e' || chr == '$') {
-		if (ctx->flags.mode > TECO_MODE_NORMAL)
-			return &teco_state_start;
-
-		/*
-		 * This check is not crucial, but it would be impossible to apply the new
-		 * command line with `}` after command-line termination.
-		 */
-		if (G_UNLIKELY(ctx == &teco_cmdline.machine &&
-		               teco_qreg_current && !teco_string_cmp(&teco_qreg_current->head.name, "\e", 1))) {
-			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-			                    "Not allowed to terminate command-line while "
-			                    "editing command-line replacement register");
-			return NULL;
-		}
-
-		ctx->parent.current = &teco_state_start;
-		if (!teco_expressions_eval(FALSE, error))
-			return NULL;
-		teco_error_return_set(error, teco_expressions_args());
-		return NULL;
-	}
+	if (chr == '\e' || chr == '$')
+		return ctx->flags.mode > TECO_MODE_NORMAL
+			? &teco_state_start : teco_return(ctx, error);
 
 	/*
 	 * Alternatives: ^[, <CTRL/[>, <ESC>, $ (dollar)
@@ -1771,6 +1754,104 @@ TECO_DEFINE_STATE_COMMAND(teco_state_escape,
 	.is_start = TRUE,
 	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
+
+/*
+ * Just like ^[, ^C actually implements a lookahead,
+ * so a ^C itself does nothing.
+ * This does not break the user experience since ^C
+ * is disallowed to type at the command-line.
+ */
+static teco_state_t *
+teco_state_ctlc_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
+{
+	switch (chr) {
+	case TECO_CTL_KEY('C'):	return teco_state_ctlc_control_input(ctx, 'C', error);
+	case '^':		return &teco_state_ctlc_control;
+	}
+
+	return ctx->flags.mode > TECO_MODE_NORMAL
+		? teco_state_start_input(ctx, chr, error) : teco_return(ctx, error);
+}
+
+static gboolean
+teco_state_ctlc_initial(teco_machine_main_t *ctx, GError **error)
+{
+	if (G_UNLIKELY(ctx == &teco_cmdline.machine)) {
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "<^C> is not allowed to terminate command-lines");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+TECO_DEFINE_STATE_COMMAND(teco_state_ctlc,
+	.initial_cb = (teco_state_initial_cb_t)teco_state_ctlc_initial,
+	/*
+	 * At the end of a macro, "return" is allowed, but basically a no-op.
+	 */
+	.end_of_macro_cb = NULL,
+	/*
+	 * The state should behave like teco_state_start
+	 * when it comes to function key macro masking.
+	 */
+	.is_start = TRUE,
+	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
+);
+
+static teco_state_t *
+teco_state_ctlc_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
+{
+	/*$ ^C^C exit
+	 * [n]^C^C -- Exit program immediately
+	 *
+	 * Lets the top-level macro return immediately
+	 * regardless of the current macro invocation frame.
+	 * This command is only allowed in batch mode,
+	 * so it is not invoked accidentally when using
+	 * the CTRL+C immediate editing command to
+	 * interrupt long running operations.
+	 * When using \fB^C^C\fP in a munged file,
+	 * interactive mode is never started, so it behaves
+	 * effectively just like \(lq-EX\fB$$\fP\(rq
+	 * (when executed in the top-level macro at least).
+	 *
+	 * Any numeric parameter is returned by the process
+	 * as its exit status.
+	 * By default, the success code is returned.
+	 * The \fBquit\fP hook is still executed.
+	 *
+	 * This command is currently disallowed in interactive mode.
+	 *
+	 * Note that both \(lq^C\(rq can be typed either
+	 * as control codes (3) or with carets.
+	 */
+	if (chr == 'c' || chr == 'C') {
+		if (ctx->flags.mode > TECO_MODE_NORMAL)
+			return &teco_state_start;
+
+		if (teco_undo_enabled) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+			                    "<^C^C> not allowed in interactive mode");
+			return NULL;
+		}
+
+		if (!teco_expressions_eval(FALSE, error))
+			return NULL;
+		teco_quit_requested = TRUE;
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
+		return NULL;
+	}
+
+	return ctx->flags.mode > TECO_MODE_NORMAL
+		? teco_state_control_input(ctx, chr, error) : teco_return(ctx, error);
+}
+
+/*
+ * This state is necessary, so that you can type ^C^C exclusively with carets.
+ * Otherwise it would be very cumbersome to cause exits with ASCII characters only.
+ */
+TECO_DEFINE_STATE_COMMAND(teco_state_ctlc_control);
 
 /*$ ED flags
  * flags ED -- Set and get ED-flags

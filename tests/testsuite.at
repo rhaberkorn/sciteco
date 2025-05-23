@@ -6,7 +6,7 @@ AT_COLOR_TESTS
 AT_ARG_OPTION([valgrind],
 	AS_HELP_STRING([--valgrind], [Run tests under Valgrind (memcheck)]))
 
-# NOTE: We could use 1^C to get an unsuccessful return code.
+# NOTE: We could use 1^C or 1^C^C to get an unsuccessful return code.
 # However, this won't print any stack trace or error message.
 # Therefore, we still use the idiom "(0/0)" to enforce a "Division by zero"
 # error whenever we want to fail.
@@ -57,8 +57,9 @@ AT_CLEANUP
 
 AT_SETUP([Exit status])
 TE_CHECK([[23]], 23, ignore, ignore)
-TE_CHECK([[42^C]], 42, ignore, ignore)
-TE_CHECK([[13$$]], 13, ignore, ignore)
+TE_CHECK([[42^C (0/0)]], 42, ignore, ignore)
+TE_CHECK([[13$$ (0/0)]], 13, ignore, ignore)
+TE_CHECK([[@^Um{9^C^C} Mm (0/0)]], 9, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Radix])
@@ -280,8 +281,16 @@ TE_CHECK_CMDLINE([[@I/ @:foo  ]]TE_RUBOUT_WORD[[/ Z-3"N(0/0)']], 0, ignore, stde
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
-AT_SETUP([Command-line termination while editing replacement register])
+AT_SETUP([Disallowed interactive commands])
+# Command-line termination while editing the replacement register would
+# be hard to recover from.
 TE_CHECK_CMDLINE([[{$$}]], 0, ignore, stderr)
+AT_FAIL_IF([! $GREP "^Error:" stderr])
+# ^C interruption should not terminate the command-line accidentally.
+TE_CHECK_CMDLINE([[^C]], 0, ignore, stderr)
+AT_FAIL_IF([! $GREP "^Error:" stderr])
+# ^C^C is generally disallowed in interactive mode.
+TE_CHECK_CMDLINE([[@^Um{^C^C} Mm]], 0, ignore, stderr)
 AT_FAIL_IF([! $GREP "^Error:" stderr])
 AT_CLEANUP
 
