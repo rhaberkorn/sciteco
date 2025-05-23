@@ -1787,6 +1787,12 @@ character and their case is insignificant.
 In the following list of supported expressions, the caret-notation
 thus refers to the corresponding control code:
 .TP
+.SCITECO_TOPIC ^P
+.B ^P
+Disable interpretation of all further string building characters,
+so all following characters will be taken verbatim.
+There is no way to escape the string terminator after \(lq^P\(rq.
+.TP
 .SCITECO_TOPIC ^Qc ^Rc quote
 .BI ^Q c
 .TQ

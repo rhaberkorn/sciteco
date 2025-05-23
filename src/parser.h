@@ -332,7 +332,8 @@ gboolean teco_machine_input(teco_machine_t *ctx, gunichar chr, GError **error);
 typedef enum {
 	TECO_STRINGBUILDING_MODE_NORMAL = 0,
 	TECO_STRINGBUILDING_MODE_UPPER,
-	TECO_STRINGBUILDING_MODE_LOWER
+	TECO_STRINGBUILDING_MODE_LOWER,
+	TECO_STRINGBUILDING_MODE_DISABLED
 } teco_stringbuilding_mode_t;
 
 /**

@@ -394,9 +394,6 @@ teco_machine_stringbuilding_append(teco_machine_stringbuilding_t *ctx, const gch
 	g_assert(ctx->result != NULL);
 
 	switch (ctx->mode) {
-	case TECO_STRINGBUILDING_MODE_NORMAL:
-		teco_string_append(ctx->result, str, len);
-		break;
 	case TECO_STRINGBUILDING_MODE_UPPER: {
 		g_autofree gchar *folded = ctx->codepage == SC_CP_UTF8
 						? g_utf8_strup(str, len) : g_ascii_strup(str, len);
@@ -409,6 +406,9 @@ teco_machine_stringbuilding_append(teco_machine_stringbuilding_t *ctx, const gch
 		teco_string_append(ctx->result, folded, strlen(folded));
 		break;
 	}
+	default:
+		teco_string_append(ctx->result, str, len);
+		break;
 	}
 }
 
@@ -436,19 +436,21 @@ TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_n);
 static teco_state_t *
 teco_state_stringbuilding_start_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
 {
-	switch (chr) {
-	case '^':
-		return &teco_state_stringbuilding_ctl;
-	case TECO_CTL_KEY('^'):
-		/*
-		 * Ctrl+^ is inserted verbatim as code 30.
-		 * Otherwise it would expand to a single caret
-		 * just like caret+caret (^^).
-		 */
-		break;
-	default:
-		if (TECO_IS_CTL(chr))
-			return teco_state_stringbuilding_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+	if (ctx->mode != TECO_STRINGBUILDING_MODE_DISABLED) {
+		switch (chr) {
+		case '^':
+			return &teco_state_stringbuilding_ctl;
+		case TECO_CTL_KEY('^'):
+			/*
+			 * Ctrl+^ is inserted verbatim as code 30.
+			 * Otherwise it would expand to a single caret
+			 * just like caret+caret (^^).
+			 */
+			break;
+		default:
+			if (TECO_IS_CTL(chr))
+				return teco_state_stringbuilding_ctl_input(ctx, TECO_CTL_ECHO(chr), error);
+		}
 	}
 
 	return teco_state_stringbuilding_escaped_input(ctx, chr, error);
@@ -481,6 +483,11 @@ teco_state_stringbuilding_ctl_input(teco_machine_stringbuilding_t *ctx, gunichar
 		 * be abolished altogether.
 		 */
 		break;
+	case 'P':
+		if (ctx->parent.must_undo)
+			teco_undo_guint(ctx->mode);
+		ctx->mode = TECO_STRINGBUILDING_MODE_DISABLED;
+		return &teco_state_stringbuilding_start;
 	case 'Q':
 	case 'R': return &teco_state_stringbuilding_escaped;
 	case 'V': return &teco_state_stringbuilding_lower;
@@ -523,8 +530,6 @@ teco_state_stringbuilding_escaped_input(teco_machine_stringbuilding_t *ctx, guni
 	 * is that we don't try to casefold non-ANSI characters in single-byte mode.
 	 */
 	switch (ctx->mode) {
-	case TECO_STRINGBUILDING_MODE_NORMAL:
-		break;
 	case TECO_STRINGBUILDING_MODE_UPPER:
 		chr = ctx->codepage == SC_CP_UTF8 || chr < 0x80
 					? g_unichar_toupper(chr) : chr;
@@ -740,8 +745,6 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gunic
 		if (value < 0 || !g_unichar_validate(value))
 			goto error_codepoint;
 		switch (ctx->mode) {
-		case TECO_STRINGBUILDING_MODE_NORMAL:
-			break;
 		case TECO_STRINGBUILDING_MODE_UPPER:
 			value = g_unichar_toupper(value);
 			break;
@@ -754,8 +757,6 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gunic
 		if (value < 0 || value > 0xFF)
 			goto error_codepoint;
 		switch (ctx->mode) {
-		case TECO_STRINGBUILDING_MODE_NORMAL:
-			break;
 		case TECO_STRINGBUILDING_MODE_UPPER:
 			value = g_ascii_toupper(value);
 			break;
