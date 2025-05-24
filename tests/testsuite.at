@@ -300,10 +300,10 @@ AT_SETUP([Command line opener])
 AT_DATA([data.123], [0123456789
 9876543210
 ])
-AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-13\"N(0/0)'" +2,3 data.123]], 0, ignore, ignore)
-AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-11\"N(0/0)'" data.123:2]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-13\"N(0/0)'" +2,3 data.123]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-11\"N(0/0)'" data.123:2]], 0, ignore, ignore)
 # `-S` stops processing of special arguments
-AT_CHECK([[$SCITECO -e "@EM'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF EJ-2\"N(0/0)'" -S +1 data.123]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF EJ-2\"N(0/0)'" -S +1 data.123]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Regression Tests])

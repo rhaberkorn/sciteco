@@ -6,8 +6,8 @@
 
 0,2EJ !* FIXME: Memory limiting is too slow *!
 
-:EMQ[$SCITECOPATH]/getopt.tes
-EMQ[$SCITECOPATH]/string.tes
+:EIQ[$SCITECOPATH]/getopt.tes
+EIQ[$SCITECOPATH]/string.tes
 
 !* read commandline arguments *!
 [getopt.p]

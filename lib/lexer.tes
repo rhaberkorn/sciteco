@@ -29,7 +29,7 @@
   [_ 1ENQ[$SCITECOPATH]/lexers/*.tes ]_ J
   <:L;R
     0X.[filename] 4R .U.p <-A-^^/"= 1; ':R;> .,Q.pX.[name]
-    EMQ.[filename]
+    EIQ.[filename]
     :@EU[lexer.auto]{
       :M[lexer.test.Q.[name]]"S :M[lexer.set.Q.[name]] ]_ '
     }

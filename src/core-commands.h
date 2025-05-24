@@ -80,6 +80,5 @@ gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machi
 		##__VA_ARGS__ \
 	)
 
-TECO_DECLARE_STATE(teco_state_insert_building);
-TECO_DECLARE_STATE(teco_state_insert_nobuilding);
+TECO_DECLARE_STATE(teco_state_insert_plain);
 TECO_DECLARE_STATE(teco_state_insert_indent);

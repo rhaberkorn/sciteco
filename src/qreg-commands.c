@@ -703,7 +703,7 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 TECO_DEFINE_STATE_EXPECTQREG(teco_state_macro);
 
 static teco_state_t *
-teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+teco_state_indirect_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
 	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
@@ -725,9 +725,9 @@ teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 	return &teco_state_start;
 }
 
-/*$ EM
- * EMfile$ -- Execute macro from file
- * :EMfile$
+/*$ EI indirect
+ * EIfile$ -- Execute from indirect command file
+ * :EIfile$
  *
  * Read the file with name <file> into memory and execute its contents
  * as a macro.
@@ -738,7 +738,7 @@ teco_state_macrofile_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * As all \*(ST code, the contents of <file> must be in valid UTF-8
  * even if operating in the \(lqdefault ANSI\(rq mode as configured by \fBED\fP.
  */
-TECO_DEFINE_STATE_EXPECTFILE(teco_state_macrofile);
+TECO_DEFINE_STATE_EXPECTFILE(teco_state_indirect);
 
 static teco_state_t *
 teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,

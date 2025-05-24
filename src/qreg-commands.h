@@ -93,6 +93,6 @@ TECO_DECLARE_STATE(teco_state_setqreginteger);
 TECO_DECLARE_STATE(teco_state_increaseqreg);
 
 TECO_DECLARE_STATE(teco_state_macro);
-TECO_DECLARE_STATE(teco_state_macrofile);
+TECO_DECLARE_STATE(teco_state_indirect);
 
 TECO_DECLARE_STATE(teco_state_copytoqreg);

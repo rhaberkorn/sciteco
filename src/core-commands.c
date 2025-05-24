@@ -630,7 +630,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['"']  = {&teco_state_condcommand},
 		['E']  = {&teco_state_ecommand,
 		          .modifier_at = TRUE, .modifier_colon = 2},
-		['I']  = {&teco_state_insert_building,
+		['I']  = {&teco_state_insert_plain,
 		          .modifier_at = TRUE},
 		['?']  = {&teco_state_help,
 		          .modifier_at = TRUE},
@@ -2608,6 +2608,13 @@ teco_state_ecommand_exit(teco_machine_main_t *ctx, GError **error)
 	teco_undo_gboolean(teco_quit_requested) = TRUE;
 }
 
+static void
+teco_state_macrofile_deprecated(teco_machine_main_t *ctx, GError **error)
+{
+	teco_interface_msg(TECO_MSG_WARNING,
+	                   "<EM> command is deprecated - use <EI> instead");
+}
+
 static teco_state_t *
 teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
@@ -2623,9 +2630,10 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		          .modifier_at = TRUE, .modifier_colon = 1},
 		['G']  = {&teco_state_egcommand,
 		          .modifier_at = TRUE, .modifier_colon = 1},
-		['I']  = {&teco_state_insert_nobuilding,
-		          .modifier_at = TRUE},
-		['M']  = {&teco_state_macrofile,
+		['I']  = {&teco_state_indirect,
+		          .modifier_at = TRUE, .modifier_colon = 1},
+		/* DEPRECATED: can be repurposed */
+		['M']  = {&teco_state_indirect, teco_state_macrofile_deprecated,
 		          .modifier_at = TRUE, .modifier_colon = 1},
 		['N']  = {&teco_state_glob_pattern,
 		          .modifier_at = TRUE, .modifier_colon = 1},
@@ -2777,21 +2785,7 @@ teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
  * may be better, since it has string building characters
  * disabled.
  */
-TECO_DEFINE_STATE_INSERT(teco_state_insert_building);
-
-/*$ EI
- * [c1,c2,...]EI[text]$ -- Insert text without string building characters
- *
- * Inserts text at the current position in the current
- * document.
- * This command is identical to the \fBI\fP command,
- * except that string building characters are \fBdisabled\fP.
- * Therefore it may be beneficial when editing \*(ST
- * macros.
- */
-TECO_DEFINE_STATE_INSERT(teco_state_insert_nobuilding,
-	.expectstring.string_building = FALSE
-);
+TECO_DEFINE_STATE_INSERT(teco_state_insert_plain);
 
 static gboolean
 teco_state_insert_indent_initial(teco_machine_main_t *ctx, GError **error)
