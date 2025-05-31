@@ -574,8 +574,6 @@ teco_state_start_print(teco_machine_main_t *ctx, GError **error)
  * This can be an ASCII <code> or Unicode codepoint
  * depending on Scintilla's encoding of the current
  * buffer.
- * Invalid Unicode byte sequences are reported as
- * -1 or -2.
  *
  *   - If <n> is 0, return the <code> of the character
  *     pointed to by dot.
@@ -586,12 +584,11 @@ teco_state_start_print(teco_machine_main_t *ctx, GError **error)
  *   - If <n> is omitted, the sign prefix is implied.
  *
  * If the position of the queried character is off-page,
- * the command will yield an error.
- *
+ * the command will return -1.
  * If the document is encoded as UTF-8 and there is
- * an incomplete sequence at the requested position,
- * -1 is returned.
- * All other invalid Unicode sequences are returned as -2.
+ * an invalid byte sequence at the requested position,
+ * -2 is returned.
+ * Incomplete byte sequences are returned as -3.
  */
 static void
 teco_state_start_get(teco_machine_main_t *ctx, GError **error)
@@ -604,12 +601,8 @@ teco_state_start_get(teco_machine_main_t *ctx, GError **error)
 	gssize get_pos = teco_interface_glyphs2bytes_relative(pos, v);
 	sptr_t len = teco_interface_ssm(SCI_GETLENGTH, 0, 0);
 
-	if (get_pos < 0 || get_pos == len) {
-		teco_error_range_set(error, "A");
-		return;
-	}
-
-	teco_expressions_push(teco_interface_get_character(get_pos, len));
+	teco_expressions_push(get_pos < 0 || get_pos == len
+				? -1 : teco_interface_get_character(get_pos, len));
 }
 
 static teco_state_t *

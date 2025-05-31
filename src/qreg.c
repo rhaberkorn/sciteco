@@ -239,18 +239,12 @@ teco_qreg_plain_get_character(teco_qreg_t *qreg, teco_int_t position,
 	sptr_t len = teco_view_ssm(teco_qreg_view, SCI_GETLENGTH, 0, 0);
 	gssize off = teco_view_glyphs2bytes(teco_qreg_view, position);
 
-	gboolean ret = off >= 0 && off != len;
-	if (!ret)
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %" TECO_INT_FORMAT " out of range", position);
-		/* make sure we still restore the current Q-Register */
-	else
-		*chr = teco_view_get_character(teco_qreg_view, off, len);
+	*chr = off >= 0 && off != len ? teco_view_get_character(teco_qreg_view, off, len) : -1;
 
 	if (teco_qreg_current)
 		teco_doc_edit(&teco_qreg_current->string, 0);
 
-	return ret;
+	return TRUE;
 }
 
 static teco_int_t
@@ -527,9 +521,8 @@ teco_qreg_external_get_character(teco_qreg_t *qreg, teco_int_t position,
 		return FALSE;
 
 	if (position < 0 || position >= g_utf8_strlen(str.data, str.len)) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_RANGE,
-		            "Position %" TECO_INT_FORMAT " out of range", position);
-		return FALSE;
+		*chr = -1;
+		return TRUE;
 	}
 	const gchar *p = g_utf8_offset_to_pointer(str.data, position);
 

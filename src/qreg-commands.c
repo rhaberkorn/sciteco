@@ -300,21 +300,21 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 /*$ Q Qq query
  * Qq -> n -- Query Q-Register existence, its integer or string characters
  * -Qq -> -n
- * <position>Qq -> character
+ * <position>Qq -> code
  * :Qq -> -1 | size
  *
  * Without any arguments, get and return the integer-part of
  * Q-Register <q>.
  *
- * With one argument, return the <character> code at <position>
+ * With one argument, return the character <code> at <position>
  * from the string-part of Q-Register <q>.
  * Positions are handled like buffer positions \(em they
  * begin at 0 up to the length of the string minus 1.
- * An error is thrown for invalid positions.
+ * -1 is returned for invalid positions.
  * If <q> is encoded as UTF-8 and there is
- * an incomplete sequence at the requested position,
- * -1 is returned.
- * All other invalid Unicode sequences are returned as -2.
+ * an invalid byte sequence at the requested position,
+ * -2 is returned.
+ * Incomplete UTF-8 byte sequences are returned as -3.
  * Both non-colon-modified forms of Q require register <q>
  * to be defined and fail otherwise.
  *

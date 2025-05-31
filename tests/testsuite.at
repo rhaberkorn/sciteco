@@ -242,6 +242,11 @@ TE_CHECK([[@I/TEST/ @EW/юникод.txt/]], 0, ignore, ignore)
 AT_CHECK([[test -f юникод.txt]], 0, ignore, ignore)
 TE_CHECK([[^^ß-223"N(0/0)' 23Uъ Q[Ъ]-23"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@O/метка/ !метка!]], 0, ignore, ignore)
+
+# Test the "error" return codes of <A>:
+TE_CHECK([[0EE 255@I/A/J 65001EE 0A-(-2)"N(0/0)' 1A-^^A"N(0/0)' 2A-(-1)"N(0/0)']], 0, ignore, ignore)
+# FIXME: Byte 128 should probably return -3 (incomplete sequence).
+TE_CHECK([[@EQa// 0EE 128@I/A/J 65001EE 0Qa-(-2)"N(0/0)' 1Qa-^^A"N(0/0)' 2Qa-(-1)"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Automatic EOL normalization])

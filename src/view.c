@@ -628,8 +628,8 @@ teco_view_glyphs2bytes_relative(teco_view_t *ctx, gsize pos, teco_int_t n)
  * @param pos The glyph's byte position
  * @param len The length of the document in bytes
  * @return The requested codepoint.
- *   In UTF-8 encoded documents, this might be -1 (incomplete sequence)
- *   or -2 (invalid byte sequence).
+ *   In UTF-8 encoded documents, this might be -2 (invalid byte sequence)
+ *   or -3 (incomplete sequence).
  */
 teco_int_t
 teco_view_get_character(teco_view_t *ctx, gsize pos, gsize len)
@@ -653,12 +653,15 @@ teco_view_get_character(teco_view_t *ctx, gsize pos, gsize len)
 	 * or repeatedly calling SCI_GETCHARAT.
 	 */
 	teco_view_ssm(ctx, SCI_GETTEXTRANGEFULL, 0, (sptr_t)&range);
+	if (!*buf)
+		return 0;
 	/*
 	 * Make sure that the -1/-2 error values are preserved.
 	 * The sign bit in UCS-4/UTF-32 is unused, so this will even
 	 * suffice if TECO_INTEGER == 32.
 	 */
-	return *buf ? (gint32)g_utf8_get_char_validated(buf, -1) : 0;
+	gint32 rc = g_utf8_get_char_validated(buf, -1);
+	return rc < 0 ? rc-1 : rc;
 }
 
 void
