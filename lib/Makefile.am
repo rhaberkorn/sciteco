@@ -105,6 +105,7 @@ dist_lexer_DATA += lexers/verilog.tes \
                    lexers/asciidoc.tes \
                    lexers/troff.tes \
                    lexers/sql.tes \
-                   lexers/css.tes
+                   lexers/css.tes \
+                   lexers/latex.tes
 
 endif

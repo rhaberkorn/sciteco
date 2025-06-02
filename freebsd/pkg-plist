@@ -50,6 +50,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%LEXILLA%%%%DATADIR%%/lib/lexers/java.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/js.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/kix.tes
+%%LEXILLA%%%%DATADIR%%/lib/lexers/latex.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/lisp.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/lout.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/lua.tes

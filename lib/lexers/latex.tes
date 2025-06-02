@@ -1,0 +1,32 @@
+!* LaTeX *!
+
+@[lexer.test.latex]{
+  :EN*.texQ*"S -1 '
+  :EN*.styQ*
+}
+
+@[lexer.set.latex]{
+  ESSETILEXERlatex
+
+  !* command *!
+  :M[color.keyword],1M[color.set]
+  !* tag opening *!
+  :M[color.string],2M[color.set]
+  !* math inline *!
+  !!:M[color.preproc2],3M[color.set]
+  :M[color.comment],4M[color.set]
+  !* tag closing *!
+  :M[color.string],5M[color.set]
+  !* math block *!
+  !!:M[color.preproc2],6M[color.set]
+  :M[color.comment],7M[color.set]
+  !* verbatim segment *!
+  !!:M[color.string],8M[color.set]
+  !* short command *!
+  :M[color.preproc],9M[color.set]
+  !* special char *!
+  :M[color.preproc2],10M[color.set]
+  !* command optional argument *!
+  :M[color.string2],11M[color.set]
+  :M[color.error],12M[color.set]
+}
