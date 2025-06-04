@@ -95,14 +95,14 @@ jobs:
     - name: Build Source Tarball
       run: make dist
 
-  win32:
+  win64:
     runs-on: windows-latest
 
     defaults:
       run:
         shell: bash.exe --login -eo pipefail "{0}"
     env:
-      MSYSTEM: MINGW32
+      MSYSTEM: MINGW64
       CHERE_INVOKING: 1
 
     steps:
@@ -119,13 +119,13 @@ jobs:
     - name: Install Build Dependencies
       run: >
         pacman -S --noconfirm --needed
-        base-devel mingw-w64-i686-autotools mingw-w64-i686-toolchain
-        mingw-w64-i686-glib2 mingw-w64-i686-pdcurses
-        groff mingw-w64-i686-doxygen
+        base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain
+        mingw-w64-x86_64-glib2 mingw-w64-x86_64-pdcurses
+        groff mingw-w64-x86_64-doxygen
 
     - name: Configure Build
       env:
-        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+        PDCURSES_CFLAGS: -I/mingw64/include/pdcurses/
       run: |
         autoreconf -i
         ./configure --with-interface=pdcurses-gui --enable-debug --enable-html-docs
@@ -141,7 +141,7 @@ jobs:
     - name: make distcheck
       env:
         DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui
-        PDCURSES_CFLAGS: -I/mingw32/include/pdcurses/
+        PDCURSES_CFLAGS: -I/mingw64/include/pdcurses/
       run: make distcheck
     - name: Build Source Tarball
       run: make dist
