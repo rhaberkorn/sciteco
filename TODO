@@ -1,8 +1,14 @@
 Tasks:
  * Have a look at TECO-86.
  * VEDIT and PMATE for MS-DOS
+ * Update to Scinterm 5.5.
+   Perhaps we can make use of the arbitrary RGB color feauture?
+ * PDCurses 4.5.1 is in MSYS.
+   Perhaps some workarounds can be removed now (8cc704b897f33d6150156c77202a29222b9ee667).
+   https://github.com/Bill-Gray/PDCursesMod/issues/330
 
 Known Bugs:
+ * <FD> returns the deleted length-1, which also breaks <^S>.
  * Gtk: The control characters in tutorial.woman are still styled with
    the variable-width font since its rendered in STYLE_CONTROLCHAR (36),
    which is reset in woman.tes.
@@ -198,8 +204,6 @@ Features:
    insert commands with default escape chars.
    Then this could be part of fnkeys.tes.
  * :$ and :$$ to pop/return only single values
- * allow top-level macros to influence the proces return code.
-   This can be used in macros to call $$ or ^C akin to exit(1).
  * Special macro assignment command.
    It could use the SciTECO parser for finding the end of the
    macro definition which is more reliable than @^Uq{}.
@@ -221,9 +225,6 @@ Features:
    be no more real need for command variants with disabled
    string building (as string building will naturally always
    be disabled in parser-terminator-mode).
-   Instead, a special string building character for disabling
-   string building character processing can be introduced,
-   and all the command variants like EI and EU can be repurposed.
    Q-Reg specs should support alternative balanced escapes as well
    for symmetry.
  * Numbers could be separate states instead of stack operating
@@ -325,18 +326,18 @@ Features:
    * ER command: read file(s) into current buffer at dot.
      Video TECO accepts a glob pattern here.
    * nEW to save a buffer by id
-   * EI is used to open an indirect macro file in classic TECO.
-     EM should thus be renamed EI.
-     EM (position magtape in classic TECO) would be free again,
-     e.g. for execute macro with string argument or as a special version
-     of EI that considers $SCITECOPATH.
-     Current use of EI (insert without string building) will have
-     to move, but it might vanish anyway once we can disable string building
-     with a special character, eg. you could write I^C instead.
+   * EI$ would "resume" command input from the terminal in TECO-11.
+     But how is that different from ^C/$$ in SciTECO?
+   * In TECOC, <EI> searches the TEC_LIBRARY and ignores the file extension.
+     This is generally very useful to have, how to force a file name verbatim?
+     You can always add a leading `./` of course.
+   * <^C> actually returns all the way back to the command-line in
+     TECO-11, ie. it aborts the current command string.
+     This cannot be fully reproduced in SciTECO, but we could
+     return from all the stack frames up to the toplevel macro.
    * <I> doesn't have string building enabled in classic TECO.
      Changing this would perhaps be a change too radical.
      Also, we would then need a string-building variant like <:I>.
-   * <FN> as a search-replace variant of <N>.
    * FB for bounded search and FC for bounded search-replace.
      One advantage in comparison to ::S
      (which also supports arguments in SciTECO), would be the ability
@@ -348,10 +349,8 @@ Features:
      just like in Video TECO.
      The DEC behavior could be achieved by always searching till the end
      of the buffer, but excluding all matches beyond the target range.
-   * ^A, :Gq, T and stdio in general
-   * nA returned -1 in case of invalid positions (similar to SciTECO's ^E)
-     instead of failing in DEC TECO.
-     The failing <A> command is inherited from Video TECO.
+   * ^A, :Gq, T, ^T and stdio in general
+   * ^B as the current date. We should probably copy TECOC's behavior here.
    * ^W was an immediate action command to repaint the screen.
      This could be a regular command to allow refreshing in long loops.
      Video TECO had ET for the same purpose.
@@ -378,8 +377,10 @@ Features:
      that could be considered by all loops etc.
    * Video TECO: EQq...$ accepts glob patterns and reads
      all files into the register. But we probably won't want to have that.
-   * :EB -> Bool on VT.
+   * :EB -> Bool on Video TECO.
    * Video TECO: EV as an alias for EB, but create read-only buffer.
+ * Return a random value between 1 and n.
+   Could automatically work with floats.
  * n:"x to leave <n> on the stack (i.e. only peek). This simplifies
    expressions like Qa"N Qa ...
  * Perhaps there should be a pattern match construct for word characters
@@ -710,6 +711,11 @@ Features:
    in a Git revision, that's printed by `sciteco --help`.
    But it would have to work with tarballs as well, so it has to be
    written into a separate header, that can be distributed.
+ * Perhaps undefined operations like -(X) should check X for MININT.
+ * Use Cirrus CI instead of Github Actions
+   Allows us to do CI on FreeBSD and potentially other more obscure systems.
+   Also, this will allow us to migrate to another hoster like
+   Savannah or Sourcehut later on.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -812,6 +818,12 @@ Optimizations:
    atexit() callbacks are apparently called before the destructors.
  * Are there any numerical warnings we could activate?
    There have been quite some bugs due to numeric issues.
+   -Wsign-compare -Wconversion
+ * Add build system support for some static code analyzer.
+   scan-build, clang-tidy or CodeChecker?
+   Or run scan-build in CI with a selection of fatal warnings.
+   * The unix.Malloc check unfortunately produces countless bogus warnings
+     due to g_auto.
 
 Documentation:
  * Doxygen docs could be deployed on Github pages
