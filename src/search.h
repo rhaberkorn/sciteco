@@ -28,3 +28,4 @@ TECO_DECLARE_STATE(teco_state_search_kill);
 TECO_DECLARE_STATE(teco_state_search_delete);
 TECO_DECLARE_STATE(teco_state_replace);
 TECO_DECLARE_STATE(teco_state_replace_default);
+TECO_DECLARE_STATE(teco_state_replace_default_all);

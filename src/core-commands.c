@@ -1037,6 +1037,8 @@ teco_state_fcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		          .modifier_at = TRUE, .modifier_colon = 2},
 		['R']  = {&teco_state_replace_default,
 		          .modifier_at = TRUE, .modifier_colon = 2},
+		['N']  = {&teco_state_replace_default_all,
+		          .modifier_at = TRUE, .modifier_colon = 1},
 		['G']  = {&teco_state_changedir,
 		          .modifier_at = TRUE},
 

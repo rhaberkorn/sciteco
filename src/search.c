@@ -1000,9 +1000,12 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 static teco_state_t *
 teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->flags.mode <= TECO_MODE_NORMAL &&
-	    (!teco_state_search_done(ctx, str, error) ||
-	     !teco_ed_hook(TECO_ED_HOOK_EDIT, error)))
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
+
+	const teco_buffer_t *curbuf = teco_ring_current;
+	if (!teco_state_search_done(ctx, str, error) ||
+	    (teco_ring_current != curbuf && !teco_ed_hook(TECO_ED_HOOK_EDIT, error)))
 		return NULL;
 
 	return &teco_state_start;
@@ -1353,4 +1356,48 @@ teco_state_replace_default_done(teco_machine_main_t *ctx, const teco_string_t *s
  */
 TECO_DEFINE_STATE_SEARCH(teco_state_replace_default,
 	.expectstring.last = FALSE
+);
+
+static teco_state_t *
+teco_state_replace_default_all_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return &teco_state_replace_default_ignore;
+
+	const teco_buffer_t *curbuf = teco_ring_current;
+	teco_state_t *state = teco_state_replace_default_done(ctx, str, error);
+	if (!state || (curbuf != teco_ring_current && !teco_ed_hook(TECO_ED_HOOK_EDIT, error)))
+		return NULL;
+
+	return state;
+}
+
+/*$ FN
+ * [n]FN[pattern]$[string]$ -- Search and replace with default over buffer-boundaries
+ * -FN[pattern]$[string]$
+ * from,toFN[pattern]$[string]$
+ * [n]:FN[pattern]$[string]$ -> Success|Failure
+ * -:FN[pattern]$[string]$ -> Success|Failure
+ * from,to:FN[pattern]$[string]$ -> Success|Failure
+ * [n]::FN[pattern]$[string]$ -> Success|Failure
+ * -::FN[pattern]$[string]$ -> Success|Failure
+ * from,to::FN[pattern]$[string]$ -> Success|Failure
+ *
+ * The \fBFN\fP command is similar to the \fBFR\fP command
+ * but will continue to search for occurrences of <pattern> when the
+ * end or beginning of the current buffer is reached.
+ * It searches for <pattern> just like the search over buffer-boundaries
+ * command (\fBN\fP) and replaces the occurrence with <string>
+ * similar to what \fBFR\fP does.
+ * If <string> is empty the string in the global replacement
+ * register is implied instead.
+ *
+ * \fBFN\fP also differs from \fBFR\fP in the interpretation of two arguments.
+ * Using two arguments the search will be bounded between the
+ * buffer with number <from>, up to the buffer with number
+ * <to>.
+ */
+TECO_DEFINE_STATE_SEARCH(teco_state_replace_default_all,
+	.expectstring.last = FALSE,
+	.initial_cb = (teco_state_initial_cb_t)teco_state_search_all_initial
 );

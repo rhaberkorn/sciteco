@@ -203,6 +203,13 @@ TE_CHECK([[-^X @^Um{^X} Mm-0"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@I/XYZ/ J ::@S/X/"F(0/0)' H::@S/Z/"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Searches over buffer boundaries])
+TE_CHECK([[@I/XYZ/J @EB/foo/ @I/XZY/J @:N/Z/"F(0/0)' Q*-2"N(0/0)'
+           @:N//"F(0/0)' Q*-1"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/XYZ/J @EB/foo/ @I/XZY/J @:FN/Z/0/"F(0/0)' Q*-2"N(0/0)'
+           @:FN///"F(0/0)' Q*-1"N(0/0)']], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Search and insertion ranges])
 TE_CHECK([[@I/XXYYZZ/^SC ."N(0/0)' C @S/YY/^YU1U0 Q0-2"N(0/0)' Q1-4"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@I/XXYYZZ/J @S/XX^E[^EMY]/ 1^YXa :Qa-2"N(0/0)']], 0, ignore, ignore)
