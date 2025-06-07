@@ -54,8 +54,8 @@ teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **err
 {
 	teco_state_t *current = ctx->parent.current;
 
-	teco_qreg_t *qreg;
-	teco_qreg_table_t *table;
+	teco_qreg_t *qreg = NULL;
+	teco_qreg_table_t *table = NULL;
 
 	switch (teco_machine_qregspec_input(ctx->expectqreg, chr,
 	                                    ctx->flags.mode == TECO_MODE_NORMAL ? &qreg : NULL, &table, error)) {
