@@ -716,12 +716,8 @@ teco_interface_init_interactive(GError **error)
 	 * Disables click-detection.
 	 * If we'd want to discern PRESSED and CLICKED events,
 	 * we'd have to emulate the same feature on GTK.
-	 *
-	 * On PDCurses/Wincon we currently rely on click detection
-	 * since it does not report BUTTONX_RELEASED unless also
-	 * moving the mouse cursor.
 	 */
-#if NCURSES_MOUSE_VERSION >= 2 && !defined(PDCURSES_WINCON)
+#if NCURSES_MOUSE_VERSION >= 2
 	mouseinterval(0);
 #endif
 
@@ -1826,9 +1822,8 @@ teco_interface_getmouse(GError **error)
 		 * NOTE: Not all curses variants report the RELEASED event,
 		 * but may also return REPORT_MOUSE_POSITION.
 		 * So we might react to all button presses as well.
-		 * Others will still report CLICKED.
 		 */
-		if (event.bstate & (BUTTON1_RELEASED | BUTTON1_CLICKED | REPORT_MOUSE_POSITION)) {
+		if (event.bstate & (BUTTON1_RELEASED | REPORT_MOUSE_POSITION)) {
 			teco_machine_t *machine = &teco_cmdline.machine.parent;
 			const teco_string_t *insert = teco_curses_info_popup_getentry(&teco_interface.popup, event.y, event.x);
 
@@ -1911,22 +1906,6 @@ teco_interface_getmouse(GError **error)
 	if (event.bstate & BUTTON_ALT)
 		teco_mouse.mods |= TECO_MOUSE_ALT;
 
-	if (event.bstate & BUTTON_EVENT(CLICKED)) {
-		/*
-		 * Click detection __should__ be disabled,
-		 * but some Curses implementations report them anyway.
-		 * This has been observed on PDCurses/WinGUI.
-		 * On PDCurses/Wincon we especially did not disable
-		 * click detection since it doesn't report
-		 * BUTTONX_RELEASED at all.
-		 * We emulate separate PRESSED/RELEASE events on those
-		 * platforms.
-		 */
-		teco_mouse.type = TECO_MOUSE_PRESSED;
-		if (!teco_cmdline_keymacro("MOUSE", -1, error))
-			return FALSE;
-		teco_mouse.type = TECO_MOUSE_RELEASED;
-	}
 	return teco_cmdline_keymacro("MOUSE", -1, error);
 }
 
@@ -1936,25 +1915,15 @@ static gint
 teco_interface_blocking_getch(void)
 {
 #if NCURSES_MOUSE_VERSION >= 2
-#if defined(NCURSES_VERSION) || defined(PDCURSES_WINCON)
 	/*
-	 * REPORT_MOUSE_POSITION is necessary at least on
+	 * FIXME: REPORT_MOUSE_POSITION is necessary at least on
 	 * ncurses, so that BUTTONX_RELEASED events are reported.
-	 * At least we interpret REPORT_MOUSE_POSITION
-	 * like BUTTONX_RELEASED.
 	 * It does NOT report every cursor movement, though.
-	 *
-	 * FIXME: On PDCurses/Wincon we enable it, so we at least
-	 * receive something that will be interpreted as
-	 * BUTTONX_RELEASED, although it really just reports
-	 * cursor movements.
+	 * What does PDCurses do?
 	 */
-	static const mmask_t mmask = ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION;
-#else
-	static const mmask_t mmask = ALL_MOUSE_EVENTS;
+	mousemask(teco_ed & TECO_ED_MOUSEKEY
+			? ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION : 0, NULL);
 #endif
-	mousemask(teco_ed & TECO_ED_MOUSEKEY ? mmask : 0, NULL);
-#endif /* NCURSES_MOUSE_VERSION >= 2 */
 
 	/* no special <CTRL/C> handling */
 	raw();
