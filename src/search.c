@@ -548,6 +548,16 @@ TECO_DEFINE_UNDO_OBJECT_OWN(ranges, teco_range_t *, g_free);
 #define teco_undo_ranges_own(VAR) \
 	(*teco_undo_object_ranges_push(&(VAR)))
 
+/**
+ * Extract the ranges of the given GMatchInfo.
+ *
+ * @param match_info The result of g_regex_match().
+ * @param offset The beginning of the match operation in bytes.
+ *   Match results will be relative to this offset.
+ * @param count Where to store the number of ranges (subpatterns).
+ * @returns Ranges (subpatterns) in absolute byte positions.
+ *   They \b must still be converted to glyph positions afterwards.
+ */
 static teco_range_t *
 teco_get_ranges(const GMatchInfo *match_info, gsize offset, guint *count)
 {
@@ -661,7 +671,7 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 			matched[i].ranges = NULL;
 		}
 
-		for (int i = 0; i < matched_num; i++)
+		for (gint i = 0; i < matched_num; i++)
 			g_free(matched[i].ranges);
 	}
 
@@ -671,7 +681,16 @@ teco_do_search(GRegex *re, gsize from, gsize to, gint *count, GError **error)
 		teco_undo_guint(teco_ranges_count) = num_ranges;
 		g_assert(teco_ranges_count > 0);
 
-		teco_interface_ssm(SCI_SETSEL, matched_ranges[0].from, matched_ranges[0].to);
+		teco_interface_ssm(SCI_SETSEL, teco_ranges[0].from, teco_ranges[0].to);
+
+		/*
+		 * teco_get_ranges() returned byte positions,
+		 * while everything else expects glyph offsets.
+		 */
+		for (guint i = 0; i < teco_ranges_count; i++) {
+			teco_ranges[i].from = teco_interface_bytes2glyphs(teco_ranges[i].from);
+			teco_ranges[i].to = teco_interface_bytes2glyphs(teco_ranges[i].to);
+		}
 	}
 
 	return TRUE;
@@ -1083,13 +1102,15 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 	if (teco_search_parameters.dot < dot) {
 		/* kill forwards */
 		sptr_t anchor = teco_interface_ssm(SCI_GETANCHOR, 0, 0);
-		gsize len = anchor - teco_search_parameters.dot;
+		teco_int_t len_glyphs = teco_interface_bytes2glyphs(anchor) -
+		                        teco_interface_bytes2glyphs(teco_search_parameters.dot);
 
 		if (teco_current_doc_must_undo())
 			undo__teco_interface_ssm(SCI_GOTOPOS, dot, 0);
 		teco_interface_ssm(SCI_GOTOPOS, anchor, 0);
 
-		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot, len);
+		teco_interface_ssm(SCI_DELETERANGE, teco_search_parameters.dot,
+		                   anchor - teco_search_parameters.dot);
 
 		/* NOTE: An undo action is not always created. */
 		if (teco_current_doc_must_undo() &&
@@ -1098,8 +1119,8 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 
 		/* fix up ranges (^Y) */
 		for (guint i = 0; i < teco_ranges_count; i++) {
-			teco_ranges[i].from -= len;
-			teco_ranges[i].to -= len;
+			teco_ranges[i].from -= len_glyphs;
+			teco_ranges[i].to -= len_glyphs;
 		}
 	} else {
 		/* kill backwards */

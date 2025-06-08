@@ -44,8 +44,8 @@ TECO_DECLARE_STATE(teco_state_ctlc_control);
 TECO_DECLARE_STATE(teco_state_ecommand);
 
 typedef struct {
-	gsize from;	/*< start position in bytes */
-	gsize to;	/*< end position in bytes */
+	teco_int_t from;	/*< start position in glyphs */
+	teco_int_t to;		/*< end position in glyphs */
 } teco_range_t;
 
 extern guint teco_ranges_count;

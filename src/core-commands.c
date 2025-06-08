@@ -225,8 +225,13 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 		g_assert(*str != '\0');
 		gsize len = strlen(str);
 
-		teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from + len;
+		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		teco_undo_int(teco_ranges[0].from) = teco_interface_bytes2glyphs(pos);
+		/*
+		 * We can assume that `len` is already in glyphs,
+		 * i.e. formatted numbers will never use multi-byte/Unicode characters.
+		 */
+		teco_undo_int(teco_ranges[0].to) = teco_ranges[0].from + len;
 		teco_undo_guint(teco_ranges_count) = 1;
 
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
@@ -1465,8 +1470,8 @@ teco_ranges_init(void)
  * The default value 0 specifies the entire matched pattern,
  * while higher numbers refer to \fB^E[\fI...\fB]\fR subpatterns.
  * \fB^Y\fP can also be used to return the buffer range of the
- * last text insertion by any \*(ST command (\fBI\fP, \fBEI\fP, \fB^I\fP, \fBG\fIq\fR,
- * \fB\\\fP, \fBEC\fP, \fBEN\fP, etc).
+ * last text insertion by any \*(ST command (\fBI\fP, \fB^I\fP, \fBG\fIq\fR,
+ * \fB\\\fP, \fBEC\fP, \fBEN\fP, search replacements, etc).
  * In this case <n> is only allowed to be 0 or missing.
  *
  * For instance, \(lq^YXq\(rq copies the entire matched pattern or text
@@ -1489,8 +1494,8 @@ teco_state_control_last_range(teco_machine_main_t *ctx, GError **error)
 		return;
 	}
 
-	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].from));
-	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].to));
+	teco_expressions_push(teco_ranges[n].from);
+	teco_expressions_push(teco_ranges[n].to);
 }
 
 /*$ ^S
@@ -1527,8 +1532,7 @@ teco_state_control_last_length(teco_machine_main_t *ctx, GError **error)
 		return;
 	}
 
-	teco_expressions_push(teco_interface_bytes2glyphs(teco_ranges[n].from) -
-	                      teco_interface_bytes2glyphs(teco_ranges[n].to));
+	teco_expressions_push(teco_ranges[n].from - teco_ranges[n].to);
 }
 
 static void TECO_DEBUG_CLEANUP
@@ -2671,7 +2675,8 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
 
-	teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_undo_int(teco_ranges[0].from) = teco_interface_bytes2glyphs(pos);
 	teco_undo_guint(teco_ranges_count) = 1;
 
 	/*
@@ -2753,9 +2758,11 @@ teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t *str,
 teco_state_t *
 teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
 {
-	if (ctx->flags.mode == TECO_MODE_NORMAL)
-		teco_undo_gsize(teco_ranges[0].to) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
 
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+	teco_undo_int(teco_ranges[0].to) = teco_interface_bytes2glyphs(pos);
 	return &teco_state_start;
 }
 

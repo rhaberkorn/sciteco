@@ -515,8 +515,9 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 			if (!colon_modified) {
 				gsize len = strlen(filename);
 
-				teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-				teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from + len + 1;
+				sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+				teco_undo_int(teco_ranges[0].from) = teco_interface_bytes2glyphs(pos);
+				teco_undo_int(teco_ranges[0].to) = teco_interface_bytes2glyphs(pos + len + 1);
 				teco_undo_guint(teco_ranges_count) = 1;
 
 				/*
@@ -550,16 +551,15 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 		g_auto(teco_globber_t) globber;
 		teco_globber_init(&globber, pattern_str.data, file_flags);
 
-		teco_undo_gsize(teco_ranges[0].from) = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		teco_undo_gsize(teco_ranges[0].to) = teco_ranges[0].from;
-		teco_undo_guint(teco_ranges_count) = 1;
+		sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		teco_undo_int(teco_ranges[0].from) = teco_interface_bytes2glyphs(pos);
 
 		teco_interface_ssm(SCI_BEGINUNDOACTION, 0, 0);
 
 		gchar *globbed_filename;
 		while ((globbed_filename = teco_globber_next(&globber))) {
 			gsize len = strlen(globbed_filename);
-			teco_ranges[0].to += len+1;
+			pos += len+1;
 
 			/*
 			 * FIXME: Filenames may contain linefeeds.
@@ -573,6 +573,9 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 		}
 
 		teco_interface_ssm(SCI_ENDUNDOACTION, 0, 0);
+
+		teco_undo_int(teco_ranges[0].to) = teco_interface_bytes2glyphs(pos);
+		teco_undo_guint(teco_ranges_count) = 1;
 	}
 
 	if (colon_modified) {

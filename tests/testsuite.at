@@ -211,8 +211,10 @@ TE_CHECK([[@I/XYZ/J @EB/foo/ @I/XZY/J @:FN/Z/0/"F(0/0)' Q*-2"N(0/0)'
 AT_CLEANUP
 
 AT_SETUP([Search and insertion ranges])
-TE_CHECK([[@I/XXYYZZ/^SC ."N(0/0)' C @S/YY/^YU1U0 Q0-2"N(0/0)' Q1-4"N(0/0)']], 0, ignore, ignore)
+# When deleting characters, the result of ^S/^Y must not change.
+TE_CHECK([[@I/XXYYZZ/^SC ."N(0/0)' C @S/YY/ HK ^YU1U0 Q0-2"N(0/0)' Q1-4"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@I/XXYYZZ/J @S/XX^E[^EMY]/ 1^YXa :Qa-2"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/XXYYZZ/J @FD/^EMZ/ ^S+2"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Editing local registers in macro calls])

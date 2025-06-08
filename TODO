@@ -8,7 +8,6 @@ Tasks:
    https://github.com/Bill-Gray/PDCursesMod/issues/330
 
 Known Bugs:
- * <FD> returns the deleted length-1, which also breaks <^S>.
  * Gtk: The control characters in tutorial.woman are still styled with
    the variable-width font since its rendered in STYLE_CONTROLCHAR (36),
    which is reset in woman.tes.
