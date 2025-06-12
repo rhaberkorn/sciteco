@@ -253,7 +253,7 @@ teco_interface_init(void)
 
 	gint events = gtk_widget_get_events(teco_interface.event_box_widget);
 	events |= GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
-	          GDK_SCROLL_MASK;
+	          GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK;
 	gtk_widget_set_events(teco_interface.event_box_widget, events);
 
 	g_signal_connect(teco_interface.event_box_widget, "button-press-event",
@@ -1114,17 +1114,25 @@ teco_interface_handle_mouse_button(GdkEventButton *event, GError **error)
 static gboolean
 teco_interface_handle_scroll(GdkEventScroll *event, GError **error)
 {
+	static gdouble delta_y = 0;
+
 	g_assert(event->type == GDK_SCROLL);
 
-	/*
-	 * FIXME: Do we have to support GDK_SCROLL_SMOOTH?
-	 */
 	switch (event->direction) {
 	case GDK_SCROLL_UP:
 		teco_mouse.type = TECO_MOUSE_SCROLLUP;
 		break;
 	case GDK_SCROLL_DOWN:
 		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
+		break;
+	case GDK_SCROLL_SMOOTH:
+		/* emulate discrete scrolling */
+		delta_y += event->delta_y;
+		if (ABS(delta_y) < 12)
+			return TRUE;
+		teco_mouse.type = delta_y < 0 ? TECO_MOUSE_SCROLLUP
+		                              : TECO_MOUSE_SCROLLDOWN;
+		delta_y = 0;
 		break;
 	default:
 		return TRUE;
