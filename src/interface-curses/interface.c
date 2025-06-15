@@ -1985,6 +1985,11 @@ teco_interface_event_loop_iter(void)
 		return;
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
+		/*
+		 * At least on PDCurses/Wincon, the hardware cursor is sometimes
+		 * reactivated.
+		 */
+		curs_set(0);
 		teco_interface_resize_all_windows();
 		break;
 #endif
