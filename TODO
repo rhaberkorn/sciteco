@@ -3,9 +3,6 @@ Tasks:
  * VEDIT and PMATE for MS-DOS
  * Update to Scinterm 5.5.
    Perhaps we can make use of the arbitrary RGB color feauture?
- * PDCurses 4.5.1 is in MSYS.
-   Perhaps some workarounds can be removed now (8cc704b897f33d6150156c77202a29222b9ee667).
-   https://github.com/Bill-Gray/PDCursesMod/issues/330
 
 Known Bugs:
  * Gtk: The control characters in tutorial.woman are still styled with

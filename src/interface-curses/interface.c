@@ -1915,15 +1915,23 @@ static gint
 teco_interface_blocking_getch(void)
 {
 #if NCURSES_MOUSE_VERSION >= 2
+#ifdef __PDCURSES__
 	/*
-	 * FIXME: REPORT_MOUSE_POSITION is necessary at least on
+	 * On PDCurses it's crucial NOT to mask for BUTTONX_CLICKED.
+	 * Scroll events are not reported without the non-standard MOUSE_WHEEL_SCROLL.
+	 */
+	static const mmask_t mmask = BUTTON_EVENT(PRESSED) | BUTTON_EVENT(RELEASED) |
+	                             MOUSE_WHEEL_SCROLL;
+#else
+	/*
+	 * REPORT_MOUSE_POSITION is necessary at least on
 	 * ncurses, so that BUTTONX_RELEASED events are reported.
 	 * It does NOT report every cursor movement, though.
-	 * What does PDCurses do?
 	 */
-	mousemask(teco_ed & TECO_ED_MOUSEKEY
-			? ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION : 0, NULL);
+	static const mmask_t mmask = ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION;
 #endif
+	mousemask(teco_ed & TECO_ED_MOUSEKEY ? mmask : 0, NULL);
+#endif /* NCURSES_MOUSE_VERSION >= 2 */
 
 	/* no special <CTRL/C> handling */
 	raw();
@@ -1977,10 +1985,6 @@ teco_interface_event_loop_iter(void)
 		return;
 #ifdef KEY_RESIZE
 	case KEY_RESIZE:
-#ifdef __PDCURSES__
-		/* NOTE: No longer necessary since PDCursesMod v4.3.3. */
-		resize_term(0, 0);
-#endif
 		teco_interface_resize_all_windows();
 		break;
 #endif
