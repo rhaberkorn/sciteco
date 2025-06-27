@@ -373,7 +373,7 @@ teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str,
  * \fIfilename\fP does not necessarily have to exist in the
  * file system for the match to succeed (unless a file type check
  * is also specified).
- * For instance, \(lqENf??/\[**].c\fB$\fPfoo/bar.c\fB$\fP\(rq will
+ * For instance, \(lqENf??\[sl]*.c\fB$\fPfoo/bar.c\fB$\fP\(rq will
  * always match and the string \(lqfoo/bar.c\(rq will be inserted
  * (see below).
  *
