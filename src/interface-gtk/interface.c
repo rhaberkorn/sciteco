@@ -69,6 +69,8 @@ static void teco_interface_cmdline_commit_cb(GtkIMContext *context, gchar *str,
                                              gpointer user_data);
 static gboolean teco_interface_input_cb(GtkWidget *widget, GdkEvent *event,
                                         gpointer user_data);
+static void teco_interface_scroll_cb(GtkEventControllerScroll *controller,
+                                     double dx, double dy, gpointer data);
 static void teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len,
                                             gpointer user_data);
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
@@ -124,6 +126,7 @@ static struct {
 	GtkWidget *info_name_widget;
 
 	GtkWidget *event_box_widget;
+	GtkEventController *scroll_controller;
 
 	GtkWidget *message_bar_widget;
 	GtkWidget *message_widget;
@@ -260,8 +263,17 @@ teco_interface_init(void)
 			 G_CALLBACK(teco_interface_input_cb), NULL);
 	g_signal_connect(teco_interface.event_box_widget, "button-release-event",
 			 G_CALLBACK(teco_interface_input_cb), NULL);
-	g_signal_connect(teco_interface.event_box_widget, "scroll-event",
-			 G_CALLBACK(teco_interface_input_cb), NULL);
+
+	/*
+	 * On some platforms only GDK_SCROLL_SMOOTH events are reported, which are hard
+	 * to translate to discrete scroll events, as required by the `4EJ` API.
+	 * This work is therefore delegated to a scroll controller.
+	 */
+	teco_interface.scroll_controller = gtk_event_controller_scroll_new(teco_interface.event_box_widget,
+									   GTK_EVENT_CONTROLLER_SCROLL_VERTICAL |
+	                                                                   GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
+	g_signal_connect(teco_interface.scroll_controller, "scroll",
+	                 G_CALLBACK(teco_interface_scroll_cb), NULL);
 
 	teco_interface.message_bar_widget = gtk_info_bar_new();
 	gtk_widget_set_name(teco_interface.message_bar_widget, "sciteco-message-bar");
@@ -1114,8 +1126,6 @@ teco_interface_handle_mouse_button(GdkEventButton *event, GError **error)
 static gboolean
 teco_interface_handle_scroll(GdkEventScroll *event, GError **error)
 {
-	static gdouble delta_y = 0;
-
 	g_assert(event->type == GDK_SCROLL);
 
 	switch (event->direction) {
@@ -1124,15 +1134,6 @@ teco_interface_handle_scroll(GdkEventScroll *event, GError **error)
 		break;
 	case GDK_SCROLL_DOWN:
 		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
-		break;
-	case GDK_SCROLL_SMOOTH:
-		/* emulate discrete scrolling */
-		delta_y += event->delta_y;
-		if (ABS(delta_y) < 12)
-			return TRUE;
-		teco_mouse.type = delta_y < 0 ? TECO_MOUSE_SCROLLUP
-		                              : TECO_MOUSE_SCROLLDOWN;
-		delta_y = 0;
 		break;
 	default:
 		return TRUE;
@@ -1282,6 +1283,8 @@ teco_interface_cleanup(void)
 
 	if (teco_interface.window)
 		gtk_widget_destroy(teco_interface.window);
+	if (teco_interface.scroll_controller)
+		g_object_unref(teco_interface.scroll_controller);
 
 	scintilla_release_resources();
 
@@ -1468,6 +1471,28 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 }
 
 static void
+teco_interface_scroll_cb(GtkEventControllerScroll *controller, double dx, double dy, gpointer data)
+{
+	/*
+	 * FIXME: Using teco_interface.event_box_widget will cause crashes in
+	 * teco_interface_input_cb()
+	 */
+	GtkWidget *widget = teco_interface.window;
+
+	/*
+	 * Emulate a GDK_SCROLL event to make use of the existing
+	 * event queuing in teco_interface_input_cb().
+	 */
+	g_autoptr(GdkEvent) scroll_event = gdk_event_new(GDK_SCROLL);
+	scroll_event->scroll.window = gtk_widget_get_parent_window(widget);
+	scroll_event->scroll.direction = dy > 0 ? GDK_SCROLL_DOWN : GDK_SCROLL_UP;
+	scroll_event->scroll.delta_x = dx;
+	scroll_event->scroll.delta_y = dy;
+
+	teco_interface_input_cb(widget, scroll_event, NULL);
+}
+
+static void
 teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len, gpointer user_data)
 {
 	g_assert(len >= teco_interface.popup_prefix_len);
@@ -1494,7 +1519,6 @@ teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event, gpointer 
 {
 	/*
 	 * Emulate that the "close" key was pressed
-	 * which may then be handled by the execution thread
 	 * which invokes the appropriate "function key macro"
 	 * if it exists. Its default action will ensure that
 	 * the execution thread shuts down and the main loop
@@ -1513,8 +1537,11 @@ teco_interface_sigterm_handler(gpointer user_data)
 	/*
 	 * Similar to window deletion - emulate "close" key press.
 	 */
+	GtkWidget *widget = teco_interface.window;
+
 	g_autoptr(GdkEvent) close_event = gdk_event_new(GDK_KEY_PRESS);
+	close_event->key.window = gtk_widget_get_parent_window(widget);
 	close_event->key.keyval = GDK_KEY_Close;
 
-	return teco_interface_input_cb(teco_interface.window, close_event, NULL);
+	return teco_interface_input_cb(widget, close_event, NULL);
 }
