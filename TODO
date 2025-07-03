@@ -346,7 +346,6 @@ Features:
      The DEC behavior could be achieved by always searching till the end
      of the buffer, but excluding all matches beyond the target range.
    * ^A, :Gq, T, ^T and stdio in general
-   * ^B as the current date. We should probably copy TECOC's behavior here.
    * ^W was an immediate action command to repaint the screen.
      This could be a regular command to allow refreshing in long loops.
      Video TECO had ET for the same purpose.
