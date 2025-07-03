@@ -356,16 +356,6 @@ Features:
      until the next matching ( )  { }  [ ]  < >  " '.
      However there is no single way to get brace skipping right,
      so this might be prime candidate for a macro.
-   * There should be a string building character for including
-     a character by code. Currently, there is only ^EUq where
-     q must be set earlier.
-     This would be useful when searching in binary files or
-     to include Unicode characters by code point.
-     Unfortunately its syntax cannot depend on the string argument's
-     encoding, as that could confuse parse-only mode.
-     TECO-11 has ^E<nnn> for octal-only, which is extended by Video TECO
-     to support the typical strtoul() semantics.
-     This is probably what we want as well.
    * Video TECO's <EC> updates the display when reading from
      long running processes. This might be useful as well, at least
      when detecting interactive invocation.

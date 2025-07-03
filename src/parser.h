@@ -384,6 +384,13 @@ typedef struct teco_machine_stringbuilding_t {
 	 * the buffer's or Q-Register's encoding.
 	 */
 	guint codepage;
+
+	/**
+	 * String to collect code from `^E<...>` constructs.
+	 * This could waste some memory for string arguments with nested Q-Reg specs,
+	 * but we better keep it here than adding another global variable.
+	 */
+	teco_string_t code;
 } teco_machine_stringbuilding_t;
 
 void teco_machine_stringbuilding_init(teco_machine_stringbuilding_t *ctx, gunichar escape_char,

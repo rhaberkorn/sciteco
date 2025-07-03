@@ -19,6 +19,7 @@
 #include "config.h"
 #endif
 
+#include <errno.h>
 #include <string.h>
 
 #include <glib.h>
@@ -385,6 +386,7 @@ teco_machine_main_clear(teco_machine_main_t *ctx)
 	teco_goto_table_clear(&ctx->goto_table);
 	teco_string_clear(&ctx->expectstring.string);
 	teco_machine_stringbuilding_clear(&ctx->expectstring.machine);
+	// FIXME: Could leak ctx->goto_label, but it's in an union
 }
 
 /** Append string to result with case folding. */
@@ -412,6 +414,48 @@ teco_machine_stringbuilding_append(teco_machine_stringbuilding_t *ctx, const gch
 	}
 }
 
+/**
+ * Append codepoint to result string with case folding.
+ *
+ * This also takes the target encoding into account and checks the value
+ * range accordingly.
+ *
+ * @returns FALSE if the codepoint is not valid in the target encoding.
+ */
+static gboolean
+teco_machine_stringbuilding_append_c(teco_machine_stringbuilding_t *ctx, teco_int_t value)
+{
+	g_assert(ctx->result != NULL);
+
+	if (ctx->codepage == SC_CP_UTF8) {
+		if (value < 0 || !g_unichar_validate(value))
+			return FALSE;
+		switch (ctx->mode) {
+		case TECO_STRINGBUILDING_MODE_UPPER:
+			value = g_unichar_toupper(value);
+			break;
+		case TECO_STRINGBUILDING_MODE_LOWER:
+			value = g_unichar_tolower(value);
+			break;
+		}
+		teco_string_append_wc(ctx->result, value);
+	} else {
+		if (value < 0 || value > 0xFF)
+			return FALSE;
+		switch (ctx->mode) {
+		case TECO_STRINGBUILDING_MODE_UPPER:
+			value = g_ascii_toupper(value);
+			break;
+		case TECO_STRINGBUILDING_MODE_LOWER:
+			value = g_ascii_tolower(value);
+			break;
+		}
+		teco_string_append_c(ctx->result, value);
+	}
+
+	return TRUE;
+}
+
 /*
  * FIXME: All teco_state_stringbuilding_* states could be static?
  */
@@ -429,6 +473,7 @@ TECO_DECLARE_STATE(teco_state_stringbuilding_upper);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_num);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_u);
+TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_code);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_q);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_quote);
 TECO_DECLARE_STATE(teco_state_stringbuilding_ctle_n);
@@ -643,6 +688,7 @@ teco_state_stringbuilding_ctle_input(teco_machine_stringbuilding_t *ctx, gunicha
 	switch (teco_ascii_toupper(chr)) {
 	case '\\': next = &teco_state_stringbuilding_ctle_num; break;
 	case 'U':  next = &teco_state_stringbuilding_ctle_u; break;
+	case '<':  next = &teco_state_stringbuilding_ctle_code; break;
 	case 'Q':  next = &teco_state_stringbuilding_ctle_q; break;
 	case '@':  next = &teco_state_stringbuilding_ctle_quote; break;
 	case 'N':  next = &teco_state_stringbuilding_ctle_n; break;
@@ -741,43 +787,69 @@ teco_state_stringbuilding_ctle_u_input(teco_machine_stringbuilding_t *ctx, gunic
 	if (!qreg->vtable->get_integer(qreg, &value, error))
 		return NULL;
 
-	if (ctx->codepage == SC_CP_UTF8) {
-		if (value < 0 || !g_unichar_validate(value))
-			goto error_codepoint;
-		switch (ctx->mode) {
-		case TECO_STRINGBUILDING_MODE_UPPER:
-			value = g_unichar_toupper(value);
-			break;
-		case TECO_STRINGBUILDING_MODE_LOWER:
-			value = g_unichar_tolower(value);
-			break;
-		}
-		teco_string_append_wc(ctx->result, value);
-	} else {
-		if (value < 0 || value > 0xFF)
-			goto error_codepoint;
-		switch (ctx->mode) {
-		case TECO_STRINGBUILDING_MODE_UPPER:
-			value = g_ascii_toupper(value);
-			break;
-		case TECO_STRINGBUILDING_MODE_LOWER:
-			value = g_ascii_tolower(value);
-			break;
-		}
-		teco_string_append_c(ctx->result, value);
+	if (!teco_machine_stringbuilding_append_c(ctx, value)) {
+		g_autofree gchar *name_printable = teco_string_echo(qreg->head.name.data, qreg->head.name.len);
+		g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+		            "Q-Register \"%s\" does not contain a valid codepoint", name_printable);
+		return NULL;
 	}
 
 	return &teco_state_stringbuilding_start;
-
-error_codepoint: {
-	g_autofree gchar *name_printable = teco_string_echo(qreg->head.name.data, qreg->head.name.len);
-	g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
-	            "Q-Register \"%s\" does not contain a valid codepoint", name_printable);
-	return NULL;
-}
 }
 
 TECO_DEFINE_STATE_STRINGBUILDING_QREG(teco_state_stringbuilding_ctle_u);
+
+static teco_state_t *
+teco_state_stringbuilding_ctle_code_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
+{
+	if (chr == '>') {
+		if (!ctx->result)
+			/* parse-only mode */
+			return &teco_state_stringbuilding_start;
+
+		if (!ctx->code.data) {
+			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+			                    "Invalid empty ^E<> specified");
+			return NULL;
+		}
+
+		/*
+		 * FIXME: Once we support hexadecimal constants in the SciTECO
+		 * language itself, we might support this syntax as well.
+		 * Or should we perhaps always consider the current radix?
+		 */
+		gchar *endp = ctx->code.data;
+		errno = 0;
+		gint64 code = g_ascii_strtoll(ctx->code.data, &endp, 0);
+		if (errno || endp - ctx->code.data != ctx->code.len ||
+		    !teco_machine_stringbuilding_append_c(ctx, code)) {
+			/* will also catch embedded nulls */
+			g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
+			            "Invalid code ^E<%s> specified", ctx->code.data);
+			return NULL;
+		}
+
+		if (ctx->parent.must_undo)
+			teco_undo_string_own(ctx->code);
+		else
+			teco_string_clear(&ctx->code);
+		memset(&ctx->code, 0, sizeof(ctx->code));
+
+		return &teco_state_stringbuilding_start;
+	}
+
+	if (!ctx->result)
+		/* parse-only mode */
+		return &teco_state_stringbuilding_ctle_code;
+
+	if (ctx->parent.must_undo)
+		undo__teco_string_truncate(&ctx->code, ctx->code.len);
+	teco_string_append_wc(&ctx->code, chr);
+
+	return &teco_state_stringbuilding_ctle_code;
+}
+
+TECO_DEFINE_STATE(teco_state_stringbuilding_ctle_code);
 
 static teco_state_t *
 teco_state_stringbuilding_ctle_q_input(teco_machine_stringbuilding_t *ctx, gunichar chr, GError **error)
@@ -942,6 +1014,7 @@ teco_machine_stringbuilding_clear(teco_machine_stringbuilding_t *ctx)
 {
 	if (ctx->machine_qregspec)
 		teco_machine_qregspec_free(ctx->machine_qregspec);
+	teco_string_clear(&ctx->code);
 }
 
 gboolean
