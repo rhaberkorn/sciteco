@@ -151,7 +151,7 @@ teco_ring_last(void)
 }
 
 static void
-teco_undo_ring_edit_action(teco_buffer_t **buffer, gboolean run)
+teco_undo_ring_reinsert_action(teco_buffer_t **buffer, gboolean run)
 {
 	if (run) {
 		/*
@@ -162,22 +162,19 @@ teco_undo_ring_edit_action(teco_buffer_t **buffer, gboolean run)
 			teco_tailq_insert_before((*buffer)->entry.next, &(*buffer)->entry);
 		else
 			teco_tailq_insert_tail(&teco_ring_head, &(*buffer)->entry);
-
-		teco_ring_current = *buffer;
-		teco_buffer_edit(*buffer);
 	} else {
 		teco_buffer_free(*buffer);
 	}
 }
 
-/*
- * Emitted after a buffer close
- * The pointer is the only remaining reference to the buffer!
+/**
+ * Insert buffer during undo (for closing buffers).
+ * Ownership of the buffer is passed to the undo token.
  */
 static void
-teco_undo_ring_edit(teco_buffer_t *buffer)
+teco_undo_ring_reinsert(teco_buffer_t *buffer)
 {
-	teco_buffer_t **ctx = teco_undo_push_size((teco_undo_action_t)teco_undo_ring_edit_action,
+	teco_buffer_t **ctx = teco_undo_push_size((teco_undo_action_t)teco_undo_ring_reinsert_action,
 	                                          sizeof(buffer));
 	if (ctx)
 		*ctx = buffer;
@@ -320,7 +317,7 @@ teco_ring_edit_by_id(teco_int_t id, GError **error)
 }
 
 static void
-teco_ring_close_buffer(teco_buffer_t *buffer)
+teco_ring_remove_buffer(teco_buffer_t *buffer)
 {
 	teco_tailq_remove(&teco_ring_head, &buffer->entry);
 
@@ -333,32 +330,48 @@ teco_ring_close_buffer(teco_buffer_t *buffer)
 		                   "Removed unnamed file from the ring.");
 }
 
-TECO_DEFINE_UNDO_CALL(teco_ring_close_buffer, teco_buffer_t *);
+TECO_DEFINE_UNDO_CALL(teco_ring_remove_buffer, teco_buffer_t *);
 
+/**
+ * Close the given buffer.
+ * Executes close hooks and changes the current buffer if necessary.
+ * It already pushes undo tokens.
+ */
 gboolean
-teco_ring_close(GError **error)
+teco_ring_close(teco_buffer_t *buffer, GError **error)
 {
-	teco_buffer_t *buffer = teco_ring_current;
+	if (buffer == teco_ring_current) {
+		if (!teco_ed_hook(TECO_ED_HOOK_CLOSE, error))
+			return FALSE;
 
-	if (!teco_ed_hook(TECO_ED_HOOK_CLOSE, error))
-		return FALSE;
-	teco_ring_close_buffer(buffer);
-	teco_ring_current = teco_buffer_next(buffer) ? : teco_buffer_prev(buffer);
-	/* Transfer responsibility to the undo token object. */
-	teco_undo_ring_edit(buffer);
+		teco_ring_undo_edit();
+		teco_ring_remove_buffer(buffer);
 
-	if (!teco_ring_current)
-		return teco_ring_edit_by_name(NULL, error);
+		teco_ring_current = teco_buffer_next(buffer) ? : teco_buffer_prev(buffer);
+		if (!teco_ring_current) {
+			/* edit new unnamed buffer */
+			if (!teco_ring_edit_by_name(NULL, error))
+				return FALSE;
+		} else {
+			teco_buffer_edit(teco_ring_current);
+			if (!teco_ed_hook(TECO_ED_HOOK_EDIT, error))
+				return FALSE;
+		}
+	} else {
+		teco_ring_remove_buffer(buffer);
+	}
 
-	teco_buffer_edit(teco_ring_current);
-	return teco_ed_hook(TECO_ED_HOOK_EDIT, error);
+	/* transfer responsibility to the undo token object */
+	teco_undo_ring_reinsert(buffer);
+
+	return TRUE;
 }
 
 void
 teco_ring_undo_close(void)
 {
 	undo__teco_buffer_free(teco_ring_current);
-	undo__teco_ring_close_buffer(teco_ring_current);
+	undo__teco_ring_remove_buffer(teco_ring_current);
 }
 
 void
@@ -583,38 +596,59 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 TECO_DEFINE_STATE_EXPECTFILE(teco_state_save_file);
 
 /*$ EF close
- * [bool]EF -- Remove buffer from ring
+ * [n]EF -- Remove buffer from ring
  * -EF
- * :EF
+ * [n]:EF
  *
  * Removes buffer from buffer ring, effectively
  * closing it.
- * If the buffer is dirty (modified), EF will yield
+ * The optional argument <n> specifies the id of the buffer
+ * to close -- by default the current buffer will be closed.
+ * If the selected buffer is dirty (modified), \fBEF\fP will yield
  * an error.
- * <bool> may be a specified to enforce closing dirty
- * buffers.
- * If it is a Failure condition boolean (negative),
- * the buffer will be closed unconditionally.
- * If <bool> is absent, the sign prefix (1 or -1) will
- * be implied, so \(lq-EF\(rq will always close the buffer.
+ * If <n> is negative (success boolean), buffer <-n> will be closed
+ * even if it is dirty.
+ * \(lq-EF\(rq will force-close the current buffer.
  *
- * When colon-modified, <bool> is ignored and \fBEF\fP
- * will save the buffer before closing.
+ * When colon-modified, the selected buffer is saved before closing.
  * The file is always written, unlike \(lq:EX\(rq which
  * saves only dirty buffers.
  * This can fail of course, e.g. when called on the unnamed
  * buffer.
  *
- * It is noteworthy that EF will be executed immediately in
+ * It is noteworthy that \fBEF\fP will be executed immediately in
  * interactive mode but can be rubbed out at a later time
  * to reopen the file.
  * Closed files are kept in memory until the command line
  * is terminated.
+ *
+ * Close and edit hooks are only executed when closing the current buffer.
  */
 void
 teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
 {
-	if (teco_qreg_current) {
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+
+	/*
+	 * This is like implying teco_num_sign*teco_ring_get_id(teco_ring_current)
+	 * but avoids the O(n) ring iterations.
+	 */
+	teco_buffer_t *buffer;
+	gboolean force;
+	if (teco_expressions_args() > 0) {
+		teco_int_t id;
+		if (!teco_expressions_pop_num_calc(&id, 0, error))
+			return;
+		buffer = teco_ring_find(ABS(id));
+		force = id < 0;
+	} else {
+		buffer = teco_ring_current;
+		force = teco_num_sign < 0;
+		teco_set_num_sign(1);
+	}
+
+	if (buffer == teco_ring_current && teco_qreg_current) {
 		const teco_string_t *name = &teco_qreg_current->head.name;
 		g_autofree gchar *name_printable = teco_string_echo(name->data, name->len);
 		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
@@ -623,19 +657,16 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
 	}
 
 	if (teco_machine_main_eval_colon(ctx) > 0) {
-		if (!teco_buffer_save(teco_ring_current, NULL, error))
+		if (!teco_buffer_save(buffer, NULL, error))
 			return;
 	} else {
-		teco_int_t v;
-		if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
-			return;
-		if (teco_is_failure(v) && teco_ring_current->dirty) {
+		if (!force && buffer->dirty) {
 			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
 			            "Buffer \"%s\" is dirty",
-				    teco_ring_current->filename ? : "(Unnamed)");
+				    buffer->filename ? : "(Unnamed)");
 			return;
 		}
 	}
 
-	teco_ring_close(error);
+	teco_ring_close(buffer, error);
 }

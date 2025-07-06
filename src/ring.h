@@ -86,7 +86,7 @@ teco_ring_undo_edit(void)
 	teco_buffer_undo_edit(teco_ring_current);
 }
 
-gboolean teco_ring_close(GError **error);
+gboolean teco_ring_close(teco_buffer_t *buffer, GError **error);
 void teco_ring_undo_close(void);
 
 void teco_ring_set_scintilla_undo(gboolean state);

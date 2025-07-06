@@ -97,11 +97,11 @@ I\#
 \#^J
 
 !* find insertion point *!
-FS^J.TEDOC^J^J
+:FS^J.TEDOC^J^J"F(0/0)'
 
 EJ-1<
   <
-    2U* EU.#scQ*
+    2U* [*]#sc
 
     !* extract comment *!
     SQ[comment.start]$;

@@ -318,7 +318,6 @@ Features:
    rubbed out command line).
  * some missing useful VideoTECO/TECO-11 commands and unnecessary
    incompatibilities:
-   * EF with buffer id
    * ER command: read file(s) into current buffer at dot.
      Video TECO accepts a glob pattern here.
    * nEW to save a buffer by id
@@ -701,6 +700,9 @@ Features:
    Allows us to do CI on FreeBSD and potentially other more obscure systems.
    Also, this will allow us to migrate to another hoster like
    Savannah or Sourcehut later on.
+ * nEF is currently disallowed when editing a Q-Reg as long as
+   n == Q* (default). Perhaps it should always be allowed without
+   switching from the Q-Reg view.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.

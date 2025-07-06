@@ -2003,7 +2003,7 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * The current user interface: 1 for Curses, 2 for GTK
  * (\fBread-only\fP)
  * .IP 1:
- * The current numbfer of buffers: Also the numeric id
+ * The current number of buffers: Also the numeric id
  * of the last buffer in the ring. This is implied if
  * no argument is given, so \(lqEJ\(rq returns the number
  * of buffers in the ring.
