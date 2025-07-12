@@ -156,13 +156,30 @@ struct teco_qreg_table_t {
 void teco_qreg_table_init(teco_qreg_table_t *table, gboolean must_undo);
 void teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo);
 
-/** @memberof teco_qreg_table_t */
+/**
+ * Insert Q-Register into table.
+ *
+ * @return If non-NULL a register with the same name as qreg already
+ *   existed in table. In this case qreg is __not__ automatically freed.
+ * @memberof teco_qreg_table_t
+ */
 static inline teco_qreg_t *
 teco_qreg_table_insert(teco_qreg_table_t *table, teco_qreg_t *qreg)
 {
 	qreg->must_undo = table->must_undo; // FIXME
 	return (teco_qreg_t *)teco_rb3str_insert(&table->tree, TRUE, &qreg->head);
 }
+
+/** @memberof teco_qreg_table_t */
+static inline void
+teco_qreg_table_insert_unique(teco_qreg_table_t *table, teco_qreg_t *qreg)
+{
+	G_GNUC_UNUSED teco_qreg_t *found = teco_qreg_table_insert(table, qreg);
+	g_assert(found == NULL);
+}
+
+gboolean teco_qreg_table_replace(teco_qreg_table_t *table, teco_qreg_t *qreg,
+                                 gboolean inherit_int, GError **error);
 
 /** @memberof teco_qreg_table_t */
 static inline teco_qreg_t *

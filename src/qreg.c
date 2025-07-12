@@ -25,6 +25,8 @@
 
 #include <Scintilla.h>
 
+//#include <rb3ptr.h>
+
 #include "sciteco.h"
 #include "string-utils.h"
 #include "file-utils.h"
@@ -39,6 +41,7 @@
 #include "ring.h"
 #include "eol.h"
 #include "error.h"
+#include "rb3str.h"
 #include "qreg.h"
 
 /**
@@ -794,19 +797,25 @@ teco_qreg_workingdir_new(void)
 	 * the "\e" register also exists.
 	 * Not to mention that environment variable regs also start with dollar.
 	 * Perhaps "~" would be a better choice, although it is also already used?
-	 * Most logical would be ".", but this should probably map to to Dot and
-	 * is also ugly to write in practice.
+	 * Most logical would be ".", but it is also ugly to write in practice.
 	 * Perhaps "@"...
 	 */
 	return teco_qreg_new(&vtable, "$", 1);
+}
+
+static inline gchar
+teco_qreg_clipboard_get_name(const teco_qreg_t *qreg)
+{
+	g_assert(1 <= qreg->head.name.len && qreg->head.name.len <= 2 &&
+	         *qreg->head.name.data == '~');
+	return qreg->head.name.len < 2 ? qreg->integer : qreg->head.name.data[1];
 }
 
 static gboolean
 teco_qreg_clipboard_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
                                guint codepage, GError **error)
 {
-	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
-	const gchar *clipboard_name = qreg->head.name.data + 1;
+	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
 
 	if (teco_ed & TECO_ED_AUTOEOL) {
 		/*
@@ -866,8 +875,7 @@ teco_qreg_clipboard_undo_set_string(teco_qreg_t *qreg, GError **error)
 	if (!teco_undo_enabled)
 		return TRUE;
 
-	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
-	const gchar *clipboard_name = qreg->head.name.data + 1;
+	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
 
 	/*
 	 * Ownership of str is passed to the undo token.
@@ -885,8 +893,7 @@ static gboolean
 teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
                                guint *codepage, GError **error)
 {
-	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
-	const gchar *clipboard_name = qreg->head.name.data + 1;
+	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
 
 	if (!(teco_ed & TECO_ED_AUTOEOL))
 		/*
@@ -930,8 +937,7 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 static gboolean
 teco_qreg_clipboard_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
 {
-	g_assert(!teco_string_contains(&qreg->head.name, '\0'));
-	const gchar *clipboard_name = qreg->head.name.data + 1;
+	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
 
 	g_auto(teco_string_t) str = {NULL, 0};
 
@@ -954,6 +960,12 @@ teco_qreg_clipboard_new(const gchar *name)
 
 	teco_qreg_t *qreg = teco_qreg_new(&vtable, "~", 1);
 	teco_string_append(&qreg->head.name, name, strlen(name));
+	/*
+	 * Register "~" is the default clipboard, which defaults to "~C".
+	 * This is configurable via the integer cell.
+	 */
+	if (qreg->head.name.len == 1)
+		qreg->integer = 'C';
 	return qreg;
 }
 
@@ -967,9 +979,9 @@ teco_qreg_table_init(teco_qreg_table_t *table, gboolean must_undo)
 
 	/* general purpose registers */
 	for (gchar q = 'A'; q <= 'Z'; q++)
-		teco_qreg_table_insert(table, teco_qreg_plain_new(&q, sizeof(q)));
+		teco_qreg_table_insert_unique(table, teco_qreg_plain_new(&q, sizeof(q)));
 	for (gchar q = '0'; q <= '9'; q++)
-		teco_qreg_table_insert(table, teco_qreg_plain_new(&q, sizeof(q)));
+		teco_qreg_table_insert_unique(table, teco_qreg_plain_new(&q, sizeof(q)));
 }
 
 /** @memberof teco_qreg_table_t */
@@ -979,10 +991,43 @@ teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo)
 	teco_qreg_table_init(table, must_undo);
 
 	/* search mode ("^X") */
-	teco_qreg_table_insert(table, teco_qreg_plain_new("\x18", 1));
+	teco_qreg_table_insert_unique(table, teco_qreg_plain_new("\x18", 1));
 	/* numeric radix ("^R") */
 	table->radix = teco_qreg_radix_new();
-	teco_qreg_table_insert(table, table->radix);
+	teco_qreg_table_insert_unique(table, table->radix);
+}
+
+/**
+ * Insert Q-register into table, possibly replacing a register with the same name.
+ *
+ * This is useful for initializing Q-registers late when the user could have
+ * already created one in the profile.
+ *
+ * @param table Table to insert into
+ * @param qreg Q-Register to insert
+ * @param inherit_int Whether to preserve the numeric part of
+ *   any Q-register found in the table.
+ * @param error GError
+ * @return TRUE if error occurred
+ * @memberof teco_qreg_table_t
+ */
+gboolean
+teco_qreg_table_replace(teco_qreg_table_t *table, teco_qreg_t *qreg,
+                        gboolean inherit_int, GError **error)
+{
+	teco_qreg_t *found = teco_qreg_table_insert(table, qreg);
+	if (!found)
+		return TRUE;
+
+	teco_int_t v;
+	if (inherit_int &&
+	    (!found->vtable->get_integer(found, &v, error) ||
+	     !qreg->vtable->set_integer(qreg, v, error)))
+		return FALSE;
+
+	rb3_replace(&found->head.head, &qreg->head.head);
+	teco_qreg_free(found);
+	return TRUE;
 }
 
 static inline void
@@ -1409,7 +1454,7 @@ teco_state_qregspec_done(teco_machine_qregspec_t *ctx, GError **error)
 	case TECO_QREG_OPTIONAL_INIT:
 		if (!ctx->result) {
 			ctx->result = teco_qreg_plain_new(ctx->name.data, ctx->name.len);
-			teco_qreg_table_insert(ctx->result_table, ctx->result);
+			teco_qreg_table_insert_unique(ctx->result_table, ctx->result);
 			teco_qreg_table_undo_remove(ctx->result);
 		}
 		break;

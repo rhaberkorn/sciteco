@@ -419,15 +419,20 @@ main(int argc, char **argv)
 	 * DEC TECO has them in the global table, though.
 	 */
 	/* search string and status register */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("_", 1));
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_plain_new("_", 1));
 	/* replacement string register */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("-", 1));
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_plain_new("-", 1));
 	/* current document's dot (":") */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_dot_new());
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_dot_new());
 	/* current buffer name and number ("*") */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_bufferinfo_new());
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_bufferinfo_new());
 	/* current working directory ("$") */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_workingdir_new());
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_workingdir_new());
 	/* environment defaults and registers */
 	teco_initialize_environment();
 
@@ -513,7 +518,8 @@ main(int argc, char **argv)
 	 * If munged file didn't quit, switch into interactive mode
 	 */
 	/* commandline replacement string register */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_plain_new("\e", 1));
+	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
+	                              teco_qreg_plain_new("\e", 1));
 
 	teco_undo_enabled = TRUE;
 	teco_ring_set_scintilla_undo(TRUE);

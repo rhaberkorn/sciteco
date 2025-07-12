@@ -1591,6 +1591,15 @@ The existence of a clipboard register can thus be checked
 in macros to determine whether getting and modifying that
 particular clipboard is supported natively.
 .br
+If there are multiple clipboard registers, you can choose
+the default one via the ASCII code in the numeric cell of
+register \(lq~\(rq, which defaults to 67 (\(lq~C\(rq).
+For instance if setting \(lq^^PU~\(rq, register \(lq~\(rq
+and register \(lq~P\(rq will refer to the same primary
+clipboard.
+The numeric parts of all the other clipboard registers are
+currently not used by \*(ST.
+.br
 \*(ST supports two ways of driving the clipboard on ncurses.
 .SCITECO_TOPIC OSC-52 xterm
 First of all, there is built-in support for OSC-52 escape sequences,
@@ -1638,8 +1647,6 @@ EOL normalization will take place (if enabled), so that pasting
 clipboards does not introduce unexpected EOL sequences.
 The Q-Register view's EOL mode will \fBnot\fP be guessed from
 the original clipboard contents, though.
-The numeric parts of the clipboard registers are currently
-not used by \*(ST.
 .TP
 .BI ^K key
 Key macro registers as documented in section

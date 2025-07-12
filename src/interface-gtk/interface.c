@@ -160,10 +160,14 @@ teco_interface_init(void)
 	 * clipboards/selections are supported on this system,
 	 * so we register only some default ones.
 	 */
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("P"));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("S"));
-	teco_qreg_table_insert(&teco_qreg_table_globals, teco_qreg_clipboard_new("C"));
+	teco_qreg_table_replace(&teco_qreg_table_globals,
+	                        teco_qreg_clipboard_new(""), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals,
+	                        teco_qreg_clipboard_new("P"), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals,
+	                        teco_qreg_clipboard_new("S"), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals,
+	                        teco_qreg_clipboard_new("C"), TRUE, NULL);
 
 	teco_interface.event_queue = g_queue_new();
 
@@ -606,6 +610,8 @@ teco_interface_cmdline_update(const teco_cmdline_t *cmdline)
 static GdkAtom
 teco_interface_get_selection_by_name(const gchar *name)
 {
+	g_assert(*name != '\0');
+
 	/*
 	 * We can use gdk_atom_intern() to support arbitrary X11 selection
 	 * names. However, since we cannot find out which selections are
@@ -614,11 +620,9 @@ teco_interface_get_selection_by_name(const gchar *name)
 	 * Checking them here avoids expensive X server roundtrips.
 	 */
 	switch (*name) {
-	case '\0': return GDK_NONE;
 	case 'P':  return GDK_SELECTION_PRIMARY;
 	case 'S':  return GDK_SELECTION_SECONDARY;
 	case 'C':  return GDK_SELECTION_CLIPBOARD;
-	default:   break;
 	}
 
 	return gdk_atom_intern(name, FALSE);
