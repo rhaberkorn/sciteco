@@ -420,7 +420,7 @@ teco_machine_stringbuilding_append(teco_machine_stringbuilding_t *ctx, const gch
  * This also takes the target encoding into account and checks the value
  * range accordingly.
  *
- * @returns FALSE if the codepoint is not valid in the target encoding.
+ * @return FALSE if the codepoint is not valid in the target encoding.
  */
 static gboolean
 teco_machine_stringbuilding_append_c(teco_machine_stringbuilding_t *ctx, teco_int_t value)
