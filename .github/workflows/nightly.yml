@@ -177,7 +177,7 @@ jobs:
         git push -u origin +HEAD:gh-pages
 
   win64-curses:
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     defaults:
       run:
@@ -274,7 +274,7 @@ jobs:
   # linked statically on Windows (at least MSYS does not provide
   # static libraries) and would draw in libglib, libintl, libiconv etc. anyway.
   win64-gtk:
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     defaults:
       run:
