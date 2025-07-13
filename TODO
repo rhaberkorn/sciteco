@@ -318,8 +318,6 @@ Features:
    rubbed out command line).
  * some missing useful VideoTECO/TECO-11 commands and unnecessary
    incompatibilities:
-   * ER command: read file(s) into current buffer at dot.
-     Video TECO accepts a glob pattern here.
    * nEW to save a buffer by id
    * EI$ would "resume" command input from the terminal in TECO-11.
      But how is that different from ^C/$$ in SciTECO?
@@ -359,7 +357,7 @@ Features:
      when detecting interactive invocation.
      But perhaps there should rather be a global configurable delay/refresh
      that could be considered by all loops etc.
-   * Video TECO: EQq...$ accepts glob patterns and reads
+   * Video TECO: EQq...$ and ER...$ accepts glob patterns and reads
      all files into the register. But we probably won't want to have that.
    * :EB -> Bool on Video TECO.
    * Video TECO: EV as an alias for EB, but create read-only buffer.

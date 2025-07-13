@@ -99,6 +99,7 @@ void teco_ring_cleanup(void);
 
 TECO_DECLARE_STATE(teco_state_edit_file);
 TECO_DECLARE_STATE(teco_state_save_file);
+TECO_DECLARE_STATE(teco_state_read_file);
 
 void teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error);
 

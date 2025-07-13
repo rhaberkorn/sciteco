@@ -2686,6 +2686,8 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		          .modifier_at = TRUE, .modifier_colon = 1},
 		['W']  = {&teco_state_save_file,
 		          .modifier_at = TRUE},
+		['R']  = {&teco_state_read_file,
+		          .modifier_at = TRUE},
 
 		/*
 		 * Commands

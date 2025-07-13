@@ -77,7 +77,7 @@ teco_buffer_undo_edit(teco_buffer_t *ctx)
 static gboolean
 teco_buffer_load(teco_buffer_t *ctx, const gchar *filename, GError **error)
 {
-	if (!teco_view_load(ctx->view, filename, error))
+	if (!teco_view_load(ctx->view, filename, TRUE, error))
 		return FALSE;
 
 #if 0		/* NOTE: currently buffer cannot be dirty */
@@ -594,6 +594,40 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * characters are enabled by default.
  */
 TECO_DEFINE_STATE_EXPECTFILE(teco_state_save_file);
+
+static teco_state_t *
+teco_state_read_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
+
+	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+
+	g_autofree gchar *filename = teco_file_expand_path(str->data);
+	/* FIXME: Add wrapper to interface.h? */
+	if (!teco_view_load(teco_interface_current_view, filename, FALSE, error))
+		return NULL;
+
+	if (teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0) != pos) {
+		teco_ring_dirtify();
+
+		if (teco_current_doc_must_undo())
+			undo__teco_interface_ssm(SCI_UNDO, 0, 0);
+	}
+
+	return &teco_state_start;
+}
+
+/*$ ER read
+ * ER<file>$ -- Read and insert file into current buffer
+ *
+ * Reads and inserts the given <file> into the current buffer or Q-Register at dot.
+ * Dot is left immediately after the given file.
+ */
+/*
+ * NOTE: Video TECO allows glob patterns as an argument.
+ */
+TECO_DEFINE_STATE_EXPECTFILE(teco_state_read_file);
 
 /*$ EF close
  * [n]EF -- Remove buffer from ring

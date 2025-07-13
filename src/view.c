@@ -198,15 +198,21 @@ teco_view_set_representations(teco_view_t *ctx)
  *
  * @param ctx The view to load.
  * @param channel Channel to read from.
+ * @param clear Whether to completely replace document
+ *   (leaving dot at the beginning of the document) or insert at dot
+ *   (leaving dot at the end of the insertion).
  * @param error A GError.
  * @return FALSE in case of a GError.
  *
  * @memberof teco_view_t
  */
 gboolean
-teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **error)
+teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel,
+                            gboolean clear, GError **error)
 {
 	gboolean ret = TRUE;
+
+	unsigned int message = SCI_ADDTEXT;
 
 	g_auto(teco_eol_reader_t) reader;
 	teco_eol_reader_init_gio(&reader, channel);
@@ -225,22 +231,27 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		                   SC_LINECHARACTERINDEX_UTF32, 0);
 
 	teco_view_ssm(ctx, SCI_BEGINUNDOACTION, 0, 0);
-	teco_view_ssm(ctx, SCI_CLEARALL, 0, 0);
+	if (clear) {
+		teco_view_ssm(ctx, SCI_CLEARALL, 0, 0);
 
-	/*
-	 * Preallocate memory based on the file size.
-	 * May waste a few bytes if file contains DOS EOLs
-	 * and EOL translation is enabled, but is faster.
-	 * NOTE: g_io_channel_unix_get_fd() should report the correct fd
-	 * on Windows, too.
-	 */
-	struct stat stat_buf = {.st_size = 0};
-	if (!fstat(g_io_channel_unix_get_fd(channel), &stat_buf) &&
-	    stat_buf.st_size > 0) {
-		ret = teco_memory_check(stat_buf.st_size, error);
-		if (!ret)
-			goto cleanup;
-		teco_view_ssm(ctx, SCI_ALLOCATE, stat_buf.st_size, 0);
+		/*
+		 * Preallocate memory based on the file size.
+		 * May waste a few bytes if file contains DOS EOLs
+		 * and EOL translation is enabled, but is faster.
+		 * NOTE: g_io_channel_unix_get_fd() should report the correct fd
+		 * on Windows, too.
+		 */
+		struct stat stat_buf = {.st_size = 0};
+		if (!fstat(g_io_channel_unix_get_fd(channel), &stat_buf) &&
+		    stat_buf.st_size > 0) {
+			ret = teco_memory_check(stat_buf.st_size, error);
+			if (!ret)
+				goto cleanup;
+			teco_view_ssm(ctx, SCI_ALLOCATE, stat_buf.st_size, 0);
+		}
+
+		/* keep dot at beginning of document */
+		message = SCI_APPENDTEXT;
 	}
 
 	for (;;) {
@@ -258,7 +269,7 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 		if (rc == G_IO_STATUS_EOF)
 			break;
 
-		teco_view_ssm(ctx, SCI_APPENDTEXT, str.len, (sptr_t)str.data);
+		teco_view_ssm(ctx, message, str.len, (sptr_t)str.data);
 
 		/*
 		 * Even if we checked initially, knowing the file size,
@@ -285,7 +296,7 @@ teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel, GError **erro
 	 * If it is enabled but the stream does not contain any
 	 * EOL characters, the platform default is still assumed.
 	 */
-	if (reader.eol_style >= 0)
+	if (clear && reader.eol_style >= 0)
 		teco_view_ssm(ctx, SCI_SETEOLMODE, reader.eol_style, 0);
 
 	if (reader.eol_style_inconsistent)
@@ -303,12 +314,21 @@ cleanup:
 }
 
 /**
- * Load view's document from file.
+ * Load file into view's document.
+ * 
+ * @param ctx The view to load.
+ * @param filename File name to read
+ * @param clear Whether to completely replace document
+ *   (leaving dot at the beginning of the document) or insert at dot
+ *   (leaving dot at the end of the insertion).
+ * @param error A GError.
+ * @return FALSE in case of a GError.
  *
  * @memberof teco_view_t
  */
 gboolean
-teco_view_load_from_file(teco_view_t *ctx, const gchar *filename, GError **error)
+teco_view_load_from_file(teco_view_t *ctx, const gchar *filename,
+                         gboolean clear, GError **error)
 {
 	g_autoptr(GIOChannel) channel = g_io_channel_new_file(filename, "r", error);
 	if (!channel)
@@ -322,7 +342,7 @@ teco_view_load_from_file(teco_view_t *ctx, const gchar *filename, GError **error
 	g_io_channel_set_encoding(channel, NULL, NULL);
 	g_io_channel_set_buffered(channel, FALSE);
 
-	if (!teco_view_load_from_channel(ctx, channel, error)) {
+	if (!teco_view_load_from_channel(ctx, channel, clear, error)) {
 		g_prefix_error(error, "Error reading file \"%s\": ", filename);
 		return FALSE;
 	}

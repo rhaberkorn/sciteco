@@ -245,6 +245,12 @@ TE_CHECK([[@EB/foo/ @I/XXX/ :EF :Q*"N(0/0)' @EB/foo/ Z-3"N(0/0)']], 0, ignore, i
 TE_CHECK([[@EB/foo/ 1EF :Q*"=(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Read file into current buffer])
+AT_DATA([test.txt], [[0123456789
+]])
+TE_CHECK([[@I/Helloworld/5R @ER"test.txt" .-5-11"N(0/0)']], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([8-bit cleanliness])
 TE_CHECK([[0@I//J 0A"N(0/0)' :@S/^@/"F(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@EQa//0EE 1U*0EE 0:@EUa/f^@^@/ :Qa-4"N(0/0)' Ga Z-4"N(0/0)']], 0, ignore, ignore)

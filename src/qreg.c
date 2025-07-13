@@ -337,7 +337,7 @@ teco_qreg_plain_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
 	 * So if loading fails, teco_qreg_current will be
 	 * made the current document again.
 	 */
-	if (!teco_view_load(teco_qreg_view, filename, error))
+	if (!teco_view_load(teco_qreg_view, filename, TRUE, error))
 		return FALSE;
 
 	if (teco_qreg_current)
