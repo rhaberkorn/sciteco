@@ -202,7 +202,7 @@ jobs:
         pacman -S --noconfirm --needed
         base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain
         mingw-w64-x86_64-glib2 mingw-w64-x86_64-pdcurses
-        groff
+        groff zip
 
     - name: Configure Build
       env:
@@ -299,7 +299,7 @@ jobs:
         pacman -S --noconfirm --needed
         base-devel mingw-w64-x86_64-autotools mingw-w64-x86_64-toolchain
         mingw-w64-x86_64-glib2 mingw-w64-x86_64-gtk3 mingw-w64-x86_64-librsvg
-        groff
+        groff zip
 
     - name: Configure Build
       env:
