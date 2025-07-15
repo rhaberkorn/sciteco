@@ -160,14 +160,10 @@ teco_interface_init(void)
 	 * clipboards/selections are supported on this system,
 	 * so we register only some default ones.
 	 */
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new(""), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("P"), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("S"), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("C"), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("P"));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("S"));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("C"));
 
 	teco_interface.event_queue = g_queue_new();
 

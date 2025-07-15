@@ -1239,8 +1239,7 @@ teco_interface_init_clipboard(void)
 	if (rc == PDC_CLIP_SUCCESS)
 		PDC_freeclipboard(contents);
 
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new(""), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
 }
 
 gboolean
@@ -1506,14 +1505,10 @@ teco_interface_init_clipboard(void)
 	     !teco_qreg_table_find(&teco_qreg_table_globals, "$SCITECO_CLIPBOARD_GET", 22)))
 		return;
 
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new(""), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("P"), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("S"), TRUE, NULL);
-	teco_qreg_table_replace(&teco_qreg_table_globals,
-	                        teco_qreg_clipboard_new("C"), TRUE, NULL);
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new(""));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("P"));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("S"));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_clipboard_new("C"));
 }
 
 gboolean

@@ -25,8 +25,6 @@
 
 #include <Scintilla.h>
 
-//#include <rb3ptr.h>
-
 #include "sciteco.h"
 #include "string-utils.h"
 #include "file-utils.h"
@@ -803,19 +801,21 @@ teco_qreg_workingdir_new(void)
 	return teco_qreg_new(&vtable, "$", 1);
 }
 
-static inline gchar
+static inline const gchar *
 teco_qreg_clipboard_get_name(const teco_qreg_t *qreg)
 {
 	g_assert(1 <= qreg->head.name.len && qreg->head.name.len <= 2 &&
 	         *qreg->head.name.data == '~');
-	return qreg->head.name.len < 2 ? qreg->integer : qreg->head.name.data[1];
+	if (qreg->head.name.len > 1)
+		return qreg->head.name.data+1;
+	return teco_ed & TECO_ED_CLIP_PRIMARY ? "P" : "C";
 }
 
 static gboolean
 teco_qreg_clipboard_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
                                guint codepage, GError **error)
 {
-	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
+	const gchar *clipboard_name = teco_qreg_clipboard_get_name(qreg);
 
 	if (teco_ed & TECO_ED_AUTOEOL) {
 		/*
@@ -875,7 +875,7 @@ teco_qreg_clipboard_undo_set_string(teco_qreg_t *qreg, GError **error)
 	if (!teco_undo_enabled)
 		return TRUE;
 
-	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
+	const gchar *clipboard_name = teco_qreg_clipboard_get_name(qreg);
 
 	/*
 	 * Ownership of str is passed to the undo token.
@@ -893,7 +893,7 @@ static gboolean
 teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
                                guint *codepage, GError **error)
 {
-	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
+	const gchar *clipboard_name = teco_qreg_clipboard_get_name(qreg);
 
 	if (!(teco_ed & TECO_ED_AUTOEOL))
 		/*
@@ -937,7 +937,7 @@ teco_qreg_clipboard_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
 static gboolean
 teco_qreg_clipboard_load(teco_qreg_t *qreg, const gchar *filename, GError **error)
 {
-	gchar clipboard_name[] = {teco_qreg_clipboard_get_name(qreg), '\0'};
+	const gchar *clipboard_name = teco_qreg_clipboard_get_name(qreg);
 
 	g_auto(teco_string_t) str = {NULL, 0};
 
@@ -995,39 +995,6 @@ teco_qreg_table_init_locals(teco_qreg_table_t *table, gboolean must_undo)
 	/* numeric radix ("^R") */
 	table->radix = teco_qreg_radix_new();
 	teco_qreg_table_insert_unique(table, table->radix);
-}
-
-/**
- * Insert Q-register into table, possibly replacing a register with the same name.
- *
- * This is useful for initializing Q-registers late when the user could have
- * already created one in the profile.
- *
- * @param table Table to insert into
- * @param qreg Q-Register to insert
- * @param inherit_int Whether to preserve the numeric part of
- *   any Q-register found in the table.
- * @param error GError
- * @return TRUE if error occurred
- * @memberof teco_qreg_table_t
- */
-gboolean
-teco_qreg_table_replace(teco_qreg_table_t *table, teco_qreg_t *qreg,
-                        gboolean inherit_int, GError **error)
-{
-	teco_qreg_t *found = teco_qreg_table_insert(table, qreg);
-	if (!found)
-		return TRUE;
-
-	teco_int_t v;
-	if (inherit_int &&
-	    (!found->vtable->get_integer(found, &v, error) ||
-	     !qreg->vtable->set_integer(qreg, v, error)))
-		return FALSE;
-
-	rb3_replace(&found->head.head, &qreg->head.head);
-	teco_qreg_free(found);
-	return TRUE;
 }
 
 static inline void

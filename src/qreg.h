@@ -18,6 +18,8 @@
 
 #include <glib.h>
 
+//#include <rb3ptr.h>
+
 #include "sciteco.h"
 #include "view.h"
 #include "doc.h"
@@ -178,8 +180,26 @@ teco_qreg_table_insert_unique(teco_qreg_table_t *table, teco_qreg_t *qreg)
 	g_assert(found == NULL);
 }
 
-gboolean teco_qreg_table_replace(teco_qreg_table_t *table, teco_qreg_t *qreg,
-                                 gboolean inherit_int, GError **error);
+/**
+ * Insert Q-register into table, possibly replacing a register with the same name.
+ *
+ * This is useful for initializing Q-registers late when the user could have
+ * already created one in the profile.
+ *
+ * @param table Table to insert into
+ * @param qreg Q-Register to insert
+ *
+ * @memberof teco_qreg_table_t
+ */
+static inline void
+teco_qreg_table_replace(teco_qreg_table_t *table, teco_qreg_t *qreg)
+{
+	teco_qreg_t *found = teco_qreg_table_insert(table, qreg);
+	if (found) {
+		rb3_replace(&found->head.head, &qreg->head.head);
+		teco_qreg_free(found);
+	}
+}
 
 /** @memberof teco_qreg_table_t */
 static inline teco_qreg_t *
