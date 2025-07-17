@@ -146,6 +146,7 @@ TE_CHECK([[ [a 23Ub ]b Qb"N(0/0)']], 0, ignore, ignore)
 # FG will temporarily change the working directory to tests/testsuite.dir.
 TE_CHECK([[ [$ @FG'..' ]$ :Q$-1Q$-^^r"=(0/0)']], 0, ignore, ignore)
 TE_CHECK([[ [: @I/XXX/ ]: ."N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[ [a :]a"F(0/0)' ![! :]a"S(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 m4_define([TE_MAXINT32], [2147483647])

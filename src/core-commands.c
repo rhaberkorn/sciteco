@@ -639,7 +639,8 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		          .modifier_at = TRUE, .modifier_colon = 1},
 
 		['[']  = {&teco_state_pushqreg},
-		[']']  = {&teco_state_popqreg},
+		[']']  = {&teco_state_popqreg,
+		          .modifier_colon = 1},
 		['G']  = {&teco_state_getqregstring},
 		['Q']  = {&teco_state_queryqreg,
 		          .modifier_colon = 1},

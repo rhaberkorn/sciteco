@@ -99,17 +99,28 @@ teco_state_popqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 {
 	teco_state_expectqreg_reset(ctx);
 
-	return ctx->flags.mode == TECO_MODE_NORMAL &&
-	       !teco_qreg_stack_pop(qreg, error) ? NULL : &teco_state_start;
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return &teco_state_start;
+
+	if (!teco_machine_main_eval_colon(ctx))
+		return !teco_qreg_stack_pop(qreg, error) ? NULL : &teco_state_start;
+	teco_expressions_push(teco_bool(teco_qreg_stack_pop(qreg, NULL)));
+	return &teco_state_start;
 }
 
-/*$ "]" "]q" pop
+/*$ "]" "]q" ":]q" pop
  * ]q -- Restore Q-Register
+ * :]q -> Success|Failure
  *
  * Restore Q-Register <q> by replacing its contents
  * with the contents of the register saved on top of
  * the Q-Register push-down stack.
  * The stack entry is popped.
+ *
+ * When colon-modified, \fB]\fP returns a success boolean
+ * (-1) if there was a register to pop.
+ * If the stack was empty, a failure boolean (0) is returned
+ * instead of throwing an error.
  *
  * In interactive mode, the original contents of <q>
  * are not immediately reclaimed but are kept in memory
