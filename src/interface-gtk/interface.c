@@ -1224,7 +1224,7 @@ teco_interface_event_loop(GError **error)
 	 * This is not necessary on Windows since the icon included
 	 * as a resource will be used by default.
 	 */
-	static const gchar *icon_files[] = {
+	static const gchar *const icon_files[] = {
 		"sciteco-48.png", "sciteco-32.png", "sciteco-16.png"
 	};
 	GList *icon_list = NULL;

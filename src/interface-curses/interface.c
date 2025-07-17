@@ -1518,7 +1518,7 @@ teco_interface_set_clipboard(const gchar *name, const gchar *str, gsize str_len,
 	if (teco_interface_osc52_is_enabled())
 		return teco_interface_osc52_set_clipboard(name, str, str_len, error);
 
-	static const gchar *reg_name = "$SCITECO_CLIPBOARD_SET";
+	static const gchar reg_name[] = "$SCITECO_CLIPBOARD_SET";
 
 	teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, reg_name, strlen(reg_name));
 	if (!reg) {
@@ -1579,7 +1579,7 @@ teco_interface_get_clipboard(const gchar *name, gchar **str, gsize *len, GError 
 	if (teco_interface_osc52_is_enabled())
 		return teco_interface_osc52_get_clipboard(name, str, len, error);
 
-	static const gchar *reg_name = "$SCITECO_CLIPBOARD_GET";
+	static const gchar reg_name[] = "$SCITECO_CLIPBOARD_GET";
 
 	teco_qreg_t *reg = teco_qreg_table_find(&teco_qreg_table_globals, reg_name, strlen(reg_name));
 	if (!reg) {

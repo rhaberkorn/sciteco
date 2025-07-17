@@ -149,7 +149,7 @@ TECO_DEFINE_UNDO_CALL(teco_view_ssm, teco_view_t *, unsigned int, uptr_t, sptr_t
 void
 teco_view_set_representations(teco_view_t *ctx)
 {
-	static const char *reps[] = {
+	static const gchar reps[][4] = {
 		"^@", "^A", "^B", "^C", "^D", "^E", "^F", "^G",
 		"^H", "TAB" /* ^I */, "LF" /* ^J */, "^K", "^L", "CR" /* ^M */, "^N", "^O",
 		"^P", "^Q", "^R", "^S", "^T", "^U", "^V", "^W",

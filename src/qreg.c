@@ -1341,7 +1341,7 @@ teco_ed_hook(teco_ed_hook_t type, GError **error)
 	return teco_expressions_discard_args(error) &&
 	       teco_expressions_brace_close(error);
 
-	static const gchar *type2name[] = {
+	static const gchar *const type2name[] = {
 		[TECO_ED_HOOK_ADD-1]   = "ADD",
 		[TECO_ED_HOOK_EDIT-1]  = "EDIT",
 		[TECO_ED_HOOK_CLOSE-1] = "CLOSE",
