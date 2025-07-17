@@ -39,8 +39,8 @@ teco_state_expectqreg_initial(teco_machine_main_t *ctx, GError **error)
 	teco_state_t *current = ctx->parent.current;
 
 	/*
-	 * NOTE: We have to allocate a new instance always since `expectqreg`
-	 * is part of an union.
+	 * NOTE: This could theoretically be allocated once in
+	 * teco_machine_main_init(), but we'd have to set the type here anyway.
 	 */
 	ctx->expectqreg = teco_machine_qregspec_new(current->expectqreg.type, ctx->qreg_table_locals,
 	                                            ctx->parent.must_undo);
@@ -69,7 +69,7 @@ teco_state_expectqreg_input(teco_machine_main_t *ctx, gunichar chr, GError **err
 
 	/*
 	 * NOTE: ctx->expectqreg is preserved since we may want to query it from follow-up
-	 * states. This means, it must usually be stored manually in got_register_cb() via:
+	 * states. This means, it must usually be reset manually in got_register_cb() via:
 	 * teco_state_expectqreg_reset(ctx);
 	 */
 	return current->expectqreg.got_register_cb(ctx, qreg, table, error);

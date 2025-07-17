@@ -39,13 +39,6 @@ TECO_DECLARE_STATE(teco_state_eolcomment);
 
 teco_string_t teco_goto_skip_label = {NULL, 0};
 
-static gboolean
-teco_state_label_initial(teco_machine_main_t *ctx, GError **error)
-{
-	memset(&ctx->goto_label, 0, sizeof(ctx->goto_label));
-	return TRUE;
-}
-
 /*
  * NOTE: The comma is theoretically not allowed in a label
  * (see <O> syntax), but is accepted anyway since labels
@@ -108,7 +101,6 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 }
 
 TECO_DEFINE_STATE(teco_state_label,
-	.initial_cb = (teco_state_initial_cb_t)teco_state_label_initial,
 	.style = SCE_SCITECO_LABEL
 );
 

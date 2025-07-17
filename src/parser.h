@@ -514,17 +514,19 @@ struct teco_machine_main_t {
 	/*
 	 * teco_state_t-dependent state.
 	 *
-	 * Some of these cannot be used concurrently and are therefore
-	 * grouped into unions.
-	 * We could further optimize memory usage by dynamically allocating
-	 * some of these structures on demand.
+	 * Some cannot theoretically be used at the same time
+	 * but it's hard to prevent memory leaks if putting them into
+	 * a common union.
 	 */
-	teco_machine_expectstring_t		expectstring;
-	union {
-		teco_string_t			goto_label;
-		teco_machine_qregspec_t		*expectqreg;
-		teco_machine_scintilla_t	scintilla;
-	};
+	teco_machine_expectstring_t	expectstring;
+	/**
+	 * State machine for parsing Q-reg specifications.
+	 * This could theoretically be inlined, but it would introduce
+	 * a recursive dependency between qreg.h and parser.h.
+	 */
+	teco_machine_qregspec_t		*expectqreg;
+	teco_string_t			goto_label;
+	teco_machine_scintilla_t	scintilla;
 };
 
 typedef struct teco_machine_main_flags_t teco_machine_main_flags_t;

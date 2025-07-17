@@ -315,7 +315,7 @@ cleanup:
 
 /**
  * Load file into view's document.
- * 
+ *
  * @param ctx The view to load.
  * @param filename File name to read
  * @param clear Whether to completely replace document

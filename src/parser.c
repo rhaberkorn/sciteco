@@ -81,7 +81,7 @@ teco_machine_input(teco_machine_t *ctx, gunichar chr, GError **error)
 gboolean
 teco_state_end_of_macro(teco_machine_t *ctx, GError **error)
 {
-	g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+	g_set_error_literal(error, TECO_ERROR, TECO_ERROR_SYNTAX,
 	                    "Unterminated command");
 	return FALSE;
 }
@@ -386,7 +386,8 @@ teco_machine_main_clear(teco_machine_main_t *ctx)
 	teco_goto_table_clear(&ctx->goto_table);
 	teco_string_clear(&ctx->expectstring.string);
 	teco_machine_stringbuilding_clear(&ctx->expectstring.machine);
-	// FIXME: Could leak ctx->goto_label, but it's in an union
+	teco_string_clear(&ctx->goto_label);
+	teco_machine_qregspec_free(ctx->expectqreg);
 }
 
 /** Append string to result with case folding. */
@@ -1012,8 +1013,7 @@ teco_machine_stringbuilding_escape(teco_machine_stringbuilding_t *ctx, const gch
 void
 teco_machine_stringbuilding_clear(teco_machine_stringbuilding_t *ctx)
 {
-	if (ctx->machine_qregspec)
-		teco_machine_qregspec_free(ctx->machine_qregspec);
+	teco_machine_qregspec_free(ctx->machine_qregspec);
 	teco_string_clear(&ctx->code);
 }
 

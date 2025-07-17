@@ -157,7 +157,9 @@ teco_lexer_step(teco_view_t *view, teco_machine_main_t *machine,
 		 * The curly braces will be styled like regular commands.
 		 *
 		 * FIXME: This works only for top-level macro definitions,
-		 * not for embedded definitions.
+		 * not for nested definitions.
+		 * FIXME: The macrodef_machine's end-of-macro callback could be used
+		 * to detect and highlight an error on the closing `}`.
 		 * FIXME: This cannot currently be disabled, not even with SCI_SETPROPERTY.
 		 * We could only map it to an ED flag or
 		 * rewrite the lexer against the ILexer5 interface, which requires C++.

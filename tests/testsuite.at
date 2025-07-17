@@ -228,6 +228,14 @@ TE_CHECK([[@^Ua{@EQ.x//}  Ma @^U.x/FOO/]], 1, ignore, ignore)
 TE_CHECK([[@^Ua{@EQ.x// Mb Q*U*} Ma]], 0, ignore, ignore)
 AT_CLEANUP
 
+# This is also for detecting leaks under Valgrind.
+AT_SETUP([Unterminated commands])
+TE_CHECK([[G[foo^Q] ]], 1, ignore, ignore)
+TE_CHECK([[!foo ]], 1, ignore, ignore)
+TE_CHECK([[^Ua ]], 1, ignore, ignore)
+TE_CHECK([[EGa ]], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Loading files into Q-Registers])
 TE_CHECK([[@I/../ @EW/loadqreg.txt/ @EQa/loadqreg.txt/ :Qa-2"N(0/0)']], 0, ignore, ignore)
 # Does the same as FG..$. Afterwards, the parent directory should be shorter.
@@ -409,6 +417,8 @@ TE_CHECK([[@EU$"."]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Empty help topic])
+# FIXME: Produces a false positive under Valgrind
+# due to the value of $SCITECOPATH.
 TE_CHECK([[@?//]], 1, ignore, ignore)
 AT_CLEANUP
 
