@@ -420,10 +420,6 @@ Features:
    byte offsets. This would mainly be useful in ^E\^E.
  * EL command could also be used to convert all EOLs in the current
    buffer.
- * nEL should perhaps dirtify the buffer, at least when automatic
-   EOL translation is active, or always (see above).
-   The dirty flag exists to remind users to save their buffers and
-   nEL changes the result of a Save.
  * exclusive access to all opened files/buffers (locking):
    SciTECO will never be able to notice when a file has been
    changed externally. Also reversing a file write will overwrite

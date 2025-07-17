@@ -2337,6 +2337,13 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 			undo__teco_interface_ssm(SCI_SETEOLMODE,
 			                         teco_interface_ssm(SCI_GETEOLMODE, 0, 0), 0);
 		teco_interface_ssm(SCI_SETEOLMODE, eol_mode, 0);
+
+		/*
+		 * While the buffer contents were not changed,
+		 * the result of saving the file may differ,
+		 * so we still dirtify the buffer.
+		 */
+		teco_ring_dirtify();
 	} else if (teco_machine_main_eval_colon(ctx) > 0) {
 		const gchar *eol_seq = teco_eol_get_seq(teco_interface_ssm(SCI_GETEOLMODE, 0, 0));
 		teco_expressions_push(eol_seq);
