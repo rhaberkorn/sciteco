@@ -629,7 +629,7 @@ teco_state_read_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  */
 TECO_DEFINE_STATE_EXPECTFILE(teco_state_read_file);
 
-/*$ EF close
+/*$ "EF" ":EF" close
  * [n]EF -- Remove buffer from ring
  * -EF
  * [n]:EF

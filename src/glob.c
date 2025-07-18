@@ -327,7 +327,7 @@ teco_state_glob_pattern_done(teco_machine_main_t *ctx, const teco_string_t *str,
 	return &teco_state_glob_filename;
 }
 
-/*$ EN glob
+/*$ "EN" ":EN" glob
  * [type]EN[pattern]$[filename]$ -- Glob files or match filename and check file type
  * [type]:EN[pattern]$[filename]$ -> Success|Failure
  *

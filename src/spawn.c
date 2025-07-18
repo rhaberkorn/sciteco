@@ -491,7 +491,7 @@ cleanup:
 /* in cmdline.c */
 gboolean teco_state_execute_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar key, GError **error);
 
-/*$ EC pipe filter
+/*$ "EC" :EC" pipe filter
  * ECcommand$ -- Execute operating system command and filter buffer contents
  * linesECcommand$
  * -ECcommand$
@@ -624,7 +624,7 @@ teco_state_egcommand_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	return &teco_state_execute;
 }
 
-/*$ EG EGq
+/*$ "EG" "EGq" ":EGq"
  * EGq command$ -- Set Q-Register to output of operating system command
  * linesEGq command$
  * -EGq command$

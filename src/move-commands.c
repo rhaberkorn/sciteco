@@ -36,7 +36,7 @@
 #include "core-commands.h"
 #include "move-commands.h"
 
-/*$ J jump
+/*$ "J" ":J" jump
  * [position]J -- Go to position in buffer
  * [position]:J -> Success|Failure
  *
@@ -90,7 +90,7 @@ teco_move_chars(teco_int_t n)
 	return TECO_SUCCESS;
 }
 
-/*$ C move
+/*$ "C" ":C" move
  * [n]C -- Move dot <n> characters
  * -C
  * [n]:C -> Success|Failure
@@ -117,7 +117,7 @@ teco_state_start_move(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*$ R reverse
+/*$ "R" ":R" reverse
  * [n]R -- Move dot <n> characters backwards
  * -R
  * [n]:R -> Success|Failure
@@ -158,7 +158,7 @@ teco_move_lines(teco_int_t n)
 	return TECO_SUCCESS;
 }
 
-/*$ L line
+/*$ "L" ":L" line
  * [n]L -- Move dot <n> lines forwards
  * -L
  * [n]:L -> Success|Failure
@@ -193,7 +193,7 @@ teco_state_start_line(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*$ B backwards
+/*$ "B" ":B" backwards
  * [n]B -- Move dot <n> lines backwards
  * -B
  * [n]:B -> Success|Failure
@@ -328,7 +328,7 @@ teco_find_words(gsize *pos, teco_int_t n, gboolean end_of_word)
 	return TRUE;
 }
 
-/*$ W word
+/*$ "W" ":W" "@W" ":@W" word
  * [n]W -- Move dot <n> words forwards
  * -W
  * [n]:W -> Success|Failure
@@ -353,7 +353,7 @@ teco_find_words(gsize *pos, teco_int_t n, gboolean end_of_word)
  * buffer, the command yields an error.
  * If colon-modified it instead returns a condition code.
  */
-/*$ P
+/*$ "P" ":P" "@P" ":@P"
  * [n]P -- Move dot <n> words backwards
  * -P
  * [n]:P -> Success|Failure
@@ -401,7 +401,7 @@ teco_state_start_words(teco_machine_main_t *ctx, const gchar *cmd, gint factor, 
 	return &teco_state_start;
 }
 
-/*$ V
+/*$ "V" ":V" "@V" ":@V"
  * [n]V -- Delete words forwards
  * -V
  * [n]:V -> Success|Failure
@@ -417,7 +417,7 @@ teco_state_start_words(teco_machine_main_t *ctx, const gchar *cmd, gint factor, 
  * \(lq@V\(rq is especially useful to remove the remainder of the
  * current word.
  */
-/*$ Y
+/*$ "Y" ":Y" "@Y" ":@Y"
  * [n]Y -- Delete word backwards
  * -Y
  * [n]:Y -> Success|Failure
@@ -544,7 +544,7 @@ teco_state_start_kill(teco_machine_main_t *ctx, const gchar *cmd, gboolean by_li
 	return TRUE;
 }
 
-/*$ K kill
+/*$ "K" ":K" kill
  * [n]K -- Kill lines
  * -K
  * from,to K
@@ -572,7 +572,7 @@ teco_state_start_kill_lines(teco_machine_main_t *ctx, GError **error)
 	teco_state_start_kill(ctx, "K", TRUE, error);
 }
 
-/*$ D delete
+/*$ "D" ":D" delete
  * [n]D -- Delete characters
  * -D
  * from,to D
@@ -600,7 +600,7 @@ teco_state_start_delete_chars(teco_machine_main_t *ctx, GError **error)
 	teco_state_start_kill(ctx, "D", FALSE, error);
 }
 
-/*$ ^Q lines2glyphs glyphs2lines
+/*$ "^Q" ":^Q" lines2glyphs glyphs2lines
  * [n]^Q -> glyphs -- Convert between lines and glyph lengths or positions
  * [position]:^Q -> line
  *

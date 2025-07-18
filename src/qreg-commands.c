@@ -308,7 +308,7 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	return &teco_state_start;
 }
 
-/*$ Q Qq query
+/*$ "Q" "Qq" ":Qq" query
  * Qq -> n -- Query Q-Register existence, its integer or string characters
  * -Qq -> -n
  * <position>Qq -> code
@@ -446,7 +446,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 	return &teco_state_start;
 }
 
-/*$ ^Uq
+/*$ "^Uq" ":^Uq" "set string" append
  * [c1,c2,...]^Uq[string]$ -- Set or append to Q-Register string without string building
  * [c1,c2,...]:^Uq[string]$
  *
@@ -516,7 +516,7 @@ teco_state_setqregstring_building_done(teco_machine_main_t *ctx, const teco_stri
 	return teco_state_setqregstring_nobuilding_done(ctx, str, error);
 }
 
-/*$ EU EUq
+/*$ "EU" "EUq" ":EUq"
  * [c1,c2,...]EUq[string]$ -- Set or append to Q-Register string with string building characters
  * [c1,c2,...]:EUq[string]$
  *
@@ -564,7 +564,7 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 	return &teco_state_start;
 }
 
-/*$ G Gq get
+/*$ G Gq get paste
  * Gq -- Insert Q-Register string
  *
  * Inserts the string of Q-Register <q> into the buffer
@@ -603,7 +603,7 @@ teco_state_setqreginteger_got_register(teco_machine_main_t *ctx, teco_qreg_t *qr
 	return &teco_state_start;
 }
 
-/*$ U Uq
+/*$ "U" "Uq" ":Uq" set
  * nUq -- Set Q-Register integer
  * -Uq
  * [n]:Uq -> Success|Failure
@@ -687,7 +687,7 @@ teco_state_macro_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	return &teco_state_start;
 }
 
-/*$ M Mq eval
+/*$ "M" "Mq" ":Mq" call eval macro
  * Mq -- Execute macro
  * :Mq
  *
@@ -738,7 +738,7 @@ teco_state_indirect_done(teco_machine_main_t *ctx, const teco_string_t *str, GEr
 	return &teco_state_start;
 }
 
-/*$ EI indirect
+/*$ "EI" ":EI" indirect include
  * EIfile$ -- Execute from indirect command file
  * :EIfile$
  *
@@ -850,7 +850,7 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	return &teco_state_start;
 }
 
-/*$ X Xq
+/*$ "X" "Xq" ":Xq" "@Xq" ":@Xq" copy extract
  * [lines]Xq -- Copy into or append or cut to Q-Register
  * -Xq
  * from,toXq

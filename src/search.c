@@ -56,7 +56,7 @@ TECO_DEFINE_UNDO_SCALAR(teco_search_parameters_t);
  */
 static teco_search_parameters_t teco_search_parameters;
 
-/*$ ^X search-mode
+/*$ "^X" "search mode"
  * mode^X -- Set or get search mode flag
  * -^X
  * ^X -> mode
@@ -887,7 +887,7 @@ teco_state_search_done(teco_machine_main_t *ctx, const teco_string_t *str, GErro
 		##__VA_ARGS__ \
 	)
 
-/*$ S search pattern compare
+/*$ "S" ":S" "::S" search pattern compare
  * [n]S[pattern]$ -- Search for pattern
  * -S[pattern]$
  * from,toS[pattern]$
@@ -1030,7 +1030,7 @@ teco_state_search_all_done(teco_machine_main_t *ctx, const teco_string_t *str, G
 	return &teco_state_start;
 }
 
-/*$ N
+/*$ "N" ":N" "search all"
  * [n]N[pattern]$ -- Search over buffer-boundaries
  * -N[pattern]$
  * from,toN[pattern]$
@@ -1137,7 +1137,7 @@ teco_state_search_kill_done(teco_machine_main_t *ctx, const teco_string_t *str, 
 	return &teco_state_start;
 }
 
-/*$ FK
+/*$ "FK" ":FK"
  * FK[pattern]$ -- Delete up to occurrence of pattern
  * [n]FK[pattern]$
  * -FK[pattern]$
@@ -1188,7 +1188,7 @@ teco_state_search_delete_done(teco_machine_main_t *ctx, const teco_string_t *str
 	return &teco_state_start;
 }
 
-/*$ FD
+/*$ "FD" ":FD" "::FD"
  * [n]FD[pattern]$ -- Delete occurrence of pattern
  * -FD[pattern]$
  * from,toFD[pattern]$
@@ -1249,7 +1249,7 @@ teco_state_replace_done(teco_machine_main_t *ctx, const teco_string_t *str, GErr
 	                                     : &teco_state_replace_ignore;
 }
 
-/*$ FS
+/*$ "FS" ":FS" "::FS"
  * [n]FS[pattern]$[string]$ -- Search and replace
  * -FS[pattern]$[string]$
  * from,toFS[pattern]$[string]$
@@ -1354,7 +1354,7 @@ teco_state_replace_default_done(teco_machine_main_t *ctx, const teco_string_t *s
 	                                     : &teco_state_replace_default_ignore;
 }
 
-/*$ FR
+/*$ "FR" ":FR" "::FR" search-replace
  * [n]FR[pattern]$[string]$ -- Search and replace with default
  * -FR[pattern]$[string]$
  * from,toFR[pattern]$[string]$
@@ -1393,7 +1393,7 @@ teco_state_replace_default_all_done(teco_machine_main_t *ctx, const teco_string_
 	return state;
 }
 
-/*$ FN
+/*$ "FN" ":FN" "::FN" "search-replace all"
  * [n]FN[pattern]$[string]$ -- Search and replace with default over buffer-boundaries
  * -FN[pattern]$[string]$
  * from,toFN[pattern]$[string]$

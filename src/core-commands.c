@@ -377,7 +377,7 @@ teco_state_start_loop_close(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*$ ";" break
+/*$ ";" ":;" break
  * [bool]; -- Conditionally break from loop
  * [bool]:;
  *
@@ -905,7 +905,7 @@ TECO_DEFINE_STATE_COMMAND(teco_state_start,
 	.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE
 );
 
-/*$ F<
+/*$ "F<" ":F<"
  * F< -- Go to loop start or jump to beginning of macro
  * :F<
  *
@@ -946,7 +946,7 @@ teco_state_fcommand_loop_start(teco_machine_main_t *ctx, GError **error)
 	ctx->macro_pc = lctx->pc;
 }
 
-/*$ F> continue
+/*$ "F>" ":F>" continue
  * F> -- Go to loop end or return from macro
  * :F>
  *
@@ -1382,7 +1382,7 @@ teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*$ ^E glyphs2bytes bytes2glyphs
+/*$ "^E" ":^E" glyphs2bytes bytes2glyphs
  * glyphs^E -> bytes -- Translate between glyph and byte indexes
  * bytes:^E -> glyphs
  * ^E -> bytes
@@ -1543,7 +1543,7 @@ teco_ranges_cleanup(void)
 	g_free(teco_ranges);
 }
 
-/*$ ^B date time timestamp
+/*$ "^B" ":^B" "::^B" date time timestamp
  * ^B -> (((year-1900)*16 + month)*32 + day) -- Retrieve date, time or timestamp
  * :^B -> seconds
  * ::^B -> timestamp
@@ -2241,7 +2241,7 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
-/*$ EL eol
+/*$ "EL" ":EL" EOL
  * 0EL -- Set or get End of Line mode
  * 13,10:EL
  * 1EL
@@ -2404,7 +2404,7 @@ teco_codepage2str(guint codepage)
 	return NULL;
 }
 
-/*$ EE encoding codepage charset
+/*$ "EE" ":EE" encoding codepage charset
  * codepageEE -- Edit current document's encoding (codepage/charset)
  * EE -> codepage
  * codepage:EE
@@ -2598,7 +2598,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		teco_interface_ssm(SCI_GOTOPOS, teco_interface_glyphs2bytes(dot_glyphs), 0);
 }
 
-/*$ EX exit
+/*$ "EX" ":EX" exit
  * [bool]EX -- Exit program
  * -EX
  * :EX
