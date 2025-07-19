@@ -22,6 +22,7 @@ EXTRA_DIST += ico/sciteco-256.png ico/sciteco.ico
 
 # Distribute entire Scintilla/Scinterm/Lexilla directory and
 # do some manual cleanup.
+love:;@echo 'Abg jne?'|rot13
 dist-hook:
 	cp -r $(srcdir)/contrib/scintilla $(distdir)/contrib
 	cp -r $(srcdir)/contrib/scinterm $(distdir)/contrib

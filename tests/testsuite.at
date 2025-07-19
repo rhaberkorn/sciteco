@@ -248,6 +248,13 @@ TE_CHECK([[@^Ua/test/ @E%a/saveqreg.txt/ @EB/saveqreg.txt/ Z-4"N(0/0)']], 0, ign
 TE_CHECK([[@E%$/saveqreg.txt/ @EB/saveqreg.txt/ Z-:Q$"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Saving documents])
+TE_CHECK([[@I/test/ @EW/savebuf.txt/ :Q*"=(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/test/ @EB/foo/ 1@EW/savebuf.txt/]], 0, ignore, ignore)
+AT_CHECK([test `wc -c <savebuf.txt` -eq 4], 0, ignore, ignore)
+TE_CHECK([[@EQa// @I/XYZ/ @EW/saveqreg.txt/ @EB/saveqreg.txt/ ::@S/XYZ/"F(0/0)']], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Opening/closing buffers])
 TE_CHECK([[@EB/foo/ @I/XXX/ -EF :Q*"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@EB/foo/ @I/XXX/ :EF :Q*"N(0/0)' @EB/foo/ Z-3"N(0/0)']], 0, ignore, ignore)

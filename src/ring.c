@@ -55,7 +55,8 @@ teco_buffer_set_filename(teco_buffer_t *ctx, const gchar *filename)
 	gchar *resolved = teco_file_get_absolute_path(filename);
 	g_free(ctx->filename);
 	ctx->filename = resolved;
-	teco_interface_info_update(ctx);
+	if (ctx == teco_ring_current && !teco_qreg_current)
+		teco_interface_info_update(ctx);
 }
 
 /** @memberof teco_buffer_t */
@@ -107,7 +108,8 @@ teco_buffer_save(teco_buffer_t *ctx, const gchar *filename, GError **error)
 	 * Undirtify
 	 * NOTE: info update is performed by set_filename()
 	 */
-	undo__teco_interface_info_update_buffer(ctx);
+	if (ctx == teco_ring_current && !teco_qreg_current)
+		undo__teco_interface_info_update_buffer(ctx);
 	teco_undo_gboolean(ctx->dirty) = FALSE;
 
 	/*
@@ -478,7 +480,7 @@ teco_state_edit_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 
 /*$ EB edit
  * [n]EB[file]$ -- Open or edit file
- * nEB$
+ * [n]EB$
  *
  * Opens or edits the file with name <file>.
  * If <file> is not in the buffer ring it is opened,
@@ -540,36 +542,47 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
+	if (!teco_expressions_eval(FALSE, error))
+		return NULL;
+
 	g_autofree gchar *filename = teco_file_expand_path(str->data);
-	if (teco_qreg_current) {
-		if (!teco_qreg_current->vtable->save(teco_qreg_current, filename, error))
+
+	/*
+	 * This is like implying teco_ring_get_id(teco_ring_current)
+	 * but avoids the O(n) ring iterations.
+	 */
+	teco_buffer_t *buffer = teco_ring_current;
+	if (teco_expressions_args() > 0) {
+		teco_int_t id;
+		if (!teco_expressions_pop_num_calc(&id, 0, error))
 			return NULL;
-	} else {
-		if (!teco_buffer_save(teco_ring_current, *filename ? filename : NULL, error))
-			return NULL;
+		buffer = teco_ring_find(id);
+	} else if (teco_qreg_current) {
+		return !teco_qreg_current->vtable->save(teco_qreg_current, filename, error)
+		       ? NULL : &teco_state_start;
 	}
 
-	return &teco_state_start;
+	return !teco_buffer_save(buffer, *filename ? filename : NULL, error) ? NULL : &teco_state_start;
 }
 
 /*$ EW write save
- * EW$ -- Save current buffer or Q-Register
- * EWfile$
+ * EW$ -- Save buffer or Q-Register
+ * [n]EW[file]$
  *
- * Saves the current buffer to disk.
+ * Saves the chosen buffer with id <n> to disk
+ * By default, the current buffer is saved.
  * If the buffer was dirty, it will be clean afterwards.
  * If the string argument <file> is not empty,
  * the buffer is saved with the specified file name
  * and is renamed in the ring.
  *
- * The EW command also works if the current document
- * is a Q-Register, i.e. a Q-Register is edited.
- * In this case, the string contents of the current
- * Q-Register are saved to <file>.
+ * If the current document is a Q-Register and <n> is not given,
+ * the string contents of the current Q-Register are saved to <file>
+ * (cf. \fBE%\fIq\fR command)..
  * Q-Registers have no notion of associated file names,
- * so <file> must be always specified.
+ * so <file> must be always specified in this case.
  *
- * In interactive mode, EW is executed immediately and
+ * In interactive mode, \fBEW\fP is executed immediately and
  * may be rubbed out.
  * In order to support that, \*(ST creates so called
  * save point files.
@@ -581,9 +594,9 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
  * Save point files are always created in the same directory
  * as the original file to ensure that no copying of the file
  * on disk is necessary but only a rename of the file.
- * When rubbing out the EW command, \*(ST restores the latest
+ * When rubbing out the \fBEW\fP command, \*(ST restores the latest
  * save point file by moving (renaming) it back to its
- * original path \(em also not requiring any on-disk copying.
+ * original path -- also not requiring any on-disk copying.
  * \*(ST is impossible to crash, but just in case it still
  * does it may leave behind these save point files which
  * must be manually deleted by the user.
@@ -676,30 +689,29 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
 			return;
 		buffer = teco_ring_find(ABS(id));
 		force = id < 0;
+	} else if (teco_qreg_current) {
+		/*
+		 * TODO: Should perhaps remove the register like FQq.
+		 */
+		const teco_string_t *name = &teco_qreg_current->head.name;
+		g_autofree gchar *name_printable = teco_string_echo(name->data, name->len);
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Q-Register \"%s\" currently edited", name_printable);
+		return;
 	} else {
 		buffer = teco_ring_current;
 		force = teco_num_sign < 0;
 		teco_set_num_sign(1);
 	}
 
-	if (buffer == teco_ring_current && teco_qreg_current) {
-		const teco_string_t *name = &teco_qreg_current->head.name;
-		g_autofree gchar *name_printable = teco_string_echo(name->data, name->len);
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Q-Register \"%s\" currently edited", name_printable);
-		return;
-	}
-
 	if (teco_machine_main_eval_colon(ctx) > 0) {
 		if (!teco_buffer_save(buffer, NULL, error))
 			return;
-	} else {
-		if (!force && buffer->dirty) {
-			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-			            "Buffer \"%s\" is dirty",
-				    buffer->filename ? : "(Unnamed)");
-			return;
-		}
+	} else if (!force && buffer->dirty) {
+		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+		            "Buffer \"%s\" is dirty",
+			    buffer->filename ? : "(Unnamed)");
+		return;
 	}
 
 	teco_ring_close(buffer, error);

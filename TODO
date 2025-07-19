@@ -318,7 +318,6 @@ Features:
    rubbed out command line).
  * some missing useful VideoTECO/TECO-11 commands and unnecessary
    incompatibilities:
-   * nEW to save a buffer by id
    * EI$ would "resume" command input from the terminal in TECO-11.
      But how is that different from ^C/$$ in SciTECO?
    * In TECOC, <EI> searches the TEC_LIBRARY and ignores the file extension.
@@ -406,6 +405,11 @@ Features:
  * Command to free Q-Register (remove from table).
    e.g. FQ (free Q). :FQ could free by QRegister prefix name for
    the common use case of Q-Register subtables and lists.
+ * EF is currently disallowed when editing a Q-Reg unless a numeric
+   argument is specified.
+   On Video TECO it appears to free the current Q-Reg, which probably
+   makes more sense than the current semantics.
+   Should be changed along with implementing FQq.
  * multiline commandline
    * Perhaps use Scintilla view as mini buffer.
      This means patching Scintilla, so it does not break lines
@@ -694,9 +698,6 @@ Features:
    Allows us to do CI on FreeBSD and potentially other more obscure systems.
    Also, this will allow us to migrate to another hoster like
    Savannah or Sourcehut later on.
- * nEF is currently disallowed when editing a Q-Reg as long as
-   n == Q* (default). Perhaps it should always be allowed without
-   switching from the Q-Reg view.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
