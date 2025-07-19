@@ -391,6 +391,12 @@ AT_SETUP([Search accesses wrong Q-Register table])
 TE_CHECK([[@^U.#xx/123/ @^Um{:@S/^EG.#xx/$} :Mm Mm]], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Invalid buffer ids])
+TE_CHECK([[42@EB//]], 1, ignore, ignore)
+TE_CHECK([[23@EW//]], 1, ignore, ignore)
+TE_CHECK([[11EF]], 1, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Memory limiting during spawning])
 # This might result in an OOM if memory limiting is not working
 TE_CHECK([[50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero']], 1, ignore, ignore)

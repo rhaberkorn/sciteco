@@ -47,6 +47,7 @@ typedef enum {
 	TECO_ERROR_WORDS,
 	TECO_ERROR_RANGE,
 	TECO_ERROR_SUBPATTERN,
+	TECO_ERROR_INVALIDBUF,
 	TECO_ERROR_INVALIDQREG,
 	TECO_ERROR_QREGOPUNSUPPORTED,
 	TECO_ERROR_QREGCONTAINSNULL,
@@ -123,6 +124,13 @@ teco_error_subpattern_set(GError **error, const gchar *cmd)
 {
 	g_set_error(error, TECO_ERROR, TECO_ERROR_SUBPATTERN,
 	            "Invalid subpattern specified for <%s>", cmd);
+}
+
+static inline void
+teco_error_invalidbuf_set(GError **error, teco_int_t id)
+{
+	g_set_error(error, TECO_ERROR, TECO_ERROR_INVALIDBUF,
+	            "Invalid buffer id %" TECO_INT_FORMAT, id);
 }
 
 static inline void

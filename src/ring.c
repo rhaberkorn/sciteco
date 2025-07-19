@@ -305,8 +305,7 @@ teco_ring_edit_by_id(teco_int_t id, GError **error)
 {
 	teco_buffer_t *buffer = teco_ring_find(id);
 	if (!buffer) {
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Invalid buffer id %" TECO_INT_FORMAT, id);
+		teco_error_invalidbuf_set(error, id);
 		return FALSE;
 	}
 
@@ -557,6 +556,10 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 		if (!teco_expressions_pop_num_calc(&id, 0, error))
 			return NULL;
 		buffer = teco_ring_find(id);
+		if (!buffer) {
+			teco_error_invalidbuf_set(error, id);
+			return NULL;
+		}
 	} else if (teco_qreg_current) {
 		return !teco_qreg_current->vtable->save(teco_qreg_current, filename, error)
 		       ? NULL : &teco_state_start;
@@ -688,6 +691,10 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
 		if (!teco_expressions_pop_num_calc(&id, 0, error))
 			return;
 		buffer = teco_ring_find(ABS(id));
+		if (!buffer) {
+			teco_error_invalidbuf_set(error, ABS(id));
+			return;
+		}
 		force = id < 0;
 	} else if (teco_qreg_current) {
 		/*
