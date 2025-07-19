@@ -487,6 +487,19 @@ teco_qreg_external_edit(teco_qreg_t *qreg, GError **error)
 }
 
 static gboolean
+teco_qreg_external_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
+{
+	g_auto(teco_string_t) buf = {NULL, 0};
+	guint codepage;
+
+	if (!qreg->vtable->undo_set_string(qreg, error) ||
+	    !qreg->vtable->get_string(qreg, &buf.data, &buf.len, &codepage, error))
+		return FALSE;
+	teco_string_append(&buf, str, len);
+	return qreg->vtable->set_string(qreg, buf.data, buf.len, codepage, error);
+}
+
+static gboolean
 teco_qreg_external_exchange_string(teco_qreg_t *qreg, teco_doc_t *src, GError **error)
 {
 	g_auto(teco_string_t) other_str, own_str = {NULL, 0};
@@ -604,6 +617,7 @@ teco_qreg_external_save(teco_qreg_t *qreg, const gchar *filename, GError **error
 	.exchange_string	= teco_qreg_external_exchange_string, \
 	.undo_exchange_string	= teco_qreg_external_undo_exchange_string, \
 	.edit			= teco_qreg_external_edit, \
+	.append_string		= teco_qreg_external_append_string, \
 	.get_character		= teco_qreg_external_get_character, \
 	.get_length		= teco_qreg_external_get_length, \
 	.load			= teco_qreg_external_load, \
@@ -636,6 +650,8 @@ teco_qreg_bufferinfo_get_integer(teco_qreg_t *qreg, teco_int_t *ret, GError **er
 /*
  * FIXME: Something could be implemented here. There are 2 possibilities:
  * Either it renames the current buffer, or opens a file (alternative to EB).
+ * Should we implement it, we can probably remove the append_string
+ * implementation below.
  */
 static gboolean
 teco_qreg_bufferinfo_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
@@ -741,17 +757,6 @@ teco_qreg_workingdir_undo_set_string(teco_qreg_t *qreg, GError **error)
 	return TRUE;
 }
 
-/*
- * FIXME: Redundant with teco_qreg_bufferinfo_append_string()...
- * Best solution would be to simply implement them.
- */
-static gboolean
-teco_qreg_workingdir_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
-{
-	teco_error_qregopunsupported_set(error, qreg->head.name.data, qreg->head.name.len, FALSE);
-	return FALSE;
-}
-
 static gboolean
 teco_qreg_workingdir_get_string(teco_qreg_t *qreg, gchar **str, gsize *len,
                                 guint *codepage, GError **error)
@@ -785,7 +790,6 @@ teco_qreg_workingdir_new(void)
 	static teco_qreg_vtable_t vtable = TECO_INIT_QREG_EXTERNAL(
 		.set_string		= teco_qreg_workingdir_set_string,
 		.undo_set_string	= teco_qreg_workingdir_undo_set_string,
-		.append_string		= teco_qreg_workingdir_append_string,
 		.get_string		= teco_qreg_workingdir_get_string
 	);
 
@@ -849,17 +853,6 @@ teco_qreg_clipboard_set_string(teco_qreg_t *qreg, const gchar *str, gsize len,
 
 	/* should not be reached */
 	return TRUE;
-}
-
-/*
- * FIXME: Redundant with teco_qreg_bufferinfo_append_string()...
- * Best solution would be to simply implement them.
- */
-static gboolean
-teco_qreg_clipboard_append_string(teco_qreg_t *qreg, const gchar *str, gsize len, GError **error)
-{
-	teco_error_qregopunsupported_set(error, qreg->head.name.data, qreg->head.name.len, FALSE);
-	return FALSE;
 }
 
 static gboolean
@@ -953,7 +946,6 @@ teco_qreg_clipboard_new(const gchar *name)
 	static teco_qreg_vtable_t vtable = TECO_INIT_QREG_EXTERNAL(
 		.set_string		= teco_qreg_clipboard_set_string,
 		.undo_set_string	= teco_qreg_clipboard_undo_set_string,
-		.append_string		= teco_qreg_clipboard_append_string,
 		.get_string		= teco_qreg_clipboard_get_string,
 		.load			= teco_qreg_clipboard_load
 	);

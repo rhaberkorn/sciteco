@@ -1549,7 +1549,6 @@ but querying \(lq$\(rq will still return an absolute path.
 The \(lq$\(rq register may also be edited but changing its
 string contents this way has no effect on the current
 working directory.
-Appending to the \(lq$\(rq register is unsupported.
 The register is initialized automatically on startup.
 .TP
 .BR $ " (Escape)"

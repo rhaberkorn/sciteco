@@ -303,6 +303,11 @@ AT_SETUP([Memory limiting])
 TE_CHECK([[50*1000*1000,2EJ <[a> !]!]], 1, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Change working directory])
+TE_CHECK([[:Q$Ul @FG'..' Ql-:Q$-1"<(0/0)']], 0, ignore, ignore)
+TE_CHECK([[:Q$Ul :@^U$'/..' Ql-:Q$-1"<(0/0)']], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Execute external command])
 # TODO: It would be a better test to generate a random number of bytes.
 # Unfortunately, neither $RANDOM, shuf nor jot are portable.
