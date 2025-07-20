@@ -387,7 +387,7 @@ teco_expressions_clear(void)
  * @param buffer The output buffer of at least TECO_EXPRESSIONS_FORMAT_LEN characters.
  *               The output string will be null-terminated.
  * @param number The number to format.
- * @param table The local Q-Register table that contains the appropriate radix register (^R).
+ * @param qreg The radix register (^R).
  * @return A pointer into buffer to the beginning of the formatted number.
  */
 gchar *

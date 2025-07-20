@@ -141,6 +141,10 @@ Batch mode does not have these restrictions.
 .IP \(bu
 A few commands that modify the command line are only available
 in interactive mode.
+.IP \(bu
+A few commands like \fB^C\fP are disallowed in interactive mode
+when run from the command-line macro or behave slightly
+differently compared to batch mode (e.g. \fB$$\fP or \fB==\fP).
 .RE
 .
 .LP

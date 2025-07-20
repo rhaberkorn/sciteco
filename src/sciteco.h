@@ -25,10 +25,12 @@
 
 #if TECO_INTEGER == 32
 typedef gint32 teco_int_t;
-#define TECO_INT_FORMAT G_GINT32_FORMAT
+#define TECO_INT_MODIFIER G_GINT32_MODIFIER
+#define TECO_INT_FORMAT   G_GINT32_FORMAT
 #elif TECO_INTEGER == 64
 typedef gint64 teco_int_t;
-#define TECO_INT_FORMAT G_GINT64_FORMAT
+#define TECO_INT_MODIFIER G_GINT64_MODIFIER
+#define TECO_INT_FORMAT   G_GINT64_FORMAT
 #else
 #error Invalid TECO integer storage size
 #endif

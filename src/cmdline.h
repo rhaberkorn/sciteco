@@ -84,6 +84,13 @@ teco_cmdline_keymacro_c(gchar key, GError **error)
 	return TRUE;
 }
 
+/** Check whether we are executing directly from the end of the command line. */
+static inline gboolean
+teco_cmdline_is_executing(teco_machine_main_t *ctx)
+{
+	return ctx == &teco_cmdline.machine && ctx->macro_pc == teco_cmdline.effective_len;
+}
+
 extern gboolean teco_quit_requested;
 
 /*
