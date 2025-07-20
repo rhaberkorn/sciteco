@@ -304,6 +304,9 @@ teco_cmdline_keypress(const gchar *data, gsize len, GError **error)
 
 		teco_string_clear(&teco_last_cmdline);
 		teco_last_cmdline = teco_cmdline.str;
+		/*
+		 * FIXME: Preserve the command line after the $$.
+		 */
 		memset(&teco_cmdline.str, 0, sizeof(teco_cmdline.str));
 		teco_cmdline.effective_len = 0;
 

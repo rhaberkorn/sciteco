@@ -545,7 +545,15 @@ AT_CLEANUP
 
 AT_SETUP([Rub out from empty string argument])
 # Should rub out the modifiers as well.
+# Will currently fail because it tries to execute `:@{`.
 TE_CHECK_CMDLINE([[:@^Ua/]]TE_RUBOUT_WORD[[{Z"N(0/0)'}]], 0, ignore, stderr)
-AT_CHECK([[$GREP "^Error:" stderr]], 0, ignore ignore)
+AT_CHECK([[! $GREP "^Error:" stderr]], 0, ignore, ignore)
+AT_XFAIL_IF(true)
+AT_CLEANUP
+
+AT_SETUP([Command-line termination])
+# Everything after the $$ should be preserved.
+TE_CHECK_CMDLINE([[{@I/$$1234=/}]], 0, stdout, ignore)
+AT_CHECK([[$GREP "1234" stdout]], 0, ignore, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP

@@ -5,6 +5,8 @@ Tasks:
    Perhaps we can make use of the arbitrary RGB color feauture?
 
 Known Bugs:
+ * {@I/$$23=/} doesn't insert anything after $$.
+   This would require some refactoring.
  * Gtk: The control characters in tutorial.woman are still styled with
    the variable-width font since its rendered in STYLE_CONTROLCHAR (36),
    which is reset in woman.tes.
