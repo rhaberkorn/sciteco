@@ -66,11 +66,11 @@ PLIST_SUB+=		GTK="" \
 .endif
 
 OPTIONS_DEFINE=		LEXILLA MALLOC_REPLACEMENT TECO_INTEGER_32
-OPTIONS_DEFAULT=	LEXILLA
+OPTIONS_DEFAULT=	LEXILLA MALLOC_REPLACEMENT
 OPTIONS_SUB=		yes
 
 LEXILLA_DESC=			Build with Lexilla lexer support (larger)
-MALLOC_REPLACEMENT_DESC=	Force replacement of system malloc()
+MALLOC_REPLACEMENT_DESC=	Replace system malloc() for memory limiting
 TECO_INTEGER_32_DESC=		Use 32-bit TECO integers
 
 LEXILLA_CONFIGURE_OFF=			--without-lexilla
