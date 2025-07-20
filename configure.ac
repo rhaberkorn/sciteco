@@ -410,10 +410,8 @@ AC_ARG_ENABLE(malloc-replacement,
 	[malloc_replacement=$enableval], [malloc_replacement=check])
 if [[ $malloc_replacement = check ]]; then
 	# We currently do not support dlmalloc on Windows and Mac OS.
-	# It works on FreeBSD, but is slower than the polling fallback,
-	# it has been disabled by default.
 	case $host in
-	*-*-*bsd* | *-*-darwin* | *-mingw*) malloc_replacement=no;;
+	*-*-darwin* | *-mingw*) malloc_replacement=no;;
 	*) malloc_replacement=yes;;
 	esac
 fi

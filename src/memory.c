@@ -251,13 +251,19 @@
  * It is of course possible to query the program's RSS via OS APIs.
  * This has long been avoided because it is naturally platform-dependant and
  * some of the APIs have proven to be too slow for frequent polling.
+ * Also, this will only reliably work if malloc_trim(0) does what it's
+ * supposed to do.
  *
  * - Windows has GetProcessMemoryInfo() which is quite slow.
  *   When polled on a separate thread, the slow down is very acceptable.
+ * - POSIX has getrusage().
+ *   __Its performance on different OS is still untested!__
+ *   It reports in different units on different systems, see
+ *   mimalloc/src/prim/unix/prim.c.
+ *   The maxrss field does not shrink even with a working malloc_trim().
  * - OS X has task_info().
  *   __Its performance is still untested!__
  * - FreeBSD has sysctl().
- *   __Its performance is still untested!__
  * - Linux has no APIs but /proc/self/statm.
  *   Reading it is naturally very slow, but at least of constant time.
  *   When polled on a separate thread, the slow down is very acceptable.
@@ -471,10 +477,8 @@ teco_memory_get_usage(void)
 /*
  * Practically only for FreeBSD.
  *
- * The malloc replacement via dlmalloc also works on FreeBSD,
- * but this implementation has been benchmarked to be up to 4 times faster
- * (but only if we poll in a separate thread).
- * On the downside, this will of course be less precise.
+ * Since FreeBSD supports dlmalloc(), which is generally faster than
+ * jemalloc with a poll thread, this is not usually required.
  */
 static gsize
 teco_memory_get_usage(void)
