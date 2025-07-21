@@ -25,11 +25,30 @@
 /** non-operational characters in teco_state_start */
 #define TECO_NOOPS " \f\r\n\v"
 
+/* in cmdline.c */
+gboolean teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                             gunichar key, GError **error);
+
+/**
+ * @class TECO_DEFINE_STATE_COMMAND
+ * @implements TECO_DEFINE_STATE_CASEINSENSITIVE
+ * @ingroup states
+ *
+ * Base state for everything where part of a one or two letter command
+ * is accepted.
+ */
+#define TECO_DEFINE_STATE_COMMAND(NAME, ...) \
+	TECO_DEFINE_STATE_CASEINSENSITIVE(NAME, \
+		.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t) \
+		                       teco_state_command_process_edit_cmd, \
+		.style = SCE_SCITECO_COMMAND, \
+		##__VA_ARGS__ \
+	)
+
 /*
  * FIXME: Most of these states can probably be private/static
  * as they are only referenced from teco_state_start.
  */
-TECO_DECLARE_STATE(teco_state_start);
 TECO_DECLARE_STATE(teco_state_fcommand);
 
 void teco_undo_change_dir_to_current(void);
@@ -38,9 +57,6 @@ TECO_DECLARE_STATE(teco_state_changedir);
 TECO_DECLARE_STATE(teco_state_condcommand);
 TECO_DECLARE_STATE(teco_state_control);
 TECO_DECLARE_STATE(teco_state_ascii);
-TECO_DECLARE_STATE(teco_state_escape);
-TECO_DECLARE_STATE(teco_state_ctlc);
-TECO_DECLARE_STATE(teco_state_ctlc_control);
 TECO_DECLARE_STATE(teco_state_ecommand);
 
 typedef struct {
@@ -57,7 +73,8 @@ gboolean teco_state_insert_process(teco_machine_main_t *ctx, const teco_string_t
 teco_state_t *teco_state_insert_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error);
 
 /* in cmdline.c */
-gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx, gunichar chr, GError **error);
+gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
+                                            gunichar chr, GError **error);
 
 /**
  * @class TECO_DEFINE_STATE_INSERT
@@ -82,3 +99,26 @@ gboolean teco_state_insert_process_edit_cmd(teco_machine_main_t *ctx, teco_machi
 
 TECO_DECLARE_STATE(teco_state_insert_plain);
 TECO_DECLARE_STATE(teco_state_insert_indent);
+
+/**
+ * @class TECO_DEFINE_STATE_START
+ * @implements TECO_DEFINE_STATE_COMMAND
+ * @ingroup states
+ *
+ * Base state for everything where a new command can begin
+ * (the start state itself and all lookahead states).
+ */
+#define TECO_DEFINE_STATE_START(NAME, ...) \
+	TECO_DEFINE_STATE_COMMAND(NAME, \
+		.end_of_macro_cb = NULL, /* Allowed at the end of a macro! */ \
+		.is_start = TRUE, \
+		.keymacro_mask = TECO_KEYMACRO_MASK_START | TECO_KEYMACRO_MASK_CASEINSENSITIVE, \
+		##__VA_ARGS__ \
+	)
+
+teco_state_t *teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
+
+TECO_DECLARE_STATE(teco_state_start);
+TECO_DECLARE_STATE(teco_state_escape);
+TECO_DECLARE_STATE(teco_state_ctlc);
+TECO_DECLARE_STATE(teco_state_ctlc_control);
