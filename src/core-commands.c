@@ -609,7 +609,8 @@ teco_print(guint radix, GError **error)
  *
  * If you want to print multiple values from the stack,
  * you have to put the \(lq=\(rq into a pass-through loop
- * or separate the commands with whitespace.
+ * or separate the commands with
+ * whitespace (e.g. \(lq^Y= =\(rq).
  */
 /*
  * In order to imitate TECO-11 closely, we apply the lookahead
