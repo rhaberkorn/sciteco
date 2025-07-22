@@ -233,16 +233,20 @@ teco_ring_dirtify(void)
 	teco_interface_info_update(teco_ring_current);
 }
 
-gboolean
-teco_ring_is_any_dirty(void)
+/** Get id of first dirty buffer, or otherwise 0 */
+guint
+teco_ring_get_first_dirty(void)
 {
+	guint id = 1;
+
 	for (teco_tailq_entry_t *cur = teco_ring_head.first; cur != NULL; cur = cur->next) {
 		teco_buffer_t *buffer = (teco_buffer_t *)cur;
 		if (buffer->dirty)
-			return TRUE;
+			return id;
+		id++;
 	}
 
-	return FALSE;
+	return 0;
 }
 
 gboolean

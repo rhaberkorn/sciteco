@@ -2581,9 +2581,10 @@ teco_state_ecommand_exit(teco_machine_main_t *ctx, GError **error)
 		teco_int_t v;
 		if (!teco_expressions_pop_num_calc(&v, teco_num_sign, error))
 			return;
-		if (teco_is_failure(v) && teco_ring_is_any_dirty()) {
-			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
-			                    "Modified buffers exist");
+		guint id;
+		if (teco_is_failure(v) && (id = teco_ring_get_first_dirty())) {
+			g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
+			            "Buffer with id %u is dirty", id);
 			return;
 		}
 	}

@@ -67,7 +67,7 @@ teco_buffer_t *teco_ring_find_by_id(teco_int_t id);
 	               teco_int_t    : teco_ring_find_by_id)(X))
 
 void teco_ring_dirtify(void);
-gboolean teco_ring_is_any_dirty(void);
+guint teco_ring_get_first_dirty(void);
 gboolean teco_ring_save_all_dirty_buffers(GError **error);
 
 gboolean teco_ring_edit_by_name(const gchar *filename, GError **error);
