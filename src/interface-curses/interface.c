@@ -968,40 +968,64 @@ teco_interface_set_window_title(const gchar *title)
 
 #elif defined(CURSES_TTY) && defined(HAVE_TIGETSTR)
 
+/*
+ * Many Modern terminal emulators map the window title to
+ * the historic status line.
+ * This feature is not standardized in ncurses,
+ * so we query the terminfo database.
+ * This feature may make problems with terminal emulators
+ * that do support a status line but do not map them
+ * to the window title.
+ * Some emulators (like xterm, rxvt and many pseudo-xterms)
+ * support setting the window title via custom escape
+ * sequences and via the status line but their
+ * terminfo entry does not say so.
+ * Real XTerm can also save and restore window titles but
+ * there is not even a terminfo capability defined for this.
+ * Currently, SciTECO just leaves the title set after we quit.
+ *
+ * TODO: Once we support customizing the UI,
+ * there could be a special status line that's sent
+ * to the terminal that may be set up in the profile
+ * depending on $TERM.
+ */
 static void
 teco_interface_set_window_title(const gchar *title)
 {
-	if (!has_status_line || !to_status_line || !from_status_line)
+	static const gchar *term = NULL;
+	static const gchar *title_start = NULL;
+	static const gchar *title_end = NULL;
+
+	if (G_UNLIKELY(!term)) {
+		term = g_getenv("TERM");
+
+		title_start = to_status_line;
+		title_end = from_status_line;
+
+		if ((!title_start || !title_end) && term &&
+		    (g_str_has_prefix(term, "xterm") || g_str_has_prefix(term, "rxvt"))) {
+			/*
+			 * Just assume that any whitelisted $TERM has the OSC-0
+			 * escape sequence or at least ignores it.
+			 * This might also set the window's icon, but it's more widely
+			 * used than OSC-2.
+			 */
+			title_start = "\e]0;";
+			title_end = "\a";
+		}
+	}
+
+	if (!title_start || !title_end)
 		return;
 
 	/*
-	 * Modern terminal emulators map the window title to
-	 * the historic status line.
-	 * This feature is not standardized in ncurses,
-	 * so we query the terminfo database.
-	 * This feature may make problems with terminal emulators
-	 * that do support a status line but do not map them
-	 * to the window title. Some emulators (like xterm)
-	 * support setting the window title via custom escape
-	 * sequences and via the status line but their
-	 * terminfo entry does not say so. (xterm can also
-	 * save and restore window titles but there is not
-	 * even a terminfo capability defined for this.)
-	 * Taken the different emulator incompatibilites
-	 * it may be best to make this configurable.
-	 * Once we support configurable status lines,
-	 * there could be a special status line that's sent
-	 * to the terminal that may be set up in the profile
-	 * depending on $TERM.
-	 *
 	 * NOTE: The terminfo manpage advises us to use putp()
 	 * but on ncurses/UNIX (where terminfo is available),
 	 * we do not let curses write to stdout.
-	 * NOTE: This leaves the title set after we quit.
 	 */
-	fputs(to_status_line, teco_interface.screen_tty);
+	fputs(title_start, teco_interface.screen_tty);
 	fputs(title, teco_interface.screen_tty);
-	fputs(from_status_line, teco_interface.screen_tty);
+	fputs(title_end, teco_interface.screen_tty);
 	fflush(teco_interface.screen_tty);
 }
 

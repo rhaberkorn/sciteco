@@ -92,10 +92,6 @@ Known Bugs:
      There is also MoveFileEx(file, NULL, MOVEFILE_DELAY_UNTIL_REBOOT).
    * Windows has file system forks, but they can be orphaned just
      like ordinary files but are harder to locate and clean up manually.
- * Setting window title is broken on ncurses/XTerm.
-   The necessary capabilities are usually not in the Terminfo database.
-   Perhaps do some XTerm magic here. We can also restore
-   window titles on exit using XTerm.
  * The XTerm OSC-52 clipboard feature appears to garble Unicode characters.
    This is apparently an XTerm bug, probably due to 8-bit-uncleanliness.
    It was verified by `printf "\e]52;c;?\a"` on the command line.
