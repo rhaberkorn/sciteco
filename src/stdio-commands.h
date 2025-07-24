@@ -19,3 +19,4 @@
 #include "parser.h"
 
 TECO_DECLARE_STATE(teco_state_print_decimal);
+TECO_DECLARE_STATE(teco_state_print_string);

@@ -19,7 +19,6 @@
 #include "config.h"
 #endif
 
-#include <stdarg.h>
 #include <string.h>
 #include <signal.h>
 
@@ -193,7 +192,7 @@ teco_interface_init(void)
 	 */
 	teco_interface.info_bar_widget = gtk_header_bar_new();
 	gtk_widget_set_name(teco_interface.info_bar_widget, "sciteco-info-bar");
-	teco_interface.info_name_widget = teco_gtk_label_new(NULL, 0);
+	teco_interface.info_name_widget = teco_gtk_label_new("", 0);
 	gtk_widget_set_valign(teco_interface.info_name_widget, GTK_ALIGN_CENTER);
 	/* eases writing portable fallback.css that avoids CSS element names */
 	gtk_style_context_add_class(gtk_widget_get_style_context(teco_interface.info_name_widget),
@@ -279,8 +278,7 @@ teco_interface_init(void)
 	gtk_widget_set_name(teco_interface.message_bar_widget, "sciteco-message-bar");
 	GtkWidget *message_bar_content =
 			gtk_info_bar_get_content_area(GTK_INFO_BAR(teco_interface.message_bar_widget));
-	/* NOTE: Messages are always pre-canonicalized */
-	teco_interface.message_widget = gtk_label_new(NULL);
+	teco_interface.message_widget = teco_gtk_label_new(NULL, 0);
 	/* eases writing portable fallback.css that avoids CSS element names */
 	gtk_style_context_add_class(gtk_widget_get_style_context(teco_interface.message_widget),
 	                            "label");
@@ -391,7 +389,7 @@ teco_interface_get_options(void)
 void teco_interface_init_color(guint color, guint32 rgb) {}
 
 void
-teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
+teco_interface_msg_literal(teco_msg_t type, const gchar *str, gsize len)
 {
 	/*
 	 * The message types are chosen such that there is a CSS class
@@ -407,21 +405,11 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 
 	g_assert(type < G_N_ELEMENTS(type2gtk));
 
-	gchar buf[256];
-
-	/*
-	 * stdio_vmsg() leaves `ap` undefined and we are expected
-	 * to do the same and behave like vprintf().
-	 */
-	va_list aq;
-	va_copy(aq, ap);
-	teco_interface_stdio_vmsg(type, fmt, ap);
-	g_vsnprintf(buf, sizeof(buf), fmt, aq);
-	va_end(aq);
+	teco_interface_stdio_msg(type, str, len);
 
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(teco_interface.message_bar_widget),
 				      type2gtk[type]);
-	gtk_label_set_text(GTK_LABEL(teco_interface.message_widget), buf);
+	teco_gtk_label_set_text(TECO_GTK_LABEL(teco_interface.message_widget), str, len);
 
 	if (type == TECO_MSG_ERROR)
 		gtk_widget_error_bell(teco_interface.window);
@@ -432,7 +420,7 @@ teco_interface_msg_clear(void)
 {
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(teco_interface.message_bar_widget),
 				      GTK_MESSAGE_QUESTION);
-	gtk_label_set_text(GTK_LABEL(teco_interface.message_widget), "");
+	teco_gtk_label_set_text(TECO_GTK_LABEL(teco_interface.message_widget), "", 0);
 }
 
 void

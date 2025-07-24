@@ -1546,6 +1546,8 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['^']  = {&teco_state_ascii},
 		['[']  = {&teco_state_escape},
 		['C']  = {&teco_state_ctlc},
+		['A']  = {&teco_state_print_string,
+		          .modifier_at = TRUE},
 
 		/*
 		 * Additional numeric operations

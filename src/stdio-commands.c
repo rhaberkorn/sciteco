@@ -23,6 +23,7 @@
 #include "sciteco.h"
 #include "parser.h"
 #include "error.h"
+#include "undo.h"
 #include "expressions.h"
 #include "interface.h"
 #include "cmdline.h"
@@ -49,16 +50,16 @@ teco_print(guint radix, GError **error)
 	 * also to allow output without trailing LF.
 	 * Perhaps repurpose teco_expressions_format().
 	 */
-	const gchar *fmt = "%" TECO_INT_MODIFIER "d";
+	const gchar *fmt = "%" TECO_INT_MODIFIER "d\n";
 	switch (radix) {
-	case 8:  fmt = "%" TECO_INT_MODIFIER "o"; break;
-	case 16: fmt = "%" TECO_INT_MODIFIER "X"; break;
+	case 8:  fmt = "%" TECO_INT_MODIFIER "o\n"; break;
+	case 16: fmt = "%" TECO_INT_MODIFIER "X\n"; break;
 	}
 	teco_interface_msg(TECO_MSG_USER, fmt, teco_expressions_peek_num(0));
 	return TRUE;
 }
 
-/*$ "=" "==" "===" print
+/*$ "=" "==" "===" "print number"
  * <n>= -- Print integer as message
  * <n>==
  * <n>===
@@ -194,4 +195,47 @@ TECO_DEFINE_STATE_START(teco_state_print_octal,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_print_octal_initial,
 	.end_of_macro_cb = (teco_state_end_of_macro_cb_t)
 	                   teco_state_print_octal_end_of_macro
+);
+
+static gboolean
+teco_state_print_string_initial(teco_machine_main_t *ctx, GError **error)
+{
+	/*
+	 * ^A differs from all other string-taking commands in having
+	 * a default ^A escape char.
+	 */
+	if (ctx->parent.must_undo)
+		teco_undo_gunichar(ctx->expectstring.machine.escape_char);
+	ctx->expectstring.machine.escape_char = TECO_CTL_KEY('A');
+
+	/* chain to the default initial_cb */
+	return teco_state_expectstring_initial(ctx, error);
+}
+
+static teco_state_t *
+teco_state_print_string_done(teco_machine_main_t *ctx, const teco_string_t *str, GError **error)
+{
+	teco_interface_msg_literal(TECO_MSG_USER, str->data, str->len);
+	return &teco_state_start;
+}
+
+/*$ "^A" print
+ * ^A<string>^A -- Print string as message
+ * @^A/string/
+ *
+ * Print <string> as a message, i.e. in the message line
+ * in interactive mode and if possible on the terminal (stdout) as well.
+ *
+ * \fB^A\fP differs from all other commands in the way <string>
+ * is terminated.
+ * It is terminated by ^A (CTRL+A, ASCII 1) by default.
+ * While the initial \fB^A\fP can be written with upcarets,
+ * the terminating ^A must always be ASCII 1.
+ * You can however overwrite the <string> terminator as usual
+ * by \fB@\fP-modifying the command.
+ *
+ * String-building characters are enabled for this command.
+ */
+TECO_DEFINE_STATE_EXPECTSTRING(teco_state_print_string,
+	.initial_cb = (teco_state_initial_cb_t)teco_state_print_string_initial
 );

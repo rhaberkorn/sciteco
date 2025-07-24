@@ -81,35 +81,52 @@ teco_interface_undo_set_clipboard(const gchar *name, gchar *str, gsize len)
 	}
 }
 
+void
+teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
+{
+	gchar buf[512];
+	va_list ap;
+
+	va_start(ap, fmt);
+	/*
+	 * If the buffer could ever be exceeded, perhaps
+	 * use g_strdup_vprintf() instead.
+	 */
+	gint len = g_vsnprintf(buf, sizeof(buf), fmt, ap);
+	g_assert(0 <= len && len < sizeof(buf));
+	va_end(ap);
+
+	teco_interface_msg_literal(type, buf, len);
+}
+
 /**
- * Print a message to the appropriate stdio streams.
+ * Print a raw message to the appropriate stdio streams.
  *
- * This method has similar semantics to `vprintf`, i.e.
- * it leaves `ap` undefined. Therefore to pass the format
- * string and arguments to another `vprintf`-like function,
- * you have to copy the arguments via `va_copy`.
+ * This deliberately does not echo (i.e. escape non-printable characters)
+ * the string. Either they are supposed to be written verbatim
+ * (TECO_MSG_USER) or are already echoed.
+ * Everything higher than TECO_MSG_USER is also terminated by LF.
+ *
+ * @fixme TECO_MSG_USER could always be flushed.
+ * This however makes the message disappear, though.
+ * We might also want to put flushing under control of the language instead.
  */
 void
-teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
+teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len)
 {
-	FILE *stream = stdout;
-
 	switch (type) {
 	case TECO_MSG_USER:
+		fwrite(str, 1, len, stdout);
+		//fflush(stdout);
 		break;
 	case TECO_MSG_INFO:
-		fputs("Info: ", stream);
+		g_fprintf(stdout, "Info: %.*s\n", (gint)len, str);
 		break;
 	case TECO_MSG_WARNING:
-		stream = stderr;
-		fputs("Warning: ", stream);
+		g_fprintf(stderr, "Warning: %.*s\n", (gint)len, str);
 		break;
 	case TECO_MSG_ERROR:
-		stream = stderr;
-		fputs("Error: ", stream);
+		g_fprintf(stderr, "Error: %.*s\n", (gint)len, str);
 		break;
 	}
-
-	g_vfprintf(stream, fmt, ap);
-	fputc('\n', stream);
 }

@@ -16,7 +16,6 @@
  */
 #pragma once
 
-#include <stdarg.h>
 #include <signal.h>
 
 #include <glib.h>
@@ -62,17 +61,9 @@ typedef enum {
 } teco_msg_t;
 
 /** @pure */
-void teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap);
+void teco_interface_msg_literal(teco_msg_t type, const gchar *str, gsize len);
 
-static inline void G_GNUC_PRINTF(2, 3)
-teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	teco_interface_vmsg(type, fmt, ap);
-	va_end(ap);
-}
+void teco_interface_msg(teco_msg_t type, const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 
 /** @pure */
 void teco_interface_msg_clear(void);
@@ -180,7 +171,7 @@ gboolean teco_interface_event_loop(GError **error);
  * Interfacing to the external SciTECO world
  */
 /** @protected */
-void teco_interface_stdio_vmsg(teco_msg_t type, const gchar *fmt, va_list ap);
+void teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len);
 
 /** @pure */
 void teco_interface_cleanup(void);

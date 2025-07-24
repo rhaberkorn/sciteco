@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -860,10 +859,10 @@ teco_interface_resize_all_windows(void)
 }
 
 void
-teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
+teco_interface_msg_literal(teco_msg_t type, const gchar *str, gsize len)
 {
 	if (!teco_interface.cmdline_window) { /* batch mode */
-		teco_interface_stdio_vmsg(type, fmt, ap);
+		teco_interface_stdio_msg(type, str, len);
 		return;
 	}
 
@@ -872,10 +871,7 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 	 * even in interactive mode.
 	 */
 #if defined(PDCURSES_GUI) || defined(CURSES_TTY) || defined(NCURSES_WIN32)
-	va_list aq;
-	va_copy(aq, ap);
-	teco_interface_stdio_vmsg(type, fmt, aq);
-	va_end(aq);
+	teco_interface_stdio_msg(type, str, len);
 #endif
 
 	short fg, bg;
@@ -899,14 +895,10 @@ teco_interface_vmsg(teco_msg_t type, const gchar *fmt, va_list ap)
 		break;
 	}
 
-	/*
-	 * NOTE: This is safe since we don't have to cancel out any A_REVERSE,
-	 * that could be set in the background attributes.
-	 */
 	wmove(teco_interface.msg_window, 0, 0);
-	wbkgdset(teco_interface.msg_window, teco_color_attr(fg, bg));
-	vw_printw(teco_interface.msg_window, fmt, ap);
-	wclrtoeol(teco_interface.msg_window);
+	wattrset(teco_interface.msg_window, teco_color_attr(fg, bg));
+	teco_curses_format_str(teco_interface.msg_window, str, len, -1);
+	teco_curses_clrtobot(teco_interface.msg_window);
 }
 
 void
@@ -918,8 +910,9 @@ teco_interface_msg_clear(void)
 	short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETBACK, STYLE_DEFAULT, 0));
 	short bg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_DEFAULT, 0));
 
-	wbkgdset(teco_interface.msg_window, teco_color_attr(fg, bg));
-	werase(teco_interface.msg_window);
+	wmove(teco_interface.msg_window, 0, 0);
+	wattrset(teco_interface.msg_window, teco_color_attr(fg, bg));
+	teco_curses_clrtobot(teco_interface.msg_window);
 }
 
 void

@@ -45,6 +45,8 @@ extern teco_view_t *teco_qreg_view;
  * teco_qreg_set_integer_t set_integer;
  * ...
  * teco_qreg_set_integer(qreg, 23, error);
+ *
+ * But this probably won't work. Perhaps use the X-macro pattern.
  */
 typedef const struct {
 	gboolean (*set_integer)(teco_qreg_t *qreg, teco_int_t value, GError **error);

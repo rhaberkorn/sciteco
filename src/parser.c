@@ -1047,8 +1047,12 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 		 * to the ANSI range (teco_ascii_toupper())?
 		 * This would be faster than case folding each and every character
 		 * of a string argument to check against the escape char.
+		 *
+		 * FIXME: This has undesired effects if you try to use one of
+		 * of these characters with multiple string arguments.
 		 */
 		switch (ctx->expectstring.machine.escape_char) {
+		case TECO_CTL_KEY('A'):
 		case '\e':
 		case '{':
 			if (ctx->parent.must_undo)
