@@ -52,6 +52,68 @@
 static teco_state_t *teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 static teco_state_t *teco_state_ctlc_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error);
 
+/**
+ * Translate buffer range arguments from the expression stack to
+ * a from-position and length in bytes.
+ *
+ * If only one argument is given, it is interpreted as a number of lines
+ * beginning with dot.
+ * If two arguments are given, it is interpreted as two buffer positions
+ * in glyphs.
+ *
+ * @param cmd Name of the command
+ * @param from_ret Where to store the from-position in bytes
+ * @param len_ret Where to store the length of the range in bytes
+ * @param error A GError
+ * @return FALSE if an error occurred
+ *
+ * @fixme There are still redundancies with teco_state_start_kill().
+ * But it needs to discern between invalid ranges and other errors.
+ */
+gboolean
+teco_get_range_args(const gchar *cmd, gsize *from_ret, gsize *len_ret, GError **error)
+{
+	gssize from, len; /* in bytes */
+
+	if (!teco_expressions_eval(FALSE, error))
+		return FALSE;
+
+	if (teco_expressions_args() <= 1) {
+		teco_int_t line;
+
+		if (!teco_expressions_pop_num_calc(&line, teco_num_sign, error))
+			return FALSE;
+
+		from = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
+		line += teco_interface_ssm(SCI_LINEFROMPOSITION, from, 0);
+
+		if (!teco_validate_line(line)) {
+			teco_error_range_set(error, cmd);
+			return FALSE;
+		}
+
+		len = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0) - from;
+
+		if (len < 0) {
+			from += len;
+			len *= -1;
+		}
+	} else {
+		gssize to = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
+		from = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
+		len = to - from;
+
+		if (len < 0 || from < 0 || to < 0) {
+			teco_error_range_set(error, cmd);
+			return FALSE;
+		}
+	}
+
+	*from_ret = from;
+	*len_ret = len;
+	return TRUE;
+}
+
 /*
  * NOTE: This needs some extra code in teco_state_start_input().
  */
@@ -660,7 +722,8 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		          .modifier_colon = 1},
 		['D']  = {&teco_state_start, teco_state_start_delete_chars,
 		          .modifier_colon = 1},
-		['A']  = {&teco_state_start, teco_state_start_get}
+		['A']  = {&teco_state_start, teco_state_start_get},
+		['T']  = {&teco_state_start, teco_state_start_typeout}
 	};
 
 	switch (chr) {

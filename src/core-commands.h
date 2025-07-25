@@ -25,6 +25,8 @@
 /** non-operational characters in teco_state_start */
 #define TECO_NOOPS " \f\r\n\v"
 
+gboolean teco_get_range_args(const gchar *cmd, gsize *from_ret, gsize *len_ret, GError **error);
+
 /* in cmdline.c */
 gboolean teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *parent_ctx,
                                              gunichar key, GError **error);

@@ -261,3 +261,39 @@ teco_state_print_string_done(teco_machine_main_t *ctx, const teco_string_t *str,
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_print_string,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_print_string_initial
 );
+
+/*$ T type typeout
+ * [lines]T -- Type out buffer contents as messages
+ * -T
+ * from,toT
+ *
+ * Type out the next or previous number of <lines> from the buffer
+ * as a message, i.e. in the message line in interactive mode
+ * and if possible on the terminal (stdout) as well..
+ * If <lines> is omitted, the sign prefix is implied.
+ * If two arguments are specified, the characters beginning
+ * at position <from> up to the character at position <to>
+ * are copied.
+ *
+ * The semantics of the arguments is analogous to the \fBK\fP
+ * command's arguments.
+ */
+void
+teco_state_start_typeout(teco_machine_main_t *ctx, GError **error)
+{
+	gsize from, len;
+
+	if (!teco_get_range_args("T", &from, &len, error))
+		return;
+
+	/*
+	 * NOTE: This may remove the buffer gap since we need a consecutive
+	 * piece of memory to log as a single message.
+	 * FIXME: In batch mode even this could theoretically be avoided.
+	 * Need to add a function like teco_interface_is_batch().
+	 * Still, this is probably more efficient than using a temporary
+	 * allocation with SCI_GETTEXTRANGEFULL.
+	 */
+	const gchar *str = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, from, len);
+	teco_interface_msg_literal(TECO_MSG_USER, str, len);
+}

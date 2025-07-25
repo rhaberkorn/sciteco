@@ -16,7 +16,11 @@
  */
 #pragma once
 
+#include <glib.h>
+
 #include "parser.h"
 
 TECO_DECLARE_STATE(teco_state_print_decimal);
 TECO_DECLARE_STATE(teco_state_print_string);
+
+void teco_state_start_typeout(teco_machine_main_t *ctx, GError **error);

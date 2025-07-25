@@ -780,39 +780,10 @@ teco_state_copytoqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
-	gssize from, len; /* in bytes */
+	gsize from, len;
 
-	if (!teco_expressions_eval(FALSE, error))
+	if (!teco_get_range_args("X", &from, &len, error))
 		return NULL;
-	if (teco_expressions_args() <= 1) {
-		teco_int_t line;
-
-		from = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		if (!teco_expressions_pop_num_calc(&line, teco_num_sign, error))
-			return NULL;
-		line += teco_interface_ssm(SCI_LINEFROMPOSITION, from, 0);
-
-		if (!teco_validate_line(line)) {
-			teco_error_range_set(error, "X");
-			return NULL;
-		}
-
-		len = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0) - from;
-
-		if (len < 0) {
-			from += len;
-			len *= -1;
-		}
-	} else {
-		gssize to = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
-		from = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
-		len = to - from;
-
-		if (len < 0 || from < 0 || to < 0) {
-			teco_error_range_set(error, "X");
-			return NULL;
-		}
-	}
 
 	/*
 	 * NOTE: This does not use SCI_GETRANGEPOINTER+SCI_GETGAPPOSITION
