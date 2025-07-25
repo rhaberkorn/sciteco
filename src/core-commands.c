@@ -605,7 +605,8 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		          .modifier_colon = 1},
 		['X']  = {&teco_state_copytoqreg,
 		          .modifier_at = TRUE, .modifier_colon = 1},
-		['=']  = {&teco_state_print_decimal},
+		['=']  = {&teco_state_print_decimal,
+		          .modifier_colon = 1},
 
 		/*
 		 * Arithmetics

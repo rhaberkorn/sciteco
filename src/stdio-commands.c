@@ -37,7 +37,7 @@
  * on the same number.
  */
 static gboolean
-teco_print(guint radix, GError **error)
+teco_print(teco_machine_main_t *ctx, guint radix, GError **error)
 {
 	if (!teco_expressions_eval(FALSE, error))
 		return FALSE;
@@ -45,24 +45,33 @@ teco_print(guint radix, GError **error)
 		teco_error_argexpected_set(error, "=");
 		return FALSE;
 	}
+
 	/*
-	 * FIXME: There should be a raw output function,
-	 * also to allow output without trailing LF.
-	 * Perhaps repurpose teco_expressions_format().
+	 * teco_expressions_format() cannot easily be used
+	 * to format __unsigned__ integers.
 	 */
-	const gchar *fmt = "%" TECO_INT_MODIFIER "d\n";
+	const gchar *fmt = "%" TECO_INT_MODIFIER "d";
 	switch (radix) {
-	case 8:  fmt = "%" TECO_INT_MODIFIER "o\n"; break;
-	case 16: fmt = "%" TECO_INT_MODIFIER "X\n"; break;
+	case 8:  fmt = "%" TECO_INT_MODIFIER "o"; break;
+	case 16: fmt = "%" TECO_INT_MODIFIER "X"; break;
 	}
-	teco_interface_msg(TECO_MSG_USER, fmt, teco_expressions_peek_num(0));
+	gchar buf[32];
+	gint len = g_snprintf(buf, sizeof(buf), fmt, teco_expressions_peek_num(0));
+	g_assert(len > 0);
+	if (!teco_machine_main_eval_colon(ctx))
+		buf[len++] = '\n';
+
+	teco_interface_msg_literal(TECO_MSG_USER, buf, len);
 	return TRUE;
 }
 
-/*$ "=" "==" "===" "print number"
+/*$ "=" "==" "===" ":=" ":==" ":===" "print number"
  * <n>= -- Print integer as message
  * <n>==
  * <n>===
+ * <n>:=
+ * <n>:==
+ * <n>:===
  *
  * Shows integer <n> as a message in the message line and/or
  * on the console.
@@ -81,6 +90,9 @@ teco_print(guint radix, GError **error)
  * you have to put the \(lq=\(rq into a pass-through loop
  * or separate the commands with
  * whitespace (e.g. \(lq^Y= =\(rq).
+ *
+ * If colon-modified the number is printed without a trailing
+ * linefeed.
  */
 /*
  * In order to imitate TECO-11 closely, we apply the lookahead
@@ -92,8 +104,6 @@ teco_print(guint radix, GError **error)
  * Typing `===` prints the number first in decimal,
  * then octal and finally in hexadecimal.
  * This won't happen e.g. in a loop that is closed on the command-line.
- *
- * FIXME: Support colon-modifier to suppress line-break on console.
  */
 TECO_DECLARE_STATE(teco_state_print_octal);
 
@@ -106,7 +116,7 @@ teco_state_print_decimal_initial(teco_machine_main_t *ctx, GError **error)
 	 * Interactive invocation:
 	 * don't yet pop number as we may have to print it repeatedly
 	 */
-	return teco_print(10, error);
+	return teco_print(ctx, 10, error);
 }
 
 static teco_state_t *
@@ -116,7 +126,7 @@ teco_state_print_decimal_input(teco_machine_main_t *ctx, gunichar chr, GError **
 		return &teco_state_print_octal;
 
 	if (ctx->flags.mode == TECO_MODE_NORMAL) {
-		if (!teco_cmdline_is_executing(ctx) && !teco_print(10, error))
+		if (!teco_cmdline_is_executing(ctx) && !teco_print(ctx, 10, error))
 			return NULL;
 		teco_expressions_pop_num(0);
 	}
@@ -132,7 +142,7 @@ teco_state_print_decimal_end_of_macro(teco_machine_main_t *ctx, GError **error)
 {
 	if (teco_cmdline_is_executing(ctx) || ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
-	if (!teco_print(10, error))
+	if (!teco_print(ctx, 10, error))
 		return FALSE;
 	teco_expressions_pop_num(0);
 	return TRUE;
@@ -153,7 +163,7 @@ teco_state_print_octal_initial(teco_machine_main_t *ctx, GError **error)
 	 * Interactive invocation:
 	 * don't yet pop number as we may have to print it repeatedly
 	 */
-	return teco_print(8, error);
+	return teco_print(ctx, 8, error);
 }
 
 static teco_state_t *
@@ -161,7 +171,7 @@ teco_state_print_octal_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 {
 	if (chr == '=') {
 		if (ctx->flags.mode == TECO_MODE_NORMAL) {
-			if (!teco_print(16, error))
+			if (!teco_print(ctx, 16, error))
 				return NULL;
 			teco_expressions_pop_num(0);
 		}
@@ -169,7 +179,7 @@ teco_state_print_octal_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	}
 
 	if (ctx->flags.mode == TECO_MODE_NORMAL) {
-		if (!teco_cmdline_is_executing(ctx) && !teco_print(8, error))
+		if (!teco_cmdline_is_executing(ctx) && !teco_print(ctx, 8, error))
 			return NULL;
 		teco_expressions_pop_num(0);
 	}
@@ -185,7 +195,7 @@ teco_state_print_octal_end_of_macro(teco_machine_main_t *ctx, GError **error)
 {
 	if (teco_cmdline_is_executing(ctx) || ctx->flags.mode > TECO_MODE_NORMAL)
 		return TRUE;
-	if (!teco_print(8, error))
+	if (!teco_print(ctx, 8, error))
 		return FALSE;
 	teco_expressions_pop_num(0);
 	return TRUE;
@@ -219,7 +229,7 @@ teco_state_print_string_done(teco_machine_main_t *ctx, const teco_string_t *str,
 	return &teco_state_start;
 }
 
-/*$ "^A" print
+/*$ "^A" print "print string"
  * ^A<string>^A -- Print string as message
  * @^A/string/
  *

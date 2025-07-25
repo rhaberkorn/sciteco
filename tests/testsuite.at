@@ -174,10 +174,14 @@ TE_CHECK([[(]]TE_MAXINT64[[)-(]]TE_MAXINT64[[)"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[(]]TE_MININT64[[)-(]]TE_MININT64[[)"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
+# FIXME: Once we have a --quiet option, we should probably use it here.
 AT_SETUP([Printing numbers])
 # Must print only one hexadecimal number.
 TE_CHECK([[255===]], 0, stdout, ignore)
 AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 1], 0, ignore, ignore)
+# Without LF: Only the "Info:" line will be counted.
+TE_CHECK([[255:===]], 0, stdout, ignore)
+AT_FAIL_IF([test `wc -l <stdout` -ne 1], 0, ignore, ignore)
 # Will print a decimal, octal and 2 hexadecimal numbers.
 TE_CHECK_CMDLINE([[2<255===>]], 0, stdout, ignore)
 AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 4], 0, ignore, ignore)
