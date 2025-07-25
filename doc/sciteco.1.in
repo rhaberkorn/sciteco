@@ -501,6 +501,18 @@ In order to execute a stand-alone script or custom profile macro:
 .EE
 .RE
 .
+.ig \" FIXME: Requires --quiet to be an useful example
+.LP
+In order to query the installation path of the standard library,
+which is useful for authors of third-party macro packages:
+.RS
+.SCITECO_TT
+.EX
+@PACKAGE@ -qe ':G[$SCITECOPATH]'
+.SCITECO_TT_END
+.EE
+.RE
+..
 .
 .SH SEE ALSO
 .

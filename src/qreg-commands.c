@@ -545,6 +545,11 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 	if (!qreg->vtable->get_string(qreg, &str.data, &str.len, NULL, error))
 		return NULL;
 
+	if (teco_machine_main_eval_colon(ctx)) {
+		teco_interface_msg_literal(TECO_MSG_USER, str.data, str.len);
+		return &teco_state_start;
+	}
+
 	sptr_t pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 
 	if (str.len > 0) {
@@ -565,10 +570,15 @@ teco_state_getqregstring_got_register(teco_machine_main_t *ctx, teco_qreg_t *qre
 }
 
 /*$ G Gq get paste
- * Gq -- Insert Q-Register string
+ * Gq -- Insert or print Q-Register string
+ * :Gq
  *
  * Inserts the string of Q-Register <q> into the buffer
  * at its current position.
+ * If colon-modified prints the string as a message
+ * (i.e. to the terminal and/or in the message area) instead
+ * of modifying the current buffer.
+ *
  * Specifying an undefined <q> yields an error.
  */
 TECO_DEFINE_STATE_EXPECTQREG(teco_state_getqregstring);
