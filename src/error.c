@@ -79,7 +79,7 @@ teco_error_display_short(const GError *error)
 void
 teco_error_display_full(const GError *error)
 {
-	teco_interface_msg(TECO_MSG_ERROR, "%s", error->message);
+	teco_interface_msg_literal(TECO_MSG_ERROR, error->message, strlen(error->message));
 
 	guint nr = 0;
 
