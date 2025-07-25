@@ -218,8 +218,13 @@ teco_state_print_string_initial(teco_machine_main_t *ctx, GError **error)
 		teco_undo_gunichar(ctx->expectstring.machine.escape_char);
 	ctx->expectstring.machine.escape_char = TECO_CTL_KEY('A');
 
-	/* chain to the default initial_cb */
-	return teco_state_expectstring_initial(ctx, error);
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return TRUE;
+
+	teco_machine_stringbuilding_set_codepage(&ctx->expectstring.machine,
+	                                         teco_machine_main_eval_colon(ctx)
+	                                         ? SC_CHARSET_ANSI : teco_default_codepage());
+	return TRUE;
 }
 
 static teco_state_t *
@@ -229,9 +234,10 @@ teco_state_print_string_done(teco_machine_main_t *ctx, const teco_string_t *str,
 	return &teco_state_start;
 }
 
-/*$ "^A" print "print string"
+/*$ "^A" ":^A" print "print string"
  * ^A<string>^A -- Print string as message
  * @^A/string/
+ * :^A<string>^A
  *
  * Print <string> as a message, i.e. in the message line
  * in interactive mode and if possible on the terminal (stdout) as well.
@@ -245,6 +251,12 @@ teco_state_print_string_done(teco_machine_main_t *ctx, const teco_string_t *str,
  * by \fB@\fP-modifying the command.
  *
  * String-building characters are enabled for this command.
+ * \fB^A\fP outputs strings in the default codepage,
+ * but when colon modified raw ANSI encoding is enforced.
+ */
+/*
+ * NOTE: Codepage is among other things important for
+ * ^EUq, ^E<...> and case folding.
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_print_string,
 	.initial_cb = (teco_state_initial_cb_t)teco_state_print_string_initial
