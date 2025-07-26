@@ -230,8 +230,6 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 	    !teco_expressions_eval(FALSE, error))
 		return NULL;
 
-	teco_int_t value;
-
 	if (!ctx->scintilla.iMessage) {
 		if (!teco_expressions_args()) {
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
@@ -239,9 +237,7 @@ teco_state_scintilla_symbols_done(teco_machine_main_t *ctx, const teco_string_t 
 			return NULL;
 		}
 
-		if (!teco_expressions_pop_num_calc(&value, 0, error))
-			return NULL;
-		ctx->scintilla.iMessage = value;
+		ctx->scintilla.iMessage = teco_expressions_pop_num(0);
 	}
 
 	return &teco_state_scintilla_lparam;

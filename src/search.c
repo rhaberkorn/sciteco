@@ -111,8 +111,7 @@ teco_state_search_initial(teco_machine_main_t *ctx, GError **error)
 		return FALSE;
 	if (teco_expressions_args()) {
 		/* TODO: optional count argument? */
-		if (!teco_expressions_pop_num_calc(&v1, 0, error))
-			return FALSE;
+		v1 = teco_expressions_pop_num(0);
 		if (v1 <= v2) {
 			teco_search_parameters.count = 1;
 			teco_search_parameters.from = teco_interface_glyphs2bytes(v1);
@@ -977,8 +976,7 @@ teco_state_search_all_initial(teco_machine_main_t *ctx, GError **error)
 		return FALSE;
 	if (teco_expressions_args()) {
 		/* TODO: optional count argument? */
-		if (!teco_expressions_pop_num_calc(&v1, 0, error))
-			return FALSE;
+		v1 = teco_expressions_pop_num(0);
 		if (v1 <= v2) {
 			teco_search_parameters.count = 1;
 			teco_search_parameters.from_buffer = teco_ring_find(v1);

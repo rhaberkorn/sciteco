@@ -284,9 +284,7 @@ teco_state_queryqreg_got_register(teco_machine_main_t *ctx, teco_qreg_t *qreg,
 
 	if (teco_expressions_args() > 0) {
 		/* Query character from Q-Register string */
-		teco_int_t pos;
-		if (!teco_expressions_pop_num_calc(&pos, 0, error))
-			return NULL;
+		teco_int_t pos = teco_expressions_pop_num(0);
 		if (pos < 0) {
 			teco_error_range_set(error, "Q");
 			return NULL;
@@ -395,9 +393,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 			/* the glib docs wrongly claim that one character can take 6 bytes */
 			buffer = g_malloc(4*args);
 			for (gint i = args; i > 0; i--) {
-				teco_int_t v;
-				if (!teco_expressions_pop_num_calc(&v, 0, error))
-					return NULL;
+				teco_int_t v = teco_expressions_pop_num(0);
 				if (v < 0 || !g_unichar_validate(v)) {
 					teco_error_codepoint_set(error, "^U");
 					return NULL;
@@ -407,9 +403,7 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 		} else {
 			buffer = g_malloc(args);
 			for (gint i = args; i > 0; i--) {
-				teco_int_t v;
-				if (!teco_expressions_pop_num_calc(&v, 0, error))
-					return NULL;
+				teco_int_t v = teco_expressions_pop_num(0);
 				if (v < 0 || v > 0xFF) {
 					teco_error_codepoint_set(error, "^U");
 					return NULL;

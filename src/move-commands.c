@@ -620,21 +620,16 @@ teco_state_start_delete_chars(teco_machine_main_t *ctx, GError **error)
 void
 teco_state_control_lines2glyphs(teco_machine_main_t *ctx, GError **error)
 {
-	if (!teco_expressions_eval(FALSE, error))
-		return;
-
 	if (teco_machine_main_eval_colon(ctx)) {
 		gssize pos;
+
+		if (!teco_expressions_eval(FALSE, error))
+			return;
 
 		if (!teco_expressions_args()) {
 			pos = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
 		} else {
-			teco_int_t v;
-
-			if (!teco_expressions_pop_num_calc(&v, 0, error))
-				return;
-
-			pos = teco_interface_glyphs2bytes(v);
+			pos = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
 			if (pos < 0) {
 				teco_error_range_set(error, "^Q");
 				return;

@@ -204,7 +204,7 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 		teco_int_t line;
 
 		teco_spawn_ctx.from = teco_interface_ssm(SCI_GETCURRENTPOS, 0, 0);
-		if (!teco_expressions_pop_num_calc(&line, 0, error))
+		if (!teco_expressions_pop_num_calc(&line, teco_num_sign, error))
 			return FALSE;
 		line += teco_interface_ssm(SCI_LINEFROMPOSITION, teco_spawn_ctx.from, 0);
 		teco_spawn_ctx.to = teco_interface_ssm(SCI_POSITIONFROMLINE, line, 0);
@@ -219,17 +219,12 @@ teco_state_execute_initial(teco_machine_main_t *ctx, GError **error)
 		break;
 	}
 
-	default: {
+	default:
 		/* pipe and replace character range */
-		teco_int_t from, to;
-		if (!teco_expressions_pop_num_calc(&to, 0, error) ||
-		    !teco_expressions_pop_num_calc(&from, 0, error))
-			return FALSE;
-		teco_spawn_ctx.from = teco_interface_glyphs2bytes(from);
-		teco_spawn_ctx.to = teco_interface_glyphs2bytes(to);
+		teco_spawn_ctx.to = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
+		teco_spawn_ctx.from = teco_interface_glyphs2bytes(teco_expressions_pop_num(0));
 		rc = teco_bool(teco_spawn_ctx.from <= teco_spawn_ctx.to &&
 		               teco_spawn_ctx.from >= 0 && teco_spawn_ctx.to >= 0);
-	}
 	}
 
 	if (teco_is_failure(rc)) {

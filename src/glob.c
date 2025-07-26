@@ -470,8 +470,7 @@ teco_state_glob_filename_done(teco_machine_main_t *ctx, const teco_string_t *str
 
 	teco_int_t teco_test_mode;
 
-	if (!teco_expressions_eval(FALSE, error) ||
-	    !teco_expressions_pop_num_calc(&teco_test_mode, 0, error))
+	if (!teco_expressions_pop_num_calc(&teco_test_mode, 0, error))
 		return NULL;
 	switch (teco_test_mode) {
 	/*

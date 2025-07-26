@@ -342,6 +342,8 @@ AT_SETUP([Execute external command])
 # So we have to wait until SciTECO supports a random number generator.
 TE_CHECK([[@EC'dd if=/dev/zero bs=512 count=1' Z= Z-512"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[0,128ED @EC'dd if=/dev/zero bs=512 count=1' Z= Z-512"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/hello/ H@EC'tr a-z A-Z' J<0A"V(0/0)' :C;>]], 0, ignore, ignore)
+TE_CHECK([[@I/hello^J/ -@EC'tr a-z A-Z' J<0A"V(0/0)' :C;>]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Timestamps])

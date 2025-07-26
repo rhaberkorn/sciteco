@@ -556,9 +556,7 @@ teco_state_save_file_done(teco_machine_main_t *ctx, const teco_string_t *str, GE
 	 */
 	teco_buffer_t *buffer = teco_ring_current;
 	if (teco_expressions_args() > 0) {
-		teco_int_t id;
-		if (!teco_expressions_pop_num_calc(&id, 0, error))
-			return NULL;
+		teco_int_t id = teco_expressions_pop_num(0);
 		buffer = teco_ring_find(id);
 		if (!buffer) {
 			teco_error_invalidbuf_set(error, id);
@@ -691,9 +689,7 @@ teco_state_ecommand_close(teco_machine_main_t *ctx, GError **error)
 	teco_buffer_t *buffer;
 	gboolean force;
 	if (teco_expressions_args() > 0) {
-		teco_int_t id;
-		if (!teco_expressions_pop_num_calc(&id, 0, error))
-			return;
+		teco_int_t id = teco_expressions_pop_num(0);
 		buffer = teco_ring_find(ABS(id));
 		if (!buffer) {
 			teco_error_invalidbuf_set(error, ABS(id));

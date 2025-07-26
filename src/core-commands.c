@@ -259,13 +259,9 @@ teco_state_start_backslash(teco_machine_main_t *ctx, GError **error)
 		return;
 
 	if (teco_expressions_args()) {
-		teco_int_t value;
-
-		if (!teco_expressions_pop_num_calc(&value, 0, error))
-			return;
-
 		gchar buffer[TECO_EXPRESSIONS_FORMAT_LEN];
-		gchar *str = teco_expressions_format(buffer, value,
+		gchar *str = teco_expressions_format(buffer,
+		                                     teco_expressions_pop_num(0),
 		                                     ctx->qreg_table_locals->radix);
 		g_assert(*str != '\0');
 		gsize len = strlen(str);
@@ -327,8 +323,7 @@ static void
 teco_state_start_loop_open(teco_machine_main_t *ctx, GError **error)
 {
 	teco_loop_context_t lctx;
-	if (!teco_expressions_eval(FALSE, error) ||
-	    !teco_expressions_pop_num_calc(&lctx.counter, -1, error))
+	if (!teco_expressions_pop_num_calc(&lctx.counter, -1, error))
 		return;
 	lctx.brace_level = teco_brace_level;
 	lctx.pass_through = teco_machine_main_eval_colon(ctx) > 0;
@@ -1203,8 +1198,7 @@ teco_state_condcommand_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 			teco_error_argexpected_set(error, "\"");
 			return NULL;
 		}
-		if (!teco_expressions_pop_num_calc(&value, 0, error))
-			return NULL;
+		value = teco_expressions_pop_num(0);
 		break;
 
 	default:
@@ -1305,8 +1299,6 @@ TECO_DEFINE_STATE_COMMAND(teco_state_condcommand,
 static void
 teco_state_control_negate(teco_machine_main_t *ctx, GError **error)
 {
-	teco_int_t v;
-
 	if (!teco_expressions_eval(FALSE, error))
 		return;
 
@@ -1314,9 +1306,8 @@ teco_state_control_negate(teco_machine_main_t *ctx, GError **error)
 		teco_error_argexpected_set(error, "^_");
 		return;
 	}
-	if (!teco_expressions_pop_num_calc(&v, 0, error))
-		return;
-	teco_expressions_push(~v);
+
+	teco_expressions_push(~teco_expressions_pop_num(0));
 }
 
 static void
@@ -1390,9 +1381,8 @@ teco_state_control_radix(teco_machine_main_t *ctx, GError **error)
 			return;
 		teco_expressions_push(radix);
 	} else {
-		if (!teco_expressions_pop_num_calc(&radix, 0, error) ||
-		    !qreg->vtable->undo_set_integer(qreg, error) ||
-		    !qreg->vtable->set_integer(qreg, radix, error))
+		if (!qreg->vtable->undo_set_integer(qreg, error) ||
+		    !qreg->vtable->set_integer(qreg, teco_expressions_pop_num(0), error))
 			return;
 	}
 }
@@ -1444,9 +1434,7 @@ teco_state_control_glyphs2bytes(teco_machine_main_t *ctx, GError **error)
 		 */
 		res = teco_interface_ssm(colon_modified ? SCI_GETLENGTH : SCI_GETCURRENTPOS, 0, 0);
 	} else {
-		teco_int_t pos;
-		if (!teco_expressions_pop_num_calc(&pos, 0, error))
-			return;
+		teco_int_t pos = teco_expressions_pop_num(0);
 		if (colon_modified) {
 			/* teco_interface_bytes2glyphs() does not check addresses */
 			res = 0 <= pos && pos <= teco_interface_ssm(SCI_GETLENGTH, 0, 0)
@@ -1540,12 +1528,16 @@ teco_state_control_last_length(teco_machine_main_t *ctx, GError **error)
 	/*
 	 * There is little use in supporting n^S for n != 0.
 	 * This is just for consistency with ^Y.
+	 *
+	 * We do not use teco_expressions_pop_num_calc(),
+	 * so as not to reset the sign prefix.
 	 */
-	if (teco_expressions_args() > 0 &&
-	    !teco_expressions_pop_num_calc(&n, 0, error))
+	if (!teco_expressions_eval(FALSE, error))
 		return;
+	if (teco_expressions_args() > 0)
+		n = teco_expressions_pop_num(0);
 	if (n < 0 || n >= teco_ranges_count) {
-		teco_error_subpattern_set(error, "^Y");
+		teco_error_subpattern_set(error, "^S");
 		return;
 	}
 
@@ -2141,17 +2133,14 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 	static teco_int_t caret_x = 0;
 
 	teco_int_t property;
-	if (!teco_expressions_eval(FALSE, error) ||
-	    !teco_expressions_pop_num_calc(&property, teco_num_sign, error))
+	if (!teco_expressions_pop_num_calc(&property, teco_num_sign, error))
 		return;
 
 	if (teco_expressions_args() > 0) {
 		/*
 		 * Set property
 		 */
-		teco_int_t value, color;
-		if (!teco_expressions_pop_num_calc(&value, 0, error))
-			return;
+		teco_int_t value = teco_expressions_pop_num(0);
 
 		switch (property) {
 		case EJ_MEMORY_LIMIT:
@@ -2170,9 +2159,8 @@ teco_state_ecommand_properties(teco_machine_main_t *ctx, GError **error)
 				teco_error_argexpected_set(error, "EJ");
 				return;
 			}
-			if (!teco_expressions_pop_num_calc(&color, 0, error))
-				return;
-			teco_interface_init_color((guint)value, (guint32)color);
+			teco_interface_init_color((guint)value,
+			                          (guint32)teco_expressions_pop_num(0));
 			break;
 
 		case EJ_CARETX:
@@ -2293,11 +2281,7 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 		teco_int_t eol_mode;
 
 		if (teco_machine_main_eval_colon(ctx) > 0) {
-			teco_int_t v1, v2;
-			if (!teco_expressions_pop_num_calc(&v1, 0, error))
-				return;
-
-			switch (v1) {
+			switch (teco_expressions_pop_num(0)) {
 			case '\r':
 				eol_mode = SC_EOL_CR;
 				break;
@@ -2306,9 +2290,7 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 					eol_mode = SC_EOL_LF;
 					break;
 				}
-				if (!teco_expressions_pop_num_calc(&v2, 0, error))
-					return;
-				if (v2 == '\r') {
+				if (teco_expressions_pop_num(0) == '\r') {
 					eol_mode = SC_EOL_CRLF;
 					break;
 				}
@@ -2319,8 +2301,7 @@ teco_state_ecommand_eol(teco_machine_main_t *ctx, GError **error)
 				return;
 			}
 		} else {
-			if (!teco_expressions_pop_num_calc(&eol_mode, 0, error))
-				return;
+			eol_mode = teco_expressions_pop_num(0);
 			switch (eol_mode) {
 			case SC_EOL_CRLF:
 			case SC_EOL_CR:
@@ -2469,10 +2450,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 	/*
 	 * Set code page
 	 */
-	teco_int_t new_cp;
-	if (!teco_expressions_pop_num_calc(&new_cp, 0, error))
-		return;
-
+	teco_int_t new_cp = teco_expressions_pop_num(0);
 	if (old_cp == SC_CP_UTF8 && new_cp == SC_CP_UTF8)
 		return;
 
@@ -2784,9 +2762,8 @@ teco_state_insert_initial(teco_machine_main_t *ctx, GError **error)
 		undo__teco_interface_ssm(SCI_UNDO, 0, 0);
 
 	/* This is done only now because it can _theoretically_ fail. */
-	for (gint i = args; i > 0; i--)
-		if (!teco_expressions_pop_num_calc(NULL, 0, error))
-			return FALSE;
+	for (gint i = 0; i < args; i++)
+		teco_expressions_pop_num(0);
 
 	return TRUE;
 }

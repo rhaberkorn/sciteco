@@ -76,12 +76,22 @@ teco_expressions_push_int(teco_int_t number)
 	undo__remove_index__teco_numbers(teco_numbers->len-1);
 }
 
+/** Peek into the numbers stack */
 teco_int_t
 teco_expressions_peek_num(guint index)
 {
 	return g_array_index(teco_numbers, teco_int_t, teco_numbers->len - 1 - index);
 }
 
+/**
+ * Pop a value from the number stack.
+ *
+ * This must only be called if you are sure that the number at the
+ * given index exists and is an argument, i.e. only after calling
+ * teco_expressions_eval() and teco_expressions_args().
+ * If you are unsure or want to imply a value,
+ * use teco_expressions_pop_num_calc() instead.
+ */
 teco_int_t
 teco_expressions_pop_num(guint index)
 {
@@ -99,6 +109,17 @@ teco_expressions_pop_num(guint index)
 	return n;
 }
 
+/**
+ * Pop an argument from the number stack.
+ *
+ * This resolves operations and allows implying values
+ * if there isn't any argument on the stack.
+ *
+ * @param ret Where to store the number
+ * @param imply The fallback value if there is no argument
+ * @param error A GError
+ * @return FALSE if an error occurred
+ */
 gboolean
 teco_expressions_pop_num_calc(teco_int_t *ret, teco_int_t imply, GError **error)
 {
@@ -263,6 +284,13 @@ teco_expressions_calc(GError **error)
 	return TRUE;
 }
 
+/**
+ * Resolve all operations on the top of the stack.
+ *
+ * @param pop_brace If TRUE this also pops the "brace" operator.
+ * @param error A GError
+ * @return FALSE if an error occurred
+ */
 gboolean
 teco_expressions_eval(gboolean pop_brace, GError **error)
 {
@@ -287,6 +315,14 @@ teco_expressions_eval(gboolean pop_brace, GError **error)
 	return TRUE;
 }
 
+/**
+ * Get number of numeric arguments on the top of the stack.
+ *
+ * @fixme You must call teco_expressions_eval() to resolve operations
+ * before this gives sensitive results.
+ * Overall it might be better to automatically call teco_expressions_eval()
+ * here or introduce a separate teco_expressions_args_calc().
+ */
 guint
 teco_expressions_args(void)
 {
