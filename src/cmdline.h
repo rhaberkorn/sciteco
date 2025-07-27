@@ -84,8 +84,6 @@ teco_cmdline_keymacro_c(gchar key, GError **error)
 	return TRUE;
 }
 
-extern gboolean teco_quit_requested;
-
 /*
  * Command states
  */

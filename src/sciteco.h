@@ -87,6 +87,7 @@ teco_is_failure(teco_bool_t x)
  * This is not a bitfield, since it is set from SciTECO.
  */
 enum {
+	TECO_ED_EXIT		= (1 << 1),
 	TECO_ED_DEFAULT_ANSI	= (1 << 2),
 	TECO_ED_AUTOCASEFOLD	= (1 << 3),
 	TECO_ED_AUTOEOL		= (1 << 4),

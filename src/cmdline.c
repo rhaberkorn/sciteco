@@ -63,12 +63,6 @@ int malloc_trim(size_t pad);
 
 teco_cmdline_t teco_cmdline = {};
 
-/*
- * FIXME: Should this be here?
- * Should perhaps rather be in teco_machine_main_t or teco_cmdline_t.
- */
-gboolean teco_quit_requested = FALSE;
-
 /** Last terminated command line */
 static teco_string_t teco_last_cmdline = {NULL, 0};
 
@@ -285,7 +279,7 @@ teco_cmdline_keypress(const gchar *data, gsize len, GError **error)
 
 		teco_interface_popup_clear();
 
-		if (teco_quit_requested) {
+		if (teco_ed & TECO_ED_EXIT) {
 			/* caught by user interface */
 			g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
 			return FALSE;

@@ -506,7 +506,8 @@ main(int argc, char **argv)
 			goto cleanup;
 		g_clear_error(&error);
 
-		if (teco_quit_requested) {
+		if (teco_ed & TECO_ED_EXIT) {
+			/* exit was requested using the EX command */
 			if (!teco_expressions_pop_num_calc(&ret, EXIT_SUCCESS, &error) ||
 			    !teco_ed_hook(TECO_ED_HOOK_QUIT, &error))
 				goto cleanup;

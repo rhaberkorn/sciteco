@@ -1873,7 +1873,7 @@ teco_state_ctlc_control_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 
 		if (!teco_expressions_eval(FALSE, error))
 			return NULL;
-		teco_quit_requested = TRUE;
+		teco_ed |= TECO_ED_EXIT;
 		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_QUIT, "");
 		return NULL;
 	}
@@ -1907,7 +1907,12 @@ TECO_DEFINE_STATE_COMMAND(teco_state_ctlc_control);
  * Without any argument ED returns the current flags.
  *
  * Currently, the following flags are used by \*(ST:
- * .IP 4: 5
+ * .IP 2: 5
+ * Reflects whether program termination has been requested
+ * by successfully performing the \fBEX\fP command.
+ * This flag can also be used to cancel the effect of any
+ * prior \fBEX\fP.
+ * .IP 4:
  * If enabled, prefer raw single-byte ANSI encoding
  * for all new buffers and registers.
  * This does not change the encoding of any existing
@@ -2577,7 +2582,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		teco_interface_ssm(SCI_GOTOPOS, teco_interface_glyphs2bytes(dot_glyphs), 0);
 }
 
-/*$ "EX" ":EX" exit
+/*$ "EX" ":EX" exit quit
  * [bool]EX -- Exit program
  * -EX
  * :EX
@@ -2614,6 +2619,10 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
  * \(lq:EX\fB$$\fP\(rq is nevertheless the usual interactive
  * command sequence to exit while saving all modified
  * buffers.
+ *
+ * The program termination request is also available in bit 2
+ * of the \fBED\fP flags, so \(lqED&2\(rq can be used to
+ * check whether EX has been successfully called.
  */
 /** @fixme what if changing file after EX? will currently still exit */
 static void
@@ -2634,7 +2643,7 @@ teco_state_ecommand_exit(teco_machine_main_t *ctx, GError **error)
 		}
 	}
 
-	teco_undo_gboolean(teco_quit_requested) = TRUE;
+	teco_undo_int(teco_ed) |= TECO_ED_EXIT;
 }
 
 static void
