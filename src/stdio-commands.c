@@ -31,6 +31,19 @@
 #include "stdio-commands.h"
 
 /**
+ * Check whether we are executing directly from the end of the command line.
+ * This works \b only when invoked from the initial_cb.
+ */
+static inline gboolean
+teco_cmdline_is_executing(teco_machine_main_t *ctx)
+{
+	return ctx == &teco_cmdline.machine &&
+	       ctx->macro_pc == teco_cmdline.effective_len;
+}
+
+static gboolean is_executing = FALSE;
+
+/**
  * Print number from stack in the given radix.
  *
  * It must be popped manually, so we can call it multiple times
@@ -110,7 +123,10 @@ TECO_DECLARE_STATE(teco_state_print_octal);
 static gboolean
 teco_state_print_decimal_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->flags.mode > TECO_MODE_NORMAL || !teco_cmdline_is_executing(ctx))
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return TRUE;
+	is_executing = teco_cmdline_is_executing(ctx);
+	if (G_LIKELY(!is_executing))
 		return TRUE;
 	/*
 	 * Interactive invocation:
@@ -126,7 +142,7 @@ teco_state_print_decimal_input(teco_machine_main_t *ctx, gunichar chr, GError **
 		return &teco_state_print_octal;
 
 	if (ctx->flags.mode == TECO_MODE_NORMAL) {
-		if (!teco_cmdline_is_executing(ctx) && !teco_print(ctx, 10, error))
+		if (G_LIKELY(!is_executing) && !teco_print(ctx, 10, error))
 			return NULL;
 		teco_expressions_pop_num(0);
 	}
@@ -140,7 +156,9 @@ teco_state_print_decimal_input(teco_machine_main_t *ctx, gunichar chr, GError **
 static gboolean
 teco_state_print_decimal_end_of_macro(teco_machine_main_t *ctx, GError **error)
 {
-	if (teco_cmdline_is_executing(ctx) || ctx->flags.mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return TRUE;
+	if (G_UNLIKELY(is_executing))
 		return TRUE;
 	if (!teco_print(ctx, 10, error))
 		return FALSE;
@@ -157,7 +175,10 @@ TECO_DEFINE_STATE_START(teco_state_print_decimal,
 static gboolean
 teco_state_print_octal_initial(teco_machine_main_t *ctx, GError **error)
 {
-	if (ctx->flags.mode > TECO_MODE_NORMAL || !teco_cmdline_is_executing(ctx))
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return TRUE;
+	is_executing = teco_cmdline_is_executing(ctx);
+	if (G_LIKELY(!is_executing))
 		return TRUE;
 	/*
 	 * Interactive invocation:
@@ -179,7 +200,7 @@ teco_state_print_octal_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 	}
 
 	if (ctx->flags.mode == TECO_MODE_NORMAL) {
-		if (!teco_cmdline_is_executing(ctx) && !teco_print(ctx, 8, error))
+		if (G_LIKELY(!is_executing) && !teco_print(ctx, 8, error))
 			return NULL;
 		teco_expressions_pop_num(0);
 	}
@@ -193,7 +214,9 @@ teco_state_print_octal_input(teco_machine_main_t *ctx, gunichar chr, GError **er
 static gboolean
 teco_state_print_octal_end_of_macro(teco_machine_main_t *ctx, GError **error)
 {
-	if (teco_cmdline_is_executing(ctx) || ctx->flags.mode > TECO_MODE_NORMAL)
+	if (ctx->flags.mode > TECO_MODE_NORMAL)
+		return TRUE;
+	if (G_UNLIKELY(is_executing))
 		return TRUE;
 	if (!teco_print(ctx, 8, error))
 		return FALSE;

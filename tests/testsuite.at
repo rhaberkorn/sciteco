@@ -185,6 +185,8 @@ AT_FAIL_IF([test `wc -l <stdout` -ne 1], 0, ignore, ignore)
 # Will print a decimal, octal and 2 hexadecimal numbers.
 TE_CHECK_CMDLINE([[2<255===>]], 0, stdout, ignore)
 AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 4], 0, ignore, ignore)
+TE_CHECK_CMDLINE([[3<255=>]], 0, stdout, ignore)
+AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 3], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Printing strings])
