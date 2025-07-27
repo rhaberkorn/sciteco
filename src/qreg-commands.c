@@ -387,39 +387,46 @@ teco_state_setqregstring_nobuilding_done(teco_machine_main_t *ctx,
 			return NULL;
 
 		g_autofree gchar *buffer = NULL;
+		const gchar *start;
 		gsize len = 0;
 
 		if (codepage == SC_CP_UTF8) {
-			/* the glib docs wrongly claim that one character can take 6 bytes */
-			buffer = g_malloc(4*args);
+			/* 4 bytes should be enough for UTF-8, but we better follow the documentation */
+			start = buffer = g_malloc(args*6);
+
 			for (gint i = args; i > 0; i--) {
-				teco_int_t v = teco_expressions_pop_num(0);
-				if (v < 0 || !g_unichar_validate(v)) {
+				teco_int_t chr = teco_expressions_peek_num(i-1);
+				if (chr < 0 || !g_unichar_validate(chr)) {
 					teco_error_codepoint_set(error, "^U");
 					return NULL;
 				}
-				len += g_unichar_to_utf8(v, buffer+len);
+				len += g_unichar_to_utf8(chr, buffer+len);
 			}
+			/* we pop only now since we had to peek in reverse order */
+			for (gint i = 0; i < args; i++)
+				teco_expressions_pop_num(0);
 		} else {
 			buffer = g_malloc(args);
-			for (gint i = args; i > 0; i--) {
-				teco_int_t v = teco_expressions_pop_num(0);
-				if (v < 0 || v > 0xFF) {
+
+			for (gint i = 0; i < args; i++) {
+				teco_int_t chr = teco_expressions_pop_num(0);
+				if (chr < 0 || chr > 0xFF) {
 					teco_error_codepoint_set(error, "^U");
 					return NULL;
 				}
-				buffer[len++] = v;
+				buffer[args-(++len)] = chr;
 			}
+			start = buffer+args-len;
 		}
 
 		if (colon_modified) {
 			/* append to register */
-			if (!qreg->vtable->append_string(qreg, buffer, len, error))
+			if (!qreg->vtable->append_string(qreg, start, len, error))
 				return NULL;
 		} else {
 			/* set register */
 			if (!qreg->vtable->undo_set_string(qreg, error) ||
-			    !qreg->vtable->set_string(qreg, buffer, len,
+			    !qreg->vtable->set_string(qreg, start, len,
 			                              codepage, error))
 				return NULL;
 		}

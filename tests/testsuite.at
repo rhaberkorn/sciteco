@@ -305,8 +305,8 @@ AT_CHECK([[$SCITECO -8e "194Ua Qa@I//J :@S/^EUa/\"F(0/0)'"]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Unicode])
-TE_CHECK([[8594@I/Здравствуй, мир!/ Z-17"N(0/0)' J0A-8594"N(0/0)']], 0, ignore, ignore)
-TE_CHECK([[8594@^Ua/Здравствуй, мир!/ :Qa-17"N(0/0)' 0Qa-8594"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[8594,8592@I/Здравствуй, мир!/ Z-18"N(0/0)' J0A-8594"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[8594,8592@^Ua/Здравствуй, мир!/ :Qa-18"N(0/0)' 0Qa-8594"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@I/Здравствуй, мир!/ JW .-12"N(0/0)' ^E-22"N(0/0)' 204:EE .-12"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@I/TEST/ @EW/юникод.txt/]], 0, ignore, ignore)
 AT_CHECK([[test -f юникод.txt]], 0, ignore, ignore)
