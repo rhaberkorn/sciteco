@@ -518,8 +518,7 @@ main(int argc, char **argv)
 	 * If munged file didn't quit, switch into interactive mode
 	 */
 	/* commandline replacement string register */
-	teco_qreg_table_insert_unique(&teco_qreg_table_globals,
-	                              teco_qreg_plain_new("\e", 1));
+	teco_qreg_table_replace(&teco_qreg_table_globals, teco_qreg_plain_new("\e", 1));
 
 	teco_undo_enabled = TRUE;
 	teco_ring_set_scintilla_undo(TRUE);

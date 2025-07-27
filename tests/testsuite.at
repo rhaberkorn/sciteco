@@ -536,6 +536,15 @@ TE_CHECK_CMDLINE([[@^Um{:@S/XXX/} :Mm"S(0/0)' Mm"S(0/0)']], 0, ignore, stderr)
 AT_FAIL_IF([$GREP "^Error:" stderr])
 AT_CLEANUP
 
+AT_SETUP([Overwriting builtin registers])
+# Initializes registers in batch mode, which are later replaced during startup
+# of interactive mode.
+# This was causing assertion errors.
+AT_DATA([test.tec], [[23U^[ !]! 23U~
+]])
+AT_CHECK([[$SCITECO --fake-cmdline '' --mung test.tec]], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_BANNER([Known Bugs])
 
 AT_SETUP([Number stack])
