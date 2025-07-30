@@ -2,6 +2,9 @@
 dist_scitecolib_DATA = color.tes lexer.tes session.tes opener.tes \
                        fnkeys.tes string.tes getopt.tes
 
+# standalone scripts
+dist_scitecolib_DATA += repl.tes
+
 # Helper script for creating lexer definitions
 EXTRA_DIST = scite2co.lua
 

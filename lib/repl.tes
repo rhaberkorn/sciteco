@@ -1,0 +1,54 @@
+!*
+ * This is a stand-alone script that mimics
+ * classic TECO command lines.
+ * Requires an ANSI-compatible terminal.
+ *
+ * Currently, you must set the terminal characteristics on the outside:
+ * stty raw opost icrnl && sciteco -m repl.tes
+ *
+ * You can launch into interactive mode by typing -u#ex
+ *
+ * TODO:
+ * - Catch errors
+ * - Support *q
+ *!
+0U#ex
+<
+  *
+  <
+    U Q:;
+    !* erase current command line *!
+    [.c[.l
+      0U.i 0U.l :Q<%.i-1Q-10"=%.l'>
+      Q.l"> [\.lF | 13 '
+      [C[J
+    ].l].c
+    !* Handle rub out *!
+    Q-8"= 127U '
+    Q-127"=
+      :Q">
+        !*
+         * Remove last character from reg 
+         * Doesn't require EQ which cannot be reliably undone.
+         *!
+        [.i 0U.i :Q-1<%.i-1Q:> ].i
+      '
+    |
+      Q:
+    '
+    !* Redraw command line *!
+    [.i[.c
+      0U.i :Q< %.i-1QU.c
+        Q.c-10"= 10 F> '
+        Q.c-"= $ F> '
+        Q.c-32"< ^,(Q.c#64) | Q.c '
+      >
+    ].c].i
+    !* FIXME: Catch errors *!
+    Q-"=
+      Q#">0U# 10 :M  1;' 1|0
+    'U#
+  >
+  ED&2"N1;' !* EX called *!
+  Q#ex:;
+>

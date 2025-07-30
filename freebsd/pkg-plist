@@ -11,6 +11,7 @@ share/man/man7/%%PROGRAM_PREFIX%%sciteco.7.gz
 %%DATADIR%%/lib/fnkeys.tes
 %%DATADIR%%/lib/getopt.tes
 %%DATADIR%%/lib/lexer.tes
+%%DATADIR%%/lib/repl.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/abaqus.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/ada.tes
 %%LEXILLA%%%%DATADIR%%/lib/lexers/asciidoc.tes
