@@ -1550,12 +1550,32 @@ teco_ranges_cleanup(void)
 	g_free(teco_ranges);
 }
 
-/*$ "^B" ":^B" "::^B" date time timestamp
- * ^B -> (((year-1900)*16 + month)*32 + day) -- Retrieve date, time or timestamp
- * :^B -> seconds
- * ::^B -> timestamp
+/*$ ^B date
+ * ^B -> (((year-1900)*16 + month)*32 + day) -- Retrieve date
  *
- * By default returns the current date via the given equation.
+ * Returns the current date via the given equation.
+ */
+/*
+ * FIXME: Perhaps :^B should directly return the
+ * decoded year, month and day.
+ */
+static void
+teco_state_control_date(teco_machine_main_t *ctx, GError **error)
+{
+	GDate date;
+
+	g_date_clear(&date, 1);
+	g_date_set_time_t(&date, time(NULL));
+	teco_expressions_push(((g_date_get_year(&date)-1900)*16 + g_date_get_month(&date))*32 +
+	                      g_date_get_day(&date));
+}
+
+/*$ "^H" ":^H" "::^H" time timestamp
+ * ^H -> seconds since midnight -- Retrieve time of day or timestamp
+ * :^H -> seconds
+ * ::^H -> timestamp
+ *
+ * By default returns the current time in seconds since midnight (UTC).
  *
  * If colon-modified it returns the number of <seconds> since the Epoch,
  * 1970-01-01 00:00:00 +0000 (UTC).
@@ -1564,16 +1584,11 @@ teco_ranges_cleanup(void)
  * which can be used as a <timestamp>.
  */
 static void
-teco_state_control_date(teco_machine_main_t *ctx, GError **error)
+teco_state_control_time(teco_machine_main_t *ctx, GError **error)
 {
-	GDate date;
-
 	switch (teco_machine_main_eval_colon(ctx)) {
 	case 0:
-		g_date_clear(&date, 1);
-		g_date_set_time_t(&date, time(NULL));
-		teco_expressions_push(((g_date_get_year(&date)-1900)*16 + g_date_get_month(&date))*32 +
-		                      g_date_get_day(&date));
+		teco_expressions_push(time(NULL) % (60*60*24));
 		break;
 	case 1:
 		teco_expressions_push(time(NULL));
@@ -1617,7 +1632,8 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		/*
 		 * Commands
 		 */
-		['B']  = {&teco_state_start, teco_state_control_date,
+		['B']  = {&teco_state_start, teco_state_control_date},
+		['H']  = {&teco_state_start, teco_state_control_time,
 		          .modifier_colon = 2},
 		['O']  = {&teco_state_start, teco_state_control_octal},
 		['D']  = {&teco_state_start, teco_state_control_decimal},

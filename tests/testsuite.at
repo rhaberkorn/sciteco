@@ -356,8 +356,8 @@ TE_CHECK([[@I/hello^J/ -@EC'tr a-z A-Z' J<0A"V(0/0)' :C;>]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Timestamps])
-# TODO: Test the date (^B) and time (:^B) variants as well.
-TE_CHECK([[::^BUa ::^B-Qa"<(0/0)']], 0, ignore, ignore)
+# TODO: Test the date (^B) and time (^H and :^H) variants as well.
+TE_CHECK([[::^HUa ::^H-Qa"<(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 #
