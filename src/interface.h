@@ -66,6 +66,9 @@ void teco_interface_msg_literal(teco_msg_t type, const gchar *str, gsize len);
 void teco_interface_msg(teco_msg_t type, const gchar *fmt, ...) G_GNUC_PRINTF(2, 3);
 
 /** @pure */
+teco_int_t teco_interface_getch(gboolean widechar);
+
+/** @pure */
 void teco_interface_msg_clear(void);
 
 /** @pure */
@@ -172,6 +175,9 @@ gboolean teco_interface_event_loop(GError **error);
  */
 /** @protected */
 void teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len);
+
+/** @protected */
+teco_int_t teco_interface_stdio_getch(gboolean widechar);
 
 /** @pure */
 void teco_interface_cleanup(void);

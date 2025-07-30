@@ -20,7 +20,11 @@
 
 #include "parser.h"
 
+void teco_state_start_typeout(teco_machine_main_t *ctx, GError **error);
+void teco_state_control_typeout(teco_machine_main_t *ctx, GError **error);
+
+/*
+ * Command states
+ */
 TECO_DECLARE_STATE(teco_state_print_decimal);
 TECO_DECLARE_STATE(teco_state_print_string);
-
-void teco_state_start_typeout(teco_machine_main_t *ctx, GError **error);

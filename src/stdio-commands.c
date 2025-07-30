@@ -292,7 +292,7 @@ TECO_DEFINE_STATE_EXPECTSTRING(teco_state_print_string,
  *
  * Type out the next or previous number of <lines> from the buffer
  * as a message, i.e. in the message line in interactive mode
- * and if possible on the terminal (stdout) as well..
+ * and if possible on the terminal (stdout) as well.
  * If <lines> is omitted, the sign prefix is implied.
  * If two arguments are specified, the characters beginning
  * at position <from> up to the character at position <to>
@@ -319,4 +319,84 @@ teco_state_start_typeout(teco_machine_main_t *ctx, GError **error)
 	 */
 	const gchar *str = (const gchar *)teco_interface_ssm(SCI_GETRANGEPOINTER, from, len);
 	teco_interface_msg_literal(TECO_MSG_USER, str, len);
+}
+
+/*$ "^T" ":^T" "typeout glyph" "get char"
+ * <c1,c2,...>^T -- Type out the numeric arguments as a message or get character from user
+ * <c1,c2,...>:^T
+ * ^T -> codepoint
+ * :^T -> byte
+ *
+ * Types out characters for all the values
+ * on the argument stack (interpreted as codepoints) as messages,
+ * i.e. in the message line in interactive mode
+ * and if possible on the terminal (stdout) as well.
+ * It does so in the order of the arguments, i.e.
+ * <c1> is inserted before <c2>, ecetera.
+ * By default the codepoints are expected to be in the default
+ * codepage, but you can force raw ANSI encoding (for arbitrary
+ * bytes) by colon-modifying the command.
+ *
+ * When called without any argument, \fB^T\fP reads a key from the
+ * user (or from stdin) and returns the corresponding codepoint.
+ * If the default encoding is UTF-8, this will not work
+ * for function keys.
+ * If the default encoding is raw ANSI or if the command is
+ * colon-modified, \fB^T\fP returns raw bytes.
+ * When run in batch mode, this will return whatever byte is
+ * delivered by the attached terminal.
+ * In case stdin is closed, -1 is returned.
+ * In interactive mode, pressing CTRL+D or CTRL+C will also
+ * return -1.
+ */
+void
+teco_state_control_typeout(teco_machine_main_t *ctx, GError **error)
+{
+	if (!teco_expressions_eval(FALSE, error))
+		return;
+
+	gboolean utf8 = !teco_machine_main_eval_colon(ctx) &&
+	                teco_default_codepage() == SC_CP_UTF8;
+
+	guint args = teco_expressions_args();
+	if (!args) {
+		teco_expressions_push(teco_interface_getch(utf8));
+		return;
+	}
+
+	if (!utf8) {
+		/* assume raw ANSI byte output */
+		g_autofree gchar *buf = g_malloc(args);
+		gchar *p = buf+args;
+
+		for (gint i = 0; i < args; i++) {
+			teco_int_t chr = teco_expressions_pop_num(0);
+			if (chr < 0 || chr > 0xFF) {
+				teco_error_codepoint_set(error, "^T");
+				return;
+			}
+			*--p = chr;
+		}
+
+		teco_interface_msg_literal(TECO_MSG_USER, p, args);
+		return;
+	}
+
+	/* 4 bytes should be enough for UTF-8, but we better follow the documentation */
+	g_autofree gchar *buf = g_malloc(args*6);
+	gchar *p = buf;
+
+	for (gint i = args; i > 0; i--) {
+		teco_int_t chr = teco_expressions_peek_num(i-1);
+		if (chr < 0 || !g_unichar_validate(chr)) {
+			teco_error_codepoint_set(error, "^T");
+			return;
+		}
+		p += g_unichar_to_utf8(chr, p);
+	}
+	/* we pop only now since we had to peek in reverse order */
+	for (gint i = 0; i < args; i++)
+		teco_expressions_pop_num(0);
+
+	teco_interface_msg_literal(TECO_MSG_USER, buf, p-buf);
 }

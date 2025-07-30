@@ -1628,7 +1628,9 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		          .modifier_colon = 1},
 		['X']  = {&teco_state_start, teco_state_control_search_mode},
 		['Y']  = {&teco_state_start, teco_state_control_last_range},
-		['S']  = {&teco_state_start, teco_state_control_last_length}
+		['S']  = {&teco_state_start, teco_state_control_last_length},
+		['T']  = {&teco_state_start, teco_state_control_typeout,
+		          .modifier_colon = 1}
 	};
 
 	/*

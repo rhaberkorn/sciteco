@@ -275,3 +275,27 @@ teco_gtk_label_get_text(TecoGtkLabel *self)
 {
 	return &self->string;
 }
+
+/**
+ * Signal that a keypress is expected (after executing ^T)
+ * by printing the first character in reverse.
+ *
+ * @fixme This mimics the current Curses implementation.
+ * Perhaps better show an icon?
+ */
+void
+teco_gtk_label_highlight_getch(TecoGtkLabel *self)
+{
+	const gchar *plaintext = gtk_label_get_text(GTK_LABEL(self));
+	g_assert(plaintext != NULL);
+	if (!*plaintext || !strcmp(plaintext, "\u258C")) {
+		gtk_label_set_text(GTK_LABEL(self), "\u258C");
+	} else {
+		PangoAttrList *attribs = gtk_label_get_attributes(GTK_LABEL(self));
+		teco_gtk_label_add_highlight_attribs(attribs,
+		                                     &self->fg, self->fg_alpha,
+		                                     &self->bg, self->bg_alpha,
+		                                     0, 1);
+		gtk_label_set_attributes(GTK_LABEL(self), attribs);
+	}
+}

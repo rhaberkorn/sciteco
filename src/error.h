@@ -95,7 +95,7 @@ static inline void
 teco_error_codepoint_set(GError **error, const gchar *cmd)
 {
 	g_set_error(error, TECO_ERROR, TECO_ERROR_CODEPOINT,
-	            "Invalid Unicode codepoint for <%s>", cmd);
+	            "Invalid codepoint for <%s>", cmd);
 }
 
 static inline void

@@ -33,3 +33,5 @@ void teco_gtk_label_parse_string(const gchar *str, gssize len,
                                  PangoColor *fg, guint16 fg_alpha,
                                  PangoColor *bg, guint16 bg_alpha,
                                  PangoAttrList **attribs, gchar **text);
+
+void teco_gtk_label_highlight_getch(TecoGtkLabel *self);

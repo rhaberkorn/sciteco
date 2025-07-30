@@ -75,6 +75,7 @@ static void teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong
 static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *event,
                                                 gpointer user_data);
 static gboolean teco_interface_sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
+static gchar teco_interface_get_ansi_key(GdkEventKey *event);
 
 /**
  * Interval between polling for keypresses.
@@ -421,6 +422,103 @@ teco_interface_msg_clear(void)
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(teco_interface.message_bar_widget),
 				      GTK_MESSAGE_QUESTION);
 	teco_gtk_label_set_text(TECO_GTK_LABEL(teco_interface.message_widget), "", 0);
+}
+
+static void
+teco_interface_getch_commit_cb(GtkIMContext *context, gchar *str, gpointer user_data)
+{
+	teco_int_t *cp = user_data;
+
+	/*
+	 * FIXME: What if str contains several characters?
+	 */
+	*cp = g_utf8_get_char_validated(str, -1);
+	g_assert(*cp >= 0);
+	gtk_main_quit();
+}
+
+/*
+ * FIXME: Redundancies with teco_interface_handle_keypress()
+ * FIXME: Report function keys
+ */
+static gboolean
+teco_interface_getch_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+	teco_int_t *cp = user_data;
+
+	g_assert(event->type == GDK_KEY_PRESS);
+
+	switch (event->key.keyval) {
+	case GDK_KEY_Escape:	*cp = '\e'; break;
+	case GDK_KEY_BackSpace:	*cp = TECO_CTL_KEY('H'); break;
+	case GDK_KEY_Tab:	*cp = '\t'; break;
+	case GDK_KEY_Return:	*cp = '\n'; break;
+	default:
+		/*
+		 * NOTE: Alt-Gr key-combinations are sometimes reported as
+		 * Ctrl+Alt, so we filter those out.
+		 */
+		if ((event->key.state & (GDK_CONTROL_MASK | GDK_MOD1_MASK)) == GDK_CONTROL_MASK &&
+		    (*cp = teco_interface_get_ansi_key(&event->key))) {
+			*cp = TECO_CTL_KEY(g_ascii_toupper(*cp));
+			switch (*cp) {
+			case TECO_CTL_KEY('C'):
+				teco_interrupted = TRUE;
+				/* fall through */
+			case TECO_CTL_KEY('D'):
+				*cp = -1;
+			}
+			break;
+		}
+
+		gtk_im_context_filter_keypress(teco_interface.input_method, &event->key);
+		return TRUE;
+	}
+
+	gtk_main_quit();
+	return TRUE;
+}
+
+teco_int_t
+teco_interface_getch(gboolean widechar)
+{
+	if (!gtk_main_level())
+		/* batch mode */
+		return teco_interface_stdio_getch(widechar);
+
+	teco_int_t cp = -1;
+	gulong key_handler, commit_handler;
+
+	/* temporarily replace the "key-press-event" and "commit" handlers */
+	g_signal_handlers_block_by_func(teco_interface.window,
+	                                teco_interface_input_cb, NULL);
+	key_handler = g_signal_connect(teco_interface.window, "key-press-event",
+	                               G_CALLBACK(teco_interface_getch_input_cb), &cp);
+	g_signal_handlers_block_by_func(teco_interface.input_method,
+	                                teco_interface_cmdline_commit_cb, NULL);
+	commit_handler = g_signal_connect(teco_interface.input_method, "commit",
+	                                  G_CALLBACK(teco_interface_getch_commit_cb), &cp);
+
+	/*
+	 * Highlights the first character in the label.
+	 * This mimics what the Curses UI does.
+	 * Is there a better way to signal that we expect input?
+	 */
+	teco_gtk_label_highlight_getch(TECO_GTK_LABEL(teco_interface.message_widget));
+
+	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
+	gdk_window_thaw_updates(top_window);
+
+	gtk_main();
+
+	gdk_window_freeze_updates(top_window);
+
+	g_signal_handler_disconnect(teco_interface.input_method, commit_handler);
+	g_signal_handlers_unblock_by_func(teco_interface.input_method, teco_interface_cmdline_commit_cb, NULL);
+	g_signal_handler_disconnect(teco_interface.window, key_handler);
+	g_signal_handlers_unblock_by_func(teco_interface.window, teco_interface_input_cb, NULL);
+
+	return cp;
 }
 
 void

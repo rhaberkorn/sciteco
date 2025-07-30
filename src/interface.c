@@ -130,3 +130,32 @@ teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len)
 		break;
 	}
 }
+
+/**
+ * Get character from stdin.
+ *
+ * @param widechar If TRUE reads one glyph encoded in UTF-8.
+ *   If FALSE, returns exactly one byte.
+ * @return Codepoint or -1 in case of EOF.
+ */
+teco_int_t
+teco_interface_stdio_getch(gboolean widechar)
+{
+	gchar buf[4];
+	gint i = 0;
+	gint32 cp;
+
+	do {
+		if (G_UNLIKELY(fread(buf+i, 1, 1, stdin) < 1))
+			return -1; /* EOF */
+		if (!widechar || !buf[i])
+			return (guchar)buf[i];
+
+		/* doesn't work as expected when passed a null byte */
+		cp = g_utf8_get_char_validated(buf, ++i);
+		if (i >= sizeof(buf) || cp != -2)
+			i = 0;
+	} while (cp < 0);
+
+	return cp;
+}

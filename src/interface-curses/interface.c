@@ -134,6 +134,9 @@ teco_console_ctrl_handler(DWORD type)
 
 static gint teco_xterm_version(void) G_GNUC_UNUSED;
 
+static void teco_interface_refresh(void);
+static gint teco_interface_blocking_getch(void);
+
 #define UNNAMED_FILE "(Unnamed)"
 
 /**
@@ -913,6 +916,50 @@ teco_interface_msg_clear(void)
 	wmove(teco_interface.msg_window, 0, 0);
 	wattrset(teco_interface.msg_window, teco_color_attr(fg, bg));
 	teco_curses_clrtobot(teco_interface.msg_window);
+}
+
+teco_int_t
+teco_interface_getch(gboolean widechar)
+{
+	if (!teco_interface.cmdline_window) /* batch mode */
+		return teco_interface_stdio_getch(widechar);
+
+	teco_interface_refresh();
+
+	/*
+	 * Signal that we accept input by drawing a real cursor in the message bar.
+	 */
+	wmove(teco_interface.msg_window, 0, 0);
+	curs_set(1);
+	wrefresh(teco_interface.msg_window);
+
+	gchar buf[4];
+	gint i = 0;
+	gint32 cp;
+
+	do {
+		cp = teco_interface_blocking_getch();
+		if (cp == TECO_CTL_KEY('C'))
+			teco_interrupted = TRUE;
+		if (cp == TECO_CTL_KEY('C') || cp == TECO_CTL_KEY('D')) {
+			cp = -1;
+			break;
+		}
+		if (cp < 0 || cp > 0xFF)
+			continue;
+
+		if (!widechar || !cp)
+			break;
+
+		/* doesn't work as expected when passed a null byte */
+		buf[i] = cp;
+		cp = g_utf8_get_char_validated(buf, ++i);
+		if (i >= sizeof(buf) || cp != -2)
+			i = 0;
+	} while (cp < 0);
+
+	curs_set(0);
+	return cp;
 }
 
 void
@@ -1933,6 +1980,9 @@ teco_interface_getmouse(GError **error)
 static gint
 teco_interface_blocking_getch(void)
 {
+	if (!g_queue_is_empty(teco_interface.input_queue))
+		return GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
+
 #if NCURSES_MOUSE_VERSION >= 2
 #ifdef __PDCURSES__
 	/*
@@ -1991,9 +2041,7 @@ teco_interface_event_loop_iter(void)
 
 	GError **error = &teco_interface.event_loop_error;
 
-	gint key = g_queue_is_empty(teco_interface.input_queue)
-			? teco_interface_blocking_getch()
-			: GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
+	gint key = teco_interface_blocking_getch();
 
 	const teco_view_t *last_view = teco_interface_current_view;
 	sptr_t last_vpos = teco_interface_ssm(SCI_GETFIRSTVISIBLELINE, 0, 0);
