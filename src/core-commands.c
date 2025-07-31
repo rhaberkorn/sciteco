@@ -20,6 +20,7 @@
 
 #include <time.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <glib.h>
 #include <glib/gstdio.h>
@@ -2600,6 +2601,25 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 		teco_interface_ssm(SCI_GOTOPOS, teco_interface_glyphs2bytes(dot_glyphs), 0);
 }
 
+/*$ EO version
+ * EO -> major*10000 + minor*100 + micro
+ *
+ * Return the version of \*(ST encoded into an integer.
+ */
+static void
+teco_state_ecommand_version(teco_machine_main_t *ctx, GError **error)
+{
+	/*
+	 * FIXME: This is inefficient and could be done at build-time.
+	 * Or we could have PACKAGE_MAJOR_VERSION, PACKAGE_MINOR_VERSION etc. macros.
+	 * But then, who cares?
+	 */
+	guint major, minor, micro;
+	G_GNUC_UNUSED gint rc = sscanf(PACKAGE_VERSION, "%u.%u.%u", &major, &minor, &micro);
+	g_assert(rc == 3);
+	teco_expressions_push(major*10000 + minor*100 + micro);
+}
+
 /*$ "EX" ":EX" exit quit
  * [bool]EX -- Exit program
  * -EX
@@ -2715,6 +2735,7 @@ teco_state_ecommand_input(teco_machine_main_t *ctx, gunichar chr, GError **error
 		          .modifier_colon = 1},
 		['E']  = {&teco_state_start, teco_state_ecommand_encoding,
 		          .modifier_colon = 1},
+		['O']  = {&teco_state_start, teco_state_ecommand_version},
 		['X']  = {&teco_state_start, teco_state_ecommand_exit,
 		          .modifier_colon = 1},
 	};

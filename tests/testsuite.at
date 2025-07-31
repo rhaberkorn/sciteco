@@ -360,6 +360,13 @@ AT_SETUP([Timestamps])
 TE_CHECK([[::^HUa ::^H-Qa"<(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Program version])
+TE_CHECK([[EO=]], 0, stdout, ignore)
+# FIXME: The grep shouldn't be necessary if we run all tests with --quiet.
+AT_CHECK([[EO="`$GREP -v "^Info:" stdout`" && \
+           test $(($EO/10000)).$(($EO/100%100)).$(($EO%100)) = "$SCITECO_VERSION"]], 0, ignore, ignore)
+AT_CLEANUP
+
 #
 # Command-line editing.
 #

@@ -108,6 +108,7 @@ teco_get_default_config_path(void)
 
 #endif
 
+static gboolean teco_show_version = FALSE;
 static gchar *teco_eval_macro = NULL;
 static gboolean teco_mung_file = FALSE;
 static gboolean teco_mung_profile = TRUE;
@@ -119,6 +120,8 @@ static gchar *
 teco_process_options(gchar ***argv)
 {
 	static const GOptionEntry option_entries[] = {
+		{"version", 'v', 0, G_OPTION_ARG_NONE, &teco_show_version,
+		 "Show version"},
 		{"eval", 'e', 0, G_OPTION_ARG_STRING, &teco_eval_macro,
 		 "Evaluate macro", "macro"},
 		{"mung", 'm', 0, G_OPTION_ARG_NONE, &teco_mung_file,
@@ -185,6 +188,11 @@ teco_process_options(gchar ***argv)
 		g_fprintf(stderr, "Option parsing failed: %s\n",
 			  error->message);
 		exit(EXIT_FAILURE);
+	}
+
+	if (teco_show_version) {
+		puts(PACKAGE_VERSION);
+		exit(EXIT_SUCCESS);
 	}
 
 	if ((*argv)[0] && !g_strcmp0((*argv)[1], "-S")) {

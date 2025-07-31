@@ -18,6 +18,7 @@ export SCITECOPATH="@abs_top_srcdir@/lib"
 export srcdir
 
 TECO_INTEGER=@TECO_INTEGER@
+SCITECO_VERSION="@PACKAGE_VERSION@"
 
 GREP="@GREP@"
 

@@ -16,6 +16,7 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .SCITECO_TOPIC "sciteco"
 .SY @PACKAGE@
 .OP "-h|--help"
+.OP "-v|--version"
 .OP "-e|--eval" macro
 .OP "-m|--mung"
 .OP "--no-profile"
@@ -183,6 +184,10 @@ option.
 .IP "\fB-h\fR, \fB--help\fR"
 .SCITECO_TOPIC "-h" "--help"
 Display a short help text on the console.
+.IP "\fB-v\fR, \fB--version\fR"
+.SCITECO_TOPIC "-v" "--version"
+Display the \*(ST version in an easy to parse way.
+See also the \fBEO\fP command.
 .IP "\fB-e\fR, \fB--eval\fR \fImacro"
 .SCITECO_TOPIC "-e" "--eval"
 Evaluate (execute)
