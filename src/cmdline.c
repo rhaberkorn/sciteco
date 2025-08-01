@@ -472,6 +472,11 @@ teco_state_process_edit_cmd(teco_machine_t *ctx, teco_machine_t *parent_ctx, gun
 		raise(SIGTSTP);
 		return TRUE;
 #endif
+
+	case TECO_CTL_KEY('L'):
+		/* causes a complete screen redraw */
+		teco_interface_refresh(TRUE);
+		return TRUE;
 	}
 
 	teco_interface_popup_clear();

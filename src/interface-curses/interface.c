@@ -134,7 +134,6 @@ teco_console_ctrl_handler(DWORD type)
 
 static gint teco_xterm_version(void) G_GNUC_UNUSED;
 
-static void teco_interface_refresh(void);
 static gint teco_interface_blocking_getch(void);
 
 #define UNNAMED_FILE "(Unnamed)"
@@ -924,7 +923,7 @@ teco_interface_getch(gboolean widechar)
 	if (!teco_interface.cmdline_window) /* batch mode */
 		return teco_interface_stdio_getch(widechar);
 
-	teco_interface_refresh();
+	teco_interface_refresh(FALSE);
 
 	/*
 	 * Signal that we accept input by drawing a real cursor in the message bar.
@@ -1819,8 +1818,8 @@ teco_interface_is_interrupted(void)
  * filtering out CTRL+C.
  * It's currently necessary as a fallback e.g. for PDCURSES_GUI or XCurses.
  *
- * NOTE: Theoretically, this can be optimized by doing wgetch() only every X
- * microseconds like on Gtk+.
+ * NOTE: Theoretically, this can be optimized by doing wgetch() only every
+ * TECO_POLL_INTERVAL microseconds like on Gtk+.
  * But this turned out to slow things down, at least on PDCurses/WinGUI.
  */
 gboolean
@@ -1848,9 +1847,16 @@ teco_interface_is_interrupted(void)
 
 #endif
 
-static void
-teco_interface_refresh(void)
+void
+teco_interface_refresh(gboolean force)
 {
+	if (!teco_interface.cmdline_window)
+		/* batch mode */
+		return;
+
+	if (G_UNLIKELY(force))
+		clearok(curscr, TRUE);
+
 	/*
 	 * Info window is updated very often which is very
 	 * costly, especially when using PDC_set_title(),
@@ -2124,7 +2130,7 @@ teco_interface_event_loop_iter(void)
 		 * in the ^KMOUSE macro, allowing dot to be outside of the view.
 		 */
 		teco_interface_unfold();
-		teco_interface_refresh();
+		teco_interface_refresh(FALSE);
 		return;
 #endif
 
@@ -2183,7 +2189,7 @@ teco_interface_event_loop_iter(void)
 	teco_interface_unfold();
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
 
-	teco_interface_refresh();
+	teco_interface_refresh(FALSE);
 }
 
 gboolean
@@ -2199,7 +2205,7 @@ teco_interface_event_loop(GError **error)
 	teco_interface_cmdline_update(&empty_cmdline);
 	teco_interface_msg_clear();
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-	teco_interface_refresh();
+	teco_interface_refresh(FALSE);
 
 #ifdef EMCURSES
 	PDC_emscripten_set_handler(teco_interface_event_loop_iter, TRUE);

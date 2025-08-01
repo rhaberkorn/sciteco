@@ -680,6 +680,16 @@ work as an immediate editing command in the GUI or as a signal
 dispatched from an associated console or from another process.
 T}
 T{
+.SCITECO_TOPIC ^L redraw
+Redraw
+T};12;^L;T{
+Everywhere
+T};T{
+Enforces a complete redraw of the entire window.
+This is useful when the display becomes corrupted,
+especially when using the Curses UI.
+T}
+T{
 .SCITECO_TOPIC interrupt
 Interrupt
 T};3;^C;T{

@@ -41,6 +41,12 @@
  * feature.
  */
 
+/**
+ * Interval between polling for keypresses (if necessary).
+ * In other words, this is the maximum latency to detect CTRL+C interruptions.
+ */
+#define TECO_POLL_INTERVAL 100000 /* microseconds */
+
 /** @protected */
 extern teco_view_t *teco_interface_current_view;
 
@@ -178,6 +184,9 @@ void teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len);
 
 /** @protected */
 teco_int_t teco_interface_stdio_getch(gboolean widechar);
+
+/** @protected */
+void teco_interface_refresh(gboolean force);
 
 /** @pure */
 void teco_interface_cleanup(void);

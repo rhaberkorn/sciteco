@@ -1605,6 +1605,46 @@ teco_state_control_time(teco_machine_main_t *ctx, GError **error)
 	}
 }
 
+/*$ ^W refresh sleep delay wait
+ * [n]^W -- Wait and refresh screen
+ *
+ * First sleep <n> milliseconds before refreshing the view,
+ * i.e. drawing it.
+ * By default it sleeps for 10ms.
+ * This can be added to loops to make progress visible
+ * in interactive mode.
+ * In batch mode this command is useful as a sleep command.
+ * Sleeps can of course be interrupted with CTRL+C.
+ *
+ * Since CTRL+W is an immediate editing command, you may
+ * have to type this command in upcaret mode.
+ * To enforce a complete screen redraw you can also
+ * press CTRL+L.
+ */
+static void
+teco_state_control_refresh(teco_machine_main_t *ctx, GError **error)
+{
+	teco_int_t ms;
+
+	if (!teco_expressions_pop_num_calc(&ms, 10, error))
+		return;
+
+	while (ms > 0 && !teco_interface_is_interrupted()) {
+		/*
+		 * UNIX' usleep() would also be interrupted by
+		 * SIGINT, but polling for interruptions is
+		 * probably precise enough.
+		 * We need this as a fallback anyway.
+		 */
+		g_usleep(MIN(ms*1000, TECO_POLL_INTERVAL));
+		ms -= TECO_POLL_INTERVAL/1000;
+	}
+
+	teco_interface_unfold();
+	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
+	teco_interface_refresh(FALSE);
+}
+
 static teco_state_t *
 teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
@@ -1647,7 +1687,8 @@ teco_state_control_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['Y']  = {&teco_state_start, teco_state_control_last_range},
 		['S']  = {&teco_state_start, teco_state_control_last_length},
 		['T']  = {&teco_state_start, teco_state_control_typeout,
-		          .modifier_colon = 1}
+		          .modifier_colon = 1},
+		['W']  = {&teco_state_start, teco_state_control_refresh}
 	};
 
 	/*

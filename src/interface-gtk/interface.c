@@ -77,12 +77,6 @@ static gboolean teco_interface_window_delete_cb(GtkWidget *widget, GdkEventAny *
 static gboolean teco_interface_sigterm_handler(gpointer user_data) G_GNUC_UNUSED;
 static gchar teco_interface_get_ansi_key(GdkEventKey *event);
 
-/**
- * Interval between polling for keypresses.
- * In other words, this is the maximum latency to detect CTRL+C interruptions.
- */
-#define TECO_POLL_INTERVAL	100000 /* microseconds */
-
 #define UNNAMED_FILE		"(Unnamed)"
 
 #define USER_CSS_FILE		".teco_css"
@@ -437,10 +431,6 @@ teco_interface_getch_commit_cb(GtkIMContext *context, gchar *str, gpointer user_
 	gtk_main_quit();
 }
 
-/*
- * FIXME: Redundancies with teco_interface_handle_keypress()
- * FIXME: Report function keys
- */
 static gboolean
 teco_interface_getch_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
@@ -865,6 +855,27 @@ teco_interface_is_interrupted(void)
 	return teco_interrupted != FALSE;
 }
 
+void
+teco_interface_refresh(gboolean force)
+{
+	if (!gtk_main_level()) /* batch mode */
+		return;
+
+	if (G_UNLIKELY(force))
+		gtk_widget_queue_draw(teco_interface.window);
+
+	GdkWindow *top_window = gdk_window_get_toplevel(gtk_widget_get_window(teco_interface.window));
+	gdk_window_thaw_updates(top_window);
+
+	/*
+	 * FIXME: Why do we need two iterations to see any updates?
+	 */
+	for (gint i = 0; i < 2; i++)
+		gtk_main_iteration_do(FALSE);
+
+	gdk_window_freeze_updates(top_window);
+}
+
 static void
 teco_interface_set_css_variables(teco_view_t *view)
 {
@@ -942,7 +953,7 @@ teco_interface_set_css_variables(teco_view_t *view)
 }
 
 static void
-teco_interface_refresh(gboolean current_view_changed)
+teco_interface_update(gboolean current_view_changed)
 {
 	/*
 	 * The styles configured via Scintilla might change
@@ -1290,7 +1301,7 @@ teco_interface_event_loop(GError **error)
 	                                          GTK_STYLE_PROVIDER(user_css_provider),
 	                                          GTK_STYLE_PROVIDER_PRIORITY_USER);
 
-	teco_interface_refresh(TRUE);
+	teco_interface_update(TRUE);
 
 	gtk_widget_show_all(teco_interface.window);
 	/* don't show popup by default */
@@ -1512,7 +1523,7 @@ teco_interface_input_cb(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 		}
 		teco_interrupted = FALSE;
 
-		teco_interface_refresh(teco_interface_current_view != last_view);
+		teco_interface_update(teco_interface_current_view != last_view);
 		/* always expand folds, even after mouse clicks */
 		teco_interface_unfold();
 		/*
@@ -1597,7 +1608,7 @@ teco_interface_popup_clicked_cb(GtkWidget *popup, gchar *str, gulong len, gpoint
 	teco_interface_popup_clear();
 	teco_interface_cmdline_update(&teco_cmdline);
 
-	teco_interface_refresh(teco_interface_current_view != last_view);
+	teco_interface_update(teco_interface_current_view != last_view);
 }
 
 static gboolean

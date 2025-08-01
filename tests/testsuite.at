@@ -357,7 +357,7 @@ AT_CLEANUP
 
 AT_SETUP([Timestamps])
 # TODO: Test the date (^B) and time (^H and :^H) variants as well.
-TE_CHECK([[::^HUa ::^H-Qa"<(0/0)']], 0, ignore, ignore)
+TE_CHECK([[::^HUt 100^W (::^H-Qt)-100"<(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Program version])
