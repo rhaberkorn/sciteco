@@ -207,7 +207,7 @@ AT_CLEANUP
 AT_SETUP([Type out and get char])
 TE_CHECK([[1058,1045,1057,1058^T]], 0, stdout, ignore)
 AT_FAIL_IF([test "`$GREP -v "^Info:" stdout`" != "ТЕСТ"], 0, ignore, ignore)
-AT_CHECK([[echo -n "ТЕСТ" | $SCITECO -e '<^TUa Qa:; Qa=>']], 0, stdout, ignore)
+AT_CHECK([[printf "ТЕСТ" | $SCITECO -e '<^TUa Qa:; Qa=>']], 0, stdout, ignore)
 AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 4], 0, ignore, ignore)
 AT_CLEANUP
 
