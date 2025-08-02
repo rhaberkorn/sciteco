@@ -722,24 +722,21 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['T']  = {&teco_state_start, teco_state_start_typeout}
 	};
 
-	switch (chr) {
 	/*
-	 * No-ops (same as TECO_NOOPS):
+	 * Non-operational commands.
 	 * These are explicitly not handled in teco_state_control,
 	 * so that we can potentially reuse the upcaret notations like ^J.
 	 */
-	case ' ':
-	case '\f':
-	case '\r':
-	case '\n':
-	case '\v':
+	if (teco_is_noop(chr)) {
 		if (ctx->flags.modifier_at ||
 		    (ctx->flags.mode == TECO_MODE_NORMAL && ctx->flags.modifier_colon)) {
 			teco_error_modifier_set(error, chr);
 			return NULL;
 		}
 		return &teco_state_start;
+	}
 
+	switch (chr) {
 	/*$ 0 1 2 3 4 5 6 7 8 9 digit number
 	 * [n]0|1|2|3|4|5|6|7|8|9 -> n*Radix+X -- Append digit
 	 *

@@ -1394,13 +1394,16 @@ return 0 instead.
 .LP
 .SCITECO_TOPIC ::
 Two colons (\fB::\fP) can sometimes further modify a command's behavior \(em
-currently it is used by the \fB::S\fP search comparison command
-and a few related search-and-replace operations.
+currently it is used by the timestamp command \fB::^H\fP,
+the \fB::S\fP search comparison command and a few related search-and-replace operations.
 .LP
 .SCITECO_TOPIC @ at
 When put in front of a command with string arguments,
 the at (\fB@\fP) modifier always allows the string termination character
 to be changed for that particular command.
+\# This particular bit of syntax is TECO-64 inspired.
+Whitespace characters (as by \*(ST's understanding of no-op characters)
+are ignored immediately after the command name if it was \fB@\fP-modified.
 The alternative termination character must be specified just before
 the first string argument.
 For instance:
@@ -1409,19 +1412,29 @@ For instance:
 @FS/foo/bar/
 .SCITECO_TT_END
 .EE
-Any character may be used as an alternative termination character.
+Any non-whitespace character may be used as an alternative termination character
+and is matched case-insensitively.
 There is one special case, though.
 If specified as the opening curly brace (\fB{\fP), a string argument
 will continue until the closing curly brace (\fB}\fP).
 Curly braces must be balanced and after the closing curly brace
-the termination character is reset to Escape and another one may
-be chosen.
+a new termination character may be chosen after optional whitespace.
 This feature is especially useful for embedding TECO code in
 string arguments, as in:
 .SCITECO_TT
 .EX
 @^Um{
   @FS{foo}/bar/
+}
+.SCITECO_TT_END
+.EE
+Since whitespace is ignored in front of the alternative escape character,
+this could have also been written as:
+.SCITECO_TT
+.EX
+@^Um
+{
+  @FS {foo} /bar/
 }
 .SCITECO_TT_END
 .EE
@@ -2158,7 +2171,7 @@ the program counter and influencing parsing, it is described in this
 document's command reference.
 \*(ST can perform simple unconditional and computed gotos.
 .LP
-.SCITECO_TOPIC label
+.SCITECO_TOPIC "!" label
 Labels are symbolic and are defined with the following syntax:
 .br
 .BI ! label !
@@ -2187,7 +2200,7 @@ In addition to labels and unlike most classic TECO dialects,
 \*(ST also supports true comments.
 True comments are parsed faster than labels and do not
 take up memory in goto tables.
-.SCITECO_TOPIC "block comment"
+.SCITECO_TOPIC "!*" "block comment"
 One form of comments is the block comment:
 .br
 .BI !* comment *!
@@ -2199,7 +2212,8 @@ They are analoguous to C's
 .BI /* ... */
 comments.
 .LP
-.SCITECO_TOPIC "EOL comment"
+\# This form of comment was originally in TECO-64.
+.SCITECO_TOPIC "!!" "EOL comment"
 The second form of real comments are end-of-line comments,
 which are analogous to C++'s \fB//\fP comments:
 .br

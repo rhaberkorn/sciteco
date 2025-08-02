@@ -75,7 +75,9 @@ void undo__remove_index__teco_loop_stack(guint);
  * FIXME: Maybe use TECO_DECLARE_VTABLE_METHOD()?
  */
 typedef const struct {
+	/** whether string building characters are enabled by default */
 	guint string_building : 1;
+	/** whether this string argument is the last of the command */
 	guint last : 1;
 
 	/**

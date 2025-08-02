@@ -22,8 +22,12 @@
 #include "parser.h"
 #include "string-utils.h"
 
-/** non-operational characters in teco_state_start */
-#define TECO_NOOPS " \f\r\n\v"
+/** Check whether c is a non-operational command in teco_state_start */
+static inline gboolean
+teco_is_noop(gunichar c)
+{
+	return c == ' ' || c == '\f' || c == '\r' || c == '\n' || c == '\v';
+}
 
 gboolean teco_get_range_args(const gchar *cmd, gsize *from_ret, gsize *len_ret, GError **error);
 

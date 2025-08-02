@@ -996,6 +996,11 @@ teco_machine_stringbuilding_escape(teco_machine_stringbuilding_t *ctx, const gch
 	for (guint i = 0; i < len; ) {
 		gunichar chr = g_utf8_get_char(str+i);
 
+		/*
+		 * NOTE: We support both `[` and `{`, so this works for autocompleting
+		 * long Q-register specifications as well.
+		 * This may therefore insert unnecessary ^Q, but they won't hurt.
+		 */
 		if (g_unichar_toupper(chr) == ctx->escape_char ||
 		    (ctx->escape_char == '[' && chr == ']') ||
 		    (ctx->escape_char == '{' && chr == '}'))
@@ -1032,34 +1037,28 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 	teco_state_t *current = ctx->parent.current;
 
 	/*
+	 * Ignore whitespace immediately after @-modified commands.
+	 * This is inspired by TECO-64.
+	 * The alternative would have been to throw an error,
+	 * as allowing whitespace escape_chars is harmful.
+	 */
+	if (ctx->flags.modifier_at && teco_is_noop(chr))
+		return current;
+
+	/*
 	 * String termination handling
 	 */
-	if (ctx->flags.modifier_at) {
-		if (current->expectstring.last)
-			/* also clears the "@" modifier flag */
-			teco_machine_main_eval_at(ctx);
-
+	if (teco_machine_main_eval_at(ctx)) {
 		/*
-		 * FIXME: Exclude setting at least whitespace characters as the
-		 * new string escape character to avoid accidental errors?
-		 *
 		 * FIXME: Should we perhaps restrict case folding escape characters
 		 * to the ANSI range (teco_ascii_toupper())?
-		 * This would be faster than case folding each and every character
+		 * This would be faster than case folding almost all characters
 		 * of a string argument to check against the escape char.
-		 *
-		 * FIXME: This has undesired effects if you try to use one of
-		 * of these characters with multiple string arguments.
 		 */
-		switch (ctx->expectstring.machine.escape_char) {
-		case TECO_CTL_KEY('A'):
-		case '\e':
-		case '{':
-			if (ctx->parent.must_undo)
-				teco_undo_gunichar(ctx->expectstring.machine.escape_char);
-			ctx->expectstring.machine.escape_char = g_unichar_toupper(chr);
-			return current;
-		}
+		if (ctx->parent.must_undo)
+			teco_undo_gunichar(ctx->expectstring.machine.escape_char);
+		ctx->expectstring.machine.escape_char = g_unichar_toupper(chr);
+		return current;
 	}
 
 	/*
@@ -1113,6 +1112,14 @@ teco_state_expectstring_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 			if (ctx->parent.must_undo)
 				teco_undo_gunichar(ctx->expectstring.machine.escape_char);
 			ctx->expectstring.machine.escape_char = '\e';
+		} else if (ctx->expectstring.machine.escape_char == '{') {
+			/*
+			 * Makes sure that after all but the last string argument,
+			 * the escape character is reset, as in @FR{foo}{bar}.
+			 */
+			if (ctx->parent.must_undo)
+				teco_undo_flags(ctx->flags);
+			ctx->flags.modifier_at = TRUE;
 		}
 		ctx->expectstring.nesting = 1;
 

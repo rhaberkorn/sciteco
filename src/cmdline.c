@@ -531,7 +531,7 @@ teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *pa
 
 			while (ctx->parent.current->is_start &&
 			       teco_cmdline.effective_len < teco_cmdline.str.len &&
-			       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len]))
+			       teco_is_noop(teco_cmdline.str.data[teco_cmdline.effective_len]))
 				if (!teco_cmdline_rubin(error))
 					return FALSE;
 
@@ -541,7 +541,7 @@ teco_state_command_process_edit_cmd(teco_machine_main_t *ctx, teco_machine_t *pa
 		/* rubout command */
 		while (ctx->parent.current->is_start &&
 		       teco_cmdline.effective_len > 0 &&
-		       strchr(TECO_NOOPS, teco_cmdline.str.data[teco_cmdline.effective_len-1]))
+		       teco_is_noop(teco_cmdline.str.data[teco_cmdline.effective_len-1]))
 			teco_cmdline_rubout();
 
 		do

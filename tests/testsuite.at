@@ -118,6 +118,9 @@ AT_SETUP([String arguments])
 TE_CHECK([[Ifoo^Q]]TE_ESCAPE[[(0/0)]]TE_ESCAPE, 0, ignore, ignore)
 TE_CHECK([[@I"foo^Q"(0/0)"]], 0, ignore, ignore)
 TE_CHECK([[@I{foo{bar}foo^Q{(0/0)}]], 0, ignore, ignore)
+TE_CHECK([[@^Ua
+           {12345} :Qa-5"N(0/0)']], 0, ignore, ignore)
+TE_CHECK([[@I/X/ H@FR{X}/12345/ Z-5"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[@Ia^EQa(0/0)a]], 0, ignore, ignore)
 # Video-TECO-like syntax - might change in the future
 TE_CHECK([[@I/^E<65>^E<0x41>^E<0101>/ <-A:; -A-^^A"N(0/0)' R>]], 0, ignore, ignore)

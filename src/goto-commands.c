@@ -218,6 +218,9 @@ teco_state_blockcomment_input(teco_machine_main_t *ctx, gunichar chr, GError **e
 
 TECO_DEFINE_STATE_COMMENT(teco_state_blockcomment);
 
+/*
+ * `!!` line comments are inspired by TECO-64.
+ */
 static teco_state_t *
 teco_state_eolcomment_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 {
