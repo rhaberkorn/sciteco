@@ -66,6 +66,8 @@ typedef enum {
 	TECO_MSG_ERROR
 } teco_msg_t;
 
+extern teco_msg_t teco_interface_msg_level;
+
 /** @pure */
 void teco_interface_msg_literal(teco_msg_t type, const gchar *str, gsize len);
 

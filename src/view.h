@@ -56,6 +56,7 @@ gboolean teco_view_load_from_channel(teco_view_t *ctx, GIOChannel *channel,
                                      gboolean clear, GError **error);
 gboolean teco_view_load_from_file(teco_view_t *ctx, const gchar *filename,
                                   gboolean clear, GError **error);
+gboolean teco_view_load_from_stdin(teco_view_t *ctx, gboolean clear, GError **error);
 
 /** @memberof teco_view_t */
 #define teco_view_load(CTX, FROM, CLEAR, ERROR) \
@@ -66,6 +67,7 @@ gboolean teco_view_load_from_file(teco_view_t *ctx, const gchar *filename,
 
 gboolean teco_view_save_to_channel(teco_view_t *ctx, GIOChannel *channel, GError **error);
 gboolean teco_view_save_to_file(teco_view_t *ctx, const gchar *filename, GError **error);
+gboolean teco_view_save_to_stdout(teco_view_t *ctx, GError **error);
 
 /** @memberof teco_view_t */
 #define teco_view_save(CTX, TO, ERROR) \

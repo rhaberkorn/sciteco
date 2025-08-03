@@ -100,6 +100,7 @@ Features
   to be used interactively on system terminals, can be integrated into
   UNIX pipelines and can be extended with external command-line tools
   (see `EC` command).
+  It can easily replace tools like *sed* and *awk*.
 * Themeability and consistency: Color settings (or schemes) are applied consistenly
   across all supported platforms. Gtk+ builds allow further customization using CSS.
   The user interface is kept minimalistic and is consistent in spirit across the
@@ -152,7 +153,7 @@ Community
   if you can (or write an E-Mail to the author).
 * You can also use [Github Discussions](https://github.com/rhaberkorn/sciteco/discussions)
   for asking questions.
-* We are also present in the [alt.lang.teco](https://newsgrouper.org.uk/alt.lang.teco) Usenet group,
+* We are also present in the [alt.lang.teco](https://newsgrouper.org/alt.lang.teco) Usenet group,
   but it is not restricted to SciTECO.
 
 Additional Documentation

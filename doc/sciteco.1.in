@@ -17,6 +17,9 @@ Scintilla-based \fBT\fPext \fBE\fPditor and \fBCO\fPrrector
 .SY @PACKAGE@
 .OP "-h|--help"
 .OP "-v|--version"
+.OP "-q|--quiet"
+.OP "-i|--stdin"
+.OP "-o|--stdout"
 .OP "-e|--eval" macro
 .OP "-m|--mung"
 .OP "--no-profile"
@@ -75,17 +78,21 @@ problems because \*(ST might try to interpret these options.
 argument (which will always be the munged file name in a script invocation).
 .
 .LP
-.SCITECO_TOPIC argv arguments
 Upon startup \*(ST's buffer ring contains only one unnamed empty buffer.
-All command line arguments after the \*(ST options are passed as
+First \*(ST reads from \fIstdin\fP into the unnamed buffer if \(lq--stdin\(rq
+was given.
+\# FIXME: This must change
+.SCITECO_TOPIC argv arguments
+Afterwards all command line arguments after the \*(ST options are passed as
 .I arguments
-to the munged macro by placing each argument on its own line in
-the buffer.
+to the munged macro by appending each argument on its own line to
+the unnamed buffer.
 The \fIscript\fP file name expected when \(lq--mung\(rq is given
 is currently \fBnot\fP considered a macro argument.
 In any case the current buffer position (called
 .IR dot )
 is left at the beginning of the buffer.
+The buffer is left \fIdirty\fP if anything was added to it.
 Optionally \(lq\-\-\(rq might be used to explicitly separate \*(ST options and
 macro arguments, but is never passed down as a macro argument.
 Since it's sometimes useful to pass down \(rq\-\-\(rq to the profile macro,
@@ -120,7 +127,7 @@ to these streams while in interactive mode, or messages are continued to
 be written to these streams (in addition to being displayed in the GUI).
 .IP \(bu
 Messages logged to \fIstdout\fP or \fIstderr\fP \(em except
-for messages written explicitly via some \*(ST command \(em
+for \(lquser\(rq-level messages (written explicitly via some \*(ST command) \(em
 are prefixed with a string signifying the message's severity.
 In interactive mode, messages are also shown in a GUI-dependant
 manner.
@@ -188,6 +195,25 @@ Display a short help text on the console.
 .SCITECO_TOPIC "-v" "--version"
 Display the \*(ST version in an easy to parse way.
 See also the \fBEO\fP command.
+.IP "\fB-q\fR, \fB--quiet\fR"
+.SCITECO_TOPIC "-q" "--quiet"
+Do not print any messages to \fIstdout\fP except for \(lquser\(rq-level
+messages, i.e. messages printed via \fBT\fP, \fB^T\fP and related
+commands.
+This is useful when piping the output of \*(ST into other programs.
+.IP "\fB-i\fR, \fB--stdin\fR"
+.SCITECO_TOPIC "-i" "--stdin"
+Reads from \fIstdin\fP into the unnamed buffer before executing any macro.
+Allows to easily integrate \*(ST into an UNIX pipeline, at least
+if you don't need to process infinite streams.
+This normalizes end-of-line (EOL) characters just like when opening
+any other file.
+.IP "\fB-o\fR, \fB--stdout\fR"
+.SCITECO_TOPIC "-o" "--stdout"
+\# FIXME: Perhaps this should imply --quiet?
+Prints the current document's contents to \fIstdout\fP immediately before
+terminating the program, restoring the original EOL characters.
+This is also useful when piping the output of \*(ST into other programs.
 .IP "\fB-e\fR, \fB--eval\fR \fImacro"
 .SCITECO_TOPIC "-e" "--eval"
 Evaluate (execute)
@@ -506,7 +532,30 @@ In order to execute a stand-alone script or custom profile macro:
 .EE
 .RE
 .
-.ig \" FIXME: Requires --quiet to be an useful example
+.LP
+The easiest way to integrate \*(ST into an UNIX pipeline is
+by using the \(lq--quiet --stdin --stdout\(rq or \(lq-qio\(rq
+parameters.
+For instance in order to prefix all lines with a line number:
+.RS
+.SCITECO_TT
+.EX
+dmesg | @PACKAGE@ -qioe '<%a\\@I/ / :L;>'
+.SCITECO_TT_END
+.EE
+.RE
+.
+.LP
+Suppose you would want to print only those lines from \fIstdin\fP
+matching \(lqiwm0:\(rq:
+.RS
+.SCITECO_TT
+.EX
+dmesg | @PACKAGE@ -qie '<@S/iwm0:/; :L; -T>'
+.SCITECO_TT_END
+.EE
+.RE
+.
 .LP
 In order to query the installation path of the standard library,
 which is useful for authors of third-party macro packages:
@@ -517,7 +566,6 @@ which is useful for authors of third-party macro packages:
 .SCITECO_TT_END
 .EE
 .RE
-..
 .
 .SH SEE ALSO
 .

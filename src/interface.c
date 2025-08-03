@@ -36,6 +36,9 @@
 
 //#define DEBUG
 
+/** minimum level of messages to print to stdout/stderr */
+teco_msg_t teco_interface_msg_level = TECO_MSG_USER;
+
 teco_view_t *teco_interface_current_view = NULL;
 
 TECO_DEFINE_UNDO_CALL(teco_interface_show_view, teco_view_t *);
@@ -114,6 +117,10 @@ teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
 void
 teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len)
 {
+	/* "user"-level messages are always printed */
+	if (type != TECO_MSG_USER && type < teco_interface_msg_level)
+		return;
+
 	switch (type) {
 	case TECO_MSG_USER:
 		fwrite(str, 1, len, stdout);

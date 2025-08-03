@@ -350,6 +350,44 @@ teco_view_load_from_file(teco_view_t *ctx, const gchar *filename,
 	return TRUE;
 }
 
+/**
+ * Load stdin until EOF into view's document.
+ *
+ * @param ctx The view to load.
+ * @param clear Whether to completely replace document
+ *   (leaving dot at the beginning of the document) or insert at dot
+ *   (leaving dot at the end of the insertion).
+ * @param error A GError.
+ * @return FALSE in case of a GError.
+ *
+ * @memberof teco_view_t
+ */
+gboolean
+teco_view_load_from_stdin(teco_view_t *ctx, gboolean clear, GError **error)
+{
+#ifdef G_OS_WIN32
+	g_autoptr(GIOChannel) channel = g_io_channel_win32_new_fd(0);
+#else
+	g_autoptr(GIOChannel) channel = g_io_channel_unix_new(0);
+#endif
+	g_assert(channel != NULL);
+
+	/*
+	 * The file loading algorithm does not need buffered
+	 * streams, so disabling buffering should increase
+	 * performance (slightly).
+	 */
+	g_io_channel_set_encoding(channel, NULL, NULL);
+	g_io_channel_set_buffered(channel, FALSE);
+
+	if (!teco_view_load_from_channel(ctx, channel, clear, error)) {
+		g_prefix_error_literal(error, "Error reading stdin: ");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 #if 0
 
 /*
@@ -550,6 +588,31 @@ teco_view_save_to_file(teco_view_t *ctx, const gchar *filename, GError **error)
 		                   "Unable to preserve owner of \"%s\": %s",
 		                   filename, g_strerror(errno));
 #endif
+
+	return TRUE;
+}
+
+/** @memberof teco_view_t */
+gboolean
+teco_view_save_to_stdout(teco_view_t *ctx, GError **error)
+{
+#ifdef G_OS_WIN32
+	g_autoptr(GIOChannel) channel = g_io_channel_win32_new_fd(1);
+#else
+	g_autoptr(GIOChannel) channel = g_io_channel_unix_new(1);
+#endif
+	g_assert(channel != NULL);
+
+	/*
+	 * teco_view_save_to_channel() expects a buffered and blocking channel
+	 */
+	g_io_channel_set_encoding(channel, NULL, NULL);
+	g_io_channel_set_buffered(channel, TRUE);
+
+	if (!teco_view_save_to_channel(ctx, channel, error)) {
+		g_prefix_error_literal(error, "Error writing to stdout: ");
+		return FALSE;
+	}
 
 	return TRUE;
 }

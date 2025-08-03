@@ -42,6 +42,7 @@
 #include "parser.h"
 #include "goto.h"
 #include "qreg.h"
+#include "view.h"
 #include "ring.h"
 #include "undo.h"
 #include "error.h"
@@ -109,6 +110,9 @@ teco_get_default_config_path(void)
 #endif
 
 static gboolean teco_show_version = FALSE;
+static gboolean teco_quiet = FALSE;
+static gboolean teco_stdin = FALSE;
+static gboolean teco_stdout = FALSE;
 static gchar *teco_eval_macro = NULL;
 static gboolean teco_mung_file = FALSE;
 static gboolean teco_mung_profile = TRUE;
@@ -122,6 +126,12 @@ teco_process_options(gchar ***argv)
 	static const GOptionEntry option_entries[] = {
 		{"version", 'v', 0, G_OPTION_ARG_NONE, &teco_show_version,
 		 "Show version"},
+		{"quiet", 'q', 0, G_OPTION_ARG_NONE, &teco_quiet,
+		 "Don't print any non-user-level messages to stdout"},
+		{"stdin", 'i', 0, G_OPTION_ARG_NONE, &teco_stdin,
+		 "Read stdin into the unnamed buffer"},
+		{"stdout", 'o', 0, G_OPTION_ARG_NONE, &teco_stdout,
+		 "Print current buffer to stdout before program termination"},
 		{"eval", 'e', 0, G_OPTION_ARG_STRING, &teco_eval_macro,
 		 "Evaluate macro", "macro"},
 		{"mung", 'm', 0, G_OPTION_ARG_NONE, &teco_mung_file,
@@ -194,6 +204,10 @@ teco_process_options(gchar ***argv)
 		puts(PACKAGE_VERSION);
 		exit(EXIT_SUCCESS);
 	}
+
+	if (teco_quiet)
+		/* warnings and errors will still be printed to stderr */
+		teco_interface_msg_level = TECO_MSG_WARNING;
 
 	if ((*argv)[0] && !g_strcmp0((*argv)[1], "-S")) {
 		/* translate -S to --, this is always passed down */
@@ -453,16 +467,38 @@ main(int argc, char **argv)
 	}
 
 	/*
+	 * Load stdin into the unnamed buffer.
+	 * This will also perform EOL normalization.
+	 * This is not done automatically when isatty(0) == 0
+	 * since you might want to read from stdin manually (^T).
+	 * Loading stdin also won't work if the stream is infinite.
+	 *
+	 * NOTE: The profile hasn't run yet, so it cannot guess the
+	 * documents encoding. This should therefore be done by the profile
+	 * for any preexisting unnamed buffer.
+	 *
+	 * FIXME: The unnamed buffer is also currently used for
+	 * command-line parameters.
+	 * Therefore you practically cannot pipe into SciTECO
+	 * while using opener.tes.
+	 */
+	if (teco_stdin && !teco_view_load_from_stdin(teco_ring_current->view, TRUE, &error))
+		goto cleanup;
+
+	/*
 	 * Add remaining arguments to unnamed buffer.
 	 *
 	 * FIXME: This is not really robust since filenames may contain linefeeds.
 	 * Also, the Unnamed Buffer should be kept empty for piping.
-	 * Therefore, it would be best to store the arguments in Q-Regs, e.g. $0,$1,$2...
+	 * Therefore, it would be best to store the arguments in Q-Regs, e.g. ^A0,^A1,^A2...
 	 */
 	for (gint i = 1; argv_utf8[i]; i++) {
 		teco_interface_ssm(SCI_APPENDTEXT, strlen(argv_utf8[i]), (sptr_t)argv_utf8[i]);
 		teco_interface_ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
 	}
+
+	if (teco_interface_ssm(SCI_GETLENGTH, 0, 0) > 0)
+		teco_ring_dirtify();
 
 	/*
 	 * Execute macro or mung file
@@ -571,6 +607,9 @@ main(int argc, char **argv)
 		goto cleanup;
 
 cleanup:
+	if (!error && teco_stdout)
+		teco_view_save_to_stdout(teco_ring_current->view, &error);
+
 	if (error != NULL) {
 		teco_error_display_full(error);
 		ret = EXIT_FAILURE;
