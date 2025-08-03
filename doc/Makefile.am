@@ -52,7 +52,7 @@ CLEANFILES += sciteco.1 sciteco.1.intermediate
 EXTRA_DIST += sciteco.1.in
 
 women_DATA += sciteco.7.woman sciteco.7.woman.tec
-CLEANFILES += sciteco.7 sciteco.7.intermediate sciteco.7.in sciteco.7.htbl
+CLEANFILES += sciteco.7 sciteco.7.intermediate sciteco.7.in
 EXTRA_DIST += sciteco.7.template
 
 women_DATA += tutorial.woman tutorial.woman.tec
@@ -61,8 +61,9 @@ EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
 
-# NOTE: *.intermediate files are only generated since SciTECO scripts
-# cannot currently read stdin, so the grosciteco postprocessor
+# FIXME: *.intermediate files are only generated since SciTECO scripts
+# cannot currently read stdin via --stdin while passing command-line
+# arguments at the same time, so the grosciteco postprocessor
 # has to be run on a separate file.
 %.woman %.woman.tec : %.intermediate grosciteco.tes
 	$(SCITECO_FULL) -m -- @srcdir@/grosciteco.tes \
@@ -84,13 +85,9 @@ html_DATA = grosciteco.tes.1.html tedoc.tes.1.html \
 CLEANFILES += $(html_DATA)
 endif
 
-# NOTE: The *.htbl files are only generated since SciTECO
-# scripts cannot be integrated into pipelines easily yet.
-%.htbl : % htbl.tes
-	$(SCITECO_FULL) -m -- @srcdir@/htbl.tes $< $@
-
-%.html : %.htbl
-	@GROFF@ -wall -Thtml -man $< >$@
+%.html : % htbl.tes
+	$(SCITECO_FULL) -qiom -- @srcdir@/htbl.tes <$< | \
+	@GROFF@ -wall -Thtml -man >$@
 
 %.html : %.ms
 	@GROFF@ -wall -Thtml -ms $< >$@

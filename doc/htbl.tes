@@ -1,10 +1,8 @@
-#!/usr/local/bin/sciteco -m
-!* htbl.tes <input> <output> *!
+#!/usr/local/bin/sciteco -qiom
+!* cat input | htbl.tes >output *!
 !* Troff tbl "drop-in" replacement *!
 
 0,2EJ !* FIXME: Memory limiting is too slow *!
-
-LR 0X#in 2LR 0X#ou EBN#in EB -EF
 
 <
 !*
@@ -112,5 +110,4 @@ q.[drows]<
 I.HTML </table>^J
 >
 
-2EL EWQ#ou
-EX
+2EL -EX

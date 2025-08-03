@@ -24,8 +24,7 @@ endif
 SCITECO_INSTALLED = \
 	$(bindir)/`echo sciteco | @SED@ '$(transform)'`$(EXEEXT)
 
-SUBST_MACRO = EB$<\e \
-              <FS@PACKAGE^Q@\e@PACKAGE@\e;>J \
+SUBST_MACRO = <FS@PACKAGE^Q@\e@PACKAGE@\e;>J \
               <FS@PACKAGE_NAME^Q@\e@PACKAGE_NAME@\e;>J \
               <FS@PACKAGE_VERSION^Q@\e@PACKAGE_VERSION@\e;>J \
               <FS@PACKAGE_URL^Q@\e@PACKAGE_URL@\e;>J \
@@ -34,12 +33,11 @@ SUBST_MACRO = EB$<\e \
               <FS@scitecodatadir^Q@\e$(scitecodatadir)\e;>J \
               <FS@scitecolibdir^Q@\e$(scitecolibdir)\e;>J \
               <FS@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>J \
-              <FS@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>J \
-              EW$@\e
+              <FS@DATE^Q@\e;$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>J
 
 # The SciTECO-based substitutor must not process config.h.in.
 @top_srcdir@/config.h: ;
 
 SUFFIXES = .in
 .in:
-	$(SCITECO_MINIMAL) -e $$'$(SUBST_MACRO)'
+	$(SCITECO_MINIMAL) -qioe $$'$(SUBST_MACRO)' <$< >$@
