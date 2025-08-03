@@ -27,10 +27,10 @@ AT_ARG_OPTION([valgrind],
 # square brackets.
 
 m4_define([TE_CHECK], [
-	AT_CHECK([$SCITECO --eval ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
+	AT_CHECK([$SCITECO --quiet --eval ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
 ])
 m4_define([TE_CHECK_CMDLINE], [
-	AT_CHECK([$SCITECO --no-profile --fake-cmdline ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
+	AT_CHECK([$SCITECO --quiet --no-profile --fake-cmdline ']m4_bpatsubst([[$1]], ['], ['\\''])['], [$2], [$3], [$4])
 ])
 
 # Control characters for testing immediate editing commands with TE_CHECK_CMDLINE().
@@ -157,6 +157,7 @@ m4_define([TE_MININT32], [-2147483648])
 m4_define([TE_MAXINT64], [9223372036854775807])
 m4_define([TE_MININT64], [-9223372036854775808])
 
+# TODO: Also check different radixes.
 AT_SETUP([Formatting numbers])
 # MAXINT32/MININT32: should always work.
 TE_CHECK(TE_MAXINT32[[\ J::@S/]]TE_MAXINT32[[/"F(0/0)']], 0, ignore, ignore)
@@ -177,41 +178,60 @@ TE_CHECK([[(]]TE_MAXINT64[[)-(]]TE_MAXINT64[[)"N(0/0)']], 0, ignore, ignore)
 TE_CHECK([[(]]TE_MININT64[[)-(]]TE_MININT64[[)"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
-# FIXME: Once we have a --quiet option, we should probably use it here.
+AT_SETUP([Piping from stdin to stdout])
+AT_DATA([expout], [[ТЕСТ
+]])
+# Also tests case-folding via ^W^W.
+AT_CHECK([[echo 'тест' | $SCITECO -qioe 'H@Xa @I/^W^W^EQa/']], 0, expout, ignore)
+AT_CLEANUP
+
 AT_SETUP([Printing numbers])
 # Must print only one hexadecimal number.
-TE_CHECK([[255===]], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 1], 0, ignore, ignore)
-# Without LF: Only the "Info:" line will be counted.
+AT_DATA([expout], [[FF
+]])
+TE_CHECK([[255===]], 0, expout, ignore)
+# Without LF: No line will be counted.
 TE_CHECK([[255:===]], 0, stdout, ignore)
-AT_FAIL_IF([test `wc -l <stdout` -ne 1], 0, ignore, ignore)
+AT_FAIL_IF([test `wc -l <stdout` -ne 0])
 # Will print a decimal, octal and 2 hexadecimal numbers.
-TE_CHECK_CMDLINE([[2<255===>]], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 4], 0, ignore, ignore)
-TE_CHECK_CMDLINE([[3<255=>]], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 3], 0, ignore, ignore)
+AT_DATA([expout], [[255
+377
+FF
+FF
+]])
+TE_CHECK_CMDLINE([[2<255===>]], 0, expout, ignore)
+AT_DATA([expout], [[255
+255
+255
+]])
+TE_CHECK_CMDLINE([[3<255=>]], 0, expout, ignore)
 AT_CLEANUP
 
 AT_SETUP([Printing strings])
-# FIXME: Test that the LF is missing at line end.
-TE_CHECK([[@^A/TEST^JLine 2/]], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 2], 0, ignore, ignore)
+AT_DATA([expout], [[TEST
+Line 2
+]])
+TE_CHECK([[@^A/TEST^JLine 2^J/]], 0, expout, ignore)
 AT_CLEANUP
 
 AT_SETUP([Type out buffer contents])
-AT_DATA([test.txt], [[Line 1
+AT_DATA([expout], [[Line 1
 Line 2
 Line 3
 ]])
-TE_CHECK([[@EB'test.txt' 2T]], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 2], 0, ignore, ignore)
+TE_CHECK([[@EB'expout' HT]], 0, expout, ignore)
 AT_CLEANUP
 
 AT_SETUP([Type out and get char])
-TE_CHECK([[1058,1045,1057,1058^T]], 0, stdout, ignore)
-AT_FAIL_IF([test "`$GREP -v "^Info:" stdout`" != "ТЕСТ"], 0, ignore, ignore)
-AT_CHECK([[printf "ТЕСТ" | $SCITECO -e '<^TUa Qa:; Qa=>']], 0, stdout, ignore)
-AT_FAIL_IF([test `$GREP -v "^Info:" stdout | wc -l` -ne 4], 0, ignore, ignore)
+AT_DATA([expout], [[ТЕСТ
+]])
+TE_CHECK([[1058,1045,1057,1058,10^T]], 0, expout, ignore)
+AT_DATA([expout], [[1058
+1045
+1057
+1058
+]])
+AT_CHECK([[printf "ТЕСТ" | $SCITECO -qe '<^TUa Qa:; Qa=>']], 0, expout, ignore)
 AT_CLEANUP
 
 AT_SETUP([Convert between line and glyph positions])
@@ -364,10 +384,8 @@ TE_CHECK([[::^HUt 100^W (::^H-Qt)-100"<(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Program version])
-TE_CHECK([[EO=]], 0, stdout, ignore)
-# FIXME: The grep shouldn't be necessary if we run all tests with --quiet.
-AT_CHECK([[EO="`$GREP -v "^Info:" stdout`" && \
-           test $(($EO/10000)).$(($EO/100%100)).$(($EO%100)) = "$SCITECO_VERSION"]], 0, ignore, ignore)
+TE_CHECK([[EO/10000\@I"." EO/100^/100\@I"." EO^/100\ HT]], 0, stdout, ignore)
+AT_FAIL_IF([test "`cat stdout`" != "$SCITECO_VERSION"])
 AT_CLEANUP
 
 #
@@ -611,7 +629,8 @@ AT_CLEANUP
 
 AT_SETUP([Command-line termination])
 # Everything after the $$ should be preserved.
-TE_CHECK_CMDLINE([[{@I/$$1234=/}]], 0, stdout, ignore)
-AT_CHECK([[$GREP "1234" stdout]], 0, ignore, ignore)
+AT_DATA([expout], [[1234
+]])
+TE_CHECK_CMDLINE([[{@I/$$1234=/}]], 0, expout, ignore)
 AT_XFAIL_IF(true)
 AT_CLEANUP
