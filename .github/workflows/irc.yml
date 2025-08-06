@@ -15,20 +15,14 @@ jobs:
     steps:
     - name: Git Clone
       uses: actions/checkout@v4.1.6
-    - name: Get last successful commit
-      uses: nrwl/last-successful-commit-action@v1
-      id: last_successful_commit
-      with:
-        branch: 'master'
-        workflow_id: 'ci.yml'
-        github_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Get log
       id: get_log
       run: |
+        # Get commit of the previous successful CI run
+        COMMIT="`gh run list --workflow="ci.yml" --limit=2 --status=success --json headSha -q '.[1].headSha'`"
         {
           echo 'LOG<<EOF'
-          git log --pretty="format:%h %s" --reverse \
-                  ${{ steps.last_successful_commit.outputs.commit_hash }}..HEAD
+          git log --pretty="format:%h %s" --reverse $COMMIT..HEAD
           echo EOF
         } >> "$GITHUB_OUTPUT"
     - name: Post IRC message
