@@ -25,14 +25,19 @@ jobs:
     - name: Get log
       id: get_log
       run: |
-        echo 'log<<EOF' >>$GITHUB_OUTPUT
-        git log --pretty="format:%h %s" --reverse \
-                ${{ steps.last_successful_commit.outputs.commit_hash }}..HEAD`" >>$GITHUB_OUTPUT
-        echo 'EOF' >>$GITHUB_OUTPUT
+        {
+          echo 'LOG<<EOF'
+          git log --pretty="format:%h %s" --reverse \
+                  ${{ steps.last_successful_commit.outputs.commit_hash }}..HEAD
+          echo EOF
+        } >> "$GITHUB_OUTPUT"
     - name: Post IRC message
       uses: rectalogic/notify-irc@v1
       with:
         channel: "#sciteco"
         server: "irc.libera.chat"
         nickname: git-bot
-        message: ${{ steps.get_log.outputs.log }}
+        # NOTE: There is also ${{ github.event.ref }} ${{ join(github.event.commits.*.message) }}
+        # but it probably doesn't give us the commits since the last succesful one, but simply everything
+        # belonging to the push.
+        message: ${{ steps.get_log.outputs.LOG }}
