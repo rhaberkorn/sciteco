@@ -1668,6 +1668,26 @@ the original clipboard contents, though.
 The numeric parts of the clipboard registers are
 currently not used by \*(ST.
 .TP
+.SCITECO_TOPIC ^Ax
+.BI ^A x
+An argument passed on the operating system's command line.
+\fIx\fP can be an integer beginning with 0.
+.B ^A0
+is the name of the program, as passed via \(lqargv[0]\(rq to
+C programs, and is guaranteed to always exist.
+All remaining registers for \fIx\fP larger than or equal to 1
+represent the command-line parameters after all the built-in
+options as reported by \(lq@PACKAGE@ --help\(rq.
+In other words all the options processed by the \*(ST main program
+including the file names after \(lq--mung\(rq are automatically
+excluded from the
+.BI ^A x
+array.
+The numeric parts of the argument registers are
+currently not used by \*(ST.
+For more details, see
+.BR sciteco (1).
+.TP
 .BI ^K key
 Key macro registers as documented in section
 .BR "KEY TRANSLATION" .

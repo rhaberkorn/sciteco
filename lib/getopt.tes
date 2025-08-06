@@ -1,5 +1,5 @@
 !*$
- * M[getopt] -> Success|Failure -- Parse options
+ * M[getopt] -> First non-flag argument -- Parse options
  *
  * Parses command line options according to the string
  * \(lqoptstring\(rq, similar to \fBgetopt\P(3).
@@ -14,37 +14,47 @@
  * If the option had an argument, it is stored in the register's
  * string part.
  *
- * A condition boolean is returned to signify whether
- * there was a parsing error.
+ * Returns the index of the first command-line argument that does not
+ * belong to a flag or -1 in case of parsing errors.
  *!
 [optstring]
-@[getopt]{ [:
-  <
-    .-Z"= 1; ' 0A-^^-"N :L; F< '
+@[getopt]{
+  <%.j
+    :Q[\.j]:;
+    0Q[\.j]--"N 1; '
+  !next!
 
-    1A-^^-"= K 1; '
+    1Q[\.j]U.f
+    Q.f--"= !* -- *! Q.j+1 '
 
+    !* j-th argument is -f *!
     0U.i <
-      :Q[optstring]-Q.i"= ]: 0 '
-      Q.iQ[optstring]U.c
+      Q.iQ[optstring]U.o Q.o"< -1 '
 
-      0U.#ar <
-        %.i-:Q[optstring]"= 1; '
-        Q.iQ[optstring]-^^:"N 1; '
-      %.#ar>
+      !* count number of : after o *!
+      0U.#ar <%.iQ[optstring]-:"N 1; ' %.#ar>
 
-      1A-Q.c"=
-        -U[getopt.U.c]
+      Q.f-Q.o"=
+        -U[getopt.U.o]
         Q.#ar">
-          2A-10"=
-            K Q.#ar-1"> 0A-^^-"= 0U.i F< ' '
+          2Q[\.j]"<
+            !* -f arg *!
+            %.j
+            Q.#ar-1"> !* optional arg *!
+              :Q[\.j]"< Q.j '
+              0Q[\.j]--"= Onext '
+            |
+              :Q[\.j]"< -1 '
+            '
+            EU[getopt.U.o]Q[\.j]
           |
-            2D
+            !* -farg *!
+            EU[getopt.U.o]Q[\.j]
+            [* EQ[getopt.U.o] 2D ]*
           '
-          LR 0X[getopt.U.c] 0L
         '
-        K 1;
+        1;
       '
     >
   >
-]: -1}
+Q.j}

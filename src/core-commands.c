@@ -920,7 +920,7 @@ TECO_DEFINE_STATE_START(teco_state_start);
  * Immediately jumps to the current loop's start.
  * Also works from inside conditionals.
  *
- * This command behaves exactly like \fB>\fP with regard to
+ * This command behaves exactly like \fB<\fP with regard to
  * colon-modifiers.
  *
  * Outside of loops \(em or in a macro without

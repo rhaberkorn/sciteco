@@ -18,7 +18,7 @@ GNU roff post-processor for \*(ST
 .OP "-t" tec_output
 .OP "--"
 .I text_output
-.I input
+.RI < input
 .YS
 .
 .
@@ -79,8 +79,8 @@ This is also the default when omitted.
 .IP "\fItext_output\fP
 The plain-text output file, e.g. \(lqgreat-macro.woman\(rq.
 .IP "\fIinput\fP"
-The \fIinput\fP file is in \fBtroff\fP's device-independant
-output format.
+\fBtroff\fP's device-independant output format
+is read from \fIstdin\fP.
 .
 .
 .SH SPECIAL TROFF MACROS
@@ -168,8 +168,8 @@ a \*(ST macro package with a man page called
 .SCITECO_TT
 .EX
 groff -Z -Kutf-8 -Tutf8 -man -M@scitecodatadir@ -msciteco \\
-      great-macro.tes.7sciteco >great-macro.tes.7sciteco.intermediate
-grosciteco.tes great-macro.tes.7sciteco.woman great-macro.tes.7sciteco.intermediate
+      great-macro.tes.7sciteco | \\
+grosciteco.tes great-macro.tes.7sciteco.woman
 .SCITECO_TT_END
 .EE
 .RE

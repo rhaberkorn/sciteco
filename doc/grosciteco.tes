@@ -1,16 +1,18 @@
-#!/usr/local/bin/sciteco -m
-!* grosciteco.tes [-t <output-tec>] [--] <output-woman> <input> *!
+#!/usr/local/bin/sciteco -mi
+!* grosciteco.tes [-t <output-tec>] [--] <output> <input *!
 
 0,2EJ !* FIXME: Memory limiting is too slow *!
 
 :EIQ[$SCITECOPATH]/getopt.tes
 
 !* Process command-line options *!
-[optstring]t: M[getopt]"F (0/0) '
-LR 0X[output-woman] 2LR 0X[input] HK
+[optstring]t:
+M[getopt]U[output-woman] Q[output-woman]"< Invalid command-line^J 1 '
+EU[output-woman]Q[\[output-woman]]
 :Q[getopt.t]"< EU[getopt.t]Q[output-woman].tec '
 
-EBN[input]
+EBN[output-woman] HK 1EB
+
 0EE !* Groff intermediate code is always ASCII *!
 
 !* skip whitespace characters *!
@@ -54,7 +56,7 @@ EBN[input]
 !* FIXME: Works only for straight lines *!
 @[line]{ U.[to.v] U.[to.h]
   Q.[to.h]-Q[pos.h]"= Q.[to.v]-Q[pos.v]"=  ' '
-  [* EB
+  [* EBN[output-woman]
   Q.[to.h]-Q[pos.h]"=
     !* vertical line *!
     Q.[to.v]-Q[pos.v]"< Q[pos.v]U.v Q.[to.v]U[pos.v] | Q.[to.v]U.v '
@@ -147,32 +149,32 @@ EBN[input]
          * a table). Only the line+column should no longer change.
          * Either store line+column or use markers.
          *!
-        [* EB 0:M[move] U.d ]*
+        [* EBN[output-woman] 0:M[move] U.d ]*
         :EU[topics]\.d:
         C :X[topics]
         L F<
       !cmd.xXsciteco_tt!
-        [* EB 0:M[move] U[ttstart] ]*
+        [* EBN[output-woman] 0:M[move] U[ttstart] ]*
         L F<
       !cmd.xXsciteco_tt_end!
-        [* EB 0:M[move]
+        [* EBN[output-woman] 0:M[move]
           -Q[ttstart]<
             Q[ttstart]ESSTARTSTYLING Q[ttstart]ESGETSTYLEAT+16,1ESSETSTYLING
           %[ttstart]>
         ]*
         L F<
       !cmd.xXsciteco_startstyling!
-        [* EB 0:M[move] U[stylestart] ]*
+        [* EBN[output-woman] 0:M[move] U[stylestart] ]*
         L F<
       !cmd.xXsciteco_setstyling!
         C :M#giU.s
-        [* EB 0:M[move]
+        [* EBN[output-woman] 0:M[move]
           Q[stylestart]ESSTARTSTYLING Q.s,(-Q[stylestart])ESSETSTYLING
         ]*
         L F<
       !cmd.xXsciteco_foldlevel!
         C :M#giU.[foldlevel]
-        [* EB 0:M[move]
+        [* EBN[output-woman] 0:M[move]
           Q.[foldlevel],(ESLINEFROMPOSITION)ESSETLINESTATE
         ]*
         L F<
@@ -274,7 +276,7 @@ EBN[input]
 
   !cmd.t!
     :M#sw .(:M#sa).X.w
-    [* EB :Q.w:M[move]
+    [* EBN[output-woman] :Q.w:M[move]
     G.w :Q.w:M[style] ]*
     :Q.w%[pos.h] :M#sc F<
 
@@ -285,17 +287,17 @@ EBN[input]
     |
       .(:M#sa).X.w 0Q[glyphs.Q.w]U.w
     '
-    [* EB 1:M[move]
+    [* EBN[output-woman] 1:M[move]
     Q.wI 1:M[style] ]* :M#sc F<
 
   !cmd.c!
     :M#sw 0AU.w C
-    [* EB 1:M[move]
+    [* EBN[output-woman] 1:M[move]
     G[glyphs.U.w] 1:M[style] ]* :M#sc F<
 
   !cmd.N!
     :M#sw :M#giU.w
-    [* EB 1:M[move]
+    [* EBN[output-woman] 1:M[move]
     Q.wI 1:M[style] ]* :M#sc F<
 
   !cmd.n!
@@ -336,7 +338,7 @@ Q*U*
  * TODO: The size can still be improved by using SCI_SETSTYLINGEX
  * if appropriate.
  *!
-EB 0EE !* operate in single-byte mode *!
+EBN[output-woman] 0EE !* operate in single-byte mode *!
 J 0U#cs 0U#cd
 <
   .ESGETSTYLEATUs Qs"< Qs= '
@@ -375,7 +377,7 @@ Q[cur.fl]"N
 !*
  * Save the clear-text part of the document into <output-woman>
  *!
-2EL EWQ[output-woman]
+2EL EW
 
 EQ[styles]
 

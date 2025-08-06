@@ -420,14 +420,23 @@ AT_CLEANUP
 
 AT_BANNER([Standard library])
 
+AT_SETUP([Option parser])
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/getopt.tes' @^U[optstring]/XY/ M[getopt]-3\"N(0/0)' \
+                        Q[getopt.X]+1\"N(0/0)' :Q[^A3]-2\"N(0/0)' :Q[^A4]-6\"N(0/0)'" \
+                    -- -X -- -Y foobar]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/getopt.tes' @^U[optstring]/F:z::X/ M[getopt]-4\"N(0/0)' \
+                        Q[getopt.X]+1\"N(0/0)' :Q[getopt.F]-8\"N(0/0)' :Q[getopt.z]\"N(0/0)'" \
+                    -- -X -Ffilename -z]], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([Command line opener])
 AT_DATA([data.123], [0123456789
 9876543210
 ])
-AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-13\"N(0/0)'" +2,3 data.123]], 0, ignore, ignore)
-AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF .-11\"N(0/0)'" data.123:2]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] EF .-13\"N(0/0)'" +2,3 data.123]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] EF .-11\"N(0/0)'" data.123:2]], 0, ignore, ignore)
 # `-S` stops processing of special arguments
-AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] -EF EJ-2\"N(0/0)'" -S +1 data.123]], 0, ignore, ignore)
+AT_CHECK([[$SCITECO -e "@EI'^EQ[\$SCITECOPATH]/opener.tes' M[opener] EF EJ-2\"N(0/0)'" -S +1 data.123]], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_BANNER([Regression Tests])

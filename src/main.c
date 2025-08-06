@@ -476,29 +476,29 @@ main(int argc, char **argv)
 	 * NOTE: The profile hasn't run yet, so it cannot guess the
 	 * documents encoding. This should therefore be done by the profile
 	 * for any preexisting unnamed buffer.
-	 *
-	 * FIXME: The unnamed buffer is also currently used for
-	 * command-line parameters.
-	 * Therefore you practically cannot pipe into SciTECO
-	 * while using opener.tes.
 	 */
-	if (teco_stdin && !teco_view_load_from_stdin(teco_ring_current->view, TRUE, &error))
-		goto cleanup;
+	if (teco_stdin) {
+		if (!teco_view_load_from_stdin(teco_ring_current->view, TRUE, &error))
+			goto cleanup;
 
-	/*
-	 * Add remaining arguments to unnamed buffer.
-	 *
-	 * FIXME: This is not really robust since filenames may contain linefeeds.
-	 * Also, the Unnamed Buffer should be kept empty for piping.
-	 * Therefore, it would be best to store the arguments in Q-Regs, e.g. ^A0,^A1,^A2...
-	 */
-	for (gint i = 1; argv_utf8[i]; i++) {
-		teco_interface_ssm(SCI_APPENDTEXT, strlen(argv_utf8[i]), (sptr_t)argv_utf8[i]);
-		teco_interface_ssm(SCI_APPENDTEXT, 1, (sptr_t)"\n");
+		if (teco_interface_ssm(SCI_GETLENGTH, 0, 0) > 0)
+			teco_ring_dirtify();
 	}
 
-	if (teco_interface_ssm(SCI_GETLENGTH, 0, 0) > 0)
-		teco_ring_dirtify();
+	/*
+	 * Initialize the commandline-argument Q-registers (^Ax).
+	 */
+	for (guint i = 0; argv_utf8[i]; i++) {
+		gchar buf[32+1];
+		gint len = g_snprintf(buf, sizeof(buf), "\1%u", i);
+		g_assert(len < sizeof(buf));
+
+		teco_qreg_t *qreg = teco_qreg_plain_new(buf, len);
+		teco_qreg_table_insert_unique(&teco_qreg_table_globals, qreg);
+		if (!qreg->vtable->set_string(qreg, argv_utf8[i], strlen(argv_utf8[i]),
+		                              teco_default_codepage(), &error))
+			goto cleanup;
+	}
 
 	/*
 	 * Execute macro or mung file

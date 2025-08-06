@@ -63,12 +63,13 @@ invoked as scripts by using a Hash-Bang line like
 .RS
 .SCITECO_TT
 .EX
-#!@bindir@/sciteco -m
+#!@bindir@/@PACKAGE@ -m
 .SCITECO_TT_END
 .EE
 .RE
 .
 .LP
+.SCITECO_TOPIC argv arguments
 Note that UNIX Hash-Bang lines will only pass a \fBsingle\fP argument to the
 interpreter before the script's file name, so all required \*(ST options must
 be mangled into a single argument with their single-letter names.
@@ -76,31 +77,29 @@ Passing option-like arguments (beginning with a dash) to scripts may cause
 problems because \*(ST might try to interpret these options.
 \*(ST thus stops parsing at the first non-option
 argument (which will always be the munged file name in a script invocation).
-.
-.LP
-Upon startup \*(ST's buffer ring contains only one unnamed empty buffer.
-First \*(ST reads from \fIstdin\fP into the unnamed buffer if \(lq--stdin\(rq
-was given.
-\# FIXME: This must change
-.SCITECO_TOPIC argv arguments
-Afterwards all command line arguments after the \*(ST options are passed as
-.I arguments
-to the munged macro by appending each argument on its own line to
-the unnamed buffer.
-The \fIscript\fP file name expected when \(lq--mung\(rq is given
-is currently \fBnot\fP considered a macro argument.
-In any case the current buffer position (called
-.IR dot )
-is left at the beginning of the buffer.
-The buffer is left \fIdirty\fP if anything was added to it.
 Optionally \(lq\-\-\(rq might be used to explicitly separate \*(ST options and
 macro arguments, but is never passed down as a macro argument.
 Since it's sometimes useful to pass down \(rq\-\-\(rq to the profile macro,
 you can use \(lq\-S\(rq, which is equivalent to \(lq\-\- \-\-\(rq.
+All remaining arguments after the built-in processing of options
+are passed to the executed macro using an array of global Q-registers \fB^A\fIx\fR.
+The \fIscript\fP file name expected when \(lq\-\-mung\(rq is given
+is currently \fBnot\fP included in this array.
+Q-register \fB^A0\fP is the name of the current process as passed to C
+programs in \(lqargv[0]\(rq.
+.
+.LP
+Upon startup \*(ST's buffer ring always contains only one unnamed buffer.
+If \(lq\-\-stdin\(rq is given, \*(ST first reads from \fIstdin\fP until end-of-file
+into the unnamed buffer.
+This is includes automatic EOL translation just like when using the \fBEB\fP command
+and can therefore be disabled by specifying \(lq\-\-8bit\(rq.
+If reading from \fIstdin\fP results in any text additions, the buffer is left \fIdirty\fP.
+The current position (called dot) is always left at the beginning of the buffer.
 .
 .LP
 If the munged macro does not request program termination using the
-\fBEX\fP command or exits using \fB^C\fP, \*(ST will automatically
+\fBEX\fP command or exits using \fB^C^C\fP, \*(ST will automatically
 switch into its graphical \fIinteractive\fP mode.
 \*(ST may be built with different graphical user interfaces,
 including Curses and GTK+ based ones.
@@ -546,6 +545,8 @@ dmesg | @PACKAGE@ -qioe '<%a\\@I/ / :L;>'
 .RE
 .
 .LP
+This also works in interactive mode, so \(lq@PACKAGE@ -i\(rq
+allows you to interactively edit text read from \fIstdin\fP.
 Suppose you would want to print only those lines from \fIstdin\fP
 matching \(lqiwm0:\(rq:
 .RS

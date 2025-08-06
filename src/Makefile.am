@@ -103,8 +103,6 @@ endif
 CLEANFILES = $(BUILT_SOURCES) \
 	     symbols-scintilla.c symbols-scilexer.c
 
-# FIXME: Perhaps symbols-extract.tes should work with --stdin/--stdout.
-# Requires changing the command-line argument passing first.
 symbols-scintilla.c : @SCINTILLA_PATH@/include/Scintilla.h \
                       symbols-extract.tes
 	$(SCITECO_MINIMAL) -8m -- @srcdir@/symbols-extract.tes \

@@ -40,40 +40,34 @@ install-exec-hook:
 womendir = $(scitecolibdir)/women
 
 women_DATA = grosciteco.tes.1.woman grosciteco.tes.1.woman.tec
-CLEANFILES = grosciteco.tes.1 grosciteco.tes.1.intermediate
+CLEANFILES = grosciteco.tes.1
 EXTRA_DIST = grosciteco.tes.1.in
 
 women_DATA += tedoc.tes.1.woman tedoc.tes.1.woman.tec
-CLEANFILES += tedoc.tes.1 tedoc.tes.1.intermediate
+CLEANFILES += tedoc.tes.1
 EXTRA_DIST += tedoc.tes.1.in
 
 women_DATA += sciteco.1.woman sciteco.1.woman.tec
-CLEANFILES += sciteco.1 sciteco.1.intermediate
+CLEANFILES += sciteco.1
 EXTRA_DIST += sciteco.1.in
 
 women_DATA += sciteco.7.woman sciteco.7.woman.tec
-CLEANFILES += sciteco.7 sciteco.7.intermediate sciteco.7.in
+CLEANFILES += sciteco.7 sciteco.7.in
 EXTRA_DIST += sciteco.7.template
 
 women_DATA += tutorial.woman tutorial.woman.tec
-CLEANFILES += tutorial.ms tutorial.intermediate
+CLEANFILES += tutorial.ms
 EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
 
-# FIXME: *.intermediate files are only generated since SciTECO scripts
-# cannot currently read stdin via --stdin while passing command-line
-# arguments at the same time, so the grosciteco postprocessor
-# has to be run on a separate file.
-%.woman %.woman.tec : %.intermediate grosciteco.tes
-	$(SCITECO_FULL) -m -- @srcdir@/grosciteco.tes \
-	                $@ $<
+%.woman %.woman.tec : % sciteco.tmac grosciteco.tes
+	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -man -M@srcdir@ -msciteco $< | \
+	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
-%.intermediate : % sciteco.tmac
-	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -man -M@srcdir@ -msciteco $< >$@
-
-tutorial.intermediate : tutorial.ms sciteco.tmac
-	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< >$@
+tutorial.woman tutorial.woman.tec : tutorial.ms sciteco.tmac grosciteco.tes
+	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< | \
+	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
 man_MANS = grosciteco.tes.1 tedoc.tes.1 sciteco.1 sciteco.7
 
