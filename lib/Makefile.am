@@ -1,9 +1,20 @@
+include $(top_srcdir)/bootstrap.am
 
 dist_scitecolib_DATA = color.tes lexer.tes session.tes opener.tes \
                        fnkeys.tes string.tes getopt.tes
 
 # standalone scripts
-dist_scitecolib_DATA += repl.tes
+dist_scitecolib_SCRIPTS = repl.tes tecat.tes
+
+# Fix up the hash-bang line of installed SciTECO scripts upon
+# installation to refer to the installed sciteco binary.
+# This takes --program-prefix into account.
+#
+# FIXME: This will patch the hash-bang line repeatedly.
+install-data-hook:
+	$(SCITECO_FULL) -e "<%i^[ :Q[^A^E\\i]:; @EB'$(DESTDIR)$(scitecolibdir)/^EN[^A^E\\i]'> 1U* \
+	                    EJ-1<%*^[ 0,^Q::@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
+	                    :EX" $(dist_scitecolib_SCRIPTS)
 
 # Helper script for creating lexer definitions
 EXTRA_DIST = scite2co.lua

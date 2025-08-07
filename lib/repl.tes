@@ -1,10 +1,11 @@
+#!/usr/local/bin/sciteco -m
 !*
  * This is a stand-alone script that mimics
  * classic TECO command lines.
  * Requires an ANSI-compatible terminal.
  *
  * Currently, you must set the terminal characteristics on the outside:
- * stty raw opost icrnl && sciteco -m repl.tes
+ * stty raw opost icrnl && /usr/local/share/sciteco/lib/repl.tes
  *
  * You can launch into interactive mode by typing -u#ex
  *
