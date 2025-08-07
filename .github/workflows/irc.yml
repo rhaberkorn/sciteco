@@ -17,6 +17,8 @@ jobs:
       uses: actions/checkout@v4.1.6
     - name: Get log
       id: get_log
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         # Get commit of the previous successful CI run
         COMMIT="`gh run list --workflow="ci.yml" --limit=2 --status=success --json headSha -q '.[1].headSha'`"
