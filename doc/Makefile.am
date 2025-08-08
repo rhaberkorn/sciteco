@@ -30,12 +30,16 @@ dist_scitecodata_DATA = sciteco.tmac
 # Fix up the hash-bang line of installed SciTECO scripts upon
 # installation to refer to the installed sciteco binary.
 # This takes --program-prefix into account.
+# This wouldn't work on Windows since SciTECO cannot open
+# the /mingw64 paths.
 #
 # FIXME: This will patch the hash-bang line repeatedly.
+if !WIN32
 install-exec-hook:
 	$(SCITECO_FULL) -e "@EB'$(DESTDIR)$(bindir)/*.tes' 1U* \
 	                    EJ-1<%*^[ 0,^Q::@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
 	                    :EX"
+endif
 
 womendir = $(scitecolibdir)/women
 

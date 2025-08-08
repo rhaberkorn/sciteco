@@ -2,8 +2,14 @@
 !*
  * Replace all control characters with printable representations as in SciTECO.
  * These characters are printed in reverse using ANSI escape sequences.
- * This is especially useful as the diff textconv filter for Git as in
- * git config --global diff.teco.textconv /usr/local/share/sciteco/lib/tecat.tes
+ * This is especially useful as a textconv filter for Git as in
+ * git config --global diff.teco.textconv "sciteco -8qm /usr/local/share/sciteco/lib/tecat.tes"
+ *
+ * You also have to add the following to ~/.gitattributes:
+ * *.teco_ini      diff=teco
+ * .teco_session   diff=teco
+ * *.tes           diff=teco
+ * *.tec           diff=teco
  *!
 0,2EJ !* FIXME: Memory limiting may be too slow *!
 :Q#1"> EBN#1 '
