@@ -30,6 +30,11 @@
 #include <glib/gprintf.h>
 #include <glib/gstdio.h>
 
+#ifdef G_OS_WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
 #ifdef HAVE_SYS_CAPSICUM_H
 #include <sys/capsicum.h>
 #endif
@@ -361,6 +366,20 @@ main(int argc, char **argv)
 {
 	g_autoptr(GError) error = NULL;
 	teco_int_t ret = EXIT_SUCCESS;
+
+#ifdef G_OS_WIN32
+	/*
+	 * Windows might by default perform EOL translations, especially
+	 * when writing to stdout, i.e. translate LF to CRLF.
+	 * This would break at the very least --stdout, where you are
+	 * expected to get the linebreaks configured on the current buffer via EL.
+	 * It would also break binary filters on Windows.
+	 * Since printing LF to the console is safe nowadays, we just do that
+	 * globally.
+	 */
+	for (gint fd = 0; fd <= 2; fd++)
+		_setmode(fd, _O_BINARY);
+#endif
 
 #ifdef DEBUG_PAUSE
 	/* Windows debugging hack (see above) */

@@ -232,6 +232,10 @@ AT_DATA([expout], [[1058
 1058
 ]])
 AT_CHECK([[printf "ТЕСТ" | $SCITECO -qe '<^TUa Qa:; Qa=>']], 0, expout, ignore)
+# Writing to stdout should not perform any unexpected EOL translations.
+# When using --stdin/--stdout, we can rely on the builtin EOL normalization.
+TE_CHECK([[10^T]], 0, stdout, ignore)
+TE_CHECK([[16,0ED @EB/stdout/ Z-1"N(0/0)' 0A-10"N(0/0)']], 0, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Convert between line and glyph positions])
