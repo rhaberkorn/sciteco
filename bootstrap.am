@@ -33,7 +33,7 @@ SUBST_MACRO = <FS@PACKAGE^Q@\e@PACKAGE@\e;>J \
               <FS@scitecodatadir^Q@\e$(scitecodatadir)\e;>J \
               <FS@scitecolibdir^Q@\e$(scitecolibdir)\e;>J \
               <FS@TECO_INTEGER^Q@\e@TECO_INTEGER@\e;>J \
-              <FS@DATE^Q@\e;$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>J
+              <FS@DATE^Q@\e$(shell LC_ALL=C @DATE@ "+%d %b %Y")\e;>J
 
 # The SciTECO-based substitutor must not process config.h.in.
 @top_srcdir@/config.h: ;
