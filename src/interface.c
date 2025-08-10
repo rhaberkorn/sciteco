@@ -20,6 +20,7 @@
 #endif
 
 #include <stdarg.h>
+#include <string.h>
 #include <stdio.h>
 
 #include <glib.h>
@@ -87,19 +88,13 @@ teco_interface_undo_set_clipboard(const gchar *name, gchar *str, gsize len)
 void
 teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
 {
-	gchar buf[512];
 	va_list ap;
 
 	va_start(ap, fmt);
-	/*
-	 * If the buffer could ever be exceeded, perhaps
-	 * use g_strdup_vprintf() instead.
-	 */
-	gint len = g_vsnprintf(buf, sizeof(buf), fmt, ap);
-	g_assert(0 <= len && len < sizeof(buf));
+	g_autofree gchar *buf = g_strdup_vprintf(fmt, ap);
 	va_end(ap);
 
-	teco_interface_msg_literal(type, buf, len);
+	teco_interface_msg_literal(type, buf, strlen(buf));
 }
 
 /**
