@@ -29,7 +29,7 @@ The Curses frontend is verified to work with [ncurses](https://www.gnu.org/softw
 All X/Open-compatible libraries should be supported.
 SVr4 curses without enhanced definitions is **not** supported.
 
-Linux, FreeBSD, [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
+Linux, FreeBSD, NetBSD, [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 Windows (MinGW 32/64) ~~and [Haiku](https://www.haiku-os.org/) (gcc4)~~ are tested and supported.
 SciTECO compiles with both GCC and Clang.
 SciTECO should compile just fine on other UNIX-compatible platforms.

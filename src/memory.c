@@ -304,6 +304,10 @@ static guint teco_memory_usage = 0;
  */
 #ifdef REPLACE_MALLOC
 
+#ifndef G_ATOMIC_LOCK_FREE
+#warning "malloc() replacement will be very slow!"
+#endif
+
 void * __attribute__((used))
 malloc(size_t size)
 {

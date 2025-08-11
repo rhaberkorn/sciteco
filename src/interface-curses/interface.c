@@ -355,7 +355,7 @@ static struct {
 		gshort r, g, b;
 	} orig_color_table[16];
 
-	int stdout_orig, stderr_orig;
+	int stdin_orig, stdout_orig, stderr_orig;
 	SCREEN *screen;
 	FILE *screen_tty;
 
@@ -412,7 +412,7 @@ teco_interface_init(void)
 	for (guint i = 0; i < G_N_ELEMENTS(teco_interface.orig_color_table); i++)
 		teco_interface.orig_color_table[i].r = -1;
 
-	teco_interface.stdout_orig = teco_interface.stderr_orig = -1;
+	teco_interface.stdin_orig = teco_interface.stdout_orig = teco_interface.stderr_orig = -1;
 
 	teco_curses_info_popup_init(&teco_interface.popup);	
 
@@ -581,16 +581,32 @@ teco_interface_init_color(guint color, guint32 rgb)
 static void
 teco_interface_init_screen(void)
 {
-	teco_interface.screen_tty = g_fopen("/dev/tty", "r+");
+	teco_interface.screen_tty = g_fopen("/dev/tty", "a");
 	/* should never fail */
 	g_assert(teco_interface.screen_tty != NULL);
 
-	teco_interface.screen = newterm(NULL, teco_interface.screen_tty, teco_interface.screen_tty);
+	/*
+	 * At least on NetBSD we loose keypresses when passing in a
+	 * handle for /dev/tty.
+	 * We therefore redirect stdin in interactive mode.
+	 * This works always if stdin was already redirected or not (isatty(0))
+	 * since we are guaranteed not to read from stdin outside of curses.
+	 * When returning to batch mode, we can restore the original stdin.
+	 */
+	teco_interface.stdin_orig = dup(0);
+	g_assert(teco_interface.stdin_orig >= 0);
+	G_GNUC_UNUSED FILE *stdin_new = g_freopen("/dev/tty", "r", stdin);
+	g_assert(stdin_new != NULL);
+
+	teco_interface.screen = newterm(NULL, teco_interface.screen_tty, stdin);
 	if (G_UNLIKELY(!teco_interface.screen)) {
 		g_fprintf(stderr, "Error initializing interactive mode. "
 		                  "$TERM may be incorrect.\n");
 		exit(EXIT_FAILURE);
 	}
+
+	/* initscr() does that in ncurses */
+	def_prog_mode();
 
 	/*
 	 * If stdout or stderr would go to the terminal,
@@ -824,10 +840,14 @@ teco_interface_restore_batch(void)
 	teco_interface_restore_colors();
 
 	/*
-	 * Restore stdout and stderr, so output goes to
+	 * Restore stdin, stdout and stderr, so output goes to
 	 * the terminal again in case we "muted" them.
 	 */
 #ifdef CURSES_TTY
+	if (teco_interface.stdin_orig >= 0) {
+		G_GNUC_UNUSED int fd = dup2(teco_interface.stdin_orig, 0);
+		g_assert(fd == 0);
+	}
 	if (teco_interface.stdout_orig >= 0) {
 		G_GNUC_UNUSED int fd = dup2(teco_interface.stdout_orig, 1);
 		g_assert(fd == 1);
@@ -1862,6 +1882,14 @@ teco_interface_refresh(gboolean force)
 		/* batch mode */
 		return;
 
+#ifdef NETBSD_CURSES
+	/* works around crashes in doupdate() */
+	gint y, x;
+	getmaxyx(stdscr, y, x);
+	if (G_UNLIKELY(x <= 1 || y <= 1))
+		return;
+#endif
+
 	if (G_UNLIKELY(force))
 		clearok(curscr, TRUE);
 
@@ -2213,7 +2241,12 @@ teco_interface_event_loop(GError **error)
 	teco_interface_cmdline_update(&empty_cmdline);
 	teco_interface_msg_clear();
 	teco_interface_ssm(SCI_SCROLLCARET, 0, 0);
-	teco_interface_refresh(FALSE);
+	/*
+	 * NetBSD's Curses needs the hard refresh as it would
+	 * otherwise draw the info window in the wrong row.
+	 * Shouldn't cause any slowdown on ncurses.
+	 */
+	teco_interface_refresh(TRUE);
 
 #ifdef EMCURSES
 	PDC_emscripten_set_handler(teco_interface_event_loop_iter, TRUE);

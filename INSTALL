@@ -67,8 +67,13 @@ The same on Fedora:
 
 And on FreeBSD:
 
-  $ sudo pkg install git gmake pkgconfig autoconf automake libtool \
+  $ sudo pkg install git gmake pkgconf autoconf automake libtool \
                      glib gtk3 groff doxygen
+
+On NetBSD:
+
+  $ sudo pkgin install git gmake pkg-config autoconf automake libtool-base \
+                       glib2 gtk3+ doxygen
 
 Building from Source Tar Ball or Repository
 ===========================================

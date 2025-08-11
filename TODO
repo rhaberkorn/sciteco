@@ -52,6 +52,12 @@ Known Bugs:
    https://github.com/Bill-Gray/PDCursesMod/issues/335
    We're waiting for an MSYS package upgrade.
    It could also be worked around by using wget_wch() instead of wgetch().
+ * PDCurses/Win32: Crashes sometimes without any error message.
+ * NetBSD Curses: scrolling apparently uses hardware idl capabilities
+   resulting in graphical glitches on slow terminals.
+   idlok(FALSE) is apparently ignored.
+ * NetBSD: Very slow, even the redrawing.
+   This does not happen with ncurses on NetBSD.
  * dlmalloc's malloc_trim() does not seem to free any resident memory
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
