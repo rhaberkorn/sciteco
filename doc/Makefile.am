@@ -9,6 +9,11 @@ include $(top_srcdir)/bootstrap.am
 # preprocessor to manpage templates.
 dist_bin_SCRIPTS = tedoc.tes
 
+# Name of tedoc.tes after installation, taking --program-prefix
+# into account.
+TEDOC_INSTALLED = \
+	$(bindir)/`echo tedoc.tes | @SED@ '$(transform)'`
+
 %.in : %.template tedoc.tes @top_srcdir@/src/*.c
 	$(SCITECO_FULL) -m -- @srcdir@/tedoc.tes \
 	                -C $@ $< @top_srcdir@/src/*.c
@@ -27,6 +32,11 @@ dist_bin_SCRIPTS += grosciteco.tes
 # the directory via `groff -M`.
 dist_scitecodata_DATA = sciteco.tmac
 
+# Name of grosciteco.tes after installation, taking --program-prefix
+# into account.
+GROSCITECO_INSTALLED = \
+	$(bindir)/`echo grosciteco.tes | @SED@ '$(transform)'`
+
 # Fix up the hash-bang line of installed SciTECO scripts upon
 # installation to refer to the installed sciteco binary.
 # This takes --program-prefix into account.
@@ -34,11 +44,16 @@ dist_scitecodata_DATA = sciteco.tmac
 # the /mingw64 paths.
 #
 # FIXME: This will patch the hash-bang line repeatedly.
+# Perhaps it would be better to do that using a preprocessing
+# step before installation - see the known problems that this
+# is causing on FreeBSD/Poudriere.
 if !WIN32
 install-exec-hook:
-	$(SCITECO_FULL) -e "@EB'$(DESTDIR)$(bindir)/*.tes' 1U* \
-	                    EJ-1<%*^[ 0,^Q::@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
-	                    :EX"
+	$(SCITECO_FULL) -e "<%i^[ :Q[^A^E\\i]:; @EB'^EN[^A^E\\i]' \
+	                     0,^Q::@FR'#!^EM^Xsciteco'#!$(SCITECO_INSTALLED)'> \
+	                    :EX" \
+	                    $(DESTDIR)$(GROSCITECO_INSTALLED) \
+	                    $(DESTDIR)$(TEDOC_INSTALLED)
 endif
 
 womendir = $(scitecolibdir)/women
