@@ -26,6 +26,9 @@ NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 MAKEFLAGS += -j$(NUMJOBS)
 endif
 
+# In case `make check` fails, there will be a complete log.
+export TESTSUITEFLAGS="--verbose"
+
 %:
 	dh $@
 
