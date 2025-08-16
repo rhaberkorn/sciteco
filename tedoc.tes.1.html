@@ -1,0 +1,379 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; tedoc.tes(1)</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+
+  <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
+  <div class="grohtml">
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#TEDOC COMMENTS">TEDOC COMMENTS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">tedoc
+&minus;&minus; Source code documentation tool for
+<b>SciTECO</b></p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="12%">
+
+
+<p style="margin-top: 1em"><b>tedoc.tes</b></p></td>
+<td width="1%"></td>
+<td width="46%">
+
+
+<p style="margin-top: 1em">[<b>-C</b>] [<b>--</b>]
+<i>output template sources...</i></p></td>
+<td width="32%">
+</td></tr>
+</table>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:9%; margin-top: 1em"><i><b>tedoc</b></i>
+is a tool for extracting documentation from <b>SciTECO</b>
+macros and C/C++ code. It is used to document
+<b>SciTECO</b>&rsquo;s internal commands as well as macro
+packages. It processes special <b>SciTECO</b> comment blocks
+from the <i>sources</i>, generating <b>troff</b> man-page
+markup and inserts them into a man-page <i>template</i> at
+the position of the <b>TEDOC</b> pseudo-request. The result
+is written to an <i>output</i> file. <b>tedoc</b> can thus
+be understood as a <b>troff</b> preprocessor.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="8%">
+
+
+<p style="margin-top: 1em"><b>-C</b></p></td>
+<td width="1%"></td>
+<td width="82%">
+
+
+<p style="margin-top: 1em">Instruct <b>tedoc</b> to extract
+C/C++ comments instead of <b>SciTECO</b> comments. The C
+comments begin with &ldquo;/*$&rdquo; and end with
+&ldquo;*/&rdquo;. The <b>SciTECO</b> comments in contrast
+begin with &ldquo;!*$&rdquo; and end with
+&ldquo;*!&rdquo;.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="8%">
+
+
+<p><i>output</i></p></td>
+<td width="1%"></td>
+<td width="82%">
+
+
+<p>The resulting man-page file.</p></td></tr>
+</table>
+
+<p style="margin-left:9%;"><i>template</i></p>
+
+<p style="margin-left:18%;">A man-page template, i.e. a
+man-page with the <b>TEDOC</b> request.</p>
+
+<p style="margin-left:9%;"><i>sources...</i></p>
+
+<p style="margin-left:18%;">An arbitrary number of source
+code files to scan through. The comments are extracted in
+document order, i.e. from the first comment in the first
+source file to the last comment in the last source file
+specified.</p>
+
+<h2>TEDOC COMMENTS
+<a name="TEDOC COMMENTS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">The <b>tedoc</b>
+source code comments support a small but powerful semantic
+markup for documenting <b>SciTECO</b> commands and
+macros:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Comments start with &ldquo;!*$&rdquo; (or
+&ldquo;/*$&rdquo; in C/C++ mode).</p></td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>The first line (immediately after the starting comment)
+may contain <i>topic</i> keywords for <b>SciTECO</b>&rsquo;s
+online help system that will point to the beginning of the
+section generated for this <b>tedoc</b> comment. This
+generates <b>SCITECO_TOPIC</b> macro calls defined in
+<b>sciteco.tmac</b> (see <b>grosciteco.tes</b>(1).</p></td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>All lines until first empty line are syntax
+descriptions.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Text followed by &ldquo;--&rdquo; is a short
+description.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Variable values and characters of syntactic significance
+should be detected automatically.</p></td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Alternatives are denoted by &ldquo;|&rdquo;.</p></td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Every line is an alternative (e.g. different calling
+forms of the same command or macro).</p></td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>Return values may be specified after
+&ldquo;-&gt;&rdquo;.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="4%"></td>
+<td width="86%">
+
+
+<p>The remaining text is the verbose command
+description.</p> </td></tr>
+</table>
+
+<p style="margin-left:14%;">&bull;</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="14%"></td>
+<td width="1%"></td>
+<td width="8%"></td>
+<td width="77%">
+
+
+<p style="margin-top: 1em">&ldquo;&lt;name&gt;&rdquo;
+denotes a variable from the syntax description.</p></td></tr>
+<tr valign="top" align="left">
+<td width="14%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="77%">
+
+
+<p>Empty lines introduce paragraphs.</p></td></tr>
+<tr valign="top" align="left">
+<td width="14%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="77%">
+
+
+<p>Lines beginning with &ldquo;-&rdquo; are unordered
+lists.</p> </td></tr>
+<tr valign="top" align="left">
+<td width="14%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="77%">
+
+
+<p>Lines beginning with numbers and dot (&ldquo;1.&rdquo;,
+&ldquo;2.&rdquo;, etc.) are ordered lists.</p></td></tr>
+<tr valign="top" align="left">
+<td width="14%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="77%">
+
+
+<p>These transformations are only preprocessing, so that
+<b>troff</b> requests, macros and escapes may also be used
+freely.</p> </td></tr>
+</table>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>SciTECO</b>
+invocation and help on its environment variables:</p>
+
+<p style="margin-left:18%;"><b>sciteco</b>(1)</p>
+
+<p style="margin-left:9%;">A <b>GNU roff</b> post-processor
+for rendering <b>troff</b></p>
+
+<p style="margin-left:18%;">markup into
+&ldquo;womanpages&rdquo; for <b>SciTECO</b>&rsquo;s online
+help system &mdash; also documents special <b>troff</b>
+macros in <b>sciteco.tmac</b>: <b>grosciteco.tes</b>(1)</p>
+
+<p style="margin-left:9%;">The <b>GNU roff</b>
+&ldquo;man&rdquo; macros for writing man pages:</p>
+
+<p style="margin-left:18%;"><b>groff_man</b>(7)</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">This manpage and
+the <b>SciTECO</b> program was written by
+<a href="mailto:robin.haberkorn@googlemail.com">Robin
+Haberkorn</a>.</p>
+
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>

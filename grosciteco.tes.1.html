@@ -1,0 +1,343 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; grosciteco.tes(1)</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+
+  <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
+  <div class="grohtml">
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#SPECIAL TROFF MACROS">SPECIAL TROFF MACROS</a><br>
+<a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#BUGS">BUGS</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">grosciteco
+&minus;&minus; GNU roff post-processor for
+<b>SciTECO</b></p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="18%">
+
+
+<p style="margin-top: 1em"><b>grosciteco.tes</b></p></td>
+<td width="1%"></td>
+<td width="50%">
+
+
+
+<p style="margin-top: 1em">[<b>-t&nbsp;</b><i>tec_output</i>]
+[<b>--</b>] <i>text_output</i> &lt;<i>input</i></p></td>
+<td width="22%">
+</td></tr>
+</table>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+
+<p style="margin-left:9%; margin-top: 1em"><i><b>grosciteco</b></i>
+is a post-processor for <b>GNU roff</b> which works similar
+to <b>groff</b>&rsquo;s <b>grotty</b> post-processor and
+driver. Similarily, <b>grosciteco</b> is a plain-text
+formatter &mdash; but since it lays out the document itself
+and is written in the <b>SciTECO</b> language, it will
+generate an additional <b>SciTECO</b> macro that can be
+executed to style the plain-text document.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The plain-text
+document will usually have the extension &ldquo;woman&rdquo;
+and the accompanying <b>SciTECO</b> macro will have the
+extension &ldquo;woman.tec&rdquo;. Both files combined are
+called <i>womanpage</i> since they are commonly
+<b>SciTECO</b>-formatted man pages.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Furthermore,
+<i>womanpages</i> can be indexed by search terms (called
+topics). A per-file topic index is generated as part of the
+&ldquo;woman.tec&rdquo; output file. Users of
+<b>grosciteco</b> can define topics in <b>troff</b> markup
+using the <b>SCITECO_TOPIC</b> troff macro defined in the
+&ldquo;sciteco.tmac&rdquo; macro package. This macro package
+should always be loaded when processing <b>troff</b>
+documents which are going to be post-processed by
+<b>grosciteco</b>.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Preparing a
+<i>womanpage</i> for display is usually performed
+automatically by <b>SciTECO</b>&rsquo;s
+&ldquo;woman.tes&rdquo; lexer definition whenever you open a
+&ldquo;*.woman&rdquo; file in <b>SciTECO</b>.
+<i>womanpages</i> are recommended to be installed into a
+special directory in <b>SciTECO</b>&rsquo;s standard
+library. The <b>SciTECO</b> command <b>?</b> provides an
+online help feature which gives fast access to
+properly-installed <i>womanpages</i>. It builds a global
+topic index of all <i>womanpages</i> installed in the
+<b>$SCITECOPATH/women</b> directory. <b>grosciteco</b> is
+thus a central component in providing <b>SciTECO</b>&rsquo;s
+help system, in documenting internal commands, the
+<b>SciTECO</b> standard library macros and third-party macro
+packages. The generation of <i>womanpages</i> at
+compile-time means that no <b>troff</b> is required by end
+users to browse documentation within <b>SciTECO</b>.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>-t</b>
+<i>tec_output</i></p>
+
+<p style="margin-left:18%;">The <b>SciTECO</b> script that
+when executed after loading <i>text_output</i> into a
+Scintilla view, styles that document. It can be thought of
+as representing meta-information for <i>text_output</i>. In
+order to cooperate with the &ldquo;woman&rdquo; lexer and
+<b>SciTECO</b>&rsquo;s <b>?</b> command, its file name
+should be <i>text_output</i>.tec, e.g.
+&ldquo;great-macro.woman.tec&rdquo;. This is also the
+default when omitted.</p>
+
+<p style="margin-left:9%;"><i>text_output</i></p>
+
+<p style="margin-left:18%;">The plain-text output file,
+e.g. &ldquo;great-macro.woman&rdquo;.</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="6%">
+
+
+<p><i>input</i></p></td>
+<td width="3%"></td>
+<td width="77%">
+
+
+<p><b>troff</b>&rsquo;s device-independant output format is
+read from <i>stdin</i>.</p></td>
+<td width="5%">
+</td></tr>
+</table>
+
+<h2>SPECIAL TROFF MACROS
+<a name="SPECIAL TROFF MACROS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>troff</b>
+documents should be processed with the
+&ldquo;sciteco.tmac&rdquo; macro package that also ships
+with <b>SciTECO</b>. It tweaks formatting for display in
+<b>SciTECO</b> (assuming that the lexer system for
+<i>womanpages</i> is in place) and provides the following
+<b>troff</b> macros that can be called by documentation
+authors: <b><br>
+.SCITECO_TOPIC</b> <i>topics...</i></p>
+
+<p style="margin-left:18%;">Defines one or more topics in
+<b>SciTECO</b>&rsquo;s help system. Every topic must be in
+its own macro argument. A <i>topic</i> can be looked up in
+<b>SciTECO</b> using the <b>?</b><i>topic</i><b>$</b>
+command, but in case of topic collisions, <b>SciTECO</b>
+will modify the topic name to keep it unique. The <b>?</b>
+(question mark) command will jump to the position that
+corresponds to the macro call in <b>troff</b> markup. Topics
+can and should only consist of printable characters, so
+escape characters should be written in their up-caret
+notation (e.g. &ldquo;&#710;[&rdquo; instead of escape).
+<b>SciTECO</b> expands control characters to their printabel
+form when looking up terms.</p>
+
+<p style="margin-left:9%;"><b>.SCITECO_TT</b> [<i>line
+length</i>]</p>
+
+<p style="margin-left:18%;">Marks the beginning of an area
+that must be formatted in a monospaced font.
+<b>grosciteco</b> has only limited support for Troff font
+styles and the font family used depends on the
+<b>SciTECO</b> UI used to show the womanpage. Since line
+drawing commands assume a TTY-like output device,
+<b>SCITECO_TT</b> should precede those sections of text
+(including the <b>tbl</b> macro <b>TS</b>). An optional
+temporary <i>line length</i> may also be specified which is
+especially useful for tables.</p>
+
+<p style="margin-left:9%;"><b>.SCITECO_TT_END</b>
+[<b>SP</b>]</p>
+
+<p style="margin-left:18%;">Marks the end of an area that
+must be formatted in a monospaced font. The optional
+<b>SP</b> keyword may be specified to skip one line
+vertically (via troff&rsquo;s <b>.sp</b> request).</p>
+
+
+<p style="margin-left:9%;"><b>.SCITECO_STARTSTYLING</b></p>
+
+<p style="margin-left:18%;">Marks the beginning of a block
+for manual Scintilla styling.</p>
+
+<p style="margin-left:9%;"><b>.SCITECO_SETSTYLING</b>
+<i>style</i></p>
+
+<p style="margin-left:18%;">Assign the given Scintilla
+style number to the block beginning with
+<b>.SCITECO_STARTSTYLING</b>. This style must have been
+configured in a custom macro.</p>
+
+<p style="margin-left:9%; margin-top: 1em">These public
+macros will be ignored if &ldquo;sciteco.tmac&rdquo; is not
+loaded, so it is safe to use them in man pages that are also
+installed into the system.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Note that
+&ldquo;sciteco.tmac&rdquo; is not installed into the
+standard <b>GNU roff</b> macro search directories, but into
+<b>SciTECO</b> data directory at
+&ldquo;/usr/local/bin/../share/sciteco&rdquo;. It must thus
+be moved or linked manually into one of the search paths, or
+the data dir must be added to the search paths.
+Alternatively, you may also add it to the <b>groff</b>
+command line with the <b>-M</b> option.</p>
+
+<h2>EXAMPLES
+<a name="EXAMPLES"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">The following
+UNIX shell commands will generate the <i>womanpage</i> for a
+<b>SciTECO</b> macro package with a man page called
+<b>great-macro.tes</b>(7sciteco):</p>
+
+<p style="margin-left:18%;">groff -Z -Kutf-8 -Tutf8 -man
+-M/usr/local/bin/../share/sciteco -msciteco \ <br>
+great-macro.tes.7sciteco | \ <br>
+grosciteco.tes great-macro.tes.7sciteco.woman</p>
+
+<p style="margin-left:9%; margin-top: 1em">The resulting
+files should be installed to
+<b>/usr/local/bin/../share/sciteco/lib/women</b> (or
+wherever <b>$SCITECOPATH</b> points to at runtime) to make
+the files accessible in <b>SciTECO</b>&rsquo;s online-help
+system.</p>
+
+<h2>BUGS
+<a name="BUGS"></a>
+</h2>
+
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>grosciteco</b>
+is quite slow, although this is a <b>SciTECO</b> issue.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The
+<b>pic</b>(1) preprocessor is poorly supported and
+diacritics may not be rendered properly.</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>SciTECO</b>
+invocation and help on its environment variables:</p>
+
+<p style="margin-left:18%;"><b>sciteco</b>(1)</p>
+
+<p style="margin-left:9%;">Language reference including
+additional information on the <b>?</b> command:</p>
+
+<p style="margin-left:18%;"><b>sciteco</b>(7)</p>
+
+<p style="margin-left:9%;">A documentation tool generating
+man-page markup:</p>
+
+<p style="margin-left:18%;"><b>tedoc.tes</b>(1)</p>
+
+<p style="margin-left:9%;">The <b>GNU roff</b> front end
+program:</p>
+
+<p style="margin-left:18%;"><b>groff</b>(1)</p>
+
+<p style="margin-left:9%;">The <b>GNU roff</b>
+&ldquo;man&rdquo; macros for writing man pages:</p>
+
+<p style="margin-left:18%;"><b>groff_man</b>(7)</p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">This manpage and
+the <b>SciTECO</b> program was written by
+<a href="mailto:robin.haberkorn@googlemail.com">Robin
+Haberkorn</a>.</p>
+
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>
