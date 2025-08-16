@@ -106,8 +106,11 @@ teco_interface_msg(teco_msg_t type, const gchar *fmt, ...)
  * Everything higher than TECO_MSG_USER is also terminated by LF.
  *
  * @fixme TECO_MSG_USER could always be flushed.
- * This however makes the message disappear, though.
- * We might also want to put flushing under control of the language instead.
+ * This however makes the message disappear on UNIX since stdout/stderr
+ * have been redirected to /dev/null.
+ * Also it would probably be detrimental for performance in scripts
+ * that write individual characters.
+ * Perhaps we should put flushing under control of the language instead.
  */
 void
 teco_interface_stdio_msg(teco_msg_t type, const gchar *str, gsize len)

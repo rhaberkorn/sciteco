@@ -597,6 +597,14 @@ teco_interface_init_screen(void)
 	 * redirect it. Otherwise, they are already redirected
 	 * (e.g. to a file) and writing to them does not
 	 * interrupt terminal interaction.
+	 *
+	 * This cannot of course preserve all messages written to stdout/stderr.
+	 * Only those messages written before flushing will be preserved and
+	 * be visible after program termination since they are still in a user-
+	 * space stdio-buffer.
+	 * All messages could only be preserved if we redirected to a temporary
+	 * file and replayed it afterwards. It wouldn't preserve the order of
+	 * stdout vs. stderr messages.
 	 */
 	if (isatty(1)) {
 		teco_interface.stdout_orig = dup(1);
