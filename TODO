@@ -3,9 +3,14 @@ Tasks:
  * VEDIT and PMATE for MS-DOS
  * Update to Scinterm 5.5.
    Perhaps we can make use of the arbitrary RGB color feauture?
+ * Macro to get the current word at dot (or by numeric argument)
+   similar to double right click.
 
 Known Bugs:
+ * @^Um{-$$} Mm= should probably return -1.
  * {@I/$$23=/} doesn't insert anything after $$.
+   This would be necessary for an interactive screen editing script,
+   that leaves you in <I> always.
    This would require some refactoring.
  * Gtk: The control characters in tutorial.woman are still styled with
    the variable-width font since its rendered in STYLE_CONTROLCHAR (36),
@@ -25,6 +30,7 @@ Known Bugs:
    We try to work around this with click detection,
    but it still behaves a bit oddly.
    See https://github.com/Bill-Gray/PDCursesMod/issues/330
+   Waiting for PDCurses in MSYS to be updated.
  * PDCurses/WinGUI: There is still some flickering, but it got better
    since key macros update the command line only once.
    Could already be fixed upstream, see:
@@ -33,7 +39,19 @@ Known Bugs:
    Affects both PDCurses/WinGUI and Gtk.
    This no longer happens with ECbash -c 'while true; do true; done'$.
    However ECping -t 8.8.8.8$ still cannot be interrupted.
- * PDCurses/Win32: Crashes sometimes without any error message.
+ * Win32 builds cannot work with the /mingw64 path as used in MSYS/MinGW.
+   However the UNIX path translation appears to be a Cygwin feature.
+   If SciTECO would do that, it might break other things (e.g. you might
+   want to refer directory C:\mingw64 instead).
+ * Win32/Wincon: cat ... | sciteco -i
+   "Redirection is not supported."
+   PR: https://github.com/Bill-Gray/PDCursesMod/pull/344
+   Waiting for an MSYS package releae.
+ * PDCurses/Win32: Both Wincon and WinGUI crash when you press *any*
+   non-ANSI character. This is fixed since PDCurses v4.5.2:
+   https://github.com/Bill-Gray/PDCursesMod/issues/335
+   We're waiting for an MSYS package upgrade.
+   It could also be worked around by using wget_wch() instead of wgetch().
  * dlmalloc's malloc_trim() does not seem to free any resident memory
    after hitting the OOM limit, eg. after <%a>.
    Apparently an effect of HAVE_MORECORE (sbrk()) - some allocation is
@@ -137,9 +155,9 @@ Known Bugs:
    escaped glob patterns.
    Unfortunately, this would be very tricky to do right.
  * The git.blame macro is broken, at least on Git v2.45.2 and v2.25.1. Compare
-   cat sample.teco_ini | git blame --incremental --contents - -- sample.teco_ini | grep -E '^[a-f0-9]{40}'
+   cat fallback.teco_ini | git blame --incremental --contents - -- fallback.teco_ini | grep -E '^[a-f0-9]{40}'
    (which is wrong and does not even contain all commits) with
-   git blame --incremental --contents sample.teco_ini -- sample.teco_ini | grep -E '^[a-f0-9]{40}'
+   git blame --incremental --contents fallback.teco_ini -- fallback.teco_ini | grep -E '^[a-f0-9]{40}'
    which is correct. Without --incremental even the formatting is broken.
    This could well be a Git bug.
  * Margins, identions and the like are not configured on the unnamed
@@ -167,6 +185,9 @@ Known Bugs:
  * At least the GTK version with --xembed is prone to unexpected
    crashes. Interestingly, while this does leave orphaned savepoint
    files around, it does not produce a core dump.
+ * repl.tes terminates when encountering the first error.
+   This requires error catching to be fixed.
+   Also, the command-line redrawing is still broken in GNOME Terminal.
 
 Features:
  * Should we support *.sgml files with the HTML lexer?
@@ -285,24 +306,6 @@ Features:
    keys and Alt and Ctrl modifiers.
    See also https://stackoverflow.com/questions/31379824/how-to-get-control-characters-for-ctrlleft-from-terminfo-in-zsh
    https://gist.github.com/rkumar/1237091
- * Support loading from stdin (--stdin) and writing to
-   the current buffer to stdout on exit (--stdout).
-   This will make it easy to write command line filters,
-   We will need flags like and --quiet with
-   single-letter forms to make it possible to write hash-bang
-   lines like #!...sciteco -q8iom
-   Command line arguments should then also be handled
-   differently, passing them in an array or single string
-   register, so they no longer affect the unnamed buffer.
- * Once we've got --stdout, it makes sense to ship a version of
-   tecat written in SciTECO.
-   This is useful as a git diff textconv filter.
-   See https://gist.github.com/rhaberkorn/6534ecf1b05de6216d0a9c33f31ab5f8
- * For third-party macro authors, it is useful to know
-   the standard library path (e.g. to install new lexers).
-   There could be a --print-path option, or with the --quiet
-   and --stdout options, one could write:
-   sciteco -qoe 'G[$SCITECOPATH]'
  * Now that we have redo/reinsertion:
    When ^G modifier is active, normal inserts could insert
    between effective and rubbed out command line - without
@@ -339,12 +342,6 @@ Features:
      just like in Video TECO.
      The DEC behavior could be achieved by always searching till the end
      of the buffer, but excluding all matches beyond the target range.
-   * :Gq, T, ^T and stdio in general
-   * ^W was an immediate action command to repaint the screen.
-     This could be a regular command to allow refreshing in long loops.
-     Video TECO had ET for the same purpose.
-     TECO 10 had a ^W regular command for case folding all strings,
-     but I don't think it's worth supporting.
    * MSUTECO for MS-DOS had ^P for giving the number of characters
      until the next matching ( )  { }  [ ]  < >  " '.
      However there is no single way to get brace skipping right,
@@ -358,7 +355,24 @@ Features:
      all files into the register. But we probably won't want to have that.
    * :EB -> Bool on Video TECO.
    * Video TECO: EV as an alias for EB, but create read-only buffer.
- * Return a random value between 1 and n.
+   * EN behaves differently on TECO-11.
+     We could only emulate it by immediately traversing the entire
+     directory. EN however is also heavily overloaded on SciTECO
+     and we probably don't want to loose these features.
+   * ET for controlling stdio. Currently you must execute stty.
+     This would require binding the UNIX-specific tcsetattr(),
+     as Curses APIs won't be available in Gtk.
+     Does it also make sense to perform echoing of control codes
+     in ^A as TECO-11 does by default?
+     * Add flag to allow redirecting output to stderr.
+ * ^A currently doesn't flush the output.
+   Perhaps flushing should be controlled by the language.
+   Perhaps via the ET flags.
+ * Mini game where you can drive a tank around your source code.
+ * `@]q` to pop keeping the numeric part of q intact.
+   Perhaps `@@]q` to overwrite __only__ the numeric part,
+   but keeping the string intact.
+ * <F?> Return a random value between 1 and n
    Could automatically work with floats.
  * n:"x to leave <n> on the stack (i.e. only peek). This simplifies
    expressions like Qa"N Qa ...
@@ -455,7 +469,7 @@ Features:
    Backup files should NOT be hidden and the timeout should be
    configurable (EJ?).
  * Error handling in SciTECO macros: Allow throwing errors with
-   e.g. [n]ET<description>$ where n is an error code, defaulting
+   e.g. [n]^F<description>^F where n is an error code, defaulting
    to 0 and description is the error string - there could be code-specific
    defaults. All internal error classes use defined codes.
    Errors could be catched using a structured try-catch-like construct
@@ -464,6 +478,8 @@ Features:
    We will have to go through all the command implementations as well
    since must no longer rely on undo token execution after
    throwing errors.
+   * Error codes should probably be logged to the console
+     as well. Perhaps adopt a style similar to DEC TECO: Exxxx
  * Backtracking execution semantics, bringing the power of SNOBOL
    (and more!).
    This can be a variant of a structured error handling construct.
@@ -538,6 +554,10 @@ Features:
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
+ * Debian packages via OBS.
+   It should also be easier to integrate into CI to provide nightlies
+   and binaries as well. This would make the PPA and Ubuntu nightly
+   artifacts superfluous.
  * Bash completions.
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions
    when exceeding the memory limit.
@@ -560,10 +580,7 @@ Features:
      to XOR, allowing for the idiom `Qa~Qb"=` when checking for equality
      that is faster than using `-` and works for floats as well.
  * ^& could be a NAND operator.
- * Perhaps ignore whitespace after @ as does TECO-64.
-   There is little benefit in using spaces or tabs as string delimiters,
-   but ignoring whitespace may increase readability. Eg.
-   @^Ua {...}
+ * ^< left shift, ^> right shift
  * It should be possible to disable auto-completions of one-character
    register names, so that we can map the idention macro to M<TAB>.
  * Add a configure-switch for LTO (--enable-lto).
@@ -696,6 +713,19 @@ Features:
    Allows us to do CI on FreeBSD and potentially other more obscure systems.
    Also, this will allow us to migrate to another hoster like
    Savannah or Sourcehut later on.
+ * m,nQq to get a list of codepoints from char m to n.
+   This would ease subscripting, e.g. to remove the last character:
+   0,:Qq-1Qq^Uq$
+   There should also be m,nA for consistency.
+ * :Olabel$ to avoid throwing an error if label is not defined.
+   This would be very useful when using computed Gotos as select-case
+   like constructs as the code after the Goto would act as a default-clause.
+ * Sort order in Q-register autocompletions should be numeric,
+   so ^A11 comes after ^A1.
+ * FFI interface: There could be a command nFXlib$func$str$
+   to call C function func() from lib with a string argument and numeric
+   arguments. Would allow extending SciTECO with external libraries
+   as well.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
@@ -776,6 +806,7 @@ Optimizations:
    are defined.
    But how to even test for glibc's ptmalloc?
    Linux could use musl as well for instance.
+ * Evaluate TLSF allocator.
  * Resolve Coverity Scan issues.
    If this turns out to be useful, perhaps we can automatically
    upload builds via CI?
@@ -799,11 +830,16 @@ Optimizations:
  * Are there any numerical warnings we could activate?
    There have been quite some bugs due to numeric issues.
    -Wsign-compare -Wconversion
+   Even -Werror?
  * Add build system support for some static code analyzer.
    scan-build, clang-tidy or CodeChecker?
    Or run scan-build in CI with a selection of fatal warnings.
    * The unix.Malloc check unfortunately produces countless bogus warnings
      due to g_auto.
+ * Refactor control flow commands into flow-commands.c.
+ * fnkeys.tes: Don't insert (0C) or (0R).
+ * tecat.tes is too slow even though it doesn't even use Q-reg strings.
+   An ideal test case to study.
 
 Documentation:
  * Doxygen docs could be deployed on Github pages

@@ -144,6 +144,9 @@ Both ncurses and Gtk+ packages are provided for Ubuntu, generic Linux
 (in the form of [AppImages](https://appimage.org/)) and Windows.
 For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 we currently only provide *experimental* ncurses builds.
+Users of RPM-based distributions (Fedora, openSUSE, etc.) can also use the
+[OBS repository](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco)
+to install nightly builds.
 
 If everything fails, you can try building from source.
 See [`INSTALL`](https://github.com/rhaberkorn/sciteco/blob/master/INSTALL) for more details.

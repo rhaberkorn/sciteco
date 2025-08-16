@@ -2,7 +2,7 @@ News
 ====
 
 <span class="nf nf-md-new_box"></span>
-[v2.4.0](https://github.com/rhaberkorn/sciteco/releases/tag/v2.4.0) has been released!
-
-<span class="nf nf-md-new_box"></span>
-Join our [IRC chatroom](https://web.libera.chat/#sciteco): #sciteco at irc.libera.chat
+Users of RPM-based distributions (Fedora, openSUSE, etc.) can get
+[releases](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco) and
+[nightly builds](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco)
+from our [Open Build Service repositories](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco).
