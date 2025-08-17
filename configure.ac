@@ -246,55 +246,68 @@ AC_ARG_WITH(interface,
 case $INTERFACE in
 *curses*)
 	case $INTERFACE in
-	ncurses | netbsd-curses)
+	ncurses)
 		# This gives precendence to the widechar version of ncurses,
 		# which is necessary for Unicode support even when not using widechar APIs.
-		AX_WITH_CURSES
+		# However we also accept libncurses.so if it also contains the
+		# enhanced definitions.
+		# NOTE: This also defines CURSES_CFLAGS and CURSES_LIBS arguments,
+		# which are used by all the other curses variants as well.
+		AX_WITH_NCURSES
 		if [[ x$ax_cv_curses_enhanced != xyes -o x$ax_cv_curses_color != xyes ]]; then
-			AC_MSG_ERROR([X/Open curses compatible library not found!])
+			AC_MSG_ERROR([X/Open-compatible libncurses not found! Perhaps you must point CURSES_CFLAGS to the correct curses.h.])
 		fi
+
 		CFLAGS="$CFLAGS $CURSES_CFLAGS"
 		CXXFLAGS="$CXXFLAGS $CURSES_CFLAGS"
 		LIBS="$LIBS $CURSES_LIBS"
 
 		AC_CHECK_FUNCS([tigetstr])
+		;;
 
-		if [[ x$INTERFACE = xnetbsd-curses ]]; then
-			# NetBSD's curses can act as a ncurses
-			# drop-in replacement and ships with a ncurses
-			# pkg-config file. Still we define a symbol since
-			# it's hard to detect at build-time.
-			AC_DEFINE(NETBSD_CURSES, 1, [Building against netbsd-curses])
+	netbsd-curses)
+		# NetBSD's curses can theoretically be detected by checking for
+		# ti_puts(), but since both netbsd-curses and ncurses can be
+		# installed, we want this to be an explicit setting.
+		AC_DEFINE(NETBSD_CURSES, 1, [Building against netbsd-curses])
+
+		CFLAGS="$CFLAGS $CURSES_CFLAGS"
+		CXXFLAGS="$CXXFLAGS $CURSES_CFLAGS"
+		LIBS="$LIBS $CURSES_LIBS"
+
+		if [[ "x$CURSES_LIBS" = "x" ]]; then
+			# libncurses.pc is only shipped by Void Linux' fork,
+			# not in NetBSD itself.
+			AC_CHECK_LIB(curses, ti_puts, , [
+				AC_MSG_ERROR([NetBSD's libcurses missing!])
+			])
+		else
+			AC_MSG_CHECKING([checking for netbsd-curses (CURSES_LIBS)])
+			AC_MSG_RESULT([$CURSES_LIBS])
+			LIBS="$LIBS $CURSES_LIBS"
 		fi
+
+		AC_CHECK_FUNCS([tigetstr])
 		;;
 
 	xcurses)
 		AC_CHECK_PROG(XCURSES_CONFIG, xcurses-config, xcurses-config)
 
-		AC_ARG_VAR(XCURSES_CFLAGS, [
-			C compiler flags for XCurses,
-		        overriding the autoconf check
-		])
-		if [[ "x$XCURSES_CFLAGS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
-			XCURSES_CFLAGS=`$XCURSES_CONFIG --cflags`
+		if [[ "x$CURSES_CFLAGS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
+			CURSES_CFLAGS=`$XCURSES_CONFIG --cflags`
 		fi
-		CFLAGS="$CFLAGS $XCURSES_CFLAGS"
-		CXXFLAGS="$CXXFLAGS $XCURSES_CFLAGS"
+		CFLAGS="$CFLAGS $CURSES_CFLAGS"
+		CXXFLAGS="$CXXFLAGS $CURSES_CFLAGS"
 
-		AC_ARG_VAR(XCURSES_LIBS, [
-			linker flags for XCurses,
-		        overriding the autoconf check
-		])
 		AC_MSG_CHECKING([checking for XCurses])
-		if [[ "x$XCURSES_LIBS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
-			XCURSES_LIBS=`$XCURSES_CONFIG --libs`
+		if [[ "x$CURSES_LIBS" = "x" -a "x$XCURSES_CONFIG" != "x" ]]; then
+			CURSES_LIBS=`$XCURSES_CONFIG --libs`
 		fi
-		if [[ "x$XCURSES_LIBS" = "x" ]]; then
-			AC_MSG_ERROR([libXCurses not configured correctly!
-			              xcurses-config must be present or XCURSES_LIBS must be specified.])
+		if [[ "x$CURSES_LIBS" = "x" ]]; then
+			AC_MSG_ERROR([libXCurses not configured correctly! xcurses-config must be present or CURSES_LIBS must be specified.])
 		fi
-		AC_MSG_RESULT([$XCURSES_LIBS])
-		LIBS="$LIBS $XCURSES_LIBS"
+		AC_MSG_RESULT([$CURSES_LIBS])
+		LIBS="$LIBS $CURSES_LIBS"
 
 		# It is crucial to define XCURSES before including curses.h.
 		AC_DEFINE(XCURSES, 1, [Enable PDCurses/XCurses extensions])
@@ -303,26 +316,17 @@ case $INTERFACE in
 		;;
 
 	pdcurses*)
-		AC_ARG_VAR(PDCURSES_CFLAGS, [
-			C compiler flags for PDCurses,
-		        overriding the autoconf check
-		])
-		CFLAGS="$CFLAGS $PDCURSES_CFLAGS"
-		CXXFLAGS="$CXXFLAGS $PDCURSES_CFLAGS"
+		CFLAGS="$CFLAGS $CURSES_CFLAGS"
+		CXXFLAGS="$CXXFLAGS $CURSES_CFLAGS"
 
-		AC_ARG_VAR(PDCURSES_LIBS, [
-			linker flags for PDCurses,
-		        overriding the autoconf check
-		])
-		if [[ "x$PDCURSES_LIBS" = "x" ]]; then
+		if [[ "x$CURSES_LIBS" = "x" ]]; then
 			AC_CHECK_LIB(pdcurses, PDC_get_version, , [
-				AC_MSG_ERROR([libpdcurses missing!
-				              Perhaps it is not named correctly or has wrong permissions.])
+				AC_MSG_ERROR([libpdcurses missing!])
 			])
 		else
-			AC_MSG_CHECKING([checking for PDCurses (PDCURSES_LIBS)])
-			AC_MSG_RESULT([$PDCURSES_LIBS])
-			LIBS="$LIBS $PDCURSES_LIBS"
+			AC_MSG_CHECKING([checking for PDCurses (CURSES_LIBS)])
+			AC_MSG_RESULT([$CURSES_LIBS])
+			LIBS="$LIBS $CURSES_LIBS"
 		fi
 
 		# It is crucial to define PDC_WIDE before including curses.h.
@@ -349,8 +353,6 @@ case $INTERFACE in
 		;;
 	esac
 
-	# AX_WITH_CURSES defines per-header symbols, but we currently
-	# demand that CPPFLAGS are set up such, that we can find curses.h anyway.
 	AC_CHECK_HEADERS([curses.h], , [
 		AC_MSG_ERROR([Curses header missing!])
 	])

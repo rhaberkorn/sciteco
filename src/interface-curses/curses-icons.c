@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <curses.h>
-
 #include "sciteco.h"
 #include "curses-icons.h"
 

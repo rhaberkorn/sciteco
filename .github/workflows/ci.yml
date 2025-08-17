@@ -125,7 +125,7 @@ jobs:
 
     - name: Configure Build
       env:
-        PDCURSES_CFLAGS: -I/mingw64/include/pdcurses/
+        CURSES_CFLAGS: -I/mingw64/include/pdcurses/
       run: |
         autoreconf -i
         ./configure --with-interface=pdcurses-gui --enable-debug --enable-html-docs
@@ -141,7 +141,7 @@ jobs:
     - name: make distcheck
       env:
         DISTCHECK_CONFIGURE_FLAGS: --with-interface=pdcurses-gui
-        PDCURSES_CFLAGS: -I/mingw64/include/pdcurses/
+        CURSES_CFLAGS: -I/mingw64/include/pdcurses/
       run: make distcheck
     - name: Build Source Tarball
       run: make dist

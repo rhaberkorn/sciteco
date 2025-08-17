@@ -112,7 +112,7 @@ poudriere:
 # we should include gspawn-win32-helper.exe instead.
 #
 # When linking in PDCursesMod/WinGUI statically, the
-# environment variable PDCURSES_LIBS should be set to
+# environment variable CURSES_LIBS should be set to
 # "-lpdcurses -lgdi32 -lcomdlg32 -lwinmm"
 # Also, don't forget to set MINGW_UI=pdcurses-gui.
 MINGW_UI=pdcurses

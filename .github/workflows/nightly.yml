@@ -206,7 +206,7 @@ jobs:
 
     - name: Configure Build
       env:
-        PDCURSES_CFLAGS: -I/mingw64/include/pdcurses/
+        CURSES_CFLAGS: -I/mingw64/include/pdcurses/
         # FIXME: glib on MinGW supports static linking but the gspawn
         # helper binaries are still linked dynamically, forcing us to ship
         # all DLLs anyway. Therefore it makes little sense to link SciTECO
@@ -225,11 +225,11 @@ jobs:
         (cd build-wingui
          ../configure --with-interface=pdcurses-gui --enable-html-docs --program-prefix=g \
                       --with-scitecodatadir=. \
-                      PDCURSES_LIBS="-lpdcurses_wingui -lgdi32 -lcomdlg32 -lwinmm")
+                      CURSES_LIBS="-lpdcurses_wingui -lgdi32 -lcomdlg32 -lwinmm")
         (cd build-wincon
          ../configure --with-interface=pdcurses --enable-html-docs \
                       --with-scitecodatadir=. \
-                      PDCURSES_LIBS="-lpdcurses_wincon -lgdi32 -lwinmm")
+                      CURSES_LIBS="-lpdcurses_wincon -lgdi32 -lwinmm")
 
     - name: make
       run: |
