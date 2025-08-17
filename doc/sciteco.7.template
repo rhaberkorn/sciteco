@@ -2512,12 +2512,14 @@ The same conventions are used elsewhere in this manual.
 .
 .SH COMPATIBILITY
 .
-\*(ST is not compatible with any particular TECO dialect,
-but is quite similar to
-.BR "Video TECO" .
-Most Video TECO and many Standard TECO programs should
+\*(ST strives to be compatible with \(lqstandard\(rq DEC TECO-11 whereever this
+does not hinder \*(ST's nature as an interactive modern editor.
+In questions concerning multiple buffers and interactivity
+\*(ST draws inspiration from Video TECO.
+Most Video TECO and many \(lqstandard\(rq TECO macros should
 be portable with little or no changes.
-This manual mentions differences on several occasions.
+\*(ST however conciously deviates from both dialects to preserve
+features considered intrinsic and defining to the project.
 .
 .
 .SH SEE ALSO
