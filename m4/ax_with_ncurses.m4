@@ -186,7 +186,9 @@ AC_DEFUN([AX_WITH_NCURSES], [
                         @%:@include <curses.h>
                         @%:@ifndef _XOPEN_CURSES
                         @%:@error "this Curses library is not enhanced"
-                        "this Curses library is not enhanced"
+                        @%:@endif
+                        @%:@ifndef NCURSES_VERSION
+                        @%:@error "the curses library is not an ncurses""
                         @%:@endif
                     ]], [[
                         chtype a = A_BOLD;
@@ -239,7 +241,9 @@ AC_DEFUN([AX_WITH_NCURSES], [
                         @%:@include <curses.h>
                         @%:@ifndef _XOPEN_CURSES
                         @%:@error "this Curses library is not enhanced"
-                        "this Curses library is not enhanced"
+                        @%:@endif
+                        @%:@ifndef NCURSES_VERSION
+                        @%:@error "the curses library is not an ncurses""
                         @%:@endif
                     ]], [[
                         chtype a = A_BOLD;
