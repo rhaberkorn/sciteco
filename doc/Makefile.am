@@ -81,11 +81,11 @@ EXTRA_DIST += tutorial.ms.in
 CLEANFILES += $(women_DATA)
 
 %.woman %.woman.tec : % sciteco.tmac grosciteco.tes
-	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -man -M@srcdir@ -msciteco $< | \
+	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -man -M@srcdir@ -msciteco $< | \
 	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
 tutorial.woman tutorial.woman.tec : tutorial.ms sciteco.tmac grosciteco.tes
-	@GROFF@ -wall -Z -Kutf-8 -Tutf8 -t -ms -M@srcdir@ -msciteco $< | \
+	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -ms -M@srcdir@ -msciteco $< | \
 	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
 man_MANS = grosciteco.tes.1 tedoc.tes.1 sciteco.1 sciteco.7
@@ -100,10 +100,10 @@ endif
 
 %.html : % htbl.tes
 	$(SCITECO_FULL) -qiom -- @srcdir@/htbl.tes <$< | \
-	@GROFF@ -wall -Thtml -man >$@
+	@GROFF@ @GROFF_FLAGS@ -wall -Thtml -man >$@
 
 %.html : %.ms
-	@GROFF@ -wall -Thtml -ms $< >$@
+	@GROFF@ @GROFF_FLAGS@ -wall -Thtml -ms $< >$@
 
 # FIXME: We may want to build the cheat sheet automatically.
 # This would require a full Groff installation, though.

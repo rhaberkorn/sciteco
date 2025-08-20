@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 10), dh-exec, gcc (>= 4:5.0), g++ (>= 4:5.0),
  libglib2.0-dev (>= 2.44),
  ncurses-term, libncurses-dev,
  libgtk-3-dev (>= 3.12), xvfb,
- groff
+ groff (>= 1.19.2)
 Standards-Version: 4.5.0
 Homepage: https://rhaberkorn.github.io/sciteco/
 Vcs-Browser: https://github.com/rhaberkorn/sciteco

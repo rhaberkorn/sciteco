@@ -219,7 +219,7 @@ EBN[output-woman] HK 1EB
     :M#sw :M#gi :M#sc F<
 
   !cmd.V!
-    :M#sw :M#gi/Q[res.v]-1+Q[origin.v]U[pos.v] :M#sc F<
+    :M#sw :M#gi/Q[res.v]-1+Q[origin.v]U[pos.v] Q[pos.v]"<0U[pos.v]' :M#sc F<
 
   !cmd.v!
     :M#sw :M#gi/Q[res.v]%[pos.v] :M#sc F<

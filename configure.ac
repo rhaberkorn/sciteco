@@ -115,6 +115,14 @@ if [[ x$GROFF = x ]]; then
 	AC_MSG_ERROR([GNU roff required!])
 fi
 
+# preconv was added only in Groff v1.20, which is still missig
+# in NetBSD.
+AC_CHECK_PROG(PRECONV, preconv, preconv)
+if [[ x$PRECONV != x ]]; then
+	GROFF_FLAGS="-Kutf-8"
+fi
+AC_SUBST(GROFF_FLAGS)
+
 # Doxygen is not necessarily required as long as
 # you do not run `make devdoc`.
 AC_CHECK_PROG(DOXYGEN, doxygen, doxygen)
