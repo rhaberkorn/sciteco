@@ -16,7 +16,7 @@ SciTECO Build and Runtime Dependencies
  * Autotools and an UNIX-like environment
  * GNU Make
  * A GCC-compatible C11 and C++17 compiler, e.g. GNU C/C++
-   (v5.0 or later) or LLVM/gcc or LLVM/Clang.
+   (v8.1 or later) or LLVM/gcc or LLVM/Clang.
    SciTECO itself does not require C++, but Scintilla does.
  * Glib 2 as a cross-platform runtime library (v2.44 or later):
    https://developer.gnome.org/glib/

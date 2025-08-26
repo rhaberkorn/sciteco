@@ -7,6 +7,10 @@ Tasks:
    similar to double right click.
 
 Known Bugs:
+ * Upgrade to Scintilla 5.5.7 requires charconv header which bumps
+   the minimum GCC version to 8.1 (officially 9).
+   This breaks OpenSUSE 15.5-15.6 builds.
+ * Build problems on Fedora 41: See mail from Blake McBride.
  * @^Um{-$$} Mm= should probably return -1.
  * {@I/$$23=/} doesn't insert anything after $$.
    This would be necessary for an interactive screen editing script,
@@ -194,6 +198,8 @@ Known Bugs:
  * repl.tes terminates when encountering the first error.
    This requires error catching to be fixed.
    Also, the command-line redrawing is still broken in GNOME Terminal.
+ * When config.status is run as a consequence of touching configure.ac,
+   config.h will be wrong, forcing us to rerun ./configure.
 
 Features:
  * Should we support *.sgml files with the HTML lexer?
@@ -732,6 +738,8 @@ Features:
    to call C function func() from lib with a string argument and numeric
    arguments. Would allow extending SciTECO with external libraries
    as well.
+ * Solaris libxcurses (/usr/include/xpg4/curses.h)
+   is X/Open compatible and could be supported.
 
 Optimizations:
  * Use SC_DOCUMENTOPTION_STYLES_NONE in batch mode.
