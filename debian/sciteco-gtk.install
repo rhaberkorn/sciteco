@@ -1,4 +1,6 @@
 #!/usr/bin/dh-exec
+# NOTE: DO NOT REMOVE THE EXECUTABLE FLAG FROM THIS FILE
+
 usr/bin/gsciteco
 # Theoretically, these scripts could be in sciteco-common,
 # but they need an interpreter and the name depends on the version installed.
