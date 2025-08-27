@@ -381,7 +381,7 @@ teco_view_load_from_stdin(teco_view_t *ctx, gboolean clear, GError **error)
 	g_io_channel_set_buffered(channel, FALSE);
 
 	if (!teco_view_load_from_channel(ctx, channel, clear, error)) {
-		g_prefix_error_literal(error, "Error reading stdin: ");
+		g_prefix_error(error, "Error reading stdin: ");
 		return FALSE;
 	}
 
@@ -610,7 +610,7 @@ teco_view_save_to_stdout(teco_view_t *ctx, GError **error)
 	g_io_channel_set_buffered(channel, TRUE);
 
 	if (!teco_view_save_to_channel(ctx, channel, error)) {
-		g_prefix_error_literal(error, "Error writing to stdout: ");
+		g_prefix_error(error, "Error writing to stdout: ");
 		return FALSE;
 	}
 
