@@ -143,7 +143,6 @@ teco_gtk_label_add_highlight_attribs(PangoAttrList *attribs, PangoColor *fg, gui
 	 * even in Pango v1.38.
 	 * Perhaps, this has been fixed in later versions.
 	 */
-#if PANGO_VERSION_CHECK(1,38,0)
 	attr = pango_attr_foreground_alpha_new(fg_alpha);
 	attr->start_index = index;
 	attr->end_index = index + len;
@@ -153,7 +152,6 @@ teco_gtk_label_add_highlight_attribs(PangoAttrList *attribs, PangoColor *fg, gui
 	attr->start_index = index;
 	attr->end_index = index + len;
 	pango_attr_list_insert(attribs, attr);
-#endif
 
 	attr = pango_attr_foreground_new(fg->red, fg->green, fg->blue);
 	attr->start_index = index;

@@ -34,7 +34,7 @@ SciTECO Build and Runtime Dependencies
      build from PDCurses Git instead.
    * other curses implementations might work as well but are untested
  * When choosing the GTK interface:
-   * GTK+ v3.12 or later: http://www.gtk.org/
+   * GTK+ v3.24 or later: http://www.gtk.org/
  * GNU roff (groff) v1.19.2 or later: https://www.gnu.org/software/groff/
    Required at build-time, but it is already shipped on most
    UNIX-like systems to format man pages.
