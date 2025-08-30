@@ -2142,13 +2142,13 @@ teco_state_ecommand_flags(teco_machine_main_t *ctx, GError **error)
  * Type of the last mouse event (\fBread-only\fP).
  * One of the following values will be returned:
  * .RS
- * .  IP 1: 4
+ * .  IP 0: 4
  * Some button has been pressed
- * .  IP 2:
+ * .  IP 1:
  * Some button has been released
- * .  IP 3:
+ * .  IP 2:
  * Scroll up
- * .  IP 4:
+ * .  IP 3:
  * Scroll down
  * .RE
  * .IP -2:

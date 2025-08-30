@@ -24,6 +24,7 @@
 #include <glib.h>
 
 #include "sciteco.h"
+#include "error.h"
 #include "string-utils.h"
 #include "expressions.h"
 #include "parser.h"
@@ -110,15 +111,22 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 	if (ctx->flags.mode > TECO_MODE_NORMAL)
 		return &teco_state_start;
 
+	if (!str->len) {
+		/* you can still write @O/,/, though... */
+		g_set_error_literal(error, TECO_ERROR, TECO_ERROR_FAILED,
+		                    "No labels given for <O>");
+		return NULL;
+	}
+
 	teco_int_t value;
-	if (!teco_expressions_pop_num_calc(&value, 1, error))
+	if (!teco_expressions_pop_num_calc(&value, 0, error))
 		return NULL;
 
 	/*
 	 * Find the comma-separated substring in str indexed by `value`.
 	 */
 	teco_string_t label = {NULL, 0};
-	while (value > 0) {
+	while (value >= 0) {
 		label.data = label.data ? label.data+label.len+1 : str->data;
 		const gchar *p = label.data ? memchr(label.data, ',', str->len - (label.data - str->data)) : NULL;
 		label.len = p ? p - label.data : str->len - (label.data - str->data);
@@ -129,7 +137,7 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 			break;
 	}
 
-	if (value == 0) {
+	if (value < 0 && label.len > 0) {
 		gssize pc = teco_goto_table_find(&ctx->goto_table, label.data, label.len);
 
 		if (pc >= 0) {
@@ -156,19 +164,22 @@ gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_
 
 /*$ "O" goto
  * Olabel$ -- Go to label
- * [n]Olabel1[,label2,...]$
+ * [n]Olabel0[,label1,...]$
  *
  * Go to <label>.
  * The simple go-to command is a special case of the
  * computed go-to command.
  * A comma-separated list of labels may be specified
  * in the string argument.
- * The label to jump to is selected by <n> (1 is <label1>,
- * 2 is <label2>, etc.).
- * If <n> is omitted, 1 is implied.
+ * The label to jump to is selected by <n> (0 is <label0>,
+ * 1 is <label1>, etc.).
+ * If <n> is omitted, 0 is implied.
+ * Computed go-tos can be used like switch-case statements
+ * other languages.
  *
  * If the label selected by <n> is does not exist in the
- * list of labels, the command does nothing.
+ * list of labels or is empty, the command does nothing
+ * and execution continues normally.
  * Label definitions are cached in a table, so that
  * if the label to go to has already been defined, the
  * go-to command will jump immediately.
@@ -179,6 +190,10 @@ gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_
  * is terminated.
  * In the latter case, the user will not be able to
  * terminate the command-line.
+ *
+ * String building constructs are enabled in \fBO\fP
+ * which allows for a second kind of computed go-to,
+ * where the label name contains the value to select.
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_goto,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_goto_process_edit_cmd,

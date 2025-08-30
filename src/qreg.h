@@ -239,7 +239,7 @@ gboolean teco_qreg_stack_pop(teco_qreg_t *qreg, GError **error);
 void teco_qreg_stack_clear(void);
 
 typedef enum {
-	TECO_ED_HOOK_ADD = 1,
+	TECO_ED_HOOK_ADD = 0,
 	TECO_ED_HOOK_EDIT,
 	TECO_ED_HOOK_CLOSE,
 	TECO_ED_HOOK_QUIT

@@ -1262,12 +1262,12 @@ stack are discarded.
 This way, \fPED\fP hooks should not interfere with
 the stack-semantics of commands triggering them.
 .LP
-Possible arguments to the \(lqED\(rq macro begin with 1 and
+Possible arguments to the \(lqED\(rq macro begin with 0 and
 are defined consecutively so the macro can branch to the
 operation using a computed goto.
 The different values are defined as follows:
 .TP
-.B 1
+.B 0
 A file has been \fBadded\fP to the buffer ring.
 It may or may not already exist in the file system.
 This file is \*(ST's current document when this hook
@@ -1275,7 +1275,7 @@ executes.
 Scintilla lexing may be configured in this hook \(em it
 usually only has to be done once.
 .TP
-.B 2
+.B 1
 A buffer has been \fBedited\fP (made the current file).
 This hook is not executed when a file is freshly added
 to the buffer ring, since this can be simulated easily
@@ -1283,13 +1283,13 @@ by branching within the \(lqED\(rq macro.
 In this hook you may want to define language-specific
 auxiliary macros, for instance.
 .TP
-.B 3
+.B 2
 A buffer is about to be \fBclosed\fP (removed from the
 buffer ring).
 The buffer that is about to be closed, is still the
 current document when this hook runs.
 .TP
-.B 4
+.B 3
 \*(ST is about to \fBquit\fP, i.e. exit normally.
 This is \*(ST's equivalent of
 .BR atexit (3)
@@ -2185,11 +2185,13 @@ in classic TECOs.
 .
 .SS Gotos and Labels
 .
-The most basic flow control command in \*(ST is the Go-to command.
+An important flow control command in \*(ST is the Go-to command.
 Since it is really an ordinary command, exceptional only in setting
 the program counter and influencing parsing, it is described in this
 document's command reference.
-\*(ST can perform simple unconditional and computed gotos.
+\*(ST can perform simple unconditional and computed gotos
+which are just as powerful as switch-case statements in other
+languages.
 .LP
 .SCITECO_TOPIC "!" label
 Labels are symbolic and are defined with the following syntax:

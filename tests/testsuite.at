@@ -114,6 +114,14 @@ TE_CHECK([[3<%a:>-3"N(0/0)' $]], 0, ignore, ignore)
 TE_CHECK([[3<%a :F>(0/0):>-3"N(0/0)' $]], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([Gotos and labels])
+TE_CHECK([[@O//]], 1, ignore, ignore)
+TE_CHECK([[^^XUq @O/s.^EUq/ (0/0) !s.X!]], 0, ignore, ignore)
+TE_CHECK([[1@O/foo,bar/ (0/0) !bar!]], 0, ignore, ignore)
+# No-op gotos
+TE_CHECK([[-1@O/foo/ 1@O/foo/ @O/,foo/]], 0, ignore, ignore)
+AT_CLEANUP
+
 AT_SETUP([String arguments])
 TE_CHECK([[Ifoo^Q]]TE_ESCAPE[[(0/0)]]TE_ESCAPE, 0, ignore, ignore)
 TE_CHECK([[@I"foo^Q"(0/0)"]], 0, ignore, ignore)

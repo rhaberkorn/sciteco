@@ -155,7 +155,7 @@ gboolean teco_interface_is_interrupted(void);
 
 typedef struct {
 	enum {
-		TECO_MOUSE_PRESSED = 1,
+		TECO_MOUSE_PRESSED = 0,
 		TECO_MOUSE_RELEASED,
 		TECO_MOUSE_SCROLLUP,
 		TECO_MOUSE_SCROLLDOWN
