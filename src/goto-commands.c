@@ -38,7 +38,17 @@
 TECO_DECLARE_STATE(teco_state_blockcomment);
 TECO_DECLARE_STATE(teco_state_eolcomment);
 
+/**
+ * In TECO_MODE_PARSE_ONLY_GOTO mode, we remain in parse-only mode
+ * until the given label is encountered.
+ */
 teco_string_t teco_goto_skip_label = {NULL, 0};
+/**
+ * The program counter to restore if the teco_goto_skip_label
+ * is \b not found (after :Olabel$).
+ * If smaller than 0 an error is thrown instead.
+ */
+gssize teco_goto_backup_pc = -1;
 
 /*
  * NOTE: The comma is theoretically not allowed in a label
@@ -68,6 +78,7 @@ teco_state_label_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 			    !teco_string_cmp(&ctx->goto_label, teco_goto_skip_label.data, teco_goto_skip_label.len)) {
 				teco_undo_string_own(teco_goto_skip_label);
 				memset(&teco_goto_skip_label, 0, sizeof(teco_goto_skip_label));
+				teco_undo_gssize(teco_goto_backup_pc) = -1;
 
 				if (ctx->parent.must_undo)
 					teco_undo_flags(ctx->flags);
@@ -122,6 +133,8 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 	if (!teco_expressions_pop_num_calc(&value, 0, error))
 		return NULL;
 
+	gboolean colon_modified = teco_machine_main_eval_colon(ctx) > 0;
+
 	/*
 	 * Find the comma-separated substring in str indexed by `value`.
 	 */
@@ -142,14 +155,19 @@ teco_state_goto_done(teco_machine_main_t *ctx, const teco_string_t *str, GError 
 
 		if (pc >= 0) {
 			ctx->macro_pc = pc;
-		} else {
+		} else if (!ctx->goto_table.complete) {
 			/* skip till label is defined */
 			g_assert(teco_goto_skip_label.len == 0);
 			undo__teco_string_truncate(&teco_goto_skip_label, 0);
 			teco_string_init(&teco_goto_skip_label, label.data, label.len);
+			teco_undo_gssize(teco_goto_backup_pc) = colon_modified ? ctx->macro_pc : -1;
 			if (ctx->parent.must_undo)
 				teco_undo_flags(ctx->flags);
 			ctx->flags.mode = TECO_MODE_PARSE_ONLY_GOTO;
+		} else if (!colon_modified) {
+			/* can happen if we previously executed a colon-modified go-to */
+			teco_error_label_set(error, teco_goto_skip_label.data, teco_goto_skip_label.len);
+			return NULL;
 		}
 	}
 
@@ -164,6 +182,7 @@ gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_
 
 /*$ "O" goto
  * Olabel$ -- Go to label
+ * :Olabel$
  * [n]Olabel0[,label1,...]$
  *
  * Go to <label>.
@@ -186,14 +205,19 @@ gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_
  * Otherwise, parsing continues until the <label>
  * is defined.
  * The command will yield an error if a label has
- * not been defined when the macro or command-line
- * is terminated.
- * In the latter case, the user will not be able to
- * terminate the command-line.
+ * not been defined when the macro is terminated.
+ * When jumping to a non-existent <label> in the
+ * command-line macro, you cannot practically terminate
+ * the command-line until defining the <label>.
  *
  * String building constructs are enabled in \fBO\fP
  * which allows for a second kind of computed go-to,
  * where the label name contains the value to select.
+ * When colon-modifying the \fBO\fP command, execution
+ * will continue after the command if the given <label>
+ * isn't found.
+ * This is useful to handle the \(lqdefault\(rq case
+ * when using computed go-tos of the second kind.
  */
 TECO_DEFINE_STATE_EXPECTSTRING(teco_state_goto,
 	.process_edit_cmd_cb = (teco_state_process_edit_cmd_cb_t)teco_state_goto_process_edit_cmd,

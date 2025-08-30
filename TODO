@@ -729,9 +729,6 @@ Features:
    This would ease subscripting, e.g. to remove the last character:
    0,:Qq-1Qq^Uq$
    There should also be m,nA for consistency.
- * :Olabel$ to avoid throwing an error if label is not defined.
-   This would be very useful when using computed Gotos as select-case
-   like constructs as the code after the Goto would act as a default-clause.
  * Sort order in Q-register autocompletions should be numeric,
    so ^A11 comes after ^A1.
  * FFI interface: There could be a command nFXlib$func$str$

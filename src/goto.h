@@ -26,10 +26,14 @@
 typedef struct {
 	teco_rb3str_tree_t tree;
 
+	/** Whether to generate undo tokens (unnecessary in macro invocations) */
+	guint must_undo : 1;
+
 	/**
-	 * Whether to generate undo tokens (unnecessary in macro invocations)
+	 * Whether the table is guaranteed to be complete because the entire
+	 * macro has already been parsed.
 	 */
-	gboolean must_undo;
+	guint complete : 1;
 } teco_goto_table_t;
 
 /** @memberof teco_goto_table_t */
@@ -38,6 +42,7 @@ teco_goto_table_init(teco_goto_table_t *ctx, gboolean must_undo)
 {
 	rb3_reset_tree(&ctx->tree);
 	ctx->must_undo = must_undo;
+	ctx->complete = FALSE;
 }
 
 gboolean teco_goto_table_remove(teco_goto_table_t *ctx, const gchar *name, gsize len);

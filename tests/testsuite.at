@@ -117,6 +117,7 @@ AT_CLEANUP
 AT_SETUP([Gotos and labels])
 TE_CHECK([[@O//]], 1, ignore, ignore)
 TE_CHECK([[^^XUq @O/s.^EUq/ (0/0) !s.X!]], 0, ignore, ignore)
+TE_CHECK([[:@O/foo/]], 0, ignore, ignore)
 TE_CHECK([[1@O/foo,bar/ (0/0) !bar!]], 0, ignore, ignore)
 # No-op gotos
 TE_CHECK([[-1@O/foo/ 1@O/foo/ @O/,foo/]], 0, ignore, ignore)

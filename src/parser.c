@@ -186,41 +186,60 @@ teco_execute_macro(const gchar *macro, gsize macro_len,
 
 	GError *tmp_error = NULL;
 
-	if (!teco_machine_main_step(&macro_machine, macro, macro_len, &tmp_error)) {
-		if (!g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_RETURN)) {
-			/* passes ownership of tmp_error */
-			g_propagate_error(error, tmp_error);
-			goto error_cleanup;
+	for (;;) {
+		if (!teco_machine_main_step(&macro_machine, macro, macro_len, &tmp_error)) {
+			if (!g_error_matches(tmp_error, TECO_ERROR, TECO_ERROR_RETURN)) {
+				/* passes ownership of tmp_error */
+				g_propagate_error(error, tmp_error);
+				goto error_cleanup;
+			}
+			g_error_free(tmp_error);
+
+			/*
+			 * Macro returned - handle like regular
+			 * end of macro, even though some checks
+			 * are unnecessary here.
+			 * macro_pc will still point to the return PC.
+			 */
+			g_assert(macro_machine.parent.current == &teco_state_start);
+
+			/*
+			 * Discard all braces, except the current one.
+			 */
+			if (!teco_expressions_brace_return(parent_brace_level, teco_error_return_args, error))
+				goto error_cleanup;
+
+			/*
+			 * Clean up the loop stack.
+			 * We are allowed to return in loops.
+			 * NOTE: This does not have to be undone.
+			 */
+			g_array_remove_range(teco_loop_stack, macro_machine.loop_stack_fp,
+			                     teco_loop_stack->len - macro_machine.loop_stack_fp);
 		}
-		g_error_free(tmp_error);
 
-		/*
-		 * Macro returned - handle like regular
-		 * end of macro, even though some checks
-		 * are unnecessary here.
-		 * macro_pc will still point to the return PC.
-		 */
-		g_assert(macro_machine.parent.current == &teco_state_start);
+		if (G_LIKELY(teco_goto_backup_pc < 0))
+			break;
 
-		/*
-		 * Discard all braces, except the current one.
-		 */
-		if (!teco_expressions_brace_return(parent_brace_level, teco_error_return_args, error))
-			goto error_cleanup;
+		/* continue after :Olabel$ */
+		macro_machine.macro_pc = teco_goto_backup_pc;
+		/* macro could have ended in a "lookahead" state */
+		macro_machine.parent.current = &teco_state_start;
 
-		/*
-		 * Clean up the loop stack.
-		 * We are allowed to return in loops.
-		 * NOTE: This does not have to be undone.
-		 */
-		g_array_remove_range(teco_loop_stack, macro_machine.loop_stack_fp,
-		                     teco_loop_stack->len - macro_machine.loop_stack_fp);
+		teco_undo_string_own(teco_goto_skip_label);
+		memset(&teco_goto_skip_label, 0, sizeof(teco_goto_skip_label));
+		teco_undo_gssize(teco_goto_backup_pc) = -1;
+
+		if (macro_machine.parent.must_undo)
+			teco_undo_flags(macro_machine.flags);
+		macro_machine.flags.mode = TECO_MODE_NORMAL;
+
+		/* no need to reparse everything in the future */
+		macro_machine.goto_table.complete = TRUE;
 	}
 
 	if (G_UNLIKELY(teco_goto_skip_label.len > 0)) {
-		g_autofree gchar *label_printable = teco_string_echo(teco_goto_skip_label.data, teco_goto_skip_label.len);
-		g_set_error(error, TECO_ERROR, TECO_ERROR_FAILED,
-		            "Label \"%s\" not found", label_printable);
+		teco_error_label_set(error, teco_goto_skip_label.data, teco_goto_skip_label.len);
 		goto error_attach;
 	}
 

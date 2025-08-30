@@ -182,6 +182,9 @@ TECO_DECLARE_UNDO_SCALAR(guint);
 TECO_DECLARE_UNDO_SCALAR(gsize);
 #define teco_undo_gsize(VAR) (*teco_undo_object_gsize_push(&(VAR)))
 
+TECO_DECLARE_UNDO_SCALAR(gssize);
+#define teco_undo_gssize(VAR) (*teco_undo_object_gssize_push(&(VAR)))
+
 TECO_DECLARE_UNDO_SCALAR(teco_int_t);
 #define teco_undo_int(VAR) (*teco_undo_object_teco_int_t_push(&(VAR)))
 

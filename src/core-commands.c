@@ -633,7 +633,7 @@ teco_state_start_input(teco_machine_main_t *ctx, gunichar chr, GError **error)
 		['$']  = {&teco_state_escape},
 		['!']  = {&teco_state_label},
 		['O']  = {&teco_state_goto,
-		          .modifier_at = TRUE},
+		          .modifier_at = TRUE, .modifier_colon = 1},
 		['^']  = {&teco_state_control,
 		          .modifier_at = TRUE, .modifier_colon = 2},
 		['F']  = {&teco_state_fcommand,

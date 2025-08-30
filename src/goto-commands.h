@@ -16,10 +16,13 @@
  */
 #pragma once
 
+#include <glib.h>
+
 #include "parser.h"
 #include "string-utils.h"
 
 extern teco_string_t teco_goto_skip_label;
+extern gssize teco_goto_backup_pc;
 
 TECO_DECLARE_STATE(teco_state_label);
 TECO_DECLARE_STATE(teco_state_goto);
