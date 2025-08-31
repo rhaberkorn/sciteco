@@ -121,10 +121,12 @@ There are prebuilt binary packages and source bundles for your convenience:
 * [Download Archive at Sourceforge](https://sourceforge.net/projects/sciteco/files/)
 * [FreeBSD port](https://www.freshports.org/editors/sciteco/)
   [![FreeBSD port](https://repology.org/badge/version-for-repo/freebsd/sciteco-curses.svg?header=PACKAGE)](https://repology.org/project/sciteco-curses/versions)
-* [Ubuntu PPA repository](https://launchpad.net/~robin-haberkorn/+archive/sciteco)
-* [OBS repository and binary downloads](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco)
-  for RPM-based distributions (Fedora, openSUSE, etc.)
+* OBS repositories and binary downloads for RPM-based (Fedora, openSUSE, etc.) and
+  Debian-based (Debian, Raspbian, Ubuntu) distributions:
   [![build result](https://build.opensuse.org/projects/home:rhaberkorn:sciteco:STABLE/packages/sciteco/badge.svg?type=percent)](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco:STABLE/sciteco)
+  * [Common packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-common)
+  * [Gtk packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-gtk)
+  * [Curses packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-curses)
 * [Arch User Repository](https://aur.archlinux.org/packages/sciteco-git)
   [![AUR package](https://repology.org/badge/version-for-repo/aur/sciteco.svg?header=PACKAGE)](https://repology.org/project/sciteco/versions)
 * [Alpine Linux package](https://pkgs.alpinelinux.org/package/edge/community/x86_64/sciteco)
@@ -136,17 +138,23 @@ There are prebuilt binary packages and source bundles for your convenience:
   [`sciteco` package from this layer](https://github.com/rhaberkorn/meta-rhaberkorn).
 * Users of OpenWrt may try to install the
   [`sciteco` package of this feed](https://github.com/rhaberkorn/nanonote-ports).
+* ~~[Ubuntu PPA repository](https://launchpad.net/~robin-haberkorn/+archive/sciteco)~~ (deprecated)
 
 These releases may be quite outdated and not all of them are provided or tested by the author.
-So you may also try out the [nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly) -
-they represent the repository's HEAD commit but may well be unstable.
-Both ncurses and Gtk+ packages are provided for Ubuntu, generic Linux
-(in the form of [AppImages](https://appimage.org/)) and Windows.
+So you may also try out the following nightly builds:
+
+* OBS repositories and binary downloads for RPM-based (Fedora, openSUSE, etc.) and
+  Debian-based (Debian, Raspbian, Ubuntu) distributions:
+  [![build result](https://build.opensuse.org/projects/home:rhaberkorn:sciteco:UNSTABLE/packages/sciteco/badge.svg?type=percent)](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco:UNSTABLE/sciteco)
+  * [Common packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-common)
+  * [Gtk packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-gtk)
+  * [Curses packages](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-curses)
+* [Github CI builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly)
+  for Mac OS, Windows and Linux AppImages.
+
+Nightly builds represent the repository's HEAD commit but may well be unstable.
 For [Mac OS X](https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support),
 we currently only provide *experimental* ncurses builds.
-Users of RPM-based distributions (Fedora, openSUSE, etc.) can also use the
-[OBS repository](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco)
-to install nightly builds.
 
 If everything fails, you can try building from source.
 See [`INSTALL`](https://github.com/rhaberkorn/sciteco/blob/master/INSTALL) for more details.

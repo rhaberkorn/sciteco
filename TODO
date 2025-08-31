@@ -552,11 +552,6 @@ Features:
    special. Even if we always increased the nest_level, that
    variable does not discern Ifs and Whiles.
  * Possible Nightly Build improvements (and therefore releases):
-   * Push nightly builds into the Ubuntu PPA.
-     We should probably create a new PPA sciteco-nightly.
-     A new private key has already been registered on Launchpad and
-     Github. We just need to integrate with CI.
-     See also https://github.com/marketplace/actions/import-gpg
    * Mac OS Arm64 builds either separately or via universal binary.
      See https://codetinkering.com/switch-homebrew-arm-x86/
      Target flag: `-target arm64-apple-macos11`
@@ -566,10 +561,9 @@ Features:
  * Get into mentors.debian.net. First step to being adopted
    into the Debian repositories.
  * Get meta-rhaberkorn into https://layers.openembedded.org
- * Debian packages via OBS.
-   It should also be easier to integrate into CI to provide nightlies
-   and binaries as well. This would make the PPA and Ubuntu nightly
-   artifacts superfluous.
+ * AppImage via OBS.
+   Apparently the AppImage repo is based on openSUSE 15.6.
+   Have to fix openSUSE 15.6 builds.
  * Bash completions.
  * FreeBSD: rctl(8) theoretically allows setting up per-process actions
    when exceeding the memory limit.

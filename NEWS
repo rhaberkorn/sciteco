@@ -2,7 +2,14 @@ News
 ====
 
 <span class="nf nf-md-new_box"></span>
-Users of RPM-based distributions (Fedora, openSUSE, etc.) can get
-[releases](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco) and
-[nightly builds](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco)
-from our [Open Build Service repositories](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco).
+Releases, nightly builds, both as repositories and binary downloads for RPM-based distributions
+(Fedora, openSUSE etc.) and Debian-based distributions (Debian, Raspbian, Ubuntu) are now provided via
+[Open Build Service repositories](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco):
+
+| *Releases*  | [Common](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-common) | [Gtk](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-gtk) | [Curses](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&package=sciteco-curses)
+| *Nightlies* | [Common](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-common) | [Gtk](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-gtk) | [Curses](https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&package=sciteco-curses)
+
+The different links are only relevent when downloading packages - there are only two different OBS repositories per distribution.
+This deprecates the [Ubuntu PPA repository](https://launchpad.net/~robin-haberkorn/+archive/sciteco).
+FreeBSD, Windows and Mac OS binaries are still provided via [Github releases](https://github.com/rhaberkorn/sciteco/releases)
+and [nightly builds](https://github.com/rhaberkorn/sciteco/releases/tag/nightly).
