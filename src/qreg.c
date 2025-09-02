@@ -1341,8 +1341,8 @@ teco_ed_hook(teco_ed_hook_t type, GError **error)
 	};
 
 error_add_frame:
-	g_assert(0 <= type-1 && type-1 < G_N_ELEMENTS(type2name));
-	teco_error_add_frame_edhook(type2name[type-1]);
+	g_assert(0 <= type && type < G_N_ELEMENTS(type2name));
+	teco_error_add_frame_edhook(type2name[type]);
 	return FALSE;
 }
 
