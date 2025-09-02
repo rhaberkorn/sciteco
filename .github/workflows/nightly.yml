@@ -7,49 +7,18 @@ on:
     - cron: '14 3 * * *'
 
 jobs:
-  debian-packages:
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-
-    runs-on: ${{ matrix.os }}
+  # FIXME: AppImages can theoretically also be built on OBS.
+  # Unfortunately it only works with packages from openSUSE 15.6.
+  # Also, it's not trivial to build multiple AppImages on OBS.
+  appimages:
+    runs-on: ubuntu-latest
 
     steps:
 
     - name: Git Clone
       uses: actions/checkout@v4.1.6
-      with:
-        submodules: true
-
-    - name: Update Repositories
-      run: sudo apt-get update
-    - name: Install Build Dependencies
-      run: >
-        sudo apt-get install -y
-        devscripts build-essential lintian debhelper dh-exec
-        autoconf automake libtool
-        libglib2.0-dev libncurses-dev libgtk-3-dev xvfb
-        groff
-
-    # NOTE: We need to configure the build directory only to generate distribute.mk.
-    - name: Configure Build
-      run: |
-        autoreconf -i
-        ./configure
-
-    # NOTE: The debian package build rules already use xvfb-run to emulate an XServer
-    # when necessary since the PPA build servers might also be headless.
-    # NOTE: Packages are left in debian-temp/.
-    - name: Build Debian/Ubuntu Packages
-      run: |
-        ./distribute.mk debian-binary
-        cp debian-temp/sciteco-curses_*.deb sciteco-curses_nightly_${{matrix.os}}_amd64.deb
-        cp debian-temp/sciteco-gtk_*.deb sciteco-gtk_nightly_${{matrix.os}}_amd64.deb
-        cp debian-temp/sciteco-common_*.deb sciteco-common_nightly_${{matrix.os}}_all.deb
 
     - name: Build AppImages
-      # Should always be on the oldest supported Ubuntu
-      if: matrix.os == 'ubuntu-22.04'
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
@@ -64,12 +33,12 @@ jobs:
         mv out/*.AppImage ../sciteco-gtk_nightly_x86_64.AppImage
         chmod a+x *.AppImage
 
-    - name: Archive Debian/Ubuntu Packages and AppImages
+    - name: Archive AppImages
       uses: pyTooling/Actions/releaser@v1.0.5
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         tag: nightly
-        files: ./*.deb ./*.AppImage
+        files: ./*.AppImage
 
   macos:
     runs-on: macos-13

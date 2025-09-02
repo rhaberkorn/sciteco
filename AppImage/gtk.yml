@@ -1,22 +1,19 @@
 app: sciteco-gtk
 
 ingredients:
+  dist: focal
+  sources:
+    # should always build on the oldest supported version
+    - deb http://archive.ubuntu.com/ubuntu/ focal main universe
+    - deb http://download.opensuse.org/repositories/home:/rhaberkorn:/sciteco:/UNSTABLE/xUbuntu_20.04/ /
   packages:
     - sciteco-gtk
   exclude:
     # pkg2appimage blacklists Gtk, Pango and other libs from the GNOME stack,
     # so excluding glib as well should actually improve portability.
     - libglib2.0-0
-  dist: focal
-  sources:
-    - deb http://archive.ubuntu.com/ubuntu/ jammy main universe
-#  ppas:
-#    - robin-haberkorn/sciteco
-  script:
-    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-common_nightly_ubuntu-22.04_all.deb"
-    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-gtk_nightly_ubuntu-22.04_amd64.deb"
   post_script:
-    - dpkg -I sciteco-gtk*.deb | grep "Version:" | cut -d':' -f2 | cut -d'+' -f1 | sed 's/^[ ]*//g' >VERSION
+    - dpkg -I sciteco-gtk*.deb | sed -En 's/ *Version: *(.*)/\1/p' >VERSION
 
 script:
   # FIXME: There should perhaps be a unique name in the desktop file, so it does not conflict with the Curses version.

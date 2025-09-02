@@ -1,18 +1,15 @@
 app: sciteco-curses
 
 ingredients:
-  packages:
-    - sciteco-curses
   dist: focal
   sources:
-    - deb http://archive.ubuntu.com/ubuntu/ jammy main universe
-#  ppas:
-#    - robin-haberkorn/sciteco
-  script:
-    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-common_nightly_ubuntu-22.04_all.deb"
-    - wget -c "https://github.com/rhaberkorn/sciteco/releases/download/nightly/sciteco-curses_nightly_ubuntu-22.04_amd64.deb"
+    # should always build on the oldest supported version
+    - deb http://archive.ubuntu.com/ubuntu/ focal main universe
+    - deb http://download.opensuse.org/repositories/home:/rhaberkorn:/sciteco:/UNSTABLE/xUbuntu_20.04/ /
+  packages:
+    - sciteco-curses
   post_script:
-    - dpkg -I sciteco-curses*.deb | grep "Version:" | cut -d':' -f2 | cut -d'+' -f1 | sed 's/^[ ]*//g' >VERSION
+    - dpkg -I sciteco-curses*.deb | sed -En 's/ *Version: *(.*)/\1/p' >VERSION
 
 script:
   # This is currently not installed by sciteco-curses.
