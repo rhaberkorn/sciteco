@@ -180,7 +180,7 @@ gboolean teco_state_goto_process_edit_cmd(teco_machine_main_t *ctx, teco_machine
 gboolean teco_state_goto_insert_completion(teco_machine_main_t *ctx, const teco_string_t *str,
                                            GError **error);
 
-/*$ "O" goto
+/*$ "O" ":O" goto
  * Olabel$ -- Go to label
  * :Olabel$
  * [n]Olabel0[,label1,...]$
