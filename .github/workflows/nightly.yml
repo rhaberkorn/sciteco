@@ -11,7 +11,7 @@ jobs:
   # Unfortunately it only works with packages from openSUSE 15.6.
   # Also, it's not trivial to build multiple AppImages on OBS.
   appimages:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
 
