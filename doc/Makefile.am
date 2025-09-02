@@ -80,11 +80,11 @@ EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
 
-%.woman %.woman.tec : % sciteco.tmac grosciteco.tes
+%.woman %.woman.tec &: % sciteco.tmac grosciteco.tes
 	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -man -M@srcdir@ -msciteco $< | \
 	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
-tutorial.woman tutorial.woman.tec : tutorial.ms sciteco.tmac grosciteco.tes
+tutorial.woman tutorial.woman.tec &: tutorial.ms sciteco.tmac grosciteco.tes
 	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -ms -M@srcdir@ -msciteco $< | \
 	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
 
