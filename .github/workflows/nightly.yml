@@ -25,7 +25,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        sudo apt-get install -y libfuse2
+        sudo apt-get install -y libfuse2 imagemagick wget
         cd AppImage
         gh release download -R AppImageCommunity/pkg2appimage -O pkg2appimage.AppImage \
                             -p 'pkg2appimage-*-x86_64.AppImage' continuous
