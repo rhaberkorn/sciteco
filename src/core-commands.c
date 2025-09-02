@@ -2640,7 +2640,7 @@ teco_state_ecommand_encoding(teco_machine_main_t *ctx, GError **error)
 }
 
 /*$ EO version
- * EO -> major*10000 + minor*100 + micro
+ * EO -> major*10000 + minor*100 + micro -- Get program version
  *
  * Return the version of \*(ST encoded into an integer.
  */
