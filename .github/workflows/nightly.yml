@@ -18,6 +18,9 @@ jobs:
     - name: Git Clone
       uses: actions/checkout@v4.1.6
 
+    - name: Update Repositories
+      run: sudo apt-get update
+
     - name: Build AppImages
       env:
         GH_TOKEN: ${{ github.token }}
