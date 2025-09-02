@@ -80,9 +80,18 @@ EXTRA_DIST += tutorial.ms.in
 
 CLEANFILES += $(women_DATA)
 
-%.woman %.woman.tec &: % sciteco.tmac grosciteco.tes
-	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -man -M@srcdir@ -msciteco $< | \
-	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $@
+# Using pattern rules is bugged in some versions of GNU make in
+# combination with grouped targets (&:).
+define woman_man_rule
+$(1).woman $(1).woman.tec &: $(1) sciteco.tmac grosciteco.tes
+	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -man -M@srcdir@ -msciteco $$< | \
+	$(SCITECO_FULL) -im -- @srcdir@/grosciteco.tes $$@
+endef
+
+$(eval $(call woman_man_rule,grosciteco.tes.1))
+$(eval $(call woman_man_rule,tedoc.tes.1))
+$(eval $(call woman_man_rule,sciteco.1))
+$(eval $(call woman_man_rule,sciteco.7))
 
 tutorial.woman tutorial.woman.tec &: tutorial.ms sciteco.tmac grosciteco.tes
 	@GROFF@ @GROFF_FLAGS@ -wall -Z -Tutf8 -t -ms -M@srcdir@ -msciteco $< | \
