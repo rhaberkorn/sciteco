@@ -1,0 +1,256 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; Home</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+<h1 id="news">News</h1>
+<p><span class="nf nf-md-new_box"></span>
+Releases, nightly builds, both as repositories and binary downloads for RPM-based distributions
+(Fedora, openSUSE etc.) and Debian-based distributions (Debian, Raspbian, Ubuntu) are now provided via
+<a href="https://build.opensuse.org/package/show/home:rhaberkorn:sciteco">Open Build Service repositories</a>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Releases</strong></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-common">Common</a></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-gtk">Gtk</a></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-curses">Curses</a></td>
+</tr>
+<tr>
+<td><strong>Nightlies</strong></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-common">Common</a></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-gtk">Gtk</a></td>
+<td><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-curses">Curses</a></td>
+</tr>
+</tbody>
+</table>
+<p>The different links are only relevant when downloading packages - there are only two different OBS repositories per distribution.
+This deprecates the <a href="https://launchpad.net/~robin-haberkorn/+archive/sciteco">Ubuntu PPA repository</a>.
+FreeBSD, Windows and Mac OS binaries are still provided via <a href="https://github.com/rhaberkorn/sciteco/releases">Github releases</a>
+and <a href="https://github.com/rhaberkorn/sciteco/releases/tag/nightly">nightly builds</a>.</p>
+<hr><p><a href="https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml"><img src="https://github.com/rhaberkorn/sciteco/actions/workflows/ci.yml/badge.svg" alt="Continuous Integration" /></a>
+<a href="https://github.com/rhaberkorn/sciteco/releases/tag/nightly"><img src="https://github.com/rhaberkorn/sciteco/actions/workflows/nightly.yml/badge.svg" alt="Nightly Builds" /></a></p>
+<h1 id="overview">Overview</h1>
+<p>SciTECO is an interactive TECO dialect, similar to Video TECO.
+It also adds features from classic TECO-11, as well as unique new ideas.</p>
+<p>The basic approach to text editing is both radically different and surprisingly similar to popular
+editors like Vi or EMacs. Instead of using mostly keyboard commands to modify text in a visual
+manner, in SciTECO you edit a program (called macro) using very few keyboard commands (called
+immediate editing commands). This program edits text for the user and is executed immediately,
+as far as possible. For instance, moving the cursor to the right can be done immediatly via the
+&#8220;C&#8221; command which is a part of the editor language. The language is the editor so to speak.
+When you delete a character from the end of the command line macro (called rubout), the
+side-effects of that character which may be a command or part of a command, are undone.</p>
+<p><img src="https://sciteco.sf.net/screenshots/v2.1-dev-freebsd-ncurses.gif" alt="SciTECO demo" /></p>
+<p>SciTECO uses the <a href="https://www.scintilla.org/">Scintilla</a> editor component and supports
+GTK+ 3 as well as Curses frontends (using <a href="https://foicica.com/scinterm/">Scinterm</a>).</p>
+<p>The Curses frontend is verified to work with <a href="https://www.gnu.org/software/ncurses/">ncurses</a>,
+<a href="https://github.com/sabotage-linux/netbsd-curses">NetBSD Curses</a>,
+<a href="https://github.com/wmcbrine/PDCurses">PDCurses&#47;XCurses</a>,
+<a href="https://github.com/Bill-Gray/PDCursesMod">PDCursesMod</a> and
+<a href="https://github.com/rhaberkorn/emcurses">EMCurses</a>.
+All X&#47;Open-compatible libraries should be supported.
+SVr4 curses without enhanced definitions is <strong>not</strong> supported.</p>
+<p>Linux, FreeBSD, NetBSD, <a href="https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support">Mac OS X</a>,
+Windows (MinGW 32&#47;64) <del>and <a href="https://www.haiku-os.org/">Haiku</a> (gcc4)</del> are tested and supported.
+SciTECO compiles with both GCC and Clang.
+SciTECO should compile just fine on other UNIX-compatible platforms.
+However UNIX-compatibility is not strictly required:
+Since SciTECO primarily depends on <a href="https://developer.gnome.org/glib/">glib</a> and
+some implementation of Curses, it should be easy to port to even more exotic platforms.</p>
+<p><strong>Warning: The SciTECO language is work in progress and has not yet fully stabilized.
+It may change drastically and in backwards-incompatible ways in the repository&#8217;s
+master branch and between releases until version 3.0 is released.</strong></p>
+<h1 id="features">Features</h1>
+<ul>
+<li>Supports most of the <a href="http://www.copters.com/teco.html">Video TECO</a> commands.</li>
+<li>Improved parser compared to classic TECOs, making SciTECO
+more similar to other imperative languages.</li>
+<li>Operator precedence in arithmetic expressions and an argument stack that may be modified
+by the user (commands may have more than two arguments)</li>
+<li>Extended Q-Register namespace (arbitrary strings): Can be used to build libraries and
+can be abused as a data structure.</li>
+<li>Quick access to the system clipboard via special <code>~</code> registers, even on ncurses!</li>
+<li>Make use of your keyboard&#8217;s function keys by assigning them to strings inserted into
+the command stream.
+This also enables navigating with function keys (e.g. cursor keys) as demonstrated
+by the standard library <code>fnkeys.tes</code>.
+In fact, all keys with printable representation and control keys can be remapped using
+key macros - and they can be context-sensitive as well!</li>
+<li>There is scriptable mouse support via the key macro mechanism (see also <code>fnkeys.tes</code>).
+Autocompletion popups can also be scrolled and clicked.</li>
+<li>Many TECO-11 features, like that most commands have a colon-modified form, string-building
+characters, exotic match characters&#8230;</li>
+<li>Interactivity: Immediate searching (similar to search-as-you-type) and
+context-sensitive immediate editing commands.
+In fact almost everything is done on-the-fly, giving immediate interactive feedback.
+This also means that commands can fail immediately and will not even be accepted into
+the command line, making it harder to write incorrect interactive macros.
+Context-sensitive immediate editing commands also make it much harder to destroy a day&#8217;s
+work by accident than in classic TECOs.
+Also, SciTECO supports many types of context-sensitive auto-completions (i.e. the Tab-key):
+Q-Register names, file names, directories, goto labels, help topics&#8230;</li>
+<li>Command rubout: SciTECO can undo almost every side effect, including file writes
+(<code>EW</code> command).
+This makes it even harder to destroy work by accident than in most other
+editors.
+Rubbed out commands can be re-inserted (redo).</li>
+<li>Munging: Macros may be munged, that is executed in batch mode. In other words, SciTECO
+can be used for scripting.
+By default, a profile is munged.</li>
+<li>Full Unicode (UTF-8) support: The document is still represented as a random-accessible
+codepoint sequence.
+While SciTECO macros can be written in plain ASCII - even in its printable subset -
+Unicode glyphs can be used everywhere, where a single character is accepted, for instance
+in single letter Q-Register names.</li>
+<li>8-bit clean: SciTECO can be used to edit binary files if the encoding is changed to
+ANSI and automatic EOL conversion is turned off (easiest with <code>--8bit</code>).</li>
+<li>Self-documenting: An integrated indexed help system allows browsing formatted documentation
+about commands, macros and concepts within SciTECO (<code>?</code> command).
+Macro packages can be documented with the <code>tedoc</code> tool, generating man pages.
+Man pages and <a href="https://www.gnu.org/software/groff/">GNU troff</a> markup in general
+can be compiled into documents loadable by SciTECO using the <code>grosciteco</code> post-processor.</li>
+<li>Cross platform: Builds on a wide variety of platforms. While being focused on UNIX
+and drawing some inspiration from it, other platforms (esp. Windows) are fully
+supported. It is made sure that SciTECO integrates well into all supported
+platforms even without an UNIX-like environment.</li>
+<li>SciTECO is console and command-line friendly.
+Besides running under Curses and being a scripting language, it is written
+to be used interactively on system terminals, can be integrated into
+UNIX pipelines and can be extended with external command-line tools
+(see <code>EC</code> command).
+It can easily replace tools like <em>sed</em> and <em>awk</em>.</li>
+<li>Themeability and consistency: Color settings (or schemes) are applied consistenly
+across all supported platforms. Gtk+ builds allow further customization using CSS.
+The user interface is kept minimalistic and is consistent in spirit across the
+different platforms.</li>
+<li>Syntax highlighting, styles, line numbers, folding, etc. thanks to Scintilla, Lexilla and Scintillua.
+Low-level Scintilla commands can also be accessed to extend SciTECO.
+SciTECO even syntax highlights code, written in the SciTECO language itself.</li>
+<li>A growing standard library of macros with frameworks for color schemes, syntax highlighting
+and buffer sessions.
+Optimized for hack-ability rather than completeness.</li>
+</ul>
+<h1 id="download">Download</h1>
+<p>There are prebuilt binary packages and source bundles for your convenience:</p>
+<ul>
+<li><a href="https://github.com/rhaberkorn/sciteco/releases">Github Releases</a></li>
+<li><a href="https://sourceforge.net/projects/sciteco/files/">Download Archive at Sourceforge</a></li>
+<li><a href="https://www.freshports.org/editors/sciteco/">FreeBSD port</a>
+<a href="https://repology.org/project/sciteco-curses/versions"><img src="https://repology.org/badge/version-for-repo/freebsd/sciteco-curses.svg?header=PACKAGE" alt="FreeBSD port" /></a></li>
+<li>OBS repositories and binary downloads for RPM-based (Fedora, openSUSE, etc.) and
+Debian-based (Debian, Raspbian, Ubuntu) distributions:
+<a href="https://build.opensuse.org/package/show/home:rhaberkorn:sciteco:STABLE/sciteco"><img src="https://build.opensuse.org/projects/home:rhaberkorn:sciteco:STABLE/packages/sciteco/badge.svg?type=percent" alt="build result" /></a>
+<ul>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-common">Common packages</a></li>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-gtk">Gtk packages</a></li>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:STABLE&amp;package=sciteco-curses">Curses packages</a></li>
+</ul></li>
+<li><a href="https://aur.archlinux.org/packages/sciteco-git">Arch User Repository</a>
+<a href="https://repology.org/project/sciteco/versions"><img src="https://repology.org/badge/version-for-repo/aur/sciteco.svg?header=PACKAGE" alt="AUR package" /></a></li>
+<li><a href="https://pkgs.alpinelinux.org/package/edge/community/x86_64/sciteco">Alpine Linux package</a>
+<a href="https://repology.org/project/sciteco/versions"><img src="https://repology.org/badge/version-for-repo/alpine_edge/sciteco.svg?header=PACKAGE" alt="Alpine Linux Edge package" /></a></li>
+<li><a href="https://community.chocolatey.org/packages/SciTECO">Chocolatey package</a>
+for Windows users
+<a href="https://repology.org/project/sciteco/versions"><img src="https://repology.org/badge/version-for-repo/chocolatey/sciteco.svg?header=PACKAGE" alt="Chocolatey package" /></a></li>
+<li>Yocto&#47;OpenEmbedded users should try the
+<a href="https://github.com/rhaberkorn/meta-rhaberkorn"><code>sciteco</code> package from this layer</a>.</li>
+<li>Users of OpenWrt may try to install the
+<a href="https://github.com/rhaberkorn/nanonote-ports"><code>sciteco</code> package of this feed</a>.</li>
+<li><del><a href="https://launchpad.net/~robin-haberkorn/+archive/sciteco">Ubuntu PPA repository</a></del> (deprecated)</li>
+</ul>
+<p>These releases may be quite outdated and not all of them are provided or tested by the author.
+So you may also try out the following nightly builds:</p>
+<ul>
+<li>OBS repositories and binary downloads for RPM-based (Fedora, openSUSE, etc.) and
+Debian-based (Debian, Raspbian, Ubuntu) distributions:
+<a href="https://build.opensuse.org/package/show/home:rhaberkorn:sciteco:UNSTABLE/sciteco"><img src="https://build.opensuse.org/projects/home:rhaberkorn:sciteco:UNSTABLE/packages/sciteco/badge.svg?type=percent" alt="build result" /></a>
+<ul>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-common">Common packages</a></li>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-gtk">Gtk packages</a></li>
+<li><a href="https://software.opensuse.org/download.html?project=home:rhaberkorn:sciteco:UNSTABLE&amp;package=sciteco-curses">Curses packages</a></li>
+</ul></li>
+<li><a href="https://github.com/rhaberkorn/sciteco/releases/tag/nightly">Github CI builds</a>
+for Mac OS, Windows and Linux AppImages.</li>
+</ul>
+<p>Nightly builds represent the repository&#8217;s HEAD commit but may well be unstable.
+For <a href="https://github.com/rhaberkorn/sciteco/wiki/Mac-OS-Support">Mac OS X</a>,
+we currently only provide <em>experimental</em> ncurses builds.</p>
+<p>If everything fails, you can try building from source.
+See <a href="https://github.com/rhaberkorn/sciteco/blob/master/INSTALL"><code>INSTALL</code></a> for more details.</p>
+<h1 id="community">Community</h1>
+<ul>
+<li>Join our new <a href="https://web.libera.chat/#sciteco">IRC chatroom</a>: #sciteco at irc.libera.chat</li>
+<li>Report <a href="https://github.com/rhaberkorn/sciteco/issues">bugs via Github</a>
+if you can (or write an E-Mail to the author).</li>
+<li>You can also use <a href="https://github.com/rhaberkorn/sciteco/discussions">Github Discussions</a>
+for asking questions.</li>
+<li>We are also present in the <a href="https://newsgrouper.org/alt.lang.teco">alt.lang.teco</a> Usenet group,
+but it is not restricted to SciTECO.</li>
+</ul>
+<h1 id="additional-documentation">Additional Documentation</h1>
+<ul>
+<li>Online manpages:
+<a href="https://rhaberkorn.github.io/sciteco/sciteco.1.html"><strong>sciteco</strong>(1)</a>,
+<a href="https://rhaberkorn.github.io/sciteco/sciteco.7.html"><strong>sciteco</strong>(7)</a>,
+<a href="https://rhaberkorn.github.io/sciteco/grosciteco.tes.1.html"><strong>grosciteco.tes</strong>(1)</a>,
+<a href="https://rhaberkorn.github.io/sciteco/tedoc.tes.1.html"><strong>tedoc.tes</strong>(1)</a></li>
+<li><a href="https://rhaberkorn.github.io/sciteco/tutorial.html">Tutorial</a>:
+This is what you see when you launch SciTECO for the first time.</li>
+<li><a href="https://sciteco.sf.net/manuals/cheat-sheet.pdf">Cheat Sheet and Language Overview</a>.
+This can be printed on an A4 sheet of paper.</li>
+<li><a href="https://github.com/rhaberkorn/sciteco/wiki">Wiki at Github</a></li>
+<li>A <a href="https://sciteco.sf.net/manuals/presentation.pdf">short presentation</a>
+(in German!) hold at <a href="https://www.netz39.de/">Netz39</a>.</li>
+</ul>
+<p align="center"><img alt="SciTECO icon" src="https://github.com/rhaberkorn/sciteco/raw/master/ico/sciteco-48.png"/></p>
+
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>

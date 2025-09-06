@@ -1,0 +1,350 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; Tutorial</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+
+  <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
+  <div class="grohtml"><!-- CreationDate: Sat Sep  6 03:41:45 2025 -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta name="generator" content="groff -Thtml, see www.gnu.org">
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<meta name="Content-Style" content="text/css">
+<style type="text/css">
+       p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+       h1      { text-align: center }
+</style>
+<title></title>
+</head>
+<body>
+
+<a href="#1. Tutorial">1. Tutorial</a><br>
+<a href="#1.1. Get me out of here!">1.1. Get me out of here!</a><br>
+<a href="#1.2. Navigation">1.2. Navigation</a><br>
+<a href="#1.3. Insertion">1.3. Insertion</a><br>
+<a href="#1.4. Deletion">1.4. Deletion</a><br>
+<a href="#1.5. Saving">1.5. Saving</a><br>
+<a href="#1.6. Loading">1.6. Loading</a><br>
+<a href="#1.7. Search and replace">1.7. Search and replace</a><br>
+<a href="#1.8. Q-Registers">1.8. Q-Registers</a><br>
+<a href="#1.9. Programming">1.9. Programming</a><br>
+<a href="#1.10. Customize">1.10. Customize</a><br>
+<a href="#1.11. Further reading">1.11. Further reading</a><br>
+
+<hr>
+
+
+<h2>1. Tutorial
+<a name="1. Tutorial"></a>
+</h2>
+
+
+<p style="margin-top: 1em">It seems, you are launching
+<b>SciTECO</b> for the first time. <b>SciTECO</b> is an
+unique interactive text editor and programming language.
+This tutorial guides you through the bare essentials of the
+editor. Try the examples directly on this document.</p>
+
+<h3>1.1. Get me out of here!
+<a name="1.1. Get me out of here!"></a>
+</h3>
+
+
+<p style="margin-top: 1em">To exit the editor, just type
+the characters <b>ex</b>, followed by two escape key
+presses. Escape key presses produce ASCII 27 characters,
+which are echoed as &ldquo;<b>$</b>&rdquo;. TECO commands
+are <i>case-insensitive</i>. In the remainder of this
+document, command examples are therefore formatted as
+follows:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>EX$$</b></p>
+
+<h3>1.2. Navigation
+<a name="1.2. Navigation"></a>
+</h3>
+
+
+<p style="margin-top: 1em">To set the cursor to the next
+line, type the <b>L</b> command, which will eventually
+scroll the document. You should also be able to use cursor
+movement keys. Perhaps you can even scroll using your
+mouse&rsquo;s scroll wheel.</p>
+
+<p style="margin-top: 1em">To move back one line, type the
+<b>B</b> command. <b>B</b> is <b>-L</b>! <b>C</b> moves one
+character to the right and <b>R</b> moves in the reverse
+direction, i.e. one character to the left. <b>R</b> is
+<b>-C</b>. <b>J</b> jumps to the beginning of the document
+and <b>ZJ</b> to the end. Using cursor movement or mouse
+buttons updates the movement commands in the command line
+(the line at the bottom of the screen after <b>*</b>).</p>
+
+<h3>1.3. Insertion
+<a name="1.3. Insertion"></a>
+</h3>
+
+
+<p style="margin-top: 1em">To insert the string
+&ldquo;Hello world!&rdquo; type the following:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>I</b>Hello
+world!<b>$</b></p>
+
+<p style="margin-top: 1em">Try pressing the backspace key
+repeatedly &mdash; the inserted text will vanish. This is
+called <i>rubout</i> and it works for <i>all</i> commands.
+You are not actually editing the document, but the command
+line. The commands are executed on the fly &mdash; you
+don&rsquo;t have to press Enter as in all other programming
+language prompts. Also try pressing CTRL+W to rub out entire
+words or commands. While the <b>I</b> command may resemble
+Vi, <b>SciTECO</b> is <i>not</i> a modal editor. There is no
+&ldquo;insert&rdquo; mode, you are merely providing a string
+argument to the interactively executed <b>I</b> command.</p>
+
+<h3>1.4. Deletion
+<a name="1.4. Deletion"></a>
+</h3>
+
+
+<p style="margin-top: 1em">Rubout may be used to undo text
+insertions, but you can also explicitly delete lines using
+the <b>K</b> command. <b>D</b> deletes individual
+characters. <b>-K</b> deletes the previous line and
+<b>-D</b> the previous character. If you changed this
+document, &ldquo;EX<b>$$</b>&rdquo; will refuse to exit the
+editor. Use the following command instead to discard all
+changes:</p>
+
+
+<p style="margin-left:6%; margin-top: 1em"><b>-EX$$</b></p>
+
+<h3>1.5. Saving
+<a name="1.5. Saving"></a>
+</h3>
+
+
+<p style="margin-top: 1em">You should <b>not</b> save any
+changes to this document. Instead, let&rsquo;s save it to a
+local file (save as):</p>
+
+
+<p style="margin-left:6%; margin-top: 1em"><b>EW</b>&#732;/test.txt<b>$</b></p>
+
+<p style="margin-top: 1em">If you exit now, next time you
+start <b>SciTECO</b>, this file is restored and you can
+continue right where you left off. To write out the current
+document without changing its name, just type:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>EW$</b></p>
+
+<p style="margin-top: 1em">Remember, you can type CTRL+W to
+undo even the file write and restore the previous state of
+the file.</p>
+
+<h3>1.6. Loading
+<a name="1.6. Loading"></a>
+</h3>
+
+
+<p style="margin-top: 1em">To open files from your
+operating system&rsquo;s shell, specify them after the
+&ldquo;sciteco&rdquo; command. For instance to open exactly
+one file on an UNIX-like system:</p>
+
+<p style="margin-left:6%; margin-top: 1em">$ sciteco
+&#732;/test.txt</p>
+
+<p style="margin-top: 1em">When called this way,
+<b>SciTECO</b> does not maintain <i>sessions</i>, i.e. will
+not restore this file when started without arguments. In
+order to open another file from within <b>SciTECO</b>, try
+the following command:</p>
+
+
+<p style="margin-left:6%; margin-top: 1em"><b>EB</b>new-file.txt<b>$</b></p>
+
+<p style="margin-top: 1em">This can be an existing or new
+file or even be open already &mdash; you will always edit
+the given file afterwards. You can use the Tab key to
+auto-complete file names, just like in a typical UNIX shell!
+Of course, you can press CTRL+W to revert opening the
+file.</p>
+
+<h3>1.7. Search and replace
+<a name="1.7. Search and replace"></a>
+</h3>
+
+
+<p style="margin-top: 1em">To search for a string beginning
+at the current position, try something like this:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>S</b>some
+string<b>$</b></p>
+
+<p style="margin-top: 1em">To find &ldquo;some
+string&rdquo; and replace it with &ldquo;another
+string&rdquo;, you could write:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>FR</b>some
+string<b>$</b>another string<b>$</b></p>
+
+<p style="margin-top: 1em">If you omit either of the string
+arguments, the previous value is used, so <b>S$</b> repeats
+the last search and <b>FR$$</b> repeats the last
+search-replace operation.</p>
+
+<h3>1.8. Q-Registers
+<a name="1.8. Q-Registers"></a>
+</h3>
+
+
+<p style="margin-top: 1em">The equivalent of variables are
+called <i>Q-registers</i>. You can among many other things
+store the next 10 lines into the register
+&ldquo;A&rdquo;:</p>
+
+<p style="margin-left:6%; margin-top: 1em">10<b>X</b>a</p>
+
+<p style="margin-top: 1em">Leave away the number to copy
+the next line only. Actually, most commands accept optional
+number arguments. To insert (get) the contents of register
+&ldquo;A&rdquo; use the command <b>G</b>a. Register
+&ldquo;&#732;&rdquo; is the main system clipboard, so
+&ldquo;X&#732;&rdquo; copies into, while
+&ldquo;G&#732;&rdquo; pastes the clipboard. This however
+might not work out of the box if you are running the ncurses
+version of <b>SciTECO</b>.</p>
+
+<h3>1.9. Programming
+<a name="1.9. Programming"></a>
+</h3>
+
+
+<p style="margin-top: 1em"><b>SciTECO</b> is an editor
+<i>and</i> a structured turing complete programming
+language. It recognizes complex control flow commands and
+subroutines (macros) for automating text editing tasks. This
+tutorial will not go into detail, but here&rsquo;s an
+example of performing a search-replace operation on the
+entire buffer:</p>
+
+<p style="margin-left:6%; margin-top: 1em"><b>J
+&lt;FR</b>here&rsquo;s<b>$</b>here is<b>$;&gt;</b></p>
+
+<h3>1.10. Customize
+<a name="1.10. Customize"></a>
+</h3>
+
+
+<p style="margin-top: 1em">If you haven&rsquo;t done so
+already, copy the global
+/usr/local/bin/../share/sciteco/fallback.teco_ini to your
+home directory and edit it to customize
+<b>SciTECO</b>&rsquo;s behavior:</p>
+
+<p style="margin-left:6%; margin-top: 1em">$ cp
+/usr/local/bin/../share/sciteco/fallback.teco_ini
+&#732;/.teco_ini <br>
+$ sciteco &#732;/.teco_ini</p>
+
+<p style="margin-top: 1em">This is a profile script in the
+<b>SciTECO</b> language, that is executed by default every
+time you launch <b>SciTECO</b>. If you made a mistake
+editing it and <b>SciTECO</b> refuses to start, you can
+always skip loading the profile and use <b>SciTECO</b>
+commands to fix up the profile script:</p>
+
+<p style="margin-left:6%; margin-top: 1em">$ sciteco
+--no-profile</p>
+
+<h3>1.11. Further reading
+<a name="1.11. Further reading"></a>
+</h3>
+
+
+<p style="margin-top: 1em">There is a lot more to learn if
+you would like to become a &ldquo;moby munger&rdquo;.
+Consult or even print the official Cheat Sheet to extend
+your &ldquo;vocabulary&rdquo; of <b>SciTECO</b>
+commands:</p>
+
+
+<p style="margin-top: 1em">https://sciteco.sf.net/manuals/cheat-sheet.pdf</p>
+
+<p style="margin-top: 1em">Navigate to the beginning of the
+line with the URL and type <b>X&#732;</b> to copy it into
+the system clipboard. For more details on the <b>SciTECO</b>
+language, consult the <b>sciteco</b>(7) man page.
+<b>sciteco</b>(1) documents <b>SciTECO</b> as an application
+(command-line arguments, environment variables and so on).
+These man pages are also available on the website in HTML
+format, but you can also read them right now from within
+<b>SciTECO</b> by using the &ldquo;?&rdquo; command. To open
+the language reference, type:</p>
+
+
+<p style="margin-left:6%; margin-top: 1em"><b>?</b>language<b>$</b></p>
+
+<p style="margin-top: 1em">If you want to read the tutorial
+at any later time, just type <b>?</b>tutorial<b>$</b>. You
+may also want to have a look at the Wiki and FAQ:</p>
+
+
+<p style="margin-top: 1em">https://github.com/rhaberkorn/sciteco/wiki</p>
+
+<p style="margin-top: 1em">If you cannot find a solution to
+your problem, you can of course open an Issue or Discussion
+on <b>SciTECO</b>&rsquo;s Github page. We are also happy to
+help out on the official IRC channel: Join #sciteco at
+irc.libera.chat.</p>
+
+<p style="margin-top: 1em">Merry munging!</p>
+
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>

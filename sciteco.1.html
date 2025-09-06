@@ -1,0 +1,766 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>SciTECO - &lt;Website&gt; sciteco(1)</title>
+	<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/rhaberkorn/sciteco/master/ico/sciteco.ico">
+	<meta name="description" content="Advanced TECO dialect and interactive screen editor based on Scintilla">
+	<style>
+	@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+	.reverse {
+		background-color: black;
+		color: white;
+	}
+
+	/* For grohtml-generated content */
+	.grohtml p       { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml pre     { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml table   { margin-top: 0; margin-bottom: 0; vertical-align: top }
+	.grohtml h1      { text-align: center }
+	</style>
+</head>
+<body>
+<tt>
+	SciTECO - &lt;Website&gt; 
+	<span class="nf nf-md-home"></span> <a href="index.html">Home</a> /
+	<span class="nf nf-md-image"></span> <a href="screenshots.html">Screenshots</a> /
+	<span class="nf nf-md-floppy_variant"></span> <a href="https://github.com/rhaberkorn/sciteco/releases" target=_blank>Downloads</a> /
+	<span class="nf nf-fa-book_atlas"></span> <a href="sciteco.1.html"><b>sciteco</b>(1)</a> /
+	<span class="nf nf-fa-book_bible"></span> <a href="sciteco.7.html"><b>sciteco</b>(7)</a> /
+	<span class="nf nf-md-alpha_w_box"></span> <a href="https://github.com/rhaberkorn/sciteco/wiki" target=_blank>Wiki</a> /
+	<span class="nf nf-fa-github_square"></span> <a href="https://github.com/rhaberkorn/sciteco" target=_blank>Github</a>
+</tt>
+<hr>
+
+  <p class="nf nf-fa-warning"> This documents the project's HEAD revision.</p>
+  <div class="grohtml">
+<a href="#NAME">NAME</a><br>
+<a href="#SYNOPSIS">SYNOPSIS</a><br>
+<a href="#DESCRIPTION">DESCRIPTION</a><br>
+<a href="#OPTIONS">OPTIONS</a><br>
+<a href="#EXIT STATUS">EXIT STATUS</a><br>
+<a href="#ENVIRONMENT">ENVIRONMENT</a><br>
+<a href="#SIGNALS">SIGNALS</a><br>
+<a href="#FILES">FILES</a><br>
+<a href="#EXAMPLES">EXAMPLES</a><br>
+<a href="#SEE ALSO">SEE ALSO</a><br>
+<a href="#AUTHOR">AUTHOR</a><br>
+
+<hr>
+
+
+<h2>NAME
+<a name="NAME"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">sciteco
+&minus;&minus; Scintilla-based <b>T</b>ext <b>E</b>ditor and
+<b>CO</b>rrector</p>
+
+<h2>SYNOPSIS
+<a name="SYNOPSIS"></a>
+</h2>
+
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="9%">
+
+
+<p style="margin-top: 1em"><b>sciteco</b></p></td>
+<td width="1%"></td>
+<td width="77%">
+
+
+<p style="margin-top: 1em">[<b>-h|--help</b>]
+[<b>-v|--version</b>] [<b>-q|--quiet</b>]
+[<b>-i|--stdin</b>] [<b>-o|--stdout</b>]
+[<b>-e|--eval&nbsp;</b><i>macro</i>] [<b>-m|--mung</b>]
+[<b>--no-profile</b>] [<b>-8|--8bit</b>] [<i>UI option
+...</i>] [<b>--|-S</b>] [<i>script</i>] [<i>argument
+...</i>]</p> </td>
+<td width="4%">
+</td></tr>
+</table>
+
+<h2>DESCRIPTION
+<a name="DESCRIPTION"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>SciTECO</b>
+is an interactive <b>TECO</b> dialect, similar to <b>Video
+TECO</b>. It also adds features from classic <b>Standard
+TECO-11</b>, and incorporates many unique new ideas. It is
+geared towards UNIX-like operating systems but also natively
+supports Microsoft Windows NT&trade;.</p>
+
+<p style="margin-left:9%; margin-top: 1em">When executed,
+<b>SciTECO</b> mungs (executes) the TECO macro stored in the
+file specified in the <i>script</i> argument if
+<b>--mung</b> is given or the macro specified via
+<b>--eval</b> respectively. Munged files and macros are
+executed in non-interactive (<i>batch</i>) mode, allowing
+the user to write stand-alone TECO scripts. Only when
+munging files as opposed to other means of executing macros,
+the first line is ignored if it begins with a
+&ldquo;#&rdquo; (hash sign). Therefore under UNIX-like
+operating systems, TECO macro files may be invoked as
+scripts by using a Hash-Bang line like</p>
+
+<p style="margin-left:18%;">#!/usr/local/bin/sciteco -m</p>
+
+<p style="margin-left:9%; margin-top: 1em">Note that UNIX
+Hash-Bang lines will only pass a <b>single</b> argument to
+the interpreter before the script&rsquo;s file name, so all
+required <b>SciTECO</b> options must be mangled into a
+single argument with their single-letter names. Passing
+option-like arguments (beginning with a dash) to scripts may
+cause problems because <b>SciTECO</b> might try to interpret
+these options. <b>SciTECO</b> thus stops parsing at the
+first non-option argument (which will always be the munged
+file name in a script invocation). Optionally
+&ldquo;&minus;&minus;&rdquo; might be used to explicitly
+separate <b>SciTECO</b> options and macro arguments, but is
+never passed down as a macro argument. Since it&rsquo;s
+sometimes useful to pass down &rdquo;&minus;&minus;&rdquo;
+to the profile macro, you can use &ldquo;&minus;S&rdquo;,
+which is equivalent to &ldquo;&minus;&minus;
+&minus;&minus;&rdquo;. All remaining arguments after the
+built-in processing of options are passed to the executed
+macro using an array of global Q-registers
+<b>&#710;A</b><i>x</i>. The <i>script</i> file name expected
+when &ldquo;&minus;&minus;mung&rdquo; is given is currently
+<b>not</b> included in this array. Q-register
+<b>&#710;A0</b> is the name of the current process as passed
+to C programs in &ldquo;argv[0]&rdquo;.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Upon startup
+<b>SciTECO</b>&rsquo;s buffer ring always contains only one
+unnamed buffer. If &ldquo;&minus;&minus;stdin&rdquo; is
+given, <b>SciTECO</b> first reads from <i>stdin</i> until
+end-of-file into the unnamed buffer. This is includes
+automatic EOL translation just like when using the <b>EB</b>
+command and can therefore be disabled by specifying
+&ldquo;&minus;&minus;8bit&rdquo;. If reading from
+<i>stdin</i> results in any text additions, the buffer is
+left <i>dirty</i>. The current position (called dot) is
+always left at the beginning of the buffer.</p>
+
+<p style="margin-left:9%; margin-top: 1em">If the munged
+macro does not request program termination using the
+<b>EX</b> command or exits using <b>&#710;C&#710;C</b>,
+<b>SciTECO</b> will automatically switch into its graphical
+<i>interactive</i> mode. <b>SciTECO</b> may be built with
+different graphical user interfaces, including Curses and
+GTK+ based ones. Eventually when the user terminates
+interactive mode by calling <b>EX</b>, <b>SciTECO</b> will
+return to its batch mode before exiting. <b>SciTECO</b>
+macros may still execute in batch mode after leaving
+interactive mode and shutting down any GUI if the user has
+configured <b>ED</b> hooks (see <b>sciteco</b>(7)).</p>
+
+<p style="margin-left:9%; margin-top: 1em">The differences
+between <i>batch</i> and <i>interactive</i> mode are
+outlined below:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>In batch mode, no terminal interaction takes place
+beyond writing plain-text messages to the <i>stdout</i> and
+<i>stderr</i> file descriptors. <i>stdin</i> is currently
+not read in batch mode. It is therefore safe to redirect
+<b>SciTECO</b>&rsquo;s <i>stdout</i> or <i>stderr</i> into
+files or pipes. On most UIs, it is even safe to redirect
+<i>stdout</i> or <i>stderr</i> if <b>SciTECO</b> enters
+interactive mode. Depending on the GUI compiled into
+<b>SciTECO</b>, either nothing is written to these streams
+while in interactive mode, or messages are continued to be
+written to these streams (in addition to being displayed in
+the GUI).</p></td></tr>
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>Messages logged to <i>stdout</i> or <i>stderr</i>
+&mdash; except for &ldquo;user&rdquo;-level messages
+(written explicitly via some <b>SciTECO</b> command) &mdash;
+are prefixed with a string signifying the message&rsquo;s
+severity. In interactive mode, messages are also shown in a
+GUI-dependant manner.</p></td></tr>
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>In batch mode, any <b>SciTECO</b> command failure will
+terminate the program. A full stack trace of <b>SciTECO</b>
+macro invocations will be printed to <i>stderr</i> and the
+process&rsquo; return code will signify failure. In
+interactive mode, <b>SciTECO</b> will &ldquo;rub out&rdquo;
+any character resulting in a command failure.</p></td></tr>
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>The interactive mode enables character rub-out and thus
+undoing of command side-effects. Therefore code runs
+significantly slower in interactive mode and all algorithms
+have non-constant memory requirements as they will
+constantly accumulate &ldquo;undo tokens&rdquo;. Batch mode
+does not have these restrictions.</p></td></tr>
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>A few commands that modify the command line are only
+available in interactive mode.</p></td></tr>
+<tr valign="top" align="left">
+<td width="18%"></td>
+<td width="1%">
+
+
+<p>&bull;</p></td>
+<td width="8%"></td>
+<td width="73%">
+
+
+<p>A few commands like <b>&#710;C</b> are disallowed in
+interactive mode when run from the command-line macro or
+behave slightly differently compared to batch mode (e.g.
+<b>$$</b> or <b>==</b>).</p></td></tr>
+</table>
+
+<p style="margin-left:9%; margin-top: 1em">If the
+<b>&minus;&minus;mung</b> option is absent, <b>SciTECO</b>
+will mung <i>$SCITECOCONFIG/.teco_ini</i> (if existing)
+which is called the profile. On UNIX/Linux, the default
+profile is at <i>&#732;/.teco_ini</i> (see
+<b>ENVIRONMENT</b>). If the per-user profile is missing,
+<b>SciTECO</b> falls back to
+<i>/usr/local/bin/../share/sciteco/fallback.teco_ini</i>.
+Without <b>&minus;&minus;mung</b>, a <i>script</i> file name
+will consequently not be expected as the first non-option
+argument. The profile will usually set up various Scintilla
+and <b>SciTECO</b> options, configure syntax highlighting,
+define commonly used macros and open files specified as
+arguments to <b>SciTECO</b>. The recommended command-line
+processor from &ldquo;opener.tes&rdquo; allows opening files
+on specific lines or lines and columns
+(<b>+</b><i>line</i>[<b>,</b><i>column</i>] <i>filename</i>
+or
+<i>filename</i><b>:</b><i>line</i>[<b>:</b><i>column</i>][<b>:</b>]).
+This special syntax can be inhibited by prefixing the files
+names with the special &ldquo;&minus;S&rdquo; separator.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The profile
+macro will usually leave the editor in interactive mode.
+Profile execution can be suppressed with the
+<b>&minus;&minus;no&minus;profile</b> option.</p>
+
+<h2>OPTIONS
+<a name="OPTIONS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>-h</b>,
+<b>--help</b></p>
+
+<p style="margin-left:18%;">Display a short help text on
+the console.</p>
+
+<p style="margin-left:9%;"><b>-v</b>, <b>--version</b></p>
+
+<p style="margin-left:18%;">Display the <b>SciTECO</b>
+version in an easy to parse way. See also the <b>EO</b>
+command.</p>
+
+<p style="margin-left:9%;"><b>-q</b>, <b>--quiet</b></p>
+
+<p style="margin-left:18%;">Do not print any messages to
+<i>stdout</i> except for &ldquo;user&rdquo;-level messages,
+i.e. messages printed via <b>T</b>, <b>&#710;T</b> and
+related commands. This is useful when piping the output of
+<b>SciTECO</b> into other programs.</p>
+
+<p style="margin-left:9%;"><b>-i</b>, <b>--stdin</b></p>
+
+<p style="margin-left:18%;">Reads from <i>stdin</i> into
+the unnamed buffer before executing any macro. Allows to
+easily integrate <b>SciTECO</b> into an UNIX pipeline, at
+least if you don&rsquo;t need to process infinite streams.
+This normalizes end-of-line (EOL) characters just like when
+opening any other file.</p>
+
+<p style="margin-left:9%;"><b>-o</b>, <b>--stdout</b></p>
+
+<p style="margin-left:18%;">Prints the current
+document&rsquo;s contents to <i>stdout</i> immediately
+before terminating the program, restoring the original EOL
+characters. This is also useful when piping the output of
+<b>SciTECO</b> into other programs.</p>
+
+<p style="margin-left:9%;"><b>-e</b>, <b>--eval</b>
+<i>macro</i></p>
+
+<p style="margin-left:18%;">Evaluate (execute) <i>macro</i>
+specified as a command-line option. Similar to munging but
+always exits afterwards. If the option is specified, the
+<b>&minus;&minus;mung</b> option has no effect.</p>
+
+<p style="margin-left:9%;"><b>-m</b>, <b>--mung</b></p>
+
+<p style="margin-left:18%;">Mung <i>script</i>. The script
+file name is expected as the first non-option argument, so
+it does not necessarily have to follow the <b>--mung</b>
+option. Default is <i>$SCITECOCONFIG/.teco_ini</i>.</p>
+
+<p style="margin-left:9%;"><b>--no-profile</b></p>
+
+<p style="margin-left:18%;">Do not mung any profile. This
+leaves the editor in interactive mode with default settings
+just as if no profile existed or like when munging an empty
+file. This is useful to fix up a broken profile script. This
+option has no effect when a file is explicitly munged with
+<b>&minus;&minus;mung</b>.</p>
+
+<p style="margin-left:9%;"><b>-8</b>, <b>--8bit</b></p>
+
+<p style="margin-left:18%;">Use raw single-byte ANSI
+encoding by default and disable automatic EOL conversion,
+which optimizes <b>SciTECO</b> for 8-bit cleanliness. It is
+equivalent to executing &ldquo;16,4ED&rdquo;, but since it
+is executed very early at startup, all Q-Registers and the
+unnamed buffer will already be in ANSI encoding. This option
+is also useful when munging the profile macro.</p>
+
+<p style="margin-left:9%;"><i>UI options ...</i></p>
+
+<p style="margin-left:18%;">Some graphical user interfaces,
+notably GTK+, provide additional command line options.
+Execute &ldquo;sciteco --help&rdquo; for more details.</p>
+
+<h2>EXIT STATUS
+<a name="EXIT STATUS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>SciTECO</b>
+will return a non-null exit code if an error occurred during
+batch mode processing &mdash; usually 1 on UNIX. Otherwise
+the top value on the numeric stack will determine the
+process&rsquo; exit code as if passed to libc&rsquo;s
+<b>exit</b>(3) function. On UNIX systems only numbers
+between 0 and 255 may be meaningfull.</p>
+
+<h2>ENVIRONMENT
+<a name="ENVIRONMENT"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">Before
+<b>SciTECO</b> executes any macro, all of the variables in
+the process environment are inserted into the global
+Q-Register table. A dollar sign is prepended before each
+variable name, so that for instance the variable
+&ldquo;HOME&rdquo; can be examined by macros by reading the
+string-content of Q-Register &ldquo;$HOME&rdquo;.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Changes to these
+environment registers are not applied to the process
+environment for technical reasons. Nevertheless,
+<b>SciTECO</b> will always access the environment registers
+instead of the process environment when it needs to evaluate
+an environment variable internally. Furthermore, when
+spawning subprocesses, <b>SciTECO</b> will export all
+Q-Registers beginning with &ldquo;$&rdquo; that do not have
+a &ldquo;=&rdquo; in their name into the subprocess
+environment. Therefore, the subset of Q-Registers whose name
+begins with &ldquo;$&rdquo; can be considered practically
+identical to the process environment and <b>SciTECO</b>
+macros can access, modify and extend the environment using
+these registers.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The following
+environment variables and registers are initialized with
+default values by <b>SciTECO</b> if they are unset:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="5%">
+
+
+<p><b>HOME</b></p></td>
+<td width="4%"></td>
+<td width="82%">
+
+
+<p>Home directory of the current user. This may be used
+e.g. by the <b>FG</b> command and for tilde-expansions. If
+unset, it defaults to the current user&rsquo;s home
+directory as set by <b>passwd</b>(5) or as determined by
+other platform-dependent means. Initialization of this
+variable ensures that the &ldquo;$HOME&rdquo; Q-Register is
+available even on Windows and the home directory can always
+be re-configured.</p></td></tr>
+</table>
+
+<p style="margin-left:9%;"><b>SHELL</b> or
+<b>COMSPEC</b></p>
+
+<p style="margin-left:18%;">Path of the command interpreter
+used by <b>EG</b> and <b>EC</b> commands if UNIX98 shell
+emulation is <i>disabled</i>. <b>SHELL</b> is used on
+UNIX-like systems, while <b>COMSPEC</b> is used on DOS-like
+systems (like Windows). Both variables are usually already
+set in the process environment but are initialized to
+&ldquo;/bin/sh&rdquo; or &ldquo;cmd.exe&rdquo; should they
+nevertheless be unset. Since environment variables are
+case-insensitive on DOS-like systems and different spellings
+exist for <b>COMSPEC</b>, the name of the variable is always
+normalized to all-upper-case by <b>SciTECO</b>.</p>
+
+<p style="margin-left:9%;"><b>SCITECOCONFIG</b></p>
+
+<p style="margin-left:18%;">Path where <b>SciTECO</b> looks
+for configuration files. For instance, this is the path of
+the default profile. If unset, this variable defaults to the
+<b>HOME</b> environment variable on Unix. On Windows, this
+variable defaults to the location of the <b>SciTECO</b>
+program executable, so that <b>SciTECO</b> is self-contained
+on Windows. On other platforms, this variable defaults to
+some other user-specific configuration directory.</p>
+
+<p style="margin-left:9%;"><b>SCITECOPATH</b></p>
+
+<p style="margin-left:18%;">Standard library macro path.
+Macros can expect to find standard library macros in this
+directory. On Windows, this variable defaults to the
+&ldquo;lib&rdquo; subdirectory of the directory containing
+the <b>SciTECO</b> program executable, so that
+<b>SciTECO</b> is self-contained on Windows. On all other
+platforms (including UNIX/Linux) this variable defaults to
+the standard library installation path at
+<b>/usr/local/bin/../share/sciteco/lib</b>.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The <b>HOME</b>,
+<b>SCITECOCONFIG</b> and <b>SCITECOPATH</b> environment
+variables and registers are canonicalized to absolute paths.
+Therefore it is possible to define them relative to the
+working directory of <b>SciTECO</b> when it starts up while
+macros can work with the corresponding registers to locate
+files even when the working directory of <b>SciTECO</b> is
+changed later on.</p>
+
+<p style="margin-left:9%; margin-top: 1em">Additionally
+<b>SciTECO</b> may be influenced by the
+<a href="https://developer.gnome.org/glib/stable/glib-running.html">environment
+variables accessed by glib</a>. On a Curses UI, there are
+other important environment variables like <b>TERM</b>,
+<b>LINES</b>, <b>COLUMNS</b> and <b>ESCDELAY</b> that may be
+accessed when <b>SciTECO</b> enters interactive mode. For
+ncurses, see section <b>ENVIRONMENT</b> in
+<b>ncurses</b>(3NCURSES) for details. <b>SciTECO</b> exports
+the environment registers into the process environment
+before initializing Curses, so these variables can be
+modified in the profile macro.</p>
+
+<p style="margin-left:9%; margin-top: 1em">On ncurses, in
+addition to the OSC-52 protocol, you can use external
+processes to drive the built-in clipboard Q-Registers
+(&ldquo;&#732;&rdquo; and so on). For that you can set the
+<b>SCITECO_CLIPBOARD_SET</b> and
+<b>SCITECO_CLIPBOARD_GET</b> environment variables or their
+corresponding Q-Registers to shell commands, that receive
+the clipboard contents on stdin or output the requested
+clipboard on stdout. In the configured commands, the string
+&ldquo;{}&rdquo; is replaced with a single letter code of
+the clipboard to set: &ldquo;c&rdquo;, &ldquo;p&rdquo; or
+&ldquo;s&rdquo; as in the clipboard register names. The
+given commands will always be executed by <b>/bin/sh</b>,
+regardless of the <b>SHELL</b> environment variable or the
+value of bit 8 (128) in the <b>ED</b> flags. The spawned
+processes also do not currently inherit the environment from
+the Q-Register environment variables, i.e. you cannot change
+the process environment via <b>SciTECO</b> code. See
+<b>/usr/local/bin/../share/sciteco/fallback.teco_ini</b> for
+an example of how to integrate the X11 clipboard via
+<b>xclip</b>(1). Integrating with Wayland and the Mac OS
+clipboards is of course also possible.</p>
+
+<p style="margin-left:9%; margin-top: 1em">On GTK+, you may
+turn off the infamous client-side window decorations by
+setting the environment variable <b>GTK_CSD</b> to
+&ldquo;0&rdquo;.</p>
+
+<p style="margin-left:9%; margin-top: 1em">The
+<b>SCITECO_SCINTILLUA_LEXERS</b> environment variable
+specifies the Scintillua &ldquo;lexers/&rdquo; directory.
+This is passed as the &ldquo;scintillua.lexers&rdquo;
+library property when loading a Scintillua lexer via the
+<b>SCI_SETILEXER</b> Scintilla message.</p>
+
+<h2>SIGNALS
+<a name="SIGNALS"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>SciTECO</b>
+currently reacts to the following signals or uses them
+internally:</p>
+
+<table width="100%" border="0" rules="none" frame="void"
+       cellspacing="0" cellpadding="0">
+<tr valign="top" align="left">
+<td width="9%"></td>
+<td width="8%">
+
+
+<p><b>SIGINT</b></p></td>
+<td width="1%"></td>
+<td width="82%">
+
+
+<p>Interrupts the currently running macro. The character
+resulting in the macro execution will fail causing
+<b>SciTECO</b> to exit in batch mode, or reject the
+character resulting in the execution when in interactive
+mode. For instance, this signal will interrupt long-running
+loops. If the GUI is waiting on user input, this signal is
+effectively ignored. Some GUIs may depend on delivery of
+<b>SIGINT</b> when <b>&#710;C</b> is pressed in order to
+interrupt macros interactively. Others will poll for
+keypresses. Note that this signal can usually also be
+generated when pressing <b>&#710;C</b> on the process&rsquo;
+associated console (also if there is a graphical
+window).</p> </td></tr>
+</table>
+
+<p style="margin-left:9%;"><b>SIGTERM</b></p>
+
+<p style="margin-left:18%;">Try to gracefully shut down
+<b>SciTECO</b>. In batch mode this only interrupts the
+currently running macro similar to <b>SIGINT</b> causing
+<b>SciTECO</b> to exit. If technically possible, user
+interfaces will additionally process <b>SIGTERM</b> in
+interactive mode as if the <i>CLOSE</i> function key has
+been pressed, which will result in unconditional program
+termination or user-programmed behaviour.</p>
+
+<h2>FILES
+<a name="FILES"></a>
+</h2>
+
+
+
+<p style="margin-left:9%; margin-top: 1em"><b>$SCITECOCONFIG/.teco_ini</b></p>
+
+<p style="margin-left:18%;">Default profile macro.</p>
+
+
+<p style="margin-left:9%;"><b>/usr/local/bin/../share/sciteco/fallback.teco_ini</b></p>
+
+<p style="margin-left:18%;">Fallback profile macro
+configuring commonly used run-time options, syntax
+highlighting, session handling and opening files specified
+on the command line.</p>
+
+<p style="margin-left:9%;"><b>$SCITECOPATH/*.tes</b></p>
+
+<p style="margin-left:18%;">Standard library macros.</p>
+
+
+<p style="margin-left:9%;"><b>.teco-</b><i>n</i><b>-</b><i>filename</i><b>&#732;</b></p>
+
+<p style="margin-left:18%;">Save point files created by
+<b>SciTECO</b> when saving files during interactive
+execution have this format. On Windows, these files have the
+hidden attribute set. Savepoint files are temporary and
+should be ignored by version control systems, etc.</p>
+
+
+<p style="margin-left:9%;"><b>$SCITECOCONFIG/.teco_session</b></p>
+
+<p style="margin-left:18%;">Macro storing the default
+buffer session. This is not written by <b>SciTECO</b>
+itself, but by the standard library <b>session.tes</b>
+macros. When the &ldquo;session.vcs&rdquo; macro is used,
+these files will also be created in the roots of Git,
+Mercurial and Subversion repositories or working copies.</p>
+
+
+<p style="margin-left:9%;"><b>$SCITECOCONFIG/.teco_css</b></p>
+
+<p style="margin-left:18%;">When using the Gtk UI, this
+will be the location of a CSS file that can be used to apply
+<b>SciTECO</b> color schemes to the entire UI and to do
+other style customizations.</p>
+
+
+<p style="margin-left:9%;"><b>/usr/local/bin/../share/sciteco/fallback.css</b></p>
+
+<p style="margin-left:18%;">When using the Gtk UI, this is
+a fallback stylesheet in case
+<b>$SCITECOCONFIG/.teco_css</b> does not exist. It may also
+be used as a template for
+<b>$SCITECOCONFIG/.teco_css</b>.</p>
+
+<h2>EXAMPLES
+<a name="EXAMPLES"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">Without any
+argument, <b>SciTECO</b> will open the last editor session
+(see &ldquo;session.tes&rdquo;). To edit one or more files,
+just specify them on the command line:</p>
+
+<p style="margin-left:18%;">sciteco main.c</p>
+
+<p style="margin-left:9%; margin-top: 1em">You can specify
+which line to open either before or after the file name:</p>
+
+<p style="margin-left:18%;">sciteco +70 main.c
+error.c:23</p>
+
+<p style="margin-left:9%; margin-top: 1em">If the program
+fails to start up after editing
+<b>$SCITECOCONFIG/.teco_ini</b> or after upgrading
+<b>SciTECO</b>, you can prevent loading the profile
+macro:</p>
+
+<p style="margin-left:18%;">sciteco --no-profile</p>
+
+<p style="margin-left:9%; margin-top: 1em">After startup of
+the interactive mode, use the
+&ldquo;EB&#732;/.teco_ini<b>$</b>&rdquo; command to load and
+fix up the profile macro. In order to execute a stand-alone
+script or custom profile macro:</p>
+
+<p style="margin-left:18%;">sciteco -m script.tes</p>
+
+<p style="margin-left:9%; margin-top: 1em">The easiest way
+to integrate <b>SciTECO</b> into an UNIX pipeline is by
+using the &ldquo;--quiet --stdin --stdout&rdquo; or
+&ldquo;-qio&rdquo; parameters. For instance in order to
+prefix all lines with a line number:</p>
+
+<p style="margin-left:18%;">dmesg | sciteco -qioe
+&rsquo;&lt;%a\@I/ / :L;&gt;&rsquo;</p>
+
+<p style="margin-left:9%; margin-top: 1em">This also works
+in interactive mode, so &ldquo;sciteco -i&rdquo; allows you
+to interactively edit text read from <i>stdin</i>. Suppose
+you would want to print only those lines from <i>stdin</i>
+matching &ldquo;iwm0:&rdquo;:</p>
+
+<p style="margin-left:18%;">dmesg | sciteco -qie
+&rsquo;&lt;@S/iwm0:/; :L; -T&gt;&rsquo;</p>
+
+<p style="margin-left:9%; margin-top: 1em">In order to
+query the installation path of the standard library, which
+is useful for authors of third-party macro packages:</p>
+
+<p style="margin-left:18%;">sciteco -qe
+&rsquo;:G[$SCITECOPATH]&rsquo;</p>
+
+<h2>SEE ALSO
+<a name="SEE ALSO"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">Language
+reference:</p>
+
+<p style="margin-left:18%;"><b>sciteco</b>(7)</p>
+
+<p style="margin-left:9%;">The <b>troff</b> post-processor
+for <b>SciTECO</b>, including information on how to <br>
+write &ldquo;womanpages&rdquo;:</p>
+
+<p style="margin-left:18%;"><b>grosciteco.tes</b>(1)</p>
+
+<p style="margin-left:9%;">A <b>troff</b> pre-processor
+commonly used to generate man-pages:</p>
+
+<p style="margin-left:18%;"><b>tedoc.tes</b>(1)</p>
+
+<p style="margin-left:9%;">Development home, bug tracker
+and wiki:</p>
+
+
+<p style="margin-left:18%;"><a href="https://github.com/rhaberkorn/sciteco"><b>SciTECO</b>
+at Github</a></p>
+
+<p style="margin-left:9%;">Related dialects:</p>
+
+
+<p style="margin-left:18%;"><a href="http://sourceforge.net/projects/videoteco/">Video
+TECO</a>
+(<a href="http://www.copters.com/teco.html">Manual</a>),
+<br>
+
+<a href="http://h71000.www7.hp.com/doc/73final/documentation/pdf/teco.pdf">DEC
+Standard TECO-11</a></p>
+
+<h2>AUTHOR
+<a name="AUTHOR"></a>
+</h2>
+
+
+<p style="margin-left:9%; margin-top: 1em">This manpage and
+the <b>SciTECO</b> program was written by
+<a href="mailto:robin.haberkorn@googlemail.com">Robin
+Haberkorn</a>.</p>
+
+<hr>
+<tt>
+<table width="100%"><tr>
+	<td width="1ch" valign=top><b>*</b></td>
+	<td valign=top><marquee>IThis page was made with SciTECO.<span class=reverse>$</span>-EX<span class=reverse>$$</span></marquee></td>
+	<td width=56><a href="https://github.com/rhaberkorn/sciteco/issues" target=_blank>
+		<img src="https://sciteco.sf.net/graphics/notbug.gif" title="There are no bugs. Go away.">
+	</a></td>
+</tr></table>
+</tt>
+</body>
+</html>
