@@ -107,6 +107,8 @@
 #define CURSES_TTY
 #endif
 
+//#define DEBUG
+
 #ifdef G_OS_WIN32
 
 /**
@@ -1917,23 +1919,29 @@ teco_interface_refresh(gboolean force)
 	(BUTTON1_##X | BUTTON2_##X | BUTTON3_##X | BUTTON4_##X | BUTTON5_##X)
 
 static gboolean
-teco_interface_getmouse(GError **error)
+teco_interface_process_mevent(MEVENT *event, GError **error)
 {
-	MEVENT event;
-
-	if (getmouse(&event) != OK)
-		return TRUE;
+#ifdef DEBUG
+	g_printf("EVENT: 0x%016X -> bit %02d [%c%c%c%c%c]\n",
+	         event->bstate, ffs(event->bstate)-1,
+	         event->bstate & BUTTON_NUM(4) ? 'U' : ' ',
+	         event->bstate & BUTTON_NUM(5) ? 'D' : ' ',
+	         event->bstate & BUTTON_EVENT(PRESSED) ? 'P' : ' ',
+	         event->bstate & BUTTON_EVENT(RELEASED) ? 'R' : ' ',
+	         event->bstate & REPORT_MOUSE_POSITION ? 'M' : ' ');
+#endif
 
 	if (teco_curses_info_popup_is_shown(&teco_interface.popup) &&
-	    wmouse_trafo(teco_interface.popup.window, &event.y, &event.x, FALSE)) {
+	    wmouse_trafo(teco_interface.popup.window, &event->y, &event->x, FALSE)) {
 		/*
 		 * NOTE: Not all curses variants report the RELEASED event,
 		 * but may also return REPORT_MOUSE_POSITION.
 		 * So we might react to all button presses as well.
 		 */
-		if (event.bstate & (BUTTON1_RELEASED | REPORT_MOUSE_POSITION)) {
+		if (event->bstate & (BUTTON1_RELEASED | REPORT_MOUSE_POSITION)) {
 			teco_machine_t *machine = &teco_cmdline.machine.parent;
-			const teco_string_t *insert = teco_curses_info_popup_getentry(&teco_interface.popup, event.y, event.x);
+			const teco_string_t *insert = teco_curses_info_popup_getentry(&teco_interface.popup,
+			                                                              event->y, event->x);
 
 			if (insert && machine->current->insert_completion_cb) {
 				/* successfully clicked popup item */
@@ -1949,9 +1957,9 @@ teco_interface_getmouse(GError **error)
 
 			return TRUE;
 		}
-		if (event.bstate & BUTTON_NUM(4))
+		if (event->bstate & BUTTON_NUM(4))
 			teco_curses_info_popup_scroll(&teco_interface.popup, -2);
-		else if (event.bstate & BUTTON_NUM(5))
+		else if (event->bstate & BUTTON_NUM(5))
 			teco_curses_info_popup_scroll(&teco_interface.popup, +2);
 
 		short fg = teco_rgb2curses(teco_interface_ssm(SCI_STYLEGETFORE, STYLE_CALLTIP, 0));
@@ -1962,59 +1970,93 @@ teco_interface_getmouse(GError **error)
 	}
 
 	/*
+	 * NOTE: There will only be one of the button bits
+	 * set in bstate, so we don't loose information translating
+	 * them to enums.
+	 *
+	 * At least on ncurses, this enables the "Normal tracking mode"
+	 * which only reports PRESSEND and RELEASED events, but no mouse
+	 * position tracing.
+	 */
+	if (event->bstate & BUTTON_NUM(4))
+		/* scroll up - there will be no RELEASED event */
+		teco_mouse.type = TECO_MOUSE_SCROLLUP;
+	else if (event->bstate & BUTTON_NUM(5))
+		/* scroll down - there will be no RELEASED event */
+		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
+	else if (event->bstate & BUTTON_EVENT(RELEASED))
+		teco_mouse.type = TECO_MOUSE_RELEASED;
+	else if (event->bstate & BUTTON_EVENT(PRESSED))
+		teco_mouse.type = TECO_MOUSE_PRESSED;
+	else
+		return TRUE;
+
+	/*
 	 * Return mouse coordinates relative to the view.
 	 * They will be in characters, but that's what SCI_POSITIONFROMPOINT
 	 * expects on Scinterm anyway.
 	 */
 	WINDOW *current = teco_view_get_window(teco_interface_current_view);
-	if (!wmouse_trafo(current, &event.y, &event.x, FALSE))
+	if (!wmouse_trafo(current, &event->y, &event->x, FALSE))
 		/* no event inside of current view */
 		return TRUE;
 
-	/*
-	 * NOTE: There will only be one of the button bits
-	 * set in bstate, so we don't loose information translating
-	 * them to enums.
-	 *
-	 * At least on ncurses, we don't always get a RELEASED event.
-	 * It instead sends only REPORT_MOUSE_POSITION,
-	 * so make sure not to overwrite teco_mouse.button in this case.
-	 */
-	if (event.bstate & BUTTON_NUM(4))
-		/* scroll up - there will be no RELEASED event */
-		teco_mouse.type = TECO_MOUSE_SCROLLUP;
-	else if (event.bstate & BUTTON_NUM(5))
-		/* scroll down - there will be no RELEASED event */
-		teco_mouse.type = TECO_MOUSE_SCROLLDOWN;
-	else if (event.bstate & BUTTON_EVENT(RELEASED))
-		teco_mouse.type = TECO_MOUSE_RELEASED;
-	else if (event.bstate & BUTTON_EVENT(PRESSED))
-		teco_mouse.type = TECO_MOUSE_PRESSED;
-	else
-		/* can also be REPORT_MOUSE_POSITION */
-		teco_mouse.type = TECO_MOUSE_RELEASED;
+	teco_mouse.x = event->x;
+	teco_mouse.y = event->y;
 
-	teco_mouse.x = event.x;
-	teco_mouse.y = event.y;
-
-	if (event.bstate & BUTTON_NUM(1))
+	if (event->bstate & BUTTON_NUM(1))
 		teco_mouse.button = 1;
-	else if (event.bstate & BUTTON_NUM(2))
+	else if (event->bstate & BUTTON_NUM(2))
 		teco_mouse.button = 2;
-	else if (event.bstate & BUTTON_NUM(3))
+	else if (event->bstate & BUTTON_NUM(3))
 		teco_mouse.button = 3;
-	else if (!(event.bstate & REPORT_MOUSE_POSITION))
+	else if (!(event->bstate & REPORT_MOUSE_POSITION))
 		teco_mouse.button = -1;
 
 	teco_mouse.mods = 0;
-	if (event.bstate & BUTTON_SHIFT)
+	if (event->bstate & BUTTON_SHIFT)
 		teco_mouse.mods |= TECO_MOUSE_SHIFT;
-	if (event.bstate & BUTTON_CTRL)
+	if (event->bstate & BUTTON_CTRL)
 		teco_mouse.mods |= TECO_MOUSE_CTRL;
-	if (event.bstate & BUTTON_ALT)
+	if (event->bstate & BUTTON_ALT)
 		teco_mouse.mods |= TECO_MOUSE_ALT;
 
+#ifdef NCURSES_UNIX
+	/*
+	 * FIXME: Some terminal emulators do not send separate
+	 * middle click PRESSED and RELEASED buttons
+	 * (both are sent when releasing the button).
+	 * Furthermore due to ncurses bugs the order
+	 * of events is arbitrary.
+	 * Therefore we ignore BUTTON2_PRESSED and synthesize
+	 * PRESSED and RELEASED evnts on BUTTON2_RELEASED:
+	 */
+	if (teco_mouse.button == 2) {
+		if (teco_mouse.type == TECO_MOUSE_PRESSED)
+			/* ignore BUTTON2_PRESSED events */
+			return TRUE;
+		if (teco_mouse.type == TECO_MOUSE_RELEASED) {
+			teco_mouse.type = TECO_MOUSE_PRESSED;
+			if (!teco_cmdline_keymacro("MOUSE", -1, error))
+				return FALSE;
+			teco_mouse.type = TECO_MOUSE_RELEASED;
+		}
+	}
+#endif /* NCURSES_UNIX */
+
 	return teco_cmdline_keymacro("MOUSE", -1, error);
+}
+
+static gboolean
+teco_interface_getmouse(GError **error)
+{
+	MEVENT event;
+
+	while (getmouse(&event) == OK)
+		if (!teco_interface_process_mevent(&event, error))
+			return FALSE;
+
+	return TRUE;
 }
 
 #endif /* NCURSES_MOUSE_VERSION >= 2 */
@@ -2026,22 +2068,29 @@ teco_interface_blocking_getch(void)
 		return GPOINTER_TO_INT(g_queue_pop_head(teco_interface.input_queue));
 
 #if NCURSES_MOUSE_VERSION >= 2
+	/*
+	 * FIXME: Due to an ncurses bug, we can receive bogus BUTTON3_PRESSED events after
+	 * left scrolling.
+	 * If we would reset the mouse mask with every wgetch(), which resets
+	 * the internal button state, we would receive bogus BUTTON3_PRESSED events
+	 * repeatedly.
+	 * An upstream ncurses patch will probably be merged soon.
+	 */
+	static gboolean old_mousekey = FALSE;
+	gboolean new_mousekey = (teco_ed & TECO_ED_MOUSEKEY) != 0;
+	if (new_mousekey != old_mousekey) {
+		old_mousekey = new_mousekey;
+		mmask_t mmask = BUTTON_EVENT(PRESSED) | BUTTON_EVENT(RELEASED);
 #ifdef __PDCURSES__
-	/*
-	 * On PDCurses it's crucial NOT to mask for BUTTONX_CLICKED.
-	 * Scroll events are not reported without the non-standard MOUSE_WHEEL_SCROLL.
-	 */
-	static const mmask_t mmask = BUTTON_EVENT(PRESSED) | BUTTON_EVENT(RELEASED) |
-	                             MOUSE_WHEEL_SCROLL;
-#else
-	/*
-	 * REPORT_MOUSE_POSITION is necessary at least on
-	 * ncurses, so that BUTTONX_RELEASED events are reported.
-	 * It does NOT report every cursor movement, though.
-	 */
-	static const mmask_t mmask = ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION;
+		/*
+		 * On PDCurses it's crucial NOT to mask for BUTTONX_CLICKED.
+		 * Also, scroll events are not reported without the non-standard
+		 * MOUSE_WHEEL_SCROLL.
+		 */
+		mmask |= MOUSE_WHEEL_SCROLL;
 #endif
-	mousemask(teco_ed & TECO_ED_MOUSEKEY ? mmask : 0, NULL);
+		mousemask(new_mousekey ? mmask : 0, NULL);
+	}
 #endif /* NCURSES_MOUSE_VERSION >= 2 */
 
 	/* no special <CTRL/C> handling */
@@ -2168,7 +2217,7 @@ teco_interface_event_loop_iter(void)
 		teco_interface_unfold();
 		teco_interface_refresh(FALSE);
 		return;
-#endif
+#endif /* NCURSES_MOUSE_VERSION >= 2 */
 
 	/*
 	 * Control keys and keys with printable representation
