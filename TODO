@@ -7,17 +7,16 @@ Tasks:
    similar to double right click.
 
 Known Bugs:
- * GNOME Terminal and Xterm produces BUTTON3_PRESSED (without BUTTON3_RELEASED) events
-   when scrolling horizontally.
-   This is a confirmed ncurses bug, which will be fixed
-   but we have to live with old ncurses versions as well.
-   We limit the effect of this bug by not resetting the mousemask()
-   unnecessarily.
- * Curses: st and Xterm produce BUTTON2_RELEASED, followed by BUTTON2_PRESSED
+ * ncurses: GNOME Terminal and Xterm produces BUTTON3_PRESSED (without BUTTON3_RELEASED)
+   events when scrolling horizontally.
+   This is fixed upstream in ncurses and there is a workaround for
+   older ncurses versions which limits the effects of this bug.
+ * ncurses: st and Xterm produce BUTTON2_RELEASED, followed by BUTTON2_PRESSED
    when clicking the middle button.
    We also *sometimes* get it in the correct order.
-   This is apparently an ncurses bug.
-   We work around this by synthesizing BUTTON2_PRESSED when receiving BUTTON2_RELEASED.
+   This bug has been fixed upstream and there is a workaround for
+   older ncurses versions. You may loose the distinction between
+   pressed and release events, though.
  * Upgrade to Scintilla 5.5.7 requires charconv header which bumps
    the minimum GCC version to 8.1 (officially 9).
    This breaks OpenSUSE 15.5-15.6 builds.

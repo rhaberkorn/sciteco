@@ -2021,7 +2021,7 @@ teco_interface_process_mevent(MEVENT *event, GError **error)
 	if (event->bstate & BUTTON_ALT)
 		teco_mouse.mods |= TECO_MOUSE_ALT;
 
-#ifdef NCURSES_UNIX
+#if defined(NCURSES_UNIX) && NCURSES_VERSION_PATCH < 20250913
 	/*
 	 * FIXME: Some terminal emulators do not send separate
 	 * middle click PRESSED and RELEASED buttons
@@ -2042,7 +2042,7 @@ teco_interface_process_mevent(MEVENT *event, GError **error)
 			teco_mouse.type = TECO_MOUSE_RELEASED;
 		}
 	}
-#endif /* NCURSES_UNIX */
+#endif /* NCURSES_UNIX && NCURSES_VERSION_PATCH < 20250913 */
 
 	return teco_cmdline_keymacro("MOUSE", -1, error);
 }
