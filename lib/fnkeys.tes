@@ -153,7 +153,7 @@
     Q.rU.l Q.iESGETMARGINWIDTHN%.r
     Q.x-Q.l+1"> Q.x-Q.r"< !* mouse within margin i *!
       Q.iESGETMARGINMASKN&(-33554432)"N !* folding margin *!
-        -EJ-2"= !* mouse released *!
+        -EJ-1"= !* mouse released *!
           Q.pESLINEFROMPOSITIONESTOGGLEFOLD
           {-9D}
         '
