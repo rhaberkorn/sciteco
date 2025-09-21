@@ -1,6 +1,6 @@
 [submodule "scintilla"]
 	path = contrib/scintilla
-	url = https://github.com/rhaberkorn/scintilla-mirror.git
+	url = git://git.fmsbw.de/scintilla-mirror
 	ignore = untracked
 [submodule "scinterm"]
 	path = contrib/scinterm

@@ -75,7 +75,7 @@
 #   Copyright (c) 2009 Damian Pietras <daper@daper.net>
 #   Copyright (c) 2012 Reuben Thomas <rrt@sc3d.org>
 #   Copyright (c) 2011 John Zaitseff <J.Zaitseff@zap.org.au>
-#   Copyright (c) 2025 Robin Haberkorn <robin.haberkorn@googlemail.com>
+#   Copyright (c) 2025 Robin Haberkorn <rhaberkorn@fmsbw.de>
 #
 #   This program is free software: you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License as published by the

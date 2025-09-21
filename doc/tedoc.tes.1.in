@@ -124,7 +124,7 @@ The \fBGNU roff\fP \(lqman\(rq macros for writing man pages:
 .SH AUTHOR
 .
 This manpage and the \*(ST program was written by
-.MT robin.haberkorn@googlemail.com
+.MT rhaberkorn@fmsbw.de
 Robin Haberkorn
 .ME .
 \# EOF

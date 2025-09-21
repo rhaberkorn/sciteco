@@ -1,16 +1,16 @@
 Source: sciteco
 Section: editors
 Priority: optional
-Maintainer: Robin Haberkorn <robin.haberkorn@googlemail.com>
+Maintainer: Robin Haberkorn <rhaberkorn@fmsbw.de>
 Build-Depends: debhelper (>= 10), dh-exec, gcc (>= 4:8.1), g++ (>= 4:8.1),
  libglib2.0-dev (>= 2.44),
  ncurses-term, libncurses-dev,
  libgtk-3-dev (>= 3.24), xvfb,
  groff (>= 1.19.2)
 Standards-Version: 4.5.0
-Homepage: https://rhaberkorn.github.io/sciteco/
-Vcs-Browser: https://github.com/rhaberkorn/sciteco
-Vcs-Git: git://github.com/rhaberkorn/sciteco.git
+Homepage: https://sciteco.fmsbw.de/
+Vcs-Browser: https://git.fmsbw.de/sciteco
+Vcs-Git: git://git.fmsbw.de/sciteco
 
 Package: sciteco-curses
 Architecture: any

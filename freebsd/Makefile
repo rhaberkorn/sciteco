@@ -4,9 +4,9 @@ CATEGORIES=	editors textproc devel
 MASTER_SITES=	https://github.com/rhaberkorn/${PORTNAME}/releases/download/v${DISTVERSION}/ \
 		SOURCEFORGE/${PORTNAME}/v${DISTVERSION}/
 
-MAINTAINER=	robin.haberkorn@googlemail.com
+MAINTAINER=	rhaberkorn@fmsbw.de
 COMMENT=	Scintilla-based Text Editor and Corrector
-WWW=		https://rhaberkorn.github.io/sciteco/
+WWW=		https://sciteco.fmsbw.de/
 
 LICENSE=	GPLv3+
 LICENSE_FILE=	${WRKSRC}/COPYING

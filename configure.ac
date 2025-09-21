@@ -3,9 +3,9 @@
 
 AC_PREREQ([2.65])
 AC_INIT([SciTECO], [2.4.0],
-	[robin.haberkorn@googlemail.com],
+	[rhaberkorn@fmsbw.de],
 	[sciteco],
-	[https://github.com/rhaberkorn/sciteco])
+	[https://sciteco.fmsbw.de/])
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE

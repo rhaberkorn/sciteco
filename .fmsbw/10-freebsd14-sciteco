@@ -1,0 +1,34 @@
+#!/bin/sh
+set -ex
+export ASSUME_ALWAYS_YES=yes
+
+# Already in freebsd14-sciteco
+# TODO: Build this with buildah.
+#pkg update
+#pkg install FreeBSD-clang FreeBSD-clibs-dev \
+#            gmake pkgconf autoconf automake libtool \
+#            glib gtk3 groff lowdown valgrind
+
+autoreconf -i
+./configure --with-interface=ncurses --enable-debug --enable-html-docs
+gmake
+
+# NOTE: The test suite must be run in verbose mode because if it fails
+# we won't be able to analyze testsuite.log.
+gmake check TESTSUITEFLAGS="--verbose --color=never --valgrind"
+# Includes a second test suite run, but without Valgrind.
+# This is good since we had to exclude several test cases when running
+# under CI with --valgrind.
+gmake distcheck
+
+gmake install
+
+# Build and deploy website
+cd www
+sciteco -m build.tes
+cp *.html /opt/htdocs/
+cd ..
+cp ico/sciteco.ico /opt/htdocs/graphics
+cp ico/sciteco-48.png /opt/htdocs/graphics
+
+# TODO: Should we also distribute FreeBSD binaries?

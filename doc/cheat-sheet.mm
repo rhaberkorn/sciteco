@@ -14,7 +14,7 @@
 \#.SP
 Overview of \fBSciTECO\fP as an editor.
 A full language description can be found in
-.pdfhref W -D https://rhaberkorn.github.io/sciteco/sciteco.7.html -A . \fBsciteco\fP(7)
+.pdfhref W -D https://sciteco.fmsbw.de/sciteco.7.html -A . \fBsciteco\fP(7)
 .br
 .
 .\" subscripts

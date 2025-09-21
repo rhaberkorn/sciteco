@@ -1,10 +1,10 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: SciTECO
-Upstream-Contact: robin.haberkorn@googlemail.com
-Source: https://github.com/rhaberkorn/sciteco
+Upstream-Contact: rhaberkorn@fmsbw.de
+Source: https://git.fmsbw.de/sciteco
 
 Files: *
-Copyright: Copyright 2012-2025 Robin Haberkorn <robin.haberkorn@googlemail.com>
+Copyright: Copyright 2012-2025 Robin Haberkorn <rhaberkorn@fmsbw.de>
 License: GPL-3
  /usr/share/common-licenses/GPL-3
 

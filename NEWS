@@ -2,6 +2,9 @@ News
 ====
 
 <span class="nf nf-md-new_box"></span>
+The new official website is at [sciteco.fmsbw.de](https://sciteco.fmsbw.de/).
+
+<span class="nf nf-md-new_box"></span>
 Releases, nightly builds, both as repositories and binary downloads for RPM-based distributions
 (Fedora, openSUSE etc.) and Debian-based distributions (Debian, Raspbian, Ubuntu) are now provided via
 [Open Build Service repositories](https://build.opensuse.org/package/show/home:rhaberkorn:sciteco):

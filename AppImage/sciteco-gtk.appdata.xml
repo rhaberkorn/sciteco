@@ -15,10 +15,10 @@
 		This app contains the GTK+ 3 (graphical) version of SciTECO.
 	</p></description>
 	<launchable type="desktop-id">sciteco-gtk.desktop</launchable>
-	<url type="homepage">https://rhaberkorn.github.io/sciteco/</url>
+	<url type="homepage">https://sciteco.fmsbw.de/</url>
 	<screenshots>
 		<screenshot type="default">
-			<image>https://sciteco.sf.net/screenshots/v2.3.0-freebsd-gtk.png</image>
+			<image>https://sciteco.fmsbw.de/screenshots/v2.3.0-freebsd-gtk.png</image>
 		</screenshot>
 	</screenshots>
 	<provides>

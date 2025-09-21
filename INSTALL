@@ -96,7 +96,7 @@ the submodules, so that SciTECO can build a verified and prepared
 version of Scintilla/Scinterm autmatically.
 Just make sure you have cloned your repository as follows:
 
-  $ git clone https://github.com/rhaberkorn/sciteco.git
+  $ git clone git://git.fmsbw.de/sciteco
   $ cd sciteco/
   $ git submodule update --init
 

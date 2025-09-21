@@ -15,10 +15,10 @@
 		This app contains the curses (terminal) version of SciTECO.
 	</p></description>
 	<launchable type="desktop-id">sciteco-curses.desktop</launchable>
-	<url type="homepage">https://rhaberkorn.github.io/sciteco/</url>
+	<url type="homepage">https://sciteco.fmsbw.de/</url>
 	<screenshots>
 		<screenshot type="default">
-			<image>https://sciteco.sf.net/screenshots/v2.1.0-freebsd-ncurses.png</image>
+			<image>https://sciteco.fmsbw.de/screenshots/v2.1.0-freebsd-ncurses.png</image>
 		</screenshot>
 	</screenshots>
 	<provides>

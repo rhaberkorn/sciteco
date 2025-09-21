@@ -2560,7 +2560,7 @@ Overview of CSS in GTK
 .SH AUTHOR
 .
 This manpage and the \*(ST program was written by
-.MT robin.haberkorn@googlemail.com
+.MT rhaberkorn@fmsbw.de
 Robin Haberkorn
 .ME .
 \# EOF
