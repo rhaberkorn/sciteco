@@ -373,6 +373,9 @@ AT_CHECK([[cmp autoeol-sciteco.txt ${srcdir}/autoeol-input.txt]], 0, ignore, ign
 AT_CLEANUP
 
 AT_SETUP([Memory limiting])
+# FIXME: Requires too much time and memory at least when running in a CI job on my fmsbw.de server
+# (.fmsbw/10-freebsd14-sciteco).
+AT_SKIP_IF([test $at_arg_valgrind != false])
 TE_CHECK([[50*1000*1000,2EJ <[a> !]!]], 1, ignore, ignore)
 AT_CLEANUP
 
@@ -492,6 +495,9 @@ TE_CHECK([[11EF]], 1, ignore, ignore)
 AT_CLEANUP
 
 AT_SETUP([Memory limiting during spawning])
+# FIXME: Requires too much time and memory at least when running in a CI job on my fmsbw.de server
+# (.fmsbw/10-freebsd14-sciteco).
+AT_SKIP_IF([test $at_arg_valgrind != false])
 # This might result in an OOM if memory limiting is not working
 TE_CHECK([[50*1000*1000,2EJ 0,128ED @EC'dd if=/dev/zero']], 1, ignore, ignore)
 AT_CLEANUP
