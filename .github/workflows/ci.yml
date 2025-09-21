@@ -52,7 +52,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: xvfb-run -a make check TESTSUITEFLAGS="--verbose"
+      run: xvfb-run -a make check TESTSUITEFLAGS="--verbose --color=never"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     - name: make distcheck
@@ -88,7 +88,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose"
+      run: make check TESTSUITEFLAGS="--verbose --color=never"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     - run: make distcheck
@@ -135,7 +135,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose"
+      run: make check TESTSUITEFLAGS="--verbose --color=never"
     - name: Build Developer Documentation
       run: cd doc && make devdoc
     - name: make distcheck

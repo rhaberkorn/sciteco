@@ -97,7 +97,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose"
+      run: make check TESTSUITEFLAGS="--verbose --color=never"
 
     - name: Package
       run: |
@@ -215,8 +215,8 @@ jobs:
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
       run: |
-        make -C build-wingui check TESTSUITEFLAGS="--verbose"
-        make -C build-wincon check TESTSUITEFLAGS="--verbose"
+        make -C build-wingui check TESTSUITEFLAGS="--verbose --color=never"
+        make -C build-wincon check TESTSUITEFLAGS="--verbose --color=never"
 
     - name: Prepare Distribution Directory
       env:
@@ -290,7 +290,7 @@ jobs:
     # NOTE: The test suite must be run in verbose mode because if it fails
     # we won't be able to analyze testsuite.log.
     - name: Run Test Suite
-      run: make check TESTSUITEFLAGS="--verbose"
+      run: make check TESTSUITEFLAGS="--verbose --color=never"
 
     - name: Prepare Distribution Directory
       env:
